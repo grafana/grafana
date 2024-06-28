@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import * as React from 'react';
 
 import {
   GrafanaTheme2,
@@ -9,6 +10,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
@@ -118,12 +121,6 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   transformation: prepareTimeSeriesTransformer,
   name: prepareTimeSeriesTransformer.name,
   description: prepareTimeSeriesTransformer.description,
-  help: `
-  ### Use cases
-
-  This takes query results and transforms them into a predictable timeseries format.
-  This transformer may be especially useful when using old panels that only expect the
-  many-frame timeseries format.
-  `,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(prepareTimeSeriesTransformer.id).helperDocs,
 };

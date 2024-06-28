@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,6 +51,9 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
 
 		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
+
+		{name: "parse structured metadata", filepath: "streams_structured_metadata", query: streamsQuery},
+		{name: "parse structured metadata different labels each log line", filepath: "streams_structured_metadata_2", query: streamsQuery},
 	}
 
 	runTest := func(folder string, path string, query lokiQuery, responseOpts ResponseOpts) {
@@ -61,14 +64,10 @@ func TestSuccessResponse(t *testing.T) {
 		bytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
-		frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &query, responseOpts, log.New("test"))
+		dr, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil, false), &query, responseOpts, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
 
-		dr := &backend.DataResponse{
-			Frames: frames,
-			Error:  err,
-		}
-		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, true)
+		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, false)
 	}
 
 	for _, test := range tt {
@@ -126,11 +125,57 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, log.New("test"))
+			dr, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil, false), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, backend.NewLoggerWith("logger", "test"))
+			require.NoError(t, err)
+			require.Len(t, dr.Frames, 0)
+			require.Equal(t, dr.Error.Error(), test.errorMessage)
+			require.Equal(t, dr.ErrorSource, backend.ErrorSourceDownstream)
+		})
+	}
+}
 
-			require.Len(t, frames, 0)
-			require.Error(t, err)
-			require.EqualError(t, err, test.errorMessage)
+func TestErrorsFromResponseCodes(t *testing.T) {
+	tt := []struct {
+		name        string
+		statusCode  int
+		errorSource backend.ErrorSource
+	}{
+		{
+			name:        "parse response with status code 400 into correct error",
+			statusCode:  400,
+			errorSource: backend.ErrorSourceDownstream,
+		},
+		{
+			name:        "parse response with status code 406 into correct error",
+			statusCode:  406,
+			errorSource: backend.ErrorSourcePlugin,
+		},
+		{
+			name:        "parse response with status code 413 into correct error",
+			statusCode:  413,
+			errorSource: backend.ErrorSourcePlugin,
+		},
+		{
+			name:        "parse response with status code 500 into correct error",
+			statusCode:  500,
+			errorSource: backend.ErrorSourceDownstream,
+		},
+		{
+			name:        "parse response with status code 501 into correct error",
+			statusCode:  501,
+			errorSource: backend.ErrorSourcePlugin,
+		},
+	}
+
+	errorString := "parse error at line 1, col 8: something is wrong"
+	contentType := "application/json; charset=UTF-8"
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			dr, _ := runQuery(context.Background(), makeMockedAPI(test.statusCode, contentType, []byte(errorString), nil, false), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, backend.NewLoggerWith("logger", "test"))
+			require.Len(t, dr.Frames, 0)
+			require.Equal(t, dr.Error.Error(), errorString)
+			require.Equal(t, dr.ErrorSource, test.errorSource)
 		})
 	}
 }

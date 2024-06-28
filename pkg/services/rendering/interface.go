@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrTimeout = errors.New("timeout error - you can set timeout in seconds with &timeout url parameter")
@@ -20,6 +20,7 @@ type RenderType string
 const (
 	RenderCSV RenderType = "csv"
 	RenderPNG RenderType = "png"
+	RenderPDF RenderType = "pdf"
 )
 
 type TimeoutOpts struct {
@@ -41,18 +42,25 @@ func getRequestTimeout(opt TimeoutOpts) time.Duration {
 	return opt.Timeout * opt.RequestTimeoutMultiplier
 }
 
-type Opts struct {
+type CommonOpts struct {
 	TimeoutOpts
 	AuthOpts
+	Path            string
+	Timezone        string
+	ConcurrentLimit int
+	Headers         map[string][]string
+}
+
+type CSVOpts struct {
+	CommonOpts
+}
+
+type Opts struct {
+	CommonOpts
 	ErrorOpts
 	Width             int
 	Height            int
-	Path              string
-	Encoding          string
-	Timezone          string
-	ConcurrentLimit   int
 	DeviceScaleFactor float64
-	Headers           map[string][]string
 	Theme             models.Theme
 }
 
@@ -74,14 +82,9 @@ type SanitizeSVGResponse struct {
 	Sanitized []byte
 }
 
-type CSVOpts struct {
-	TimeoutOpts
-	AuthOpts
-	Path            string
-	Encoding        string
-	Timezone        string
-	ConcurrentLimit int
-	Headers         map[string][]string
+type Result struct {
+	FilePath string
+	FileName string
 }
 
 type RenderResult struct {
@@ -93,7 +96,7 @@ type RenderCSVResult struct {
 	FileName string
 }
 
-type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
+type renderFunc func(ctx context.Context, renderType RenderType, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
 type sanitizeFunc func(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 
@@ -121,11 +124,12 @@ type CapabilitySupportRequestResult struct {
 type Service interface {
 	IsAvailable(ctx context.Context) bool
 	Version() string
-	Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error)
+	Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
 	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
+	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }

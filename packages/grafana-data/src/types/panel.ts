@@ -1,8 +1,8 @@
 import { defaultsDeep } from 'lodash';
 
 import { EventBus } from '../events';
-import { StandardEditorProps } from '../field';
-import { Registry } from '../utils';
+import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
+import { Registry } from '../utils/Registry';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { ScopedVars } from './ScopedVars';
@@ -72,10 +72,10 @@ export interface PanelData {
 }
 
 export interface PanelProps<T = any> {
-  /** ID of the panel within the current dashboard */
+  /** Unique ID of the panel within the current dashboard */
   id: number;
 
-  /** Result set of panel queries */
+  /** Data available as result of running panel queries, includes dataframes and loading state **/
   data: PanelData;
 
   /** Time range of the current dashboard */
@@ -84,19 +84,19 @@ export interface PanelProps<T = any> {
   /** Time zone of the current dashboard */
   timeZone: TimeZone;
 
-  /** Panel options */
+  /** Panel options set by the user in the panel editor. Includes both default and custom panel options */
   options: T;
 
   /** Indicates whether or not panel should be rendered transparent */
   transparent: boolean;
 
-  /** Current width of the panel */
+  /** Current width of the panel in pixels */
   width: number;
 
-  /** Current height of the panel */
+  /** Current height of the panel in pixels */
   height: number;
 
-  /** Field options configuration */
+  /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;
 
   /** @internal */
@@ -105,16 +105,16 @@ export interface PanelProps<T = any> {
   /** Panel title */
   title: string;
 
-  /** EventBus  */
+  /** Grafana EventBus  */
   eventBus: EventBus;
 
-  /** Panel options change handler */
+  /** Handler for options change. Invoke it to update the panel custom options. */
   onOptionsChange: (options: T) => void;
 
-  /** Field config change handler */
+  /** Field config change handler. Invoke it to update the panel field config. */
   onFieldConfigChange: (config: FieldConfigSource) => void;
 
-  /** Template variables interpolation function */
+  /** Template variables interpolation function. Given a string containing template variables, it returns the string with interpolated values. */
   replaceVariables: InterpolateFunction;
 
   /** Time range change handler */

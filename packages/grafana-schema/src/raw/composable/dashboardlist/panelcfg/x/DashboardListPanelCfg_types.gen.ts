@@ -4,12 +4,11 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 export interface Options {
   /**
@@ -21,6 +20,7 @@ export interface Options {
   keepTime: boolean;
   maxItems: number;
   query: string;
+  showFolderNames: boolean;
   showHeadings: boolean;
   showRecentlyViewed: boolean;
   showSearch: boolean;
@@ -33,6 +33,7 @@ export const defaultOptions: Partial<Options> = {
   keepTime: false,
   maxItems: 10,
   query: '',
+  showFolderNames: true,
   showHeadings: true,
   showRecentlyViewed: false,
   showSearch: false,

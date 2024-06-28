@@ -59,7 +59,7 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angularDetected,
+    isAngular: meta.angular?.detected,
     pluginId: meta.id,
   })
     .then((pluginExports) => {

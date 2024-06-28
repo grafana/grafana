@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { Spinner, useStyles2, Stack } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -70,7 +69,7 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
     return (
       <Stack gap={1}>
         <AlertStateTag state={promRule.state} isPaused={isPaused} />
-        {forTime}
+        {!isPaused && forTime}
       </Stack>
     );
   } else if (promRule && isRecordingRule(promRule)) {
@@ -80,10 +79,10 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
 };
 
 const getStyle = (theme: GrafanaTheme2) => ({
-  for: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    color: ${theme.colors.text.secondary};
-    white-space: nowrap;
-    padding-top: 2px;
-  `,
+  for: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    whiteSpace: 'nowrap',
+    paddingTop: '2px',
+  }),
 });

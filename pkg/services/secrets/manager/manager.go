@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,6 +36,7 @@ var (
 )
 
 type SecretsService struct {
+	tracer     tracing.Tracer
 	store      secrets.Store
 	enc        encryption.Internal
 	cfg        *setting.Cfg
@@ -54,6 +56,7 @@ type SecretsService struct {
 }
 
 func ProvideSecretsService(
+	tracer tracing.Tracer,
 	store secrets.Store,
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
@@ -68,6 +71,7 @@ func ProvideSecretsService(
 	))
 
 	s := &SecretsService{
+		tracer:              tracer,
 		store:               store,
 		enc:                 enc,
 		cfg:                 cfg,
@@ -79,7 +83,7 @@ func ProvideSecretsService(
 		log:                 log.New("secrets"),
 	}
 
-	enabled := !features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption)
+	enabled := !features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption)
 
 	if enabled {
 		err := s.InitProviders()
@@ -112,12 +116,12 @@ func (s *SecretsService) InitProviders() (err error) {
 }
 
 func (s *SecretsService) registerUsageMetrics() {
-	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
+	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
 		usageMetrics := make(map[string]any)
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if !s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
+		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
 
@@ -158,9 +162,12 @@ func (s *SecretsService) encryptedWithEnvelopeEncryption(payload []byte) bool {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
+	defer span.End()
+
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
-	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
-		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
+	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
+		return s.enc.Encrypt(ctx, payload, s.cfg.SecretKey)
 	}
 
 	var err error
@@ -313,6 +320,9 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	ctx, span := s.tracer.Start(ctx, "secretsService.Decrypt")
+	defer span.End()
+
 	var err error
 	defer func() {
 		opsCounter.With(prometheus.Labels{
@@ -333,7 +343,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 	// If encrypted with envelope encryption, the feature is disabled and
 	// no provider is initialized, then we throw an error.
 	if s.encryptedWithEnvelopeEncryption(payload) &&
-		s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) &&
+		s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) &&
 		!s.providersInitialized() {
 		err = fmt.Errorf("failed to decrypt a secret encrypted with envelope encryption: envelope encryption is disabled")
 		return nil, err
@@ -469,7 +479,7 @@ func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 	s.log.Info("Data keys re-encryption triggered")
 
-	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
 		s.log.Info("Envelope encryption is not enabled but trying to init providers anyway...")
 
 		if err := s.InitProviders(); err != nil {

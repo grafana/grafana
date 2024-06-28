@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { FieldNamePickerConfigSettings, SelectableValue, StandardEditorProps } from '@grafana/data';
 
@@ -12,7 +12,7 @@ type Props = StandardEditorProps<string, FieldNamePickerConfigSettings>;
 export const FieldNamePicker = ({ value, onChange, context, item }: Props) => {
   const settings: FieldNamePickerConfigSettings = item.settings ?? {};
   const names = useFieldDisplayNames(context.data, settings?.filter);
-  const selectOptions = useSelectOptions(names, value);
+  const selectOptions = useSelectOptions(names, value, undefined, undefined, settings.baseNameMode);
 
   const onSelectChange = useCallback(
     (selection?: SelectableValue<string>) => {

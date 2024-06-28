@@ -1,15 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { useStyles2, HorizontalGroup, IconButton, Tooltip, Icon } from '@grafana/ui';
-import { getModKey } from 'app/core/utils/browser';
+import { useStyles2 } from '@grafana/ui';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
 import { LokiQueryEditorProps } from '../../components/types';
-import { formatLogqlQuery } from '../../queryUtils';
 
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 
@@ -30,9 +26,6 @@ export function LokiQueryCodeEditor({
 }: Props) {
   const styles = useStyles2(getStyles);
 
-  const lokiFormatQuery = config.featureToggles.lokiFormatQuery;
-  const onClickFormatQueryButton = async () => onChange({ ...query, expr: formatLogqlQuery(query.expr, datasource) });
-
   return (
     <div className={styles.wrapper}>
       <LokiQueryField
@@ -45,27 +38,6 @@ export function LokiQueryCodeEditor({
         data={data}
         app={app}
         data-testid={testIds.editor}
-        ExtraFieldElement={
-          <>
-            {lokiFormatQuery && (
-              <div className={styles.buttonGroup}>
-                <div>
-                  <HorizontalGroup spacing="sm">
-                    <IconButton
-                      onClick={onClickFormatQueryButton}
-                      name="brackets-curly"
-                      size="xs"
-                      tooltip="Format query"
-                    />
-                    <Tooltip content={`Use ${getModKey()}+z to undo`}>
-                      <Icon className={styles.hint} name="keyboard" />
-                    </Tooltip>
-                  </HorizontalGroup>
-                </div>
-              </div>
-            )}
-          </>
-        }
       />
       {showExplain && <LokiQueryBuilderExplained query={query.expr} />}
     </div>

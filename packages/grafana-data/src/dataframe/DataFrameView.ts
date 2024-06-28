@@ -13,7 +13,7 @@ import { FunctionalVector } from '../vector/FunctionalVector';
  * @typeParam T - Type of object stored in the DataFrame.
  * @beta
  */
-export class DataFrameView<T = any> extends FunctionalVector<T> {
+export class DataFrameView<T extends object = any> extends FunctionalVector<T> {
   private index = 0;
   private obj: T;
   readonly fields: {
@@ -22,7 +22,7 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
 
   constructor(private data: DataFrame) {
     super();
-    const obj = {} as unknown as T;
+    const obj = {} as T;
     const fields = {} as any;
 
     for (let i = 0; i < data.fields.length; i++) {
@@ -34,14 +34,14 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
       fields[field.name] = field;
       const getter = () => field.values.get(this.index); // .get() to support all Vector types
 
-      if (!(obj as any).hasOwnProperty(field.name)) {
+      if (!obj.hasOwnProperty(field.name)) {
         Object.defineProperty(obj, field.name, {
           enumerable: true, // Shows up as enumerable property
           get: getter,
         });
       }
 
-      if (!(obj as any).hasOwnProperty(i.toString())) {
+      if (!obj.hasOwnProperty(i.toString())) {
         Object.defineProperty(obj, i, {
           enumerable: false, // Don't enumerate array index
           get: getter,

@@ -3,21 +3,22 @@ package historian
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/grafana/grafana/pkg/components/loki/logproto"
 	"github.com/prometheus/common/model"
-	"golang.org/x/exp/slices"
+
+	"github.com/grafana/grafana/pkg/components/loki/logproto"
 )
 
 type JsonEncoder struct{}
 
-func (e JsonEncoder) encode(s []stream) ([]byte, error) {
+func (e JsonEncoder) encode(s []Stream) ([]byte, error) {
 	body := struct {
-		Streams []stream `json:"streams"`
+		Streams []Stream `json:"streams"`
 	}{Streams: s}
 	enc, err := json.Marshal(body)
 	if err != nil {
@@ -34,7 +35,7 @@ func (e JsonEncoder) headers() map[string]string {
 
 type SnappyProtoEncoder struct{}
 
-func (e SnappyProtoEncoder) encode(s []stream) ([]byte, error) {
+func (e SnappyProtoEncoder) encode(s []Stream) ([]byte, error) {
 	body := logproto.PushRequest{
 		Streams: make([]logproto.Stream, 0, len(s)),
 	}

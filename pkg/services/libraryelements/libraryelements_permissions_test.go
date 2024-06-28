@@ -30,7 +30,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 			func(t *testing.T, sc scenarioContext) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				command := getCreatePanelCommand(0, "Library Panel Name")
+				command := getCreatePanelCommand(0, "", "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
@@ -39,12 +39,14 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder")
-				command := getCreatePanelCommand(folder.ID, "Library Panel Name")
+				// nolint:staticcheck
+				command := getCreatePanelCommand(folder.ID, folder.UID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
+				// nolint:staticcheck
 				cmd := model.PatchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -55,12 +57,13 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it from the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder")
-				command := getCreatePanelCommand(0, "Library Panel Name")
+				command := getCreatePanelCommand(0, "", "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
+				// nolint:staticcheck
 				cmd := model.PatchLibraryElementCommand{FolderID: folder.ID, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -70,7 +73,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 
 		testScenario(t, fmt.Sprintf("When %s tries to delete a library panel in the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				cmd := getCreatePanelCommand(0, "Library Panel Name")
+				cmd := getCreatePanelCommand(0, "", "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -83,7 +86,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 
 		testScenario(t, fmt.Sprintf("When %s tries to get a library panel from General folder, it should return correct response", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				cmd := getCreatePanelCommand(0, "Library Panel in General Folder")
+				cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -93,6 +96,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = ""
+				result.Result.FolderUID = "general"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
@@ -108,7 +112,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 
 		testScenario(t, fmt.Sprintf("When %s tries to get all library panels from General folder, it should return correct response", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				cmd := getCreatePanelCommand(0, "Library Panel in General Folder")
+				cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -179,7 +183,8 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 					1: testCase.permissions,
 				}
 
-				command := getCreatePanelCommand(folder.ID, "Library Panel Name")
+				// nolint:staticcheck
+				command := getCreatePanelCommand(folder.ID, folder.UID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
@@ -231,7 +236,8 @@ func TestLibraryElementPatchPermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				fromFolder := createFolder(t, sc, "FromFolder")
-				command := getCreatePanelCommand(fromFolder.ID, "Library Panel Name")
+				// nolint:staticcheck
+				command := getCreatePanelCommand(fromFolder.ID, fromFolder.UID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -242,7 +248,8 @@ func TestLibraryElementPatchPermissions(t *testing.T) {
 					1: testCase.permissions,
 				}
 
-				cmd := model.PatchLibraryElementCommand{FolderID: toFolder.ID, Version: 1, Kind: int64(model.PanelElement)}
+				// nolint:staticcheck
+				cmd := model.PatchLibraryElementCommand{FolderID: toFolder.ID, FolderUID: &toFolder.UID, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -291,7 +298,8 @@ func TestLibraryElementDeletePermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder")
-				command := getCreatePanelCommand(folder.ID, "Library Panel Name")
+				// nolint:staticcheck
+				command := getCreatePanelCommand(folder.ID, folder.UID, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -310,25 +318,29 @@ func TestLibraryElementDeletePermissions(t *testing.T) {
 func TestLibraryElementsWithMissingFolders(t *testing.T) {
 	testScenario(t, "When a user tries to create a library panel in a folder that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(-100, "Library Panel Name")
+			command := getCreatePanelCommand(0, "badFolderUID", "Library Panel Name")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
-			require.Equal(t, 404, resp.Status())
+			fmt.Println(string(resp.Body()))
+			require.Equal(t, 400, resp.Status())
 		})
 
 	testScenario(t, "When a user tries to patch a library panel by moving it to a folder that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			folder := createFolder(t, sc, "Folder")
-			command := getCreatePanelCommand(folder.ID, "Library Panel Name")
+			// nolint:staticcheck
+			command := getCreatePanelCommand(folder.ID, folder.UID, "Library Panel Name")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			result := validateAndUnMarshalResponse(t, resp)
 
-			cmd := model.PatchLibraryElementCommand{FolderID: -100, Version: 1, Kind: int64(model.PanelElement)}
+			folderUID := "badFolderUID"
+			// nolint:staticcheck
+			cmd := model.PatchLibraryElementCommand{FolderID: -100, FolderUID: &folderUID, Version: 1, Kind: int64(model.PanelElement)}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.reqContext.Req.Body = mockRequestBody(cmd)
 			resp = sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 404, resp.Status())
+			require.Equal(t, 400, resp.Status())
 		})
 }
 
@@ -357,7 +369,8 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder")
-				cmd := getCreatePanelCommand(folder.ID, "Library Panel")
+				// nolint:staticcheck
+				cmd := getCreatePanelCommand(folder.ID, folder.UID, "Library Panel")
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
@@ -407,7 +420,8 @@ func TestLibraryElementsGetAllPermissions(t *testing.T) {
 			func(t *testing.T, sc scenarioContext) {
 				for i := 1; i <= 2; i++ {
 					folder := createFolder(t, sc, fmt.Sprintf("Folder%d", i))
-					cmd := getCreatePanelCommand(folder.ID, fmt.Sprintf("Library Panel %d", i))
+					// nolint:staticcheck
+					cmd := getCreatePanelCommand(folder.ID, folder.UID, fmt.Sprintf("Library Panel %d", i))
 					sc.reqContext.Req.Body = mockRequestBody(cmd)
 					resp := sc.service.createHandler(sc.reqContext)
 					result := validateAndUnMarshalResponse(t, resp)

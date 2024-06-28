@@ -1,17 +1,15 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { stylesFactory, useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
-type Props = {
+interface Props {
   name: string;
   traceIds: string[];
-};
+}
 
 export const InspectStatsTraceIdsTable = ({ name, traceIds }: Props) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   if (traceIds.length === 0) {
     return null;
@@ -19,7 +17,7 @@ export const InspectStatsTraceIdsTable = ({ name, traceIds }: Props) => {
 
   return (
     <div className={styles.wrapper}>
-      <div className="section-heading">{name}</div>
+      <div className={styles.heading}>{name}</div>
       <table className="filter-table width-30">
         <tbody>
           {traceIds.map((traceId, index) => {
@@ -35,13 +33,15 @@ export const InspectStatsTraceIdsTable = ({ name, traceIds }: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    wrapper: css`
-      padding-bottom: ${theme.spacing(2)};
-    `,
-    cell: css`
-      text-align: right;
-    `,
-  };
+const getStyles = (theme: GrafanaTheme2) => ({
+  heading: css({
+    fontSize: theme.typography.body.fontSize,
+    marginBottom: theme.spacing(1),
+  }),
+  wrapper: css({
+    paddingBottom: theme.spacing(2),
+  }),
+  cell: css({
+    textAlign: 'right',
+  }),
 });

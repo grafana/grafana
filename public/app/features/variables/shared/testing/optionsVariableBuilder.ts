@@ -1,4 +1,4 @@
-import { VariableOption, VariableWithOptions } from 'app/features/variables/types';
+import { VariableOption, VariableWithOptions } from '@grafana/data';
 
 import { VariableBuilder } from './variableBuilder';
 
@@ -35,7 +35,7 @@ export class OptionsVariableBuilder<T extends VariableWithOptions> extends Varia
     return this;
   }
 
-  withQuery(query: any) {
+  withQuery(query: string) {
     this.variable.query = query;
     return this;
   }

@@ -1,8 +1,10 @@
 import { cx } from '@emotion/css';
-import React, { RefCallback, SyntheticEvent, useState } from 'react';
+import { RefCallback, SyntheticEvent, useState } from 'react';
+import * as React from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton } from '@grafana/experimental';
 import {
   HorizontalGroup,
@@ -164,7 +166,7 @@ const Option = (props: React.PropsWithChildren<OptionProps>) => {
         data.isDisabled && styles.optionDisabled
       )}
       {...innerProps}
-      aria-label="Select option"
+      data-testid={selectors.components.Select.option}
       title={data.title}
       onClick={onClickMultiOption}
       onKeyDown={onClickMultiOption}
@@ -248,7 +250,6 @@ const Filter = (
         width={25}
       />
       <ButtonSelect<string>
-        placeholder="Operator"
         value={item.operation ? { label: item.operation === 'eq' ? '=' : '!=', value: item.operation } : undefined}
         options={[
           { label: '=', value: 'eq' },

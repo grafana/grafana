@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
@@ -20,6 +21,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
+import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
@@ -82,10 +84,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   // for grafana, link to folder views
   if (isDeleting) {
     actionIcons.push(
-      <HorizontalGroup key="is-deleting">
+      <Stack key="is-deleting">
         <Spinner />
         deleting
-      </HorizontalGroup>
+      </Stack>
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
@@ -104,7 +106,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           );
           actionIcons.push(
             <ActionIcon
-              aria-label="re-order rules"
               data-testid="reorder-group"
               key="reorder"
               icon="exchange-alt"
@@ -180,11 +181,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       );
       actionIcons.push(
         <ActionIcon
-          aria-label="re-order rules"
           data-testid="reorder-group"
           key="reorder"
           icon="exchange-alt"
-          tooltip="re-order rules"
+          tooltip="reorder rules"
           className={styles.rotate90}
           onClick={() => setIsReorderingGroup(true)}
         />
@@ -205,9 +205,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
-    <RuleLocation namespace={namespace.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
   ) : (
-    <RuleLocation namespace={namespace.name} group={group.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
   );
 
   const closeEditModal = (saved = false) => {
@@ -225,7 +225,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           className={styles.collapseToggle}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
-          data-testid="group-collapse-toggle"
+          data-testid={selectors.components.AlertRules.groupToggle}
         />
         <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
         {isCloudRulesSource(rulesSource) && (
@@ -278,11 +278,17 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           namespace={namespace}
           group={group}
           onClose={() => closeEditModal()}
-          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
+          folderUid={folderUID}
         />
       )}
       {isReorderingGroup && (
-        <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
+        <ReorderCloudGroupModal
+          group={group}
+          folderUid={folderUID}
+          namespace={namespace}
+          onClose={() => setIsReorderingGroup(false)}
+        />
       )}
       <ConfirmModal
         isOpen={isDeletingGroup}
@@ -318,77 +324,77 @@ RulesGroup.displayName = 'RulesGroup';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css``,
-    header: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
-      flex-wrap: nowrap;
-      border-bottom: 1px solid ${theme.colors.border.weak};
+    wrapper: css({}),
+    header: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+      flexWrap: 'nowrap',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
 
-      &:hover {
-        background-color: ${theme.components.table.rowHoverBackground};
-      }
-    `,
-    headerStats: css`
-      flex-shrink: 0;
+      '&:hover': {
+        backgroundColor: theme.components.table.rowHoverBackground,
+      },
+    }),
+    headerStats: css({
+      flexShrink: 0,
 
-      span {
-        vertical-align: middle;
-      }
+      span: {
+        verticalAlign: 'middle',
+      },
 
-      ${theme.breakpoints.down('sm')} {
-        order: 2;
-        width: 100%;
-        padding-left: ${theme.spacing(1)};
-      }
-    `,
-    groupName: css`
-      margin-left: ${theme.spacing(1)};
-      margin-bottom: 0;
-      cursor: pointer;
+      [theme.breakpoints.down('sm')]: {
+        order: 2,
+        width: '100%',
+        paddingLeft: theme.spacing(1),
+      },
+    }),
+    groupName: css({
+      marginLeft: theme.spacing(1),
+      marginBottom: 0,
+      cursor: 'pointer',
 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    `,
-    spacer: css`
-      flex: 1;
-    `,
-    collapseToggle: css`
-      background: none;
-      border: none;
-      margin-top: -${theme.spacing(1)};
-      margin-bottom: -${theme.spacing(1)};
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
+    spacer: css({
+      flex: 1,
+    }),
+    collapseToggle: css({
+      background: 'none',
+      border: 'none',
+      marginTop: `-${theme.spacing(1)}`,
+      marginBottom: `-${theme.spacing(1)}`,
 
-      svg {
-        margin-bottom: 0;
-      }
-    `,
-    dataSourceIcon: css`
-      width: ${theme.spacing(2)};
-      height: ${theme.spacing(2)};
-      margin-left: ${theme.spacing(2)};
-    `,
-    dataSourceOrigin: css`
-      margin-right: 1em;
-      color: ${theme.colors.text.disabled};
-    `,
-    actionsSeparator: css`
-      margin: 0 ${theme.spacing(2)};
-    `,
-    actionIcons: css`
-      width: 80px;
-      align-items: center;
+      svg: {
+        marginBottom: 0,
+      },
+    }),
+    dataSourceIcon: css({
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      marginLeft: theme.spacing(2),
+    }),
+    dataSourceOrigin: css({
+      marginRight: '1em',
+      color: theme.colors.text.disabled,
+    }),
+    actionsSeparator: css({
+      margin: `0 ${theme.spacing(2)}`,
+    }),
+    actionIcons: css({
+      width: '80px',
+      alignItems: 'center',
 
-      flex-shrink: 0;
-    `,
-    rulesTable: css`
-      margin: ${theme.spacing(2, 0)};
-    `,
-    rotate90: css`
-      transform: rotate(90deg);
-    `,
+      flexShrink: 0,
+    }),
+    rulesTable: css({
+      margin: theme.spacing(2, 0),
+    }),
+    rotate90: css({
+      transform: 'rotate(90deg)',
+    }),
   };
 };

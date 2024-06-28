@@ -1,18 +1,19 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
+import { config, GrafanaBootConfig } from '@grafana/runtime';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { AccessControlAction } from 'app/types';
 
 import { contextSrv } from '../../core/services/context_srv';
-import { Loader } from '../plugins/admin/components/Loader';
 
+import { ServerStatsCard } from './ServerStatsCard';
 import { getServerStats, ServerStat } from './state/apis';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const styles = useStyles2(getStyles);
 
   const hasAccessToDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesRead);
@@ -20,7 +21,6 @@ export const ServerStats = () => {
 
   useEffect(() => {
     if (contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
-      setIsLoading(true);
       getServerStats().then((stats) => {
         setStats(stats);
         setIsLoading(false);
@@ -35,18 +35,17 @@ export const ServerStats = () => {
   return (
     <>
       <h2 className={styles.title}>Instance statistics</h2>
-      {isLoading ? (
-        <div className={styles.loader}>
-          <Loader text={'Loading instance stats...'} />
-        </div>
-      ) : stats ? (
+      {!isLoading && !stats ? (
+        <p className={styles.notFound}>No stats found.</p>
+      ) : (
         <div className={styles.row}>
-          <StatCard
+          <ServerStatsCard
+            isLoading={isLoading}
             content={[
-              { name: 'Dashboards (starred)', value: `${stats.dashboards} (${stats.stars})` },
-              { name: 'Tags', value: stats.tags },
-              { name: 'Playlists', value: stats.playlists },
-              { name: 'Snapshots', value: stats.snapshots },
+              { name: 'Dashboards (starred)', value: `${stats?.dashboards} (${stats?.stars})` },
+              { name: 'Tags', value: stats?.tags },
+              { name: 'Playlists', value: stats?.playlists },
+              { name: 'Snapshots', value: stats?.snapshots },
             ]}
             footer={
               <LinkButton href={'/dashboards'} variant={'secondary'}>
@@ -56,8 +55,9 @@ export const ServerStats = () => {
           />
 
           <div className={styles.doubleRow}>
-            <StatCard
-              content={[{ name: 'Data sources', value: stats.datasources }]}
+            <ServerStatsCard
+              isLoading={isLoading}
+              content={[{ name: 'Data sources', value: stats?.datasources }]}
               footer={
                 hasAccessToDataSources && (
                   <LinkButton href={'/datasources'} variant={'secondary'}>
@@ -66,21 +66,24 @@ export const ServerStats = () => {
                 )
               }
             />
-            <StatCard
-              content={[{ name: 'Alerts', value: stats.alerts }]}
+            <ServerStatsCard
+              isLoading={isLoading}
+              content={[{ name: 'Alerts', value: stats?.alerts }]}
               footer={
                 <LinkButton href={'/alerting/list'} variant={'secondary'}>
-                  Alerts
+                  Manage alerts
                 </LinkButton>
               }
             />
           </div>
-          <StatCard
+          <ServerStatsCard
+            isLoading={isLoading}
             content={[
-              { name: 'Organisations', value: stats.orgs },
-              { name: 'Users total', value: stats.users },
-              { name: 'Active users in last 30 days', value: stats.activeUsers },
-              { name: 'Active sessions', value: stats.activeSessions },
+              { name: 'Organisations', value: stats?.orgs },
+              { name: 'Users total', value: stats?.users },
+              { name: 'Active sessions', value: stats?.activeSessions },
+              { name: 'Active users in last 30 days', value: stats?.activeUsers },
+              ...getAnonymousStatsContent(stats, config),
             ]}
             footer={
               hasAccessToAdminUsers && (
@@ -91,97 +94,65 @@ export const ServerStats = () => {
             }
           />
         </div>
-      ) : (
-        <p className={styles.notFound}>No stats found.</p>
       )}
     </>
   );
 };
 
+const getAnonymousStatsContent = (stats: ServerStat | null, config: GrafanaBootConfig) => {
+  if (!config.anonymousEnabled || !stats?.activeDevices) {
+    return [];
+  }
+  if (!config.anonymousDeviceLimit) {
+    return [
+      {
+        name: 'Active anonymous devices',
+        value: `${stats.activeDevices}`,
+        tooltip: 'Detected devices that are not logged in, in last 30 days.',
+      },
+    ];
+  } else {
+    return [
+      {
+        name: 'Active anonymous devices',
+        value: `${stats.activeDevices} / ${config.anonymousDeviceLimit}`,
+        tooltip: 'Detected devices that are not logged in, in last 30 days.',
+        highlight: stats.activeDevices > config.anonymousDeviceLimit,
+      },
+    ];
+  }
+};
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    title: css`
-      margin-bottom: ${theme.spacing(4)};
-    `,
-    row: css`
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
+    title: css({
+      marginBottom: theme.spacing(4),
+    }),
+    row: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      width: '100%',
 
-      & > div:not(:last-of-type) {
-        margin-right: ${theme.spacing(2)};
-      }
+      '& > div:not(:last-of-type)': {
+        marginRight: theme.spacing(2),
+      },
 
-      & > div {
-        width: 33.3%;
-      }
-    `,
-    doubleRow: css`
-      display: flex;
-      flex-direction: column;
+      '& > div': {
+        width: '33.3%',
+      },
+    }),
+    doubleRow: css({
+      display: 'flex',
+      flexDirection: 'column',
 
-      & > div:first-of-type {
-        margin-bottom: ${theme.spacing(2)};
-      }
-    `,
-
-    loader: css`
-      height: 290px;
-    `,
-
-    notFound: css`
-      font-size: ${theme.typography.h6.fontSize};
-      text-align: center;
-      height: 290px;
-    `,
-  };
-};
-
-type StatCardProps = {
-  content: Array<Record<string, number | string>>;
-  footer?: JSX.Element | boolean;
-};
-
-const StatCard = ({ content, footer }: StatCardProps) => {
-  const styles = useStyles2(getCardStyles);
-  return (
-    <CardContainer className={styles.container} disableHover>
-      <div className={styles.inner}>
-        <div className={styles.content}>
-          {content.map((item) => {
-            return (
-              <div key={item.name} className={styles.row}>
-                <span>{item.name}</span>
-                <span>{item.value}</span>
-              </div>
-            );
-          })}
-        </div>
-        {footer && <div>{footer}</div>}
-      </div>
-    </CardContainer>
-  );
-};
-
-const getCardStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css`
-      padding: ${theme.spacing(2)};
-    `,
-    inner: css`
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-    `,
-    content: css`
-      flex: 1 0 auto;
-    `,
-    row: css`
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-bottom: ${theme.spacing(2)};
-      align-items: center;
-    `,
+      '& > div:first-of-type': {
+        marginBottom: theme.spacing(2),
+      },
+    }),
+    notFound: css({
+      fontSize: theme.typography.h6.fontSize,
+      textAlign: 'center',
+      height: '290px',
+    }),
   };
 };

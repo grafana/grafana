@@ -1,8 +1,6 @@
 import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import React from 'react';
-import 'whatwg-fetch';
 import { BrowserRouter } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -22,6 +20,7 @@ const publicDashboardListResponse: PublicDashboardListResponse[] = [
     title: 'New dashboardasdf',
     dashboardUid: 'iF36Qb6nz',
     isEnabled: false,
+    slug: 'new-dashboardasdf',
   },
   {
     uid: 'EuiEbd3nz',
@@ -29,6 +28,7 @@ const publicDashboardListResponse: PublicDashboardListResponse[] = [
     title: 'New dashboard',
     dashboardUid: 'kFlxbd37k',
     isEnabled: true,
+    slug: 'new-dashboard',
   },
 ];
 
@@ -39,6 +39,7 @@ const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
     title: '',
     dashboardUid: '',
     isEnabled: false,
+    slug: '',
   },
   {
     uid: 'EuiEbd3nz2',
@@ -46,6 +47,7 @@ const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
     title: '',
     dashboardUid: '',
     isEnabled: true,
+    slug: '',
   },
 ];
 
@@ -56,10 +58,13 @@ const paginationResponse: Omit<PublicDashboardListWithPaginationResponse, 'publi
 };
 
 const server = setupServer(
-  rest.get('/api/dashboards/public-dashboards', (_, res, ctx) =>
-    res(ctx.status(200), ctx.json({ ...paginationResponse, publicDashboards: publicDashboardListResponse }))
+  http.get('/api/dashboards/public-dashboards', () =>
+    HttpResponse.json({
+      ...paginationResponse,
+      publicDashboards: publicDashboardListResponse,
+    })
   ),
-  rest.delete('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (_, res, ctx) => res(ctx.status(200)))
+  http.delete('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', () => HttpResponse.json({}))
 );
 
 jest.mock('@grafana/runtime', () => ({
@@ -93,13 +98,13 @@ const renderPublicDashboardTable = async (waitForListRendering?: boolean) => {
     </TestProvider>
   );
 
-  waitForListRendering && (await waitForElementToBeRemoved(screen.getAllByTestId('Spinner')[1], { timeout: 3000 }));
+  waitForListRendering && (await waitForElementToBeRemoved(screen.getAllByTestId('Spinner')[0], { timeout: 3000 }));
 };
 
 describe('Show table', () => {
   it('renders loader spinner while loading', async () => {
     await renderPublicDashboardTable();
-    const spinner = screen.getAllByTestId('Spinner')[1];
+    const spinner = screen.getAllByTestId('Spinner')[0];
     expect(spinner).toBeInTheDocument();
 
     await waitForElementToBeRemoved(spinner);
@@ -118,8 +123,8 @@ describe('Show table', () => {
     };
 
     server.use(
-      rest.get('/api/dashboards/public-dashboards', (req, res, ctx) => {
-        return res(ctx.status(200), ctx.json(emptyListRS));
+      http.get('/api/dashboards/public-dashboards', () => {
+        return HttpResponse.json(emptyListRS);
       })
     );
 
@@ -167,8 +172,8 @@ describe('Orphaned public dashboard', () => {
       publicDashboards: [...publicDashboardListResponse, ...orphanedDashboardListResponse],
     };
     server.use(
-      rest.get('/api/dashboards/public-dashboards', (req, res, ctx) => {
-        return res(ctx.status(200), ctx.json(response));
+      http.get('/api/dashboards/public-dashboards', () => {
+        return HttpResponse.json(response);
       })
     );
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);

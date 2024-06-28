@@ -269,40 +269,11 @@ external group.
 
 \* `resources` may also contain a third item with `"type":` set to `"user"` or `"team"`.
 
-#### Alerts and notification channels management
+#### Data source query
 
-| Action                                                                | Distinguishing fields                                                                          |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Save alert manager configuration                                      | `{"action": "update", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/alerts"}`       |
-| Reset alert manager configuration                                     | `{"action": "delete", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/alerts"}`       |
-| Create silence                                                        | `{"action": "create", "requestUri": "/api/alertmanager/RECIPIENT/api/v2/silences"}`            |
-| Delete silence                                                        | `{"action": "delete", "requestUri": "/api/alertmanager/RECIPIENT/api/v2/silences/SILENCE-ID"}` |
-| Create alert                                                          | `{"action": "create", "requestUri": "/api/ruler/RECIPIENT/api/v2/alerts"}`                     |
-| Create or update rule group                                           | `{"action": "create-update", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE"}`     |
-| Delete rule group                                                     | `{"action": "delete", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE/GROUP-NAME"}` |
-| Delete namespace                                                      | `{"action": "delete", "requestUri": "/api/ruler/RECIPIENT/api/v1/rules/NAMESPACE"}`            |
-| Test Grafana managed receivers                                        | `{"action": "test", "requestUri": "/api/alertmanager/RECIPIENT/config/api/v1/receivers/test"}` |
-| Create or update the NGalert configuration of the user's organization | `{"action": "create-update", "requestUri": "/api/v1/ngalert/admin_config"}`                    |
-| Delete the NGalert configuration of the user's organization           | `{"action": "delete", "requestUri": "/api/v1/ngalert/admin_config"}`                           |
-
-Where the following:
-
-- `RECIPIENT` is `grafana` for requests handled by Grafana or the data source UID for requests forwarded to a data source.
-- `NAMESPACE` is the string identifier for the rules namespace.
-- `GROUP-NAME` is the string identifier for the rules group.
-- `SILENCE-ID` is the ID of the affected silence.
-
-The following legacy alerting actions are still supported:
-
-| Action                            | Distinguishing fields                                                 |
-| --------------------------------- | --------------------------------------------------------------------- |
-| Test alert rule                   | `{"action": "test", "resources": [{"type": "panel"}]}`                |
-| Pause alert                       | `{"action": "pause", "resources": [{"type": "alert"}]}`               |
-| Pause all alerts                  | `{"action": "pause-all"}`                                             |
-| Test alert notification channel   | `{"action": "test", "resources": [{"type": "alert-notification"}]}`   |
-| Create alert notification channel | `{"action": "create", "resources": [{"type": "alert-notification"}]}` |
-| Update alert notification channel | `{"action": "update", "resources": [{"type": "alert-notification"}]}` |
-| Delete alert notification channel | `{"action": "delete", "resources": [{"type": "alert-notification"}]}` |
+| Action           | Distinguishing fields                                        |
+| ---------------- | ------------------------------------------------------------ |
+| Query datasource | `{"action": "query", "resources": [{"type": "datasource"}]}` |
 
 #### Reporting
 
@@ -338,7 +309,6 @@ The following legacy alerting actions are still supported:
 | Reload provisioned dashboards     | `{"action": "provisioning-dashboards"}`    |
 | Reload provisioned datasources    | `{"action": "provisioning-datasources"}`   |
 | Reload provisioned plugins        | `{"action": "provisioning-plugins"}`       |
-| Reload provisioned notifications  | `{"action": "provisioning-notifications"}` |
 | Reload provisioned alerts         | `{"action": "provisioning-alerts"}`        |
 | Reload provisioned access control | `{"action": "provisioning-accesscontrol"}` |
 
@@ -365,7 +335,7 @@ Furthermore, you can also record `GET` requests. See below how to configure it.
 
 | Action         | Distinguishing fields          |
 | -------------- | ------------------------------ |
-| POST request   | `{"action": "action"}`         |
+| POST request   | `{"action": "post-action"}`    |
 | PATCH request  | `{"action": "partial-update"}` |
 | PUT request    | `{"action": "update"}`         |
 | DELETE request | `{"action": "delete"}`         |

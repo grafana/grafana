@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import * as React from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
@@ -10,7 +11,7 @@ import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimen
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import { getDataLinks } from '../../../plugins/panel/canvas/utils';
-import { CanvasElementItem, CanvasElementProps, defaultThemeTextColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
 
@@ -95,26 +96,26 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
 };
 
 const getStyles = (data: TextData | undefined) => (theme: GrafanaTheme2) => ({
-  container: css`
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    display: table;
-  `,
-  inlineEditorContainer: css`
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-  `,
-  span: css`
-    display: table-cell;
-    vertical-align: ${data?.valign};
-    text-align: ${data?.align};
-    font-size: ${data?.size}px;
-    color: ${data?.color};
-  `,
+  container: css({
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+    display: 'table',
+  }),
+  inlineEditorContainer: css({
+    height: '100%',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(1),
+  }),
+  span: css({
+    display: 'table-cell',
+    verticalAlign: data?.valign,
+    textAlign: data?.align,
+    fontSize: `${data?.size}px`,
+    color: data?.color,
+  }),
 });
 
 export const textItem: CanvasElementItem<TextConfig, TextData> = {
@@ -146,22 +147,25 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       height: options?.placement?.height ?? 100,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
-  prepareData: (ctx: DimensionContext, cfg: TextConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TextConfig>) => {
+    const textConfig = elementOptions.config;
+
     const data: TextData = {
-      text: cfg.text ? ctx.getText(cfg.text).value() : '',
-      align: cfg.align ?? Align.Center,
-      valign: cfg.valign ?? VAlign.Middle,
-      size: cfg.size,
+      text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      align: textConfig?.align ?? Align.Center,
+      valign: textConfig?.valign ?? VAlign.Middle,
+      size: textConfig?.size,
     };
 
-    if (cfg.color) {
-      data.color = ctx.getColor(cfg.color).value();
+    if (textConfig?.color) {
+      data.color = dimensionContext.getColor(textConfig.color).value();
     }
 
-    data.links = getDataLinks(ctx, cfg, data.text);
+    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     return data;
   },

@@ -9,20 +9,20 @@ import (
 	"github.com/grafana/dataplane/examples"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPassThroughDataplaneExamples(t *testing.T) {
@@ -50,19 +50,25 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		map[string]backend.DataResponse{"A": {Frames: frames}},
 	}
 
+	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 
 	s := Service{
 		cfg:         cfg,
 		dataService: me,
-		features:    &featuremgmt.FeatureManager{},
+		features:    features,
 		pCtxProvider: plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test"}},
 			}},
-			&datafakes.FakeDataSourceService{}, nil, pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
+			&datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{},
+			nil, pluginconfig.NewFakePluginRequestConfigProvider()),
 		tracer:  tracing.InitializeTracerForTest(),
 		metrics: newMetrics(nil),
+		converter: &ResultConverter{
+			Features: features,
+			Tracer:   tracing.InitializeTracerForTest(),
+		},
 	}
 	queries := []Query{{
 		RefID: "A",
@@ -186,7 +192,7 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		for _, example := range validNoDataNumericExamples.AsSlice() {
 			t.Run(example.Info().ID, func(t *testing.T) {
-				res, err := handleDataplaneNumeric(example.Frames("A"))
+				res, err := handleDataplaneNumeric(example.Frames("A"), false)
 				require.NoError(t, err)
 				require.Len(t, res.Values, 1)
 			})
@@ -207,7 +213,7 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		for _, example := range numericExamples.AsSlice() {
 			t.Run(example.Info().ID, func(t *testing.T) {
-				res, err := handleDataplaneNumeric(example.Frames("A"))
+				res, err := handleDataplaneNumeric(example.Frames("A"), false)
 				require.NoError(t, err)
 				require.Len(t, res.Values, example.Info().ItemCount)
 			})

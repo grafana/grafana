@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 type PluginLogoProps = {
   alt: string;
@@ -8,6 +8,5 @@ type PluginLogoProps = {
 };
 
 export function PluginLogo({ alt, className, src, height }: PluginLogoProps): React.ReactElement {
-  // @ts-ignore - react doesn't know about loading attr.
   return <img src={src} className={className} alt={alt} loading="lazy" height={height} />;
 }

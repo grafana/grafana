@@ -1,9 +1,9 @@
-import { isUndefined, omitBy, sum } from 'lodash';
+import { isUndefined, omitBy, pick, sum } from 'lodash';
 import pluralize from 'pluralize';
-import React, { Fragment } from 'react';
+import { Fragment } from 'react';
+import * as React from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Badge } from '@grafana/ui';
+import { Badge, Stack } from '@grafana/ui';
 import {
   AlertGroupTotals,
   AlertInstanceTotalState,
@@ -28,23 +28,11 @@ const emptyStats: Required<AlertGroupTotals> = {
 };
 
 export const RuleStats = ({ namespaces }: Props) => {
-  const stats = { ...emptyStats };
-
-  // sum all totals for all namespaces
-  namespaces.forEach(({ groups }) => {
-    groups.forEach((group) => {
-      const groupTotals = omitBy(group.totals, isUndefined);
-      for (let key in groupTotals) {
-        // @ts-ignore
-        stats[key] += groupTotals[key];
-      }
-    });
-  });
+  const stats = statsFromNamespaces(namespaces);
+  const total = totalFromStats(stats);
 
   const statsComponents = getComponentsFromStats(stats);
   const hasStats = Boolean(statsComponents.length);
-
-  const total = sum(Object.values(stats));
 
   statsComponents.unshift(
     <Fragment key="total">
@@ -65,6 +53,32 @@ export const RuleStats = ({ namespaces }: Props) => {
 
 interface RuleGroupStatsProps {
   group: CombinedRuleGroup;
+}
+
+function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTotals {
+  const stats = { ...emptyStats };
+
+  // sum all totals for all namespaces
+  namespaces.forEach(({ groups }) => {
+    groups.forEach((group) => {
+      const groupTotals = omitBy(group.totals, isUndefined);
+      for (let key in groupTotals) {
+        // @ts-ignore
+        stats[key] += groupTotals[key];
+      }
+    });
+  });
+
+  return stats;
+}
+
+export function totalFromStats(stats: AlertGroupTotals): number {
+  // countable stats will pick only the states that indicate a single rule – health indicators like "error" and "nodata" should
+  // not be counted because they are already counted by their state
+  const countableStats = pick(stats, ['alerting', 'pending', 'inactive', 'recording']);
+  const total = sum(Object.values(countableStats));
+
+  return total;
 }
 
 export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {

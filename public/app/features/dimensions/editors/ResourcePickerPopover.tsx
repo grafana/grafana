@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { createRef, useState } from 'react';
+import { createRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -20,13 +20,14 @@ interface Props {
   onChange: (value?: string) => void;
   mediaType: MediaType;
   folderName: ResourceFolderName;
+  maxFiles?: number;
 }
 
 interface ErrorResponse {
   message: string;
 }
 export const ResourcePickerPopover = (props: Props) => {
-  const { value, onChange, mediaType, folderName } = props;
+  const { value, onChange, mediaType, folderName, maxFiles } = props;
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
@@ -55,6 +56,7 @@ export const ResourcePickerPopover = (props: Props) => {
       folderName={folderName}
       newValue={newValue}
       setNewValue={setNewValue}
+      maxFiles={maxFiles}
     />
   );
 

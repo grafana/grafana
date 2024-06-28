@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { createTheme } from '@grafana/data';
 
@@ -85,7 +84,7 @@ describe('LokiLabelBrowser', () => {
   const setupProps = (): BrowserProps => {
     const mockLanguageProvider = {
       start: () => Promise.resolve(),
-      getLabelValues: (name: string) => {
+      fetchLabelValues: (name: string) => {
         switch (name) {
           case 'label1':
             return ['value1-1', 'value1-2'];

@@ -10,9 +10,14 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/models"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
@@ -346,10 +351,11 @@ func TestEnd(t *testing.T) {
 func TestNeedsSending(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
 	testCases := []struct {
-		name        string
-		resendDelay time.Duration
-		expected    bool
-		testState   *State
+		name              string
+		resendDelay       time.Duration
+		resolvedRetention time.Duration
+		expected          bool
+		testState         *State
 	}{
 		{
 			name:        "state: alerting and LastSentAt before LastEvaluationTime + ResendDelay",
@@ -358,7 +364,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-2 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
 			},
 		},
 		{
@@ -368,7 +374,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime),
 			},
 		},
 		{
@@ -378,7 +384,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -396,18 +402,54 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime),
 			},
 		},
 		{
-			name:        "state: normal + resolved should send without waiting",
+			name:        "state: normal + resolved should send without waiting if ResolvedAt > LastSentAt",
 			resendDelay: 1 * time.Minute,
 			expected:    true,
 			testState: &State{
 				State:              eval.Normal,
-				Resolved:           true,
+				ResolvedAt:         util.Pointer(evaluationTime),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+			},
+		},
+		{
+			name:              "state: normal + recently resolved should send with wait",
+			resendDelay:       1 * time.Minute,
+			resolvedRetention: 15 * time.Minute,
+			expected:          true,
+			testState: &State{
+				State:              eval.Normal,
+				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+			},
+		},
+		{
+			name:              "state: normal + recently resolved should not send without wait",
+			resendDelay:       2 * time.Minute,
+			resolvedRetention: 15 * time.Minute,
+			expected:          false,
+			testState: &State{
+				State:              eval.Normal,
+				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+			},
+		},
+		{
+			name:              "state: normal + not recently resolved should not send even with wait",
+			resendDelay:       1 * time.Minute,
+			resolvedRetention: 15 * time.Minute,
+			expected:          false,
+			testState: &State{
+				State:              eval.Normal,
+				ResolvedAt:         util.Pointer(evaluationTime.Add(-16 * time.Minute)),
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -416,9 +458,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:    false,
 			testState: &State{
 				State:              eval.Normal,
-				Resolved:           false,
+				ResolvedAt:         util.Pointer(time.Time{}),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -428,7 +470,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -438,7 +480,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 		{
@@ -448,7 +490,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -458,22 +500,22 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, tc.testState.NeedsSending(tc.resendDelay))
+			assert.Equal(t, tc.expected, tc.testState.NeedsSending(tc.resendDelay, tc.resolvedRetention))
 		})
 	}
 }
 
 func TestGetLastEvaluationValuesForCondition(t *testing.T) {
-	genState := func(results []Evaluation) *State {
+	genState := func(latestResult *Evaluation) *State {
 		return &State{
-			Results: results,
+			LatestResult: latestResult,
 		}
 	}
 
@@ -483,69 +525,48 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	})
 	t.Run("should return value of the condition of the last result", func(t *testing.T) {
 		expected := rand.Float64()
-		evals := []Evaluation{
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"A": util.Pointer(rand.Float64()),
-				},
-				Condition: "A",
+		eval := &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: 0,
+			Values: map[string]*float64{
+				"B": util.Pointer(rand.Float64()),
+				"A": util.Pointer(expected),
 			},
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"B": util.Pointer(rand.Float64()),
-					"A": util.Pointer(expected),
-				},
-				Condition: "A",
-			},
+			Condition: "A",
 		}
-		result := genState(evals).GetLastEvaluationValuesForCondition()
+		result := genState(eval).GetLastEvaluationValuesForCondition()
 		require.Len(t, result, 1)
 		require.Contains(t, result, "A")
 		require.Equal(t, result["A"], expected)
 	})
 	t.Run("should return empty map if there is no value for condition", func(t *testing.T) {
-		evals := []Evaluation{
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"C": util.Pointer(rand.Float64()),
-				},
-				Condition: "A",
+		eval := &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: 0,
+			Values: map[string]*float64{
+				"C": util.Pointer(rand.Float64()),
 			},
+			Condition: "A",
 		}
-		result := genState(evals).GetLastEvaluationValuesForCondition()
+		result := genState(eval).GetLastEvaluationValuesForCondition()
 		require.NotNil(t, result)
 		require.Len(t, result, 0)
 	})
 	t.Run("should use NaN if value is not defined", func(t *testing.T) {
-		evals := []Evaluation{
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"A": nil,
-				},
-				Condition: "A",
+		eval := &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: 0,
+			Values: map[string]*float64{
+				"A": nil,
 			},
+			Condition: "A",
 		}
-		result := genState(evals).GetLastEvaluationValuesForCondition()
+		result := genState(eval).GetLastEvaluationValuesForCondition()
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
 		require.Contains(t, result, "A")
 		require.Truef(t, math.IsNaN(result["A"]), "expected NaN but got %v", result["A"])
 	})
-}
-
-func TestResolve(t *testing.T) {
-	s := State{State: eval.Alerting, EndsAt: time.Now().Add(time.Minute)}
-	expected := State{State: eval.Normal, StateReason: "This is a reason", EndsAt: time.Now(), Resolved: true}
-	s.Resolve("This is a reason", expected.EndsAt)
-	assert.Equal(t, expected, s)
 }
 
 func TestShouldTakeImage(t *testing.T) {
@@ -665,4 +686,112 @@ func TestTakeImage(t *testing.T) {
 		require.NotNil(t, image)
 		assert.Equal(t, ngmodels.Image{Path: "foo.png"}, *image)
 	})
+}
+
+func TestParseFormattedState(t *testing.T) {
+	t.Run("should parse formatted state", func(t *testing.T) {
+		stateStr := "Normal (MissingSeries)"
+		s, reason, err := ParseFormattedState(stateStr)
+		require.NoError(t, err)
+
+		require.Equal(t, eval.Normal, s)
+		require.Equal(t, ngmodels.StateReasonMissingSeries, reason)
+	})
+
+	t.Run("should parse formatted state with concatenated reasons", func(t *testing.T) {
+		stateStr := "Normal (Error, KeepLast)"
+		s, reason, err := ParseFormattedState(stateStr)
+		require.NoError(t, err)
+
+		require.Equal(t, eval.Normal, s)
+		require.Equal(t, ngmodels.ConcatReasons(ngmodels.StateReasonError, ngmodels.StateReasonKeepLast), reason)
+	})
+
+	t.Run("should error on empty string", func(t *testing.T) {
+		stateStr := ""
+		_, _, err := ParseFormattedState(stateStr)
+		require.Error(t, err)
+	})
+
+	t.Run("should error on invalid string content", func(t *testing.T) {
+		stateStr := "NotAState"
+		_, _, err := ParseFormattedState(stateStr)
+		require.Error(t, err)
+	})
+}
+
+func TestGetRuleExtraLabels(t *testing.T) {
+	logger := log.New()
+
+	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
+	folderTitle := uuid.NewString()
+
+	ns := ngmodels.NotificationSettings{
+		Receiver:  "Test",
+		GroupBy:   []string{"alertname"},
+		GroupWait: util.Pointer(model.Duration(1 * time.Second)),
+	}
+
+	testCases := map[string]struct {
+		rule          *ngmodels.AlertRule
+		includeFolder bool
+		expected      map[string]string
+	}{
+		"no_folder_no_notification": {
+			rule:          ngmodels.CopyRule(rule),
+			includeFolder: false,
+			expected: map[string]string{
+				models.NamespaceUIDLabel: rule.NamespaceUID,
+				model.AlertNameLabel:     rule.Title,
+				models.RuleUIDLabel:      rule.UID,
+			},
+		},
+		"with_folder_no_notification": {
+			rule:          ngmodels.CopyRule(rule),
+			includeFolder: true,
+			expected: map[string]string{
+				models.NamespaceUIDLabel: rule.NamespaceUID,
+				model.AlertNameLabel:     rule.Title,
+				models.RuleUIDLabel:      rule.UID,
+				models.FolderTitleLabel:  folderTitle,
+			},
+		},
+		"with_notification": {
+			rule: func() *ngmodels.AlertRule {
+				r := ngmodels.CopyRule(rule)
+				r.NotificationSettings = []ngmodels.NotificationSettings{ns}
+				return r
+			}(),
+			expected: map[string]string{
+				models.NamespaceUIDLabel:                     rule.NamespaceUID,
+				model.AlertNameLabel:                         rule.Title,
+				models.RuleUIDLabel:                          rule.UID,
+				ngmodels.AutogeneratedRouteLabel:             "true",
+				ngmodels.AutogeneratedRouteReceiverNameLabel: ns.Receiver,
+				ngmodels.AutogeneratedRouteSettingsHashLabel: ns.Fingerprint().String(),
+			},
+		},
+		"ignore_multiple_notifications": {
+			rule: func() *ngmodels.AlertRule {
+				r := ngmodels.CopyRule(rule)
+				r.NotificationSettings = []ngmodels.NotificationSettings{ns, ngmodels.NotificationSettingsGen()(), ngmodels.NotificationSettingsGen()()}
+				return r
+			}(),
+			expected: map[string]string{
+				models.NamespaceUIDLabel:                     rule.NamespaceUID,
+				model.AlertNameLabel:                         rule.Title,
+				models.RuleUIDLabel:                          rule.UID,
+				ngmodels.AutogeneratedRouteLabel:             "true",
+				ngmodels.AutogeneratedRouteReceiverNameLabel: ns.Receiver,
+				ngmodels.AutogeneratedRouteSettingsHashLabel: ns.Fingerprint().String(),
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			result := GetRuleExtraLabels(logger, tc.rule, folderTitle, tc.includeFolder)
+			require.Equal(t, tc.expected, result)
+		})
+	}
 }

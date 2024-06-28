@@ -5,11 +5,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const forwardIDHeaderName = "X-Grafana-Id"
@@ -20,28 +17,21 @@ const forwardIDHeaderName = "X-Grafana-Id"
 func NewForwardIDMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &ForwardIDMiddleware{
-			next: next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 		}
 	})
 }
 
 type ForwardIDMiddleware struct {
-	next plugins.Client
+	baseMiddleware
 }
 
 func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req backend.ForwardHTTPHeaders) error {
 	reqCtx := contexthandler.FromContext(ctx)
-	// if request not for a datasource or no HTTP request context skip middleware
-	if req == nil || reqCtx == nil || reqCtx.SignedInUser == nil || pCtx.DataSourceInstanceSettings == nil {
-		return nil
-	}
-
-	jsonDataBytes, err := simplejson.NewJson(pCtx.DataSourceInstanceSettings.JSONData)
-	if err != nil {
-		return err
-	}
-
-	if !auth.IsIDForwardingEnabledForDataSource(&datasources.DataSource{JsonData: jsonDataBytes}) {
+	// no HTTP request context => skip middleware
+	if req == nil || reqCtx == nil || reqCtx.SignedInUser == nil {
 		return nil
 	}
 
@@ -90,20 +80,4 @@ func (m *ForwardIDMiddleware) CheckHealth(ctx context.Context, req *backend.Chec
 	}
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

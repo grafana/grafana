@@ -24,19 +24,37 @@ export const languageConfiguration: languages.LanguageConfiguration = {
 };
 
 export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const keywordOperators = ['=', '!='];
 export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-export const intrinsics = ['duration', 'kind', 'name', 'status'];
+export const intrinsics = [
+  'duration',
+  'kind',
+  'name',
+  'rootName',
+  'rootServiceName',
+  'status',
+  'statusMessage',
+  'traceDuration',
+];
 export const scopes: string[] = ['resource', 'span'];
 
-export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
+const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];
+const functions = aggregatorFunctions.concat([
+  'by',
+  'count_over_time',
+  'histogram_over_time',
+  'quantile_over_time',
+  'rate',
+  'select',
+]);
 
 const keywords = intrinsics.concat(scopes);
 
 const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
 
-export const language: languages.IMonarchLanguage = {
+const language: languages.IMonarchLanguage = {
   ignoreCase: false,
   defaultToken: '',
   tokenPostfix: '.traceql',
@@ -54,21 +72,38 @@ export const language: languages.IMonarchLanguage = {
 
   tokenizer: {
     root: [
+      // comments
+      [/\/\/.*/, 'comment'], // line comment
+      [/\/\*.*\*\//, 'comment'], // block comment
+
       // durations
       [/[0-9]+(.[0-9]+)?(us|µs|ns|ms|s|m|h)/, 'number'],
 
       // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
-      // functions, keywords, predefined values
+      // keywords
       [
-        /[a-zA-Z_.]\w*/,
+        // match only predefined keywords
+        `(?:${keywords.join('|')})`,
+        {
+          cases: {
+            '@keywords': 'keyword',
+            '@default': 'tag', // fallback, but should never happen
+          },
+        },
+      ],
+
+      // functions and predefined values
+      [
+        // Inside (double) quotes, all characters are allowed, with the exception of `\` and `"` that must be escaped (`\\` and `\"`).
+        // Outside quotes, some more characters are prohibited, such as `!` and `=`.
+        /(?:\w|^[^{}()=~!<>&|," ]|"(?:\\"|\\\\|[^\\"])*")+/,
         {
           cases: {
             '@functions': 'predefined',
-            '@keywords': 'keyword',
             '@statusValues': 'type',
-            '@default': 'tag',
+            '@default': 'tag', // fallback, used for tag names
           },
         },
       ],
@@ -76,8 +111,9 @@ export const language: languages.IMonarchLanguage = {
       // strings
       [/"([^"\\]|\\.)*$/, 'string.invalid'], // non-teminated string
       [/'([^'\\]|\\.)*$/, 'string.invalid'], // non-teminated string
-      [/"/, 'string', '@string_double'],
-      [/'/, 'string', '@string_single'],
+      [/([^\w])(")/, [{ token: '' }, { token: 'string', next: '@string_double' }]],
+      [/([^\w])(')/, [{ token: '' }, { token: 'string', next: '@string_single' }]],
+      [/([^\w])(`)/, [{ token: '' }, { token: 'string', next: '@string_back' }]],
 
       // delimiters and operators
       [/[{}()\[\]]/, 'delimiter.bracket'],
@@ -113,9 +149,17 @@ export const language: languages.IMonarchLanguage = {
       [/\\./, 'string.escape.invalid'],
       [/'/, 'string', '@pop'],
     ],
+
+    string_back: [
+      [/[^\\`]+/, 'string'],
+      [/@escapes/, 'string.escape'],
+      [/\\./, 'string.escape.invalid'],
+      [/`/, 'string', '@pop'],
+    ],
   },
 };
 
+// For "TraceQL" tab (Monarch editor for TraceQL)
 export const languageDefinition = {
   id: 'traceql',
   extensions: ['.traceql'],
@@ -127,9 +171,10 @@ export const languageDefinition = {
   },
 };
 
+// For "Search" tab (query builder)
 export const traceqlGrammar: Grammar = {
   comment: {
-    pattern: /#.*/,
+    pattern: /\/\/.*/,
   },
   'span-set': {
     pattern: /\{[^}]*}/,

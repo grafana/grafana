@@ -1,4 +1,4 @@
-import { toDataFrame } from '../../dataframe';
+import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType, DataTransformerConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
@@ -741,93 +741,6 @@ describe('JOIN Transformer', () => {
               "values": [
                 3000,
                 5000,
-              ],
-            },
-            {
-              "config": {},
-              "labels": {
-                "name": "B",
-              },
-              "name": "humidity",
-              "state": {},
-              "type": "number",
-              "values": [
-                10000.3,
-                10000.5,
-              ],
-            },
-          ]
-        `);
-      });
-    });
-
-    it('inner joins by time field in reverse order', async () => {
-      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
-        options: {
-          byField: 'time',
-          mode: JoinMode.inner,
-        },
-      };
-
-      seriesA.fields[0].values = seriesA.fields[0].values.reverse();
-      seriesA.fields[1].values = seriesA.fields[1].values.reverse();
-      seriesA.fields[2].values = seriesA.fields[2].values.reverse();
-
-      await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
-        const data = received[0];
-        const filtered = data[0];
-        expect(filtered.fields).toMatchInlineSnapshot(`
-          [
-            {
-              "config": {},
-              "name": "time",
-              "state": {
-                "multipleFrames": true,
-              },
-              "type": "time",
-              "values": [
-                3000,
-                5000,
-              ],
-            },
-            {
-              "config": {},
-              "labels": {
-                "name": "A",
-              },
-              "name": "temperature",
-              "state": {},
-              "type": "number",
-              "values": [
-                10.3,
-                10.5,
-              ],
-            },
-            {
-              "config": {},
-              "labels": {
-                "name": "A",
-              },
-              "name": "humidity",
-              "state": {},
-              "type": "number",
-              "values": [
-                10000.3,
-                10000.5,
-              ],
-            },
-            {
-              "config": {},
-              "labels": {
-                "name": "B",
-              },
-              "name": "temperature",
-              "state": {},
-              "type": "number",
-              "values": [
-                10.3,
-                10.5,
               ],
             },
             {

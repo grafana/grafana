@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 var (
@@ -30,7 +28,6 @@ func TestAPIKey_Authenticate(t *testing.T) {
 		desc             string
 		req              *authn.Request
 		expectedKey      *apikey.APIKey
-		expectedUser     *user.SignedInUser
 		expectedErr      error
 		expectedIdentity *authn.Identity
 	}
@@ -50,7 +47,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Role:  org.RoleAdmin,
 			},
 			expectedIdentity: &authn.Identity{
-				ID:       "api-key:1",
+				ID:       authn.MustParseNamespaceID("api-key:1"),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -72,20 +69,11 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Key:              hash,
 				ServiceAccountId: intPtr(1),
 			},
-			expectedUser: &user.SignedInUser{
-				UserID:           1,
-				OrgID:            1,
-				IsServiceAccount: true,
-				OrgRole:          org.RoleViewer,
-				Name:             "test",
-			},
 			expectedIdentity: &authn.Identity{
-				ID:             "service-account:1",
-				OrgID:          1,
-				Name:           "test",
-				OrgRoles:       map[int64]org.RoleType{1: org.RoleViewer},
-				IsGrafanaAdmin: boolPtr(false),
+				ID:    authn.MustParseNamespaceID("service-account:1"),
+				OrgID: 1,
 				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
 					SyncPermissions: true,
 				},
 				AuthenticatedBy: login.APIKeyAuthModule,
@@ -109,24 +97,33 @@ func TestAPIKey_Authenticate(t *testing.T) {
 			},
 			expectedErr: errAPIKeyRevoked,
 		},
+		{
+			desc: "should fail for api key in another organization",
+			req:  &authn.Request{OrgID: 1, HTTPRequest: &http.Request{Header: map[string][]string{"Authorization": {"Bearer " + secret}}}},
+			expectedKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            2,
+				Key:              hash,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedErr: errAPIKeyOrgMismatch,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{
-				ExpectedAPIKey: tt.expectedKey,
-			}, &usertest.FakeUserService{
-				ExpectedSignedInUser: tt.expectedUser,
-			})
+			c := ProvideAPIKey(&apikeytest.Service{ExpectedAPIKey: tt.expectedKey})
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
 				assert.Nil(t, identity)
 				assert.ErrorIs(t, err, tt.expectedErr)
-			} else {
-				assert.NoError(t, err)
-				assert.EqualValues(t, *tt.expectedIdentity, *identity)
+				return
 			}
+
+			assert.NoError(t, err)
+			assert.EqualValues(t, *tt.expectedIdentity, *identity)
+			assert.Equal(t, tt.req.OrgID, tt.expectedIdentity.OrgID, "the request organization should match the identity's one")
 		})
 	}
 }
@@ -182,8 +179,200 @@ func TestAPIKey_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{}, usertest.NewUserServiceFake())
+			c := ProvideAPIKey(&apikeytest.Service{})
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
+		})
+	}
+}
+
+func TestAPIKey_GetAPIKeyIDFromIdentity(t *testing.T) {
+	type TestCase struct {
+		desc             string
+		expectedKey      *apikey.APIKey
+		expectedIdentity *authn.Identity
+		expectedError    error
+		expectedKeyID    int64
+		expectedExists   bool
+	}
+
+	tests := []TestCase{
+		{
+			desc: "should return API Key ID for valid token that is connected to service account",
+			expectedKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            1,
+				Key:              hash,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedIdentity: &authn.Identity{
+				ID:              authn.MustParseNamespaceID("service-account:1"),
+				OrgID:           1,
+				Name:            "test",
+				AuthenticatedBy: login.APIKeyAuthModule,
+			},
+			expectedKeyID:  1,
+			expectedExists: true,
+		},
+		{
+			desc: "should return API Key ID for valid token for API key",
+			expectedKey: &apikey.APIKey{
+				ID:    2,
+				OrgID: 1,
+				Key:   hash,
+			},
+			expectedIdentity: &authn.Identity{
+				ID:              authn.MustParseNamespaceID("api-key:2"),
+				OrgID:           1,
+				Name:            "test",
+				AuthenticatedBy: login.APIKeyAuthModule,
+			},
+			expectedKeyID:  2,
+			expectedExists: true,
+		},
+		{
+			desc: "should not return any ID when the request is not made by API key or service account",
+			expectedKey: &apikey.APIKey{
+				ID:    2,
+				OrgID: 1,
+				Key:   hash,
+			},
+			expectedIdentity: &authn.Identity{
+				ID:              authn.MustParseNamespaceID("user:2"),
+				OrgID:           1,
+				Name:            "test",
+				AuthenticatedBy: login.APIKeyAuthModule,
+			},
+			expectedKeyID:  -1,
+			expectedExists: false,
+		},
+		{
+			desc: "should not return any ID when the can't fetch API Key",
+			expectedKey: &apikey.APIKey{
+				ID:    1,
+				OrgID: 1,
+				Key:   hash,
+			},
+			expectedIdentity: &authn.Identity{
+				ID:              authn.MustParseNamespaceID("service-account:2"),
+				OrgID:           1,
+				Name:            "test",
+				AuthenticatedBy: login.APIKeyAuthModule,
+			},
+			expectedError:  fmt.Errorf("invalid token"),
+			expectedKeyID:  -1,
+			expectedExists: false,
+		},
+	}
+
+	req := &authn.Request{HTTPRequest: &http.Request{
+		Header: map[string][]string{
+			"Authorization": {"Bearer " + secret},
+		},
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			c := ProvideAPIKey(&apikeytest.Service{
+				ExpectedError:  tt.expectedError,
+				ExpectedAPIKey: tt.expectedKey,
+			})
+			id, exists := c.getAPIKeyID(context.Background(), tt.expectedIdentity, req)
+			assert.Equal(t, tt.expectedExists, exists)
+			assert.Equal(t, tt.expectedKeyID, id)
+		})
+	}
+}
+
+func TestAPIKey_ResolveIdentity(t *testing.T) {
+	type testCase struct {
+		desc        string
+		namespaceID authn.NamespaceID
+
+		exptedApiKey *apikey.APIKey
+
+		expectedIdenity *authn.Identity
+		expectedErr     error
+	}
+
+	tests := []testCase{
+		{
+			desc:        "should return error for invalid namespace",
+			namespaceID: authn.MustParseNamespaceID("user:1"),
+			expectedErr: authn.ErrInvalidNamespaceID,
+		},
+		{
+			desc:        "should return error when api key has expired",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
+			exptedApiKey: &apikey.APIKey{
+				ID:      1,
+				OrgID:   1,
+				Expires: intPtr(0),
+			},
+			expectedErr: errAPIKeyExpired,
+		},
+		{
+			desc:        "should return error when api key is revoked",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
+			exptedApiKey: &apikey.APIKey{
+				ID:        1,
+				OrgID:     1,
+				IsRevoked: boolPtr(true),
+			},
+			expectedErr: errAPIKeyRevoked,
+		},
+		{
+			desc:        "should return error when api key is connected to service account",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
+			exptedApiKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            1,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedErr: authn.ErrInvalidNamespaceID,
+		},
+		{
+			desc:        "should return error when api key is belongs to different org",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
+			exptedApiKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            2,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedErr: errAPIKeyOrgMismatch,
+		},
+		{
+			desc:        "should return valid idenitty",
+			namespaceID: authn.MustParseNamespaceID("api-key:1"),
+			exptedApiKey: &apikey.APIKey{
+				ID:    1,
+				OrgID: 1,
+				Role:  org.RoleEditor,
+			},
+			expectedIdenity: &authn.Identity{
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
+				ID:              authn.MustParseNamespaceID("api-key:1"),
+				AuthenticatedBy: login.APIKeyAuthModule,
+				ClientParams:    authn.ClientParams{SyncPermissions: true},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			c := ProvideAPIKey(&apikeytest.Service{
+				ExpectedAPIKey: tt.exptedApiKey,
+			})
+
+			identity, err := c.ResolveIdentity(context.Background(), 1, tt.namespaceID)
+			if tt.expectedErr != nil {
+				assert.Nil(t, identity)
+				assert.ErrorIs(t, err, tt.expectedErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.EqualValues(t, *tt.expectedIdenity, *identity)
 		})
 	}
 }

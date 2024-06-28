@@ -1,7 +1,8 @@
 import { set } from 'lodash';
 import { ComponentClass, ComponentType } from 'react';
 
-import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
+import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import {
   FieldConfigProperty,
   FieldConfigSource,
@@ -14,8 +15,8 @@ import {
   PanelTypeChangedHandler,
   VisualizationSuggestionsSupplier,
 } from '../types';
-import { deprecationWarning } from '../utils';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+import { deprecationWarning } from '../utils/deprecationWarning';
 
 import { createFieldConfigRegistry } from './registryFactories';
 
@@ -263,7 +264,7 @@ export class PanelPlugin<
    * @internal
    */
   getPanelOptionsSupplier(): PanelOptionsSupplier<TOptions> {
-    return this.optionsSupplier ?? ((() => {}) as PanelOptionsSupplier<TOptions>);
+    return this.optionsSupplier ?? (() => {});
   }
 
   /**

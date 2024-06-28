@@ -1,7 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { openMenu } from 'react-select-event';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -84,7 +82,7 @@ describe('QueryEditorRowHeader', () => {
     renderScenario({ onChangeDataSource: () => {} });
 
     const dsSelect = screen.getByTestId(selectors.components.DataSourcePicker.container).querySelector('input')!;
-    openMenu(dsSelect);
+    await userEvent.click(dsSelect);
     expect(await screen.findByText('${dsVariable}')).toBeInTheDocument();
   });
 });
@@ -103,7 +101,7 @@ function renderScenario(overrides: Partial<Props>) {
       },
     ],
     dataSource: {} as DataSourceInstanceSettings,
-    disabled: false,
+    hidden: false,
     onChange: jest.fn(),
     onClick: jest.fn(),
     collapsedText: '',

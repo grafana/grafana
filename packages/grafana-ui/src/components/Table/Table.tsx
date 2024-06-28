@@ -1,7 +1,5 @@
-import { css, cx } from '@emotion/css';
-import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Cell,
   useAbsoluteLayout,
   useExpanded,
   useFilters,
@@ -12,7 +10,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID } from '@grafana/data';
+import { FieldType, ReducerID, getRowUniqueId } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -20,18 +18,25 @@ import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
-import { getExpandedRowHeight, ExpandedRow } from './ExpandedRow';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
-import { TableCell } from './TableCell';
+import { RowsList } from './RowsList';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
+import {
+  getColumns,
+  sortCaseInsensitive,
+  sortNumber,
+  getFooterItems,
+  createFooterCalculationValues,
+  guessLongestField,
+} from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
+const NO_DATA_TEXT = 'No data';
 
 export const Table = memo((props: Props) => {
   const {
@@ -50,6 +55,9 @@ export const Table = memo((props: Props) => {
     enablePagination,
     cellHeight = TableCellHeight.Sm,
     timeRange,
+    enableSharedCrosshair = false,
+    initialRowIndex = undefined,
+    fieldConfig,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -59,6 +67,7 @@ export const Table = memo((props: Props) => {
   const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
+  const noValuesDisplayText = fieldConfig?.defaults?.noValue ?? NO_DATA_TEXT;
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
@@ -131,8 +140,12 @@ export const Table = memo((props: Props) => {
     },
   });
 
-  const options: any = useMemo(
-    () => ({
+  const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
+
+  const options: any = useMemo(() => {
+    // This is a bit hard to type with the react-table types here, the reducer does not actually match with the
+    // TableOptions.
+    const options: any = {
       columns: memoizedColumns,
       data: memoizedData,
       disableResizing: !resizable,
@@ -141,12 +154,24 @@ export const Table = memo((props: Props) => {
       initialState: getInitialState(initialSortBy, memoizedColumns),
       autoResetFilters: false,
       sortTypes: {
-        number: sortNumber, // the builtin number type on react-table does not handle NaN values
-        'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
+        // the builtin number type on react-table does not handle NaN values
+        number: sortNumber,
+        // should be replaced with the builtin string when react-table is upgraded,
+        // see https://github.com/tannerlinsley/react-table/pull/3235
+        'alphanumeric-insensitive': sortCaseInsensitive,
       },
-    }),
-    [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
-  );
+    };
+    if (hasUniqueId) {
+      // row here is just always 0 because here we don't use real data but just a dummy array filled with 0.
+      // See memoizedData variable above.
+      options.getRowId = (row: Record<string, unknown>, relativeIndex: number) => getRowUniqueId(data, relativeIndex);
+
+      // If we have unique field we assume we can count on it as being globally unique, and we don't need to reset when
+      // data changes.
+      options.autoResetExpanded = false;
+    }
+    return options;
+  }, [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer, hasUniqueId, data]);
 
   const {
     getTableProps,
@@ -165,12 +190,6 @@ export const Table = memo((props: Props) => {
 
   const extendedState = state as GrafanaTableState;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
-
-  const expandedRowsRepr = JSON.stringify(Object.keys(state.expanded));
-  useEffect(() => {
-    // Reset the list size cache when the expanded rows change
-    listRef.current?.resetAfterIndex(0);
-  }, [expandedRowsRepr]);
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
@@ -196,7 +215,7 @@ export const Table = memo((props: Props) => {
 
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = [];
-      footerItemsCountRows[0] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
+      footerItemsCountRows[0] = rows.length.toString() ?? data.length.toString();
       setFooterItems(footerItemsCountRows);
       return;
     }
@@ -228,66 +247,19 @@ export const Table = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
-  useResetVariableListSizeCache(extendedState, listRef, data);
+  useEffect(() => {
+    // Reset page index when data changes
+    // This is needed because react-table does not do this automatically
+    // autoResetPage is set to false because setting it to true causes the issue described in
+    // https://github.com/grafana/grafana/pull/67477
+    if (data.length / pageSize < state.pageIndex) {
+      gotoPage(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  useResetVariableListSizeCache(extendedState, listRef, data, hasUniqueId);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
-
-  const rowIndexForPagination = useCallback(
-    (index: number) => {
-      return state.pageIndex * state.pageSize + index;
-    },
-    [state.pageIndex, state.pageSize]
-  );
-
-  const RenderRow = useCallback(
-    ({ index, style }: { index: number; style: CSSProperties }) => {
-      const indexForPagination = rowIndexForPagination(index);
-      const row = rows[indexForPagination];
-
-      prepareRow(row);
-
-      const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
-
-      return (
-        <div {...row.getRowProps({ style })} className={cx(tableStyles.row, expandedRowStyle)}>
-          {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedDataField && state.expanded[row.index] && (
-            <ExpandedRow
-              nestedData={nestedDataField}
-              tableStyles={tableStyles}
-              rowIndex={index}
-              width={width}
-              cellHeight={cellHeight}
-            />
-          )}
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-              timeRange={timeRange}
-              frame={data}
-            />
-          ))}
-        </div>
-      );
-    },
-    [
-      rowIndexForPagination,
-      rows,
-      prepareRow,
-      state.expanded,
-      tableStyles,
-      nestedDataField,
-      width,
-      cellHeight,
-      onCellFilterAdded,
-      timeRange,
-      data,
-    ]
-  );
 
   const onNavigate = useCallback(
     (toPage: number) => {
@@ -315,30 +287,15 @@ export const Table = memo((props: Props) => {
         />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
-            {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
+            {itemsRangeStart} - {itemsRangeEnd < rows.length ? itemsRangeEnd : rows.length} of {rows.length} rows
           </div>
         )}
       </div>
     );
   }
 
-  const getItemSize = (index: number): number => {
-    const indexForPagination = rowIndexForPagination(index);
-    const row = rows[indexForPagination];
-    if (state.expanded[row.index] && nestedDataField) {
-      return getExpandedRowHeight(nestedDataField, index, tableStyles);
-    }
-
-    return tableStyles.rowHeight;
-  };
-
-  const handleScroll: UIEventHandler = (event) => {
-    const { scrollTop } = event.currentTarget;
-
-    if (listRef.current !== null) {
-      listRef.current.scrollTo(scrollTop);
-    }
-  };
+  // Try to determine the longet field
+  const longestField = guessLongestField(fieldConfig, data);
 
   return (
     <div
@@ -356,24 +313,33 @@ export const Table = memo((props: Props) => {
           )}
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
-                <VariableSizeList
-                  // This component needs an unmount/remount when row height or page changes
-                  key={tableStyles.rowHeight + state.pageIndex}
-                  height={listHeight}
-                  itemCount={itemCount}
-                  itemSize={getItemSize}
-                  width={'100%'}
-                  ref={listRef}
-                  style={{ overflow: undefined }}
-                >
-                  {RenderRow}
-                </VariableSizeList>
-              </CustomScrollbar>
+              <RowsList
+                headerGroups={headerGroups}
+                data={data}
+                rows={rows}
+                width={width}
+                cellHeight={cellHeight}
+                headerHeight={headerHeight}
+                rowHeight={tableStyles.rowHeight}
+                itemCount={itemCount}
+                pageIndex={state.pageIndex}
+                listHeight={listHeight}
+                listRef={listRef}
+                tableState={state}
+                prepareRow={prepareRow}
+                timeRange={timeRange}
+                onCellFilterAdded={onCellFilterAdded}
+                nestedDataField={nestedDataField}
+                tableStyles={tableStyles}
+                footerPaginationEnabled={Boolean(enablePagination)}
+                enableSharedCrosshair={enableSharedCrosshair}
+                initialRowIndex={initialRowIndex}
+                longestField={longestField}
+              />
             </div>
           ) : (
-            <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
-              No data
+            <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
+              {noValuesDisplayText}
             </div>
           )}
           {footerItems && (

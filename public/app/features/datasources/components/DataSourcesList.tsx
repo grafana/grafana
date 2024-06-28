@@ -1,19 +1,18 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
-import { trackCreateDashboardClicked, trackExploreClicked, trackDataSourcesListViewed } from '../tracking';
-import { constructDataSourceExploreUrl } from '../utils';
+import { trackDataSourcesListViewed } from '../tracking';
 
+import { DataSourcesListCard } from './DataSourcesListCard';
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
 export function DataSourcesList() {
@@ -23,7 +22,7 @@ export function DataSourcesList() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
-  const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const hasExploreRights = contextSrv.hasAccessToExplore();
 
   return (
     <DataSourcesListView
@@ -65,25 +64,47 @@ export function DataSourcesListView({
     });
   }, [location]);
 
-  if (isLoading) {
-    return <PageLoader />;
-  }
-
-  if (dataSourcesCount === 0) {
+  if (!isLoading && dataSourcesCount === 0) {
     return (
-      <EmptyListCTA
-        buttonDisabled={!hasCreateRights}
-        title="No data sources defined"
-        buttonIcon="database"
-        buttonLink={dataSourcesRoutes.New}
-        buttonTitle="Add data source"
-        proTip="You can also define data sources through configuration files."
-        proTipLink="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
-        proTipLinkTitle="Learn more"
-        proTipTarget="_blank"
-      />
+      <EmptyState
+        variant="call-to-action"
+        button={
+          <LinkButton disabled={!hasCreateRights} href={dataSourcesRoutes.New} icon="database" size="lg">
+            <Trans i18nKey="data-source-list.empty-state.button-title">Add data source</Trans>
+          </LinkButton>
+        }
+        message={t('data-source-list.empty-state.title', 'No data sources defined')}
+      >
+        <Trans i18nKey="data-source-list.empty-state.pro-tip">
+          You can also define data sources through configuration files.{' '}
+          <TextLink
+            external
+            href="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
+          >
+            Learn more
+          </TextLink>
+        </Trans>
+      </EmptyState>
     );
   }
+
+  const getDataSourcesList = () => {
+    if (isLoading) {
+      return new Array(20)
+        .fill(null)
+        .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />);
+    }
+
+    return dataSources.map((dataSource) => (
+      <li key={dataSource.uid}>
+        <DataSourcesListCard
+          dataSource={dataSource}
+          hasWriteRights={hasWriteRights}
+          hasExploreRights={hasExploreRights}
+        />
+      </li>
+    ));
+  };
 
   return (
     <>
@@ -91,68 +112,11 @@ export function DataSourcesListView({
       <DataSourcesListHeader />
 
       {/* List */}
-      <ul className={styles.list}>
-        {dataSources.map((dataSource) => {
-          const dsLink = config.appSubUrl + dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid);
-          return (
-            <li key={dataSource.uid}>
-              <Card href={hasWriteRights ? dsLink : undefined}>
-                <Card.Heading>{dataSource.name}</Card.Heading>
-                <Card.Figure>
-                  <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
-                </Card.Figure>
-                <Card.Meta>
-                  {[
-                    dataSource.typeName,
-                    dataSource.url,
-                    dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
-                  ]}
-                </Card.Meta>
-                <Card.Tags>
-                  {/* Build Dashboard */}
-                  <LinkButton
-                    icon="apps"
-                    fill="outline"
-                    variant="secondary"
-                    href={`dashboard/new-with-ds/${dataSource.uid}`}
-                    onClick={() => {
-                      trackCreateDashboardClicked({
-                        grafana_version: config.buildInfo.version,
-                        datasource_uid: dataSource.uid,
-                        plugin_name: dataSource.typeName,
-                        path: location.pathname,
-                      });
-                    }}
-                  >
-                    Build a dashboard
-                  </LinkButton>
-
-                  {/* Explore */}
-                  {hasExploreRights && (
-                    <LinkButton
-                      icon="compass"
-                      fill="outline"
-                      variant="secondary"
-                      className={styles.button}
-                      href={constructDataSourceExploreUrl(dataSource)}
-                      onClick={() => {
-                        trackExploreClicked({
-                          grafana_version: config.buildInfo.version,
-                          datasource_uid: dataSource.uid,
-                          plugin_name: dataSource.typeName,
-                          path: location.pathname,
-                        });
-                      }}
-                    >
-                      Explore
-                    </LinkButton>
-                  )}
-                </Card.Tags>
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
+      {dataSources.length === 0 && !isLoading ? (
+        <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
+      ) : (
+        <ul className={styles.list}>{getDataSourcesList()}</ul>
+      )}
     </>
   );
 }
@@ -163,12 +127,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       listStyle: 'none',
       display: 'grid',
       // gap: '8px', Add back when legacy support for old Card interface is dropped
-    }),
-    logo: css({
-      objectFit: 'contain',
-    }),
-    button: css({
-      marginLeft: theme.spacing(2),
     }),
   };
 };

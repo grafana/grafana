@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
@@ -77,7 +76,7 @@ const getDefaultServiceAccount: () => ServiceAccountDTO = () => ({
 });
 
 describe('ServiceAccountsListPage tests', () => {
-  it('Should display list of service accounts', () => {
+  it('Should display list of service accounts', async () => {
     setup({
       serviceAccounts: [getDefaultServiceAccount()],
     });
@@ -153,7 +152,7 @@ describe('ServiceAccountsListPage tests', () => {
     });
 
     const user = userEvent.setup();
-    await user.click(screen.getByLabelText(/Delete service account/));
+    await user.click(screen.getByLabelText(`Delete service account ${getDefaultServiceAccount().name}`));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(deleteServiceAccountMock).toHaveBeenCalledWith(42);

@@ -5,21 +5,57 @@ import {
   SupportedTransformationType,
   DataLinkConfigOrigin,
   FieldType,
+  DataFrame,
 } from '@grafana/data';
+import { TraceToLogsOptionsV2, TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
 import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
-import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { TraceToLogsOptionsV2 } from '../../../core/components/TraceToLogs/TraceToLogsSettings';
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
 import { Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
-import { createSpanLinkFactory } from './createSpanLink';
+import { createSpanLinkFactory, pyroscopeProfileIdTagKey } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
-const dummyDataFrame = createDataFrame({ fields: [{ name: 'traceId', values: ['trace1'] }] });
+const dummyDataFrame = createDataFrame({
+  fields: [
+    { name: 'traceId', values: ['trace1'] },
+    { name: 'spanID', values: ['testSpanId'] },
+  ],
+});
+const dummyDataFrameForProfiles = createDataFrame({
+  fields: [
+    { name: 'traceId', values: ['trace1'] },
+    { name: 'spanID', values: ['testSpanId'] },
+    {
+      name: 'tags',
+      config: {
+        links: [
+          {
+            internal: {
+              query: {
+                labelSelector: '{${__tags}}',
+                groupBy: [],
+                profileTypeId: '',
+                queryType: 'profile',
+                spanSelector: ['${__span.spanId}'],
+                refId: '',
+              },
+              datasourceUid: 'pyroscopeUid',
+              datasourceName: 'pyroscope',
+            },
+            url: '',
+            title: 'Test',
+            origin: DataLinkConfigOrigin.Datasource,
+          },
+        ],
+      },
+      values: [{ key: 'test', value: 'test' }],
+    },
+  ],
+});
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -1229,6 +1265,256 @@ describe('createSpanLinkFactory', () => {
       );
     });
   });
+
+  describe('should return session link', () => {
+    beforeAll(() => {
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('does not add link when no ids are present', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBe(undefined);
+    });
+
+    it('adds link when fe o11y ids are present', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'feo11y-service',
+            tags: [{ key: 'gf.feo11y.app.id', value: 'appId' }],
+          },
+          tags: [{ key: 'session_id', value: 'the-session-id' }],
+        })
+      );
+      expect(links).toHaveLength(1);
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBeDefined();
+      expect(sessionLink!.href).toBe('/a/grafana-kowalski-app/apps/appId/sessions/the-session-id');
+    });
+
+    it('adds link when session id is defined following otel semantic convention', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'feo11y-service',
+            tags: [{ key: 'gf.feo11y.app.id', value: 'appId' }],
+          },
+          tags: [{ key: 'session.id', value: 'the-otel-session-id' }],
+        })
+      );
+      expect(links).toHaveLength(1);
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBeDefined();
+      expect(sessionLink!.href).toBe('/a/grafana-kowalski-app/apps/appId/sessions/the-otel-session-id');
+    });
+  });
+
+  describe('should return pyroscope link', () => {
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return {
+            uid: 'pyroscopeUid',
+            name: 'pyroscope',
+            type: 'grafana-pyroscope-datasource',
+          } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('with default keys when tags not configured', () => {
+      const createLink = setupSpanLinkFactory({}, '', dummyDataFrameForProfiles);
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Profiles);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{service_namespace=\\"namespace1\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+        )}`
+      );
+    });
+
+    it('with tags that passed in and without tags that are not in the span', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [{ key: 'ip' }, { key: 'newTag' }],
+        },
+        '',
+        dummyDataFrameForProfiles
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Profiles);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{ip=\\"192.168.0.1\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+        )}`
+      );
+    });
+
+    it('from tags and process tags as well', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [{ key: 'ip' }, { key: 'host' }],
+        },
+        '',
+        dummyDataFrameForProfiles
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Profiles);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+        )}`
+      );
+    });
+
+    it('creates link from dataFrame', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        dataFrame: createDataFrame({
+          fields: [
+            { name: 'traceID', values: ['testTraceId'] },
+            {
+              name: 'spanID',
+              config: { links: [{ title: 'link', url: '${__data.fields.spanID}' }] },
+              values: ['testSpanId'],
+            },
+          ],
+        }),
+        trace: dummyTraceData,
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Unknown);
+      expect(linkDef!.href).toBe('testSpanId');
+    });
+
+    it('handles renamed tags', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [
+            { key: 'service.name', value: 'service' },
+            { key: 'k8s.pod.name', value: 'pod' },
+          ],
+        },
+        '',
+        dummyDataFrameForProfiles
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Profiles);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{service=\\"serviceName\\", pod=\\"podName\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+        )}`
+      );
+    });
+
+    it('handles incomplete renamed tags', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [
+            { key: 'service.name', value: '' },
+            { key: 'k8s.pod.name', value: 'pod' },
+          ],
+        },
+        '',
+        dummyDataFrameForProfiles
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Profiles);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+        )}`
+      );
+    });
+
+    it('interpolates span intrinsics', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [{ key: 'name', value: 'spanName' }],
+        },
+        '',
+        dummyDataFrameForProfiles
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      expect(links).toBeDefined();
+      expect(links![0].type).toBe(SpanLinkType.Profiles);
+      expect(decodeURIComponent(links![0].href)).toContain('spanName=\\"operation\\"');
+    });
+  });
 });
 
 describe('dataFrame links', () => {
@@ -1272,7 +1558,11 @@ describe('dataFrame links', () => {
   });
 });
 
-function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datasourceUid = 'lokiUid') {
+function setupSpanLinkFactory(
+  options: Partial<TraceToLogsOptionsV2> = {},
+  datasourceUid = 'lokiUid',
+  dummyDataFrameForProfiles?: DataFrame
+) {
   const splitOpenFn = jest.fn();
   return createSpanLinkFactory({
     splitOpenFn,
@@ -1281,13 +1571,18 @@ function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datas
       datasourceUid,
       ...options,
     },
+    traceToProfilesOptions: {
+      customQuery: false,
+      datasourceUid: 'pyroscopeUid',
+      ...options,
+    },
     createFocusSpanLink: (traceId, spanId) => {
       return {
         href: `${traceId}-${spanId}`,
       } as unknown as LinkModel;
     },
     trace: dummyTraceData,
-    dataFrame: dummyDataFrame,
+    dataFrame: dummyDataFrameForProfiles ? dummyDataFrameForProfiles : dummyDataFrame,
   });
 }
 
@@ -1307,6 +1602,10 @@ function createTraceSpan(overrides: Partial<TraceSpan> = {}) {
       {
         key: 'host',
         value: 'host',
+      },
+      {
+        key: pyroscopeProfileIdTagKey,
+        value: 'hdgfljn23u982nj',
       },
     ],
     process: {

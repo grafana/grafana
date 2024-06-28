@@ -1,17 +1,17 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
-import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-
 import {
   historySrv,
   RevisionsModel,
-  VersionHistoryTable,
   VersionHistoryHeader,
   VersionsHistoryButtons,
-  VersionHistoryComparison,
-} from '../VersionHistory';
+} from 'app/features/dashboard-scene/settings/version-history';
+
+import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
+import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
 
 import { SettingsPageProps } from './types';
 
@@ -22,7 +22,7 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
-  diffData: { lhs: unknown; rhs: unknown };
+  diffData: { lhs: string; rhs: string };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;
@@ -50,8 +50,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
       viewMode: 'list',
       isNewLatest: false,
       diffData: {
-        lhs: {},
-        rhs: {},
+        lhs: '',
+        rhs: '',
       },
     };
   }
@@ -63,7 +63,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   getVersions = (append = false) => {
     this.setState({ isAppending: append });
     historySrv
-      .getHistoryList(this.props.dashboard, { limit: this.limit, start: this.start })
+      .getHistoryList(this.props.dashboard.uid, { limit: this.limit, start: this.start })
       .then((res) => {
         this.setState({
           isLoading: false,
@@ -124,8 +124,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
     this.setState({
       baseInfo: undefined,
       diffData: {
-        lhs: {},
-        rhs: {},
+        lhs: '',
+        rhs: '',
       },
       isNewLatest: false,
       newInfo: undefined,
@@ -139,7 +139,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     const canCompare = versions.filter((version) => version.checked).length === 2;
     const showButtons = versions.length > 1;
     const hasMore = versions.length >= this.limit;
-    const pageNav = config.featureToggles.dockedMegaMenu ? this.props.sectionNav.node.parentItem : undefined;
+    const pageNav = this.props.sectionNav.node.parentItem;
 
     if (viewMode === 'compare') {
       return (
@@ -186,7 +186,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   }
 }
 
-const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
+export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
   <HorizontalGroup>
     <Spinner />
     <em>{msg}</em>

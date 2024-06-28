@@ -1,4 +1,5 @@
-import React, { useRef, useState, useLayoutEffect } from 'react';
+import { useRef, useState, useLayoutEffect } from 'react';
+import * as React from 'react';
 import { useClickAway } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -39,7 +40,7 @@ export const ContextMenu = React.memo(
         setPositionStyles({
           position: 'fixed',
           left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
-          top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
+          top: Math.max(0, collisions.bottom ? y - rect.height - OFFSET : y + OFFSET),
         });
       }
     }, [x, y]);

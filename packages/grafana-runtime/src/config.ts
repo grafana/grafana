@@ -16,13 +16,21 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   getThemeById,
+  AngularMeta,
 } from '@grafana/data';
 
 export interface AzureSettings {
   cloud?: string;
+  clouds?: AzureCloudInfo[];
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+  userIdentityFallbackCredentialsEnabled: boolean;
+}
+
+export interface AzureCloudInfo {
+  name: string;
+  displayName: string;
 }
 
 export type AppPluginConfig = {
@@ -30,11 +38,12 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
-  angularDetected?: boolean;
+  angular: AngularMeta;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
   publicDashboardAccessToken?: string;
+  publicDashboardsEnabled = true;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -43,6 +52,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
+  namespace = 'default';
   windowTitlePrefix = '';
   buildInfo: BuildInfo;
   newPanelTitle = '';
@@ -54,10 +64,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  alertingEnabled = false;
-  alertingErrorOrTimeout = '';
-  alertingNoDataOrNullValues = '';
-  alertingMinInterval = 1;
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
@@ -92,9 +98,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme2: GrafanaTheme2;
   featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
+  anonymousDeviceLimit: number | undefined = undefined;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
+  rendererDefaultImageWidth = 1000;
+  rendererDefaultImageHeight = 500;
+  rendererDefaultImageScale = 1;
   secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;
   http2Enabled = false;
@@ -120,6 +130,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
+    userIdentityFallbackCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -143,6 +154,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   reporting = {
     enabled: true,
   };
+  analytics = {
+    enabled: true,
+  };
   googleAnalyticsId: undefined;
   googleAnalytics4Id: undefined;
   googleAnalytics4SendManualPageViews = false;
@@ -159,6 +173,16 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
   tokenExpirationDayLimit: undefined;
   disableFrontendSandboxForPlugins: string[] = [];
+  sharedWithMeFolderUID: string | undefined;
+  rootFolderUID: string | undefined;
+  localFileSystemAvailable: boolean | undefined;
+  cloudMigrationIsTarget: boolean | undefined;
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -190,10 +214,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    if (this.buildInfo.env === 'development') {
-      overrideFeatureTogglesFromUrl(this);
-    }
-
+    overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -230,15 +251,26 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
+  const isDevelopment = config.buildInfo.env === 'development';
+
+  // Although most flags can not be changed from the URL in production,
+  // some of them are safe (and useful!) to change dynamically from the browser URL
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
+
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
+
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
-        featureToggles[featureName] = toggleState;
-        console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
+        if (isDevelopment || safeRuntimeFeatureFlags.has(featureName)) {
+          featureToggles[featureName] = toggleState;
+          console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
+        } else {
+          console.log(`Unable to change feature toggle ${featureName} via url in production.`);
+        }
       }
     }
   });

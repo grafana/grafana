@@ -18,15 +18,16 @@ import * as React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-import { ubRelative } from '../uberUtilityStyles';
-
 const getStyles = () => {
   return {
-    flexRow: css`
-      display: flex;
-      flex: 0 1 auto;
-      flex-direction: row;
-    `,
+    row: css({
+      display: 'flex',
+      flex: '0 1 auto',
+      flexDirection: 'row',
+    }),
+    rowCell: css({
+      position: 'relative',
+    }),
   };
 };
 
@@ -42,31 +43,24 @@ interface TimelineRowCellProps extends React.HTMLAttributes<HTMLDivElement> {
   style?: {};
 }
 
-export default function TimelineRow(props: TTimelineRowProps) {
-  const { children, className = '', ...rest } = props;
+export default function TimelineRow({ children, className = '', ...rest }: TTimelineRowProps) {
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.flexRow, className)} {...rest}>
+    <div className={cx(styles.row, className)} {...rest}>
       {children}
     </div>
   );
 }
 
-TimelineRow.defaultProps = {
-  className: '',
-};
-
-export function TimelineRowCell(props: TimelineRowCellProps) {
-  const { children, className = '', width, style, ...rest } = props;
+export function TimelineRowCell({ children, className = '', width, style = {}, ...rest }: TimelineRowCellProps) {
   const widthPercent = `${width * 100}%`;
   const mergedStyle = { ...style, flexBasis: widthPercent, maxWidth: widthPercent };
+  const styles = useStyles2(getStyles);
   return (
-    <div className={cx(ubRelative, className)} style={mergedStyle} data-testid="TimelineRowCell" {...rest}>
+    <div className={cx(styles.rowCell, className)} style={mergedStyle} data-testid="TimelineRowCell" {...rest}>
       {children}
     </div>
   );
 }
-
-TimelineRowCell.defaultProps = { className: '', style: {} };
 
 TimelineRow.Cell = TimelineRowCell;

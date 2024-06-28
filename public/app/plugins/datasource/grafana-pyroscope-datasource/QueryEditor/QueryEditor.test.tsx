@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { CoreApp, PluginType } from '@grafana/data';
-import { setPluginExtensionGetter } from '@grafana/runtime';
+import { setPluginExtensionsHook } from '@grafana/runtime';
 
 import { PyroscopeDataSource } from '../datasource';
 import { mockFetchPyroscopeDatasourceSettings } from '../datasource.test';
@@ -13,7 +12,7 @@ import { Props, QueryEditor } from './QueryEditor';
 
 describe('QueryEditor', () => {
   beforeEach(() => {
-    setPluginExtensionGetter(() => ({ extensions: [] })); // No extensions
+    setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
     mockFetchPyroscopeDatasourceSettings();
   });
 
@@ -110,6 +109,8 @@ function setupDs() {
       id: 'memory:memory',
     },
   ] as ProfileTypeMessage[]);
+
+  ds.getLabelNames = jest.fn().mockResolvedValue(['label_one']);
 
   return ds;
 }

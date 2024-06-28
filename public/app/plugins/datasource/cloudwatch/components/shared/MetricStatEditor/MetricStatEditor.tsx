@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
@@ -6,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
-import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../../hooks';
+import { useAccountOptions, useMetrics, useNamespaces } from '../../../hooks';
 import { standardStatistics } from '../../../standardStatistics';
 import { MetricStat } from '../../../types';
 import { appendTemplateVariables, toOption } from '../../../utils/utils';
@@ -35,7 +36,6 @@ export const MetricStatEditor = ({
 }: React.PropsWithChildren<Props>) => {
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, metricStat);
-  const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
   const accountState = useAccountOptions(datasource.resources, metricStat.region);
 
   useEffect(() => {
@@ -139,7 +139,6 @@ export const MetricStatEditor = ({
           <Dimensions
             metricStat={metricStat}
             onChange={(dimensions) => onChange({ ...metricStat, dimensions })}
-            dimensionKeys={dimensionKeys}
             disableExpressions={disableExpressions}
             datasource={datasource}
           />
@@ -148,7 +147,24 @@ export const MetricStatEditor = ({
           <EditorField
             label="Match exact"
             optional={true}
-            tooltip="Only show metrics that exactly match all defined dimension names."
+            tooltip={
+              <>
+                {
+                  'Only show metrics that contain exactly the dimensions defined in the query and match the specified values. If this is enabled, all dimensions of the metric being queried must be specified so that the '
+                }
+                <a
+                  href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  metric schema
+                </a>
+                {
+                  ' matches exactly. If this is disabled, metrics that match the schema and have additional dimensions will also be returned.'
+                }
+              </>
+            }
+            tooltipInteractive
           >
             <EditorSwitch
               id={`${refId}-cloudwatch-match-exact`}

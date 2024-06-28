@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -54,6 +53,6 @@ describe('DataLinksContextMenu', () => {
     );
 
     expect(screen.getByLabelText(fakeAriaLabel)).toBeInTheDocument();
-    expect(screen.getByLabelText(selectors.components.DataLinksContextMenu.singleLink)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink)).toBeInTheDocument();
   });
 });

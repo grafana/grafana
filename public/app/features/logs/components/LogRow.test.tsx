@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
@@ -30,6 +30,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverri
     enableLogDetails: false,
     getRows: () => [],
     onOpenContext: () => {},
+    handleTextSelection: jest.fn(),
     prettifyLogMessage: false,
     app: CoreApp.Explore,
     showDuplicates: false,

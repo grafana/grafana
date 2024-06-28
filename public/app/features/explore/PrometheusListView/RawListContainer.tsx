@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
@@ -8,13 +8,12 @@ import { DataFrame, Field as DataFrameField } from '@grafana/data/';
 import { reportInteraction } from '@grafana/runtime/src';
 import { Field, Switch } from '@grafana/ui/';
 
+import { ItemLabels } from './ItemLabels';
+import RawListItem from './RawListItem';
 import {
   getRawPrometheusListItemsFromDataFrame,
   RawPrometheusListItemEmptyValue,
-} from '../utils/getRawPrometheusListItemsFromDataFrame';
-
-import { ItemLabels } from './ItemLabels';
-import RawListItem from './RawListItem';
+} from './utils/getRawPrometheusListItemsFromDataFrame';
 
 export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
 

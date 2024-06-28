@@ -1,6 +1,6 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Field, Input, Text } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -18,7 +18,7 @@ export const AlertRuleNameInput = () => {
     register,
     watch,
     formState: { errors },
-  } = useFormContext<RuleFormValues & { location?: string }>();
+  } = useFormContext<RuleFormValues>();
 
   const ruleFormType = watch('type');
   const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
@@ -35,6 +35,7 @@ export const AlertRuleNameInput = () => {
     >
       <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
         <Input
+          data-testid={selectors.components.AlertRules.ruleNameField}
           id="name"
           width={35}
           {...register('name', {

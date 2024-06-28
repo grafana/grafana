@@ -1,9 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { Text } from '../../Text/Text';
-import { Flex } from '../Flex/Flex';
+import { Stack } from '../Stack/Stack';
 
 import { Box, BackgroundColor, BorderColor, BorderStyle, BorderRadius, BoxShadow } from './Box';
 import mdx from './Box.mdx';
@@ -48,11 +47,11 @@ const Item = ({ background }: { background?: string }) => {
 
 export const Basic: StoryFn<typeof Box> = (args) => {
   return (
-    <Flex>
+    <Stack>
       <Box borderColor="medium" {...args}>
         Box
       </Box>
-    </Flex>
+    </Stack>
   );
 };
 
@@ -73,6 +72,7 @@ Basic.argTypes = {
   paddingBottom: SpacingTokenControl,
   paddingLeft: SpacingTokenControl,
   paddingRight: SpacingTokenControl,
+  direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   display: { control: 'select', options: ['flex', 'block', 'inline', 'none'] },
   backgroundColor: { control: 'select', options: backgroundOptions },
   borderStyle: { control: 'select', options: borderStyleOptions },
@@ -88,64 +88,64 @@ Basic.args = {
 
 export const Background: StoryFn<typeof Box> = () => {
   return (
-    <Flex gap={4}>
+    <Stack gap={4}>
       {backgroundOptions.map((background) => (
-        <Flex key={background} direction="column" alignItems="flex-start">
+        <Stack key={background} direction="column" alignItems="flex-start">
           {background}
           <Box backgroundColor={background} borderColor="strong" borderStyle="solid">
             <Item />
           </Box>
-        </Flex>
+        </Stack>
       ))}
-    </Flex>
+    </Stack>
   );
 };
 
 export const Border: StoryFn<typeof Box> = () => {
   return (
-    <Flex direction="column" gap={4}>
+    <Stack direction="column" gap={4}>
       <div>
         <Text variant="h4">Border Color</Text>
-        <Flex gap={4} wrap="wrap">
+        <Stack gap={4} wrap="wrap">
           {borderColorOptions.map((border) => (
-            <Flex key={border} direction="column" alignItems="flex-start">
+            <Stack key={border} direction="column" alignItems="flex-start">
               {border}
               <Box borderColor={border} borderStyle="solid">
                 <Item />
               </Box>
-            </Flex>
+            </Stack>
           ))}
-        </Flex>
+        </Stack>
       </div>
       <div>
         <Text variant="h4">Border Style</Text>
-        <Flex gap={4} wrap="wrap">
+        <Stack gap={4} wrap="wrap">
           {borderStyleOptions.map((border) => (
-            <Flex key={border} direction="column" alignItems="flex-start">
+            <Stack key={border} direction="column" alignItems="flex-start">
               {border}
               <Box borderColor="info" borderStyle={border}>
                 <Item />
               </Box>
-            </Flex>
+            </Stack>
           ))}
-        </Flex>
+        </Stack>
       </div>
-    </Flex>
+    </Stack>
   );
 };
 
 export const Shadow: StoryFn<typeof Box> = () => {
   return (
-    <Flex gap={4}>
+    <Stack gap={4}>
       {boxShadowOptions.map((shadow) => (
-        <Flex key={shadow} direction="column" alignItems="flex-start">
+        <Stack key={shadow} direction="column" alignItems="flex-start">
           {shadow}
           <Box boxShadow={shadow} borderColor="strong" borderStyle="solid">
             <Item />
           </Box>
-        </Flex>
+        </Stack>
       ))}
-    </Flex>
+    </Stack>
   );
 };
 

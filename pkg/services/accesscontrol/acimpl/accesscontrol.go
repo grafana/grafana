@@ -6,24 +6,24 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(cfg *setting.Cfg) *AccessControl {
+func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
 	return &AccessControl{
-		cfg, logger, accesscontrol.NewResolvers(logger),
+		features, logger, accesscontrol.NewResolvers(logger),
 	}
 }
 
 type AccessControl struct {
-	cfg       *setting.Cfg
+	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
 }
@@ -38,14 +38,19 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
-	namespace, identifier := user.GetNamespacedID()
-	if len(user.GetPermissions()) == 0 {
-		a.log.Debug("No permissions set for entity", "namespace", namespace, "id", identifier, "orgID", user.GetOrgID(), "login", user.GetLogin())
+	// If the user is in no organization, then the evaluation must happen based on the user's global permissions
+	permissions := user.GetPermissions()
+	if user.GetOrgID() == accesscontrol.NoOrgID {
+		permissions = user.GetGlobalPermissions()
+	}
+	if len(permissions) == 0 {
+		a.debug(ctx, user, "No permissions set", evaluator)
 		return false, nil
 	}
 
+	a.debug(ctx, user, "Evaluating permissions", evaluator)
 	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
-	if evaluator.Evaluate(user.GetPermissions()) {
+	if evaluator.Evaluate(permissions) {
 		return true, nil
 	}
 
@@ -57,9 +62,15 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, err
 	}
 
-	return resolvedEvaluator.Evaluate(user.GetPermissions()), nil
+	a.debug(ctx, user, "Evaluating resolved permissions", resolvedEvaluator)
+	return resolvedEvaluator.Evaluate(permissions), nil
 }
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
+}
+
+func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
+	namespace, id := ident.GetNamespacedID()
+	a.log.FromContext(ctx).Debug(msg, "namespace", namespace, "id", id, "orgID", ident.GetOrgID(), "permissions", eval.GoString())
 }

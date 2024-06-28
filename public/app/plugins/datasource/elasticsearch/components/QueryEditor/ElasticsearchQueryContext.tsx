@@ -1,4 +1,4 @@
-import React, { Context, createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
+import { Context, createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
@@ -31,9 +31,11 @@ export const ElasticsearchProvider = ({
   range,
 }: PropsWithChildren<Props>) => {
   const onStateChange = useCallback(
-    (query: ElasticsearchQuery) => {
+    (query: ElasticsearchQuery, prevQuery: ElasticsearchQuery) => {
       onChange(query);
-      onRunQuery();
+      if (query.query === prevQuery.query || prevQuery.query === undefined) {
+        onRunQuery();
+      }
     },
     [onChange, onRunQuery]
   );
@@ -47,7 +49,7 @@ export const ElasticsearchProvider = ({
 
   const dispatch = useStatelessReducer(
     // timeField is part of the query model, but its value is always set to be the one from datasource settings.
-    (newState) => onStateChange({ ...query, ...newState, timeField: datasource.timeField }),
+    (newState) => onStateChange({ ...query, ...newState, timeField: datasource.timeField }, query),
     query,
     reducer
   );
@@ -91,7 +93,7 @@ const getHook: GetHook = (c) => () => {
     throw new Error('use ElasticsearchProvider first.');
   }
 
-  return contextValue as NonNullable<typeof contextValue>;
+  return contextValue;
 };
 
 export const useQuery = getHook(QueryContext);

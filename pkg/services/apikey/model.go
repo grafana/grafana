@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
@@ -32,7 +32,7 @@ type APIKey struct {
 
 func (k APIKey) TableName() string { return "api_key" }
 
-// swagger:model
+// swagger:model AddAPIKeyCommand
 type AddCommand struct {
 	Name             string       `json:"name" binding:"Required"`
 	Role             org.RoleType `json:"role" binding:"Required"`

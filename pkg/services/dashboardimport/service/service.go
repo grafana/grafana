@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
@@ -83,6 +84,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	generatedDash.Del("__inputs")
 	generatedDash.Del("__requires")
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
 	if req.FolderUid != "" {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
@@ -93,10 +95,11 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		if err != nil {
 			return nil, err
 		}
+		// nolint:staticcheck
 		req.FolderId = folder.ID
 	} else {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
-			ID:           &req.FolderId,
+			ID:           &req.FolderId, // nolint:staticcheck
 			OrgID:        req.User.GetOrgID(),
 			SignedInUser: req.User,
 		})
@@ -106,12 +109,11 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderUid = folder.UID
 	}
 
-	namespaceID, identifier := req.User.GetNamespacedID()
+	namespace, identifier := req.User.GetNamespacedID()
 	userID := int64(0)
 
-	switch namespaceID {
-	case identity.NamespaceUser, identity.NamespaceServiceAccount:
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{
@@ -120,7 +122,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		UserID:    userID,
 		Overwrite: req.Overwrite,
 		PluginID:  req.PluginId,
-		FolderID:  req.FolderId,
+		FolderID:  req.FolderId, // nolint:staticcheck
 		FolderUID: req.FolderUid,
 	}
 
@@ -136,7 +138,9 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
+	// nolint:staticcheck
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId, req.FolderUid)
 	if err != nil {
 		return nil, err
 	}
@@ -147,13 +151,14 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 
 	revision := savedDashboard.Data.Get("revision").MustInt64(0)
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	return &dashboardimport.ImportDashboardResponse{
 		UID:              savedDashboard.UID,
 		PluginId:         req.PluginId,
 		Title:            savedDashboard.Title,
 		Path:             req.Path,
-		Revision:         revision, // only used for plugin version tracking
-		FolderId:         savedDashboard.FolderID,
+		Revision:         revision,                // only used for plugin version tracking
+		FolderId:         savedDashboard.FolderID, // nolint:staticcheck
 		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
 		ImportedUrl:      savedDashboard.GetURL(),

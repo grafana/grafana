@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,7 +30,7 @@ const (
 var (
 	folderUIDScope        = fmt.Sprintf("folders:uid:%s", folderUID)
 	invalidFolderUIDScope = fmt.Sprintf("folders:uid:%s", invalidFolderUID)
-	dashboard             = &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: folderID}
+	dashboard             = &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderUID: folderUID}
 	fldr                  = &dashboards.Dashboard{OrgID: orgID, UID: folderUID, IsFolder: true}
 )
 
@@ -79,22 +79,11 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 		},
 		{
 			desc:      "should be able to save dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false},
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:uid:general",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc:      "should be able to save dashboard with folder scope",
-			dashboard: dashboard,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: dashboards.ActionDashboardsWrite,
-					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
@@ -236,22 +225,11 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 		},
 		{
 			desc:      "should be able to edit dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false},
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:uid:general",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc:      "should be able to edit dashboard with folder scope",
-			dashboard: dashboard,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: dashboards.ActionDashboardsWrite,
-					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
@@ -409,22 +387,11 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 		},
 		{
 			desc:      "should be able to view dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false},
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
 					Scope:  "folders:uid:general",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc:      "should be able to view dashboard with folder scope",
-			dashboard: dashboard,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: dashboards.ActionDashboardsRead,
-					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
@@ -529,6 +496,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 		})
 	}
 }
+
 func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 	tests := []accessControlGuardianTestCase{
 		{
@@ -578,7 +546,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 		},
 		{
 			desc:      "should be able to admin dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false},
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsPermissionsRead,
@@ -587,21 +555,6 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 				{
 					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "folders:uid:general",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc:      "should be able to admin dashboard with folder scope",
-			dashboard: dashboard,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: dashboards.ActionDashboardsPermissionsRead,
-					Scope:  folderUIDScope,
-				},
-				{
-					Action: dashboards.ActionDashboardsPermissionsWrite,
-					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
@@ -820,22 +773,11 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 		},
 		{
 			desc:      "should be able to delete dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false},
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "folders:uid:general",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc:      "should be able to delete dashboard with folder scope",
-			dashboard: dashboard,
-			permissions: []accesscontrol.Permission{
-				{
-					Action: dashboards.ActionDashboardsDelete,
-					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
@@ -1014,11 +956,10 @@ func setupAccessControlGuardianTest(
 	fakeDashboardService := dashboards.NewFakeDashboardService(t)
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
 
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := foldertest.NewFakeService()
 
 	folderStore := foldertest.NewFakeFolderStore(t)
-	folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(&folder.Folder{ID: folderID, UID: folderUID, OrgID: orgID}, nil)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(folderSvc))

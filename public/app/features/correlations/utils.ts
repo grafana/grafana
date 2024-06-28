@@ -1,7 +1,8 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { ExploreItemState } from 'app/types';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 
@@ -53,9 +54,10 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
     field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
       if (correlation.config?.field === field.name) {
+        const targetQuery = correlation.config?.target || {};
         field.config.links!.push({
           internal: {
-            query: correlation.config?.target,
+            query: { ...targetQuery, datasource: { uid: correlation.target.uid } },
             datasourceUid: correlation.target.uid,
             datasourceName: correlation.target.name,
             transformations: correlation.config?.transformations,
@@ -90,3 +92,21 @@ export const createCorrelation = async (
 ): Promise<CreateCorrelationResponse> => {
   return getBackendSrv().post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation);
 };
+
+const getDSInstanceForPane = async (pane: ExploreItemState) => {
+  if (pane.datasourceInstance?.meta.mixed) {
+    return await getDataSourceSrv().get(pane.queries[0].datasource);
+  } else {
+    return pane.datasourceInstance;
+  }
+};
+
+export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetPane: ExploreItemState) => {
+  return Promise.all([getDSInstanceForPane(sourcePane), getDSInstanceForPane(targetPane)]).then((dsInstances) => {
+    return dsInstances[0]?.name !== undefined && dsInstances[1]?.name !== undefined
+      ? `${dsInstances[0]?.name} to ${dsInstances[1]?.name}`
+      : '';
+  });
+};
+
+export const correlationsLogger = createMonitoringLogger('features.correlations');

@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2, TimeZone, dateTimeFormat } from '@grafana/data';
 
@@ -33,9 +32,6 @@ export const formatUtcOffset = (timestamp: number, timeZone: TimeZone): string =
     format: 'Z',
   });
 
-  if (offset === '+00:00') {
-    return 'UTC';
-  }
   return `UTC${offset}`;
 };
 

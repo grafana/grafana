@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { PluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
@@ -19,9 +19,8 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   if (!pluginConfig) {
     return null;
   }
-
   // Enforce RBAC
-  if (!contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin)) {
+  if (!contextSrv.hasPermission(AccessControlAction.PluginsWrite)) {
     return null;
   }
 

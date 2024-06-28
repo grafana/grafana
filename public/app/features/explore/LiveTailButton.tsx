@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
@@ -15,6 +15,7 @@ type LiveTailButtonProps = {
 };
 
 export function LiveTailButton(props: LiveTailButtonProps) {
+  const transitionRef = useRef(null);
   const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
   const buttonVariant = isLive && !isPaused ? 'active' : 'canvas';
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
@@ -46,9 +47,10 @@ export function LiveTailButton(props: LiveTailButtonProps) {
           exit: styles.stopButtonExit,
           exitActive: styles.stopButtonExitActive,
         }}
+        nodeRef={transitionRef}
       >
         <Tooltip content={<>Stop and exit the live stream</>} placement="bottom">
-          <ToolbarButton variant={buttonVariant} onClick={stop} icon="square-shape" />
+          <ToolbarButton ref={transitionRef} variant={buttonVariant} onClick={stop} icon="square-shape" />
         </Tooltip>
       </CSSTransition>
     </ButtonGroup>
@@ -56,26 +58,26 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 }
 
 const styles = {
-  stopButtonEnter: css`
-    label: stopButtonEnter;
-    width: 0;
-    opacity: 0;
-    overflow: hidden;
-  `,
-  stopButtonEnterActive: css`
-    label: stopButtonEnterActive;
-    opacity: 1;
-    width: 32px;
-  `,
-  stopButtonExit: css`
-    label: stopButtonExit;
-    width: 32px;
-    opacity: 1;
-    overflow: hidden;
-  `,
-  stopButtonExitActive: css`
-    label: stopButtonExitActive;
-    opacity: 0;
-    width: 0;
-  `,
+  stopButtonEnter: css({
+    label: 'stopButtonEnter',
+    width: 0,
+    opacity: 0,
+    overflow: 'hidden',
+  }),
+  stopButtonEnterActive: css({
+    label: 'stopButtonEnterActive',
+    opacity: 1,
+    width: '32px',
+  }),
+  stopButtonExit: css({
+    label: 'stopButtonExit',
+    width: '32px',
+    opacity: 1,
+    overflow: 'hidden',
+  }),
+  stopButtonExitActive: css({
+    label: 'stopButtonExitActive',
+    opacity: 0,
+    width: 0,
+  }),
 };

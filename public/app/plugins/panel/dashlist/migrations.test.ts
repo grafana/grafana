@@ -19,7 +19,7 @@ describe('dashlist migrations', () => {
     const basePanelModel = wellFormedPanelModel({});
     basePanelModel.pluginVersion = '5.1';
 
-    const angularPanel: PanelModel<any> & AngularModel = {
+    const angularPanel: PanelModel & AngularModel = {
       ...basePanelModel,
       // pluginVersion: '5.1',
       starred: true,
@@ -56,6 +56,7 @@ describe('dashlist migrations', () => {
       showRecentlyViewed: true,
       showSearch: true,
       showHeadings: true,
+      showFolderNames: true,
       maxItems: 7,
       query: 'hello, query',
       includeVars: false,
@@ -103,6 +104,7 @@ describe('dashlist migrations', () => {
       showRecentlyViewed: true,
       showSearch: true,
       showHeadings: true,
+      showFolderNames: true,
       maxItems: 7,
       query: 'hello, query',
       includeVars: false,

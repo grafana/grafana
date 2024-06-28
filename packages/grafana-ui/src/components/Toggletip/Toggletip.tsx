@@ -1,12 +1,24 @@
 import { css, cx } from '@emotion/css';
+import {
+  arrow,
+  autoUpdate,
+  flip,
+  FloatingArrow,
+  FloatingFocusManager,
+  offset,
+  shift,
+  useClick,
+  useDismiss,
+  useFloating,
+  useInteractions,
+} from '@floating-ui/react';
 import { Placement } from '@popperjs/core';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { usePopperTooltip } from 'react-popper-tooltip';
+import { memo, cloneElement, isValidElement, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { buildTooltipTheme } from '../../utils/tooltipUtils';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
 
 import { ToggletipContent } from './types';
@@ -19,7 +31,7 @@ export interface ToggletipProps {
   /** determine whether to show or not the close button **/
   closeButton?: boolean;
   /** Callback function to be called when the toggletip is closed */
-  onClose?: Function;
+  onClose?: () => void;
   /** The preferred placement of the toggletip */
   placement?: Placement;
   /** The text or component that houses the content of the toggleltip */
@@ -36,7 +48,7 @@ export interface ToggletipProps {
   onOpen?: () => void;
 }
 
-export const Toggletip = React.memo(
+export const Toggletip = memo(
   ({
     children,
     theme = 'info',
@@ -50,94 +62,100 @@ export const Toggletip = React.memo(
     onOpen,
     show,
   }: ToggletipProps) => {
+    const arrowRef = useRef(null);
+    const grafanaTheme = useTheme2();
     const styles = useStyles2(getStyles);
     const style = styles[theme];
-    const contentRef = useRef(null);
-    const [controlledVisible, setControlledVisible] = React.useState(show);
+    const [controlledVisible, setControlledVisible] = useState(show);
+    const isOpen = show ?? controlledVisible;
 
-    const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update, tooltipRef, triggerRef } =
-      usePopperTooltip(
-        {
-          visible: show ?? controlledVisible,
-          placement: placement,
-          interactive: true,
-          offset: [0, 8],
-          // If show is undefined, the toggletip will be shown on click
-          trigger: 'click',
-          onVisibleChange: (visible: boolean) => {
-            if (show === undefined) {
-              setControlledVisible(visible);
-            }
-            if (!visible) {
-              onClose?.();
-            } else {
-              onOpen?.();
-            }
-          },
-        },
-        {
-          strategy: 'fixed',
+    // the order of middleware is important!
+    // `arrow` should almost always be at the end
+    // see https://floating-ui.com/docs/arrow#order
+    const middleware = [
+      offset(8),
+      flip({
+        fallbackAxisSideDirection: 'end',
+        // see https://floating-ui.com/docs/flip#combining-with-shift
+        crossAxis: false,
+        boundary: document.body,
+      }),
+      shift(),
+      arrow({
+        element: arrowRef,
+      }),
+    ];
+
+    const { context, refs, floatingStyles } = useFloating({
+      open: isOpen,
+      placement: getPlacement(placement),
+      onOpenChange: (open) => {
+        if (show === undefined) {
+          setControlledVisible(open);
         }
-      );
-
-    const closeToggletip = useCallback(
-      (event: KeyboardEvent | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        setControlledVisible(false);
-        onClose?.();
-
-        if (event.target instanceof Node && tooltipRef?.contains(event.target)) {
-          triggerRef?.focus();
+        if (!open) {
+          onClose?.();
+        } else {
+          onOpen?.();
         }
       },
-      [onClose, tooltipRef, triggerRef]
-    );
+      middleware,
+      whileElementsMounted: autoUpdate,
+      strategy: 'fixed',
+    });
 
-    useEffect(() => {
-      if (controlledVisible) {
-        const handleKeyDown = (enterKey: KeyboardEvent) => {
-          if (enterKey.key === 'Escape') {
-            closeToggletip(enterKey);
-          }
-        };
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown);
-        };
-      }
-      return;
-    }, [controlledVisible, closeToggletip]);
+    const click = useClick(context);
+    const dismiss = useDismiss(context);
+
+    const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
     return (
       <>
-        {React.cloneElement(children, {
-          ref: setTriggerRef,
+        {cloneElement(children, {
+          ref: refs.setReference,
           tabIndex: 0,
-          'aria-expanded': visible,
+          'aria-expanded': isOpen,
+          ...getReferenceProps(),
         })}
-        {visible && (
-          <div
-            data-testid="toggletip-content"
-            ref={setTooltipRef}
-            {...getTooltipProps({ className: cx(style.container, fitContent && styles.fitContent) })}
-          >
-            {Boolean(title) && <div className={style.header}>{title}</div>}
-            {closeButton && (
-              <div className={style.headerClose}>
-                <IconButton
-                  tooltip="Close"
-                  name="times"
-                  data-testid="toggletip-header-close"
-                  onClick={closeToggletip}
-                />
+        {isOpen && (
+          <FloatingFocusManager context={context} modal={false} closeOnFocusOut={false}>
+            <div
+              data-testid="toggletip-content"
+              className={cx(style.container, {
+                [styles.fitContent]: fitContent,
+              })}
+              ref={refs.setFloating}
+              style={floatingStyles}
+              {...getFloatingProps()}
+            >
+              <FloatingArrow
+                strokeWidth={0.3}
+                stroke={grafanaTheme.colors.border.weak}
+                className={style.arrow}
+                ref={arrowRef}
+                context={context}
+              />
+              {Boolean(title) && <div className={style.header}>{title}</div>}
+              {closeButton && (
+                <div className={style.headerClose}>
+                  <IconButton
+                    aria-label="Close"
+                    name="times"
+                    data-testid="toggletip-header-close"
+                    onClick={() => {
+                      setControlledVisible(false);
+                      onClose?.();
+                    }}
+                  />
+                </div>
+              )}
+              <div className={style.body}>
+                {(typeof content === 'string' || isValidElement(content)) && content}
+                {typeof content === 'function' && content({})}
               </div>
-            )}
-            <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
-            <div className={style.body}>
-              {(typeof content === 'string' || React.isValidElement(content)) && content}
-              {typeof content === 'function' && update && content({ update })}
+              {Boolean(footer) && <div className={style.footer}>{footer}</div>}
             </div>
-            {Boolean(footer) && <div className={style.footer}>{footer}</div>}
-          </div>
+          </FloatingFocusManager>
         )}
       </>
     );
@@ -149,8 +167,8 @@ Toggletip.displayName = 'Toggletip';
 export const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
-    theme.components.tooltip.background,
-    theme.components.tooltip.background,
+    theme.colors.background.primary,
+    theme.colors.border.weak,
     theme.components.tooltip.text,
     { topBottom: 2, rightLeft: 2 }
   );

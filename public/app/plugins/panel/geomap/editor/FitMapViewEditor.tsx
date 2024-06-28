@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { SelectableValue, StandardEditorContext } from '@grafana/data';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
@@ -79,8 +79,8 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
   const currentDataScope = value.allLayers
     ? DataScopeValues.all
     : !value.allLayers && value.lastOnly
-    ? DataScopeValues.last
-    : DataScopeValues.layer;
+      ? DataScopeValues.last
+      : DataScopeValues.layer;
 
   const onDataScopeChange = (dataScope: DataScopeValues) => {
     if (dataScope !== DataScopeValues.all && !value.layer) {

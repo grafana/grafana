@@ -85,8 +85,8 @@ export function useSearchKeyboardNavigation(
               setHighlightIndex({ ...highlightIndexRef.current });
               break;
             }
-            const url = urlsRef.current.values?.[idx] as string;
-            if (url) {
+            const url: unknown = urlsRef.current.values?.[idx];
+            if (typeof url === 'string') {
               locationService.push(locationUtil.stripBaseFromUrl(url));
             }
         }

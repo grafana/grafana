@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/grafana/grafana/pkg/tsdb/parca/kinds/dataquery"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -31,6 +32,7 @@ const (
 
 // query processes single Parca query transforming the response to data.Frame packaged in DataResponse
 func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	ctxLogger := logger.FromContext(ctx)
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
 	defer span.End()
 
@@ -40,6 +42,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
 		response.Error = err
+		ctxLogger.Error("Failed to unmarshall query", "error", err, "function", logEntrypoint())
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
 		return response
@@ -49,18 +52,21 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 		seriesResp, err := d.client.QueryRange(ctx, makeMetricRequest(qm, query))
 		if err != nil {
 			response.Error = err
+			ctxLogger.Error("Failed to process query", "error", err, "queryType", query.QueryType, "function", logEntrypoint())
 			span.RecordError(response.Error)
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response
 		}
-		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, qm.ProfileTypeId)...)
+
+		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, utils.Depointerizer(qm.ProfileTypeId))...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		logger.Debug("Querying SelectMergeStacktraces()", "queryModel", qm)
+		ctxLogger.Debug("Querying SelectMergeStacktraces()", "queryModel", qm, "function", logEntrypoint())
 		resp, err := d.client.Query(ctx, makeProfileRequest(qm, query))
 		if err != nil {
 			response.Error = err
+			ctxLogger.Error("Failed to process query", "error", err, "queryType", query.QueryType, "function", logEntrypoint())
 			span.RecordError(response.Error)
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response
@@ -78,7 +84,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 			Mode: v1alpha1.QueryRequest_MODE_MERGE,
 			Options: &v1alpha1.QueryRequest_Merge{
 				Merge: &v1alpha1.MergeProfile{
-					Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
+					Query: fmt.Sprintf("%s%s", utils.Depointerizer(qm.ProfileTypeId), utils.Depointerizer(qm.LabelSelector)),
 					Start: &timestamppb.Timestamp{
 						Seconds: query.TimeRange.From.Unix(),
 					},
@@ -97,7 +103,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 func makeMetricRequest(qm queryModel, query backend.DataQuery) *connect.Request[v1alpha1.QueryRangeRequest] {
 	return &connect.Request[v1alpha1.QueryRangeRequest]{
 		Msg: &v1alpha1.QueryRangeRequest{
-			Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
+			Query: fmt.Sprintf("%s%s", utils.Depointerizer(qm.ProfileTypeId), utils.Depointerizer(qm.LabelSelector)),
 			Start: &timestamppb.Timestamp{
 				Seconds: query.TimeRange.From.Unix(),
 			},

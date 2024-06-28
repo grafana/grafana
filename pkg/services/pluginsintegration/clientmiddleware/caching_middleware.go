@@ -7,12 +7,13 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // needed to mock the function for testing
@@ -26,7 +27,7 @@ func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientM
 
 // NewCachingMiddlewareWithFeatureManager creates a new plugins.ClientMiddleware that will
 // attempt to read and write query results to the cache with a feature manager
-func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingService, features *featuremgmt.FeatureManager) plugins.ClientMiddleware {
+func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingService, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
 	log := log.New("caching_middleware")
 	if err := prometheus.Register(QueryCachingRequestHistogram); err != nil {
 		log.Error("Error registering prometheus collector 'QueryRequestHistogram'", "error", err)
@@ -36,7 +37,9 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CachingMiddleware{
-			next:     next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 			caching:  cachingService,
 			log:      log,
 			features: features,
@@ -45,10 +48,11 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 }
 
 type CachingMiddleware struct {
-	next     plugins.Client
+	baseMiddleware
+
 	caching  caching.CachingService
 	log      log.Logger
-	features *featuremgmt.FeatureManager
+	features featuremgmt.FeatureToggles
 }
 
 // QueryData receives a data request and attempts to access results already stored in the cache for that request.
@@ -93,7 +97,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// Update the query cache with the result for this metrics request
 	if err == nil && cr.UpdateCacheFn != nil {
 		// If AWS async caching is not enabled, use the old code path
-		if m.features == nil || !m.features.IsEnabled(featuremgmt.FlagAwsAsyncQueryCaching) {
+		if m.features == nil || !m.features.IsEnabled(ctx, featuremgmt.FlagAwsAsyncQueryCaching) {
 			cr.UpdateCacheFn(ctx, resp)
 		} else {
 			// time how long shouldCacheQuery takes
@@ -162,24 +166,4 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	})
 
 	return m.next.CallResource(ctx, req, cacheSender)
-}
-
-func (m *CachingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *CachingMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *CachingMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *CachingMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *CachingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

@@ -1,6 +1,5 @@
 import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Route } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -271,7 +270,7 @@ describe('Plugin details page', () => {
       );
 
       // Check if version information is available
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.VERSIONS })).toBeInTheDocument();
 
       // Check the column headers
       expect(getByRole('columnheader', { name: /version/i })).toBeInTheDocument();
@@ -382,14 +381,14 @@ describe('Plugin details page', () => {
     });
 
     it('should display alert with information about why the plugin is disabled', async () => {
-      const { queryByLabelText } = renderPluginDetails({
+      const { queryByTestId } = renderPluginDetails({
         id,
         isInstalled: true,
         isDisabled: true,
         error: PluginErrorCode.modifiedSignature,
       });
 
-      expect(await queryByLabelText(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
+      expect(queryByTestId(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
     });
 
     it('should display grafana dependencies for a plugin if they are available', async () => {
@@ -430,7 +429,7 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the install controls to be loaded
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       // Open the confirmation modal
       await userEvent.click(getByRole('button', { name: /uninstall/i }));
@@ -682,7 +681,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await queryByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).not.toBeInTheDocument();
+      expect(await queryByRole('tab', { name: PluginTabLabels.VERSIONS })).not.toBeInTheDocument();
     });
 
     it('should not display update for plugins not published to gcom', async () => {
@@ -694,7 +693,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
     });
@@ -708,7 +707,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
@@ -722,7 +721,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
@@ -744,32 +743,28 @@ describe('Plugin details page', () => {
     });
 
     it('should display a deprecation warning if the plugin is deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { findByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).toBeInTheDocument()
-      );
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
     });
 
     it('should not display a deprecation warning in the plugin is not deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { queryByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: false,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).not.toBeInTheDocument()
-      );
+      await waitFor(() => expect(queryByRole('link', { name: 'deprecated' })).not.toBeInTheDocument());
     });
 
     it('should display a custom deprecation message if the plugin has it set', async () => {
       const statusContext = 'A detailed explanation of why this plugin is deprecated.';
-      const { queryByText } = renderPluginDetails({
+      const { findByText, findByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
@@ -779,9 +774,28 @@ describe('Plugin details page', () => {
         },
       });
 
-      const re = new RegExp(`No further updates will be made to the plugin. More information: ${statusContext}`, 'i');
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText(statusContext)).toBeInTheDocument();
+    });
 
-      await waitFor(() => expect(queryByText(re)).toBeInTheDocument());
+    it('should be possible to render markdown inside a custom deprecation message', async () => {
+      const statusContext =
+        '**This is a custom deprecation message.** [Link 1](https://grafana.com) <a href="https://grafana.com" target="_blank">Link 2</a>';
+      const { findByText, findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText('This is a custom deprecation message.')).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 1' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toHaveAttribute('href', 'https://grafana.com');
     });
   });
 
@@ -797,7 +811,7 @@ describe('Plugin details page', () => {
     it("should not display an install button for a plugin that isn't installed", async () => {
       const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: false });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
@@ -805,7 +819,7 @@ describe('Plugin details page', () => {
     it('should not display an uninstall button for an already installed plugin', async () => {
       const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: true });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
@@ -813,7 +827,7 @@ describe('Plugin details page', () => {
     it('should not display update or uninstall buttons for a plugin with update', async () => {
       const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
@@ -822,7 +836,7 @@ describe('Plugin details page', () => {
     it('should not display an install button for enterprise plugins if license is valid', async () => {
       const { findByRole, queryByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
       expect(await queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
   });

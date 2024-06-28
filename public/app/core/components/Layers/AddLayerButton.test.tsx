@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -10,7 +9,7 @@ describe('AddLayerButton', () => {
   it('renders AddLayerButton', () => {
     renderScenario({});
 
-    const button = screen.getByLabelText(selectors.components.ValuePicker.button(testLabel));
+    const button = screen.getByTestId(selectors.components.ValuePicker.button(testLabel));
 
     expect(button).toBeInTheDocument();
   });

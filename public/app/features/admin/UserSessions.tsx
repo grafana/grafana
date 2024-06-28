@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
 
-import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
+import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { i18nDate } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 import { AccessControlAction, UserSession } from 'app/types';
 
 interface Props {
@@ -18,7 +17,7 @@ interface State {
 }
 
 class BaseUserSessions extends PureComponent<Props, State> {
-  forceAllLogoutButton = React.createRef<HTMLButtonElement>();
+  forceAllLogoutButton = createRef<HTMLButtonElement>();
   state: State = {
     showLogoutModal: false,
   };
@@ -48,17 +47,13 @@ class BaseUserSessions extends PureComponent<Props, State> {
     const { sessions } = this.props;
     const { showLogoutModal } = this.state;
 
-    const logoutFromAllDevicesClass = css`
-      margin-top: 0.8rem;
-    `;
-
     const canLogout = contextSrv.hasPermission(AccessControlAction.UsersLogout);
 
     return (
-      <>
+      <div>
         <h3 className="page-heading">Sessions</h3>
-        <div className="gf-form-group">
-          <div className="gf-form">
+        <Stack direction="column" gap={1.5}>
+          <div>
             <table className="filter-table form-inline">
               <thead>
                 <tr>
@@ -73,29 +68,27 @@ class BaseUserSessions extends PureComponent<Props, State> {
                   sessions.map((session, index) => (
                     <tr key={`${session.id}-${index}`}>
                       <td>{session.isActive ? 'Now' : session.seenAt}</td>
-                      <td>{i18nDate(session.createdAt, { dateStyle: 'long' })}</td>
+                      <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
-                        <div className="pull-right">
-                          {canLogout && (
-                            <ConfirmButton
-                              confirmText="Confirm logout"
-                              confirmVariant="destructive"
-                              onConfirm={this.onSessionRevoke(session.id)}
-                              autoFocus
-                            >
-                              Force logout
-                            </ConfirmButton>
-                          )}
-                        </div>
+                        {canLogout && (
+                          <ConfirmButton
+                            confirmText="Confirm logout"
+                            confirmVariant="destructive"
+                            onConfirm={this.onSessionRevoke(session.id)}
+                          >
+                            Force logout
+                          </ConfirmButton>
+                        )}
                       </td>
                     </tr>
                   ))}
               </tbody>
             </table>
           </div>
-          <div className={logoutFromAllDevicesClass}>
+
+          <div>
             {canLogout && sessions.length > 0 && (
               <Button variant="secondary" onClick={this.showLogoutConfirmationModal} ref={this.forceAllLogoutButton}>
                 Force logout from all devices
@@ -110,8 +103,8 @@ class BaseUserSessions extends PureComponent<Props, State> {
               onDismiss={this.dismissLogoutConfirmationModal}
             />
           </div>
-        </div>
-      </>
+        </Stack>
+      </div>
     );
   }
 }

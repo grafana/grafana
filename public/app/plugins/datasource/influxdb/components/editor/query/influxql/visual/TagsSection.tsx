@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 
@@ -10,8 +8,8 @@ import { toSelectableValue } from '../utils/toSelectableValue';
 import { AddButton } from './AddButton';
 import { Seg } from './Seg';
 
-type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '=~' | '!~';
-const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '=~', '!~'];
+type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '>=' | '<=' | '=~' | '!~' | 'Is' | 'Is Not';
+const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '>=', '<=', '=~', '!~', 'Is', 'Is Not'];
 
 type KnownCondition = 'AND' | 'OR';
 const knownConditions: KnownCondition[] = ['AND', 'OR'];

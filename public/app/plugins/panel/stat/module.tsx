@@ -1,5 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
-import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from '@grafana/schema';
+import {
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  PercentChangeColorMode,
+} from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
 import { statPanelChangedHandler } from './StatMigrations';
@@ -17,22 +23,36 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
     addOrientationOption(builder, mainCategory);
     commonOptionsBuilder.addTextSizeOptions(builder);
 
-    builder.addSelect({
-      path: 'textMode',
-      name: 'Text mode',
-      description: 'Control if name and value is displayed or just name',
-      category: mainCategory,
-      settings: {
-        options: [
-          { value: BigValueTextMode.Auto, label: 'Auto' },
-          { value: BigValueTextMode.Value, label: 'Value' },
-          { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
-          { value: BigValueTextMode.Name, label: 'Name' },
-          { value: BigValueTextMode.None, label: 'None' },
-        ],
-      },
-      defaultValue: defaultOptions.textMode,
-    });
+    builder
+      .addSelect({
+        path: 'textMode',
+        name: 'Text mode',
+        description: 'Control if name and value is displayed or just name',
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: BigValueTextMode.Auto, label: 'Auto' },
+            { value: BigValueTextMode.Value, label: 'Value' },
+            { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
+            { value: BigValueTextMode.Name, label: 'Name' },
+            { value: BigValueTextMode.None, label: 'None' },
+          ],
+        },
+        defaultValue: defaultOptions.textMode,
+      })
+      .addRadio({
+        path: 'wideLayout',
+        name: 'Wide layout',
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: true, label: 'On' },
+            { value: false, label: 'Off' },
+          ],
+        },
+        defaultValue: defaultOptions.wideLayout,
+        showIf: (config) => config.textMode === BigValueTextMode.ValueAndName,
+      });
 
     builder
       .addSelect({
@@ -73,6 +93,27 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
             { value: BigValueJustifyMode.Center, label: 'Center' },
           ],
         },
+      })
+      .addBooleanSwitch({
+        path: 'showPercentChange',
+        name: 'Show percent change',
+        defaultValue: defaultOptions.showPercentChange,
+        category: mainCategory,
+        showIf: (config) => !config.reduceOptions.values,
+      })
+      .addSelect({
+        path: 'percentChangeColorMode',
+        name: 'Percent change color mode',
+        defaultValue: defaultOptions.percentChangeColorMode,
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: PercentChangeColorMode.Standard, label: 'Standard' },
+            { value: PercentChangeColorMode.Inverted, label: 'Inverted' },
+            { value: PercentChangeColorMode.SameAsValue, label: 'Same as Value' },
+          ],
+        },
+        showIf: (config) => config.showPercentChange,
       });
   })
   .setNoPadding()

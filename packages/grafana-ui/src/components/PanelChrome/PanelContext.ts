@@ -1,4 +1,4 @@
-import React from 'react';
+import { createContext, useContext } from 'react';
 
 import {
   EventBusSrv,
@@ -6,7 +6,6 @@ import {
   DashboardCursorSync,
   AnnotationEventUIModel,
   ThresholdsConfig,
-  SplitOpen,
   CoreApp,
   DataFrame,
   DataLinkPostProcessor,
@@ -14,7 +13,7 @@ import {
 
 import { AdHocFilterItem } from '../Table/types';
 
-import { SeriesVisibilityChangeMode } from './types';
+import { OnSelectRangeCallback, SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {
@@ -45,6 +44,12 @@ export interface PanelContext {
   onAnnotationDelete?: (id: string) => void;
 
   /**
+   * Called when a user selects an area on the panel, if defined will override the default behavior of the panel,
+   * which is to update the time range
+   */
+  onSelectRange?: OnSelectRangeCallback;
+
+  /**
    * Used from visualizations like Table to add ad-hoc filters from cell values
    */
   onAddAdHocFilter?: (item: AdHocFilterItem) => void;
@@ -70,13 +75,6 @@ export interface PanelContext {
    */
   onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 
-  /**
-   * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
-   * For example TimeSeries panel.
-   * @deprecated will be removed in the future. It's not needed as visualization can just field.getLinks now
-   */
-  onSplitOpen?: SplitOpen;
-
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;
 
@@ -101,7 +99,7 @@ export interface PanelContext {
   dataLinkPostProcessor?: DataLinkPostProcessor;
 }
 
-export const PanelContextRoot = React.createContext<PanelContext>({
+export const PanelContextRoot = createContext<PanelContext>({
   eventsScope: 'global',
   eventBus: new EventBusSrv(),
 });
@@ -114,4 +112,4 @@ export const PanelContextProvider = PanelContextRoot.Provider;
 /**
  * @alpha
  */
-export const usePanelContext = () => React.useContext(PanelContextRoot);
+export const usePanelContext = () => useContext(PanelContextRoot);

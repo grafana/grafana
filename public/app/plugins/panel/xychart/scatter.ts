@@ -1,4 +1,3 @@
-import { MutableRefObject } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -31,7 +30,7 @@ import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { DEFAULT_POINT_SIZE } from './config';
 import { isGraphable } from './dims';
 import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
-import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
+import { DimensionValues, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
   error?: string;
@@ -42,20 +41,13 @@ export interface ScatterPanelInfo {
 /**
  * This is called when options or structure rev changes
  */
-export function prepScatter(
-  options: Options,
-  getData: () => DataFrame[],
-  theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
-  onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
-): ScatterPanelInfo {
+export function prepScatter(options: Options, getData: () => DataFrame[], theme: GrafanaTheme2): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
 
   try {
     series = prepSeries(options, getData());
-    builder = prepConfig(getData, series, theme, ttip, onUPlotClick, isToolTipOpen);
+    builder = prepConfig(getData, series, theme);
   } catch (e) {
     let errorMsg = 'Unknown error in prepScatter';
     if (typeof e === 'string') {
@@ -224,12 +216,16 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
       }
 
       for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+        // When a frame filter is applied, only include matching frame index
+        if (series.frame !== undefined && series.frame !== frameIndex) {
+          continue;
+        }
         const frame = frames[frameIndex];
-        const xIndex = findFieldIndex(frame, series.x);
+        const xIndex = findFieldIndex(series.x, frame, frames);
 
         if (xIndex != null) {
           // TODO: this should find multiple y fields
-          const yIndex = findFieldIndex(frame, series.y);
+          const yIndex = findFieldIndex(series.y, frame, frames);
 
           if (yIndex == null) {
             throw 'Y must be in the same frame as X';
@@ -237,9 +233,9 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
 
           const dims: Dims = {
             pointColorFixed: series.pointColor?.fixed,
-            pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
+            pointColorIndex: findFieldIndex(series.pointColor?.field, frame, frames),
             pointSizeConfig: series.pointSize,
-            pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
+            pointSizeIndex: findFieldIndex(series.pointSize?.field, frame, frames),
           };
           scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
         }
@@ -255,7 +251,7 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
   const frame = frames[frameIndex];
   const numericIndices: number[] = [];
 
-  let xIndex = findFieldIndex(frame, dims.x);
+  let xIndex = findFieldIndex(dims.x, frame, frames);
   for (let i = 0; i < frame.fields.length; i++) {
     if (isGraphable(frame.fields[i])) {
       if (xIndex == null || i === xIndex) {
@@ -294,15 +290,7 @@ interface DrawBubblesOpts {
   };
 }
 
-//const prepConfig: UPlotConfigPrepFnXY<Options> = ({ frames, series, theme }) => {
-const prepConfig = (
-  getData: () => DataFrame[],
-  scatterSeries: ScatterSeries[],
-  theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
-  onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
-) => {
+const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], theme: GrafanaTheme2) => {
   let qt: Quadtree;
   let hRect: Rect | null;
 
@@ -393,7 +381,9 @@ const prepConfig = (
               }
 
               if (showPoints) {
-                u.ctx.moveTo(cx + size / 2, cy);
+                // if pointHints.fixed? don't recalc size
+                // if pointColor has 0 opacity, draw as single path (assuming all strokes are alpha 1)
+
                 u.ctx.beginPath();
                 u.ctx.arc(cx, cy, size / 2, 0, deg360);
 
@@ -518,65 +508,7 @@ const prepConfig = (
     },
   });
 
-  const clearPopupIfOpened = () => {
-    if (isToolTipOpen.current) {
-      ttip(undefined);
-      if (onUPlotClick) {
-        onUPlotClick();
-      }
-    }
-  };
-
-  let ref_parent: HTMLElement | null = null;
-
-  // clip hover points/bubbles to plotting area
-  builder.addHook('init', (u, r) => {
-    u.over.style.overflow = 'hidden';
-    ref_parent = u.root.parentElement;
-
-    if (onUPlotClick) {
-      ref_parent?.addEventListener('click', onUPlotClick);
-    }
-  });
-
-  builder.addHook('destroy', (u) => {
-    if (onUPlotClick) {
-      ref_parent?.removeEventListener('click', onUPlotClick);
-      clearPopupIfOpened();
-    }
-  });
-
-  let rect: DOMRect;
-
-  // rect of .u-over (grid area)
-  builder.addHook('syncRect', (u, r) => {
-    rect = r;
-  });
-
-  builder.addHook('setLegend', (u) => {
-    if (u.cursor.idxs != null) {
-      for (let i = 0; i < u.cursor.idxs.length; i++) {
-        const sel = u.cursor.idxs[i];
-        if (sel != null && !isToolTipOpen.current) {
-          ttip({
-            scatterIndex: i - 1,
-            xIndex: sel,
-            pageX: rect.left + u.cursor.left!,
-            pageY: rect.top + u.cursor.top!,
-          });
-          return; // only show the first one
-        }
-      }
-    }
-
-    if (!isToolTipOpen.current) {
-      ttip(undefined);
-    }
-  });
-
   builder.addHook('drawClear', (u) => {
-    clearPopupIfOpened();
-
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
@@ -595,8 +527,8 @@ const prepConfig = (
   const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
 
-  let config = xField.config;
-  let customConfig = config.custom;
+  let fieldConfig = xField.config;
+  let customConfig = fieldConfig.custom;
   let scaleDistr = customConfig?.scaleDistribution;
 
   builder.addScale({
@@ -607,12 +539,12 @@ const prepConfig = (
     distribution: scaleDistr?.type,
     log: scaleDistr?.log,
     linearThreshold: scaleDistr?.linearThreshold,
-    min: config.min,
-    max: config.max,
+    min: fieldConfig.min,
+    max: fieldConfig.max,
     softMin: customConfig?.axisSoftMin,
     softMax: customConfig?.axisSoftMax,
     centeredZero: customConfig?.axisCenteredZero,
-    decimals: config.decimals,
+    decimals: fieldConfig.decimals,
   });
 
   // why does this fall back to '' instead of null or undef?
@@ -693,7 +625,7 @@ const prepConfig = (
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used (above)
-      lineColor: lineColor as string,
+      lineColor: alpha('' + lineColor, 1),
       fillColor: alpha(pointColor, 0.5),
       show: !customConfig.hideFrom?.viz,
     });

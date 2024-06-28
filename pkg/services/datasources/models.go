@@ -23,7 +23,7 @@ const (
 	DS_TEMPO          = "tempo"
 	DS_ZIPKIN         = "zipkin"
 	DS_MYSQL          = "mysql"
-	DS_POSTGRES       = "postgres"
+	DS_POSTGRES       = "grafana-postgresql-datasource"
 	DS_MSSQL          = "mssql"
 	DS_ACCESS_DIRECT  = "direct"
 	DS_ACCESS_PROXY   = "proxy"
@@ -62,6 +62,10 @@ type DataSource struct {
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
 	UID               string            `json:"uid" xorm:"uid"`
+	// swagger:ignore
+	APIVersion string `json:"apiVersion" xorm:"api_version"`
+	// swagger:ignore
+	IsPrunable bool `xorm:"is_prunable"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -71,45 +75,55 @@ type TeamHTTPHeadersJSONData struct {
 	TeamHTTPHeaders TeamHTTPHeaders `json:"teamHttpHeaders"`
 }
 
-type TeamHTTPHeaders map[string][]TeamHTTPHeader
+type TeamHTTPHeaders struct {
+	Headers        TeamHeaders `json:"headers"`
+	RestrictAccess bool        `json:"restrictAccess"`
+}
+
+type TeamHeaders map[string][]TeamHTTPHeader
 
 type TeamHTTPHeader struct {
 	Header string `json:"header"`
 	Value  string `json:"value"`
 }
 
-func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
+func (ds DataSource) TeamHTTPHeaders() (*TeamHTTPHeaders, error) {
 	return GetTeamHTTPHeaders(ds.JsonData)
 }
 
-func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
-	teamHTTPHeadersJSON := TeamHTTPHeaders{}
-	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
-		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
-		if err != nil {
-			return nil, err
-		}
-		for teamID, headers := range teamHTTPHeadersJSON {
-			if teamID == "" {
-				return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
-			}
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
+	teamHTTPHeaders := &TeamHTTPHeaders{}
+	if jsonData == nil {
+		return nil, nil
+	}
+	if _, ok := jsonData.CheckGet("teamHttpHeaders"); !ok {
+		return nil, nil
+	}
 
-			for _, header := range headers {
-				if header.Header == "" {
-					return nil, errors.New("header name is missing or empty")
-				}
-				if header.Value == "" {
-					return nil, errors.New("header value is missing or empty")
-				}
+	teamHTTPHeadersJSON, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(teamHTTPHeadersJSON, teamHTTPHeaders)
+	if err != nil {
+		return nil, err
+	}
+	for teamID, headers := range teamHTTPHeaders.Headers {
+		if teamID == "" {
+			return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
+		}
+
+		for _, header := range headers {
+			if header.Header == "" {
+				return nil, errors.New("header name is missing or empty")
+			}
+			if header.Value == "" {
+				return nil, errors.New("header value is missing or empty")
 			}
 		}
 	}
 
-	return teamHTTPHeadersJSON, nil
+	return teamHTTPHeaders, nil
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
@@ -138,7 +152,7 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name            string            `json:"name" binding:"Required"`
+	Name            string            `json:"name"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
@@ -151,6 +165,10 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
+	// swagger:ignore
+	APIVersion string `json:"apiVersion"`
+	// swagger:ignore
+	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -175,6 +193,10 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
+	// swagger:ignore
+	APIVersion string `json:"apiVersion"`
+	// swagger:ignore
+	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`
@@ -222,11 +244,6 @@ type GetDataSourcesByTypeQuery struct {
 	OrgID    int64 // optional: filter by org_id
 	Type     string
 	AliasIDs []string
-}
-
-type GetDefaultDataSourceQuery struct {
-	OrgID int64
-	User  *user.SignedInUser
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

@@ -1,20 +1,20 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
-import { stylesFactory } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 export interface Props {
   className?: string;
 }
 
 export const FullWidthButtonContainer = ({ className, children }: React.PropsWithChildren<Props>) => {
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   return <div className={cx(styles, className)}>{children}</div>;
 };
 
-const getStyles = stylesFactory(() => {
-  return css({
+const getStyles = () =>
+  css({
     display: 'flex',
 
     button: {
@@ -31,4 +31,3 @@ const getStyles = stylesFactory(() => {
       textAlign: 'center',
     },
   });
-});

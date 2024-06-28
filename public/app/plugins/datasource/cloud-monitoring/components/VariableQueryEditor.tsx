@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -66,7 +66,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
     const metricDescriptors = await this.props.datasource.getMetricTypes(
       this.props.query.projectName || this.props.datasource.getDefaultProject()
     );
-    const services = extractServicesFromMetricDescriptors(metricDescriptors).map((m: any) => ({
+    const services = extractServicesFromMetricDescriptors(metricDescriptors).map((m) => ({
       value: m.service,
       label: m.serviceShortName,
     }));
@@ -87,7 +87,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
 
     const sloServices = await this.props.datasource.getSLOServices(projectName);
 
-    const state: any = {
+    const state = {
       services,
       selectedService,
       metricTypes,
@@ -108,7 +108,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
   };
 
   async onQueryTypeChange(queryType: string) {
-    const state: any = {
+    const state = {
       selectedQueryType: queryType,
       ...(await this.getLabels(this.state.selectedMetricType, this.state.projectName, queryType)),
     };
@@ -148,7 +148,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
       getTemplateSrv().replace(this.state.selectedMetricType),
       getTemplateSrv().replace(service)
     );
-    const state: any = {
+    const state = {
       selectedService: service,
       metricTypes,
       selectedMetricType,
@@ -158,9 +158,9 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
   }
 
   async onMetricTypeChange(metricType: string) {
-    const state: any = {
+    const state = {
       selectedMetricType: metricType,
-      ...(await this.getLabels(metricType, this.state.projectName)),
+      ...(await this.getLabels(getTemplateSrv().replace(metricType), this.state.projectName)),
     };
     this.setState(state, () => this.onPropsChange());
   }
@@ -195,7 +195,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
       expanded: false,
       options: getTemplateSrv()
         .getVariables()
-        .map((v: any) => ({
+        .map((v) => ({
           value: `$${v.name}`,
           label: `$${v.name}`,
         })),
@@ -278,6 +278,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             />
           </>
         );
+      case MetricFindQueryTypes.Services:
       case MetricFindQueryTypes.SLOServices:
         return (
           <>

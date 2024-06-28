@@ -1,30 +1,30 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Button, Modal } from '@grafana/ui';
 
 interface UnsavedChangesModalProps {
+  message: string;
   onDiscard: () => void;
   onCancel: () => void;
   onSave: () => void;
 }
 
-export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel }: UnsavedChangesModalProps) => {
+export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel, message }: UnsavedChangesModalProps) => {
   return (
     <Modal
       isOpen={true}
-      title="Unsaved changes to correlation"
+      title={`Unsaved changes to correlation`}
       onDismiss={onCancel}
       icon="exclamation-triangle"
-      className={css({ width: '500px' })}
+      className={css({ width: '600px' })}
     >
-      <h5>Do you want to save changes to this Correlation?</h5>
+      <h5>{message}</h5>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onCancel} fill="outline">
           Cancel
         </Button>
         <Button variant="destructive" onClick={onDiscard}>
-          Discard correlation
+          Continue without saving
         </Button>
         <Button variant="primary" onClick={onSave}>
           Save correlation

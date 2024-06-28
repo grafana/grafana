@@ -1,23 +1,22 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Icon, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { Icon, Text, Toggletip, useStyles2, Stack } from '@grafana/ui';
 
 interface NeedHelpInfoProps {
   contentText: string | JSX.Element;
   externalLink?: string;
   linkText?: string;
-  title: string;
+  title?: string;
 }
-export function NeedHelpInfo({ contentText, externalLink, linkText, title }: NeedHelpInfoProps) {
+export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Need help?' }: NeedHelpInfoProps) {
   const styles = useStyles2(getStyles);
+
   return (
     <Toggletip
       content={<div className={styles.mutedText}>{contentText}</div>}
       title={
-        <Stack gap={1} direction="row">
+        <Stack gap={0.5} direction="row" alignItems="center">
           <Icon name="question-circle" />
           {title}
         </Stack>
@@ -49,12 +48,12 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title }: Nee
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  mutedText: css`
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.size.sm};
-  `,
-  helpInfo: css`
-    cursor: pointer;
-    text-decoration: underline;
-  `,
+  mutedText: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.sm,
+  }),
+  helpInfo: css({
+    cursor: 'pointer',
+    textDecoration: 'underline',
+  }),
 });

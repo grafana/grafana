@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 
-import { AnnotationQuery, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@grafana/data';
+import { DashboardLink } from '@grafana/schema';
 import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
-import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
-import { DashboardLink } from '../../state/DashboardModel';
 
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';
@@ -22,7 +22,7 @@ interface OwnProps extends Themeable2 {
 }
 
 interface ConnectedProps {
-  variables: VariableModel[];
+  variables: TypedVariableModel[];
 }
 
 interface DispatchProps {}
@@ -51,10 +51,6 @@ class SubMenuUnConnected extends PureComponent<Props> {
     const { dashboard, variables, links, annotations, theme } = this.props;
 
     const styles = getStyles(theme);
-
-    if (!dashboard.isSubMenuVisible()) {
-      return null;
-    }
 
     const readOnlyVariables = dashboard.meta.isSnapshot ?? false;
 
@@ -85,20 +81,19 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    formStyles: css`
-      display: flex;
-      flex-wrap: wrap;
-      display: contents;
-    `,
-    submenu: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      align-items: flex-start;
-      gap: ${theme.spacing(1)} ${theme.spacing(2)};
-      padding: 0 0 ${theme.spacing(1)} 0;
-    `,
+    formStyles: css({
+      display: 'contents',
+      flexWrap: 'wrap',
+    }),
+    submenu: css({
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignContent: 'flex-start',
+      alignItems: 'flex-start',
+      gap: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      padding: `0 0 ${theme.spacing(1)} 0`,
+    }),
     spacer: css({
       flexGrow: 1,
     }),

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useId, useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
@@ -134,7 +134,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
           getTagKeyOptions={getMemoizedTagKeys}
           getTagValueOptions={(key) =>
             withTemplateVariableOptions(
-              allTagKeys.then((keys) => getTagValues(datasource, filterTags(query.tags ?? [], keys), key)),
+              allTagKeys.then((keys) => getTagValues(datasource, filterTags(query.tags ?? [], keys), key, measurement)),
               wrapRegex
             )
           }

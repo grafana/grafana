@@ -3,6 +3,7 @@ import { SyntaxNode } from '@lezer/common';
 import {
   addLabelFormatToQuery,
   addLabelToQuery,
+  addLineFilter,
   addNoPipelineErrorToQuery,
   addParserToQuery,
   NodePosition,
@@ -10,6 +11,7 @@ import {
   removeCommentsFromQuery,
   removeLabelFromQuery,
 } from './modifyQuery';
+import { LabelType } from './types';
 
 describe('addLabelToQuery()', () => {
   it.each`
@@ -41,6 +43,8 @@ describe('addLabelToQuery()', () => {
     ${'{foo="bar"} | logfmt | x="y"'}                                                                                                 | ${'query with parser and label filter'}                                        | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | x="y" | bar=`baz`'}
     ${'rate({foo="bar"} | logfmt [5m])'}                                                                                              | ${'metric query with parser'}                                                  | ${'bar'} | ${'='}   | ${'baz'}       | ${'rate({foo="bar"} | logfmt | bar=`baz` [5m])'}
     ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | line_format "{{.status}}" [5m]))'}                                           | ${'metric query with parser'}                                                  | ${'bar'} | ${'='}   | ${'baz'}       | ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | bar=`baz` | line_format "{{.status}}" [5m]))'}
+    ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | label_format process="{{.process}}" [5m]))'}                                 | ${'metric query with parser and label format'}                                 | ${'bar'} | ${'='}   | ${'baz'}       | ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | label_format process="{{.process}}" | bar=`baz` [5m]))'}
+    ${'{foo="bar"} | logfmt | x="y" | label_format process="{{.process}}"'}                                                           | ${'query with parser and label format'}                                        | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | x="y" | label_format process="{{.process}}" | bar=`baz`'}
     ${'{foo="bar"} | logfmt | line_format "{{.status}}"'}                                                                             | ${'do not add filter to line_format expressions in query with parser'}         | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | bar=`baz` | line_format "{{.status}}"'}
     ${'{foo="bar"} | logfmt | line_format "{{status}}"'}                                                                              | ${'do not add filter to line_format expressions in query with parser'}         | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | bar=`baz` | line_format "{{status}}"'}
     ${'{}'}                                                                                                                           | ${'query without stream selector'}                                             | ${'bar'} | ${'='}   | ${'baz'}       | ${'{bar="baz"}'}
@@ -73,16 +77,40 @@ describe('addLabelToQuery()', () => {
     }
   );
 
-  it('should always add label as labelFilter if force flag is given', () => {
-    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', true)).toEqual(
+  it('should always add label as labelFilter if label type is parsed', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
       '{foo="bar"} | forcedLabel=`value`'
     );
   });
 
-  it('should always add label as labelFilter if force flag is given with a parser', () => {
-    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', true)).toEqual(
+  it('should always add label as labelFilter if label type is parsed with parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
       '{foo="bar"} | logfmt | forcedLabel=`value`'
     );
+  });
+
+  it('should always add label as labelFilter if label type is structured', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | forcedLabel=`value`'
+    );
+  });
+
+  it('should always add label as labelFilter if label type is structured with parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | logfmt | forcedLabel=`value`'
+    );
+  });
+
+  it('should add label as labelFilter to multiple places if label is StructuredMetadata', () => {
+    expect(
+      addLabelToQuery(
+        'rate({foo="bar"} [$__auto]) / rate({foo="bar"} [$__auto])',
+        'forcedLabel',
+        '=',
+        'value',
+        LabelType.StructuredMetadata
+      )
+    ).toEqual('rate({foo="bar"} | forcedLabel=`value` [$__auto]) / rate({foo="bar"} | forcedLabel=`value` [$__auto])');
   });
 });
 
@@ -304,5 +332,24 @@ describe('removeLabelFromQuery', () => {
     ['{foo="bar"} | logfmt | job!=`grafana`', 'grafana', '{foo="bar"} | logfmt'],
   ])('should remove a negative label matcher from the query', (query: string, value: string, expected: string) => {
     expect(removeLabelFromQuery(query, 'job', '!=', value)).toBe(expected);
+  });
+});
+
+describe.each(['|=', '!='])('addLineFilter type %s', (op: string) => {
+  it('Adds a line filter to a log query', () => {
+    expect(addLineFilter('{place="earth"}', undefined, op)).toBe(`{place="earth"} ${op} \`\``);
+  });
+  it('Adds a line filter with a value to a log query', () => {
+    expect(addLineFilter('{place="earth"}', 'content', op)).toBe(`{place="earth"} ${op} \`content\``);
+  });
+  it('Adds a line filter to a metric query', () => {
+    expect(addLineFilter('avg_over_time({place="earth"} [1m])', undefined, op)).toBe(
+      `avg_over_time({place="earth"} ${op} \`\` [1m])`
+    );
+  });
+  it('Adds a line filter with a value to a metric query', () => {
+    expect(addLineFilter('avg_over_time({place="earth"} [1m])', 'content', op)).toBe(
+      `avg_over_time({place="earth"} ${op} \`content\` [1m])`
+    );
   });
 });

@@ -1,8 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
-import React from 'react';
 
+import { getMockInfluxDS, getMockDSInstanceSettings } from '../../../../../__mocks__/datasource';
 import InfluxDatasource from '../../../../../datasource';
-import { getMockInfluxDS, getMockDSInstanceSettings } from '../../../../../mocks';
 import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
@@ -58,8 +57,8 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     await assertEditor(
       query,
       'FROM[default][select measurement]WHERE[+]' +
-        'SELECT[field]([value])[mean]()[+]' +
-        'GROUP BY[time]([$__interval])[fill]([null])[+]' +
+        'SELECTfield([value])mean()[+]' +
+        'GROUP BYtime([$__interval])fill([null])[+]' +
         'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +
         'LIMIT[(optional)]SLIMIT[(optional)]' +
         'FORMAT AS[time_series]ALIAS[Naming pattern]'
@@ -75,8 +74,8 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     await assertEditor(
       query,
       'FROM[default][select measurement]WHERE[+]' +
-        'SELECT[field]([value])[mean]()[+]' +
-        'GROUP BY[time]([$__interval])[fill]([null])[+]' +
+        'SELECTfield([value])mean()[+]' +
+        'GROUP BYtime([$__interval])fill([null])[+]' +
         'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +
         'LIMIT[(optional)]SLIMIT[(optional)]' +
         'FORMAT AS[table]'
@@ -154,9 +153,9 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     await assertEditor(
       query,
       'FROM[default][cpu]WHERE[cpu][=][cpu1][AND][cpu][<][cpu3][+]' +
-        'SELECT[field]([usage_idle])[mean]()[+]' +
-        '[field]([usage_guest])[median]()[holt_winters_with_fit]([10],[2])[+]' +
-        'GROUP BY[time]([$__interval])[tag]([cpu])[tag]([host])[fill]([null])[+]' +
+        'SELECTfield([usage_idle])mean()[+]' +
+        'field([usage_guest])median()holt_winters_with_fit([10],[2])[+]' +
+        'GROUP BYtime([$__interval])tag([cpu])tag([host])fill([null])[+]' +
         'TIMEZONE[UTC]ORDER BY TIME[DESC]' +
         'LIMIT[4]SLIMIT[5]' +
         'FORMAT AS[logs]ALIAS[all i as]'

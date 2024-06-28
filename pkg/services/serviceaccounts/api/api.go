@@ -7,11 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,6 +28,7 @@ type ServiceAccountsAPI struct {
 	RouterRegister       routing.RouteRegister
 	log                  log.Logger
 	permissionService    accesscontrol.ServiceAccountPermissionsService
+	isExternalSAEnabled  bool
 }
 
 func NewServiceAccountsAPI(
@@ -36,6 +38,7 @@ func NewServiceAccountsAPI(
 	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
+	features featuremgmt.FeatureToggles,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		cfg:                  cfg,
@@ -45,6 +48,7 @@ func NewServiceAccountsAPI(
 		RouterRegister:       routerRegister,
 		log:                  log.New("serviceaccounts.api"),
 		permissionService:    permissionService,
+		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 }
 
@@ -143,7 +147,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 
 	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
 	metadata := api.getAccessControlMetadata(ctx, map[string]bool{saIDString: true})
-	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
+	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
 
 	tokens, err := api.service.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
@@ -194,7 +198,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 
 	saIDString := strconv.FormatInt(resp.Id, 10)
 	metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
-	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault("", resp.Name)
+	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", resp.Name)
 	resp.AccessControl = metadata[saIDString]
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -265,9 +269,13 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	// its okay that it fails, it is only filtering that might be weird, but to safe quard against any weird incoming query param
 	onlyWithExpiredTokens := c.QueryBool("expiredTokens")
 	onlyDisabled := c.QueryBool("disabled")
+	onlyExternal := c.QueryBool("external")
 	filter := serviceaccounts.FilterIncludeAll
 	if onlyWithExpiredTokens {
 		filter = serviceaccounts.FilterOnlyExpiredTokens
+	}
+	if api.isExternalSAEnabled && onlyExternal {
+		filter = serviceaccounts.FilterOnlyExternal
 	}
 	if onlyDisabled {
 		filter = serviceaccounts.FilterOnlyDisabled
@@ -288,7 +296,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	saIDs := map[string]bool{}
 	for i := range serviceAccountSearch.ServiceAccounts {
 		sa := serviceAccountSearch.ServiceAccounts[i]
-		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault("", sa.Name)
+		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", sa.Name)
 
 		saIDString := strconv.FormatInt(sa.Id, 10)
 		saIDs[saIDString] = true

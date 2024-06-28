@@ -52,6 +52,10 @@ load(
     "scripts/drone/pipelines/verify_starlark.star",
     "verify_starlark",
 )
+load(
+    "scripts/drone/pipelines/verify_storybook.star",
+    "verify_storybook",
+)
 
 ver_mode = "pr"
 trigger = {
@@ -81,6 +85,12 @@ def pr_pipelines():
             ),
             ver_mode,
         ),
+        verify_storybook(
+            get_pr_trigger(
+                exclude_paths = ["pkg/**", "packaging/**", "go.sum", "go.mod"],
+            ),
+            ver_mode,
+        ),
         test_frontend(
             get_pr_trigger(
                 exclude_paths = ["pkg/**", "packaging/**", "go.sum", "go.mod"],
@@ -96,6 +106,7 @@ def pr_pipelines():
         test_backend(
             get_pr_trigger(
                 include_paths = [
+                    "Makefile",
                     "pkg/**",
                     "packaging/**",
                     ".drone.yml",
@@ -103,6 +114,7 @@ def pr_pipelines():
                     "go.sum",
                     "go.mod",
                     "public/app/plugins/**/plugin.json",
+                    "docs/sources/setup-grafana/configure-grafana/feature-toggles/**",
                     "devenv/**",
                 ],
             ),
@@ -111,6 +123,8 @@ def pr_pipelines():
         lint_backend_pipeline(
             get_pr_trigger(
                 include_paths = [
+                    ".golangci.toml",
+                    "Makefile",
                     "pkg/**",
                     "packaging/**",
                     ".drone.yml",
@@ -142,7 +156,6 @@ def pr_pipelines():
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
         swagger_gen(
-            get_pr_trigger(include_paths = ["pkg/**"]),
             ver_mode,
         ),
         integration_benchmarks(

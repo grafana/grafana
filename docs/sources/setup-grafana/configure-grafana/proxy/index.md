@@ -9,11 +9,11 @@ labels:
     - enterprise
     - oss
 menuTitle: Configure data source proxy
-title: Configure a data source connection proxy
+title: Configure a data source SOCKS5 connection proxy
 weight: 1110
 ---
 
-# Configure a data source connection proxy
+# Configure a data source SOCKS5 connection proxy
 
 Grafana provides support for proxying data source connections through a Secure Socks5 Tunnel. This enables you to securely connect to data sources hosted in a different network than Grafana.
 
@@ -32,14 +32,15 @@ To complete this task, you must first deploy a socks proxy server that supports 
 
 1. For Grafana to send data source connections to the socks5 server, use the following table to configure the `secure_socks_datasource_proxy` section of the `config.ini`:
 
-   | Key             | Description                                | Example                         |
-   | --------------- | ------------------------------------------ | ------------------------------- |
-   | `enabled`       | Enable this feature in Grafana             | true                            |
-   | `root_ca_cert`  | The file path of the root ca cert          | /etc/ca.crt                     |
-   | `client_key`    | The file path of the client private key    | /etc/client.key                 |
-   | `client_cert`   | The file path of the client public key     | /etc/client.crt                 |
-   | `server_name`   | The domain name of the proxy, used for SNI | proxy.grafana.svc.cluster.local |
-   | `proxy_address` | the address of the proxy                   | localhost:9090                  |
+   | Key              | Description                                | Example                         |
+   | ---------------- | ------------------------------------------ | ------------------------------- |
+   | `enabled`        | Enable this feature in Grafana             | true                            |
+   | `root_ca_cert`   | The file path of the root ca cert          | /etc/ca.crt                     |
+   | `client_key`     | The file path of the client private key    | /etc/client.key                 |
+   | `client_cert`    | The file path of the client public key     | /etc/client.crt                 |
+   | `server_name`    | The domain name of the proxy, used for SNI | proxy.grafana.svc.cluster.local |
+   | `proxy_address`  | The address of the proxy                   | localhost:9090                  |
+   | `allow_insecure` | Disable TLS in the socks proxy             | false                           |
 
 1. Set up a data source and configure it to send data source connections through the proxy.
 

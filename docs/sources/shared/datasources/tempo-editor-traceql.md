@@ -25,13 +25,17 @@ To learn more about how to query by TraceQL, refer to the [TraceQL documentation
 
 The TraceQL query editor, located on the **Explore** > **TraceQL** tab in Grafana, lets you search by trace ID and write TraceQL queries using autocomplete.
 
-![The TraceQL query editor](/static/img/docs/tempo/screenshot-traceql-query-editor-v10.png)
+![The TraceQL query editor](/media/docs/tempo/traceql/screenshot-traceql-query-editor-v10.png)
 
 ## Enable the query editor
 
 This feature is automatically available in Grafana 10 (and newer) and Grafana Cloud.
 
 To use the TraceQL query editor in self-hosted Grafana 9.3.2 and older, you need to [enable the `traceqlEditor` feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+
+If trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces database with a gateway (e.g., nginx) in front of it from your hosted Grafana, that gateway (e.g., nginx) must allow gRPC connections. If it does not, streaming will not work and queries will fail to return results.
+
+If you cannot configure your gateway to allow gRPC, open a support escalation to request streaming query results be disabled in your hosted Grafana.
 
 ## Write TraceQL queries using the query editor
 
@@ -46,6 +50,10 @@ To access the query editor, follow these steps:
 1. Optional: Use the Time picker drop-down to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
 1. Once you have finished your query, select **Run query**.
 
+This video provides and example of creating a TraceQL query using the custom tag grouping.
+
+{{< youtube id="fraepWra00Y" >}}
+
 ## Query by TraceID
 
 To query a particular trace by its trace ID:
@@ -54,30 +62,46 @@ To query a particular trace by its trace ID:
 1. Enter the trace ID into the query field. For example: `41928b92edf1cdbe0ba6594baee5ae9`
 1. Click **Run query** or use the keyboard shortcut Shift + Enter.
 
-![Search for a trace ID using the TraceQL query editor](/static/img/docs/tempo/screenshot-traceql-editor-traceID.png)
+![Search for a trace ID using the TraceQL query editor](/media/docs/tempo/traceql/screenshot-traceql-editor-traceID.png)
 
 ## Use autocomplete to write queries
 
 You can use the query editor’s autocomplete suggestions to write queries.
 The editor detects span sets to provide relevant autocomplete options.
-It uses regular expressions (regex) to detect where it is inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from Tempo's API, depending on what is expected for the current situation.
+It uses regular expressions (regex) to detect where it's inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from Tempo's API, depending on what's expected for the current situation.
 
-![Query editor showing the auto-complete feature](/static/img/docs/tempo/screenshot-traceql-query-editor-auto-complete-v10.png)
+![Query editor showing the auto-complete feature](/media/docs/tempo/traceql/screenshot-traceql-query-editor-auto-complete-v10.png)
 
 To create a query using autocomplete, follow these steps:
 
-1. Use the steps above to access the query editor and begin your query.
+1. From the menu, choose **Explore**, select the desired Tempo data source, and navigate to the **TraceQL** tab.
 
 1. Enter your query. As you type your query, autocomplete suggestions appear as a drop-down. Each letter you enter refines the autocomplete options to match.
 
 1. Use your mouse or arrow keys to select any option you wish. When the desired option is highlighted, press Tab on your keyboard to add the selection to your query.
 
-1. Once your query is complete, select **Run query** to perform the query.
+1. Once your query is complete, select **Run query**.
 
 ## View query results
 
 Query results for both the editor and the builder are returned in a table. Selecting the Trace ID or Span ID provides more detailed information.
 
-![Query editor showing span results](/static/img/docs/tempo/screenshot-traceql-query-editor-results-v10.png)
+Selecting the trace ID from the returned results opens a trace diagram. Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram (the highlighted blue line).
 
-Selecting the trace ID from the returned results will open a trace diagram. Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram (above, the highlighted blue line).
+In the trace diagram, the bold text on the left side of each span indicates the service name, for example `mythical-requester: requester`, and it is hidden when subsequent spans have the same service name (nested spans).
+Each service has a color assigned to it, which is visible to the left of the name and timeline in the graph.
+Spans with the same color belong to the same service. The grey text to the right of the service name indicates the span name.
+
+![Query editor showing span results](/media/docs/tempo/traceql/screenshot-traceql-query-editor-results-v10.png)
+
+### Streaming results
+
+The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
+
+{{% admonition type="note" %}}
+To use this feature in Grafana OSS v10.1 and later, enable the `traceQLStreaming` feature toggle. This capability is enabled by default in Grafana Cloud.
+{{% /admonition %}}
+
+Streaming is available for both the **Search** and **TraceQL** query types, and you'll get immediate visibility of incoming traces on the results table.
+
+{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming-v2.mp4" >}}

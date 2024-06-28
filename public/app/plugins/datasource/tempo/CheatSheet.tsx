@@ -1,6 +1,5 @@
-import React from 'react';
-
 import { config, reportInteraction } from '@grafana/runtime';
+import { TextLink } from '@grafana/ui';
 
 export default function CheatSheet() {
   reportInteraction('grafana_traces_cheatsheet_clicked', {
@@ -9,19 +8,30 @@ export default function CheatSheet() {
   });
 
   return (
-    <div>
-      <h2 id="tempo-cheat-sheet">Tempo Cheat Sheet</h2>
+    <>
+      <h2>Tempo Cheat Sheet</h2>
       <p>
-        Tempo is a trace id lookup store. Enter a trace id in the above field and hit “Run Query” to retrieve your
-        trace. Tempo is generally paired with other datasources such as Loki or Prometheus to find traces.
+        <TextLink href={'https://grafana.com/docs/tempo/latest/'} external={true}>
+          Grafana Tempo
+        </TextLink>{' '}
+        is an open source, easy-to-use, and high-volume distributed tracing backend.
       </p>
       <p>
-        Here are some{' '}
-        <a href="https://grafana.com/docs/tempo/latest/guides/instrumentation/" target="blank">
-          instrumentation examples
-        </a>{' '}
-        to get you started with trace discovery through logs and metrics (exemplars).
+        Tempo implements{' '}
+        <TextLink href={'https://grafana.com/docs/tempo/latest/traceql'} external={true}>
+          TraceQL
+        </TextLink>
+        , a traces-first query language inspired by LogQL and PromQL. This query language allows users to precisely and
+        easily select spans and jump directly to the spans fulfilling the specified conditions.
       </p>
-    </div>
+      <p>
+        You can compose TraceQL queries using either the Search tab (the TraceQL query builder) or the TraceQL tab (the
+        TraceQL query editor). Both of these methods let you build queries and drill-down into result sets. (
+        <TextLink href={'https://grafana.com/docs/grafana/latest/datasources/tempo/query-editor/'} external={true}>
+          Learn more
+        </TextLink>
+        )
+      </p>
+    </>
   );
 }

@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, InfoBox, Portal, stylesFactory, useTheme2 } from '@grafana/ui';
+import { Button, InfoBox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
 
 interface Props {
@@ -10,9 +9,8 @@ interface Props {
 }
 
 export const TokenRevokedModal = (props: Props) => {
+  const styles = useStyles2(getStyles);
   const theme = useTheme2();
-
-  const styles = getStyles(theme);
   const modalStyles = getModalStyles(theme);
 
   const showMaxConcurrentSessions = Boolean(props.maxConcurrentSessions);
@@ -51,17 +49,15 @@ export const TokenRevokedModal = (props: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    infobox: css`
-      margin-bottom: 0;
-    `,
-    text: css`
-      margin: ${theme.spacing(1, 0, 2)};
-    `,
-    backdrop: css`
-      background-color: ${theme.colors.background.canvas};
-      opacity: 0.8;
-    `,
-  };
+const getStyles = (theme: GrafanaTheme2) => ({
+  infobox: css`
+    margin-bottom: 0;
+  `,
+  text: css`
+    margin: ${theme.spacing(1, 0, 2)};
+  `,
+  backdrop: css`
+    background-color: ${theme.colors.background.canvas};
+    opacity: 0.8;
+  `,
 });

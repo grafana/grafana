@@ -1,8 +1,5 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Select, SelectCommonProps, Text } from '@grafana/ui';
+import { Select, SelectCommonProps, Text, Stack } from '@grafana/ui';
 
 import {
   RECEIVER_META_KEY,
@@ -36,7 +33,7 @@ interface ReceiversProps {
 
 const ReceiversSummary = ({ receivers }: ReceiversProps) => {
   return (
-    <Stack direction="row" wrap={false}>
+    <Stack direction="row">
       {receivers.map((receiver, index) => (
         <Stack key={receiver.uid ?? index} direction="row" gap={0.5}>
           {receiver[RECEIVER_PLUGIN_META_KEY]?.icon && (

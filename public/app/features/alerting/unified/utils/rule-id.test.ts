@@ -46,7 +46,7 @@ describe('hashRulerRule', () => {
     const grafanaAlertDefinition: GrafanaRuleDefinition = {
       uid: RULE_UID,
       namespace_uid: 'namespace',
-      namespace_id: 0,
+      rule_group: 'my-group',
       title: 'my rule',
       condition: '',
       data: [],

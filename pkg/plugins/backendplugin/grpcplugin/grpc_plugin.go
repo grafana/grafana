@@ -19,6 +19,7 @@ type pluginClient interface {
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
 	backend.CallResourceHandler
+	backend.AdmissionHandler
 	backend.StreamHandler
 }
 
@@ -26,7 +27,7 @@ type grpcPlugin struct {
 	descriptor     PluginDescriptor
 	clientFactory  func() *plugin.Client
 	client         *plugin.Client
-	pluginClient   pluginClient
+	pluginClient   *ClientV2
 	logger         log.Logger
 	mutex          sync.RWMutex
 	decommissioned bool
@@ -35,13 +36,17 @@ type grpcPlugin struct {
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
-		return &grpcPlugin{
-			descriptor: descriptor,
-			logger:     logger,
-			clientFactory: func() *plugin.Client {
-				return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), logger, descriptor.versionedPlugins))
-			},
-		}, nil
+		return newGrpcPlugin(descriptor, logger, env), nil
+	}
+}
+
+func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, env func() []string) *grpcPlugin {
+	return &grpcPlugin{
+		descriptor: descriptor,
+		logger:     logger,
+		clientFactory: func() *plugin.Client {
+			return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), descriptor.skipHostEnvVars, logger, descriptor.versionedPlugins))
+		},
 	}
 }
 
@@ -194,4 +199,28 @@ func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamReques
 		return plugins.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
+}
+
+func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, request)
+}
+
+func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, request)
+}
+
+func (p *grpcPlugin) ConvertObject(ctx context.Context, request *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObject(ctx, request)
 }

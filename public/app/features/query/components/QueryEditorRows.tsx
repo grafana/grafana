@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent, ReactNode } from 'react';
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
@@ -34,6 +34,7 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -144,6 +145,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryCopied,
       onQueryRemoved,
       onQueryToggled,
+      queryRowWrapper,
     } = this.props;
 
     return (
@@ -158,7 +160,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                     ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
                     : undefined;
 
-                  return (
+                  const queryEditorRow = (
                     <QueryEditorRow
                       id={query.refId}
                       index={index}
@@ -180,6 +182,8 @@ export class QueryEditorRows extends PureComponent<Props> {
                       eventBus={eventBus}
                     />
                   );
+
+                  return queryRowWrapper ? queryRowWrapper(queryEditorRow, query.refId) : queryEditorRow;
                 })}
                 {provided.placeholder}
               </div>

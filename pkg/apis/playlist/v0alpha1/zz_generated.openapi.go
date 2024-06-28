@@ -14,7 +14,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Item":         schema_pkg_apis_playlist_v0alpha1_Item(ref),
 		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Playlist":     schema_pkg_apis_playlist_v0alpha1_Playlist(ref),
@@ -32,10 +32,11 @@ func schema_pkg_apis_playlist_v0alpha1_Item(ref common.ReferenceCallback) common
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of the item.",
+							Description: "Type of the item.\n\nPossible enum values:\n - `\"dashboard_by_id\"` Deprecated -- should use UID\n - `\"dashboard_by_tag\"`\n - `\"dashboard_by_uid\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+							Enum:        []interface{}{"dashboard_by_id", "dashboard_by_tag", "dashboard_by_uid"},
 						},
 					},
 					"value": {

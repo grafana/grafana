@@ -13,14 +13,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -34,14 +37,17 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
-	sqlStore.Cfg.AutoAssignOrg = true
-	sqlStore.Cfg.AutoAssignOrgId = int(testOrgID)
+func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
-	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	id, err := orgService.GetOrCreate(context.Background(), "testOrg")
@@ -60,13 +66,12 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
-	sqlStore := db.InitTestDB(t)
-	sqlStore.Cfg = settings
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
 	hs.SQLStore = sqlStore
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
-	setUpGetOrgUsersDB(t, sqlStore)
+	setUpGetOrgUsersDB(t, sqlStore, settings)
 	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
@@ -195,12 +200,11 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 	type testCase struct {
-		desc                        string
-		SkipOrgRoleSync             bool
-		GcomOnlyExternalOrgRoleSync bool
-		AuthEnabled                 bool
-		AuthModule                  string
-		expectedCode                int
+		desc            string
+		SkipOrgRoleSync bool
+		AuthEnabled     bool
+		AuthModule      string
+		expectedCode    int
 	}
 	permissions := []accesscontrol.Permission{
 		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
@@ -224,27 +228,11 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			expectedCode:    http.StatusForbidden,
 		},
 		{
-			desc:            "should not be able to change basicRole with a different provider",
+			desc:            "should not be able to change basicRole for a user synced through an OAuth provider",
 			SkipOrgRoleSync: false,
 			AuthEnabled:     true,
-			AuthModule:      login.GenericOAuthModule,
+			AuthModule:      login.GrafanaComAuthModule,
 			expectedCode:    http.StatusForbidden,
-		},
-		{
-			desc:                        "should be able to change basicRole for a user synced through GCom if GcomOnlyExternalOrgRoleSync flag is set to false",
-			SkipOrgRoleSync:             false,
-			GcomOnlyExternalOrgRoleSync: false,
-			AuthEnabled:                 true,
-			AuthModule:                  login.GrafanaComAuthModule,
-			expectedCode:                http.StatusOK,
-		},
-		{
-			desc:                        "should not be able to change basicRole for a user synced through GCom if GcomOnlyExternalOrgRoleSync flag is set to true",
-			SkipOrgRoleSync:             false,
-			GcomOnlyExternalOrgRoleSync: true,
-			AuthEnabled:                 true,
-			AuthModule:                  login.GrafanaComAuthModule,
-			expectedCode:                http.StatusForbidden,
 		},
 		{
 			desc:            "should be able to change basicRole with a basic Auth",
@@ -273,31 +261,24 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				if tt.AuthModule == login.LDAPAuthModule {
 					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == login.GenericOAuthModule {
-					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
-					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == login.GrafanaComAuthModule {
-					hs.Cfg.GrafanaNetAuthEnabled = tt.AuthEnabled
-					hs.Cfg.GrafanaComSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == "" {
-					// authmodule empty means basic auth
-				} else {
-					t.Errorf("invalid auth module for test: %s", tt.AuthModule)
 				}
+				// AuthModule empty means basic auth
 
-				hs.authInfoService = &logintest.AuthInfoServiceFake{
+				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
-				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagGcomOnlyExternalOrgRoleSync, tt.GcomOnlyExternalOrgRoleSync)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
+				hs.SocialService = &socialtest.FakeSocialService{
+					ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: tt.AuthEnabled, SkipOrgRoleSync: tt.SkipOrgRoleSync},
+				}
 				hs.accesscontrolService = &actest.FakeService{
 					ExpectedPermissions: permissions,
 				}
 			})
 			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/orgs/%d/users/%d", userRequesting.OrgID, userRequesting.ID), strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
-			userWithPermissions.OrgRole = roletype.RoleAdmin
+			userWithPermissions.OrgRole = identity.RoleAdmin
 			res, err := server.Send(webtest.RequestWithSignedInUser(req, userWithPermissions))
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
@@ -330,7 +311,7 @@ func TestOrgUsersAPIEndpoint(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{}}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 			})
 			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/org/users/lookup"), userWithPermissions(1, tt.permissions)))
 			require.NoError(t, err)
@@ -388,8 +369,9 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 				hs.orgService = &orgtest.FakeOrgService{
 					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{{UserID: 1}}},
 				}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
+				hs.accesscontrolService = actest.FakeService{ExpectedPermissions: tt.permissions}
 			})
 
 			url := "/api/orgs/1/users"
@@ -446,8 +428,9 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.orgService = &orgtest.FakeOrgService{
 					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{},
 				}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tc.permissions)}
+				hs.accesscontrolService = &actest.FakeService{}
 			})
 
 			u := userWithPermissions(1, tc.permissions)
@@ -488,11 +471,12 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
 				}
+				hs.accesscontrolService = &actest.FakeService{}
 			})
 
 			u := userWithPermissions(1, tt.permissions)
@@ -612,7 +596,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{
+				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{
 						AuthModule: "",
 					},
@@ -674,7 +658,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{
+				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{
 						AuthModule: "",
 					},
@@ -727,7 +711,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 						Response error
 					}{OrgID: 1, Response: nil}},
 				}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),

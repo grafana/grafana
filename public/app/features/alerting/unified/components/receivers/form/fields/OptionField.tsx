@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import React, { FC, useEffect } from 'react';
-import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
+import { FC, useEffect } from 'react';
+import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Field, Input, InputControl, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
+import { Checkbox, Field, Input, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
 import { SubformArrayField } from './SubformArrayField';
 import { SubformField } from './SubformField';
+import { WrapWithTemplateSelection } from './TemplateSelector';
 
 interface Props {
   defaultValue: any;
@@ -41,7 +42,7 @@ export const OptionField: FC<Props> = ({
         readOnly={readOnly}
         defaultValue={defaultValue}
         option={option}
-        errors={error as DeepMap<any, FieldError> | undefined}
+        errors={error}
         pathPrefix={optionPath}
       />
     );
@@ -89,7 +90,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   customValidator,
 }) => {
   const styles = useStyles2(getStyles);
-  const { control, register, unregister, getValues } = useFormContext();
+  const { control, register, unregister, getValues, setValue } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
@@ -99,6 +100,13 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
     },
     [unregister, name]
   );
+
+  const useTemplates = option.placeholder.includes('{{ template');
+
+  function onSelectTemplate(template: string) {
+    setValue(name, template);
+  }
+
   switch (option.element) {
     case 'checkbox':
       return (
@@ -114,26 +122,34 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'input':
       return (
-        <Input
-          id={id}
-          readOnly={readOnly || determineReadOnly(option, getValues, pathIndex)}
-          invalid={invalid}
-          type={option.inputType}
-          {...register(name, {
-            required: determineRequired(option, getValues, pathIndex),
-            validate: {
-              validationRule: (v) => (option.validationRule ? validateOption(v, option.validationRule) : true),
-              customValidator: (v) => (customValidator ? customValidator(v) : true),
-            },
-            setValueAs: option.setValueAs,
-          })}
-          placeholder={option.placeholder}
-        />
+        <WrapWithTemplateSelection
+          useTemplates={useTemplates}
+          option={option}
+          name={name}
+          onSelectTemplate={onSelectTemplate}
+        >
+          <Input
+            id={id}
+            readOnly={readOnly || useTemplates || determineReadOnly(option, getValues, pathIndex)}
+            invalid={invalid}
+            type={option.inputType}
+            {...register(name, {
+              required: determineRequired(option, getValues, pathIndex),
+              validate: {
+                validationRule: (v) =>
+                  option.validationRule ? validateOption(v, option.validationRule, option.required) : true,
+                customValidator: (v) => (customValidator ? customValidator(v) : true),
+              },
+              setValueAs: option.setValueAs,
+            })}
+            placeholder={option.placeholder}
+          />
+        </WrapWithTemplateSelection>
       );
 
     case 'select':
       return (
-        <InputControl
+        <Controller
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
               disabled={readOnly}
@@ -145,7 +161,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           )}
           control={control}
           name={name}
-          defaultValue={option.defaultValue}
+          defaultValue={option.defaultValue?.value}
           rules={{
             validate: {
               customValidator: (v) => (customValidator ? customValidator(v) : true),
@@ -157,7 +173,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       return (
         <>
           <legend className={styles.legend}>{option.label}</legend>
-          <InputControl
+          <Controller
             render={({ field: { ref, ...field } }) => (
               <RadioButtonList disabled={readOnly} options={option.selectOptions ?? []} {...field} />
             )}
@@ -167,7 +183,8 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
             rules={{
               required: option.required ? 'Option is required' : false,
               validate: {
-                validationRule: (v) => (option.validationRule ? validateOption(v, option.validationRule) : true),
+                validationRule: (v) =>
+                  option.validationRule ? validateOption(v, option.validationRule, option.required) : true,
                 customValidator: (v) => (customValidator ? customValidator(v) : true),
               },
             }}
@@ -176,20 +193,28 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'textarea':
       return (
-        <TextArea
-          id={id}
-          readOnly={readOnly}
-          invalid={invalid}
-          placeholder={option.placeholder}
-          {...register(name, {
-            required: option.required ? 'Required' : false,
-            validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
-          })}
-        />
+        <WrapWithTemplateSelection
+          useTemplates={useTemplates}
+          option={option}
+          name={name}
+          onSelectTemplate={onSelectTemplate}
+        >
+          <TextArea
+            id={id}
+            readOnly={readOnly || useTemplates}
+            invalid={invalid}
+            placeholder={option.placeholder}
+            {...register(name, {
+              required: option.required ? 'Required' : false,
+              validate: (v) =>
+                option.validationRule !== '' ? validateOption(v, option.validationRule, option.required) : true,
+            })}
+          />
+        </WrapWithTemplateSelection>
       );
     case 'string_array':
       return (
-        <InputControl
+        <Controller
           render={({ field: { value, onChange } }) => (
             <StringArrayInput readOnly={readOnly} value={value} onChange={onChange} />
           )}
@@ -199,7 +224,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'key_value_map':
       return (
-        <InputControl
+        <Controller
           render={({ field: { value, onChange } }) => (
             <KeyValueMapInput readOnly={readOnly} value={value} onChange={onChange} />
           )}
@@ -215,15 +240,19 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  checkbox: css`
-    height: auto; // native checkbox has fixed height which does not take into account description
-  `,
-  legend: css`
-    font-size: ${theme.typography.h6.fontSize};
-  `,
+  checkbox: css({
+    height: 'auto', // native checkbox has fixed height which does not take into account description
+  }),
+  legend: css({
+    fontSize: theme.typography.h6.fontSize,
+  }),
 });
 
-const validateOption = (value: string, validationRule: string) => {
+const validateOption = (value: string, validationRule: string, required: boolean) => {
+  if (value === '' && !required) {
+    return true;
+  }
+
   return RegExp(validationRule).test(value) ? true : 'Invalid format';
 };
 

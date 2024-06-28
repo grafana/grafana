@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { ElasticDetails } from './ElasticDetails';
-import { createDefaultConfigOptions } from './mocks';
+import { createDefaultConfigOptions } from './__mocks__/configOptions';
 
 describe('ElasticDetails', () => {
   describe('Max concurrent Shard Requests', () => {

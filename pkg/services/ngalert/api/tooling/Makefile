@@ -15,8 +15,12 @@ GENERATED_GO_MATCHERS = ./go/*.go
 SED_INPLACE := -i
 
 ifneq ($(OS),Windows_NT)
+	# If we're not using the GNU version of sed, we need to specify an argument to -i
 	UNAME := $(shell uname)
-	ifeq ($(UNAME),Darwin)
+	isGNU := $(shell sed --help 2>&1 | grep -c GNU)
+	ifneq ($(isGNU),0)
+		# Do nothing
+	else ifeq ($(UNAME),Darwin)
 		SED_INPLACE = -i ''
 	endif
 endif
@@ -56,7 +60,11 @@ fix:
 	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
 	goimports -w -v $(GENERATED_GO_MATCHERS)
 
-clean:
+clean: clean-go
+	rm spec.json
+	rm spec-stable.json
+
+clean-go:
 	rm -rf ./go
 
 serve: post.json
@@ -65,6 +73,6 @@ serve: post.json
 serve-stable: api.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
 
-gen: swagger-codegen-api fix copy-files clean
+gen: swagger-codegen-api fix copy-files clean-go
 
-all: post.json api.json gen
+all: clean spec.json spec-stable.json post.json api.json gen

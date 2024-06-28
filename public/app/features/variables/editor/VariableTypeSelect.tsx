@@ -1,9 +1,9 @@
-import React, { PropsWithChildren, useMemo } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 
 import { SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { VariableSelectField } from '../editor/VariableSelectField';
+import { VariableSelectField } from '../../dashboard-scene/settings/variables/components/VariableSelectField';
 import { getVariableTypes } from '../utils';
 
 interface Props {

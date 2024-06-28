@@ -30,6 +30,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
+export { EmptyState } from './EmptyState/EmptyState';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -38,7 +39,7 @@ export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
-export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
+export { WeekStartPicker, getWeekStart, type WeekStart } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
@@ -100,7 +101,7 @@ export {
 } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
-export { Tab } from './Tabs/Tab';
+export { Tab, type TabProps } from './Tabs/Tab';
 export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
@@ -117,9 +118,6 @@ export {
 export { Sparkline } from './Sparkline/Sparkline';
 
 export { Gauge } from './Gauge/Gauge';
-export { Graph } from './Graph/Graph';
-export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge } from './BarGauge/BarGauge';
 export {
   VizTooltip,
@@ -130,7 +128,6 @@ export {
   type SeriesTableRowProps,
 } from './VizTooltip';
 export { VizRepeater, type VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
-export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export {
   PanelChrome,
   type PanelChromeProps,
@@ -154,7 +151,7 @@ export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, type AlertVariant } from './Alert/Alert';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
+export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from '../graveyard/Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
@@ -178,7 +175,8 @@ export {
 } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
-export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { FeatureBadge } from './FeatureBadge/FeatureBadge';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -215,6 +213,9 @@ export { Link } from './Link/Link';
 export { TextLink } from './Link/TextLink';
 export { Text } from './Text/Text';
 export { Box } from './Layout/Box/Box';
+export { Stack } from './Layout/Stack/Stack';
+export { Grid } from './Layout/Grid/Grid';
+export { Space } from './Layout/Space';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -230,13 +231,14 @@ export { FieldArray } from './Forms/FieldArray';
 // Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
-export { DropdownIndicator } from './Select/DropdownIndicator';
+export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonDot } from './Forms/RadioButtonList/RadioButtonDot';
 export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';
@@ -266,6 +268,8 @@ export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
+export { getDragStyles, type DragHandlePosition } from './DragHandle/DragHandle';
+export { useSplitter } from './Splitter/useSplitter';
 
 /** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
@@ -289,13 +293,27 @@ export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { type PlotTooltipInterpolator, type PlotSelection } from './uPlot/types';
+export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './uPlot/types';
 export { type UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
-export { GraphNG, type GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
-export { TimeSeries } from './TimeSeries/TimeSeries';
-export { useGraphNGContext } from './GraphNG/hooks';
-export { preparePlotFrame, buildScaleKey } from './GraphNG/utils';
-export { type GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
+
+// -----------------------------------------------------
+// Graveyard: exported, but no longer used internally
+// These will be removed in the future
+// -----------------------------------------------------
+
+export { Graph } from '../graveyard/Graph/Graph';
+export { GraphWithLegend } from '../graveyard/Graph/GraphWithLegend';
+export { GraphContextMenu, GraphContextMenuHeader } from '../graveyard/Graph/GraphContextMenu';
+export { graphTimeFormat, graphTickFormatter } from '../graveyard/Graph/utils';
+
+export { GraphNG, type GraphNGProps } from '../graveyard/GraphNG/GraphNG';
+export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
+export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
+export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
+export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
+
+export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
+export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';

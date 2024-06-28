@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -33,7 +34,14 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   );
 
   const justOverrides = useMemo(
-    () => getFieldOverrideCategories(props, searchQuery),
+    () =>
+      getFieldOverrideCategories(
+        props.panel.fieldConfig,
+        props.plugin.fieldConfigRegistry,
+        props.data?.series ?? [],
+        searchQuery,
+        props.onFieldConfigsChange
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]
   );
@@ -102,7 +110,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && (
+        {panel.isAngularPlugin() && !plugin.meta.angular?.hideDeprecation && (
           <AngularDeprecationPluginNotice
             className={styles.angularDeprecationWrapper}
             showPluginDetailsLink={true}
@@ -143,7 +151,7 @@ export enum OptionFilter {
   Recent = 'Recent',
 }
 
-function renderSearchHits(
+export function renderSearchHits(
   allOptions: OptionsPaneCategoryDescriptor[],
   overrides: OptionsPaneCategoryDescriptor[],
   searchQuery: string
@@ -167,55 +175,55 @@ function renderSearchHits(
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 0;
+  wrapper: css({
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 0',
 
-    .search-fragment-highlight {
-      color: ${theme.colors.warning.text};
-      background: transparent;
-    }
-  `,
-  searchBox: css`
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  `,
-  formRow: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  formBox: css`
-    padding: ${theme.spacing(1)};
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.borderColor};
-    border-top-left-radius: ${theme.shape.borderRadius(1.5)};
-    border-bottom: none;
-  `,
-  closeButton: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-  searchHits: css`
-    padding: ${theme.spacing(1, 1, 0, 1)};
-  `,
-  scrollWrapper: css`
-    flex-grow: 1;
-    min-height: 0;
-  `,
-  searchNotice: css`
-    font-size: ${theme.typography.size.sm};
-    color: ${theme.colors.text.secondary};
-    padding: ${theme.spacing(1)};
-    text-align: center;
-  `,
-  mainBox: css`
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.borderColor};
-    border-top: none;
-    flex-grow: 1;
-  `,
-  angularDeprecationWrapper: css`
-    padding: ${theme.spacing(1)};
-  `,
+    '.search-fragment-highlight': {
+      color: theme.colors.warning.text,
+      background: 'transparent',
+    },
+  }),
+  searchBox: css({
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+  }),
+  formRow: css({
+    marginBottom: theme.spacing(1),
+  }),
+  formBox: css({
+    padding: theme.spacing(1),
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.components.panel.borderColor}`,
+    borderTopLeftRadius: theme.shape.borderRadius(1.5),
+    borderBottom: 'none',
+  }),
+  closeButton: css({
+    marginLeft: theme.spacing(1),
+  }),
+  searchHits: css({
+    padding: theme.spacing(1, 1, 0, 1),
+  }),
+  scrollWrapper: css({
+    flexGrow: 1,
+    minHeight: 0,
+  }),
+  searchNotice: css({
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.text.secondary,
+    padding: theme.spacing(1),
+    textAlign: 'center',
+  }),
+  mainBox: css({
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.components.panel.borderColor}`,
+    borderTop: 'none',
+    flexGrow: 1,
+  }),
+  angularDeprecationWrapper: css({
+    padding: theme.spacing(1),
+  }),
 });

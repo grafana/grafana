@@ -7,6 +7,7 @@
     command: >
       --enable-feature=remote-write-receiver
       --enable-feature=exemplar-storage
+      --enable-feature=native-histograms
       --config.file=/etc/prometheus/prometheus.yml
       --storage.tsdb.path=/prometheus
     volumes:
@@ -30,15 +31,24 @@
     ports:
       - "14268:14268"
       - "3200:3200"
+      - "4317:4317"
+  pyroscope:
+    image: "grafana/pyroscope:latest"
+    ports:
+      - "4040:4040"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   agent:
-    image: grafana/agent:v0.34.3
+    image: grafana/agent:v0.37.0
+    environment:
+      - AGENT_MODE=flow
     entrypoint:
       - /bin/grafana-agent
-      - -server.http.address=0.0.0.0:12345
-      - -config.file=/etc/agent/agent.yaml
-      - -enable-features=integrations-next
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/agent/config.river
     volumes:
-      - ./docker/blocks/self-instrumentation/agent.yaml:/etc/agent/agent.yaml
+      - ./docker/blocks/self-instrumentation/agent.flow:/etc/agent/config.river
     ports:
       - "12345:12345"
       - "12347:12347"

@@ -20,7 +20,7 @@ import (
 )
 
 type ruleStates struct {
-	states map[string]*State
+	states map[data.Fingerprint]*State
 }
 
 type cache struct {
@@ -89,7 +89,7 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	}
 	var states *ruleStates
 	if states, ok = orgStates[stateCandidate.AlertRuleUID]; !ok {
-		states = &ruleStates{states: make(map[string]*State)}
+		states = &ruleStates{states: make(map[data.Fingerprint]*State)}
 		c.states[stateCandidate.OrgID][stateCandidate.AlertRuleUID] = states
 	}
 	return states.getOrAdd(stateCandidate)
@@ -121,9 +121,36 @@ func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
 }
 
 func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) State {
+	var reserved []string
+	resultLabels := result.Instance
+	if len(resultLabels) > 0 {
+		for key := range ngModels.LabelsUserCannotSpecify {
+			if value, ok := resultLabels[key]; ok {
+				if reserved == nil { // make a copy of labels if we are going to modify it
+					resultLabels = result.Instance.Copy()
+				}
+				reserved = append(reserved, key)
+				delete(resultLabels, key)
+				// we cannot delete the reserved label completely because it can cause alert instances to collide (when this label is only unique across results)
+				// so we just rename it to something that does not collide with reserved labels
+				newKey := strings.TrimSuffix(strings.TrimPrefix(key, "__"), "__")
+				if _, ok = resultLabels[newKey]; newKey == "" || newKey == key || ok { // in the case if in the future the LabelsUserCannotSpecify contains labels that do not have double underscore
+					newKey = key + "_user"
+				}
+				if _, ok = resultLabels[newKey]; !ok { // if it still collides with another existing label, we just drop the label
+					resultLabels[newKey] = value
+				} else {
+					log.Warn("Result contains reserved label, and, after renaming, a new label collides with an existing one. Removing the label completely", "deletedLabel", key, "renamedLabel", newKey)
+				}
+			}
+		}
+		if len(reserved) > 0 {
+			log.Debug("Found collision of result labels and system reserved. Renamed labels with suffix '_user'", "renamedLabels", strings.Join(reserved, ","))
+		}
+	}
 	// Merge both the extra labels and the labels from the evaluation into a common set
 	// of labels that can be expanded in custom labels and annotations.
-	templateData := template.NewData(mergeLabels(extraLabels, result.Instance), result)
+	templateData := template.NewData(mergeLabels(extraLabels, resultLabels), result)
 
 	// For now, do nothing with these errors as they are already logged in expand.
 	// In the future, we want to show these errors to the user somehow.
@@ -139,7 +166,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		}
 	}
 
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(result.Instance))
+	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
 		lbs[key] = val
@@ -159,7 +186,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
-	for key, val := range result.Instance {
+	for key, val := range resultLabels {
 		_, ok := lbs[key]
 		// if duplicate labels exist, reserved or alert rule label will take precedence
 		if ok {
@@ -172,24 +199,21 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		log.Warn("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
 
-	il := ngModels.InstanceLabels(lbs)
-	id, err := il.StringKey()
-	if err != nil {
-		log.Error("Error getting cacheId for entry", "error", err)
-	}
+	cacheID := lbs.Fingerprint()
 
 	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
 	// expected value for a Normal state during state transition.
 	newState := State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheID:            id,
+		CacheID:            cacheID,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
 		Values:             values,
 		StartsAt:           result.EvaluatedAt,
 		EndsAt:             result.EvaluatedAt,
+		ResultFingerprint:  result.Instance.Fingerprint(), // remember original result fingerprint
 	}
 	return newState
 }
@@ -251,12 +275,12 @@ func (c *cache) set(entry *State) {
 		c.states[entry.OrgID] = make(map[string]*ruleStates)
 	}
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
-		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[string]*State)}
+		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[data.Fingerprint]*State)}
 	}
 	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheID] = entry
 }
 
-func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {
+func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	ruleStates, ok := c.states[orgID][alertRuleUID]
@@ -325,6 +349,37 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	states := make([]*State, 0, len(rs.states))
 	for _, state := range rs.states {
 		states = append(states, state)
+	}
+	return states
+}
+
+// asInstances returns the whole content of the cache as a slice of AlertInstance.
+func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
+	var states []ngModels.AlertInstance
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	for _, orgStates := range c.states {
+		for _, v1 := range orgStates {
+			for _, v2 := range v1.states {
+				if skipNormalState && IsNormalStateWithNoReason(v2) {
+					continue
+				}
+				key, err := v2.GetAlertInstanceKey()
+				if err != nil {
+					continue
+				}
+				states = append(states, ngModels.AlertInstance{
+					AlertInstanceKey:  key,
+					Labels:            ngModels.InstanceLabels(v2.Labels),
+					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
+					CurrentReason:     v2.StateReason,
+					LastEvalTime:      v2.LastEvaluationTime,
+					CurrentStateSince: v2.StartsAt,
+					CurrentStateEnd:   v2.EndsAt,
+					ResultFingerprint: v2.ResultFingerprint.String(),
+				})
+			}
+		}
 	}
 	return states
 }

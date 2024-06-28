@@ -1,11 +1,12 @@
-import { fireEvent, render, screen, getByText, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { RichHistoryQuery } from 'app/types';
+import { configureStore } from 'app/store/configureStore';
+import { ExploreState, RichHistoryQuery } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
@@ -47,7 +48,7 @@ class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
     throw new Error('Method not implemented.');
   }
   getRef(): DataSourceRef {
-    throw new Error('Method not implemented.');
+    return { uid: this.uid, type: this.type };
   }
 }
 
@@ -55,7 +56,7 @@ const dsStore: Record<string, DataSourceApi> = {
   alertmanager: new MockDatasourceApi('Alertmanager', 3, 'alertmanager', 'alertmanager'),
   loki: new MockDatasourceApi('Loki', 2, 'loki', 'loki'),
   prometheus: new MockDatasourceApi<MockQuery>('Prometheus', 1, 'prometheus', 'prometheus', {
-    getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknwon query',
+    getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknown query',
   }),
   mixed: new MixedDatasource({
     id: 4,
@@ -97,6 +98,7 @@ jest.mock('app/core/utils/explore', () => ({
 
 jest.mock('app/core/app_events', () => ({
   publish: jest.fn(),
+  subscribe: jest.fn(),
 }));
 
 interface MockQuery extends DataQuery {
@@ -104,9 +106,9 @@ interface MockQuery extends DataQuery {
   queryText?: string;
 }
 
-const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
+const setup = (propOverrides?: Partial<Props<MockQuery>>, noPanes = false) => {
   const props: Props<MockQuery> = {
-    query: {
+    queryHistoryItem: {
       id: '1',
       createdAt: 1,
       datasourceUid: 'loki',
@@ -124,13 +126,35 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     deleteHistoryItem: deleteRichHistoryMock,
     commentHistoryItem: jest.fn(),
     setQueries: jest.fn(),
-    exploreId: 'left',
-    datasourceInstance: dsStore.loki,
+    datasourceInstances: [dsStore.loki],
   };
 
   Object.assign(props, propOverrides);
 
-  render(<RichHistoryCard {...props} />);
+  const panes = noPanes
+    ? {}
+    : {
+        left: {
+          queries: [{ query: 'query1', refId: 'A' }],
+          datasourceInstance: dsStore.loki,
+          queryResponse: {},
+          range: {
+            raw: { from: 'now-1h', to: 'now' },
+          },
+        },
+      };
+
+  const store = configureStore({
+    explore: {
+      panes,
+    } as unknown as ExploreState,
+  });
+
+  render(
+    <TestProvider store={store}>
+      <RichHistoryCard {...props} />
+    </TestProvider>
+  );
 };
 
 const starredQueryWithComment: RichHistoryQuery<MockQuery> = {
@@ -170,7 +194,7 @@ describe('RichHistoryCard', () => {
 
   it('should render "Data source does not exist anymore" if removed data source', async () => {
     setup({
-      query: {
+      queryHistoryItem: {
         id: '2',
         createdAt: 1,
         datasourceUid: 'non-existent DS',
@@ -191,7 +215,7 @@ describe('RichHistoryCard', () => {
   describe('copy queries to clipboard', () => {
     it('should copy query model to clipboard when copying a query from a non existent datasource', async () => {
       setup({
-        query: {
+        queryHistoryItem: {
           id: '2',
           createdAt: 1,
           datasourceUid: 'non-existent DS',
@@ -210,7 +234,7 @@ describe('RichHistoryCard', () => {
 
     it('should copy query model to clipboard when copying a query from a datasource that does not implement getQueryDisplayText', async () => {
       setup({
-        query: {
+        queryHistoryItem: {
           id: '2',
           createdAt: 1,
           datasourceUid: 'loki',
@@ -229,15 +253,18 @@ describe('RichHistoryCard', () => {
 
     it('should copy query text to clipboard when copying a query from a datasource that implements getQueryDisplayText', async () => {
       setup({
-        query: {
+        queryHistoryItem: {
           id: '2',
           createdAt: 1,
           datasourceUid: 'prometheus',
           datasourceName: 'Test datasource',
           starred: false,
           comment: '',
-          queries: [{ query: 'query1', refId: 'A', queryText: 'query1' }],
+          queries: [
+            { query: 'query1', refId: 'A', queryText: 'query1', datasource: { uid: 'prometheus', type: 'prometheus' } },
+          ],
         },
+        datasourceInstances: [dsStore.prometheus],
       });
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
@@ -248,7 +275,7 @@ describe('RichHistoryCard', () => {
 
     it('should use each datasource getQueryDisplayText when copying queries', async () => {
       setup({
-        query: {
+        queryHistoryItem: {
           id: '2',
           createdAt: 1,
           datasourceUid: 'mixed',
@@ -260,6 +287,7 @@ describe('RichHistoryCard', () => {
             { query: 'query2', refId: 'B', datasource: { uid: 'loki' } },
           ],
         },
+        datasourceInstances: [dsStore.loki, dsStore.prometheus, dsStore.mixed],
       });
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
@@ -269,125 +297,15 @@ describe('RichHistoryCard', () => {
     });
   });
 
-  describe('run queries', () => {
-    it('should be disabled if at least one query datasource is missing when using mixed', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A', datasource: { uid: 'nonexistent-ds' } },
-        { query: 'query2', refId: 'B', datasource: { uid: 'loki' } },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        query: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'mixed',
-          datasourceName: 'Mixed',
-          starred: false,
-          comment: '',
-          queries,
-        },
-      });
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-
-      expect(runQueryButton).toBeDisabled();
-    });
-
-    it('should be disabled if at datasource is missing', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A' },
-        { query: 'query2', refId: 'B' },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        query: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'nonexistent-ds',
-          datasourceName: 'nonexistent-ds',
-          starred: false,
-          comment: '',
-          queries,
-        },
-      });
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-
-      expect(runQueryButton).toBeDisabled();
-    });
-
-    it('should only set new queries when running queries from the same datasource', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A' },
-        { query: 'query2', refId: 'B' },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        query: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'loki',
-          datasourceName: 'Loki',
-          starred: false,
-          comment: '',
-          queries,
-        },
-      });
-
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-      await userEvent.click(runQueryButton);
-
-      expect(setQueries).toHaveBeenCalledWith(expect.any(String), queries);
-      expect(changeDatasource).not.toHaveBeenCalled();
-    });
-
-    it('should change datasource to mixed and set new queries when running queries from mixed datasource', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A', datasource: { type: 'loki', uid: 'loki' } },
-        { query: 'query2', refId: 'B', datasource: { type: 'prometheus', uid: 'prometheus' } },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        query: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'mixed',
-          datasourceName: 'Mixed',
-          starred: false,
-          comment: '',
-          queries,
-        },
-      });
-
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-      await userEvent.click(runQueryButton);
-
-      await waitFor(() => {
-        expect(setQueries).toHaveBeenCalledWith(expect.any(String), queries);
-        expect(changeDatasource).toHaveBeenCalledWith(expect.any(String), 'mixed');
-      });
-    });
-  });
-
   describe('commenting', () => {
     it('should render comment, if comment present', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const queryComment = await screen.findByLabelText('Query comment');
       expect(queryComment).toBeInTheDocument();
       expect(queryComment).toHaveTextContent('test comment');
     });
     it('should have title "Edit comment" at comment icon, if comment present', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const editComment = await screen.findByLabelText('Edit comment');
       const addComment = screen.queryByTitle('Add comment');
       expect(editComment).toBeInTheDocument();
@@ -401,14 +319,14 @@ describe('RichHistoryCard', () => {
       expect(editComment).not.toBeInTheDocument();
     });
     it('should open update comment form when edit comment button clicked', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const editComment = await screen.findByLabelText('Edit comment');
       await userEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
       expect(updateCommentForm).toBeInTheDocument();
     });
     it('should close update comment form when escape key pressed', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const editComment = await screen.findByLabelText('Edit comment');
       await userEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
@@ -420,7 +338,7 @@ describe('RichHistoryCard', () => {
       expect(findCommentForm).not.toBeInTheDocument();
     });
     it('should close update comment form when enter and shift keys pressed', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const editComment = await screen.findByLabelText('Edit comment');
       await userEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
@@ -433,7 +351,7 @@ describe('RichHistoryCard', () => {
       expect(findCommentForm).not.toBeInTheDocument();
     });
     it('should close update comment form when enter and ctrl keys pressed', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const editComment = await screen.findByLabelText('Edit comment');
       await userEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
@@ -446,7 +364,7 @@ describe('RichHistoryCard', () => {
       expect(findCommentForm).not.toBeInTheDocument();
     });
     it('should not close update comment form when enter key pressed', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const editComment = await screen.findByLabelText('Edit comment');
       await userEvent.click(editComment);
       const updateCommentForm = await screen.findByLabelText('Update comment form');
@@ -469,7 +387,7 @@ describe('RichHistoryCard', () => {
       expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, true);
     });
     it('should have title "Unstar query", if not starred', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const unstarButton = await screen.findByLabelText('Unstar query');
       expect(unstarButton).toBeInTheDocument();
       await userEvent.click(unstarButton);
@@ -486,7 +404,7 @@ describe('RichHistoryCard', () => {
       expect(deleteRichHistoryMock).toBeCalledWith(starredQueryWithComment.id);
     });
     it('should display modal before deleting if starred', async () => {
-      setup({ query: starredQueryWithComment });
+      setup({ queryHistoryItem: starredQueryWithComment });
       const deleteButton = await screen.findByLabelText('Delete query');
       await userEvent.click(deleteButton);
       expect(deleteRichHistoryMock).not.toBeCalled();

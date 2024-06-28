@@ -12,11 +12,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 const (
 	pngImageBase64 = "iVBORw0KGgoNAANSUhEUgAAAC4AAAAmCAYAAAC76qlaAAAABHNCSVQICAgIfAhkiAAAABl0RVh0U29mdHdhcmUAZ25vbWUtc2NyZWVuc2hvdO8Dvz4AAABFSURBVFiF7c5BDQAhEACx4/x7XjzwGELSKuiamfke9N8OnBKvidfEa+I18Zp4TbwmXhOvidfEa+I18Zp4TbwmXhOvidc2lcsESD1LGnUAAAAASUVORK5CYII="
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type fsTestCase struct {
 	name  string
@@ -108,7 +113,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		}
 
 		nestedPath := path.Join("a", "b")
-		err = os.MkdirAll(path.Join(tmpDir, nestedPath), os.ModePerm)
+		err = os.MkdirAll(path.Join(tmpDir, nestedPath), 0o750)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -467,7 +472,7 @@ func TestIntegrationFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 2, After: ""}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{Limit: 2, After: ""}},
 						list:  checks(listSize(2), listHasMore(true), listLastPath("/folder1/b")),
 						files: [][]any{
 							checks(fPath("/folder1/a")),
@@ -475,7 +480,7 @@ func TestIntegrationFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 2, After: ""}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 2, After: ""}},
 						list:  checks(listSize(2), listHasMore(true), listLastPath("/folder1/a")),
 						files: [][]any{
 							checks(fPath("/folder1"), fMimeType(DirectoryMimeType)),
@@ -483,49 +488,49 @@ func TestIntegrationFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder1"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 1, After: "/folder1"}},
 						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/a")),
 						files: [][]any{
 							checks(fPath("/folder1/a")),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/a"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{Limit: 1, After: "/folder1/a"}},
 						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/b")),
 						files: [][]any{
 							checks(fPath("/folder1/b")),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder1/a"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 1, After: "/folder1/a"}},
 						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/b")),
 						files: [][]any{
 							checks(fPath("/folder1/b")),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/b"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{Limit: 1, After: "/folder1/b"}},
 						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder2/c")),
 						files: [][]any{
 							checks(fPath("/folder2/c")),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder1/b"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 1, After: "/folder1/b"}},
 						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder2")),
 						files: [][]any{
 							checks(fPath("/folder2"), fMimeType(DirectoryMimeType)),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 1, After: "/folder2"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 1, After: "/folder2"}},
 						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder2/c")),
 						files: [][]any{
 							checks(fPath("/folder2/c")),
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: ""}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{Limit: 5, After: ""}},
 						list:  checks(listSize(3), listHasMore(false), listLastPath("/folder2/c")),
 						files: [][]any{
 							checks(fPath("/folder1/a")),
@@ -534,7 +539,7 @@ func TestIntegrationFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 5, After: ""}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 5, After: ""}},
 						list:  checks(listSize(5), listHasMore(false), listLastPath("/folder2/c")),
 						files: [][]any{
 							checks(fPath("/folder1"), fMimeType(DirectoryMimeType)),
@@ -545,19 +550,19 @@ func TestIntegrationFsStorage(t *testing.T) {
 						},
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{Limit: 5, After: "/folder2"}},
 						list:  checks(listSize(1), listHasMore(false)),
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 5, After: "/folder2"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 5, After: "/folder2"}},
 						list:  checks(listSize(1), listHasMore(false)),
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2/c"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{Limit: 5, After: "/folder2/c"}},
 						list:  checks(listSize(0), listHasMore(false)),
 					},
 					queryListFiles{
-						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{First: 5, After: "/folder2/c"}},
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true, WithFiles: true, WithFolders: true}, paging: &Paging{Limit: 5, After: "/folder2/c"}},
 						list:  checks(listSize(0), listHasMore(false)),
 					},
 				},

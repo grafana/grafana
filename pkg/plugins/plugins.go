@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -44,18 +44,18 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
-	SignatureOrg   string
-	Parent         *Plugin
-	Children       []*Plugin
-	SignatureError *SignatureError
+	Signature     SignatureStatus
+	SignatureType SignatureType
+	SignatureOrg  string
+	Parent        *Plugin
+	Children      []*Plugin
+	Error         *Error
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	Angular AngularMeta
 
 	ExternalService *auth.ExternalService
 
@@ -64,7 +64,23 @@ type Plugin struct {
 	client         backendplugin.Plugin
 	log            log.Logger
 
+	SkipHostEnvVars bool
+
 	mu sync.Mutex
+}
+
+var (
+	_ = backend.CollectMetricsHandler(&Plugin{})
+	_ = backend.CheckHealthHandler(&Plugin{})
+	_ = backend.QueryDataHandler(&Plugin{})
+	_ = backend.CallResourceHandler(&Plugin{})
+	_ = backend.StreamHandler(&Plugin{})
+	_ = backend.AdmissionHandler(&Plugin{})
+)
+
+type AngularMeta struct {
+	Detected        bool `json:"detected"`
+	HideDeprecation bool `json:"hideDeprecation"`
 }
 
 // JSONData represents the plugin's plugin.json
@@ -111,7 +127,10 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// App Service Auth Registration
-	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
+	IAM *pfs.IAM `json:"iam,omitempty"`
+
+	// API Version: Temporary field while plugins don't expose a OpenAPI schema
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -131,6 +150,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	case "grafana-pyroscope-datasource":
 		fallthrough
 	case "grafana-testdata-datasource":
+		fallthrough
+	case "grafana-postgresql-datasource":
 		fallthrough
 	case "annolist":
 		fallthrough
@@ -185,6 +206,7 @@ type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
 	ReqRole      org.RoleType    `json:"reqRole"`
+	ReqAction    string          `json:"reqAction"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -347,6 +369,33 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+// ValidateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObject(ctx, req)
+}
+
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
@@ -405,6 +454,7 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.AdmissionHandler
 	backend.StreamHandler
 }
 

@@ -2,20 +2,27 @@ package anonimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
-	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authn.ContextAwareClient = new(Anonymous)
+var (
+	errInvalidOrg = errutil.Unauthorized("anonymous.invalid-org")
+	errInvalidID  = errutil.Unauthorized("anonymous.invalid-id")
+)
 
-const timeoutTag = 2 * time.Minute
+var _ authn.ContextAwareClient = new(Anonymous)
+var _ authn.IdentityResolverClient = new(Anonymous)
 
 type Anonymous struct {
 	cfg               *setting.Cfg
@@ -42,27 +49,19 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		httpReqCopy.RemoteAddr = r.HTTPRequest.RemoteAddr
 	}
 
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				a.log.Warn("Tag anon session panic", "err", err)
-			}
-		}()
-
-		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
-		defer cancel()
-		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
-			a.log.Warn("Failed to tag anonymous session", "error", err)
+	if err := a.anonDeviceService.TagDevice(ctx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
+		if errors.Is(err, anonstore.ErrDeviceLimitReached) {
+			return nil, err
 		}
-	}()
 
-	return &authn.Identity{
-		ID:           authn.AnonymousNamespaceID,
-		OrgID:        o.ID,
-		OrgName:      o.Name,
-		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
-		ClientParams: authn.ClientParams{SyncPermissions: true},
-	}, nil
+		a.log.Warn("Failed to tag anonymous session", "error", err)
+	}
+
+	return a.newAnonymousIdentity(o), nil
+}
+
+func (a *Anonymous) IsEnabled() bool {
+	return a.cfg.AnonymousEnabled
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
@@ -70,8 +69,26 @@ func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 	return true
 }
 
-func (a *Anonymous) Priority() uint {
-	return 100
+func (a *Anonymous) Namespace() string {
+	return authn.NamespaceAnonymous.String()
+}
+
+func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.NamespaceID) (*authn.Identity, error) {
+	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
+	if err != nil {
+		return nil, err
+	}
+
+	if o.ID != orgID {
+		return nil, errInvalidOrg.Errorf("anonymous user cannot authenticate in org %d", o.ID)
+	}
+
+	// Anonymous identities should always have the same namespace id.
+	if namespaceID != authn.AnonymousNamespaceID {
+		return nil, errInvalidID
+	}
+
+	return a.newAnonymousIdentity(o), nil
 }
 
 func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]any, error) {
@@ -84,4 +101,18 @@ func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]any, error) {
 	}
 
 	return m, nil
+}
+
+func (a *Anonymous) Priority() uint {
+	return 100
+}
+
+func (a *Anonymous) newAnonymousIdentity(o *org.Org) *authn.Identity {
+	return &authn.Identity{
+		ID:           authn.AnonymousNamespaceID,
+		OrgID:        o.ID,
+		OrgName:      o.Name,
+		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
+		ClientParams: authn.ClientParams{SyncPermissions: true},
+	}
 }

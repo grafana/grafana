@@ -1,17 +1,21 @@
 import { css, cx } from '@emotion/css';
-import React, { ComponentProps, HTMLAttributes } from 'react';
+import { ComponentProps, HTMLAttributes } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Icon, IconName, useStyles2, Text } from '@grafana/ui';
+import { Icon, IconName, useStyles2, Text, Stack } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   icon?: IconName;
+  direction?: 'row' | 'column';
   color?: ComponentProps<typeof Text>['color'];
 }
 
-const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
+const MetaText = ({ children, icon, color = 'secondary', direction = 'row', ...rest }: Props) => {
   const styles = useStyles2(getStyles);
   const interactive = typeof rest.onClick === 'function';
+
+  const rowDirection = direction === 'row';
+  const alignItems = rowDirection ? 'center' : 'flex-start';
+  const gap = rowDirection ? 0.5 : 0;
 
   return (
     <div
@@ -22,8 +26,8 @@ const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
       {...rest}
     >
       <Text variant="bodySmall" color={color}>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          {icon && <Icon size="sm" name={icon} />}
+        <Stack direction={direction} alignItems={alignItems} gap={gap} wrap={'wrap'}>
+          {icon && <Icon size="xs" name={icon} />}
           {children}
         </Stack>
       </Text>
@@ -32,9 +36,9 @@ const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
 };
 
 const getStyles = () => ({
-  interactive: css`
-    cursor: pointer;
-  `,
+  interactive: css({
+    cursor: 'pointer',
+  }),
 });
 
 export { MetaText };

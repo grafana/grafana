@@ -2,7 +2,14 @@ import { uniq } from 'lodash';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
 
-import { generateQueryFromFilters, getUnscopedTags, getFilteredTags, getAllTags, getTagsByScope } from './utils';
+import {
+  generateQueryFromFilters,
+  getUnscopedTags,
+  getFilteredTags,
+  getAllTags,
+  getTagsByScope,
+  generateQueryFromAdHocFilters,
+} from './utils';
 
 describe('generateQueryFromFilters generates the correct query for', () => {
   it('an empty array', () => {
@@ -19,6 +26,32 @@ describe('generateQueryFromFilters generates the correct query for', () => {
 
   it('a field with value and tag but without operator', () => {
     expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue' }])).toBe('{}');
+  });
+
+  describe('generates correct query for duration when duration type', () => {
+    it('not set', () => {
+      expect(
+        generateQueryFromFilters([
+          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+        ])
+      ).toBe('{duration>100ms}');
+    });
+    it('set to span', () => {
+      expect(
+        generateQueryFromFilters([
+          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+          { id: 'duration-type', value: 'span' },
+        ])
+      ).toBe('{duration>100ms}');
+    });
+    it('set to trace', () => {
+      expect(
+        generateQueryFromFilters([
+          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+          { id: 'duration-type', value: 'trace' },
+        ])
+      ).toBe('{traceDuration>100ms}');
+    });
   });
 
   it('a field with tag, operator and tag', () => {
@@ -103,30 +136,107 @@ describe('generateQueryFromFilters generates the correct query for', () => {
   });
 });
 
+describe('generateQueryFromAdHocFilters generates the correct query for', () => {
+  it('an empty array', () => {
+    expect(generateQueryFromAdHocFilters([])).toBe('{}');
+  });
+
+  it('a filter with values', () => {
+    expect(generateQueryFromAdHocFilters([{ key: 'footag', operator: '=', value: 'foovalue' }])).toBe(
+      '{footag="foovalue"}'
+    );
+  });
+
+  it('two filters with values', () => {
+    expect(
+      generateQueryFromAdHocFilters([
+        { key: 'footag', operator: '=', value: 'foovalue' },
+        { key: 'bartag', operator: '=', value: 'barvalue' },
+      ])
+    ).toBe('{footag="foovalue" && bartag="barvalue"}');
+  });
+
+  it('a filter with intrinsic values', () => {
+    expect(generateQueryFromAdHocFilters([{ key: 'kind', operator: '=', value: 'server' }])).toBe('{kind=server}');
+  });
+});
+
 describe('gets correct tags', () => {
   it('for filtered tags when no tags supplied', () => {
     const tags = getFilteredTags(emptyTags, []);
-    expect(tags).toEqual(['duration', 'kind', 'name', 'status']);
+    expect(tags).toEqual([
+      'duration',
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+    ]);
   });
 
   it('for filtered tags when API v1 tags supplied', () => {
     const tags = getFilteredTags(v1Tags, []);
-    expect(tags).toEqual(['duration', 'kind', 'name', 'status', 'bar', 'foo']);
+    expect(tags).toEqual([
+      'duration',
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'bar',
+      'foo',
+    ]);
   });
 
   it('for filtered tags when API v1 tags supplied with tags to filter out', () => {
     const tags = getFilteredTags(v1Tags, ['duration']);
-    expect(tags).toEqual(['kind', 'name', 'status', 'bar', 'foo']);
+    expect(tags).toEqual([
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'bar',
+      'foo',
+    ]);
   });
 
   it('for filtered tags when API v2 tags supplied', () => {
     const tags = getFilteredTags(uniq(getUnscopedTags(v2Tags)), []);
-    expect(tags).toEqual(['duration', 'kind', 'name', 'status', 'cluster', 'container', 'db']);
+    expect(tags).toEqual([
+      'duration',
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'cluster',
+      'container',
+      'db',
+    ]);
   });
 
   it('for filtered tags when API v2 tags supplied with tags to filter out', () => {
     const tags = getFilteredTags(getUnscopedTags(v2Tags), ['duration', 'cluster']);
-    expect(tags).toEqual(['kind', 'name', 'status', 'container', 'db']);
+    expect(tags).toEqual([
+      'kind',
+      'name',
+      'rootName',
+      'rootServiceName',
+      'status',
+      'statusMessage',
+      'traceDuration',
+      'container',
+      'db',
+    ]);
   });
 
   it('for unscoped tags', () => {

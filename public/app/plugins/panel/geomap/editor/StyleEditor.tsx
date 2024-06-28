@@ -1,5 +1,5 @@
 import { capitalize } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
@@ -120,6 +120,7 @@ export const StyleEditor = (props: Props) => {
   const propertyOptions = useObservable(settings?.layerInfo ?? of());
   const featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
   const hasTextLabel = styleUsesText(value);
+  const maxFiles = 2000;
 
   // Simple fixed value display
   if (settings?.simpleFixedValues) {
@@ -141,6 +142,7 @@ export const StyleEditor = (props: Props) => {
                         placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                         placeholderValue: defaultStyleConfig.symbol.fixed,
                         showSourceRadio: false,
+                        maxFiles,
                       },
                     } as StandardEditorsRegistryItem
                   }
@@ -230,6 +232,7 @@ export const StyleEditor = (props: Props) => {
                     placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                     placeholderValue: defaultStyleConfig.symbol.fixed,
                     showSourceRadio: false,
+                    maxFiles,
                   },
                 } as StandardEditorsRegistryItem
               }

@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
@@ -38,6 +37,7 @@ const setup = (propOverrides?: object) => {
     changePage: mockToolkitActionCreator(pageChanged),
     changeSort: mockToolkitActionCreator(sortChanged),
     isLoading: false,
+    rolesLoading: false,
   };
 
   Object.assign(props, propOverrides);

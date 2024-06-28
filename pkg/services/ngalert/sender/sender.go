@@ -43,7 +43,7 @@ type ExternalAlertmanager struct {
 
 type ExternalAMcfg struct {
 	URL     string
-	Headers map[string]string
+	Headers http.Header
 }
 
 type Option func(*ExternalAlertmanager)
@@ -80,8 +80,7 @@ func (cfg *ExternalAMcfg) headerString() string {
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
-	l := log.New("ngalert.sender.external-alertmanager")
+func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) (*ExternalAlertmanager, error) {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,
@@ -91,17 +90,25 @@ func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
 		s.logger,
 	)
+	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
+	if err != nil {
+		s.logger.Error("failed to register service discovery metrics", "error", err)
+		return nil, err
+	}
+	s.sdManager = discovery.NewManager(sdCtx, s.logger, prometheus.NewRegistry(), sdMetrics)
 
-	s.sdManager = discovery.NewManager(sdCtx, s.logger)
+	if s.sdManager == nil {
+		return nil, errors.New("failed to create new discovery manager")
+	}
 
 	for _, opt := range opts {
 		opt(s)
 	}
 
-	return s
+	return s, nil
 }
 
 // ApplyConfig syncs a configuration with the sender.
@@ -127,13 +134,14 @@ func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []Exte
 }
 
 func (s *ExternalAlertmanager) Run() {
+	logger := s.logger
 	s.wg.Add(2)
 
 	go func() {
-		s.logger.Info("Initiating communication with a group of external Alertmanagers")
+		logger.Info("Initiating communication with a group of external Alertmanagers")
 
 		if err := s.sdManager.Run(); err != nil {
-			s.logger.Error("Failed to start the sender service discovery manager", "error", err)
+			logger.Error("Failed to start the sender service discovery manager", "error", err)
 		}
 		s.wg.Done()
 	}()
@@ -176,9 +184,9 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]map[string]string, error) {
+func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
-	headers := map[string]map[string]string{}
+	headers := map[string]http.Header{}
 	for i, am := range alertmanagers {
 		u, err := url.Parse(am.URL)
 		if err != nil {

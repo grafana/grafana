@@ -4,21 +4,23 @@ import { dispatch } from 'app/store/store';
 import { ReceiversStateDTO } from 'app/types/alerting';
 
 import {
+  AlertManagerCortexConfig,
   AlertmanagerAlert,
   AlertmanagerChoice,
-  AlertManagerCortexConfig,
   AlertmanagerGroup,
-  ExternalAlertmanagerConfig,
-  ExternalAlertmanagers,
-  ExternalAlertmanagersResponse,
+  ExternalAlertmanagersConnectionStatus,
+  ExternalAlertmanagersStatusResponse,
+  GrafanaAlertingConfiguration,
+  GrafanaManagedContactPoint,
   Matcher,
+  MuteTimeInterval,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToOperator } from '../utils/alertmanager';
 import {
-  getDatasourceAPIUid,
   GRAFANA_RULES_SOURCE_NAME,
+  getDatasourceAPIUid,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { retryWhile, wrapWithQuotes } from '../utils/misc';
@@ -28,10 +30,11 @@ import { alertingApi } from './alertingApi';
 import { fetchAlertManagerConfig, fetchStatus } from './alertmanager';
 import { featureDiscoveryApi } from './featureDiscoveryApi';
 
-const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 10;
+// limits the number of previously applied Alertmanager configurations to be shown in the UI
+const ALERTMANAGER_CONFIGURATION_CONFIGURATION_HISTORY_LIMIT = 30;
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
-export interface AlertmanagersChoiceResponse {
+export interface GrafanaAlertingConfigurationStatusResponse {
   alertmanagersChoice: AlertmanagerChoice;
   numExternalAlertmanagers: number;
 }
@@ -49,9 +52,9 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getAlertmanagerAlerts: build.query<
       AlertmanagerAlert[],
-      { amSourceName: string; filter?: AlertmanagerAlertsFilter }
+      { amSourceName: string; filter?: AlertmanagerAlertsFilter; showErrorAlert?: boolean }
     >({
-      query: ({ amSourceName, filter }) => {
+      query: ({ amSourceName, filter, showErrorAlert = true }) => {
         // TODO Add support for active, silenced, inhibited, unprocessed filters
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
@@ -74,8 +77,10 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         return {
           url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts`,
           params,
+          showErrorAlert,
         };
       },
+      providesTags: ['AlertmanagerAlerts'],
     }),
 
     getAlertmanagerAlertGroups: build.query<AlertmanagerGroup[], { amSourceName: string }>({
@@ -88,36 +93,48 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: () => ({ url: '/api/alert-notifiers' }),
     }),
 
-    getAlertmanagerChoiceStatus: build.query<AlertmanagersChoiceResponse, void>({
+    // this endpoint requires administrator privileges
+    getGrafanaAlertingConfiguration: build.query<GrafanaAlertingConfiguration, void>({
+      query: () => ({ url: '/api/v1/ngalert/admin_config', showErrorAlert: false }),
+      providesTags: ['AlertingConfiguration'],
+    }),
+
+    // this endpoint provides the current state of the requested configuration above (api/v1/ngalert/admin_config)
+    // this endpoint does not require administrator privileges
+    getGrafanaAlertingConfigurationStatus: build.query<GrafanaAlertingConfigurationStatusResponse, void>({
       query: () => ({ url: '/api/v1/ngalert' }),
-      providesTags: ['AlertmanagerChoice'],
+      providesTags: ['AlertingConfiguration'],
     }),
 
-    getExternalAlertmanagerConfig: build.query<ExternalAlertmanagerConfig, void>({
-      query: () => ({ url: '/api/v1/ngalert/admin_config' }),
-      providesTags: ['AlertmanagerChoice'],
-    }),
-
-    getExternalAlertmanagers: build.query<ExternalAlertmanagers, void>({
+    // this endpoints returns the current state of alertmanager data sources we want to forward alerts to
+    getExternalAlertmanagers: build.query<ExternalAlertmanagersConnectionStatus, void>({
       query: () => ({ url: '/api/v1/ngalert/alertmanagers' }),
-      transformResponse: (response: ExternalAlertmanagersResponse) => response.data,
+      transformResponse: (response: ExternalAlertmanagersStatusResponse) => response.data,
+      providesTags: ['AlertmanagerConnectionStatus'],
     }),
 
-    saveExternalAlertmanagersConfig: build.mutation<{ message: string }, ExternalAlertmanagerConfig>({
-      query: (config) => ({ url: '/api/v1/ngalert/admin_config', method: 'POST', data: config }),
-      invalidatesTags: ['AlertmanagerChoice'],
+    updateGrafanaAlertingConfiguration: build.mutation<{ message: string }, GrafanaAlertingConfiguration>({
+      query: (config) => ({
+        url: '/api/v1/ngalert/admin_config',
+        method: 'POST',
+        data: config,
+        showSuccessAlert: false,
+      }),
+      invalidatesTags: ['AlertingConfiguration', 'AlertmanagerConfiguration', 'AlertmanagerConnectionStatus'],
     }),
 
-    getValidAlertManagersConfig: build.query<AlertManagerCortexConfig[], void>({
+    getAlertmanagerConfigurationHistory: build.query<AlertManagerCortexConfig[], void>({
       //this is only available for the "grafana" alert manager
       query: () => ({
-        url: `/api/alertmanager/${getDatasourceAPIUid(
-          GRAFANA_RULES_SOURCE_NAME
-        )}/config/history?limit=${LIMIT_TO_SUCCESSFULLY_APPLIED_AMS}`,
+        url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/history`,
+        params: {
+          limit: ALERTMANAGER_CONFIGURATION_CONFIGURATION_HISTORY_LIMIT,
+        },
       }),
+      providesTags: ['AlertmanagerConfiguration'],
     }),
 
-    resetAlertManagerConfigToOldVersion: build.mutation<{ message: string }, { id: number }>({
+    resetAlertmanagerConfigurationToOldVersion: build.mutation<{ message: string }, { id: number }>({
       //this is only available for the "grafana" alert manager
       query: (config) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/history/${
@@ -125,6 +142,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         }/_activate`,
         method: 'POST',
       }),
+      invalidatesTags: ['AlertmanagerConfiguration'],
     }),
 
     // TODO we've sort of inherited the errors format here from the previous Redux actions, errors throw are of type "SerializedError"
@@ -162,8 +180,8 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
 
         // wrap our fetchConfig function with some performance logging functions
         const fetchAMconfigWithLogging = withPerformanceLogging(
+          'unifiedalerting/fetchAmConfig',
           fetchAlertManagerConfig,
-          `[${alertmanagerSourceName}] Alertmanager config loaded`,
           {
             dataSourceName: alertmanagerSourceName,
             thunk: 'unifiedalerting/fetchAmConfig',
@@ -256,6 +274,13 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           }),
         }));
       },
+    }),
+    // Grafana Managed Alertmanager only
+    getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
+      query: () => ({ url: '/api/v1/notifications/receivers' }),
+    }),
+    getMuteTimingList: build.query<MuteTimeInterval[], void>({
+      query: () => ({ url: '/api/v1/notifications/time-intervals' }),
     }),
   }),
 });

@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Spinner, TimeRangeLabel, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 export interface Props {
   timeRange: TimeRange;
@@ -21,6 +21,23 @@ export function SettingsSummary({
 }: Props) {
   const styles = useStyles2(getStyles);
 
+  const translatedTimeRangePickerEnabledStatus = t(
+    'public-dashboard.settings-summary.time-range-picker-enabled-text',
+    'Time range picker = enabled'
+  );
+  const translatedTimeRangePickerDisabledStatus = t(
+    'public-dashboard.settings-summary.time-range-picker-disabled-text',
+    'Time range picker = disabled'
+  );
+  const translatedAnnotationShownStatus = t(
+    'public-dashboard.settings-summary.annotations-show-text',
+    'Annotations = show'
+  );
+  const translatedAnnotationHiddenStatus = t(
+    'public-dashboard.settings-summary.annotations-hide-text',
+    'Annotations = hide'
+  );
+
   return isDataLoading ? (
     <div className={cx(styles.summaryWrapper, className)}>
       <Spinner className={styles.summary} inline={true} size="sm" />
@@ -28,11 +45,15 @@ export function SettingsSummary({
   ) : (
     <div className={cx(styles.summaryWrapper, className)}>
       <span className={styles.summary}>
-        {'Time range = '}
+        <Trans i18nKey="public-dashboard.settings-summary.time-range-text">Time range = </Trans>
         <TimeRangeLabel className={styles.timeRange} value={timeRange} />
       </span>
-      <span className={styles.summary}>{`Time range picker = ${timeSelectionEnabled ? 'enabled' : 'disabled'}`}</span>
-      <span className={styles.summary}>{`Annotations = ${annotationsEnabled ? 'show' : 'hide'}`}</span>
+      <span className={styles.summary}>
+        {timeSelectionEnabled ? translatedTimeRangePickerEnabledStatus : translatedTimeRangePickerDisabledStatus}
+      </span>
+      <span className={styles.summary}>
+        {annotationsEnabled ? translatedAnnotationShownStatus : translatedAnnotationHiddenStatus}
+      </span>
     </div>
   );
 }
@@ -44,12 +65,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     summaryWrapper: css({
       display: 'flex',
     }),
-    summary: css`
-      label: collapsedText;
-      margin-left: ${theme.spacing.gridSize * 2}px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
+    summary: css({
+      label: 'collapsedText',
+      marginLeft: `${theme.spacing.gridSize * 2}px`,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
     timeRange: css({
       display: 'inline-block',
     }),

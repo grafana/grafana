@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -31,15 +31,15 @@ func TestImportDashboardService(t *testing.T) {
 			importDashboardFunc: func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
 				importDashboardArg = dto
 				return &dashboards.Dashboard{
-					ID:       4,
-					UID:      dto.Dashboard.UID,
-					Slug:     dto.Dashboard.Slug,
-					OrgID:    3,
-					Version:  dto.Dashboard.Version,
-					PluginID: "prometheus",
-					FolderID: dto.Dashboard.FolderID,
-					Title:    dto.Dashboard.Title,
-					Data:     dto.Dashboard.Data,
+					ID:        4,
+					UID:       dto.Dashboard.UID,
+					Slug:      dto.Dashboard.Slug,
+					OrgID:     3,
+					Version:   dto.Dashboard.Version,
+					PluginID:  "prometheus",
+					FolderUID: dto.Dashboard.FolderUID,
+					Title:     dto.Dashboard.Title,
+					Data:      dto.Dashboard.Data,
 				}, nil
 			},
 		}
@@ -47,7 +47,7 @@ func TestImportDashboardService(t *testing.T) {
 		importLibraryPanelsForDashboard := false
 		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
-			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
+			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 				importLibraryPanelsForDashboard = true
 				return nil
 			},
@@ -58,7 +58,6 @@ func TestImportDashboardService(t *testing.T) {
 		}
 		folderService := &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  5,
 				UID: "123",
 			},
 		}
@@ -76,8 +75,8 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderId: 5,
+			User:      &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
+			FolderUid: "folderUID",
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
@@ -91,7 +90,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), userID)
 		require.Equal(t, "prometheus", importDashboardArg.Dashboard.PluginID)
-		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
+		require.Equal(t, "folderUID", importDashboardArg.Dashboard.FolderUID)
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
@@ -106,22 +105,21 @@ func TestImportDashboardService(t *testing.T) {
 			importDashboardFunc: func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
 				importDashboardArg = dto
 				return &dashboards.Dashboard{
-					ID:       4,
-					UID:      dto.Dashboard.UID,
-					Slug:     dto.Dashboard.Slug,
-					OrgID:    3,
-					Version:  dto.Dashboard.Version,
-					PluginID: "prometheus",
-					FolderID: dto.Dashboard.FolderID,
-					Title:    dto.Dashboard.Title,
-					Data:     dto.Dashboard.Data,
+					ID:        4,
+					UID:       dto.Dashboard.UID,
+					Slug:      dto.Dashboard.Slug,
+					OrgID:     3,
+					Version:   dto.Dashboard.Version,
+					PluginID:  "prometheus",
+					FolderUID: dto.Dashboard.FolderUID,
+					Title:     dto.Dashboard.Title,
+					Data:      dto.Dashboard.Data,
 				}, nil
 			},
 		}
 		libraryPanelService := &libraryPanelServiceMock{}
 		folderService := &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  5,
 				UID: "123",
 			},
 		}
@@ -143,8 +141,8 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderId: 5,
+			User:      &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
+			FolderUid: "folderUID",
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
@@ -158,7 +156,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), userID)
 		require.Equal(t, "", importDashboardArg.Dashboard.PluginID)
-		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
+		require.Equal(t, "folderUID", importDashboardArg.Dashboard.FolderUID)
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
@@ -212,7 +210,7 @@ func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboa
 type libraryPanelServiceMock struct {
 	librarypanels.Service
 	connectLibraryPanelsForDashboardFunc func(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error
-	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error
+	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error
 }
 
 var _ librarypanels.Service = (*libraryPanelServiceMock)(nil)
@@ -225,9 +223,9 @@ func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.C
 	return nil
 }
 
-func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
+func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 	if s.importLibraryPanelsForDashboardFunc != nil {
-		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, libraryPanels, panels, folderID)
+		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, libraryPanels, panels, folderID, folderUID)
 	}
 
 	return nil

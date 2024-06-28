@@ -29,6 +29,25 @@ const tlsConfigOption: NotificationChannelOption = option('tls_config', 'TLS con
   ],
 });
 
+const oauth2ConfigOption: NotificationChannelOption = option('oauth2', 'OAuth2', 'Configures the OAuth2 settings.', {
+  element: 'subform',
+  subformOptions: [
+    option('client_id', 'Client ID', 'The OAuth2 client ID', { required: true }),
+    option('client_secret', 'Client secret', 'The OAuth2 client secret', { required: true }),
+    // ths "client_secret_file" is not allowed for security reasons in Mimir / Cloud Alertmanager so we also disable it for OSS Alertmanager – sorry!
+    // option(
+    //   'client_secret_file',
+    //   'Client secret file',
+    //   'OAuth2 client secret file location. Mutually exclusive with client_secret.',
+    // ),
+    option('token_url', 'Token URL', 'The OAuth2 token exchange URL', { required: true }),
+    option('scopes', 'Scopes', 'Comma-separated list of scopes', {
+      element: 'string_array',
+    }),
+    option('endpoint_params', 'Additional parameters', '', { element: 'key_value_map' }),
+  ],
+});
+
 const httpConfigOption: NotificationChannelOption = option(
   'http_config',
   'HTTP Config',
@@ -45,6 +64,7 @@ const httpConfigOption: NotificationChannelOption = option(
       option('proxy_url', 'Proxy URL', 'Optional proxy URL.'),
       basicAuthOption,
       tlsConfigOption,
+      oauth2ConfigOption,
     ],
   }
 );
@@ -173,6 +193,16 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
         'How long your notification will continue to be retried for, unless the user acknowledges the notification.',
         {
           placeholder: '1h',
+        }
+      ),
+      option(
+        'ttl',
+        'TTL',
+        'The number of seconds before a message expires and is deleted automatically. Examples: 10s, 5m30s, 8h.',
+        {
+          // allow 30s, 4m30s, etc
+          validationRule: '^(\\d+[s|m|h])+$|^$',
+          element: 'input',
         }
       ),
       httpConfigOption,
@@ -310,7 +340,15 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
         'max_alerts',
         'Max alerts',
         'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
-        { placeholder: '0', validationRule: '(^\\d+$|^$)' }
+        {
+          placeholder: '0',
+          inputType: 'number',
+          validationRule: '(^\\d+$|^$)',
+          setValueAs: (value) => {
+            const integer = Number(value);
+            return Number.isFinite(integer) ? integer : 0;
+          },
+        }
       ),
       httpConfigOption,
     ],
@@ -372,7 +410,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
       option('chat_id', 'Chat ID', 'ID of the chat where to send the messages', {
         required: true,
-        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
+        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : value),
       }),
       option('message', 'Message', 'Message template', {
         placeholder: '{{ template "webex.default.message" .}}',
@@ -382,12 +420,16 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
       option('parse_mode', 'Parse mode', 'Parse mode for telegram message', {
         element: 'select',
-        defaultValue: { label: 'MarkdownV2', value: 'MarkdownV2' },
+        // If we've set '' on the API, then the Select won't populate with the correct value,
+        // so the easiest way to fix this is to set the default value to ''
+        defaultValue: { label: 'None', value: '' },
         selectOptions: [
+          // Note that the value for Cloud AM is '',
+          // and for Grafana AM it is 'None'
+          { label: 'None', value: '' },
           { label: 'MarkdownV2', value: 'MarkdownV2' },
           { label: 'Markdown', value: 'Markdown' },
           { label: 'HTML', value: 'HTML' },
-          { label: 'plain text', value: '' },
         ],
       }),
       httpConfigOption,
@@ -424,7 +466,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
               'The AWS API secret_key. If blank the environment variable "AWS_ACCESS_SECRET_ID" is used'
             ),
             option('profile', 'Profile', 'Named AWS profile used to authenticate'),
-            option('role_arn', 'Rule ARN', 'AWS Role ARN, an alternative to using AWS API keys'),
+            option('role_arn', 'Role ARN', 'AWS Role ARN, an alternative to using AWS API keys'),
           ],
         }
       ),
@@ -444,7 +486,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
         "The  mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the topic_arn or phone_number"
       ),
 
-      option('subject', 'Subject', 'Subject line when the message is delivered to email endpoints', {
+      option('subject', 'Subject', 'Subject line when the message is delivered', {
         placeholder: '{{ template "sns.default.subject" .}}',
       }),
       option('message', 'Message', 'The message content of the SNS notification', {

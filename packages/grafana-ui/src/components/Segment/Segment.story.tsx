@@ -1,6 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Segment, Icon, SegmentSection } from '@grafana/ui';
@@ -33,7 +34,7 @@ const SegmentFrame = ({
   children: React.ReactNode;
 }) => (
   <>
-    <SegmentSection label="Segment Name">
+    <SegmentSection label="Segment">
       {children}
       <Segment Component={AddButton} onChange={({ value }) => action('New value added')(value)} options={options} />
     </SegmentSection>

@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -33,7 +33,7 @@ func (s *Service) HasOAuthEntry(context.Context, identity.Requester) (*login.Use
 	return nil, false, nil
 }
 
-func (s *Service) TryTokenRefresh(context.Context, *login.UserAuth) error {
+func (s *Service) TryTokenRefresh(context.Context, identity.Requester) error {
 	return nil
 }
 

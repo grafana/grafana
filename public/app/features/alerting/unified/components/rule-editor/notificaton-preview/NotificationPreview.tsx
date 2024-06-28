@@ -1,16 +1,15 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LoadingPlaceholder, useStyles2, Text } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
 import { Folder } from '../RuleFolderPicker';
-
-import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 
@@ -63,16 +62,16 @@ export const NotificationPreview = ({
     });
   };
 
-  // Get list of alert managers source name + image
-  const alertManagerSourceNamesAndImage = useGetAlertManagersSourceNamesAndImage();
+  //  Get alert managers's data source information
+  const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
 
-  const onlyOneAM = alertManagerSourceNamesAndImage.length === 1;
+  const onlyOneAM = alertManagerDataSources.length === 1;
 
   return (
     <Stack direction="column">
       <div className={styles.routePreviewHeaderRow}>
         <div className={styles.previewHeader}>
-          <Text element="h4">Alert instance routing preview</Text>
+          <Text element="h5">Alert instance routing preview</Text>
           {isLoading && previewUninitialized && (
             <Text color="secondary" variant="bodySmall">
               Loading...
@@ -98,7 +97,7 @@ export const NotificationPreview = ({
       </div>
       {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
         <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
-          {alertManagerSourceNamesAndImage.map((alertManagerSource) => (
+          {alertManagerDataSources.map((alertManagerSource) => (
             <NotificationPreviewByAlertManager
               alertManagerSource={alertManagerSource}
               potentialInstances={potentialInstances}
@@ -113,33 +112,34 @@ export const NotificationPreview = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  collapsableSection: css`
-    width: auto;
-    border: 0;
-  `,
-  previewHeader: css`
-    margin: 0;
-  `,
-  routePreviewHeaderRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-  `,
-  collapseLabel: css`
-    flex: 1;
-  `,
-  button: css`
-    justify-content: flex-end;
-  `,
-  tagsInDetails: css`
-    display: flex;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  `,
-  policyPathItemMatchers: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(1)};
-  `,
+  collapsableSection: css({
+    width: 'auto',
+    border: 0,
+  }),
+  previewHeader: css({
+    margin: 0,
+  }),
+  routePreviewHeaderRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: theme.spacing(1),
+  }),
+  collapseLabel: css({
+    flex: 1,
+  }),
+  button: css({
+    justifyContent: 'flex-end',
+  }),
+  tagsInDetails: css({
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+  }),
+  policyPathItemMatchers: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+  }),
 });

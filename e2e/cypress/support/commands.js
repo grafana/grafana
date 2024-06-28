@@ -1,13 +1,5 @@
 import 'cypress-file-upload';
 
-Cypress.Commands.add('compareScreenshots', (config) => {
-  cy.task('compareScreenshots', {
-    config,
-    screenshotsFolder: Cypress.config('screenshotsFolder'),
-    specName: Cypress.spec.name,
-  });
-});
-
 Cypress.Commands.add('logToConsole', (message, optional) => {
   cy.task('log', { message: '(' + new Date().toISOString() + ') ' + message, optional });
 });
@@ -33,4 +25,10 @@ Cypress.Commands.add('startBenchmarking', (testName) => {
 
 Cypress.Commands.add('stopBenchmarking', (testName, appStats) => {
   return cy.task('stopBenchmarking', { testName, appStats });
+});
+
+Cypress.Commands.add('setLocalStorage', (key, value) => {
+  cy.window().then((win) => {
+    win.localStorage.setItem(key, value);
+  });
 });

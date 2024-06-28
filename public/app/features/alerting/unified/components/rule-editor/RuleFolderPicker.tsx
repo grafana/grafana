@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { OldFolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/OldFolderPicker';
+import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Props as FolderPickerProps, OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { PermissionLevelString, SearchQueryType } from 'app/types';
 
-import { FolderWarning, CustomAdd } from '../../../../../core/components/Select/OldFolderPicker';
+import { CustomAdd, FolderWarning } from '../../../../../core/components/Select/OldFolderPicker';
 
 export interface Folder {
   title: string;
@@ -16,6 +14,7 @@ export interface Folder {
 
 export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
+  invalid?: boolean;
 }
 
 const SlashesWarning = () => {
@@ -52,7 +51,6 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
       showRoot={false}
       rootName=""
       allowEmpty={true}
-      initialTitle={value?.title}
       initialFolderUid={value?.uid}
       searchQueryType={SearchQueryType.AlertFolder}
       {...props}
@@ -64,15 +62,15 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  slashNotAllowed: css`
-    color: ${theme.colors.warning.main};
-    font-size: 12px;
-    margin-bottom: 2px;
-  `,
-  infoIcon: css`
-    color: ${theme.colors.warning.main};
-    font-size: 12px;
-    margin-bottom: 2px;
-    cursor: pointer;
-  `,
+  slashNotAllowed: css({
+    color: theme.colors.warning.main,
+    fontSize: '12px',
+    marginBottom: '2px',
+  }),
+  infoIcon: css({
+    color: theme.colors.warning.main,
+    fontSize: '12px',
+    marginBottom: '2px',
+    cursor: 'pointer',
+  }),
 });

@@ -31,7 +31,7 @@ You are required to specify an Admin role for each organization. The first user 
 **To add a user to an organization**:
 
 1. Sign in to Grafana as a server administrator.
-1. Click **Administration** in the left-side menu, and then **Users**.
+1. Click **Administration** in the left-side menu, **Users and access**, and then **Users**.
 1. Click a user.
 1. In the Organizations section, click **Add user to organization**.
 1. Select an organization and a role.
@@ -57,7 +57,7 @@ Remove a user from an organization when they no longer require access to the das
 **To remove a user from an organization**:
 
 1. Sign in to Grafana as a server administrator.
-1. Click **Administration** in the left-side menu, and then **Users**.
+1. Click **Administration** in the left-side menu, **Users and access**, and then **Users**.
 1. Click a user.
 1. In the Organization section, click **Remove from organization** next to the organization from which you want to remove the user.
 1. Click **Confirm removal**.

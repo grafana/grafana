@@ -10,11 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func stringPtr(s string) *string {
@@ -22,75 +23,152 @@ func stringPtr(s string) *string {
 }
 
 func TestAuthenticateJWT(t *testing.T) {
-	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
-			return jwt.JWTClaims{
-				"sub":                "1234567890",
-				"email":              "eai.doe@cor.po",
-				"preferred_username": "eai-doe",
-				"name":               "Eai Doe",
-				"roles":              "Admin",
-			}, nil
-		},
-	}
+	t.Parallel()
+
 	jwtHeaderName := "X-Forwarded-User"
-	wantID := &authn.Identity{
-		OrgID:           0,
-		OrgName:         "",
-		OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-		ID:              "",
-		Login:           "eai-doe",
-		Name:            "Eai Doe",
-		Email:           "eai.doe@cor.po",
-		IsGrafanaAdmin:  boolPtr(false),
-		AuthenticatedBy: login.JWTModule,
-		AuthID:          "1234567890",
-		IsDisabled:      false,
-		HelpFlags1:      0,
-		ClientParams: authn.ClientParams{
-			SyncUser:        true,
-			AllowSignUp:     true,
-			FetchSyncedUser: true,
-			SyncOrgRoles:    true,
-			SyncPermissions: true,
-			LookUpParams: login.UserLookupParams{
-				UserID: nil,
-				Email:  stringPtr("eai.doe@cor.po"),
-				Login:  stringPtr("eai-doe"),
+
+	testCases := []struct {
+		name           string
+		wantID         *authn.Identity
+		verifyProvider func(context.Context, string) (map[string]any, error)
+		cfg            *setting.Cfg
+	}{
+		{
+			name: "Valid Use case with group path",
+			wantID: &authn.Identity{
+				OrgID:           0,
+				OrgName:         "",
+				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
+				Groups:          []string{"foo", "bar"},
+				Login:           "eai-doe",
+				Name:            "Eai Doe",
+				Email:           "eai.doe@cor.po",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.JWTModule,
+				AuthID:          "1234567890",
+				IsDisabled:      false,
+				HelpFlags1:      0,
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
+					SyncTeams:       true,
+					LookUpParams: login.UserLookupParams{
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
+					},
+				},
+			},
+			verifyProvider: func(context.Context, string) (map[string]any, error) {
+				return map[string]any{
+					"sub":                "1234567890",
+					"email":              "eai.doe@cor.po",
+					"preferred_username": "eai-doe",
+					"name":               "Eai Doe",
+					"roles":              "Admin",
+					"groups":             []string{"foo", "bar"},
+				}, nil
+			},
+			cfg: &setting.Cfg{
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					HeaderName:              jwtHeaderName,
+					EmailClaim:              "email",
+					UsernameClaim:           "preferred_username",
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+					RoleAttributePath:       "roles",
+					GroupsAttributePath:     "groups[]",
+				},
+			},
+		},
+		{
+			name: "Valid Use case without group path",
+			wantID: &authn.Identity{
+				OrgID:           0,
+				OrgName:         "",
+				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
+				Login:           "eai-doe",
+				Groups:          []string{},
+				Name:            "Eai Doe",
+				Email:           "eai.doe@cor.po",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.JWTModule,
+				AuthID:          "1234567890",
+				IsDisabled:      false,
+				HelpFlags1:      0,
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
+					SyncTeams:       false,
+					LookUpParams: login.UserLookupParams{
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
+					},
+				},
+			},
+			verifyProvider: func(context.Context, string) (map[string]any, error) {
+				return map[string]any{
+					"sub":                "1234567890",
+					"email":              "eai.doe@cor.po",
+					"preferred_username": "eai-doe",
+					"name":               "Eai Doe",
+					"roles":              "Admin",
+					"groups":             []string{"foo", "bar"},
+				}, nil
+			},
+			cfg: &setting.Cfg{
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					HeaderName:              jwtHeaderName,
+					EmailClaim:              "email",
+					UsernameClaim:           "preferred_username",
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+					RoleAttributePath:       "roles",
+				},
 			},
 		},
 	}
 
-	cfg := &setting.Cfg{
-		JWTAuthEnabled:                 true,
-		JWTAuthHeaderName:              jwtHeaderName,
-		JWTAuthEmailClaim:              "email",
-		JWTAuthUsernameClaim:           "preferred_username",
-		JWTAuthAutoSignUp:              true,
-		JWTAuthAllowAssignGrafanaAdmin: true,
-		JWTAuthRoleAttributeStrict:     true,
-		JWTAuthRoleAttributePath:       "roles",
-	}
-	jwtClient := ProvideJWT(jwtService, cfg)
-	validHTTPReq := &http.Request{
-		Header: map[string][]string{
-			jwtHeaderName: {"sample-token"}},
-	}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jwtService := &jwt.FakeJWTService{
+				VerifyProvider: tc.verifyProvider,
+			}
 
-	id, err := jwtClient.Authenticate(context.Background(), &authn.Request{
-		OrgID:       1,
-		HTTPRequest: validHTTPReq,
-		Resp:        nil,
-	})
-	require.NoError(t, err)
+			jwtClient := ProvideJWT(jwtService, tc.cfg)
+			validHTTPReq := &http.Request{
+				Header: map[string][]string{
+					jwtHeaderName: {"sample-token"}},
+			}
 
-	assert.EqualValues(t, wantID, id, fmt.Sprintf("%+v", id))
+			id, err := jwtClient.Authenticate(context.Background(), &authn.Request{
+				OrgID:       1,
+				HTTPRequest: validHTTPReq,
+				Resp:        nil,
+			})
+			require.NoError(t, err)
+
+			assert.EqualValues(t, tc.wantID, id, fmt.Sprintf("%+v", id))
+		})
+	}
 }
 
 func TestJWTClaimConfig(t *testing.T) {
+	t.Parallel()
 	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
-			return jwt.JWTClaims{
+		VerifyProvider: func(context.Context, string) (map[string]any, error) {
+			return map[string]any{
 				"sub":                "1234567890",
 				"email":              "eai.doe@cor.po",
 				"preferred_username": "eai-doe",
@@ -102,30 +180,19 @@ func TestJWTClaimConfig(t *testing.T) {
 
 	jwtHeaderName := "X-Forwarded-User"
 
-	cfg := &setting.Cfg{
-		JWTAuthEnabled:                 true,
-		JWTAuthHeaderName:              jwtHeaderName,
-		JWTAuthAutoSignUp:              true,
-		JWTAuthAllowAssignGrafanaAdmin: true,
-		JWTAuthRoleAttributeStrict:     true,
-		JWTAuthRoleAttributePath:       "roles",
-	}
-
 	// #nosec G101 -- This is a dummy/test token
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 
-	type Dictionary map[string]any
-
 	type testCase struct {
 		desc                 string
-		claimsConfigurations []Dictionary
+		claimsConfigurations []util.DynMap
 		valid                bool
 	}
 
 	testCases := []testCase{
 		{
 			desc: "JWT configuration with email and username claims",
-			claimsConfigurations: []Dictionary{
+			claimsConfigurations: []util.DynMap{
 				{
 					"JWTAuthEmailClaim":    true,
 					"JWTAuthUsernameClaim": true,
@@ -135,7 +202,7 @@ func TestJWTClaimConfig(t *testing.T) {
 		},
 		{
 			desc: "JWT configuration with email claim",
-			claimsConfigurations: []Dictionary{
+			claimsConfigurations: []util.DynMap{
 				{
 					"JWTAuthEmailClaim":    true,
 					"JWTAuthUsernameClaim": false,
@@ -145,7 +212,7 @@ func TestJWTClaimConfig(t *testing.T) {
 		},
 		{
 			desc: "JWT configuration with username claim",
-			claimsConfigurations: []Dictionary{
+			claimsConfigurations: []util.DynMap{
 				{
 					"JWTAuthEmailClaim":    false,
 					"JWTAuthUsernameClaim": true,
@@ -155,7 +222,7 @@ func TestJWTClaimConfig(t *testing.T) {
 		},
 		{
 			desc: "JWT configuration without email and username claims",
-			claimsConfigurations: []Dictionary{
+			claimsConfigurations: []util.DynMap{
 				{
 					"JWTAuthEmailClaim":    false,
 					"JWTAuthUsernameClaim": false,
@@ -166,39 +233,53 @@ func TestJWTClaimConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			cfg := &setting.Cfg{
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					HeaderName:              jwtHeaderName,
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+					RoleAttributePath:       "roles",
+				},
+			}
 			for _, claims := range tc.claimsConfigurations {
-				cfg.JWTAuthEmailClaim = ""
-				cfg.JWTAuthUsernameClaim = ""
+				cfg.JWTAuth.EmailClaim = ""
+				cfg.JWTAuth.UsernameClaim = ""
 
 				if claims["JWTAuthEmailClaim"] == true {
-					cfg.JWTAuthEmailClaim = "email"
+					cfg.JWTAuth.EmailClaim = "email"
 				}
 				if claims["JWTAuthUsernameClaim"] == true {
-					cfg.JWTAuthUsernameClaim = "preferred_username"
+					cfg.JWTAuth.UsernameClaim = "preferred_username"
 				}
 			}
+
+			httpReq := &http.Request{
+				URL: &url.URL{RawQuery: "auth_token=" + token},
+				Header: map[string][]string{
+					jwtHeaderName: {token}},
+			}
+			jwtClient := ProvideJWT(jwtService, cfg)
+			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
+				OrgID:       1,
+				HTTPRequest: httpReq,
+				Resp:        nil,
+			})
+			if tc.valid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
 		})
-		httpReq := &http.Request{
-			URL: &url.URL{RawQuery: "auth_token=" + token},
-			Header: map[string][]string{
-				jwtHeaderName: {token}},
-		}
-		jwtClient := ProvideJWT(jwtService, cfg)
-		_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
-			OrgID:       1,
-			HTTPRequest: httpReq,
-			Resp:        nil,
-		})
-		if tc.valid {
-			require.NoError(t, err)
-		} else {
-			require.Error(t, err)
-		}
 	}
 }
 
 func TestJWTTest(t *testing.T) {
+	t.Parallel()
 	jwtService := &jwt.FakeJWTService{}
 	jwtHeaderName := "X-Forwarded-User"
 	// #nosec G101 -- This is dummy/test token
@@ -280,14 +361,18 @@ func TestJWTTest(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
 			cfg := &setting.Cfg{
-				JWTAuthEnabled:                 true,
-				JWTAuthURLLogin:                tc.urlLogin,
-				JWTAuthHeaderName:              tc.cfgHeaderName,
-				JWTAuthAutoSignUp:              true,
-				JWTAuthAllowAssignGrafanaAdmin: true,
-				JWTAuthRoleAttributeStrict:     true,
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					URLLogin:                tc.urlLogin,
+					HeaderName:              tc.cfgHeaderName,
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+				},
 			}
 			jwtClient := ProvideJWT(jwtService, cfg)
 			httpReq := &http.Request{
@@ -308,9 +393,10 @@ func TestJWTTest(t *testing.T) {
 }
 
 func TestJWTStripParam(t *testing.T) {
+	t.Parallel()
 	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
-			return jwt.JWTClaims{
+		VerifyProvider: func(context.Context, string) (map[string]any, error) {
+			return map[string]any{
 				"sub":                "1234567890",
 				"email":              "eai.doe@cor.po",
 				"preferred_username": "eai-doe",
@@ -323,15 +409,17 @@ func TestJWTStripParam(t *testing.T) {
 	jwtHeaderName := "X-Forwarded-User"
 
 	cfg := &setting.Cfg{
-		JWTAuthEnabled:                 true,
-		JWTAuthHeaderName:              jwtHeaderName,
-		JWTAuthAutoSignUp:              true,
-		JWTAuthAllowAssignGrafanaAdmin: true,
-		JWTAuthURLLogin:                true,
-		JWTAuthRoleAttributeStrict:     false,
-		JWTAuthRoleAttributePath:       "roles",
-		JWTAuthEmailClaim:              "email",
-		JWTAuthUsernameClaim:           "preferred_username",
+		JWTAuth: setting.AuthJWTSettings{
+			Enabled:                 true,
+			HeaderName:              jwtHeaderName,
+			AutoSignUp:              true,
+			AllowAssignGrafanaAdmin: true,
+			URLLogin:                true,
+			RoleAttributeStrict:     false,
+			RoleAttributePath:       "roles",
+			EmailClaim:              "email",
+			UsernameClaim:           "preferred_username",
+		},
 	}
 
 	// #nosec G101 -- This is a dummy/test token
@@ -349,4 +437,62 @@ func TestJWTStripParam(t *testing.T) {
 	require.NoError(t, err)
 	// auth_token should be removed from the query string
 	assert.Equal(t, "other_param=other_value", httpReq.URL.RawQuery)
+}
+
+func TestJWTSubClaimsConfig(t *testing.T) {
+	t.Parallel()
+
+	// #nosec G101 -- This is a dummy/test token
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXIiOiIxLjAiLCJpc3MiOiJodHRwczovL2F6dXJlZG9tYWlubmFtZS5iMmNsb2dpbi5jb20vNjIwYjI2MzQtYmI4OC00MzdiLTgwYWQtYWM0YTkwZGZkZTkxL3YyLjAvIiwic3ViIjoiOWI4OTg5MDgtMWFlYy00NDc1LTljNDgtNzg1MWQyNjVkZGIxIiwiYXVkIjoiYmEyNzM0NDktMmZiNS00YTRhLTlmODItYTA2MTRhM2MxODQ1IiwiZXhwIjoxNzExNTYwMDcxLCJub25jZSI6ImRlZmF1bHROb25jZSIsImlhdCI6MTcxMTU1NjQ3MSwiYXV0aF90aW1lIjoxNzExNTU2NDcxLCJuYW1lIjoibmFtZV9vZl90aGVfdXNlciIsImdpdmVuX25hbWUiOiJVc2VyTmFtZSIsImZhbWlseV9uYW1lIjoiVXNlclN1cm5hbWUiLCJlbWFpbHMiOlsibWFpbmVtYWlsK2V4dHJhZW1haWwwNUBnbWFpbC5jb20iLCJtYWluZW1haWwrZXh0cmFlbWFpbDA0QGdtYWlsLmNvbSIsIm1haW5lbWFpbCtleHRyYWVtYWlsMDNAZ21haWwuY29tIiwibWFpbmVtYWlsK2V4dHJhZW1haWwwMkBnbWFpbC5jb20iLCJtYWluZW1haWwrZXh0cmFlbWFpbDAxQGdtYWlsLmNvbSIsIm1haW5lbWFpbEBnbWFpbC5jb20iXSwidGZwIjoiQjJDXzFfdXNlcmZsb3ciLCJuYmYiOjE3MTE1NTY0NzF9.qpN3upxUB5CTJ7kmYPHFuhlwG95vdQqJaDDC_8KJFZ8"
+	jwtHeaderName := "X-Forwarded-User"
+	response := map[string]any{
+		"ver":         "1.0",
+		"iss":         "https://azuredomainname.b2clogin.com/620b2634-bb88-437b-80ad-ac4a90dfde91/v2.0/",
+		"sub":         "9b898908-1aec-4475-9c48-7851d265ddb1",
+		"aud":         "ba273449-2fb5-4a4a-9f82-a0614a3c1845",
+		"exp":         1711560071,
+		"nonce":       "defaultNonce",
+		"iat":         1711556471,
+		"auth_time":   1711556471,
+		"name":        "name_of_the_user",
+		"given_name":  "UserName",
+		"family_name": "UserSurname",
+		"emails": []string{
+			"mainemail+extraemail04@gmail.com",
+			"mainemail+extraemail03@gmail.com",
+			"mainemail+extraemail02@gmail.com",
+			"mainemail+extraemail01@gmail.com",
+			"mainemail@gmail.com",
+		},
+		"tfp": "B2C_1_userflow",
+		"nbf": 1711556471,
+	}
+	cfg := &setting.Cfg{
+		JWTAuth: setting.AuthJWTSettings{
+			HeaderName:            jwtHeaderName,
+			EmailAttributePath:    "emails[2]",
+			UsernameAttributePath: "name",
+		},
+	}
+	httpReq := &http.Request{
+		URL: &url.URL{RawQuery: "auth_token=" + token},
+		Header: map[string][]string{
+			jwtHeaderName: {token}},
+	}
+	jwtService := &jwt.FakeJWTService{
+		VerifyProvider: func(context.Context, string) (map[string]any, error) {
+			return response, nil
+		},
+	}
+
+	jwtClient := ProvideJWT(jwtService, cfg)
+	identity, err := jwtClient.Authenticate(context.Background(), &authn.Request{
+		OrgID:       1,
+		HTTPRequest: httpReq,
+		Resp:        nil,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "mainemail+extraemail02@gmail.com", identity.Email)
+	require.Equal(t, "name_of_the_user", identity.Name)
+	fmt.Println("identity.Email", identity.Email)
 }

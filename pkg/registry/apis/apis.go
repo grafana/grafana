@@ -3,9 +3,17 @@ package apiregistry
 import (
 	"context"
 
-	examplev0alpha1 "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
-	playlistsv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
+	"github.com/grafana/grafana/pkg/registry/apis/folders"
+	"github.com/grafana/grafana/pkg/registry/apis/peakq"
+	"github.com/grafana/grafana/pkg/registry/apis/playlist"
+	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/registry/apis/scope"
 )
 
 var (
@@ -14,11 +22,19 @@ var (
 
 type Service struct{}
 
-// ProvideService is an entry point for each service that will force initialization
+// ProvideRegistryServiceSink is an entry point for each service that will force initialization
 // and give each builder the chance to register itself with the main server
-func ProvideService(
-	_ *playlistsv0alpha1.PlaylistAPIBuilder,
-	_ *examplev0alpha1.TestingAPIBuilder,
+func ProvideRegistryServiceSink(
+	_ *dashboard.DashboardsAPIBuilder,
+	_ *playlist.PlaylistAPIBuilder,
+	_ *dashboardsnapshot.SnapshotsAPIBuilder,
+	_ *featuretoggle.FeatureFlagAPIBuilder,
+	_ *datasource.DataSourceAPIBuilder,
+	_ *folders.FolderAPIBuilder,
+	_ *peakq.PeakQAPIBuilder,
+	_ *scope.ScopeAPIBuilder,
+	_ *query.QueryAPIBuilder,
+	_ *notifications.NotificationsAPIBuilder,
 ) *Service {
 	return &Service{}
 }

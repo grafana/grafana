@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { RefObject, useMemo } from 'react';
+import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -16,18 +16,18 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { t, Trans } from 'app/core/internationalization';
-import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../core/core';
-import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
+import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
+import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
 import { changeCorrelationHelperData } from './state/explorePane';
@@ -62,16 +62,9 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
-  topOfViewRef?: RefObject<HTMLDivElement>;
 }
 
-export function ExploreToolbar({
-  exploreId,
-  topOfViewRef,
-  onChangeTime,
-  onContentOutlineToogle,
-  isContentOutlineOpen,
-}: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
@@ -106,16 +99,11 @@ export function ExploreToolbar({
     ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
     : t('explore.toolbar.refresh-picker-run', 'Run query');
 
-  const onCopyShortLink = () => {
-    createAndCopyShortLink(global.location.href);
-    reportInteraction('grafana_explore_shortened_link_clicked');
-  };
-
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
     if (!isCorrelationsEditorMode) {
-      dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+      dispatch(changeDatasource({ exploreId, datasource: dsSettings.uid, options: { importQueries: true } }));
     } else {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // prompt will handle datasource change if needed
         dispatch(
           changeCorrelationEditorDetails({
@@ -124,6 +112,7 @@ export function ExploreToolbar({
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
               changeDatasourceUid: dsSettings.uid,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -140,7 +129,7 @@ export function ExploreToolbar({
           });
         }
 
-        dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+        dispatch(changeDatasource({ exploreId, datasource: dsSettings.uid, options: { importQueries: true } }));
       }
     }
   };
@@ -162,7 +151,7 @@ export function ExploreToolbar({
 
   const onCloseSplitView = () => {
     if (isCorrelationsEditorMode) {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // if dirty, prompt
         dispatch(
           changeCorrelationEditorDetails({
@@ -170,6 +159,7 @@ export function ExploreToolbar({
             postConfirmAction: {
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -211,41 +201,30 @@ export function ExploreToolbar({
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
-  const navBarActions = [
-    <DashNavButton
-      key="share"
-      tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
-      icon="share-alt"
-      onClick={onCopyShortLink}
-      aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
-    />,
-    <div style={{ flex: 1 }} key="spacer0" />,
-  ];
+  const navBarActions = [<ShortLinkButtonMenu key="share" />, <div style={{ flex: 1 }} key="spacer0" />];
 
   return (
-    <div ref={topOfViewRef}>
+    <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <div ref={topOfViewRef}>
+      <div>
         <AppChromeUpdate actions={navBarActions} />
       </div>
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
-          config.featureToggles.exploreContentOutline && (
-            <ToolbarButton
-              key="content-outline"
-              variant="canvas"
-              tooltip="Content outline"
-              icon="list-ui-alt"
-              iconOnly={splitted}
-              onClick={onContentOutlineToogle}
-              aria-expanded={isContentOutlineOpen}
-              aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
-              className={styles.toolbarButton}
-            >
-              Outline
-            </ToolbarButton>
-          ),
+          <ToolbarButton
+            key="content-outline"
+            variant="canvas"
+            tooltip="Content outline"
+            icon="list-ui-alt"
+            iconOnly={splitted}
+            onClick={onContentOutlineToogle}
+            aria-expanded={isContentOutlineOpen}
+            aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+            className={styles.toolbarButton}
+          >
+            Outline
+          </ToolbarButton>,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed={!isCorrelationsEditorMode}
@@ -258,6 +237,7 @@ export function ExploreToolbar({
         forceShowLeftItems
       >
         {[
+          <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
           !splitted ? (
             <ToolbarButton
               variant="canvas"
@@ -293,12 +273,7 @@ export function ExploreToolbar({
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint
-            splitted={splitted}
-            key="toolbar-extension-point"
-            exploreId={exploreId}
-            timeZone={timeZone}
-          />,
+          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} timeZone={timeZone} />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

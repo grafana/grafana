@@ -18,6 +18,27 @@ labels:
 menuTitle: Query editor
 title: Microsoft SQL Server query editor
 weight: 300
+refs:
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  table:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+  configure-standard-options-display-name:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # Microsoft SQL Server query editor
@@ -25,7 +46,7 @@ weight: 300
 You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
 
 This topic explains querying specific to the MS SQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
 ## Choose a query editing mode
 
@@ -120,6 +141,8 @@ To filter on more columns, click the plus (`+`) button to the right of the condi
 
 To remove a filter, click the `x` button next to that filter's dropdown.
 
+After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
+
 ### Group results
 
 To group results by column, toggle the **Group** switch at the top of the editor.
@@ -166,7 +189,7 @@ To display the raw interpolated SQL string that the data source executed, click 
 
 ## Use table queries
 
-If the **Format** query option is set to **Table** for a [Table panel][table], you can enter any type of SQL query.
+If the **Format** query option is set to **Table** for a [Table panel](ref:table), you can enter any type of SQL query.
 The Table panel then displays the query results with whatever columns and rows are returned.
 
 **Example database table:**
@@ -237,7 +260,7 @@ For backward compatibility, there's an exception to the above rule for queries t
 Instead of transforming the `metric` column into field labels, it becomes the field name, and then the series name is formatted as the value of the `metric` column.
 See the example with the `metric` column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions][configure-standard-options-display-name].
+To optionally customize the default series name formatting, refer to [Standard options definitions](ref:configure-standard-options-display-name).
 
 **Example with `metric` column:**
 
@@ -283,7 +306,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions][configure-standard-options-display-name] display name value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions](ref:configure-standard-options-display-name) display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -326,7 +349,7 @@ Data frame result:
 
 ## Apply annotations
 
-[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 **Columns:**
@@ -544,17 +567,3 @@ DECLARE
 
 EXEC dbo.sp_test_datetime @from, @to
 ```
-
-{{% docs/reference %}}
-[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-
-[configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
-[configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-
-[table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-[table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-{{% /docs/reference %}}

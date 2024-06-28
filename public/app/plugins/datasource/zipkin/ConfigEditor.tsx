@@ -1,15 +1,17 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConnectionSettings,
+  DataSourceDescription,
+  convertLegacyAuthProps,
+} from '@grafana/experimental';
+import { NodeGraphSection, SpanBarSection, TraceToLogsSection, TraceToMetricsSection } from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
-import { Divider } from 'app/core/components/Divider';
-import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
-import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
+import { useStyles2, Divider, Stack, SecureSocksProxySettings } from '@grafana/ui';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -24,26 +26,24 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         hasRequiredFields={false}
       />
 
-      <Divider />
+      <Divider spacing={4} />
 
-      <DataSourceHttpSettings
-        defaultUrl="http://localhost:9411"
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:9411" />
+
+      <Divider spacing={4} />
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
       />
 
+      <Divider spacing={4} />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
 
-      <Divider />
-
-      {config.featureToggles.traceToMetrics ? (
-        <>
-          <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider />
-        </>
-      ) : null}
+      <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
 
       <ConfigSection
         title="Additional settings"
@@ -51,18 +51,24 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         isCollapsible={true}
         isInitiallyOpen={false}
       >
-        <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
-        <Divider hideLine={true} />
-        <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+        <Stack gap={5} direction="column">
+          <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+
+          {config.secureSocksDSProxyEnabled && (
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          )}
+
+          <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
+          <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+        </Stack>
       </ConfigSection>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: container;
-    margin-bottom: ${theme.spacing(2)};
-    max-width: 900px;
-  `,
+  container: css({
+    marginBottom: theme.spacing(2),
+    maxWidth: '900px',
+  }),
 });

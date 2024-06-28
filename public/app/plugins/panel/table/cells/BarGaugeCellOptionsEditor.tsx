@@ -1,9 +1,6 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableBarGaugeCellOptions } from '@grafana/schema';
-import { Field, RadioButtonGroup } from '@grafana/ui';
+import { Field, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 

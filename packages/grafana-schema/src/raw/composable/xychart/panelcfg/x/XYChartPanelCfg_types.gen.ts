@@ -4,15 +4,17 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
+/**
+ * Auto is "table" in the UI
+ */
 export enum SeriesMapping {
   Auto = 'auto',
   Manual = 'manual',
@@ -24,6 +26,9 @@ export enum ScatterShow {
   PointsAndLines = 'points+lines',
 }
 
+/**
+ * Configuration for the Table/Auto mode
+ */
 export interface XYDimensionConfig {
   exclude?: Array<string>;
   frame: number;
@@ -51,13 +56,20 @@ export const defaultFieldConfig: Partial<FieldConfig> = {
 };
 
 export interface ScatterSeriesConfig extends FieldConfig {
+  frame?: number;
   name?: string;
   x?: string;
   y?: string;
 }
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
+  /**
+   * Table Mode (auto)
+   */
   dims: XYDimensionConfig;
+  /**
+   * Manual Mode
+   */
   series: Array<ScatterSeriesConfig>;
   seriesMapping?: SeriesMapping;
 }

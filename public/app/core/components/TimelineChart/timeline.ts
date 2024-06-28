@@ -2,10 +2,10 @@ import uPlot, { Series } from 'uplot';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
-import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
+import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
+import { Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 import { FieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
 import { FieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/status-history/panelcfg.gen';
 
@@ -53,8 +53,7 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
-  onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
-  onLeave: () => void;
+  hoverMulti: boolean;
 }
 
 /**
@@ -77,8 +76,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     getTimeRange,
     getValueColor,
     getFieldConfig,
-    onHover,
-    onLeave,
+    hoverMulti,
   } = opts;
 
   let qt: Quadtree;
@@ -133,10 +131,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     value: number | null,
     discrete: boolean
   ) {
-    // do not render super small boxes
-    if (boxWidth < 1) {
-      return;
-    }
+    // clamp width to allow small boxes to be rendered
+    boxWidth = Math.max(1, boxWidth);
 
     const valueColor = getValueColor(seriesIdx + 1, value);
     const fieldConfig = getFieldConfig(seriesIdx);
@@ -315,7 +311,7 @@ export function getConfig(opts: TimelineCoreOptions) {
               let discrete = isDiscrete(sidx);
               let mappedNull = discrete && hasMappedNull(sidx);
 
-              let y = round(yOff + yMids[sidx - 1]);
+              let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null || mappedNull) {
@@ -357,7 +353,6 @@ export function getConfig(opts: TimelineCoreOptions) {
         };
 
   const init = (u: uPlot) => {
-    let over = u.over;
     let chars = '';
     for (let i = 32; i <= 126; i++) {
       chars += String.fromCharCode(i);
@@ -367,7 +362,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     // be a bit more conservtive to prevent overlap
     pxPerChar += 2.5;
 
-    over.style.overflow = 'hidden';
     u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
       el.style.borderRadius = '0';
     });
@@ -386,7 +380,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
   };
 
-  function setHovered(cx: number, cy: number, cys: number[]) {
+  function setHovered(cx: number, cy: number, viaSync = false) {
     hovered.fill(null);
     hoveredAtCursor = null;
 
@@ -394,22 +388,22 @@ export function getConfig(opts: TimelineCoreOptions) {
       return;
     }
 
-    for (let i = 0; i < cys.length; i++) {
-      let cy2 = cys[i];
-
-      qt.get(cx, cy2, 1, 1, (o) => {
-        if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
-          hovered[o.sidx] = o;
-
-          if (Math.abs(cy - cy2) <= o.h / 2) {
-            hoveredAtCursor = o;
-          }
+    // first gets all items in all quads intersected by a 1px wide by 10k high rect at the x cursor position and 0 y position.
+    // (we use 10k instead of plot area height for simplicity and not having to pass around the uPlot instance)
+    qt.get(cx, 0, uPlot.pxRatio, 1e4, (o) => {
+      // filter only rects that intersect along x dir
+      if (cx >= o.x && cx <= o.x + o.w) {
+        // if also intersect along y dir, set both "direct hovered" and "one-of hovered"
+        if (cy >= o.y && cy <= o.y + o.h) {
+          hovered[o.sidx] = hoveredAtCursor = o;
         }
-      });
-    }
+        // else only set "one-of hovered" (no "direct hovered") in multi mode or when synced
+        else if (hoverMulti || viaSync) {
+          hovered[o.sidx] = o;
+        }
+      }
+    });
   }
-
-  const hoverMulti = mode === TimelineMode.Changes;
 
   const cursor: uPlot.Cursor = {
     x: mode === TimelineMode.Changes,
@@ -428,20 +422,14 @@ export function getConfig(opts: TimelineCoreOptions) {
         let cx = u.cursor.left! * uPlot.pxRatio;
         let cy = u.cursor.top! * uPlot.pxRatio;
 
-        let prevHovered = hoveredAtCursor;
-
-        setHovered(cx, cy, hoverMulti ? yMids : [cy]);
-
-        if (hoveredAtCursor != null) {
-          if (hoveredAtCursor !== prevHovered) {
-            onHover(hoveredAtCursor.sidx, hoveredAtCursor.didx, hoveredAtCursor);
-          }
-        } else if (prevHovered != null) {
-          onLeave();
-        }
+        setHovered(cx, cy, u.cursor.event == null);
       }
 
       return hovered[seriesIdx]?.didx;
+    },
+    focus: {
+      prox: 1e3,
+      dist: (u, seriesIdx) => (hoveredAtCursor?.sidx === seriesIdx ? 0 : Infinity),
     },
     points: {
       fill: 'rgba(255,255,255,0.2)',
@@ -459,7 +447,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
   };
 
-  const yMids: number[] = Array(numSeries).fill(0);
   const ySplits: number[] = Array(numSeries).fill(0);
   const yRange: uPlot.Range.MinMax = [0, 1];
 
@@ -514,8 +501,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     ySplits: (u: uPlot) => {
       walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
-        yMids[iy] = round(y0 + hgt / 2);
-        ySplits[iy] = u.posToVal(yMids[iy] / uPlot.pxRatio, FIXED_UNIT);
+        let yMid = round(y0 + hgt / 2);
+        ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
       });
 
       return ySplits;

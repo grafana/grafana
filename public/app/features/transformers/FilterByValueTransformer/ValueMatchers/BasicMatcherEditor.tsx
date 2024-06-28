@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
@@ -123,6 +124,20 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
     {
       name: 'Is not equal',
       id: ValueMatcherID.notEqual,
+      component: basicMatcherEditor<string | number | boolean>({
+        validator: () => true,
+      }),
+    },
+    {
+      name: 'Is Substring',
+      id: ValueMatcherID.substring,
+      component: basicMatcherEditor<string | number | boolean>({
+        validator: () => true,
+      }),
+    },
+    {
+      name: 'Is not substring',
+      id: ValueMatcherID.notSubstring,
       component: basicMatcherEditor<string | number | boolean>({
         validator: () => true,
       }),

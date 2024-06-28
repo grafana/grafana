@@ -4,7 +4,7 @@ import { Coordinate } from 'ol/coordinate';
 import { MultiLineString } from 'ol/geom';
 import Point from 'ol/geom/Point';
 import { Group as LayerGroup } from 'ol/layer';
-import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
 import { fromLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style, Circle } from 'ol/style';
@@ -78,7 +78,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     const sourceLineMethods = Object.getPrototypeOf(sourceLine);
 
     // Night polygon
-    const vectorLayer = new VectorLayer({
+    const vectorLayer = new VectorImage({
       source,
       style: new Style({
         fill: new Fill({
@@ -88,7 +88,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     });
 
     // Night line (for crosshair sharing)
-    const nightLineLayer = new VectorLayer({
+    const nightLineLayer = new VectorImage({
       source: new VectorSource({
         features: [],
       }),
@@ -106,7 +106,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       geometry: new Point([]),
     });
 
-    const sunLayer = new VectorLayer({
+    const sunLayer = new VectorImage({
       source: new VectorSource({
         features: [sunFeature],
       }),
@@ -144,7 +144,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       }),
     });
 
-    const sunLineLayer = new VectorLayer({
+    const sunLineLayer = new VectorImage({
       source: new VectorSource({
         features: [sunLineFeature],
       }),
@@ -163,7 +163,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     if (false) {
       subscriptions.add(
         eventBus.subscribe(DataHoverEvent, (event) => {
-          const time: number = event.payload?.point?.time;
+          const time = event.payload?.point?.time;
           if (time) {
             const lineTime = new Date(time);
             const nightLinePoints = sourceLine.getCoordinates(lineTime.toString(), 'line');

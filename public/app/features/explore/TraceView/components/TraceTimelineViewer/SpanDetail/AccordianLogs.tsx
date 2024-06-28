@@ -22,10 +22,11 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
 import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
+
+import { alignIcon } from '.';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -55,13 +56,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: AccordianLogsFooter;
       color: ${autoColor(theme, '#999')};
     `,
+    AccordianKeyValuesItem: css({
+      marginBottom: theme.spacing(0.5),
+    }),
   };
 };
 
 export type AccordianLogsProps = {
   interactive?: boolean;
   isOpen: boolean;
-  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logs: TraceLog[];
   onItemToggle?: (log: TraceLog) => void;
   onToggle?: () => void;
@@ -69,14 +73,22 @@ export type AccordianLogsProps = {
   timestamp: number;
 };
 
-export default function AccordianLogs(props: AccordianLogsProps) {
-  const { interactive, isOpen, linksGetter, logs, openedItems, onItemToggle, onToggle, timestamp } = props;
+export default function AccordianLogs({
+  interactive = true,
+  isOpen,
+  linksGetter,
+  logs,
+  openedItems,
+  onItemToggle,
+  onToggle,
+  timestamp,
+}: AccordianLogsProps) {
   let arrow: React.ReactNode | null = null;
   let HeaderComponent: 'span' | 'a' = 'span';
   let headerProps: {} | null = null;
   if (interactive) {
     arrow = isOpen ? (
-      <Icon name={'angle-down'} className={uAlignIcon} />
+      <Icon name={'angle-down'} className={alignIcon} />
     ) : (
       <Icon name={'angle-right'} className="u-align-icon" />
     );
@@ -100,7 +112,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
             <AccordianKeyValues
               // `i` is necessary in the key because timestamps can repeat
               key={`${log.timestamp}-${i}`}
-              className={i < logs.length - 1 ? ubMb1 : null}
+              className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
               data={log.fields || []}
               highContrast
               interactive={interactive}
@@ -118,11 +130,3 @@ export default function AccordianLogs(props: AccordianLogsProps) {
     </div>
   );
 }
-
-AccordianLogs.defaultProps = {
-  interactive: true,
-  linksGetter: undefined,
-  onItemToggle: undefined,
-  onToggle: undefined,
-  openedItems: undefined,
-};

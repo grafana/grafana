@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Input, useStyles2 } from '@grafana/ui';
@@ -64,16 +63,16 @@ export const StringArrayInput = ({ value, onChange, readOnly = false }: Props) =
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  row: css`
-    display: flex;
-    flex-direction: row;
-    margin-bottom: ${theme.spacing(1)};
-    align-items: center;
-  `,
-  deleteIcon: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-  addButton: css`
-    margin-top: ${theme.spacing(1)};
-  `,
+  row: css({
+    display: 'flex',
+    flexDirection: 'row',
+    marginBottom: theme.spacing(1),
+    alignItems: 'center',
+  }),
+  deleteIcon: css({
+    marginLeft: theme.spacing(1),
+  }),
+  addButton: css({
+    marginTop: theme.spacing(1),
+  }),
 });

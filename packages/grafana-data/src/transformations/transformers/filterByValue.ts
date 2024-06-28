@@ -56,8 +56,12 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       interpolatedFilters.push(
         ...filters.map((filter) => {
           if (filter.config.id === ValueMatcherID.between) {
-            const interpolatedFrom = ctx.interpolate(filter.config.options.from);
-            const interpolatedTo = ctx.interpolate(filter.config.options.to);
+            if (typeof filter.config.options.from === 'string') {
+              filter.config.options.from = ctx.interpolate(filter.config.options.from);
+            }
+            if (typeof filter.config.options.to === 'string') {
+              filter.config.options.to = ctx.interpolate(filter.config.options.to);
+            }
 
             const newFilter = {
               ...filter,
@@ -65,8 +69,8 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
                 ...filter.config,
                 options: {
                   ...filter.config.options,
-                  to: interpolatedTo,
-                  from: interpolatedFrom,
+                  to: filter.config.options.to,
+                  from: filter.config.options.from,
                 },
               },
             };
@@ -76,12 +80,14 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             // Due to colliding syntaxes, interpolating regex filters will cause issues.
             return filter;
           } else if (filter.config.options.value) {
-            const interpolatedValue = ctx.interpolate(filter.config.options.value);
+            if (typeof filter.config.options.value === 'string') {
+              filter.config.options.value = ctx.interpolate(filter.config.options.value);
+            }
+
             const newFilter = {
               ...filter,
-              config: { ...filter.config, options: { ...filter.config.options, value: interpolatedValue } },
+              config: { ...filter.config, options: { ...filter.config.options, value: filter.config.options.value } },
             };
-            newFilter.config.options.value! = interpolatedValue;
             return newFilter;
           }
 
@@ -92,14 +98,16 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
     return source.pipe(
       map((data) => {
-        if (!Array.isArray(data) || data.length === 0) {
+        if (data.length === 0) {
           return data;
         }
 
-        const rows = new Set<number>();
+        const processed: DataFrame[] = [];
+
+        const fieldIndexByName = groupFieldIndexByName(data);
 
         for (const frame of data) {
-          const fieldIndexByName = groupFieldIndexByName(frame, data);
+          const rows = new Set<number>();
 
           let matchers;
           if (transformationsVariableSupport()) {
@@ -135,13 +143,9 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
               rows.add(index);
             }
           }
-        }
 
-        const processed: DataFrame[] = [];
-        const frameLength = include ? rows.size : data[0].length - rows.size;
-
-        for (const frame of data) {
           const fields: Field[] = [];
+          const frameLength = include ? rows.size : data[0].length - rows.size;
 
           for (const field of frame.fields) {
             const buffer = [];
@@ -198,10 +202,15 @@ const createFilterValueMatchers = (
   });
 };
 
-const groupFieldIndexByName = (frame: DataFrame, data: DataFrame[]): Record<string, number> => {
-  return frame.fields.reduce((all: Record<string, number>, field, fieldIndex) => {
-    const fieldName = getFieldDisplayName(field, frame, data);
-    all[fieldName] = fieldIndex;
-    return all;
-  }, {});
+const groupFieldIndexByName = (data: DataFrame[]) => {
+  const lookup: Record<string, number> = {};
+
+  for (const frame of data) {
+    frame.fields.forEach((field, fieldIndex) => {
+      const fieldName = getFieldDisplayName(field, frame, data);
+      lookup[fieldName] = fieldIndex;
+    });
+  }
+
+  return lookup;
 };

@@ -28,6 +28,10 @@ export interface ConvertFieldTypeOptions {
    */
   dateFormat?: string;
   /**
+   * When converting an array to a string, the values can be joined with a custom separator
+   */
+  joinWith?: string;
+  /**
    * When converting a date to a string an option timezone.
    */
   timezone?: TimeZone;
@@ -103,7 +107,7 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
-      return fieldToStringField(field, opts.dateFormat, { timeZone: opts.timezone });
+      return fieldToStringField(field, opts.dateFormat, { timeZone: opts.timezone }, opts.joinWith);
     case FieldType.boolean:
       return fieldToBooleanField(field);
     case FieldType.enum:
@@ -192,7 +196,8 @@ function fieldToBooleanField(field: Field): Field {
 export function fieldToStringField(
   field: Field,
   dateFormat?: string,
-  parseOptions?: DateTimeOptionsWhenParsing
+  parseOptions?: DateTimeOptionsWhenParsing,
+  joinWith?: string
 ): Field {
   let values = field.values;
 
@@ -202,7 +207,12 @@ export function fieldToStringField(
       break;
 
     case FieldType.other:
-      values = values.map((v) => JSON.stringify(v));
+      values = values.map((v) => {
+        if (joinWith?.length && Array.isArray(v)) {
+          return v.join(joinWith);
+        }
+        return JSON.stringify(v); // will quote strings and avoid "object"
+      });
       break;
 
     default:
@@ -256,25 +266,24 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
   return fieldToTimeField(field, dateFormat);
 }
 
-function fieldToEnumField(field: Field, cfg?: EnumFieldConfig): Field {
-  const enumConfig = { ...cfg };
+function fieldToEnumField(field: Field, config?: EnumFieldConfig): Field {
+  const enumConfig = { ...config };
   const enumValues = field.values.slice();
+
+  // Create lookup map based on existing enum config text values, if none exist return field as is
   const lookup = new Map<unknown, number>();
-  if (enumConfig.text) {
+  if (enumConfig.text && enumConfig.text.length > 0) {
     for (let i = 0; i < enumConfig.text.length; i++) {
       lookup.set(enumConfig.text[i], i);
     }
   } else {
-    enumConfig.text = [];
+    return field;
   }
 
+  // Convert field values to enum indexes
   for (let i = 0; i < enumValues.length; i++) {
-    const v = enumValues[i];
-    if (!lookup.has(v)) {
-      enumConfig.text[lookup.size] = v;
-      lookup.set(v, lookup.size);
-    }
-    enumValues[i] = lookup.get(v);
+    const value = enumValues[i];
+    enumValues[i] = lookup.get(value);
   }
 
   return {

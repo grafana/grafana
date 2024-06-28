@@ -1,22 +1,21 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
+import { AlertManagerDataSource } from '../../../utils/datasource';
 
 import { NotificationRoute } from './NotificationRoute';
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
-import { AlertManagerNameWithImage } from './useGetAlertManagersSourceNamesAndImage';
 
 function NotificationPreviewByAlertManager({
   alertManagerSource,
   potentialInstances,
   onlyOneAM,
 }: {
-  alertManagerSource: AlertManagerNameWithImage;
+  alertManagerSource: AlertManagerDataSource;
   potentialInstances: Labels[];
   onlyOneAM: boolean;
 }) {
@@ -48,8 +47,8 @@ function NotificationPreviewByAlertManager({
           <div className={styles.firstAlertManagerLine}></div>
           <div className={styles.alertManagerName}>
             {' '}
-            Alert manager:
-            <img src={alertManagerSource.img} alt="" className={styles.img} />
+            Alertmanager:
+            <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
             {alertManagerSource.name}
           </div>
           <div className={styles.secondAlertManagerLine}></div>
@@ -87,30 +86,30 @@ function NotificationPreviewByAlertManager({
 export default withErrorBoundary(NotificationPreviewByAlertManager);
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  alertManagerRow: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-    width: 100%;
-  `,
-  firstAlertManagerLine: css`
-    height: 1px;
-    width: ${theme.spacing(4)};
-    background-color: ${theme.colors.secondary.main};
-  `,
-  alertManagerName: css`
-    width: fit-content;
-  `,
-  secondAlertManagerLine: css`
-    height: 1px;
-    width: 100%;
-    flex: 1;
-    background-color: ${theme.colors.secondary.main};
-  `,
-  img: css`
-    margin-left: ${theme.spacing(2)};
-    width: ${theme.spacing(3)};
-    height: ${theme.spacing(3)};
-    margin-right: ${theme.spacing(1)};
-  `,
+  alertManagerRow: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    width: '100%',
+  }),
+  firstAlertManagerLine: css({
+    height: '1px',
+    width: theme.spacing(4),
+    backgroundColor: theme.colors.secondary.main,
+  }),
+  alertManagerName: css({
+    width: 'fit-content',
+  }),
+  secondAlertManagerLine: css({
+    height: '1px',
+    width: '100%',
+    flex: 1,
+    backgroundColor: theme.colors.secondary.main,
+  }),
+  img: css({
+    marginLeft: theme.spacing(2),
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    marginRight: theme.spacing(1),
+  }),
 });

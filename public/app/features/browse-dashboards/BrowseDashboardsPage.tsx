@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -135,7 +135,13 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView canSelect={canSelect} width={width} height={height} />
+                <SearchView
+                  canSelect={canSelect}
+                  width={width}
+                  height={height}
+                  searchState={searchState}
+                  searchStateManager={stateManager}
+                />
               ) : (
                 <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
               )

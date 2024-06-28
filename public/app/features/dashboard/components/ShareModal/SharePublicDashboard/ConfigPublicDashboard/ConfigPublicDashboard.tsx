@@ -1,37 +1,47 @@
 import { css } from '@emotion/css';
-import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, featureEnabled } from '@grafana/runtime/src';
 import {
+  Button,
   ClipboardButton,
   Field,
   HorizontalGroup,
   Input,
   Label,
-  ModalsContext,
+  ModalsController,
   Switch,
   useStyles2,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Trans, t } from 'app/core/internationalization';
+import {
+  useDeletePublicDashboardMutation,
+  usePauseOrResumePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
-import { DeletePublicDashboardButton } from '../../../../../manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardButton';
-import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
-import { trackDashboardSharingActionPerType } from '../../analytics';
 import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import { dashboardHasTemplateVariables, generatePublicDashboardUrl } from '../SharePublicDashboardUtils';
-import { useGetUnsupportedDataSources } from '../useGetUnsupportedDataSources';
+import {
+  dashboardHasTemplateVariables,
+  generatePublicDashboardUrl,
+  isEmailSharingEnabled,
+  PublicDashboard,
+} from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
@@ -46,25 +56,32 @@ export interface ConfigPublicDashboardForm {
   isPaused: boolean;
 }
 
-const ConfigPublicDashboard = () => {
+interface Props {
+  unsupportedDatasources?: string[];
+  showSaveChangesAlert?: boolean;
+  publicDashboard?: PublicDashboard;
+  hasTemplateVariables?: boolean;
+  timeRange: TimeRange;
+  onRevoke: () => void;
+  dashboard: DashboardModel | DashboardScene;
+}
+
+export function ConfigPublicDashboardBase({
+  onRevoke,
+  timeRange,
+  hasTemplateVariables = false,
+  showSaveChangesAlert = false,
+  unsupportedDatasources = [],
+  publicDashboard,
+  dashboard,
+}: Props) {
   const styles = useStyles2(getStyles);
   const isDesktop = useIsDesktop();
-  const { showModal, hideModal } = useContext(ModalsContext);
 
+  const [update, { isLoading }] = useUpdatePublicDashboardMutation();
+  const [pauseOrResume, { isLoading: isPauseOrResumeLoading }] = usePauseOrResumePublicDashboardMutation();
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const hasEmailSharingEnabled =
-    !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
-  const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = dashboardState.getModel()!;
-  const dashboardVariables = dashboard.getVariables();
-
-  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
-
-  const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
-  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-  const isDataLoading = isUpdateLoading || isGetLoading;
-  const disableInputs = !hasWritePermissions || isDataLoading;
-  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
+  const disableInputs = !hasWritePermissions || isLoading || isPauseOrResumeLoading;
 
   const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
@@ -74,51 +91,62 @@ const ConfigPublicDashboard = () => {
     },
   });
 
-  const onUpdate = async (values: ConfigPublicDashboardForm) => {
+  const onPublicDashboardUpdate = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
 
-    const req = {
-      dashboard,
+    update({
+      dashboard: dashboard,
       payload: {
         ...publicDashboard!,
         annotationsEnabled: isAnnotationsEnabled,
         timeSelectionEnabled: isTimeSelectionEnabled,
         isEnabled: !isPaused,
       },
-    };
+    });
+  };
+  const onPauseOrResume = async (values: ConfigPublicDashboardForm) => {
+    const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
 
-    update(req);
+    pauseOrResume({
+      dashboard: dashboard,
+      payload: {
+        ...publicDashboard!,
+        annotationsEnabled: isAnnotationsEnabled,
+        timeSelectionEnabled: isTimeSelectionEnabled,
+        isEnabled: !isPaused,
+      },
+    });
   };
 
   const onChange = async (name: keyof ConfigPublicDashboardForm, value: boolean) => {
     setValue(name, value);
-    await handleSubmit((data) => onUpdate(data))();
+    await handleSubmit((data) => onPublicDashboardUpdate(data))();
   };
 
-  const onDismissDelete = () => {
-    showModal(ShareModal, {
-      dashboard,
-      onDismiss: hideModal,
-      activeTab: shareDashboardType.publicDashboard,
-    });
+  const onTogglePause = async (value: boolean) => {
+    setValue('isPaused', value);
+    await handleSubmit((data) => onPauseOrResume(data))();
   };
 
   function onCopyURL() {
-    trackDashboardSharingActionPerType('copy_public_url', shareDashboardType.publicDashboard);
+    DashboardInteractions.publicDashboardUrlCopied();
   }
 
   return (
     <div className={styles.configContainer}>
-      {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
+      {showSaveChangesAlert && <SaveDashboardChangesAlert />}
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="edit" />}
-      {dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />}
-      {!!unsupportedDataSources.length && (
-        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
+      {hasTemplateVariables && <UnsupportedTemplateVariablesAlert />}
+      {unsupportedDatasources.length > 0 && (
+        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDatasources.join(', ')} />
       )}
 
-      {hasEmailSharingEnabled && <EmailSharingConfiguration />}
+      {isEmailSharingEnabled() && <EmailSharingConfiguration dashboard={dashboard} />}
 
-      <Field label="Dashboard URL" className={styles.fieldSpace}>
+      <Field
+        label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}
+        className={styles.fieldSpace}
+      >
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
@@ -132,7 +160,7 @@ const ConfigPublicDashboard = () => {
               getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
               onClipboardCopy={onCopyURL}
             >
-              Copy
+              <Trans i18nKey="public-dashboard.config.copy-button">Copy</Trans>
             </ClipboardButton>
           }
         />
@@ -144,31 +172,30 @@ const ConfigPublicDashboard = () => {
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              trackDashboardSharingActionPerType(
-                e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
-                shareDashboardType.publicDashboard
-              );
-              onChange('isPaused', e.currentTarget.checked);
+              DashboardInteractions.publicDashboardPauseSharingClicked({
+                paused: e.currentTarget.checked,
+              });
+              onTogglePause(e.currentTarget.checked);
             }}
             data-testid={selectors.PauseSwitch}
           />
           <Label
-            className={css`
-              margin-bottom: 0;
-            `}
+            className={css({
+              marginBottom: 0,
+            })}
           >
-            Pause sharing dashboard
+            <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">Pause sharing dashboard</Trans>
           </Label>
         </Layout>
       </Field>
 
       <Field className={styles.fieldSpace}>
         <SettingsBar
-          title="Settings"
+          title={t('public-dashboard.config.settings-title', 'Settings')}
           headerElement={({ className }) => (
             <SettingsSummary
               className={className}
-              isDataLoading={isDataLoading}
+              isDataLoading={isLoading}
               timeRange={timeRange}
               timeSelectionEnabled={publicDashboard?.timeSelectionEnabled}
               annotationsEnabled={publicDashboard?.annotationsEnabled}
@@ -186,44 +213,88 @@ const ConfigPublicDashboard = () => {
         align={isDesktop ? 'center' : 'normal'}
       >
         <HorizontalGroup justify="flex-end">
-          <DeletePublicDashboardButton
+          <Button
+            title={t('public-dashboard.config.revoke-public-URL-button-title', 'Revoke public URL')}
+            onClick={onRevoke}
             type="button"
             disabled={disableInputs}
             data-testid={selectors.DeleteButton}
-            onDismiss={onDismissDelete}
             variant="destructive"
             fill="outline"
-            dashboard={dashboard}
-            publicDashboard={{
-              uid: publicDashboard!.uid,
-              dashboardUid: dashboard.uid,
-              title: dashboard.title,
-            }}
           >
-            Revoke public URL
-          </DeletePublicDashboardButton>
+            <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
+          </Button>
         </HorizontalGroup>
       </Layout>
     </div>
   );
-};
+}
+
+interface ConfigPublicDashboardProps {
+  publicDashboard: PublicDashboard;
+  unsupportedDatasources: string[];
+}
+
+export function ConfigPublicDashboard({ publicDashboard, unsupportedDatasources }: ConfigPublicDashboardProps) {
+  const dashboardState = useSelector((store) => store.dashboard);
+  const dashboard = dashboardState.getModel()!;
+  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const hasTemplateVariables = dashboardHasTemplateVariables(dashboard.getVariables());
+  const [deletePublicDashboard] = useDeletePublicDashboardMutation();
+  const onDeletePublicDashboardClick = (onDelete: () => void) => {
+    deletePublicDashboard({
+      dashboard,
+      uid: publicDashboard!.uid,
+      dashboardUid: dashboard.uid,
+    });
+    onDelete();
+  };
+
+  return (
+    <ModalsController>
+      {({ showModal, hideModal }) => (
+        <ConfigPublicDashboardBase
+          publicDashboard={publicDashboard}
+          dashboard={dashboard}
+          unsupportedDatasources={unsupportedDatasources}
+          timeRange={timeRange}
+          showSaveChangesAlert={hasWritePermissions && dashboard.hasUnsavedChanges()}
+          hasTemplateVariables={hasTemplateVariables}
+          onRevoke={() => {
+            DashboardInteractions.revokePublicDashboardClicked();
+            showModal(DeletePublicDashboardModal, {
+              dashboardTitle: dashboard.title,
+              onConfirm: () => onDeletePublicDashboardClick(hideModal),
+              onDismiss: () => {
+                showModal(ShareModal, {
+                  dashboard,
+                  onDismiss: hideModal,
+                  activeTab: shareDashboardType.publicDashboard,
+                });
+              },
+            });
+          }}
+        />
+      )}
+    </ModalsController>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  configContainer: css`
-    label: config container;
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(3)};
-  `,
-  fieldSpace: css`
-    label: field space;
-    width: 100%;
-    margin-bottom: 0;
-  `,
+  configContainer: css({
+    label: 'config container',
+    display: 'flex',
+    flexDirection: 'column',
+    flexWrap: 'wrap',
+    gap: theme.spacing(3),
+  }),
+  fieldSpace: css({
+    label: 'field space',
+    width: '100%',
+    marginBottom: 0,
+  }),
   timeRange: css({
     display: 'inline-block',
   }),
 });
-
-export default ConfigPublicDashboard;

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { getTimeZone, NavModelItem } from '@grafana/data';
-import { Button, ConfirmModal, HorizontalGroup } from '@grafana/ui';
+import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -70,7 +70,9 @@ export const ServiceAccountPageUnconnected = ({
 
   const serviceAccountId = parseInt(match.params.id, 10);
   const tokenActionsDisabled =
-    !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
+    serviceAccount.isDisabled ||
+    serviceAccount.isExternal ||
+    !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
   const canReadPermissions = contextSrv.hasPermissionInMetadata(
@@ -134,8 +136,8 @@ export const ServiceAccountPageUnconnected = ({
     <Page navId="serviceaccounts" pageNav={pageNav}>
       <Page.Contents isLoading={isLoading}>
         <div>
-          {serviceAccount && (
-            <HorizontalGroup spacing="md" height="auto" justify="flex-end">
+          {serviceAccount && !serviceAccount.isExternal && (
+            <Stack gap={2} height="auto" justifyContent="flex-end">
               <Button
                 type={'button'}
                 variant="destructive"
@@ -163,17 +165,29 @@ export const ServiceAccountPageUnconnected = ({
                   Disable service account
                 </Button>
               )}
-            </HorizontalGroup>
+            </Stack>
+          )}
+          {serviceAccount && serviceAccount.isExternal && (
+            <Stack gap={2} height="auto" justifyContent="flex-end">
+              <IconButton
+                disabled={true}
+                name="lock"
+                size="md"
+                tooltip={`This is a managed service account and cannot be modified.`}
+              />
+            </Stack>
           )}
           {serviceAccount && (
             <ServiceAccountProfile serviceAccount={serviceAccount} timeZone={timezone} onChange={onProfileChange} />
           )}
-          <HorizontalGroup justify="space-between" height="auto">
+          <Stack justifyContent="space-between" height="auto">
             <h3>Tokens</h3>
-            <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
-              Add service account token
-            </Button>
-          </HorizontalGroup>
+            {!serviceAccount.isExternal && (
+              <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
+                Add service account token
+              </Button>
+            )}
+          </Stack>
           {tokens && (
             <ServiceAccountTokensTable
               tokens={tokens}
@@ -182,7 +196,9 @@ export const ServiceAccountPageUnconnected = ({
               tokenActionsDisabled={tokenActionsDisabled}
             />
           )}
-          {canReadPermissions && <ServiceAccountPermissions serviceAccount={serviceAccount} />}
+          {!serviceAccount.isExternal && canReadPermissions && (
+            <ServiceAccountPermissions serviceAccount={serviceAccount} />
+          )}
         </div>
 
         <ConfirmModal

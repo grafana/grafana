@@ -1,16 +1,11 @@
-import React, { useEffect } from 'react';
-
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { useCleanup } from 'app/core/hooks/useCleanup';
-import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from './AlertWarning';
 import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
+import { useRuleWithLocation } from './hooks/useCombinedRule';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchEditableRuleAction } from './state/actions';
-import { initialAsyncRequestState } from './utils/redux';
+import { stringifyErrorLike } from './utils/misc';
 import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
@@ -19,42 +14,31 @@ interface ExistingRuleEditorProps {
 }
 
 export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) {
-  useCleanup((state) => (state.unifiedAlerting.ruleForm.existingRule = initialAsyncRequestState));
-
   const {
     loading: loadingAlertRule,
-    result,
+    result: ruleWithLocation,
     error,
-    dispatched,
-  } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
+  } = useRuleWithLocation({ ruleIdentifier: identifier });
 
-  const dispatch = useDispatch();
-  const { isEditable, loading: loadingEditable } = useIsRuleEditable(
-    ruleId.ruleIdentifierToRuleSourceName(identifier),
-    result?.rule
-  );
+  const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
+
+  const { isEditable, loading: loadingEditable } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
 
   const loading = loadingAlertRule || loadingEditable;
 
-  useEffect(() => {
-    if (!dispatched) {
-      dispatch(fetchEditableRuleAction(identifier));
-    }
-  }, [dispatched, dispatch, identifier]);
-
-  if (loading || isEditable === undefined) {
+  if (loading) {
     return <LoadingPlaceholder text="Loading rule..." />;
   }
 
   if (error) {
     return (
       <Alert severity="error" title="Failed to load rule">
-        {error.message}
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }
 
-  if (!result) {
+  if (!ruleWithLocation) {
     return <AlertWarning title="Rule not found">Sorry! This rule does not exist.</AlertWarning>;
   }
 
@@ -62,5 +46,5 @@ export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) 
     return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
   }
 
-  return <AlertRuleForm existing={result} />;
+  return <AlertRuleForm existing={ruleWithLocation} />;
 }

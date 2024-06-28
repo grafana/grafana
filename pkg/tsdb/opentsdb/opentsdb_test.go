@@ -33,7 +33,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
 		response := `{ invalid }`
 
-		result, err := service.parseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))})
+		result, err := service.parseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A")
 		require.Nil(t, result)
 		require.Error(t, err)
 	})
@@ -63,12 +63,47 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp)
+		result, err := service.parseResponse(logger, &resp, "A")
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
 
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("ref id is not hard coded", func(t *testing.T) {
+		myRefid := "reference id"
+
+		response := `
+		[
+			{
+				"metric": "test",
+				"dps": {
+					"1405544146": 50.0
+				},
+				"tags" : {
+					"env": "prod",
+					"app": "grafana"
+				}
+			}
+		]`
+
+		testFrame := data.NewFrame("test",
+			data.NewField("time", nil, []time.Time{
+				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
+			}),
+			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+				50}),
+		)
+
+		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
+		resp.StatusCode = 200
+		result, err := service.parseResponse(logger, &resp, myRefid)
+		require.NoError(t, err)
+
+		if diff := cmp.Diff(testFrame, result.Responses[myRefid].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})

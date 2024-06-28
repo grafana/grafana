@@ -9,10 +9,13 @@ labels:
     - enterprise
     - oss
 title: Variables
+description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
 weight: 130
 ---
 
 # Variables
+
+{{< youtube id="mMUJ3iwIYwc" >}}
 
 The following topics describe how to add and manage variables in your dashboards:
 
@@ -24,9 +27,12 @@ the value, using the dropdown at the top of the dashboard, your panel's metric q
 Variables allow you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
 and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
-{{< figure src="/static/img/docs/v50/variables_dashboard.png" >}}
 
-These can be especially useful for administrators who want to allow Grafana viewers to quickly adjust visualizations but do not want to give them full editing permissions. Grafana Viewers can use variables.
+{{< figure src="/static/img/docs/v50/variables_dashboard.png" alt="Variable drop-down open and two values selected" >}}
+
+{{< docs/play title="Templating - Global variables and interpolation" url="https://play.grafana.org/d/HYaGDGIMk/" >}}
+
+Variables are useful for administrators who want to allow Grafana viewers to adjust visualizations without giving them full editing permissions. Grafana viewers can use variables.
 
 Variables and templates also allow you to single-source dashboards. If you have multiple identical data sources or servers, you can make one dashboard and use variables to change what you are viewing. This simplifies maintenance and upkeep enormously.
 
@@ -42,7 +48,7 @@ wmi_system_threads{instance=~"$server"}
 
 Variable values are always synced to the URL using the syntax `var-<varname>=value`.
 
-## Examples
+## Additional Examples
 
 Variables are listed in drop-down lists across the top of the screen. Select different variables to see how the visualizations change.
 
@@ -52,12 +58,9 @@ Variables can be used in titles, descriptions, text panels, and queries. Queries
 
 The following dashboards in Grafana Play provide examples of template variables:
 
-- [Graphite Templated Nested](https://play.grafana.org/d/000000056/templated-dynamic-dashboard?orgId=1&var-app=backend&var-server=backend_01&var-server=backend_02&var-server=backend_03&var-server=backend_04&var-interval=1h) - Uses query variables, chained query variables, an interval variable, and a repeated panel.
-- [Global variables and interpolation](https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&var-Server=A%27A%22A&var-Server=BB%5CB)
-- [Elasticsearch Dummy Flight Data](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1&var-Filters=Carrier%7C%3D%7CLogstash%20Airways&var-query0=) - Uses ad hoc filters.
-- [Templating, repeated panels](https://play.grafana.org/d/000000025/templating-repeated-panels?orgId=1) - Two sets of repeated panels use query variables.
-- [Template Redux](https://play.grafana.org/d/p-k6QtkGz/template-redux?orgId=1) - Uses query variables, chained query variables, an interval variable, a text box variable, a custom variable, and a data source variable.
-- [Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/templating-nested-variables-drilldown?orgId=1&var-datacenter=A&var-server=AA&var-server=AC&var-pod=All)
+- [Templating, repeated panels](https://play.grafana.org/d/000000025/) - Using query variables to control how many panels appear.
+- [Templated Dynamic Dashboard](https://play.grafana.org/d/000000056/) - Uses query variables, chained query variables, an interval variable, and a repeated panel.
+- [Templating - Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/)
 
 ## Variable best practices
 

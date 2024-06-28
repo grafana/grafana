@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
 import { Field, HorizontalGroup, Select, Switch, VerticalGroup, useStyles2 } from '@grafana/ui';
@@ -19,6 +19,7 @@ interface Props {
   toggleDownloadForExcel: () => void;
   data?: DataFrame[];
   hasTransformations?: boolean;
+  formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
   actions?: React.ReactNode;
 }
@@ -26,6 +27,7 @@ interface Props {
 export const InspectDataOptions = ({
   options,
   actions,
+  formattedDataDescription,
   onOptionsChange,
   hasTransformations,
   data,
@@ -129,10 +131,13 @@ export const InspectDataOptions = ({
               {onOptionsChange && (
                 <Field
                   label={t('dashboard.inspect-data.formatted-data-label', 'Formatted data')}
-                  description={t(
-                    'dashboard.inspect-data.formatted-data-description',
-                    'Table data is formatted with options defined in the Field and Override tabs.'
-                  )}
+                  description={
+                    formattedDataDescription ||
+                    t(
+                      'dashboard.inspect-data.formatted-data-description',
+                      'Table data is formatted with options defined in the Field and Override tabs.'
+                    )
+                  }
                 >
                   <Switch
                     id="formatted-data-toggle"

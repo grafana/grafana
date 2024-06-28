@@ -21,8 +21,7 @@ import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
-
-export { type FieldValueMatcherConfig } from './matchers/fieldValueMatcher';
+import { getSubstringValueMatchers } from './matchers/valueMatchers/substringMatchers';
 
 /**
  * Registry that contains all of the built in field matchers.
@@ -59,6 +58,7 @@ export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
     ...getNullValueMatchers(),
     ...getNumericValueMatchers(),
     ...getEqualValueMatchers(),
+    ...getSubstringValueMatchers(),
     ...getRangeValueMatchers(),
     ...getRegexValueMatcher(),
   ];

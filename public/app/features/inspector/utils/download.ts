@@ -9,9 +9,9 @@ import {
   MutableDataFrame,
   toCSV,
 } from '@grafana/data';
+import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-import { transformToOTLP } from '../../../plugins/datasource/tempo/resultTransformer';
 import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/transforms';
 
 /**
@@ -57,8 +57,9 @@ export function downloadDataFrameAsCsv(
   transformId: DataTransformerID = DataTransformerID.noop
 ) {
   const dataFrameCsv = toCSV([dataFrame], csvConfig);
+  const bomChar = csvConfig?.useExcelHeader ? String.fromCharCode(0xfeff) : '';
 
-  const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
+  const blob = new Blob([bomChar, dataFrameCsv], {
     type: 'text/csv;charset=utf-8',
   });
 

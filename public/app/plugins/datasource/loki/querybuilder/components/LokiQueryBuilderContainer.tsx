@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import React, { useEffect, useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
+
+import { TimeRange } from '@grafana/data';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
@@ -17,6 +19,7 @@ export interface Props {
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
   showExplain: boolean;
+  timeRange?: TimeRange;
 }
 
 export interface State {
@@ -28,7 +31,7 @@ export interface State {
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function LokiQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource, showExplain } = props;
+  const { query, onChange, onRunQuery, datasource, showExplain, timeRange } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
     expr: query.expr,
     // Use initial visual query only if query.expr is empty string
@@ -65,6 +68,7 @@ export function LokiQueryBuilderContainer(props: Props) {
         onRunQuery={onRunQuery}
         showExplain={showExplain}
         data-testid={testIds.editor}
+        timeRange={timeRange}
       />
       {query.expr !== '' && <QueryPreview query={query.expr} />}
     </>

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { createRef } from 'react';
+import { createRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -32,17 +33,24 @@ interface Props {
   name?: string;
   placeholder?: string;
   color?: string;
+  maxFiles?: number;
 }
 
 export const ResourcePicker = (props: Props) => {
-  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color } = props;
+  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, maxFiles } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
   const pickerTriggerRef = createRef<HTMLDivElement>();
   const popoverElement = (
-    <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
+    <ResourcePickerPopover
+      onChange={onChange}
+      value={value}
+      mediaType={mediaType}
+      folderName={folderName}
+      maxFiles={maxFiles}
+    />
   );
 
   let sanitizedSrc = src;

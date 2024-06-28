@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -9,13 +10,14 @@ import (
 	"path"
 	"sort"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	folder2 "github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -29,8 +31,9 @@ var testData embed.FS
 func TestExportFromPayload(t *testing.T) {
 	orgID := int64(1)
 	folder := &folder2.Folder{
-		UID:   "e4584834-1a87-4dff-8913-8a4748dfca79",
-		Title: "foo bar",
+		UID:      "e4584834-1a87-4dff-8913-8a4748dfca79",
+		Title:    "foo bar",
+		Fullpath: "foo bar",
 	}
 
 	ruleStore := fakes.NewRuleStore(t)
@@ -41,8 +44,12 @@ func TestExportFromPayload(t *testing.T) {
 	requestFile := "post-rulegroup-101.json"
 	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
 	require.NoError(t, err)
+	// compact the json to remove any extra whitespace
+	var buf bytes.Buffer
+	require.NoError(t, json.Compact(&buf, rawBody))
+	// unmarshal the compacted json
 	var body apimodels.PostableRuleGroupConfig
-	require.NoError(t, json.Unmarshal(rawBody, &body))
+	require.NoError(t, json.Unmarshal(buf.Bytes(), &body))
 
 	createRequest := func() *contextmodel.ReqContext {
 		return createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
@@ -52,7 +59,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 
 		response.WriteTo(rc)
 
@@ -64,7 +71,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("format", "yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -75,7 +82,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("format", "foo")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -86,7 +93,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -97,7 +104,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -108,7 +115,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("download", "true")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -119,7 +126,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -129,7 +136,7 @@ func TestExportFromPayload(t *testing.T) {
 	t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
 		rc := createRequest()
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -143,7 +150,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 		t.Log(string(response.Body()))
 
@@ -158,7 +165,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc := createRequest()
 		rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 		require.Equal(t, 200, response.Status())
 		require.Equal(t, string(expectedResponse), string(response.Body()))
@@ -172,7 +179,7 @@ func TestExportFromPayload(t *testing.T) {
 		rc.Context.Req.Form.Set("format", "hcl")
 		rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.Title)
+		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
@@ -184,7 +191,7 @@ func TestExportFromPayload(t *testing.T) {
 			rc.Context.Req.Form.Set("format", "hcl")
 			rc.Context.Req.Form.Set("download", "true")
 
-			response := srv.ExportFromPayload(rc, body, folder.Title)
+			response := srv.ExportFromPayload(rc, body, folder.UID)
 			response.WriteTo(rc)
 
 			require.Equal(t, 200, response.Status())
@@ -196,46 +203,38 @@ func TestExportFromPayload(t *testing.T) {
 }
 
 func TestExportRules(t *testing.T) {
-	uids := sync.Map{}
 	orgID := int64(1)
 	f1 := randFolder()
 	f2 := randFolder()
 
 	ruleStore := fakes.NewRuleStore(t)
-	ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f1, f2)
 
 	hasAccessKey1 := ngmodels.AlertRuleGroupKey{
 		OrgID:        orgID,
 		NamespaceUID: f1.UID,
 		RuleGroup:    "HAS-ACCESS-1",
 	}
-	accessQuery := ngmodels.GenerateAlertQuery()
-	noAccessQuery := ngmodels.GenerateAlertQuery()
 
-	_, hasAccess1 := ngmodels.GenerateUniqueAlertRules(5,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			withGroupKey(hasAccessKey1),
-			ngmodels.WithQuery(accessQuery),
-			ngmodels.WithUniqueGroupIndex(),
-		))
+	gen := ngmodels.RuleGen
+	accessQuery := gen.GenerateQuery()
+	noAccessQuery := gen.GenerateQuery()
+	mdl := map[string]any{
+		"foo": "bar",
+		"baz": "a <=> b", // explicitly check greater/less than characters
+	}
+	model, err := json.Marshal(mdl)
+	require.NoError(t, err)
+	accessQuery.Model = model
+
+	hasAccess1 := gen.With(gen.WithGroupKey(hasAccessKey1), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
 	ruleStore.PutRule(context.Background(), hasAccess1...)
 	noAccessKey1 := ngmodels.AlertRuleGroupKey{
 		OrgID:        orgID,
 		NamespaceUID: f1.UID,
 		RuleGroup:    "NO-ACCESS",
 	}
-	_, noAccess1 := ngmodels.GenerateUniqueAlertRules(5,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			withGroupKey(noAccessKey1),
-			ngmodels.WithQuery(noAccessQuery),
-		))
-	noAccessRule := ngmodels.AlertRuleGen(
-		ngmodels.WithUniqueUID(&uids),
-		withGroupKey(noAccessKey1),
-		ngmodels.WithQuery(accessQuery),
-	)()
+	noAccess1 := gen.With(gen.WithGroupKey(noAccessKey1), gen.WithQuery(noAccessQuery)).GenerateManyRef(5)
+	noAccessRule := gen.With(gen.WithGroupKey(noAccessKey1), gen.WithQuery(accessQuery)).GenerateRef()
 	noAccess1 = append(noAccess1, noAccessRule)
 	ruleStore.PutRule(context.Background(), noAccess1...)
 
@@ -244,23 +243,21 @@ func TestExportRules(t *testing.T) {
 		NamespaceUID: f2.UID,
 		RuleGroup:    "HAS-ACCESS-2",
 	}
-	_, hasAccess2 := ngmodels.GenerateUniqueAlertRules(5,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			withGroupKey(hasAccessKey2),
-			ngmodels.WithQuery(accessQuery),
-			ngmodels.WithUniqueGroupIndex(),
-		))
+	hasAccess2 := gen.With(gen.WithGroupKey(hasAccessKey2), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
 	ruleStore.PutRule(context.Background(), hasAccess2...)
 
-	_, noAccess2 := ngmodels.GenerateUniqueAlertRules(10,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			ngmodels.WithQuery(accessQuery), // no access because of folder
-		))
-	ruleStore.PutRule(context.Background(), noAccess2...)
+	noAccessByFolder := gen.With(gen.WithQuery(accessQuery), gen.WithNamespaceUIDNotIn(f1.UID, f2.UID)).GenerateManyRef(10)
+
+	ruleStore.PutRule(context.Background(), noAccessByFolder...)
+	// overwrite the folders visible to user because PutRule automatically creates folders in the fake store.
+	ruleStore.Folders[orgID] = []*folder2.Folder{f1, f2}
 
 	srv := createService(ruleStore)
+
+	allRules := make([]*ngmodels.AlertRule, 0, len(hasAccess1)+len(hasAccess2)+len(noAccess1))
+	allRules = append(allRules, hasAccess1...)
+	allRules = append(allRules, hasAccess2...)
+	allRules = append(allRules, noAccess1...)
 
 	testCases := []struct {
 		title           string
@@ -276,7 +273,7 @@ func TestExportRules(t *testing.T) {
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/yaml"},
 			},
-			expectedRules: append(hasAccess1, hasAccess2...),
+			expectedRules: allRules,
 		},
 		{
 			title: "return all rules in folder",
@@ -287,7 +284,7 @@ func TestExportRules(t *testing.T) {
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/yaml"},
 			},
-			expectedRules: hasAccess1,
+			expectedRules: append(hasAccess1, noAccess1...),
 		},
 		{
 			title: "return all rules in many folders",
@@ -298,7 +295,7 @@ func TestExportRules(t *testing.T) {
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/yaml"},
 			},
-			expectedRules: append(hasAccess1, hasAccess2...),
+			expectedRules: allRules,
 		},
 		{
 			title: "return rules in single group",
@@ -349,27 +346,12 @@ func TestExportRules(t *testing.T) {
 			expectedStatus: 400,
 		},
 		{
-			title: "unauthorized if folders are not accessible",
+			title: "forbidden if folders are not accessible",
 			params: url.Values{
-				"folderUid": []string{noAccess2[0].NamespaceUID},
+				"folderUid": []string{noAccessByFolder[0].NamespaceUID},
 			},
-			expectedStatus: 401,
+			expectedStatus: http.StatusForbidden,
 			expectedRules:  nil,
-		},
-		{
-			title: "unauthorized if group is not accessible",
-			params: url.Values{
-				"folderUid": []string{noAccessKey1.NamespaceUID},
-				"group":     []string{noAccessKey1.RuleGroup},
-			},
-			expectedStatus: 401,
-		},
-		{
-			title: "unauthorized if rule's group is not accessible",
-			params: url.Values{
-				"ruleUid": []string{noAccessRule.UID},
-			},
-			expectedStatus: 401,
 		},
 		{
 			title: "return in JSON if header is specified",
@@ -377,7 +359,7 @@ func TestExportRules(t *testing.T) {
 				"Accept": []string{"application/json"},
 			},
 			expectedStatus: 200,
-			expectedRules:  append(hasAccess1, hasAccess2...),
+			expectedRules:  allRules,
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
 			},
@@ -388,7 +370,7 @@ func TestExportRules(t *testing.T) {
 				"format": []string{"json"},
 			},
 			expectedStatus: 200,
-			expectedRules:  append(hasAccess1, hasAccess2...),
+			expectedRules:  allRules,
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
 			},
@@ -399,7 +381,7 @@ func TestExportRules(t *testing.T) {
 				"format": []string{"hcl"},
 			},
 			expectedStatus: 200,
-			expectedRules:  append(hasAccess1, hasAccess2...),
+			expectedRules:  allRules,
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/hcl"},
 			},
@@ -410,7 +392,9 @@ func TestExportRules(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			rc := createRequestContextWithPerms(orgID, map[int64]map[string][]string{
 				orgID: {
-					datasources.ActionQuery: []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
+					dashboards.ActionFoldersRead:         []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					accesscontrol.ActionAlertingRuleRead: []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					datasources.ActionQuery:              []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
 				},
 			}, nil)
 			rc.Req.Form = tc.params
@@ -422,12 +406,12 @@ func TestExportRules(t *testing.T) {
 			if tc.expectedStatus != 200 {
 				return
 			}
-			var exp []ngmodels.AlertRuleGroupWithFolderTitle
+			var exp []ngmodels.AlertRuleGroupWithFolderFullpath
 			gr := ngmodels.GroupByAlertRuleGroupKey(tc.expectedRules)
 			for key, rules := range gr {
 				folder, err := ruleStore.GetNamespaceByUID(context.Background(), key.NamespaceUID, orgID, nil)
 				require.NoError(t, err)
-				exp = append(exp, ngmodels.NewAlertRuleGroupWithFolderTitleFromRulesGroup(key, rules, folder.Title))
+				exp = append(exp, ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(key, rules, folder.Fullpath))
 			}
 			sort.SliceStable(exp, func(i, j int) bool {
 				gi, gj := exp[i], exp[j]
@@ -439,7 +423,7 @@ func TestExportRules(t *testing.T) {
 				}
 				return gi.Title < gj.Title
 			})
-			groups, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(exp)
+			groups, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath(exp)
 			require.NoError(t, err)
 
 			require.Equal(t, string(exportResponse(rc, groups).Body()), string(resp.Body()))

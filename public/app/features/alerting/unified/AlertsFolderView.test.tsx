@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
@@ -8,6 +7,7 @@ import { FolderState } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { AlertsFolderView } from './AlertsFolderView';
+import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { mockCombinedRule } from './mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -21,7 +21,7 @@ const ui = {
   },
 };
 
-const combinedNamespaceMock = jest.fn<CombinedRuleNamespace[], any>();
+const combinedNamespaceMock = jest.fn(useCombinedRuleNamespaces);
 jest.mock('./hooks/useCombinedRuleNamespaces', () => ({
   useCombinedRuleNamespaces: () => combinedNamespaceMock(),
 }));
@@ -35,21 +35,20 @@ const mockFolder = (folderOverride: Partial<FolderState> = {}): FolderState => {
     canSave: false,
     url: '/folder-1',
     version: 1,
-    permissions: [],
-    canViewFolderPermissions: false,
     canDelete: false,
     ...folderOverride,
   };
 };
 
 describe('AlertsFolderView tests', () => {
-  it('Should display grafana alert rules when the namespace name matches the folder name', () => {
+  it('Should display grafana alert rules when the folder uid matches the name space uid', () => {
     // Arrange
     const folder = mockFolder();
 
     const grafanaNamespace: CombinedRuleNamespace = {
       name: folder.title,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-1',
       groups: [
         {
           name: 'group1',
@@ -92,13 +91,14 @@ describe('AlertsFolderView tests', () => {
     expect(alertRows[5]).toHaveTextContent('Test Alert 6');
   });
 
-  it('Should not display alert rules when the namespace name does not match the folder name', () => {
+  it('Should not display alert rules when the namespace uid does not match the folder uid', () => {
     // Arrange
     const folder = mockFolder();
 
     const grafanaNamespace: CombinedRuleNamespace = {
       name: 'Folder without alerts',
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-2',
       groups: [
         {
           name: 'default',
@@ -131,6 +131,7 @@ describe('AlertsFolderView tests', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
       name: folder.title,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-1',
       groups: [
         {
           name: 'default',
@@ -163,6 +164,7 @@ describe('AlertsFolderView tests', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
       name: folder.title,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-1',
       groups: [
         {
           name: 'default',

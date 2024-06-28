@@ -1,16 +1,12 @@
 import { AlignedData } from 'uplot';
 
-import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta } from '..';
 import { join } from '../transformations/transformers/joinDataFrames';
+import { FieldDTO, QueryResultMeta, DataFrame, Field, FieldType, Labels } from '../types';
+import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
-import {
-  DataFrameJSON,
-  decodeFieldValueEntities,
-  FieldSchema,
-  guessFieldTypeFromValue,
-  toFilteredDataFrameDTO,
-} from '.';
+import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
+import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
  * Indicate if the frame is appened or replace
@@ -115,7 +111,7 @@ export class StreamingDataFrame implements DataFrame {
     const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
 
     const numberOfItemsToRemove = getNumberOfItemsToRemove(
-      dataFrameDTO.fields.map((f) => f.values) as unknown[][],
+      dataFrameDTO.fields.map((f) => f.values ?? []),
       typeof trimValues?.maxLength === 'number' ? Math.min(trimValues.maxLength, options.maxLength) : options.maxLength,
       this.timeFieldIndex,
       options.maxDelta
@@ -123,7 +119,7 @@ export class StreamingDataFrame implements DataFrame {
 
     dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
       ...f,
-      values: (f.values as unknown[]).slice(numberOfItemsToRemove),
+      values: f.values?.slice(numberOfItemsToRemove),
     }));
 
     const length = dataFrameDTO.fields[0]?.values?.length ?? 0;
@@ -488,7 +484,7 @@ export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>):
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]
 // to join()-able tables with column arrays
-export function transpose(vrecs: any[][]) {
+export function transpose(vrecs: unknown[][]) {
   let tableKeys = new Set(vrecs[0]);
   let tables = new Map();
 

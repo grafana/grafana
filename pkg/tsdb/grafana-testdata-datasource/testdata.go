@@ -9,13 +9,18 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/sims"
 )
+
+// ensures that testdata implements all client functions
+// var _ plugins.Client = &Service{}
 
 func ProvideService() *Service {
 	s := &Service{
 		queryMux:  datasource.NewQueryTypeMux(),
-		scenarios: map[string]*Scenario{},
+		scenarios: map[kinds.TestDataQueryType]*Scenario{},
 		frame: data.NewFrame("testdata",
 			data.NewField("Time", nil, make([]time.Time, 1)),
 			data.NewField("Value", nil, make([]float64, 1)),
@@ -42,9 +47,16 @@ func ProvideService() *Service {
 	return s
 }
 
+var (
+	_ backend.QueryDataHandler      = (*Service)(nil)
+	_ backend.CallResourceHandler   = (*Service)(nil)
+	_ backend.AdmissionHandler      = (*Service)(nil)
+	_ backend.CollectMetricsHandler = (*Service)(nil)
+)
+
 type Service struct {
 	logger          log.Logger
-	scenarios       map[string]*Scenario
+	scenarios       map[kinds.TestDataQueryType]*Scenario
 	frame           *data.Frame
 	labelFrame      *data.Frame
 	queryMux        *datasource.QueryTypeMux
@@ -65,4 +77,9 @@ func (s *Service) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) 
 		Status:  backend.HealthStatusOk,
 		Message: "Data source is working",
 	}, nil
+}
+
+// CollectMetricsHandler handles metric collection.
+func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	return nil, nil
 }

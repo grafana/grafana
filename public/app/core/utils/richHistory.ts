@@ -5,6 +5,7 @@ import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -14,9 +15,16 @@ import {
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
-import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { createRetentionPeriodBoundary } from '../history/richHistoryLocalStorageUtils';
+import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { contextSrv } from '../services/context_srv';
 
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
+import {
+  RichHistorySearchBackendFilters,
+  RichHistorySearchFilters,
+  RichHistorySettings,
+  SortOrder,
+} from './richHistoryTypes';
 
 export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
@@ -25,15 +33,27 @@ export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
  * Side-effect: store history in local storage
  */
 
+type addToRichHistoryParams = {
+  localOverride: boolean;
+  datasource: { uid: string; name?: string };
+  queries: DataQuery[];
+  starred: boolean;
+  comment?: string;
+  showNotif?: {
+    quotaExceededError?: boolean;
+    limitExceededWarning?: boolean;
+    otherErrors?: boolean;
+  };
+};
+
 export async function addToRichHistory(
-  datasourceUid: string,
-  datasourceName: string | null,
-  queries: DataQuery[],
-  starred: boolean,
-  comment: string | null,
-  showQuotaExceededError: boolean,
-  showLimitExceededWarning: boolean
+  params: addToRichHistoryParams
 ): Promise<{ richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
+  const { queries, localOverride, datasource, starred, comment, showNotif } = params;
+  // default showing of errors to true
+  const showQuotaExceededError = showNotif?.quotaExceededError ?? true;
+  const showLimitExceededWarning = showNotif?.limitExceededWarning ?? true;
+  const showOtherErrors = showNotif?.otherErrors ?? true;
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
 
@@ -43,9 +63,11 @@ export async function addToRichHistory(
     let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
-      const result = await getRichHistoryStorage().addToRichHistory({
-        datasourceUid: datasourceUid,
-        datasourceName: datasourceName ?? '',
+      // for autocomplete we want to ensure writing to local storage
+      const storage = localOverride ? getLocalRichHistoryStorage() : getRichHistoryStorage();
+      const result = await storage.addToRichHistory({
+        datasourceUid: datasource.uid,
+        datasourceName: datasource.name ?? '',
         queries: newQueriesToSave,
         starred,
         comment: comment ?? '',
@@ -56,8 +78,15 @@ export async function addToRichHistory(
         if (error.name === RichHistoryServiceError.StorageFull) {
           richHistoryStorageFull = true;
           showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
-        } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
-          dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+        } else if (showOtherErrors && error.name !== RichHistoryServiceError.DuplicatedEntry) {
+          dispatch(
+            notifyApp(
+              createErrorNotification(
+                t('explore.rich-history-utils-notification.update-failed', 'Rich History update failed'),
+                error.message
+              )
+            )
+          );
         }
       }
       // Saving failed. Do not add new entry.
@@ -78,7 +107,22 @@ export async function addToRichHistory(
 }
 
 export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
-  return await getRichHistoryStorage().getRichHistory(filters);
+  // Transforming from frontend filters where from and to are days from now to absolute timestamps.
+  const filtersCopy: RichHistorySearchBackendFilters = {
+    ...filters,
+    from:
+      filters.to === undefined
+        ? filters.to
+        : createRetentionPeriodBoundary(filters.to, {
+            isLastTs: true,
+            tz: contextSrv.user?.timezone,
+          }),
+    to:
+      filters.from === undefined
+        ? filters.from
+        : createRetentionPeriodBoundary(filters.from, { isLastTs: true, tz: contextSrv.user?.timezone }),
+  };
+  return await getRichHistoryStorage().getRichHistory(filtersCopy);
 }
 
 export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {
@@ -98,7 +142,14 @@ export async function updateStarredInRichHistory(id: string, starred: boolean) {
     return await getRichHistoryStorage().updateStarred(id, starred);
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -109,7 +160,14 @@ export async function updateCommentInRichHistory(id: string, newComment: string 
     return await getRichHistoryStorage().updateComment(id, newComment);
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -121,7 +179,14 @@ export async function deleteQueryInRichHistory(id: string) {
     return id;
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -130,7 +195,10 @@ export async function deleteQueryInRichHistory(id: string) {
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
-    range: { from: 'now-1h', to: 'now' },
+    range: {
+      from: t('explore.rich-history-utils.default-from', 'now-1h'),
+      to: t('explore.rich-history-utils.default-to', 'now'),
+    },
     datasource: query.datasourceName,
     queries: query.queries,
   };
@@ -146,19 +214,19 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   let str;
   switch (num) {
     case 0:
-      str = 'today';
+      str = t('explore.rich-history-utils.today', 'today');
       break;
     case 1:
-      str = 'yesterday';
+      str = t('explore.rich-history-utils.yesterday', 'yesterday');
       break;
     case 7:
-      str = 'a week ago';
+      str = t('explore.rich-history-utils.a-week-ago', 'a week ago');
       break;
     case 14:
-      str = 'two weeks ago';
+      str = t('explore.rich-history-utils.two-weeks-ago', 'two weeks ago');
       break;
     default:
-      str = `${num} days ago`;
+      str = t('explore.rich-history-utils.days-ago', '{{num}} days ago', { num: `${num}` });
   }
 
   return str;

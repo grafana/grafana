@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -54,15 +55,9 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     const ariaLabel = restProps['aria-label'] || title;
 
     return (
-      <div
-        ref={ref}
-        className={cx(styles.wrapper, className)}
-        data-testid={selectors.components.Alert.alertV2(severity)}
-        role={role}
-        aria-label={ariaLabel}
-        {...restProps}
-      >
+      <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
         <Box
+          data-testid={selectors.components.Alert.alertV2(severity)}
           display="flex"
           backgroundColor={severity}
           borderRadius="default"
@@ -80,7 +75,9 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           </Box>
 
           <Box paddingY={1} grow={1}>
-            <Text weight="medium">{title}</Text>
+            <Text color="primary" weight="medium">
+              {title}
+            </Text>
             {children && <div className={styles.content}>{children}</div>}
           </Box>
           {/* If onRemove is specified, giving preference to onRemove */}
@@ -157,6 +154,7 @@ const getStyles = (
       color: color.text,
     }),
     content: css({
+      color: theme.colors.text.primary,
       paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',

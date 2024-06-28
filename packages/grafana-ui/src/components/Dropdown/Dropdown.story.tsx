@@ -1,10 +1,9 @@
 import { Meta } from '@storybook/react';
-import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 import { Menu } from '../Menu/Menu';
 
 import { Dropdown } from './Dropdown';
@@ -34,7 +33,7 @@ export function Examples() {
   );
 
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <StoryExample name="Button + defaults">
         <Dropdown overlay={menu}>
           <Button variant="secondary">Button</Button>
@@ -46,7 +45,7 @@ export function Examples() {
           <IconButton tooltip="Open menu" variant="secondary" name="bars" />
         </Dropdown>
       </StoryExample>
-    </VerticalGroup>
+    </Stack>
   );
 }
 

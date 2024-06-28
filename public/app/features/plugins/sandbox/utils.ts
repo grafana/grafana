@@ -1,8 +1,12 @@
 import { isNearMembraneProxy } from '@locker/near-membrane-shared';
-import React from 'react';
+import { cloneDeep } from 'lodash';
+import * as React from 'react';
 
+import { PluginSignatureType, PluginType } from '@grafana/data';
 import { LogContext } from '@grafana/faro-web-sdk';
-import { logWarning as logWarningRuntime, logError as logErrorRuntime, config } from '@grafana/runtime';
+import { config, createMonitoringLogger } from '@grafana/runtime';
+
+import { getPluginSettings } from '../pluginSettings';
 
 import { SandboxedPluginObject } from './types';
 
@@ -16,45 +20,65 @@ export function assertNever(x: never): never {
   throw new Error(`Unexpected object: ${x}. This should never happen.`);
 }
 
+const sandboxLogger = createMonitoringLogger('sandbox', { monitorOnly: String(monitorOnly) });
+
 export function isReactClassComponent(obj: unknown): obj is React.Component {
   return obj instanceof React.Component;
 }
 
 export function logWarning(message: string, context?: LogContext) {
-  context = {
-    ...context,
-    source: 'sandbox',
-    monitorOnly: String(monitorOnly),
-  };
-  logWarningRuntime(message, context);
+  sandboxLogger.logWarning(message, context);
 }
 
 export function logError(error: Error, context?: LogContext) {
-  context = {
-    ...context,
-    source: 'sandbox',
-    monitorOnly: String(monitorOnly),
-  };
-  logErrorRuntime(error, context);
+  sandboxLogger.logError(error, context);
 }
 
-export function isFrontendSandboxSupported({
+export function logInfo(message: string, context?: LogContext) {
+  sandboxLogger.logInfo(message, context);
+}
+
+export async function isFrontendSandboxSupported({
   isAngular,
   pluginId,
 }: {
   isAngular?: boolean;
   pluginId: string;
-}): boolean {
+}): Promise<boolean> {
+  // Only if the feature is not enabled no support for sandbox
+  if (!Boolean(config.featureToggles.pluginsFrontendSandbox)) {
+    return false;
+  }
+
+  // no support for angular plugins
+  if (isAngular) {
+    return false;
+  }
+
   // To fast test and debug the sandbox in the browser.
-  const sandboxQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
+  const sandboxDisableQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
+  if (sandboxDisableQueryParam) {
+    return false;
+  }
+
+  // if disabled by configuration
   const isPluginExcepted = config.disableFrontendSandboxForPlugins.includes(pluginId);
-  return (
-    !isAngular &&
-    Boolean(config.featureToggles.pluginsFrontendSandbox) &&
-    process.env.NODE_ENV !== 'test' &&
-    !isPluginExcepted &&
-    !sandboxQueryParam
-  );
+  if (isPluginExcepted) {
+    return false;
+  }
+
+  // no sandbox in test mode. it often breaks e2e tests
+  if (process.env.NODE_ENV === 'test') {
+    return false;
+  }
+
+  // we don't run grafana-own apps in the sandbox
+  const pluginMeta = await getPluginSettings(pluginId);
+  if (pluginMeta.type === PluginType.app && pluginMeta.signatureType === PluginSignatureType.grafana) {
+    return false;
+  }
+
+  return true;
 }
 
 function isRegex(value: unknown): value is RegExp {
@@ -84,6 +108,27 @@ export function unboxRegexesFromMembraneProxy(structure: unknown): unknown {
   if (typeof structure === 'object') {
     return Object.keys(structure).reduce((acc, key) => {
       Reflect.set(acc, key, unboxRegexesFromMembraneProxy(Reflect.get(structure, key)));
+      return acc;
+    }, {});
+  }
+  return structure;
+}
+
+export function unboxNearMembraneProxies(structure: unknown): unknown {
+  if (!structure) {
+    return structure;
+  }
+
+  if (isNearMembraneProxy(structure)) {
+    return cloneDeep(structure);
+  }
+
+  if (Array.isArray(structure)) {
+    return structure.map(unboxNearMembraneProxies);
+  }
+  if (typeof structure === 'object') {
+    return Object.keys(structure).reduce((acc, key) => {
+      Reflect.set(acc, key, unboxNearMembraneProxies(Reflect.get(structure, key)));
       return acc;
     }, {});
   }

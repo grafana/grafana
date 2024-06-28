@@ -1,70 +1,87 @@
 import { css } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import { AnyAction } from '@reduxjs/toolkit';
+import { FormEvent, useEffect, useReducer } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { ButtonSelect, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { ButtonSelect, InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
+
+import {
+  isInvalid,
+  thresholdReducer,
+  updateHysteresisChecked,
+  updateRefId,
+  updateThresholdParams,
+  updateThresholdType,
+  updateUnloadParams,
+} from './thresholdReducer';
 
 interface Props {
   labelWidth: number | 'auto';
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
+  onError?: (error: string | undefined) => void;
+  useHysteresis?: boolean;
 }
 
 const defaultThresholdFunction = EvalFunction.IsAbove;
 
-export const Threshold = ({ labelWidth, onChange, refIds, query }: Props) => {
+const defaultEvaluator: ClassicCondition = {
+  type: 'query',
+  evaluator: {
+    type: defaultThresholdFunction,
+    params: [0, 0],
+  },
+  query: {
+    params: [],
+  },
+  reducer: {
+    params: [],
+    type: 'last',
+  },
+};
+
+export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHysteresis = false }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const defaultEvaluator: ClassicCondition = {
-    type: 'query',
-    evaluator: {
-      type: defaultThresholdFunction,
-      params: [0, 0],
-    },
-    query: {
-      params: [],
-    },
-    reducer: {
-      params: [],
-      type: 'last',
-    },
-  };
+  const initialExpression = { ...query, conditions: query.conditions?.length ? query.conditions : [defaultEvaluator] };
 
-  const conditions = query.conditions?.length ? query.conditions : [defaultEvaluator];
-  const condition = conditions[0];
+  // this queryState is the source of truth for the threshold component.
+  // All the changes are made to this object through the dispatch function with the thresholdReducer.
+  const [queryState, dispatch] = useReducer(thresholdReducer, initialExpression);
+  const conditionInState = queryState.conditions[0];
 
-  const thresholdFunction = thresholdFunctions.find((fn) => fn.value === conditions[0].evaluator?.type);
+  const thresholdFunction = thresholdFunctions.find((fn) => fn.value === queryState.conditions[0].evaluator?.type);
 
   const onRefIdChange = (value: SelectableValue<string>) => {
-    onChange({ ...query, expression: value.value });
+    dispatch(updateRefId(value.value));
   };
 
-  const onEvalFunctionChange = (value: SelectableValue<EvalFunction>) => {
-    const type = value.value ?? defaultThresholdFunction;
+  // any change in the queryState will trigger the onChange function.
+  useEffect(() => {
+    queryState && onChange(queryState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryState]);
 
-    onChange({
-      ...query,
-      conditions: updateConditions(conditions, { type }),
-    });
+  const onEvalFunctionChange = (value: SelectableValue<EvalFunction>) => {
+    dispatch(updateThresholdType({ evalFunction: value.value ?? defaultThresholdFunction, onError }));
   };
 
   const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index: number) => {
-    const newValue = parseFloat(event.currentTarget.value);
-    const newParams = [...condition.evaluator.params];
-    newParams[index] = newValue;
-
-    onChange({
-      ...query,
-      conditions: updateConditions(conditions, { params: newParams }),
-    });
+    dispatch(updateThresholdParams({ param: parseFloat(event.currentTarget.value), index }));
   };
 
   const isRange =
-    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
+    conditionInState.evaluator.type === EvalFunction.IsWithinRange ||
+    conditionInState.evaluator.type === EvalFunction.IsOutsideRange;
+
+  const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold) && useHysteresis;
 
   return (
     <>
@@ -86,14 +103,14 @@ export const Threshold = ({ labelWidth, onChange, refIds, query }: Props) => {
               type="number"
               width={10}
               onChange={(event) => onEvaluateValueChange(event, 0)}
-              defaultValue={condition.evaluator.params[0]}
+              defaultValue={conditionInState.evaluator.params[0]}
             />
             <div className={styles.button}>TO</div>
             <Input
               type="number"
               width={10}
               onChange={(event) => onEvaluateValueChange(event, 1)}
-              defaultValue={condition.evaluator.params[1]}
+              defaultValue={conditionInState.evaluator.params[1]}
             />
           </>
         ) : (
@@ -101,52 +118,239 @@ export const Threshold = ({ labelWidth, onChange, refIds, query }: Props) => {
             type="number"
             width={10}
             onChange={(event) => onEvaluateValueChange(event, 0)}
-            defaultValue={conditions[0].evaluator.params[0] || 0}
+            defaultValue={conditionInState.evaluator.params[0] || 0}
           />
         )}
       </InlineFieldRow>
+      {hysteresisEnabled && <HysteresisSection isRange={isRange} onError={onError} />}
     </>
   );
+  interface HysteresisSectionProps {
+    isRange: boolean;
+    onError?: (error: string | undefined) => void;
+  }
+
+  function HysteresisSection({ isRange, onError }: HysteresisSectionProps) {
+    const hasHysteresis = Boolean(conditionInState.unloadEvaluator);
+
+    const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
+      dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked, onError }));
+      allowOnblurFromUnload.current = true;
+    };
+    const allowOnblurFromUnload = React.useRef(true);
+    const onHysteresisCheckDown: React.MouseEventHandler<HTMLDivElement> | undefined = () => {
+      allowOnblurFromUnload.current = false;
+    };
+
+    return (
+      <div className={styles.hysteresis}>
+        {/* This is to enhance the user experience for mouse users. 
+        The onBlur event in RecoveryThresholdRow inputs triggers validations, 
+        but we want to skip them when the switch is clicked as this click should inmount this component. 
+        To achieve this, we use the onMouseDown event to set a flag, which is later utilized in the onBlur event to bypass validations. 
+        The onMouseDown event precedes the onBlur event, unlike onchange. */}
+
+        {/*Disabling the a11y rules here as the InlineSwitch handles keyboard interactions */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div onMouseDown={onHysteresisCheckDown}>
+          <InlineSwitch
+            showLabel={true}
+            label="Custom recovery threshold"
+            value={hasHysteresis}
+            onChange={onHysteresisCheckChange}
+            className={styles.switch}
+          />
+        </div>
+
+        {hasHysteresis && (
+          <RecoveryThresholdRow
+            isRange={isRange}
+            condition={conditionInState}
+            onError={onError}
+            dispatch={dispatch}
+            allowOnblur={allowOnblurFromUnload}
+          />
+        )}
+      </div>
+    );
+  }
 };
 
-function updateConditions(
-  conditions: ClassicCondition[],
-  update: Partial<{
-    params: number[];
-    type: EvalFunction;
-  }>
-): ClassicCondition[] {
-  return [
-    {
-      ...conditions[0],
-      evaluator: {
-        ...conditions[0].evaluator,
-        ...update,
-      },
-    },
-  ];
+interface RecoveryThresholdRowProps {
+  isRange: boolean;
+  condition: ClassicCondition;
+  onError?: (error: string | undefined) => void;
+  dispatch: React.Dispatch<AnyAction>;
+  allowOnblur: React.MutableRefObject<boolean>;
+}
+
+function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnblur }: RecoveryThresholdRowProps) {
+  const styles = useStyles2(getStyles);
+
+  const onUnloadValueChange = (event: FormEvent<HTMLInputElement>, paramIndex: number) => {
+    const newValue = parseFloat(event.currentTarget.value);
+    dispatch(updateUnloadParams({ param: newValue, index: paramIndex, onError }));
+  };
+
+  // check if is valid for the current unload evaluator params
+  const error = isInvalid(condition);
+  // get the error message depending on the unload evaluator type
+  const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
+
+  if (isRange) {
+    return <RecoveryForRange allowOnblur={allowOnblur} />;
+  } else {
+    return <RecoveryForSingleValue allowOnblur={allowOnblur} />;
+  }
+
+  /* We prioritize the onMouseDown event over the onBlur event. This is because the onBlur event is executed before the onChange event that we have 
+   in the hysteresis checkbox, and because of that, we were validating when unchecking the switch.
+  We need to uncheck the switch before the onBlur event is executed.*/
+  interface RecoveryProps {
+    allowOnblur: React.MutableRefObject<boolean>;
+  }
+
+  function RecoveryForRange({ allowOnblur }: RecoveryProps) {
+    if (condition.evaluator.type === EvalFunction.IsWithinRange) {
+      return (
+        <InlineFieldRow className={styles.hysteresis}>
+          <InlineField label="Stop alerting when outside range" labelWidth={'auto'}>
+            <Stack direction="row" gap={0}>
+              <div className={styles.range}>
+                <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom} className={styles.noMargin}>
+                  <Input
+                    type="number"
+                    width={10}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
+                    defaultValue={condition.unloadEvaluator?.params[0]}
+                  />
+                </InlineField>
+              </div>
+              <div className={styles.button}>TO</div>
+              <div className={styles.range}>
+                <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
+                  <Input
+                    type="number"
+                    width={10}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
+                    defaultValue={condition.unloadEvaluator?.params[1]}
+                  />
+                </InlineField>
+              </div>
+            </Stack>
+          </InlineField>
+        </InlineFieldRow>
+      );
+    } else {
+      return (
+        <InlineFieldRow className={styles.hysteresis}>
+          <InlineField label="Stop alerting when inside range" labelWidth={'auto'}>
+            <Stack direction="row" gap={0}>
+              <div className={styles.range}>
+                <InlineField invalid={Boolean(errorMsgFrom)} error={errorMsgFrom}>
+                  <Input
+                    type="number"
+                    width={10}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 0)}
+                    defaultValue={condition.unloadEvaluator?.params[0]}
+                  />
+                </InlineField>
+              </div>
+
+              <div className={styles.button}>TO</div>
+              <div className={styles.range}>
+                <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
+                  <Input
+                    type="number"
+                    width={10}
+                    onBlur={(event) => allowOnblur.current && onUnloadValueChange(event, 1)}
+                    defaultValue={condition.unloadEvaluator?.params[1]}
+                  />
+                </InlineField>
+              </div>
+            </Stack>
+          </InlineField>
+        </InlineFieldRow>
+      );
+    }
+  }
+
+  function RecoveryForSingleValue({ allowOnblur }: RecoveryProps) {
+    if (condition.evaluator.type === EvalFunction.IsAbove) {
+      return (
+        <InlineFieldRow className={styles.hysteresis}>
+          <InlineField
+            label="Stop alerting when below"
+            labelWidth={'auto'}
+            invalid={Boolean(invalidErrorMsg)}
+            error={invalidErrorMsg}
+          >
+            <Input
+              type="number"
+              width={10}
+              onBlur={(event) => {
+                allowOnblur.current && onUnloadValueChange(event, 0);
+              }}
+              defaultValue={condition.unloadEvaluator?.params[0]}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      );
+    } else {
+      return (
+        <InlineFieldRow className={styles.hysteresis}>
+          <InlineField
+            label="Stop alerting when above"
+            labelWidth={'auto'}
+            invalid={Boolean(invalidErrorMsg)}
+            error={invalidErrorMsg}
+          >
+            <Input
+              type="number"
+              width={10}
+              onBlur={(event) => {
+                allowOnblur.current && onUnloadValueChange(event, 0);
+              }}
+              defaultValue={condition.unloadEvaluator?.params[0]}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      );
+    }
+  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSelectText: css`
-    color: ${theme.colors.primary.text};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    text-transform: uppercase;
-  `,
-  button: css`
-    height: 32px;
-
-    color: ${theme.colors.primary.text};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    text-transform: uppercase;
-
-    display: flex;
-    align-items: center;
-    border-radius: ${theme.shape.radius.default};
-    font-weight: ${theme.typography.fontWeightBold};
-    border: 1px solid ${theme.colors.border.medium};
-    white-space: nowrap;
-    padding: 0 ${theme.spacing(1)};
-    background-color: ${theme.colors.background.primary};
-  `,
+  buttonSelectText: css({
+    color: theme.colors.primary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    textTransform: 'uppercase',
+    padding: `0 ${theme.spacing(1)}`,
+  }),
+  button: css({
+    height: '32px',
+    color: theme.colors.primary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    textTransform: 'uppercase',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: theme.shape.radius.default,
+    fontWeight: theme.typography.fontWeightBold,
+    border: `1px solid ${theme.colors.border.medium}`,
+    whiteSpace: 'nowrap',
+    padding: `0 ${theme.spacing(1)}`,
+    backgroundColor: theme.colors.background.primary,
+  }),
+  range: css({
+    width: 'min-content',
+  }),
+  hysteresis: css({
+    marginTop: theme.spacing(2),
+  }),
+  switch: css({
+    paddingLeft: theme.spacing(1),
+  }),
+  noMargin: css({
+    margin: 0,
+  }),
 });

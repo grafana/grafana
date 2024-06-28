@@ -44,7 +44,57 @@ export function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil)
     filteredSpans = true;
   }
 
+  if (searchProps.query) {
+    const queryMatches = getQueryMatches(searchProps.query, spans);
+    if (queryMatches) {
+      spans = queryMatches;
+      filteredSpans = true;
+    }
+  }
+
   return filteredSpans ? new Set(spans.map((span: TraceSpan) => span.spanID)) : undefined;
+}
+
+export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
+  if (!spans) {
+    return undefined;
+  }
+
+  const queryParts: string[] = [];
+
+  // split query by whitespace, remove empty strings, and extract filters
+  query
+    .split(/\s+/)
+    .filter(Boolean)
+    .forEach((w) => {
+      queryParts.push(w.toLowerCase());
+    });
+
+  const isTextInQuery = (queryParts: string[], text: string) =>
+    queryParts.some((queryPart) => text.toLowerCase().includes(queryPart));
+
+  const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
+    kvs
+      ? kvs.some((kv) => {
+          return isTextInQuery(queryParts, kv.key) || isTextInQuery(queryParts, kv.value.toString());
+        })
+      : false;
+
+  const isSpanAMatch = (span: TraceSpan) =>
+    isTextInQuery(queryParts, span.operationName) ||
+    isTextInQuery(queryParts, span.process.serviceName) ||
+    isTextInKeyValues(span.tags) ||
+    (span.kind && isTextInQuery(queryParts, span.kind)) ||
+    (span.statusCode !== undefined && isTextInQuery(queryParts, SpanStatusCode[span.statusCode])) ||
+    (span.statusMessage && isTextInQuery(queryParts, span.statusMessage)) ||
+    (span.instrumentationLibraryName && isTextInQuery(queryParts, span.instrumentationLibraryName)) ||
+    (span.instrumentationLibraryVersion && isTextInQuery(queryParts, span.instrumentationLibraryVersion)) ||
+    (span.traceState && isTextInQuery(queryParts, span.traceState)) ||
+    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
+    isTextInKeyValues(span.process.tags) ||
+    queryParts.some((queryPart) => queryPart === span.spanID);
+
+  return spans.filter(isSpanAMatch);
 }
 
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {

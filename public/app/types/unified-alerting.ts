@@ -1,6 +1,8 @@
 /* Prometheus internal models */
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
+import { PromOptions } from '@grafana/prometheus';
+import { LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
   Annotations,
@@ -26,8 +28,11 @@ export function hasAlertState(alert: Alert, state: PromAlertingRuleState | Grafa
   return mapStateWithReasonToBaseState(alert.state) === state;
 }
 
+// Prometheus API uses "err" but grafana API uses "error" *sigh*
+export type RuleHealth = 'nodata' | 'error' | 'err' | string;
+
 interface RuleBase {
-  health: string;
+  health: RuleHealth;
   name: string;
   query: string;
   lastEvaluation?: string;
@@ -86,7 +91,7 @@ export interface RulesSourceResult {
   namespaces?: RuleNamespace[];
 }
 
-export type RulesSource = DataSourceInstanceSettings | 'grafana';
+export type RulesSource = DataSourceInstanceSettings<PromOptions | LokiOptions> | 'grafana';
 
 // combined prom and ruler result
 export interface CombinedRule {
@@ -128,20 +133,26 @@ export interface CombinedRuleNamespace {
   rulesSource: RulesSource;
   name: string;
   groups: CombinedRuleGroup[];
+  uid?: string; //available only in grafana rules
 }
 
 export interface RuleWithLocation<T = RulerRuleDTO> {
   ruleSourceName: string;
   namespace: string;
+  namespace_uid?: string; // Grafana folder UID
   group: RulerRuleGroupDTO;
   rule: T;
 }
 
-export interface CombinedRuleWithLocation extends CombinedRule {
+// identifier for where we can find a RuleGroup
+export interface RuleGroupIdentifier {
   dataSourceName: string;
+  /** ⚠️ use the Grafana folder UID for Grafana-managed rules */
   namespaceName: string;
   groupName: string;
 }
+
+export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 
 export interface PromRuleWithLocation {
   rule: AlertingRule;

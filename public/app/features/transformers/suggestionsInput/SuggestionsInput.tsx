@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useEffect, useRef, useState } from 'react';
-import { Popper as ReactPopper } from 'react-popper';
+import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { CustomScrollbar, FieldValidationMessage, Input, Portal, useTheme2 } from '@grafana/ui';
@@ -55,7 +56,36 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>();
+
+  // the order of middleware is important!
+  const middleware = [
+    flip({
+      fallbackAxisSideDirection: 'start',
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
+
+  const { refs, floatingStyles } = useFloating({
+    open: showingSuggestions,
+    placement: 'bottom-start',
+    onOpenChange: setShowingSuggestions,
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
+  });
+
+  const handleRef = useCallback(
+    (ref: HTMLInputElement) => {
+      refs.setReference(ref);
+
+      inputRef.current = ref;
+    },
+    [refs]
+  );
 
   // Used to get the height of the suggestion elements in order to scroll to them.
   const activeRef = useRef<HTMLDivElement>(null);
@@ -137,53 +167,25 @@ export const SuggestionsInput = ({
     <div className={styles.inputWrapper}>
       {showingSuggestions && (
         <Portal>
-          <ReactPopper
-            referenceElement={inputRef.current!}
-            placement="bottom-start"
-            modifiers={[
-              {
-                name: 'preventOverflow',
-                enabled: true,
-                options: {
-                  rootBoundary: 'viewport',
-                },
-              },
-              {
-                name: 'arrow',
-                enabled: false,
-              },
-              {
-                name: 'offset',
-                options: {
-                  offset: [0, 0],
-                },
-              },
-            ]}
-          >
-            {({ ref, style, placement }) => {
-              return (
-                <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
-                  <CustomScrollbar
-                    scrollTop={scrollTop}
-                    autoHeightMax="300px"
-                    setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
-                  >
-                    {/* This suggestion component has a specialized name,
-                          but is rather generalistic in implementation,
-                          so we're using it in transformations also. 
-                          We should probably rename this to something more general. */}
-                    <DataLinkSuggestions
-                      activeRef={activeRef}
-                      suggestions={suggestions}
-                      onSuggestionSelect={onVariableSelect}
-                      onClose={() => setShowingSuggestions(false)}
-                      activeIndex={suggestionsIndex}
-                    />
-                  </CustomScrollbar>
-                </div>
-              );
-            }}
-          </ReactPopper>
+          <div ref={refs.setFloating} style={floatingStyles} className={styles.suggestionsWrapper}>
+            <CustomScrollbar
+              scrollTop={scrollTop}
+              autoHeightMax="300px"
+              setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+            >
+              {/* This suggestion component has a specialized name,
+                    but is rather generalistic in implementation,
+                    so we're using it in transformations also.
+                    We should probably rename this to something more general. */}
+              <DataLinkSuggestions
+                activeRef={activeRef}
+                suggestions={suggestions}
+                onSuggestionSelect={onVariableSelect}
+                onClose={() => setShowingSuggestions(false)}
+                activeIndex={suggestionsIndex}
+              />
+            </CustomScrollbar>
+          </div>
         </Portal>
       )}
       {invalid && error && (
@@ -194,7 +196,7 @@ export const SuggestionsInput = ({
       <Input
         placeholder={placeholder}
         invalid={invalid}
-        ref={inputRef}
+        ref={handleRef}
         value={variableValue}
         onChange={onValueChanged}
         onBlur={onBlur}

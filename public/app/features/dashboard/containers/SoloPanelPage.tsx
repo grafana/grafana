@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -76,7 +76,12 @@ export class SoloPanelPage extends Component<Props, State> {
         return;
       }
 
+      if (panel) {
+        dashboard.exitViewPanel(panel);
+      }
+
       this.setState({ panel });
+      dashboard.initViewPanel(panel);
     }
   }
 

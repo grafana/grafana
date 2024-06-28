@@ -1,5 +1,4 @@
 import { render, RenderResult, screen } from '@testing-library/react';
-import React from 'react';
 
 import { dateTime, TimeRange } from '@grafana/data';
 
@@ -96,22 +95,22 @@ describe('TimePickerContent', () => {
 
     it('renders with absolute picker when absolute value and quick ranges are visible', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(screen.queryByLabelText(/time range from field/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText('From')).toBeInTheDocument();
     });
 
     it('renders with absolute picker when absolute value and quick ranges are hidden', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
-      expect(screen.queryByLabelText(/time range from field/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText('From')).toBeInTheDocument();
     });
 
     it('renders without absolute picker when narrow screen and quick ranges are visible', () => {
       renderComponent({ value: relativeValue, isFullscreen: false });
-      expect(screen.queryByLabelText(/time range from field/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('From')).not.toBeInTheDocument();
     });
 
     it('renders with absolute picker when narrow screen and quick ranges are hidden', () => {
       renderComponent({ value: relativeValue, isFullscreen: false, hideQuickRanges: true });
-      expect(screen.queryByLabelText(/time range from field/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText('From')).toBeInTheDocument();
     });
 
     it('renders without timezone picker', () => {

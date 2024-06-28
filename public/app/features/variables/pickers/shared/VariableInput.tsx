@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { t } from 'app/core/internationalization';
 
@@ -34,6 +35,7 @@ export class VariableInput extends PureComponent<Props> {
             instance.setAttribute('style', `width:${Math.max(instance.width, 150)}px`);
           }
         }}
+        id={id}
         type="text"
         className="gf-form-input"
         value={value ?? ''}

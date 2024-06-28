@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 import { useDebounce } from 'react-use';
 
-import { QueryEditorProps, toOption } from '@grafana/data';
+import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
 import { EditorField, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
@@ -22,7 +23,7 @@ export const defaultQuery: (datasource: CloudMonitoringDatasource) => TimeSeries
 });
 
 export const AnnotationQueryEditor = (props: Props) => {
-  const { datasource, query, onRunQuery, data, onChange } = props;
+  const { datasource, query, onRunQuery, data, onChange, range } = props;
   const meta = data?.series.length ? data?.series[0].meta : {};
   const customMetaData = meta?.custom ?? {};
   const timeSeriesList = { ...defaultQuery(datasource), ...query.timeSeriesList };
@@ -73,6 +74,7 @@ export const AnnotationQueryEditor = (props: Props) => {
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={query}
+          range={range || getDefaultTimeRange()}
         />
         <EditorField label="Title" htmlFor="annotation-query-title">
           <Input id="annotation-query-title" value={title} onChange={handleTitleChange} />

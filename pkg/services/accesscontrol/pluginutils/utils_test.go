@@ -86,33 +86,40 @@ func TestValidatePluginRole(t *testing.T) {
 		wantErr  error
 	}{
 		{
+			name:     "empty display name",
+			pluginID: "test-app",
+			role:     ac.RoleDTO{DisplayName: ""},
+			wantErr:  &ac.ErrorInvalidRole{},
+		},
+		{
 			name:     "empty",
 			pluginID: "",
-			role:     ac.RoleDTO{Name: "plugins::"},
+			role:     ac.RoleDTO{Name: "plugins::reader", DisplayName: "Reader"},
 			wantErr:  ac.ErrPluginIDRequired,
 		},
 		{
 			name:     "invalid name",
 			pluginID: "test-app",
-			role:     ac.RoleDTO{Name: "test-app:reader"},
+			role:     ac.RoleDTO{Name: "test-app:reader", DisplayName: "Reader"},
 			wantErr:  &ac.ErrorInvalidRole{},
 		},
 		{
 			name:     "invalid id in name",
 			pluginID: "test-app",
-			role:     ac.RoleDTO{Name: "plugins:test-app2:reader"},
+			role:     ac.RoleDTO{Name: "plugins:test-app2:reader", DisplayName: "Reader"},
 			wantErr:  &ac.ErrorInvalidRole{},
 		},
 		{
 			name:     "valid name",
 			pluginID: "test-app",
-			role:     ac.RoleDTO{Name: "plugins:test-app:reader"},
+			role:     ac.RoleDTO{Name: "plugins:test-app:reader", DisplayName: "Reader"},
 		},
 		{
 			name:     "invalid permission",
 			pluginID: "test-app",
 			role: ac.RoleDTO{
 				Name:        "plugins:test-app:reader",
+				DisplayName: "Reader",
 				Permissions: []ac.Permission{{Action: "invalidtest-app:read"}},
 			},
 			wantErr: &ac.ErrorInvalidRole{},
@@ -121,7 +128,8 @@ func TestValidatePluginRole(t *testing.T) {
 			name:     "valid permissions",
 			pluginID: "test-app",
 			role: ac.RoleDTO{
-				Name: "plugins:test-app:reader",
+				Name:        "plugins:test-app:reader",
+				DisplayName: "Reader",
 				Permissions: []ac.Permission{
 					{Action: "plugins.app:access", Scope: "plugins:id:test-app"},
 					{Action: "test-app:read"},
@@ -133,9 +141,33 @@ func TestValidatePluginRole(t *testing.T) {
 			name:     "invalid permission targets other plugin",
 			pluginID: "test-app",
 			role: ac.RoleDTO{
-				Name: "plugins:test-app:reader",
+				Name:        "plugins:test-app:reader",
+				DisplayName: "Reader",
 				Permissions: []ac.Permission{
 					{Action: "plugins.app:access", Scope: "plugins:id:other-app"},
+				},
+			},
+			wantErr: &ac.ErrorInvalidRole{},
+		},
+		{
+			name:     "valid core permission targets plugin",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name:        "plugins:test-app:reader",
+				DisplayName: "Plugin Folder Reader",
+				Permissions: []ac.Permission{
+					{Action: "folders:read", Scope: "folders:uid:test-app"},
+				},
+			},
+		},
+		{
+			name:     "invalid core permission targets other plugin",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name:        "plugins:test-app:reader",
+				DisplayName: "Plugin Folder Reader",
+				Permissions: []ac.Permission{
+					{Action: "folders:read", Scope: "folders:uid:other-app"},
 				},
 			},
 			wantErr: &ac.ErrorInvalidRole{},

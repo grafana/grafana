@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import {
   CoreApp,
@@ -8,6 +7,7 @@ import {
   VisualizationSuggestionsBuilder,
   VisualizationSuggestion,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
@@ -66,7 +66,9 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.message}>{message}</div>
+      <div className={styles.message} data-testid={selectors.components.Panels.Panel.PanelDataErrorMessage}>
+        {message}
+      </div>
       {context.app === CoreApp.PanelEditor && dataSummary.hasData && panel && (
         <div className={styles.actions}>
           {props.suggestions && (

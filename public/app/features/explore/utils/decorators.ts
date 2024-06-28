@@ -128,7 +128,7 @@ export const decorateWithCorrelations = ({
               datasourceName: defaultTargetDatasource.name,
               query: { datasource: { uid: defaultTargetDatasource.uid } },
               meta: {
-                correlationData: { resultField: field.name, vars: availableVars },
+                correlationData: { resultField: field.name, vars: availableVars, origVars: availableVars },
               },
             },
           });
@@ -264,6 +264,7 @@ export const decorateWithLogsResult =
       absoluteRange?: AbsoluteTimeRange;
       refreshInterval?: string;
       queries?: DataQuery[];
+      deduplicate?: boolean;
     } = {}
   ) =>
   (data: ExplorePanelData): ExplorePanelData => {
@@ -272,7 +273,13 @@ export const decorateWithLogsResult =
     }
 
     const intervalMs = data.request?.intervalMs;
-    const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, options.absoluteRange, options.queries);
+    const newResults = dataFrameToLogsModel(
+      data.logsFrames,
+      intervalMs,
+      options.absoluteRange,
+      options.queries,
+      options.deduplicate
+    );
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
@@ -286,8 +293,7 @@ export const decorateWithLogsResult =
 export function decorateData(
   data: PanelData,
   queryResponse: PanelData,
-  absoluteRange: AbsoluteTimeRange,
-  refreshInterval: string | undefined,
+  logsResultDecorator: (data: ExplorePanelData) => ExplorePanelData,
   queries: DataQuery[] | undefined,
   correlations: CorrelationData[] | undefined,
   showCorrelationEditorLinks: boolean,
@@ -305,7 +311,7 @@ export function decorateData(
     ),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
-    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
+    map(logsResultDecorator),
     mergeMap(decorateWithRawPrometheusResult),
     mergeMap(decorateWithTableResult)
   );

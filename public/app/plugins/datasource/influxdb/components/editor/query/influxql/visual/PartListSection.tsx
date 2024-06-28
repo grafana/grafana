@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
 import { unwrap } from '../utils/unwrap';
@@ -27,30 +27,10 @@ type Props = {
   onAddNewPart: (type: string) => void;
 };
 
-const renderRemovableNameMenuItems = (onClick: () => void) => {
-  return (
-    <MenuGroup label="">
-      <MenuItem label="remove" onClick={onClick} />
-    </MenuGroup>
-  );
-};
-
 const noRightMarginPaddingClass = css({
   paddingRight: '0',
   marginRight: '0',
 });
-
-const RemovableName = ({ name, onRemove }: { name: string; onRemove: () => void }) => {
-  return (
-    <WithContextMenu renderMenuItems={() => renderRemovableNameMenuItems(onRemove)}>
-      {({ openMenu }) => (
-        <button className={cx('gf-form-label', noRightMarginPaddingClass)} onClick={openMenu}>
-          {name}
-        </button>
-      )}
-    </WithContextMenu>
-  );
-};
 
 type PartProps = {
   name: string;
@@ -79,7 +59,7 @@ const getPartClass = (theme: GrafanaTheme2) => {
   );
 };
 
-const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
+const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
   const theme = useTheme2();
   const partClass = useMemo(() => getPartClass(theme), [theme]);
 
@@ -90,14 +70,14 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
   };
   return (
     <div className={partClass}>
-      <RemovableName name={name} onRemove={onRemove} />(
+      <button className={cx('gf-form-label', noRightMarginPaddingClass)}>{name}</button>(
       {params.map((p, i) => {
         const { value, options } = p;
         const isLast = i === params.length - 1;
         const loadOptions =
           options !== null ? () => options().then((items) => items.map(toSelectableValue)) : undefined;
         return (
-          <React.Fragment key={i}>
+          <Fragment key={i}>
             <Seg
               allowCustomValue
               value={value}
@@ -108,7 +88,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
               }}
             />
             {!isLast && ','}
-          </React.Fragment>
+          </Fragment>
         );
       })}
       )
@@ -126,7 +106,7 @@ export const PartListSection = ({
   return (
     <>
       {parts.map((part, index) => (
-        <React.Fragment key={index}>
+        <Fragment key={index}>
           <Part
             name={part.name}
             params={part.params}
@@ -146,7 +126,7 @@ export const PartListSection = ({
               onRemovePart(index);
             }}
           />
-        </React.Fragment>
+        </Fragment>
       ))}
       <AddButton loadOptions={getNewPartOptions} onAdd={onAddNewPart} />
     </>

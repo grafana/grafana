@@ -1,7 +1,16 @@
 import { isArray, isEqual } from 'lodash';
 
-import { LegacyMetricFindQueryOptions, ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import {
+  LegacyMetricFindQueryOptions,
+  ScopedVars,
+  UrlQueryMap,
+  UrlQueryValue,
+  VariableType,
+  VariableRefresh,
+  VariableWithOptions,
+  QueryVariableModel,
+} from '@grafana/data';
+import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getState } from '../../store/store';
@@ -12,7 +21,7 @@ import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
-import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh, VariableWithOptions } from './types';
+import { TransactionStatus, VariableModel } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -147,21 +156,19 @@ export function getLegacyQueryOptions(
 }
 
 export function getVariableRefresh(variable: VariableModel): VariableRefresh {
-  if (!variable || !variable.hasOwnProperty('refresh')) {
-    return VariableRefresh.never;
+  if (variable?.type === 'custom') {
+    return VariableRefresh.onDashboardLoad;
   }
 
-  const queryVariable = variable as QueryVariableModel;
-
   if (
-    queryVariable.refresh !== VariableRefresh.onTimeRangeChanged &&
-    queryVariable.refresh !== VariableRefresh.onDashboardLoad &&
-    queryVariable.refresh !== VariableRefresh.never
+    !variable ||
+    !('refresh' in variable) ||
+    (variable.refresh !== VariableRefresh.onTimeRangeChanged && variable.refresh !== VariableRefresh.onDashboardLoad)
   ) {
     return VariableRefresh.never;
   }
 
-  return queryVariable.refresh;
+  return variable.refresh;
 }
 
 export function getVariableTypes(): Array<{ label: string; value: VariableType }> {
@@ -175,7 +182,7 @@ export function getVariableTypes(): Array<{ label: string; value: VariableType }
     }));
 }
 
-function getUrlValueForComparison(value: any): any {
+function getUrlValueForComparison(value: unknown) {
   if (isArray(value)) {
     if (value.length === 0) {
       value = undefined;
@@ -282,4 +289,20 @@ export function toVariablePayload<T extends any = undefined>(
   data?: T
 ): VariablePayload<T> {
   return { type: obj.type, id: obj.id, data: data as T };
+}
+
+export function getVariablesFromUrl() {
+  const variables = getTemplateSrv().getVariables();
+  const queryParams = locationService.getSearchObject();
+
+  return Object.keys(queryParams)
+    .filter(
+      (key) => key.indexOf(VARIABLE_PREFIX) !== -1 && variables.some((v) => v.name === key.replace(VARIABLE_PREFIX, ''))
+    )
+    .reduce<UrlQueryMap>((obj, key) => {
+      const variableName = key.replace(VARIABLE_PREFIX, '');
+      obj[variableName] = queryParams[key];
+
+      return obj;
+    }, {});
 }

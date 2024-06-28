@@ -1,7 +1,5 @@
-import React from 'react';
-
 import { AnnotationQuery, getDataSourceRef, NavModelItem } from '@grafana/data';
-import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardModel } from '../../state';
@@ -41,7 +39,7 @@ function getSubPageNav(
   editIndex: number | undefined,
   node: NavModelItem
 ): NavModelItem | undefined {
-  const parentItem = config.featureToggles.dockedMegaMenu ? node.parentItem : undefined;
+  const parentItem = node.parentItem;
   if (editIndex == null) {
     return parentItem;
   }

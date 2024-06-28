@@ -1,10 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, Stack } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
@@ -84,7 +82,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                 </div>
                 <div className={styles.alertNameWrapper}>
                   <div className={styles.instanceDetails}>
-                    <Stack direction="row" gap={1} wrap={false}>
+                    <Stack direction="row" gap={1}>
                       <div className={styles.alertName} title={ruleWithLocation.name}>
                         {ruleWithLocation.name}
                       </div>
@@ -120,6 +118,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                     </div>
                   </div>
                   <AlertInstances
+                    rule={ruleWithLocation}
                     alerts={alertingRule.alerts ?? []}
                     options={options}
                     grafanaTotalInstances={grafanaInstancesTotal}

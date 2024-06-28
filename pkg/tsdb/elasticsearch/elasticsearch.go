@@ -16,16 +16,27 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
+	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
+
+const (
+	// headerFromExpression is used by data sources to identify expression queries
+	headerFromExpression = "X-Grafana-From-Expr"
+	// headerFromAlert is used by data sources to identify alert queries
+	headerFromAlert = "FromAlert"
+	// this is the default value for the maxConcurrentShardRequests setting - it should be in sync with the default value in the datasource config settings
+	defaultMaxConcurrentShardRequests = int64(5)
+)
 
 type Service struct {
 	httpClientProvider httpclient.Provider
@@ -45,7 +56,7 @@ func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Trace
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	_, fromAlert := req.Headers[headerFromAlert]
 	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
@@ -53,20 +64,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo, logger, s.tracer)
+	return queryData(ctx, req, dsInfo, logger, s.tracer)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
-	if len(queries) == 0 {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, queries, logger, tracer)
+	query := newElasticsearchDataQuery(ctx, client, req, logger, tracer)
 	return query.execute()
 }
 
@@ -87,7 +98,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		httpCli, err := httpClientProvider.New(httpCliOpts)
+		// set the default middlewars from the httpClientProvider
+		httpCliOpts.Middlewares = httpClientProvider.(*sdkhttpclient.Provider).Opts.Middlewares
+		// enable experimental http client to support errors with source
+		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -118,11 +132,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			interval = ""
 		}
 
-		timeInterval, ok := jsonData["timeInterval"].(string)
-		if !ok {
-			timeInterval = ""
-		}
-
 		index, ok := jsonData["index"].(string)
 		if !ok {
 			index = ""
@@ -131,28 +140,28 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			index = settings.Database
 		}
 
-		var maxConcurrentShardRequests float64
+		var maxConcurrentShardRequests int64
 
 		switch v := jsonData["maxConcurrentShardRequests"].(type) {
+		// unmarshalling from JSON will return float64 for numbers, so we need to handle that and convert to int64
 		case float64:
-			maxConcurrentShardRequests = v
+			maxConcurrentShardRequests = int64(v)
 		case string:
-			maxConcurrentShardRequests, err = strconv.ParseFloat(v, 64)
+			maxConcurrentShardRequests, err = strconv.ParseInt(v, 10, 64)
 			if err != nil {
-				maxConcurrentShardRequests = 256
+				maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 			}
 		default:
-			maxConcurrentShardRequests = 256
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
+		}
+
+		if maxConcurrentShardRequests <= 0 {
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 		}
 
 		includeFrozen, ok := jsonData["includeFrozen"].(bool)
 		if !ok {
 			includeFrozen = false
-		}
-
-		xpack, ok := jsonData["xpack"].(bool)
-		if !ok {
-			xpack = false
 		}
 
 		configuredFields := es.ConfiguredFields{
@@ -166,12 +175,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
 			Database:                   index,
-			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
+			MaxConcurrentShardRequests: maxConcurrentShardRequests,
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
-			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,
-			XPack:                      xpack,
 		}
 		return model, nil
 	}
@@ -192,9 +199,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	// - ?/_mapping for fetching index mapping
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
 	// - _msearch for executing getTerms queries
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+	// - _mapping for fetching "root" index mappings
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
@@ -205,24 +213,14 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	esUrl, err := url.Parse(ds.URL)
+	esUrl, err := createElasticsearchURL(req, ds)
 	if err != nil {
-		logger.Error("Failed to parse data source URL", "error", err, "url", ds.URL)
-		return err
+		logger.Error("Failed to create request url", "error", err, "url", ds.URL, "path", req.Path)
 	}
 
-	resourcePath, err := url.Parse(req.Path)
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl, bytes.NewBuffer(req.Body))
 	if err != nil {
-		logger.Error("Failed to parse data source path", "error", err, "url", req.Path)
-		return err
-	}
-
-	// We take the path and the query-string only
-	esUrl.RawQuery = resourcePath.RawQuery
-	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
-	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
-	if err != nil {
-		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
+		logger.Error("Failed to create request", "error", err, "url", esUrl)
 		return err
 	}
 
@@ -235,6 +233,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
+		sourceErr := exp.Error{}
+		if errors.As(err, &sourceErr) {
+			lp = append(lp, "statusSource", sourceErr.Source())
+		}
 		if response != nil {
 			lp = append(lp, "statusCode", response.StatusCode)
 		}
@@ -268,4 +270,21 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		Headers: responseHeaders,
 		Body:    body,
 	})
+}
+
+func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (string, error) {
+	esUrl, err := url.Parse(ds.URL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
+	}
+
+	esUrl.Path = path.Join(esUrl.Path, req.Path)
+	esUrlString := esUrl.String()
+	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
+	// This ensures that for version checks executed to the root URL, the URL ends with a slash.
+	// This is helpful, for example, for load balancers that expect URLs to match the pattern /.*.
+	if req.Path == "" && esUrlString[len(esUrlString)-1:] != "/" {
+		return esUrl.String() + "/", nil
+	}
+	return esUrlString, nil
 }

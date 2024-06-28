@@ -1,17 +1,16 @@
-import React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { Icon, Tooltip, useForceUpdate } from '@grafana/ui';
+import { DashboardLink } from '@grafana/schema';
+import { Tooltip, useForceUpdate } from '@grafana/ui';
+import { LINK_ICON_MAP } from 'app/features/dashboard-scene/settings/links/utils';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
-import { DashboardLink } from '../../state/DashboardModel';
-import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 
-import { DashboardLinksDashboard } from './DashboardLinksDashboard';
+import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -40,23 +39,22 @@ export const DashboardLinks = ({ dashboard, links }: Props) => {
           return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={dashboard.uid} />;
         }
 
-        const icon = linkIconMap[link.icon];
+        const icon = LINK_ICON_MAP[link.icon];
 
         const linkElement = (
-          <a
-            className="gf-form-label gf-form-label--dashlink"
+          <DashboardLinkButton
             href={sanitizeUrl(linkInfo.href)}
             target={link.targetBlank ? '_blank' : undefined}
             rel="noreferrer"
             data-testid={selectors.components.DashboardLinks.link}
+            icon={icon}
           >
-            {icon && <Icon aria-hidden name={icon} style={{ marginRight: '4px' }} />}
-            <span>{linkInfo.title}</span>
-          </a>
+            {linkInfo.title}
+          </DashboardLinkButton>
         );
 
         return (
-          <div key={key} className="gf-form" data-testid={selectors.components.DashboardLinks.container}>
+          <div key={key} data-testid={selectors.components.DashboardLinks.container}>
             {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
           </div>
         );

@@ -1,17 +1,22 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import React from 'react';
 
 import { DataFrame, getFieldDisplayName, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
 import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
 
 import {
   configMapHandlers,
-  evaluteFieldMappings,
+  evaluateFieldMappings,
   FieldToConfigMapHandler,
   FieldToConfigMapping,
+  HandlerArguments,
   lookUpConfigHandler as findConfigHandlerFor,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
+
+import {
+  createsArgumentsEditor,
+  FieldConfigMappingHandlerArgumentsEditor,
+} from './FieldConfigMappingHandlerArgumentsEditor';
 
 export interface Props {
   frame: DataFrame;
@@ -27,6 +32,10 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
   const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false)) as Array<
     SelectableValue<string>
   >;
+  const hasAdditionalSettings = mappings.reduce(
+    (prev, mapping) => prev || createsArgumentsEditor(mapping.handlerKey),
+    false
+  );
 
   const onChangeConfigProperty = (row: FieldToConfigRowViewModel, value: SelectableValue<string | null>) => {
     const existingIdx = mappings.findIndex((x) => x.fieldName === row.fieldName);
@@ -60,6 +69,18 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
     }
   };
 
+  const onChangeHandlerArguments = (row: FieldToConfigRowViewModel, handlerArguments: HandlerArguments) => {
+    const existingIdx = mappings.findIndex((x) => x.fieldName === row.fieldName);
+
+    if (existingIdx !== -1) {
+      const update = [...mappings];
+      update.splice(existingIdx, 1, { ...mappings[existingIdx], handlerArguments });
+      onChange(update);
+    } else {
+      onChange([...mappings, { fieldName: row.fieldName, handlerKey: row.handlerKey, handlerArguments }]);
+    }
+  };
+
   return (
     <table className={styles.table}>
       <thead>
@@ -67,6 +88,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
           <th>Field</th>
           <th>Use as</th>
           {withReducers && <th>Select</th>}
+          {hasAdditionalSettings && <th>Additional settings</th>}
         </tr>
       </thead>
       <tbody>
@@ -91,6 +113,15 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
                 />
               </td>
             )}
+            {hasAdditionalSettings && (
+              <td data-testid={`${row.fieldName}-handler-arg`} className={styles.selectCell}>
+                <FieldConfigMappingHandlerArgumentsEditor
+                  handlerKey={row.handlerKey}
+                  handlerArguments={row.handlerArguments}
+                  onChange={(args) => onChangeHandlerArguments(row, args)}
+                />
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
@@ -105,6 +136,7 @@ interface FieldToConfigRowViewModel {
   placeholder?: string;
   missingInFrame?: boolean;
   reducerId: string;
+  handlerArguments: HandlerArguments;
 }
 
 function getViewModelRows(
@@ -113,7 +145,7 @@ function getViewModelRows(
   withNameAndValue?: boolean
 ): FieldToConfigRowViewModel[] {
   const rows: FieldToConfigRowViewModel[] = [];
-  const mappingResult = evaluteFieldMappings(frame, mappings ?? [], withNameAndValue);
+  const mappingResult = evaluateFieldMappings(frame, mappings ?? [], withNameAndValue);
 
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
@@ -126,6 +158,7 @@ function getViewModelRows(
       placeholder: mapping.automatic ? option?.label : 'Choose',
       handlerKey: mapping.handler?.key ?? null,
       reducerId: mapping.reducerId,
+      handlerArguments: mapping.handlerArguments,
     });
   }
 
@@ -140,6 +173,7 @@ function getViewModelRows(
         configOption: configHandlerToSelectOption(handler, false),
         missingInFrame: true,
         reducerId: mapping.reducerId ?? ReducerID.lastNotNull,
+        handlerArguments: {},
       });
     }
   }

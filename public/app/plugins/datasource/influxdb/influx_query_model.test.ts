@@ -1,4 +1,4 @@
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 import InfluxQueryModel from './influx_query_model';
 
@@ -203,6 +203,195 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" > 5) AND $timeFilter');
+    });
+  });
+  describe('query with greater-than-or-equal-to condition', () => {
+    it('should use >=', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '5', operator: '>=' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" >= 5) AND $timeFilter');
+    });
+  });
+
+  describe('query with less-than-or-equal-to condition', () => {
+    it('should use <=', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '5', operator: '<=' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" <= 5) AND $timeFilter');
+    });
+  });
+
+  describe('query with Is operator', () => {
+    it('should use =', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: 'False', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = false) AND $timeFilter');
+    });
+  });
+
+  describe('query with Is Not operator', () => {
+    it('should use !=', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: 'False', operator: 'Is Not' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != false) AND $timeFilter');
+    });
+  });
+
+  describe('query with Is boolean condition', () => {
+    it('should convert to lowercase and not quote value', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: 'True', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = true) AND $timeFilter');
+    });
+  });
+
+  describe('query with Is string condition', () => {
+    it('should quote value', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: 'Server2', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'Server2\') AND $timeFilter');
+    });
+  });
+
+  describe('query with Is integer condition', () => {
+    it('should not quote value', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '5', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = 5) AND $timeFilter');
+    });
+  });
+
+  describe('query with Is float condition', () => {
+    it('should not quote value', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '1.234', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = 1.234) AND $timeFilter');
+    });
+  });
+
+  describe('query with Is negative float condition', () => {
+    it('should not quote value', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '-1.234', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = -1.234) AND $timeFilter');
+    });
+  });
+
+  describe('query with Is boolean condition', () => {
+    it('should convert to lowercase and not quote value', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: 'True', operator: 'Is' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = true) AND $timeFilter');
     });
   });
 
@@ -413,6 +602,55 @@ describe('InfluxQuery', () => {
 
         expect(queryText).toBe('"key1" = \'value1\' AND "key2" != \'value2\'');
       });
+    });
+  });
+
+  describe('test query generated with templateVariable and non-regex operator', () => {
+    const testCases = [
+      ['=', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter'],
+      ['!=', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter'],
+      ['Is', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter'],
+      ['Is Not', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter'],
+      ['>', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" > $tempVar) AND $timeFilter'],
+      ['<', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" < $tempVar) AND $timeFilter'],
+    ];
+
+    it.each(testCases)('should not wrap with InfluxDB regex wrapper for "%s" operator', (operator, expectedQuery) => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe(expectedQuery);
+    });
+  });
+  describe('test query generated with templateVariable and regex operator', () => {
+    const testCases = [
+      ['=~', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" =~ /^$tempVar$/) AND $timeFilter'],
+      ['!~', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" !~ /^$tempVar$/) AND $timeFilter'],
+    ];
+
+    it.each(testCases)('should wrap with InfluxDB regex wrapper for "%s" operator', (operator, expectedQuery) => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe(expectedQuery);
     });
   });
 });

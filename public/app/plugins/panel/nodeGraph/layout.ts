@@ -1,10 +1,12 @@
+import { fromPairs } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUnmount } from 'react-use';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import { Field } from '@grafana/data';
+import { config as grafanaConfig } from '@grafana/runtime';
 
-import { createWorker } from './createLayoutWorker';
+import { createWorker, createMsaglWorker } from './createLayoutWorker';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { useNodeLimit } from './useNodeLimit';
 import { graphBounds } from './utils';
@@ -47,7 +49,8 @@ export function useLayout(
   config: Config = defaultConfig,
   nodeCountLimit: number,
   width: number,
-  rootNodeId?: string
+  rootNodeId?: string,
+  hasFixedPositions?: boolean
 ) {
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
@@ -83,20 +86,40 @@ export function useLayout(
       return;
     }
 
-    setLoading(true);
+    if (hasFixedPositions) {
+      setNodesGraph(rawNodes);
+      // The layout function turns source and target fields from string to NodeDatum, so we do that here as well.
+      const nodesMap = fromPairs(rawNodes.map((node) => [node.id, node]));
+      setEdgesGraph(
+        rawEdges.map(
+          (e): EdgeDatumLayout => ({
+            ...e,
+            source: nodesMap[e.source],
+            target: nodesMap[e.target],
+          })
+        )
+      );
+      setLoading(false);
+      return;
+    }
 
-    // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect so
+    // Layered layout is better but also more expensive, so we switch to default force based layout for bigger graphs.
+    const layoutType =
+      grafanaConfig.featureToggles.nodeGraphDotLayout && rawNodes.length <= 500 ? 'layered' : 'default';
+
+    setLoading(true);
+    // This is async but as I wanted to still run the sync grid layout, and you cannot return promise from effect so
     // having callback seems ok here.
-    const cancel = defaultLayout(rawNodes, rawEdges, ({ nodes, edges }) => {
+    const cancel = layout(rawNodes, rawEdges, layoutType, ({ nodes, edges }) => {
       if (isMounted()) {
         setNodesGraph(nodes);
-        setEdgesGraph(edges as EdgeDatumLayout[]);
+        setEdgesGraph(edges);
         setLoading(false);
       }
     });
     layoutWorkerCancelRef.current = cancel;
     return cancel;
-  }, [rawNodes, rawEdges, isMounted]);
+  }, [hasFixedPositions, rawNodes, rawEdges, isMounted]);
 
   // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
   // default layout does not care and we don't want to recalculate that on panel resize.
@@ -146,20 +169,25 @@ export function useLayout(
  * Wraps the layout code in a worker as it can take long and we don't want to block the main thread.
  * Returns a cancel function to terminate the worker.
  */
-function defaultLayout(
+function layout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
-  done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
+  engine: 'default' | 'layered',
+  done: (data: { nodes: NodeDatum[]; edges: EdgeDatumLayout[] }) => void
 ) {
-  const worker = createWorker();
+  const worker = engine === 'default' ? createWorker() : createMsaglWorker();
+
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
-    for (let i = 0; i < nodes.length; i++) {
-      // These stats needs to be Field class but the data is stringified over the worker boundary
-      event.data.nodes[i] = {
-        ...nodes[i],
-        ...event.data.nodes[i],
+    const nodesMap = fromPairs(nodes.map((node) => [node.id, node]));
+
+    // Add the x,y coordinates from the layout algorithm to the original nodes.
+    event.data.nodes = event.data.nodes.map((node) => {
+      return {
+        ...nodesMap[node.id],
+        ...node,
       };
-    }
+    });
+
     done(event.data);
   };
 

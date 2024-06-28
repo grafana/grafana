@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
-import { sortDataFrame } from '../../dataframe';
-import { getFieldDisplayName } from '../../field';
+import { sortDataFrame } from '../../dataframe/processDataFrame';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame } from '../../types';
 import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
 
@@ -43,7 +43,7 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
     ),
 };
 
-export function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
+function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
   return data.map((frame) => {
     const s = attachFieldIndex(frame, sort, ctx);
     if (s.length && s[0].index != null) {

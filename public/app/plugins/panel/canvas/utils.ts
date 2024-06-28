@@ -2,22 +2,21 @@ import { isNumber, isString } from 'lodash';
 
 import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import { hasAlphaPanels } from 'app/core/config';
+import { hasAlphaPanels, config } from 'app/core/config';
 import {
-  defaultElementItems,
-  advancedElementItems,
+  CanvasConnection,
   CanvasElementItem,
-  canvasElementRegistry,
   CanvasElementOptions,
-  TextConfig,
-} from 'app/features/canvas';
+  ConnectionDirection,
+} from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { DimensionContext } from 'app/features/dimensions';
 
-import { AnchorPoint, ConnectionState } from './types';
+import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -106,28 +105,163 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
   }
 }
 
-export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: string | undefined): LinkModel[] {
-  const panelData = ctx.getPanelData();
+/*
+ * Provided a given field add any matching data links
+ * Mutates the links object in place which is then returned by the `getDataLinks` function downstream
+ */
+const addDataLinkForField = (
+  field: Field<unknown>,
+  data: string | undefined,
+  linkLookup: Set<string>,
+  links: Array<LinkModel<Field>>
+): void => {
+  if (field?.getLinks) {
+    const disp = field.display ? field.display(data) : { text: `${data}`, numeric: +data! };
+    // TODO add more control over which row index each element uses
+    const valueRowIndex = field.values.length - 1;
+    field.getLinks({ calculatedValue: disp, valueRowIndex }).forEach((link) => {
+      const key = `${link.title}/${link.href}`;
+      if (!linkLookup.has(key)) {
+        links.push(link);
+        linkLookup.add(key);
+      }
+    });
+  }
+};
+
+// TODO: This could be refactored a fair amount, ideally the element specific config code should be owned by each element and not in this shared util file
+export function getDataLinks(
+  dimensionContext: DimensionContext,
+  elementOptions: CanvasElementOptions,
+  data: string | undefined
+): LinkModel[] {
+  const panelData = dimensionContext.getPanelData();
   const frames = panelData?.series;
 
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
+  const elementConfig = elementOptions.config;
+
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
 
-    if (cfg.text?.field && visibleFields.some((f) => getFieldDisplayName(f, frame) === cfg.text?.field)) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === cfg.text?.field)[0];
-      if (field?.getLinks) {
-        const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
-        field.getLinks({ calculatedValue: disp }).forEach((link) => {
-          const key = `${link.title}/${link.href}`;
-          if (!linkLookup.has(key)) {
-            links.push(link);
-            linkLookup.add(key);
-          }
-        });
-      }
+    // Text config
+    const isTextTiedToFieldData =
+      elementConfig?.text?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field);
+    const isTextColorTiedToFieldData =
+      elementConfig?.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field);
+
+    // General element config
+    const isElementBackgroundColorTiedToFieldData =
+      elementOptions?.background?.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field);
+    const isElementBackgroundImageTiedToFieldData =
+      elementOptions?.background?.image?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field);
+    const isElementBorderColorTiedToFieldData =
+      elementOptions?.border?.color?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field);
+
+    // Icon config
+    const isIconSVGTiedToFieldData =
+      elementConfig?.path?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field);
+    const isIconColorTiedToFieldData =
+      elementConfig?.fill?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field);
+
+    // Wind turbine config (maybe remove / not support this?)
+    const isWindTurbineRPMTiedToFieldData =
+      elementConfig?.rpm?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field);
+
+    // Server config
+    const isServerBlinkRateTiedToFieldData =
+      elementConfig?.blinkRate?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field);
+    const isServerStatusColorTiedToFieldData =
+      elementConfig?.statusColor?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field);
+    const isServerBulbColorTiedToFieldData =
+      elementConfig?.bulbColor?.field &&
+      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field);
+
+    if (isTextTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isTextColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isElementBackgroundColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isElementBackgroundImageTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isElementBorderColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isIconSVGTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isIconColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isWindTurbineRPMTiedToFieldData) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field)[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isServerBlinkRateTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isServerStatusColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
+    }
+
+    if (isServerBulbColorTiedToFieldData) {
+      const field = visibleFields.filter(
+        (field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field
+      )[0];
+      addDataLinkForField(field, data, linkLookup, links);
     }
   });
 
@@ -163,6 +297,9 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
             source: v,
             target,
             info: c,
+            vertices: c.vertices ?? undefined,
+            sourceOriginal: c.sourceOriginal ?? undefined,
+            targetOriginal: c.targetOriginal ?? undefined,
           });
         }
       });
@@ -183,4 +320,140 @@ export function updateConnectionsForSource(element: ElementState, scene: Scene) 
     const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
     connection.source.onChange({ ...connection.source.options, connections });
   });
+
+  // Update scene connection state to clear out old connections
+  scene.connections.updateState();
 }
+
+export const calculateCoordinates = (
+  sourceRect: DOMRect,
+  parentRect: DOMRect,
+  info: CanvasConnection,
+  target: ElementState,
+  transformScale: number
+) => {
+  const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
+  const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
+
+  // Convert from connection coords to DOM coords
+  const x1 = (sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2) / transformScale;
+  const y1 = (sourceVerticalCenter - (info.source.y * sourceRect.height) / 2) / transformScale;
+
+  let x2: number;
+  let y2: number;
+  const targetRect = target.div?.getBoundingClientRect();
+  if (info.targetName && targetRect) {
+    const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
+    const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
+
+    x2 = targetHorizontalCenter + (info.target.x * targetRect.width) / 2;
+    y2 = targetVerticalCenter - (info.target.y * targetRect.height) / 2;
+  } else {
+    const parentHorizontalCenter = parentRect.width / 2;
+    const parentVerticalCenter = parentRect.height / 2;
+
+    x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
+    y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
+  }
+  x2 /= transformScale;
+  y2 /= transformScale;
+
+  // TODO look into a better way to avoid division by zero
+  if (x2 - x1 === 0) {
+    x2 += 1;
+  }
+  if (y2 - y1 === 0) {
+    y2 += 1;
+  }
+  return { x1, y1, x2, y2 };
+};
+
+export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
+  return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+};
+
+export const calculateAbsoluteCoords = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  valueX: number,
+  valueY: number,
+  deltaX: number,
+  deltaY: number
+) => {
+  return { x: valueX * deltaX + x1, y: valueY * deltaY + y1 };
+};
+
+// Calculate angle between two points and return angle in radians
+export const calculateAngle = (x1: number, y1: number, x2: number, y2: number) => {
+  return Math.atan2(y2 - y1, x2 - x1);
+};
+
+export const calculateDistance = (x1: number, y1: number, x2: number, y2: number) => {
+  //TODO add sqrt approx option
+  return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+};
+
+// @TODO revisit, currently returning last row index for field
+export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
+  if (fieldName) {
+    const series = scene.context.getPanelData()?.series[0];
+    const field = series?.fields.find((f) => (f.name = fieldName));
+    const data = field?.values;
+    return data ? data.length - 1 : 0;
+  }
+  return 0;
+};
+
+export const getConnectionStyles = (
+  info: CanvasConnection,
+  scene: Scene,
+  defaultArrowSize: number,
+  defaultArrowDirection: ConnectionDirection
+) => {
+  const defaultArrowColor = config.theme2.colors.text.primary;
+  const lastRowIndex = getRowIndex(info.size?.field, scene);
+  const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
+  const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
+  const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
+  const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
+  const lineStyle = getLineStyle(info.lineStyle?.style);
+  const shouldAnimate = info.lineStyle?.animate;
+
+  return { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle, shouldAnimate };
+};
+
+const getLineStyle = (lineStyle?: LineStyle) => {
+  switch (lineStyle) {
+    case LineStyle.Dashed:
+      return StrokeDasharray.Dashed;
+    case LineStyle.Dotted:
+      return StrokeDasharray.Dotted;
+    default:
+      return StrokeDasharray.Solid;
+  }
+};
+
+export const getParentBoundingClientRect = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    const transformRef = scene.transformComponentRef?.current;
+    return transformRef?.instance.contentComponent?.getBoundingClientRect();
+  }
+
+  return scene.div?.getBoundingClientRect();
+};
+
+export const getTransformInstance = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    return scene.transformComponentRef?.current?.instance;
+  }
+  return undefined;
+};
+
+export const getParent = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    return scene.transformComponentRef?.current?.instance.contentComponent;
+  }
+  return scene.div;
+};

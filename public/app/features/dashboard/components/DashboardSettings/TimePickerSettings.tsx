@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { rangeUtil, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -15,12 +16,12 @@ interface Props {
   onNowDelayChange: (nowDelay: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
   onLiveNowChange: (liveNow: boolean) => void;
-  refreshIntervals: string[];
-  timePickerHidden: boolean;
-  nowDelay: string;
+  refreshIntervals?: string[];
+  timePickerHidden?: boolean;
+  nowDelay?: string;
   timezone: TimeZone;
   weekStart: string;
-  liveNow: boolean;
+  liveNow?: boolean;
 }
 
 interface State {

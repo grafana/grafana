@@ -1,24 +1,27 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
-
-import { FetchError, setTemplateSrv } from '@grafana/runtime';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { initTemplateSrv } from '../test_utils';
 import { Scope } from '../types';
 
 import TagsInput from './TagsInput';
 import { v1Tags, v2Tags } from './utils.test';
 
 describe('TagsInput', () => {
-  let templateSrv = initTemplateSrv('key', [{ name: 'templateVariable1' }, { name: 'templateVariable2' }]);
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    setTemplateSrv(templateSrv);
+    const expectedValues = {
+      interpolationVar: 'interpolationText',
+      interpolationText: 'interpolationText',
+      interpolationVarWithPipe: 'interpolationTextOne|interpolationTextTwo',
+      scopedInterpolationText: 'scopedInterpolationText',
+    };
+    initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
+
     jest.useFakeTimers();
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
@@ -118,12 +121,11 @@ describe('TagsInput', () => {
         updateFilter={jest.fn}
         deleteFilter={jest.fn}
         filters={[filter]}
-        setError={function (error: FetchError): void {
-          throw error;
-        }}
+        setError={() => {}}
         staticTags={[]}
         isTagsLoading={false}
         query={''}
+        addVariablesToOptions={true}
       />
     );
   };

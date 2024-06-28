@@ -1,7 +1,6 @@
 import { isEqual } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 
 import { CloudWatchDatasource } from '../../../datasource';
@@ -13,7 +12,6 @@ export interface Props {
   metricStat: MetricStat;
   onChange: (dimensions: DimensionsType) => void;
   datasource: CloudWatchDatasource;
-  dimensionKeys: Array<SelectableValue<string>>;
   disableExpressions: boolean;
 }
 
@@ -62,7 +60,7 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
   }, {});
 };
 
-export const Dimensions = ({ metricStat, datasource, dimensionKeys, disableExpressions, onChange }: Props) => {
+export const Dimensions = ({ metricStat, datasource, disableExpressions, onChange }: Props) => {
   const dimensionFilters = useMemo(() => dimensionsToFilterConditions(metricStat.dimensions), [metricStat.dimensions]);
   const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {
@@ -80,17 +78,12 @@ export const Dimensions = ({ metricStat, datasource, dimensionKeys, disableExpre
     <EditorList
       items={items}
       onChange={onDimensionsChange}
-      renderItem={makeRenderFilter(datasource, metricStat, dimensionKeys, disableExpressions)}
+      renderItem={makeRenderFilter(datasource, metricStat, disableExpressions)}
     />
   );
 };
 
-function makeRenderFilter(
-  datasource: CloudWatchDatasource,
-  metricStat: MetricStat,
-  dimensionKeys: Array<SelectableValue<string>>,
-  disableExpressions: boolean
-) {
+function makeRenderFilter(datasource: CloudWatchDatasource, metricStat: MetricStat, disableExpressions: boolean) {
   function renderFilter(
     item: DimensionFilterCondition,
     onChange: (item: DimensionFilterCondition) => void,
@@ -103,7 +96,6 @@ function makeRenderFilter(
         datasource={datasource}
         metricStat={metricStat}
         disableExpressions={disableExpressions}
-        dimensionKeys={dimensionKeys}
         onDelete={onDelete}
       />
     );

@@ -1,22 +1,25 @@
 package definitions
 
 import (
+	"container/heap"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	promlabels "github.com/prometheus/prometheus/model/labels"
 )
 
-// swagger:route GET /api/prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
+// swagger:route GET /prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
 //     Responses:
 //       200: RuleResponse
 
-// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
+// swagger:route GET /prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
@@ -24,14 +27,14 @@ import (
 //       200: RuleResponse
 //       404: NotFound
 
-// swagger:route GET /api/prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
+// swagger:route GET /prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
 //
 // gets the current alerts
 //
 //     Responses:
 //       200: AlertResponse
 
-// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
+// swagger:route GET /prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
 //
 // gets the current alerts
 //
@@ -97,6 +100,23 @@ type RuleGroup struct {
 	EvaluationTime float64   `json:"evaluationTime"`
 }
 
+// HTTPStatusCode returns the HTTP status code for a given Prometheus style error.
+func (d DiscoveryBase) HTTPStatusCode() int {
+	if d.Status == "success" {
+		return http.StatusOK
+	}
+
+	// Mapping taken from prometheus/web/api/v1/api.go
+	// Note this is not exhaustive as our API does not return
+	// the same spectrum of errors as Prometheus does.
+	switch d.ErrorType {
+	case v1.ErrBadData:
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
+	}
+}
+
 // RuleGroupsBy is a function that defines the ordering of Rule Groups.
 type RuleGroupsBy func(a1, a2 *RuleGroup) bool
 
@@ -132,7 +152,7 @@ type AlertingRule struct {
 	Query    string  `json:"query,omitempty"`
 	Duration float64 `json:"duration,omitempty"`
 	// required: true
-	Annotations overrideLabels `json:"annotations,omitempty"`
+	Annotations promlabels.Labels `json:"annotations,omitempty"`
 	// required: true
 	ActiveAt       *time.Time       `json:"activeAt,omitempty"`
 	Alerts         []Alert          `json:"alerts,omitempty"`
@@ -147,24 +167,24 @@ type Rule struct {
 	// required: true
 	Name string `json:"name"`
 	// required: true
-	Query  string         `json:"query"`
-	Labels overrideLabels `json:"labels,omitempty"`
+	Query  string            `json:"query"`
+	Labels promlabels.Labels `json:"labels,omitempty"`
 	// required: true
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`
 	// required: true
-	Type           v1.RuleType `json:"type"`
-	LastEvaluation time.Time   `json:"lastEvaluation"`
-	EvaluationTime float64     `json:"evaluationTime"`
+	Type           string    `json:"type"`
+	LastEvaluation time.Time `json:"lastEvaluation"`
+	EvaluationTime float64   `json:"evaluationTime"`
 }
 
 // Alert has info for an alert.
 // swagger:model
 type Alert struct {
 	// required: true
-	Labels overrideLabels `json:"labels"`
+	Labels promlabels.Labels `json:"labels"`
 	// required: true
-	Annotations overrideLabels `json:"annotations"`
+	Annotations promlabels.Labels `json:"annotations"`
 	// required: true
 	State    string     `json:"state"`
 	ActiveAt *time.Time `json:"activeAt"`
@@ -206,36 +226,81 @@ func (by AlertsBy) Sort(alerts []Alert) {
 	sort.Sort(AlertsSorter{alerts: alerts, by: by})
 }
 
+// AlertsHeap extends AlertsSorter for use with container/heap functions.
+type AlertsHeap struct {
+	AlertsSorter
+}
+
+func (h *AlertsHeap) Push(x any) {
+	h.alerts = append(h.alerts, x.(Alert))
+}
+
+func (h *AlertsHeap) Pop() any {
+	old := h.alerts
+	n := len(old)
+	x := old[n-1]
+	h.alerts = old[0 : n-1]
+	return x
+}
+
+// TopK returns the highest k elements. It does not modify the input.
+func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
+	// Concept is that instead of sorting the whole list and taking the number
+	// of items we need, maintain a heap of the top k elements, and update it
+	// for each element. This vastly reduces the number of comparisons needed,
+	// which is important for sorting alerts, as the comparison function is
+	// very expensive.
+
+	// If k is zero or less, return nothing.
+	if k < 1 {
+		return []Alert{}
+	}
+
+	// The heap must be in ascending order, so that the root of the heap is
+	// the current smallest element.
+	byAscending := func(a1, a2 *Alert) bool { return by(a2, a1) }
+
+	h := AlertsHeap{
+		AlertsSorter: AlertsSorter{
+			alerts: make([]Alert, 0, k),
+			by:     byAscending,
+		},
+	}
+
+	// Go version of this algorithm taken from Prometheus (promql/engine.go)
+
+	heap.Init(&h)
+	for i := 0; i < len(alerts); i++ {
+		a := alerts[i]
+
+		// We build a heap of up to k elements, with the smallest element at heap[0].
+		switch {
+		case len(h.alerts) < k:
+			heap.Push(&h, a)
+
+		case h.by(&h.alerts[0], &a):
+			// This new element is bigger than the previous smallest element - overwrite that.
+			h.alerts[0] = a
+			// Maintain the heap invariant.
+			if k > 1 {
+				heap.Fix(&h, 0)
+			}
+		}
+	}
+
+	// The heap keeps the lowest value on top, so reverse it.
+	if len(h.alerts) > 1 {
+		sort.Sort(sort.Reverse(&h))
+	}
+
+	return h.alerts
+}
+
 // AlertsByImportance orders alerts by importance. An alert is more important
 // than another alert if its status has higher importance. For example, "alerting"
 // is more important than "normal". If two alerts have the same importance
 // then the ordering is based on their ActiveAt time and their labels.
 func AlertsByImportance(a1, a2 *Alert) bool {
-	// labelsForComparison concatenates each key/value pair into a string and
-	// sorts them.
-	labelsForComparison := func(m map[string]string) []string {
-		s := make([]string, 0, len(m))
-		for k, v := range m {
-			s = append(s, k+v)
-		}
-		sort.Strings(s)
-		return s
-	}
-
-	// compareLabels returns true if labels1 are less than labels2. This happens
-	// when labels1 has fewer labels than labels2, or if the next label from
-	// labels1 is lexicographically less than the next label from labels2.
-	compareLabels := func(labels1, labels2 []string) bool {
-		if len(labels1) == len(labels2) {
-			for i := range labels1 {
-				if labels1[i] != labels2[i] {
-					return labels1[i] < labels2[i]
-				}
-			}
-		}
-		return len(labels1) < len(labels2)
-	}
-
 	// The importance of an alert is first based on the importance of their states.
 	// This ordering is intended to show the most important alerts first when
 	// using pagination.
@@ -256,9 +321,7 @@ func AlertsByImportance(a1, a2 *Alert) bool {
 			return true
 		}
 		// Both alerts are active since the same time so compare their labels
-		labels1 := labelsForComparison(a1.Labels)
-		labels2 := labelsForComparison(a2.Labels)
-		return compareLabels(labels1, labels2)
+		return promlabels.Compare(a1.Labels, a2.Labels) < 0
 	}
 
 	return importance1 < importance2
@@ -273,9 +336,16 @@ func (s AlertsSorter) Len() int           { return len(s.alerts) }
 func (s AlertsSorter) Swap(i, j int)      { s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i] }
 func (s AlertsSorter) Less(i, j int) bool { return s.by(&s.alerts[i], &s.alerts[j]) }
 
-// override the labels type with a map for generation.
-// The custom marshaling for labels.Labels ends up doing this anyways.
-type overrideLabels map[string]string
+// LabelsFromMap creates Labels from a map. Note the Labels type requires the
+// labels be sorted, so we make sure to do that.
+func LabelsFromMap(m map[string]string) promlabels.Labels {
+	sb := promlabels.NewScratchBuilder(len(m))
+	for k, v := range m {
+		sb.Add(k, v)
+	}
+	sb.Sort()
+	return sb.Labels()
+}
 
 // swagger:parameters RouteGetGrafanaAlertStatuses
 type GetGrafanaAlertStatusesParams struct {

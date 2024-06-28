@@ -15,13 +15,13 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { getSessionExpiry } from 'app/core/utils/auth';
+import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
@@ -56,11 +56,16 @@ export interface FolderRequestOptions {
 
 const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
 
+export interface InspectorStream {
+  response: FetchResponse | FetchError;
+  requestId?: string;
+}
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
-  private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
+  private inspectorStream: Subject<InspectorStream> = new Subject<InspectorStream>();
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
@@ -94,10 +99,6 @@ export class BackendSrv implements BackendService {
   }
 
   private async initGrafanaDeviceID() {
-    if (config.buildInfo?.edition === GrafanaEdition.OpenSource) {
-      return;
-    }
-
     try {
       const fp = await FingerprintJS.load();
       const result = await fp.get();
@@ -107,7 +108,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async request<T = any>(options: BackendSrvRequest): Promise<T> {
+  async request<T = unknown>(options: BackendSrvRequest): Promise<T> {
     return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
   }
 
@@ -161,8 +162,7 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    // Add device id header if not OSS build
-    if (config.buildInfo?.edition !== GrafanaEdition.OpenSource && this.deviceID) {
+    if (!!this.deviceID) {
       options.headers = options.headers ?? {};
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
@@ -182,8 +182,8 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
-  async datasourceRequest(options: BackendSrvRequest): Promise<any> {
-    return lastValueFrom(this.fetch(options));
+  async datasourceRequest<T = unknown>(options: BackendSrvRequest) {
+    return lastValueFrom(this.fetch<T>(options));
   }
 
   private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
@@ -339,7 +339,7 @@ export class BackendSrv implements BackendService {
       }, 50);
     }
 
-    this.inspectorStream.next(err);
+    this.inspectorStream.next({ response: err, requestId: options.requestId });
     return err;
   }
 
@@ -362,7 +362,7 @@ export class BackendSrv implements BackendService {
         }),
         tap((response) => {
           this.showSuccessAlert(response);
-          this.inspectorStream.next(response);
+          this.inspectorStream.next({ response: response, requestId: options.requestId });
         })
       );
   }
@@ -372,7 +372,7 @@ export class BackendSrv implements BackendService {
 
     return (inputStream) =>
       inputStream.pipe(
-        retryWhen((attempts: Observable<any>) =>
+        retryWhen((attempts) =>
           attempts.pipe(
             mergeMap((error, i) => {
               const firstAttempt = i === 0 && options.retry === 0;
@@ -391,10 +391,11 @@ export class BackendSrv implements BackendService {
                 }
 
                 let authChecker = this.loginPing();
-
-                const expired = getSessionExpiry() * 1000 < Date.now();
-                if (config.featureToggles.clientTokenRotation && expired) {
-                  authChecker = this.rotateToken();
+                if (hasSessionExpiry()) {
+                  const expired = getSessionExpiry() * 1000 < Date.now();
+                  if (expired) {
+                    authChecker = this.rotateToken();
+                  }
                 }
 
                 return from(authChecker).pipe(
@@ -452,7 +453,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  getInspectorStream(): Observable<FetchResponse | FetchError> {
+  getInspectorStream(): Observable<InspectorStream> {
     return this.inspectorStream;
   }
 
@@ -508,24 +509,25 @@ export class BackendSrv implements BackendService {
   }
 
   /** @deprecated */
-  search(query: any): Promise<DashboardSearchItem[]> {
+  search(query: Parameters<typeof this.get>[1]): Promise<DashboardSearchItem[]> {
     return this.get('/api/search', query);
   }
 
+  /** @deprecated */
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+    // NOTE: When this is removed, we can also remove most instances of:
+    // jest.mock('app/features/live/dashboard/dashboardWatcher
+    deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
+    return getDashboardAPI().getDashboardDTO(uid);
   }
 
-  validateDashboard(dashboard: DashboardModel) {
-    // We want to send the dashboard as a JSON string (in the JSON body payload) so we can get accurate error line numbers back
-    const dashboardJson = JSON.stringify(dashboard, replaceJsonNulls, 2);
-
-    return this.request<ValidateDashboardResponse>({
-      method: 'POST',
-      url: `/api/dashboards/validate`,
-      data: { dashboard: dashboardJson },
-      showSuccessAlert: false,
-      showErrorAlert: false,
+  validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
+    // support for this function will be implemented in the k8s flavored api-server
+    // hidden by experimental feature flag:
+    //  config.featureToggles.showDashboardValidationWarnings
+    return Promise.resolve({
+      isValid: false,
+      message: 'dashboard validation is not supported',
     });
   }
 
@@ -552,11 +554,4 @@ export const getBackendSrv = (): BackendSrv => backendSrv;
 interface ValidateDashboardResponse {
   isValid: boolean;
   message?: string;
-}
-
-function replaceJsonNulls<T extends unknown>(key: string, value: T): T | undefined {
-  if (typeof value === 'number' && !Number.isFinite(value)) {
-    return undefined;
-  }
-  return value;
 }

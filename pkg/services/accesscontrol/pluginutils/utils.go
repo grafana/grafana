@@ -9,19 +9,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
+var (
+	allowedCoreActions = map[string]string{
+		"plugins.app:access":        "plugins:id:",
+		"folders:create":            "folders:uid:",
+		"folders:read":              "folders:uid:",
+		"folders:write":             "folders:uid:",
+		"folders:delete":            "folders:uid:",
+		"folders.permissions:read":  "folders:uid:",
+		"folders.permissions:write": "folders:uid:",
+	}
+)
+
 // ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
 func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) error {
 	for i := range permissions {
-		if permissions[i].Action != pluginaccesscontrol.ActionAppAccess &&
-			!strings.HasPrefix(permissions[i].Action, pluginID+":") &&
+		scopePrefix, isCore := allowedCoreActions[permissions[i].Action]
+		if isCore {
+			if permissions[i].Scope != scopePrefix+pluginID {
+				return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
+					ExpectedScope: scopePrefix + pluginID}
+			}
+			// Prevent any unlikely injection
+			permissions[i].Scope = scopePrefix + pluginID
+			continue
+		}
+		if !strings.HasPrefix(permissions[i].Action, pluginID+":") &&
 			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
 			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
 				Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
-		}
-		if strings.HasPrefix(permissions[i].Action, pluginaccesscontrol.ActionAppAccess) &&
-			permissions[i].Scope != pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID) {
-			return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
-				ExpectedScope: pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID)}
 		}
 	}
 
@@ -33,6 +49,9 @@ func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) err
 func ValidatePluginRole(pluginID string, role ac.RoleDTO) error {
 	if pluginID == "" {
 		return ac.ErrPluginIDRequired
+	}
+	if role.DisplayName == "" {
+		return &ac.ErrorRoleNameMissing{}
 	}
 	if !strings.HasPrefix(role.Name, ac.PluginRolePrefix+pluginID+":") {
 		return &ac.ErrorRolePrefixMissing{Role: role.Name, Prefixes: []string{ac.PluginRolePrefix + pluginID + ":"}}
@@ -58,6 +77,22 @@ func ToRegistrations(pluginID, pluginName string, regs []plugins.RoleRegistratio
 		})
 	}
 	return res
+}
+
+// PluginIDFromName extracts the plugin ID from the role name
+func PluginIDFromName(roleName string) string {
+	if !strings.HasPrefix(roleName, ac.PluginRolePrefix) {
+		return ""
+	}
+
+	pluginID := strings.Builder{}
+	for _, c := range roleName[len(ac.PluginRolePrefix):] {
+		if c == ':' {
+			break
+		}
+		pluginID.WriteRune(c)
+	}
+	return pluginID.String()
 }
 
 func roleName(pluginID, roleName string) string {

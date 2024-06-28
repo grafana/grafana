@@ -28,6 +28,105 @@ export enum ReducerID {
   allIsNull = 'allIsNull',
   allValues = 'allValues',
   uniqueValues = 'uniqueValues',
+  p1 = 'p1',
+  p2 = 'p2',
+  p3 = 'p3',
+  p4 = 'p4',
+  p5 = 'p5',
+  p6 = 'p6',
+  p7 = 'p7',
+  p8 = 'p8',
+  p9 = 'p9',
+  p10 = 'p10',
+  p11 = 'p11',
+  p12 = 'p12',
+  p13 = 'p13',
+  p14 = 'p14',
+  p15 = 'p15',
+  p16 = 'p16',
+  p17 = 'p17',
+  p18 = 'p18',
+  p19 = 'p19',
+  p20 = 'p20',
+  p21 = 'p21',
+  p22 = 'p22',
+  p23 = 'p23',
+  p24 = 'p24',
+  p25 = 'p25',
+  p26 = 'p26',
+  p27 = 'p27',
+  p28 = 'p28',
+  p29 = 'p29',
+  p30 = 'p30',
+  p31 = 'p31',
+  p32 = 'p32',
+  p33 = 'p33',
+  p34 = 'p34',
+  p35 = 'p35',
+  p36 = 'p36',
+  p37 = 'p37',
+  p38 = 'p38',
+  p39 = 'p39',
+  p40 = 'p40',
+  p41 = 'p41',
+  p42 = 'p42',
+  p43 = 'p43',
+  p44 = 'p44',
+  p45 = 'p45',
+  p46 = 'p46',
+  p47 = 'p47',
+  p48 = 'p48',
+  p49 = 'p49',
+  p50 = 'p50',
+  p51 = 'p51',
+  p52 = 'p52',
+  p53 = 'p53',
+  p54 = 'p54',
+  p55 = 'p55',
+  p56 = 'p56',
+  p57 = 'p57',
+  p58 = 'p58',
+  p59 = 'p59',
+  p60 = 'p60',
+  p61 = 'p61',
+  p62 = 'p62',
+  p63 = 'p63',
+  p64 = 'p64',
+  p65 = 'p65',
+  p66 = 'p66',
+  p67 = 'p67',
+  p68 = 'p68',
+  p69 = 'p69',
+  p70 = 'p70',
+  p71 = 'p71',
+  p72 = 'p72',
+  p73 = 'p73',
+  p74 = 'p74',
+  p75 = 'p75',
+  p76 = 'p76',
+  p77 = 'p77',
+  p78 = 'p78',
+  p79 = 'p79',
+  p80 = 'p80',
+  p81 = 'p81',
+  p82 = 'p82',
+  p83 = 'p83',
+  p84 = 'p84',
+  p85 = 'p85',
+  p86 = 'p86',
+  p87 = 'p87',
+  p88 = 'p88',
+  p89 = 'p89',
+  p90 = 'p90',
+  p91 = 'p91',
+  p92 = 'p92',
+  p93 = 'p93',
+  p94 = 'p94',
+  p95 = 'p95',
+  p96 = 'p96',
+  p97 = 'p97',
+  p98 = 'p98',
+  p99 = 'p99',
 }
 
 export function isReducerID(id: string): id is ReducerID {
@@ -39,8 +138,9 @@ type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
 
 export interface FieldReducerInfo extends RegistryItem {
   // Internal details
-  emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
+  emptyInputResult?: unknown; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
+  preservesUnits: boolean; // Whether this reducer preserves units, certain ones don't e.g. count, distinct count, etc,
   reduce?: FieldReducer;
 }
 
@@ -84,7 +184,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
   const data = field.values;
-  if (data.length < 1) {
+  if (data && data.length < 1) {
     const calcs: FieldCalcs = { ...field.state.calcs };
     for (const reducer of queue) {
       calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
@@ -137,10 +237,11 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.lastNotNull,
     name: 'Last *',
-    description: 'Last non-null value',
+    description: 'Last non-null value (also excludes NaNs)',
     standard: true,
     aliasIds: ['current'],
     reduce: calculateLastNotNull,
+    preservesUnits: true,
   },
   {
     id: ReducerID.last,
@@ -148,24 +249,41 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Last value',
     standard: true,
     reduce: calculateLast,
+    preservesUnits: true,
   },
   {
     id: ReducerID.firstNotNull,
     name: 'First *',
-    description: 'First non-null value',
+    description: 'First non-null value (also excludes NaNs)',
     standard: true,
     reduce: calculateFirstNotNull,
+    preservesUnits: true,
   },
-  { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
-  { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
-  { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
-  { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
+  {
+    id: ReducerID.first,
+    name: 'First',
+    description: 'First Value',
+    standard: true,
+    reduce: calculateFirst,
+    preservesUnits: true,
+  },
+  { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true, preservesUnits: true },
+  { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true, preservesUnits: true },
+  {
+    id: ReducerID.mean,
+    name: 'Mean',
+    description: 'Average Value',
+    standard: true,
+    aliasIds: ['avg'],
+    preservesUnits: true,
+  },
   {
     id: ReducerID.variance,
     name: 'Variance',
     description: 'Variance of all values in a field',
     standard: false,
     reduce: calculateStdDev,
+    preservesUnits: true,
   },
   {
     id: ReducerID.stdDev,
@@ -173,6 +291,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Standard deviation of all values in a field',
     standard: false,
     reduce: calculateStdDev,
+    preservesUnits: true,
   },
   {
     id: ReducerID.sum,
@@ -181,6 +300,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     emptyInputResult: 0,
     standard: true,
     aliasIds: ['total'],
+    preservesUnits: true,
   },
   {
     id: ReducerID.count,
@@ -188,36 +308,42 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Number of values in response',
     emptyInputResult: 0,
     standard: true,
+    preservesUnits: false,
   },
   {
     id: ReducerID.range,
     name: 'Range',
     description: 'Difference between minimum and maximum values',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.delta,
     name: 'Delta',
     description: 'Cumulative change in value',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.step,
     name: 'Step',
     description: 'Minimum interval between values',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.diff,
     name: 'Difference',
     description: 'Difference between first and last values',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.logmin,
     name: 'Min (above zero)',
     description: 'Used for log min scale',
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.allIsZero,
@@ -225,6 +351,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'All values are zero',
     emptyInputResult: false,
     standard: true,
+    preservesUnits: true,
   },
   {
     id: ReducerID.allIsNull,
@@ -232,6 +359,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'All values are null',
     emptyInputResult: true,
     standard: true,
+    preservesUnits: false,
   },
   {
     id: ReducerID.changeCount,
@@ -239,6 +367,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Number of times the value changes',
     standard: false,
     reduce: calculateChangeCount,
+    preservesUnits: false,
   },
   {
     id: ReducerID.distinctCount,
@@ -246,12 +375,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Number of distinct values',
     standard: false,
     reduce: calculateDistinctCount,
+    preservesUnits: false,
   },
   {
     id: ReducerID.diffperc,
     name: 'Difference percent',
     description: 'Percentage difference between first and last values',
     standard: true,
+    preservesUnits: false,
   },
   {
     id: ReducerID.allValues,
@@ -259,6 +390,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Returns an array with all values',
     standard: false,
     reduce: (field: Field) => ({ allValues: [...field.values] }),
+    preservesUnits: false,
   },
   {
     id: ReducerID.uniqueValues,
@@ -268,35 +400,70 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     reduce: (field: Field) => ({
       uniqueValues: [...new Set(field.values)],
     }),
+    preservesUnits: false,
   },
+  ...buildPercentileReducers(),
 ]);
 
-export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  const calcs: FieldCalcs = {
-    sum: 0,
-    max: -Number.MAX_VALUE,
-    min: Number.MAX_VALUE,
-    logmin: Number.MAX_VALUE,
-    mean: null,
-    last: null,
-    first: null,
-    lastNotNull: null,
-    firstNotNull: null,
-    count: 0,
-    nonNullCount: 0,
-    allIsNull: true,
-    allIsZero: true,
-    range: null,
-    diff: null,
-    delta: 0,
-    step: Number.MAX_VALUE,
-    diffperc: 0,
+// This `Array.from` will build an array of elements from 1 to 99
+const buildPercentileReducers = (percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)]) => {
+  const percentileReducers: FieldReducerInfo[] = [];
+  const nth = (n: number) =>
+    n > 3 && n < 21 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
 
-    // Just used for calculations -- not exposed as a stat
-    previousDeltaUp: true,
-  };
+  percentiles.forEach((p) => {
+    const percentile = p / 100;
+    const id = `p${p}` as ReducerID;
+    const name = `${p}${nth(p)} %`;
+    const description = `${p}${nth(p)} percentile value`;
+
+    percentileReducers.push({
+      id: id,
+      name: name,
+      description: description,
+      standard: false,
+      reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs => {
+        return { [id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero) };
+      },
+      preservesUnits: true,
+    });
+  });
+  return percentileReducers;
+};
+
+// Used for test cases
+export const defaultCalcs: FieldCalcs = {
+  sum: 0,
+  max: -Number.MAX_VALUE,
+  min: Number.MAX_VALUE,
+  logmin: Number.MAX_VALUE,
+  mean: null,
+  last: null,
+  first: null,
+  lastNotNull: null,
+  firstNotNull: null,
+  count: 0,
+  nonNullCount: 0,
+  allIsNull: true,
+  allIsZero: true,
+  range: null,
+  diff: null,
+  delta: 0,
+  step: Number.MAX_VALUE,
+  diffperc: 0,
+  // Just used for calculations -- not exposed as a stat
+  previousDeltaUp: true,
+};
+
+export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const calcs: FieldCalcs = { ...defaultCalcs };
 
   const data = field.values;
+
+  // early return for undefined / empty series
+  if (!data) {
+    return calcs;
+  }
 
   const isNumberField = field.type === FieldType.number || field.type === FieldType.time;
 
@@ -320,8 +487,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
     calcs.count++;
 
-    if (currentValue != null) {
-      // null || undefined
+    if (currentValue != null && !Number.isNaN(currentValue)) {
+      // null || undefined || NaN
       const isFirst = calcs.firstNotNull === null;
       if (isFirst) {
         calcs.firstNotNull = currentValue;
@@ -418,7 +585,7 @@ function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: b
   const data = field.values;
   for (let idx = 0; idx < data.length; idx++) {
     const v = data[idx];
-    if (v != null && v !== undefined) {
+    if (v != null && !Number.isNaN(v)) {
       return { firstNotNull: v };
     }
   }
@@ -435,7 +602,7 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
   let idx = data.length - 1;
   while (idx >= 0) {
     const v = data[idx--];
-    if (v != null && v !== undefined) {
+    if (v != null && !Number.isNaN(v)) {
       return { lastNotNull: v };
     }
   }
@@ -510,4 +677,19 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
     distinct.add(currentValue);
   }
   return { distinctCount: distinct.size };
+}
+
+function calculatePercentile(field: Field, percentile: number, ignoreNulls: boolean, nullAsZero: boolean): number {
+  let data = field.values;
+
+  if (ignoreNulls) {
+    data = data.filter((value) => value !== null);
+  }
+  if (nullAsZero) {
+    data = data.map((value) => (value === null ? 0 : value));
+  }
+
+  const sorted = data.slice().sort((a, b) => a - b);
+  const index = Math.round((sorted.length - 1) * percentile);
+  return sorted[index];
 }

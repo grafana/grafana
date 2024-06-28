@@ -15,6 +15,10 @@ weight: 600
 
 This page explains how to install Grafana on macOS.
 
+The following video demonstrates how to install Grafana on macOS as outlined in this document:
+
+{{< youtube id="1zdm8SxOLYQ" >}}
+
 ## Install Grafana on macOS using Homebrew
 
 To install Grafana on macOS using Homebrew, complete the following steps:
@@ -60,6 +64,10 @@ To install Grafana on macOS using the standalone binaries, complete the followin
    ```bash
    ./bin/grafana server
    ```
+
+Alternatively, watch the Grafana for Beginners video below:
+
+{{< youtube id="T51Qa7eE3W8" >}}
 
 ## Next steps
 

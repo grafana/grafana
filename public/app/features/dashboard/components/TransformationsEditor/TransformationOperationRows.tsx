@@ -1,12 +1,11 @@
-import React from 'react';
-
-import { DataFrame, DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
+import { DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 
 import { TransformationOperationRow } from './TransformationOperationRow';
+import { TransformationData } from './TransformationsEditor';
 import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowsProps {
-  data: DataFrame[];
+  data: TransformationData;
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
@@ -22,6 +21,7 @@ export const TransformationOperationRows = ({
     <>
       {configs.map((t, i) => {
         const uiConfig = standardTransformersRegistry.getIfExists(t.transformation.id);
+
         if (!uiConfig) {
           return null;
         }

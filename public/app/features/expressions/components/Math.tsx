@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
+import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack } from '@grafana/ui';
 
 import { ExpressionQuery } from '../types';
 
@@ -32,7 +32,7 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
   };
 
   return (
-    <Stack direction="row">
+    <Stack>
       <InlineField
         label={
           <InlineLabel width="auto">

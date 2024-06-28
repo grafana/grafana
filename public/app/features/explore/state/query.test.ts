@@ -16,9 +16,12 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+import config from 'app/core/config';
+import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
 import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { makeLogs } from '../__mocks__/makeLogs';
@@ -49,6 +52,8 @@ import {
 import * as actions from './query';
 import { makeExplorePaneState } from './utils';
 
+jest.mock('app/features/logs/logsModel');
+
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
 const exploreId = 'left';
@@ -60,6 +65,9 @@ const datasources: DataSourceApi[] = [
     uid: 'ds1',
     getRef: () => {
       return { type: 'postgres', uid: 'ds1' };
+    },
+    filterQuery: (query: DataQuery) => {
+      return query.key === 'true';
     },
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
   {
@@ -152,6 +160,11 @@ describe('runQueries', () => {
     } as unknown as Partial<StoreState>);
   };
 
+  beforeEach(() => {
+    config.queryHistoryEnabled = false;
+    jest.clearAllMocks();
+  });
+
   it('should pass dataFrames to state even if there is error in response', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
@@ -162,11 +175,11 @@ describe('runQueries', () => {
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
 
-  it('should modify the request-id for all supplementary queries', () => {
+  it('should modify the request-id for all supplementary queries', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
     dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
-    dispatch(runQueries({ exploreId: 'left' }));
+    await dispatch(runQueries({ exploreId: 'left' }));
 
     const state = getState().explore.panes.left!;
     expect(state.queryResponse.request?.requestId).toBe('explore_left');
@@ -198,6 +211,74 @@ describe('runQueries', () => {
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
+  });
+
+  it('should add history items to both local and remote storage with the flag enabled', async () => {
+    config.queryHistoryEnabled = true;
+    const { dispatch } = setupTests();
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(2);
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[1][0].localOverride).toBeFalsy();
+  });
+
+  it('should add history items to local storage only with the flag disabled', async () => {
+    const { dispatch } = setupTests();
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(1);
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
+  });
+
+  /* the next two tests are for ensuring the query datasource's filterQuery function stops queries
+    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0]) 
+    to filter queries off their key value
+
+    datasources[1] does not have filterQuery defined
+  */
+  it('with filterQuery defined, should not save filtered out queries to history', async () => {
+    const { dispatch } = configureStore({
+      ...defaultInitialState,
+      explore: {
+        panes: {
+          left: {
+            ...defaultInitialState.explore.panes.left,
+            datasourceInstance: datasources[0],
+            queries: [
+              { refId: 'A', key: 'false' },
+              { refId: 'B', key: 'true' },
+            ],
+          },
+        },
+      },
+    } as unknown as Partial<StoreState>);
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    const calls = (richHistory.addToRichHistory as jest.Mock).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0].queries).toHaveLength(1);
+    expect(calls[0][0].queries[0].refId).toEqual('B');
+  });
+
+  it('with filterQuery not defined, all queries are saved', async () => {
+    const { dispatch } = configureStore({
+      ...defaultInitialState,
+      explore: {
+        panes: {
+          left: {
+            ...defaultInitialState.explore.panes.left,
+            datasourceInstance: datasources[1],
+            queries: [{ refId: 'A' }, { refId: 'B' }],
+          },
+        },
+      },
+    } as unknown as Partial<StoreState>);
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    const calls = (richHistory.addToRichHistory as jest.Mock).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0].queries).toHaveLength(2);
   });
 });
 
@@ -846,7 +927,7 @@ describe('reducer', () => {
     });
   });
 
-  describe('supplementary queries', () => {
+  describe('legacy supplementary queries', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
       unsubscribes: Function[],
@@ -878,7 +959,7 @@ describe('reducer', () => {
                 meta: {
                   id: 'something',
                 },
-                getDataProvider: () => {
+                getDataProvider: (_: SupplementaryQueryType, request: DataQueryRequest<DataQuery>) => {
                   return mockDataProvider();
                 },
                 getSupportedSupplementaryQueryTypes: () => [
@@ -898,8 +979,69 @@ describe('reducer', () => {
       setupQueryResponse(getState());
     });
 
+    it('should load supplementary queries after running the query', async () => {
+      await dispatch(runQueries({ exploreId: 'left' }));
+      expect(unsubscribes).toHaveLength(2);
+    });
+  });
+
+  describe('supplementary queries', () => {
+    let dispatch: ThunkDispatch,
+      getState: () => StoreState,
+      unsubscribes: Function[],
+      mockDataProvider: () => Observable<DataQueryResponse>;
+
+    beforeEach(() => {
+      unsubscribes = [];
+      mockDataProvider = () => {
+        return {
+          subscribe: () => {
+            const unsubscribe = jest.fn();
+            unsubscribes.push(unsubscribe);
+            return {
+              unsubscribe,
+            };
+          },
+        } as unknown as Observable<DataQueryResponse>;
+      };
+
+      jest.mocked(queryLogsVolume).mockImplementation(() => mockDataProvider());
+      jest.mocked(queryLogsSample).mockImplementation(() => mockDataProvider());
+
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'something',
+                },
+                getSupplementaryRequest: (_: SupplementaryQueryType, request: DataQueryRequest<DataQuery>) => {
+                  return request;
+                },
+                getSupportedSupplementaryQueryTypes: () => [
+                  SupplementaryQueryType.LogsVolume,
+                  SupplementaryQueryType.LogsSample,
+                ],
+                getSupplementaryQuery: jest.fn(),
+              },
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      dispatch = store.dispatch;
+      getState = store.getState;
+
+      setupQueryResponse(getState());
+    });
+
     it('should cancel any unfinished supplementary queries when a new query is run', async () => {
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
       // first query is run automatically
       // loading in progress - subscriptions for both supplementary queries are created, not cleaned up yet
       expect(unsubscribes).toHaveLength(2);
@@ -907,7 +1049,7 @@ describe('reducer', () => {
       expect(unsubscribes[1]).not.toBeCalled();
 
       setupQueryResponse(getState());
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
       // a new query is run while supplementary queries are not resolve yet...
       expect(unsubscribes[0]).toBeCalled();
       expect(unsubscribes[1]).toBeCalled();
@@ -917,8 +1059,8 @@ describe('reducer', () => {
       expect(unsubscribes[3]).not.toBeCalled();
     });
 
-    it('should cancel all supported supplementary queries when the main query is canceled', () => {
-      dispatch(runQueries({ exploreId: 'left' }));
+    it('should cancel all supported supplementary queries when the main query is canceled', async () => {
+      await dispatch(runQueries({ exploreId: 'left' }));
       expect(unsubscribes).toHaveLength(2);
       expect(unsubscribes[0]).not.toBeCalled();
       expect(unsubscribes[1]).not.toBeCalled();
@@ -934,16 +1076,16 @@ describe('reducer', () => {
       }
     });
 
-    it('should load supplementary queries after running the query', () => {
-      dispatch(runQueries({ exploreId: 'left' }));
+    it('should load supplementary queries after running the query', async () => {
+      await dispatch(runQueries({ exploreId: 'left' }));
       expect(unsubscribes).toHaveLength(2);
     });
 
-    it('should clean any incomplete supplementary queries data when main query is canceled', () => {
+    it('should clean any incomplete supplementary queries data when main query is canceled', async () => {
       mockDataProvider = () => {
         return of({ state: LoadingState.Loading, error: undefined, data: [] });
       };
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
 
       for (const type of supplementaryQueryTypes) {
         expect(getState().explore.panes.left!.supplementaryQueries[type].data).toBeDefined();
@@ -970,7 +1112,7 @@ describe('reducer', () => {
           { state: LoadingState.Done, error: undefined, data: [{}] }
         );
       };
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
 
       for (const types of supplementaryQueryTypes) {
         expect(getState().explore.panes.left!.supplementaryQueries[types].data).toBeDefined();
@@ -987,7 +1129,7 @@ describe('reducer', () => {
       }
     });
 
-    it('do not load disabled supplementary query data', () => {
+    it('do not load disabled supplementary query data', async () => {
       mockDataProvider = () => {
         return of({ state: LoadingState.Done, error: undefined, data: [{}] });
       };
@@ -999,7 +1141,7 @@ describe('reducer', () => {
       expect(getState().explore.panes.left!.supplementaryQueries[SupplementaryQueryType.LogsSample].enabled).toBe(true);
 
       // verify that if we run a query, it will: 1) not do logs volume, 2) do logs sample 3) provider will still be set for both
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
 
       expect(
         getState().explore.panes.left!.supplementaryQueries[SupplementaryQueryType.LogsVolume].data
@@ -1026,7 +1168,7 @@ describe('reducer', () => {
       dispatch(setSupplementaryQueryEnabled('left', false, SupplementaryQueryType.LogsSample));
 
       // runQueries sets up providers, but does not run queries
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
       expect(
         getState().explore.panes.left!.supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();

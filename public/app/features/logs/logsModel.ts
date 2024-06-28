@@ -3,12 +3,14 @@ import { from, isObservable, Observable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
+  createDataFrame,
   DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataTopic,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
@@ -33,25 +35,25 @@ import {
   ScopedVars,
   sortDataFrame,
   textUtil,
-  TimeRange,
   toDataFrame,
   toUtc,
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
-import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
-  [LogLevel.warning]: colors[1],
   [LogLevel.error]: colors[4],
+  [LogLevel.warning]: colors[1],
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
@@ -211,10 +213,12 @@ export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
-  queries?: DataQuery[]
+  queries?: DataQuery[],
+  deduplicateResults?: boolean
 ): LogsModel {
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, queries);
+  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
+  const logsModel = logSeriesToLogsModel(logSeries, queries, Boolean(deduplicateResults));
 
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
@@ -348,7 +352,11 @@ function parseTime(
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[] = []): LogsModel | undefined {
+export function logSeriesToLogsModel(
+  logSeries: DataFrame[],
+  queries: DataQuery[] = [],
+  filterDuplicateRows = false
+): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -366,7 +374,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       const logsFrame = parseLogsFrame(series);
       if (logsFrame != null) {
         // for now we ignore the nested-ness of attributes, and just stringify-them
-        const frameLabels = logsFrame.getAttributesAsLabels() ?? undefined;
+        const frameLabels = logsFrame.getLogFrameLabelsAsLabels() ?? undefined;
         const info = {
           rawFrame: series,
           logsFrame: logsFrame,
@@ -384,9 +392,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
   const flatAllLabels = allLabels.flat();
   const commonLabels = flatAllLabels.length > 0 ? findCommonLabels(flatAllLabels) : {};
 
-  const rows: LogRowModel[] = [];
+  let rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
+  const findMatchingRow = createLogRowsMap();
   for (const info of allSeries) {
     const { logsFrame, rawFrame: series, frameLabels } = info;
     const { timeField, timeNanosecondField, bodyField: stringField, severityField: logLevelField, idField } = logsFrame;
@@ -416,7 +425,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       let logLevel = LogLevel.unknown;
       const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels && labels['level']);
-      if (logLevelKey) {
+      if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
         logLevel = getLogLevel(entry);
@@ -448,6 +457,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       if (idField !== null) {
         row.rowId = idField.values[j];
+      }
+
+      if (filterDuplicateRows && findMatchingRow(row)) {
+        continue;
       }
 
       rows.push(row);
@@ -530,12 +543,15 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
 // Used to add additional information to Line limit meta info
 function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requestedRangeMs?: number): LogsMetaItem[] {
-  let logsModelMeta = [...logsModel.meta!];
+  if (!logsModel.meta) {
+    return [];
+  }
+  let logsModelMeta = [...logsModel.meta];
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
   const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
 
-  if (limit && limit > 0) {
+  if (limit && typeof limit === 'number' && limit > 0) {
     let metaLimitValue;
 
     if (limit === logsModel.rows.length && visibleRangeMs && requestedRangeMs) {
@@ -545,7 +561,8 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
         visibleRangeMs
       )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
     } else {
-      metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
+      const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
+      metaLimitValue = `${limit} (${logsModel.rows.length} ${description})`;
     }
 
     logsModelMeta[limitIndex] = {
@@ -604,10 +621,21 @@ const updateLogsVolumeConfig = (
 };
 
 type LogsVolumeQueryOptions<T extends DataQuery> = {
-  extractLevel: (dataFrame: DataFrame) => LogLevel;
   targets: T[];
-  range: TimeRange;
 };
+
+function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
+  let valueField;
+  try {
+    valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
+  } catch {}
+  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+}
+
+function getLogLevelFromLabels(labels: Labels): LogLevel {
+  const level = labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
+  return level ? getLogLevelFromKey(level) : LogLevel.unknown;
+}
 
 /**
  * Creates an observable, which makes requests to get logs volume and aggregates results.
@@ -617,7 +645,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
   logsVolumeRequest: DataQueryRequest<TQuery>,
   options: LogsVolumeQueryOptions<TQuery>
 ): Observable<DataQueryResponse> {
-  const timespan = options.range.to.valueOf() - options.range.from.valueOf();
+  const range = logsVolumeRequest.range;
+  const targets = options.targets;
+  const extractLevel = defaultExtractLevel;
+  const timespan = range.to.valueOf() - range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
 
   logsVolumeRequest.interval = intervalInfo.interval;
@@ -657,6 +688,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
         } else {
           const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
           logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
+            // Separate possible annotations from data frames
+            if (dataFrame.meta?.dataTopic === DataTopic.Annotations) {
+              return dataFrame;
+            }
             let sourceRefId = dataFrame.refId || '';
             if (sourceRefId.startsWith('log-volume-')) {
               sourceRefId = sourceRefId.substr('log-volume-'.length);
@@ -664,9 +699,9 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
             const logsVolumeCustomMetaData: LogsVolumeCustomMetaData = {
               logsVolumeType: LogsVolumeType.FullRange,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              absoluteRange: { from: range.from.valueOf(), to: range.to.valueOf() },
               datasourceName: datasource.name,
-              sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
+              sourceQuery: targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
             };
 
             dataFrame.meta = {
@@ -676,7 +711,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
                 ...logsVolumeCustomMetaData,
               },
             };
-            return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);
+            return updateLogsVolumeConfig(dataFrame, extractLevel, framesByRefId[dataFrame.refId].length === 1);
           });
 
           observer.next({
@@ -788,4 +823,23 @@ function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval
   } else {
     return { interval: '$__interval' };
   }
+}
+
+/**
+ * Creates a new data frame containing only the single row from `logRow`.
+ */
+export function logRowToSingleRowDataFrame(logRow: LogRowModel): DataFrame | null {
+  const originFrame = logRow.dataFrame;
+
+  if (originFrame.length === 0 || originFrame.length <= logRow.rowIndex) {
+    return null;
+  }
+
+  // create a new data frame containing only the single row from `logRow`
+  const frame = createDataFrame({
+    fields: originFrame.fields.map((field) => ({ ...field, values: [field.values[logRow.rowIndex]] })),
+    refId: originFrame.refId,
+  });
+
+  return frame;
 }

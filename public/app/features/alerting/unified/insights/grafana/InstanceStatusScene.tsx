@@ -1,9 +1,7 @@
-import React from 'react';
-
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-import { overrideToFixedColor } from '../../home/Insights';
+import { INSTANCE_ID, overrideToFixedColor } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 export function getInstanceStatByStatusScene(
   datasource: DataSourceRef,
@@ -11,13 +9,17 @@ export function getInstanceStatByStatusScene(
   panelDescription: string,
   status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error'
 ) {
+  const expr = INSTANCE_ID
+    ? `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}", id="${INSTANCE_ID}"})`
+    : `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}"})`;
+
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
         instant: true,
-        expr: `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}"})`,
+        expr,
         legendFormat: '{{state}}',
       },
     ],

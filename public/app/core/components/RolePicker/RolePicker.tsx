@@ -1,12 +1,11 @@
-import React, { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
+import { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
 
-import { ClickOutsideWrapper, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
+import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
 import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH, ROLE_PICKER_WIDTH } from './constants';
-import { getStyles } from './styles';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_MAX_MENU_WIDTH, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
   basicRole?: OrgRole;
@@ -49,8 +48,8 @@ export const RolePicker = ({
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
+  const [menuLeft, setMenuLeft] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
 
@@ -59,22 +58,46 @@ export const RolePicker = ({
     setSelectedRoles(appliedRoles);
   }, [appliedRoles, basicRole, onBasicRoleChange]);
 
+  const setMenuPosition = useCallback(() => {
+    const { horizontal, vertical, menuToLeft } = calculateMenuPosition();
+    if (horizontal && vertical) {
+      setOffset({ horizontal, vertical });
+      setMenuLeft(menuToLeft);
+    }
+  }, []);
+
   useEffect(() => {
-    const dimensions = ref?.current?.getBoundingClientRect();
-    if (!dimensions || !isOpen) {
+    if (!isOpen) {
       return;
     }
-    const { bottom, top, left, right, width: currentRolePickerWidth } = dimensions;
-    const distance = window.innerHeight - bottom;
-    const offsetVertical = bottom - top + 10; // Add extra 10px to offset to account for border and outline
-    const offsetHorizontal = right - left;
-    let horizontal = -offsetHorizontal;
-    let vertical = -offsetVertical;
+    setMenuPosition();
+  }, [isOpen, selectedRoles, setMenuPosition]);
 
+  const calculateMenuPosition = () => {
+    const dimensions = ref?.current?.getBoundingClientRect();
+    if (!dimensions) {
+      return {};
+    }
+    const { bottom, top, left, right } = dimensions;
+    let horizontal = left;
+    let menuToLeft = false;
+
+    const distance = window.innerHeight - bottom;
+    let vertical = bottom + 5;
+    let ToTheSide = false;
     if (distance < MENU_MAX_HEIGHT + 20) {
-      // Off set to display the role picker menu at the bottom of the screen
-      // without resorting to scroll the page
-      vertical = 50 + (MENU_MAX_HEIGHT - distance) - offsetVertical;
+      // move the menu above the input if there is not enough space below
+      vertical = top - MENU_MAX_HEIGHT - 50;
+    }
+
+    // check if there is enough space above the input field
+    if (top < MENU_MAX_HEIGHT + 50) {
+      // if not, reset the vertical position
+      vertical = top;
+      // move the menu to the right edge of the input field
+      horizontal = right + 5;
+      // flag to align the menu to the right or left edge of the input field
+      ToTheSide = true;
     }
 
     /*
@@ -84,25 +107,24 @@ export const RolePicker = ({
      * both (the role picker menu and its sub menu) aligned to the left edge of the input.
      * Otherwise, it aligns the role picker menu to the right.
      */
-    if (
-      window.innerWidth - right < currentRolePickerWidth &&
-      currentRolePickerWidth < 2 * ROLE_PICKER_SUBMENU_MIN_WIDTH
-    ) {
-      horizontal = offsetHorizontal;
+    if (horizontal + ROLE_PICKER_MAX_MENU_WIDTH > window.innerWidth) {
+      horizontal = window.innerWidth - (ToTheSide ? left : right);
+      menuToLeft = true;
     }
 
-    setOffset({ horizontal, vertical });
-  }, [isOpen, selectedRoles]);
+    return { horizontal, vertical, menuToLeft };
+  };
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
       if (!disabled) {
         event.preventDefault();
         event.stopPropagation();
+        setMenuPosition();
         setOpen(true);
       }
     },
-    [setOpen, disabled]
+    [disabled, setMenuPosition]
   );
 
   const onClose = useCallback(() => {
@@ -152,15 +174,6 @@ export const RolePicker = ({
     return options;
   };
 
-  if (isLoading) {
-    return (
-      <div style={{ maxWidth: widthPx || maxWidth, width: widthPx }}>
-        <span>Loading...</span>
-        <Spinner inline className={styles.loadingSpinner} />
-      </div>
-    );
-  }
-
   return (
     <div
       data-testid="role-picker"
@@ -171,7 +184,7 @@ export const RolePicker = ({
       }}
       ref={ref}
     >
-      <ClickOutsideWrapper onClick={onClickOutside} useCapture={true}>
+      <ClickOutsideWrapper onClick={onClickOutside} useCapture={false}>
         <RolePickerInput
           basicRole={selectedBuiltInRole}
           appliedRoles={selectedRoles}
@@ -183,23 +196,32 @@ export const RolePicker = ({
           disabled={disabled}
           showBasicRole={showBasicRole}
           width={widthPx}
+          isLoading={isLoading}
         />
         {isOpen && (
-          <RolePickerMenu
-            options={getOptions()}
-            basicRole={selectedBuiltInRole}
-            appliedRoles={appliedRoles}
-            onBasicRoleSelect={onBasicRoleSelect}
-            onSelect={onSelect}
-            onUpdate={onUpdate}
-            showGroups={query.length === 0 || query.trim() === ''}
-            basicRoleDisabled={basicRoleDisabled}
-            disabledMessage={basicRoleDisabledMessage}
-            showBasicRole={showBasicRole}
-            updateDisabled={basicRoleDisabled && !canUpdateRoles}
-            apply={apply}
-            offset={offset}
-          />
+          <Portal>
+            {/* Since menu rendered in portal and whole component wrapped in ClickOutsideWrapper, */}
+            {/* we need to stop event propagation to prevent closing menu */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <RolePickerMenu
+                options={getOptions()}
+                basicRole={selectedBuiltInRole}
+                appliedRoles={appliedRoles}
+                onBasicRoleSelect={onBasicRoleSelect}
+                onSelect={onSelect}
+                onUpdate={onUpdate}
+                showGroups={query.length === 0 || query.trim() === ''}
+                basicRoleDisabled={basicRoleDisabled}
+                disabledMessage={basicRoleDisabledMessage}
+                showBasicRole={showBasicRole}
+                updateDisabled={basicRoleDisabled && !canUpdateRoles}
+                apply={apply}
+                offset={offset}
+                menuLeft={menuLeft}
+              />
+            </div>
+          </Portal>
         )}
       </ClickOutsideWrapper>
     </div>

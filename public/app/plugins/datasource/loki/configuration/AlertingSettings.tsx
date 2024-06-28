@@ -1,9 +1,6 @@
-import React from 'react';
-
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineSwitch } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 export function AlertingSettings({
   options,

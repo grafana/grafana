@@ -28,6 +28,8 @@ var (
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
 	withoutDefaults                 = "testdata/appliedDefaults"
 	invalidAccess                   = "testdata/invalid-access"
+	beforeAutoDeletion              = "testdata/before-auto-deletion"
+	afterAutoDeletion               = "testdata/after-auto-deletion"
 
 	oneDatasourceWithTwoCorrelations   = "testdata/one-datasource-two-correlations"
 	correlationsDifferentOrganizations = "testdata/correlations-different-organizations"
@@ -123,7 +125,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Remove one datasource should have removed old datasource", func(t *testing.T) {
-		store := &spyStore{}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "old-data-source", OrgID: 1, UID: "old-data-source"}}}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -140,7 +142,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others", func(t *testing.T) {
-		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgID: 1, ID: 1}, {Name: "old-graphite2", OrgID: 1, ID: 2}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgID: 1, ID: 1}, {Name: "old-graphite3", OrgID: 1, ID: 2}}}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -167,6 +169,39 @@ func TestDatasourceAsConfig(t *testing.T) {
 		require.Equal(t, len(store.deleted), 0)
 		require.Equal(t, len(store.inserted), 1)
 		require.Equal(t, len(store.updated), 1)
+	})
+
+	t.Run("Delete data sources when removing them from provision files", func(t *testing.T) {
+		store := &spyStore{}
+		orgFake := &orgtest.FakeOrgService{}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+		if err := dc.applyChanges(context.Background(), beforeAutoDeletion); err != nil {
+			t.Fatalf("applyChanges return an error %v", err)
+		}
+
+		require.Equal(t, len(store.deleted), 0)
+		require.Equal(t, len(store.inserted), 5)
+		require.Equal(t, len(store.updated), 0)
+
+		if err := dc.applyChanges(context.Background(), afterAutoDeletion); err != nil {
+			t.Fatalf("applyChanges return an error %v", err)
+		}
+
+		require.Equal(t, len(store.deleted), 2)
+
+		remainingDataSourceNames := make([]string, 3)
+
+		for i, ds := range store.items {
+			remainingDataSourceNames[i] = ds.Name
+		}
+
+		require.Contains(t, remainingDataSourceNames, "test_graphite_without_prune")
+		require.Contains(t, remainingDataSourceNames, "test_prometheus_without_prune")
+		require.Contains(t, remainingDataSourceNames, "test_graphite_with_prune")
+
+		require.NotContains(t, remainingDataSourceNames, "testdata_with_prune")
+		require.NotContains(t, remainingDataSourceNames, "test_prometheus_with_prune")
 	})
 
 	t.Run("broken yaml should return error", func(t *testing.T) {
@@ -429,6 +464,16 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 	return nil, datasources.ErrDataSourceNotFound
 }
 
+func (s *spyStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
+	prunableProvisionedDataSources := []*datasources.DataSource{}
+	for _, item := range s.items {
+		if item.IsPrunable {
+			prunableProvisionedDataSources = append(prunableProvisionedDataSources, item)
+		}
+	}
+	return prunableProvisionedDataSources, nil
+}
+
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	s.deleted = append(s.deleted, cmd)
 	for i, v := range s.items {
@@ -443,7 +488,7 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 
 func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	s.inserted = append(s.inserted, cmd)
-	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID}
+	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, IsPrunable: cmd.IsPrunable}
 	s.items = append(s.items, newDataSource)
 	return newDataSource, nil
 }

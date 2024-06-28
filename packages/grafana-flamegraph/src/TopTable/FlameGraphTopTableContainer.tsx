@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
@@ -22,56 +22,68 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
+import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
-import { TableData } from '../types';
+import { ColorScheme, ColorSchemeDiff, TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
   onSymbolClick: (symbol: string) => void;
-  height?: number;
+  // This is used for highlighting the search button in case there is exact match.
   search?: string;
+  // We use these to filter out rows in the table if users is doing text search.
+  matchedLabels?: Set<string>;
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
-  vertical?: boolean;
+  colorScheme: ColorScheme | ColorSchemeDiff;
 };
 
-const FlameGraphTopTableContainer = React.memo(
-  ({ data, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich, onTableSort, vertical }: Props) => {
+const FlameGraphTopTableContainer = memo(
+  ({
+    data,
+    onSymbolClick,
+    search,
+    matchedLabels,
+    onSearch,
+    sandwichItem,
+    onSandwich,
+    onTableSort,
+    colorScheme,
+  }: Props) => {
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?
-      let table: { [key: string]: TableData } = {};
+      let filteredTable: { [key: string]: TableData } = {};
       for (let i = 0; i < data.data.length; i++) {
         const value = data.getValue(i);
         const valueRight = data.getValueRight(i);
         const self = data.getSelf(i);
         const label = data.getLabel(i);
-        table[label] = table[label] || {};
-        table[label].self = table[label].self ? table[label].self + self : self;
-        table[label].total = table[label].total ? table[label].total + value : value;
-        table[label].totalRight = table[label].totalRight ? table[label].totalRight + valueRight : valueRight;
+
+        // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
+        if (!matchedLabels || matchedLabels.has(label)) {
+          filteredTable[label] = filteredTable[label] || {};
+          filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
+          filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
+          filteredTable[label].totalRight = filteredTable[label].totalRight
+            ? filteredTable[label].totalRight + valueRight
+            : valueRight;
+        }
       }
-      return table;
-    }, [data]);
+      return filteredTable;
+    }, [data, matchedLabels]);
 
-    const rowHeight = 35;
-    // When we use normal layout we size the table to have the same height as the flamegraph to look good side by side.
-    // In vertical layout we don't need that so this is a bit arbitrary. We want some max limit
-    // so we don't show potentially thousands of rows at once which can hinder performance (the table is virtualized
-    // so with some max height it handles it fine)
-    const tableHeight = vertical ? Math.min(Object.keys(table).length * rowHeight, 800) : 0;
-
-    const styles = useStyles2(getStyles, tableHeight);
+    const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%', height }}>
+        <AutoSizer style={{ width: '100%' }}>
           {({ width, height }) => {
             if (width < 3 || height < 3) {
               return null;
@@ -85,6 +97,7 @@ const FlameGraphTopTableContainer = React.memo(
               onSearch,
               onSandwich,
               theme,
+              colorScheme,
               search,
               sandwichItem
             );
@@ -119,6 +132,7 @@ function buildTableDataFrame(
   onSearch: (str: string) => void,
   onSandwich: (str?: string) => void,
   theme: GrafanaTheme2,
+  colorScheme: ColorScheme | ColorSchemeDiff,
   search?: string,
   sandwichItem?: string
 ): DataFrame {
@@ -153,11 +167,17 @@ function buildTableDataFrame(
     const comparisonField = createNumberField('Comparison', 'percent');
     const diffField = createNumberField('Diff', 'percent');
     diffField.config.custom.cellOptions.type = TableCellDisplayMode.ColorText;
+
+    const [removeColor, addColor] =
+      colorScheme === ColorSchemeDiff.DiffColorBlind
+        ? [diffColorBlindColors[0], diffColorBlindColors[2]]
+        : [diffDefaultColors[0], diffDefaultColors[2]];
+
     diffField.config.mappings = [
-      { type: MappingType.ValueToText, options: { [Infinity]: { text: 'new', color: 'red' } } },
-      { type: MappingType.ValueToText, options: { [-100]: { text: 'removed', color: 'green' } } },
-      { type: MappingType.RangeToText, options: { from: 0, to: Infinity, result: { color: 'red' } } },
-      { type: MappingType.RangeToText, options: { from: -Infinity, to: 0, result: { color: 'green' } } },
+      { type: MappingType.ValueToText, options: { [Infinity]: { text: 'new', color: addColor } } },
+      { type: MappingType.ValueToText, options: { [-100]: { text: 'removed', color: removeColor } } },
+      { type: MappingType.RangeToText, options: { from: 0, to: Infinity, result: { color: addColor } } },
+      { type: MappingType.RangeToText, options: { from: -Infinity, to: 0, result: { color: removeColor } } },
     ];
 
     // For this we don't really consider sandwich view even though you can switch it on.
@@ -319,37 +339,29 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, height: number) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    topTableContainer: css`
-      label: topTableContainer;
-      flex-grow: 1;
-      flex-basis: 50%;
-      overflow: hidden;
-      padding: ${theme.spacing(1)};
-      background-color: ${theme.colors.background.secondary};
-      ${height
-        ? css`
-            min-height: ${height}px;
-          `
-        : ''}
-    `,
+    topTableContainer: css({
+      label: 'topTableContainer',
+      padding: theme.spacing(1),
+      backgroundColor: theme.colors.background.secondary,
+      height: '100%',
+    }),
   };
 };
 
 const getStylesActionCell = () => {
   return {
-    actionCellWrapper: css`
-      label: actionCellWrapper;
-      display: flex;
-      height: 24px;
-    `,
-
-    actionCellButton: css`
-      label: actionCellButton;
-      margin-right: 0;
-      width: 24px;
-    `,
+    actionCellWrapper: css({
+      label: 'actionCellWrapper',
+      display: 'flex',
+      height: '24px',
+    }),
+    actionCellButton: css({
+      label: 'actionCellButton',
+      marginRight: 0,
+      width: '24px',
+    }),
   };
 };
 

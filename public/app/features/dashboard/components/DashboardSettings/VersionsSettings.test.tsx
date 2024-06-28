@@ -1,20 +1,19 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
 import { configureStore } from '../../../../store/configureStore';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
-import { historySrv } from '../VersionHistory/HistorySrv';
 
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
 import { versions, diffs } from './__mocks__/versions';
 
-jest.mock('../VersionHistory/HistorySrv');
+jest.mock('app/features/dashboard-scene/settings/version-history/HistorySrv');
 
 const queryByFullText = (text: string) =>
   screen.queryByText((_, node: Element | undefined | null) => {

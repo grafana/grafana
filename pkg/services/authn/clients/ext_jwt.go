@@ -4,113 +4,182 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
 
-	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
-	"golang.org/x/exp/slices"
+	authlib "github.com/grafana/authlib/authn"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authn.Client = new(ExtendedJWT)
 
-var (
-	acceptedSigningMethods = []string{"RS256", "ES256"}
-	timeNow                = time.Now
-)
-
 const (
-	rfc9068ShortMediaType = "at+jwt"
-	rfc9068MediaType      = "application/at+jwt"
+	extJWTAuthenticationHeaderName  = "X-Access-Token"
+	extJWTAuthorizationHeaderName   = "X-Grafana-Id"
+	extJWTAccessTokenExpectAudience = "grafana"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service, oauthServer oauthserver.OAuth2Server) *ExtendedJWT {
+var (
+	errExtJWTInvalid = errutil.Unauthorized(
+		"ext.jwt.invalid", errutil.WithPublicMessage("Failed to verify JWT"),
+	)
+	errExtJWTInvalidSubject = errutil.Unauthorized(
+		"ext.jwt.invalid-subject", errutil.WithPublicMessage("Invalid token subject"),
+	)
+	errExtJWTMisMatchedNamespaceClaims = errutil.Unauthorized(
+		"ext.jwt.namespace-mismatch", errutil.WithPublicMessage("Namespace claims didn't match between id token and access token"),
+	)
+	errExtJWTDisallowedNamespaceClaim = errutil.Unauthorized(
+		"ext.jwt.namespace-disallowed", errutil.WithPublicMessage("Namespace claim doesn't allow access to requested namespace"),
+	)
+)
+
+func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
+	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
+		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
+	})
+
+	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
+		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
+	}, keys)
+
+	// For ID tokens, we explicitly do not validate audience, hence an empty AllowedAudiences
+	// Namespace claim will be checked
+	idTokenVerifier := authlib.NewIDTokenVerifier(authlib.VerifierConfig{}, keys)
+
 	return &ExtendedJWT{
-		cfg:         cfg,
-		log:         log.New(authn.ClientExtendedJWT),
-		userService: userService,
-		signingKeys: signingKeys,
-		oauthServer: oauthServer,
+		cfg:                 cfg,
+		log:                 log.New(authn.ClientExtendedJWT),
+		namespaceMapper:     request.GetNamespaceMapper(cfg),
+		accessTokenVerifier: accessTokenVerifier,
+		idTokenVerifier:     idTokenVerifier,
 	}
 }
 
 type ExtendedJWT struct {
-	cfg         *setting.Cfg
-	log         log.Logger
-	userService user.Service
-	signingKeys signingkeys.Service
-	oauthServer oauthserver.OAuth2Server
-}
-
-type ExtendedJWTClaims struct {
-	jwt.Claims
-	ClientID     string              `json:"client_id"`
-	Groups       []string            `json:"groups"`
-	Email        string              `json:"email"`
-	Name         string              `json:"name"`
-	Login        string              `json:"login"`
-	Scopes       []string            `json:"scope"`
-	Entitlements map[string][]string `json:"entitlements"`
+	cfg                 *setting.Cfg
+	log                 log.Logger
+	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
+	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
+	namespaceMapper     request.NamespaceMapper
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	jwtToken := s.retrieveToken(r.HTTPRequest)
+	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
-	claims, err := s.verifyRFC9068Token(ctx, jwtToken)
+	claims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
 	if err != nil {
-		s.log.Error("Failed to verify JWT", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to verify JWT: %w", err)
+		s.log.Error("Failed to verify access token", "error", err)
+		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
 
-	// user:id:18
-	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
+	idToken := s.retrieveAuthorizationToken(r.HTTPRequest)
+	if idToken != "" {
+		idTokenClaims, err := s.idTokenVerifier.Verify(ctx, idToken)
+		if err != nil {
+			s.log.Error("Failed to verify id token", "error", err)
+			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
+		}
+
+		return s.authenticateAsUser(idTokenClaims, claims)
+	}
+
+	return s.authenticateAsService(claims)
+}
+
+func (s *ExtendedJWT) IsEnabled() bool {
+	return s.cfg.ExtJWTAuth.Enabled
+}
+
+func (s *ExtendedJWT) authenticateAsUser(
+	idTokenClaims *authlib.Claims[authlib.IDTokenClaims],
+	accessTokenClaims *authlib.Claims[authlib.AccessTokenClaims],
+) (*authn.Identity, error) {
+	// Only allow id tokens signed for namespace configured for this instance.
+	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); idTokenClaims.Rest.Namespace != allowedNamespace {
+		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
+	}
+
+	// Allow access tokens with either the same namespace as the validated id token namespace or wildcard (`*`).
+	if !accessTokenClaims.Rest.NamespaceMatches(idTokenClaims.Rest.Namespace) {
+		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
+	}
+
+	accessID, err := authn.ParseNamespaceID(accessTokenClaims.Subject)
 	if err != nil {
-		s.log.Error("Failed to parse sub", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessID.String())
 	}
 
-	// FIXME: support multiple organizations
-	defaultOrgID := s.getDefaultOrgID()
-	if r.OrgID != defaultOrgID {
-		s.log.Error("Failed to verify the Organization: OrgID is not the default")
-		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
+	if !accessID.IsNamespace(authn.NamespaceAccessPolicy) {
+		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessID.String())
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: defaultOrgID, UserID: userID})
+	userID, err := authn.ParseNamespaceID(idTokenClaims.Subject)
 	if err != nil {
-		s.log.Error("Failed to get user", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to get user: %w", err)
+		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if signedInUser.Permissions == nil {
-		signedInUser.Permissions = make(map[int64]map[string][]string)
+	if !userID.IsNamespace(authn.NamespaceUser) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
 	}
 
-	if len(claims.Entitlements) == 0 {
-		s.log.Error("Entitlements claim is missing")
-		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
+	return &authn.Identity{
+		ID:              userID,
+		OrgID:           s.getDefaultOrgID(),
+		AuthenticatedBy: login.ExtendedJWTModule,
+		AuthID:          accessID.String(),
+		ClientParams: authn.ClientParams{
+			SyncPermissions: true,
+			FetchPermissionsParams: authn.FetchPermissionsParams{
+				ActionsLookup: accessTokenClaims.Rest.DelegatedPermissions,
+			},
+			FetchSyncedUser: true,
+		}}, nil
+}
+
+func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
+	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
+	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.Rest.NamespaceMatches(allowedNamespace) {
+		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
 	}
 
-	signedInUser.Permissions[s.getDefaultOrgID()] = claims.Entitlements
+	id, err := authn.ParseNamespaceID(claims.Subject)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
+	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}, login.ExtendedJWTModule), nil
+	if !id.IsNamespace(authn.NamespaceAccessPolicy) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", id.String())
+	}
+
+	return &authn.Identity{
+		ID:              id,
+		UID:             id,
+		OrgID:           s.getDefaultOrgID(),
+		AuthenticatedBy: login.ExtendedJWTModule,
+		AuthID:          claims.Subject,
+		ClientParams: authn.ClientParams{
+			SyncPermissions: true,
+			FetchPermissionsParams: authn.FetchPermissionsParams{
+				Roles: claims.Rest.Permissions,
+			},
+			FetchSyncedUser: false,
+		},
+	}, nil
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.cfg.ExtendedJWTAuthEnabled {
+	if !s.cfg.ExtJWTAuth.Enabled {
 		return false
 	}
 
-	rawToken := s.retrieveToken(r.HTTPRequest)
+	rawToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 	if rawToken == "" {
 		return false
 	}
@@ -125,7 +194,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	return claims.Issuer == s.cfg.ExtendedJWTExpectIssuer
+	return true
 }
 
 func (s *ExtendedJWT) Name() string {
@@ -137,96 +206,20 @@ func (s *ExtendedJWT) Priority() uint {
 	return 15
 }
 
-// retrieveToken retrieves the JWT token from the request.
-func (s *ExtendedJWT) retrieveToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get("Authorization")
+// retrieveAuthenticationToken retrieves the JWT token from the request.
+func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) string {
+	jwtToken := httpRequest.Header.Get(extJWTAuthenticationHeaderName)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
 }
 
-// verifyRFC9068Token verifies the token against the RFC 9068 specification.
-func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (*ExtendedJWTClaims, error) {
-	parsedToken, err := jwt.ParseSigned(rawToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse JWT: %w", err)
-	}
+// retrieveAuthorizationToken retrieves the JWT token from the request.
+func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) string {
+	jwtToken := httpRequest.Header.Get(extJWTAuthorizationHeaderName)
 
-	if len(parsedToken.Headers) != 1 {
-		return nil, fmt.Errorf("only one header supported, got %d", len(parsedToken.Headers))
-	}
-
-	parsedHeader := parsedToken.Headers[0]
-
-	typeHeader := parsedHeader.ExtraHeaders["typ"]
-	if typeHeader == nil {
-		return nil, fmt.Errorf("missing 'typ' field from the header")
-	}
-
-	jwtType := strings.ToLower(typeHeader.(string))
-	if jwtType != rfc9068ShortMediaType && jwtType != rfc9068MediaType {
-		return nil, fmt.Errorf("invalid JWT type: %s", jwtType)
-	}
-
-	if !slices.Contains(acceptedSigningMethods, parsedHeader.Algorithm) {
-		return nil, fmt.Errorf("invalid algorithm: %s. Accepted algorithms: %s", parsedHeader.Algorithm, strings.Join(acceptedSigningMethods, ", "))
-	}
-
-	var claims ExtendedJWTClaims
-	_, key, err := s.signingKeys.GetOrCreatePrivateKey(ctx,
-		signingkeys.ServerPrivateKeyID, jose.ES256)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get public key: %w", err)
-	}
-
-	err = parsedToken.Claims(key.Public(), &claims)
-	if err != nil {
-		return nil, fmt.Errorf("failed to verify the signature: %w", err)
-	}
-
-	if claims.Expiry == nil {
-		return nil, fmt.Errorf("missing 'exp' claim")
-	}
-
-	if claims.ID == "" {
-		return nil, fmt.Errorf("missing 'jti' claim")
-	}
-
-	if claims.Subject == "" {
-		return nil, fmt.Errorf("missing 'sub' claim")
-	}
-
-	if claims.IssuedAt == nil {
-		return nil, fmt.Errorf("missing 'iat' claim")
-	}
-
-	err = claims.ValidateWithLeeway(jwt.Expected{
-		Issuer:   s.cfg.ExtendedJWTExpectIssuer,
-		Audience: jwt.Audience{s.cfg.ExtendedJWTExpectAudience},
-		Time:     timeNow(),
-	}, 0)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate JWT: %w", err)
-	}
-
-	if err := s.validateClientIdClaim(ctx, claims); err != nil {
-		return nil, err
-	}
-
-	return &claims, nil
-}
-
-func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims ExtendedJWTClaims) error {
-	if claims.ClientID == "" {
-		return fmt.Errorf("missing 'client_id' claim")
-	}
-
-	if _, err := s.oauthServer.GetExternalService(ctx, claims.ClientID); err != nil {
-		return fmt.Errorf("invalid 'client_id' claim: %s", claims.ClientID)
-	}
-
-	return nil
+	// Strip the 'Bearer' prefix if it exists.
+	return strings.TrimPrefix(jwtToken, "Bearer ")
 }
 
 func (s *ExtendedJWT) getDefaultOrgID() int64 {

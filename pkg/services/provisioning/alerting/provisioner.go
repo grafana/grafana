@@ -6,12 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 type ProvisionerConfig struct {
 	Path                       string
-	DashboardService           dashboards.DashboardService
+	FolderService              folder.Service
 	DashboardProvService       dashboards.DashboardProvisioningService
 	RuleService                provisioning.AlertRuleService
 	ContactPointService        provisioning.ContactPointService
@@ -29,15 +30,6 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	}
 	logger.Info("starting to provision alerting")
 	logger.Debug("read all alerting files", "file_count", len(files))
-	ruleProvisioner := NewAlertRuleProvisioner(
-		logger,
-		cfg.DashboardService,
-		cfg.DashboardProvService,
-		cfg.RuleService)
-	err = ruleProvisioner.Provision(ctx, files)
-	if err != nil {
-		return fmt.Errorf("alert rules: %w", err)
-	}
 	cpProvisioner := NewContactPointProvisoner(logger, cfg.ContactPointService)
 	err = cpProvisioner.Provision(ctx, files)
 	if err != nil {
@@ -62,10 +54,6 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return fmt.Errorf("notification policies: %w", err)
 	}
-	err = cpProvisioner.Unprovision(ctx, files)
-	if err != nil {
-		return fmt.Errorf("contact points: %w", err)
-	}
 	err = mtProvisioner.Unprovision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("mute times: %w", err)
@@ -73,6 +61,19 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	err = ttProvsioner.Unprovision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("text templates: %w", err)
+	}
+	ruleProvisioner := NewAlertRuleProvisioner(
+		logger,
+		cfg.FolderService,
+		cfg.DashboardProvService,
+		cfg.RuleService)
+	err = ruleProvisioner.Provision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("alert rules: %w", err)
+	}
+	err = cpProvisioner.Unprovision(ctx, files) // Unprovision contact points after rules to make sure all references in rules are updated
+	if err != nil {
+		return fmt.Errorf("contact points: %w", err)
 	}
 	logger.Info("finished to provision alerting")
 	return nil

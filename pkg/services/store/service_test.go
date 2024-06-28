@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -68,13 +69,17 @@ var (
 			}})
 )
 
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
 func TestListFiles(t *testing.T) {
 	roots := []storageRuntime{publicStaticFilesStorage}
 
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
 	}, allowAllAuthService, cfg, nil)
-	frame, err := store.List(context.Background(), dummyUser, "public/maps")
+	frame, err := store.List(context.Background(), dummyUser, "public/maps", 0)
 	require.NoError(t, err)
 
 	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame.Frame, true)
@@ -95,7 +100,7 @@ func TestListFilesWithoutPermissions(t *testing.T) {
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
 	}, denyAllAuthService, cfg, nil)
-	frame, err := store.List(context.Background(), dummyUser, "public/maps")
+	frame, err := store.List(context.Background(), dummyUser, "public/maps", 0)
 	require.NoError(t, err)
 	rowLen, err := frame.RowLen()
 	require.NoError(t, err)
@@ -371,7 +376,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 				Files: []*filestorage.File{},
 			}, nil)
 
-			_, err := store.List(context.Background(), test.user, RootContent+"/"+test.nestedRoot)
+			_, err := store.List(context.Background(), test.user, RootContent+"/"+test.nestedRoot, 0)
 			require.NoError(t, err)
 		})
 
@@ -387,7 +392,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 				Files: []*filestorage.File{},
 			}, nil)
 
-			_, err := store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot, "folder1", "folder2"}, "/"))
+			_, err := store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot, "folder1", "folder2"}, "/"), 0)
 			require.NoError(t, err)
 		})
 
@@ -434,16 +439,16 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 				Files: []*filestorage.File{},
 			}, nil)
 
-			_, err := store.List(context.Background(), test.user, strings.Join([]string{RootContent, "not-nested-content"}, "/"))
+			_, err := store.List(context.Background(), test.user, strings.Join([]string{RootContent, "not-nested-content"}, "/"), 0)
 			require.NoError(t, err)
 
-			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, "a", "b", "c"}, "/"))
+			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, "a", "b", "c"}, "/"), 0)
 			require.NoError(t, err)
 
-			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot + "a"}, "/"))
+			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot + "a"}, "/"), 0)
 			require.NoError(t, err)
 
-			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot + "a", "b"}, "/"))
+			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot + "a", "b"}, "/"), 0)
 			require.NoError(t, err)
 		})
 
@@ -536,7 +541,7 @@ func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 		AllowUnsanitizedSvgUpload: true,
 	}
 
-	resp, err := store.List(ctx, globalUser, "content/nested")
+	resp, err := store.List(ctx, globalUser, "content/nested", 0)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
@@ -544,7 +549,7 @@ func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, rowLen) // nested storage is empty
 
-	resp, err = store.List(ctx, globalUser, "content")
+	resp, err = store.List(ctx, globalUser, "content", 0)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
@@ -76,7 +76,7 @@ export function RadioButtonGroup<T>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}
+      className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}
     >
       {options.map((opt, i) => {
         const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);

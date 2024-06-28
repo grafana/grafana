@@ -1,5 +1,5 @@
 import { omit } from 'lodash';
-import React, { PureComponent, useState } from 'react';
+import { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
@@ -10,9 +10,8 @@ import {
   rangeUtil,
   RelativeTimeRange,
 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, Card, Icon } from '@grafana/ui';
+import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -145,8 +144,8 @@ export class QueryRows extends PureComponent<Props> {
   };
 
   render() {
-    const { queries, expressions } = this.props;
-    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions]);
+    const { queries, expressions, condition } = this.props;
+    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions], condition);
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>

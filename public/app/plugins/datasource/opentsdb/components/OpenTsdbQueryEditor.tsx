@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, QueryEditorProps, textUtil } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 
 import OpenTsDatasource from '../datasource';
 import { OpenTsdbOptions, OpenTsdbQuery } from '../types';
@@ -93,17 +93,26 @@ export function OpenTsdbQueryEditor({
   }
 
   function getTextValues(metrics: Array<{ text: string }>) {
-    return metrics.map((value: { text: string }) => {
+    const variables = datasource.getVariables().map((value) => {
+      return {
+        value: textUtil.escapeHtml(value),
+        description: value,
+      };
+    });
+
+    const values = metrics.map((value: { text: string }) => {
       return {
         value: textUtil.escapeHtml(value.text),
         description: value.text,
       };
     });
+
+    return variables.concat(values);
   }
 
   return (
     <div className={styles.container} data-testid={testIds.editor}>
-      <div className={styles.visualEditor}>
+      <Stack gap={0.5} direction="column" grow={1}>
         <MetricSection
           query={query}
           onChange={onChange}
@@ -138,7 +147,7 @@ export function OpenTsdbQueryEditor({
           tsdbVersion={tsdbVersion}
         />
         <RateSection query={query} onChange={onChange} onRunQuery={onRunQuery} tsdbVersion={tsdbVersion} />
-      </div>
+      </Stack>
     </div>
   );
 }
@@ -147,9 +156,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css`
       display: flex;
-    `,
-    visualEditor: css`
-      flex-grow: 1;
     `,
     toggleButton: css`
       margin-left: ${theme.spacing(0.5)};

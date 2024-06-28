@@ -33,6 +33,11 @@ export interface CreateIntegrationDTO {
   verbal_name: string;
 }
 
+export interface OnCallConfigChecks {
+  is_chatops_connected: boolean;
+  is_integration_chatops_connected: boolean;
+}
+
 const getProxyApiUrl = (path: string) => `/api/plugin-proxy/${SupportedPlugin.OnCall}${path}`;
 
 export const onCallApi = alertingApi.injectEndpoints({
@@ -42,7 +47,12 @@ export const onCallApi = alertingApi.injectEndpoints({
         url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/'),
         // legacy_grafana_alerting is necessary for OnCall.
         // We do NOT need to differentiate between these two on our side
-        params: { filters: true, integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'] },
+        params: {
+          filters: true,
+          integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
+          skip_pagination: true,
+        },
+        showErrorAlert: false,
       }),
       transformResponse: (response: AlertReceiveChannelsResult) => {
         if (isPaginatedResponse(response)) {
@@ -71,6 +81,13 @@ export const onCallApi = alertingApi.injectEndpoints({
     features: build.query<OnCallFeature[], void>({
       query: () => ({
         url: getProxyApiUrl('/api/internal/v1/features/'),
+        showErrorAlert: false,
+      }),
+    }),
+    onCallConfigChecks: build.query<OnCallConfigChecks, void>({
+      query: () => ({
+        url: getProxyApiUrl('/api/internal/v1/organization/config-checks/'),
+        showErrorAlert: false,
       }),
     }),
   }),

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { FieldColorModeId } from '@grafana/data';
 
@@ -21,10 +20,10 @@ describe('Legend', () => {
       },
     ] as NodeDatum[];
     render(<Legend nodes={nodes} onSort={(sort) => {}} sortable={false} />);
-    const items = screen.getAllByLabelText(/VizLegend series/);
+    const items = screen.getAllByTestId(/VizLegend series/);
     expect(items.length).toBe(3);
 
-    const item = screen.getByLabelText(/VizLegend series error/);
+    const item = screen.getByTestId(/VizLegend series error/);
     expect((item.firstChild as HTMLDivElement).style.getPropertyValue('background')).toBe('rgb(242, 73, 92)');
   });
 });

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -11,6 +11,7 @@ import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transfo
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SortByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<SortByTransformerOptions>) => {
@@ -65,4 +66,5 @@ export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransfor
   name: standardTransformers.sortByTransformer.name,
   description: standardTransformers.sortByTransformer.description,
   categories: new Set([TransformerCategory.ReorderAndRename]),
+  help: getTransformationContent(DataTransformerID.sortBy).helperDocs,
 };

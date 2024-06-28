@@ -16,33 +16,126 @@ labels:
     - oss
 menuTitle: Configure value mappings
 title: Configure value mappings
-weight: 600
+description: Configure value mappings to change how data appears in your visualizations
+weight: 90
+refs:
+  status-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/status-history/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history/
+  bar-gauge:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/bar-gauge/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-gauge/
+  candlestick:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/candlestick/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick/
+  canvas:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas/
+  gauge:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/gauge/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge/
+  state-timeline:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline/
+  trend:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/trend/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend/
+  geomap:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap/
+  stat:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat/
+  time-series:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
+  table:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/
+  histogram:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/histogram/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram/
+  pie-chart:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/pie-chart/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart/
+  bar-chart:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/bar-chart/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-chart/
 ---
 
 # Configure value mappings
 
-In addition to field overrides, value mapping is a technique that you can use to change the visual treatment of data that appears in a visualization.
+In addition to field overrides, value mapping is a technique you can use to change how data appears in a visualization.
 
-Values mapped using value mappings bypass the unit formatting. This means that a text value mapped to a numerical value is not formatted using the configured unit.
+For example, the mapping applied in the following image causes the visualization to display the text `Cold`, `Good`, and `Hot` in blue, green, and red for ranges of temperatures rather than actual temperature values. Using value mappings this way can make data faster and easier to understand and interpret.
 
-![Value mappings example](/static/img/docs/value-mappings/value-mappings-example-8-0.png)
+![Value mappings applied to a gauge visualization](/media/docs/grafana/panels-visualizations/screenshot-value-mappings-v10.4.png)
 
-If value mappings are present in a panel, then Grafana displays a summary in the side pane of the panel editor.
+Value mappings bypass unit formatting set in the **Standard options** section of panel editor, like color or number of decimal places displayed. When value mappings are present in a panel, Grafana displays a summary of them in the **Value mappings** section of the editor panel.
+
+## Supported visualizations
+
+You can configure value mappings for the following visualizations:
+
+|                                |                                      |                                      |
+| ------------------------------ | ------------------------------------ | ------------------------------------ |
+| [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
+| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
+| [Candlestick](ref:candlestick) | [Pie chart](ref:pie-chart)           | [Time series](ref:time-series)       |
+| [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
+| [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) |                                      |
 
 ## Types of value mappings
 
-{{% admonition type="note" %}}
-The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
-{{% /admonition %}}
+Grafana supports the following value mapping types:
 
-Grafana supports the following value mappings:
+### Value
 
-- **Value:** Maps text values to a color or different display text. For example, you can configure a value mapping so that all instances of the value `10` appear as **Perfection!** rather than the number.
-- **Range:** Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display **Low** or **High** rather than the number.
-- **Regex:** Maps regular expressions to replacement text and a color. For example, if a value is `www.example.com`, you can configure a regex value mapping so that Grafana displays **www** and truncates the domain.
-- **Special** Maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to a display text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**.
+A **Value** mapping maps specific values to text and a color. For example, you can configure a mapping so that all instances of the value `10` appear as **Perfection!** rather than the number. Use **Value** mapping when you want to format a single value.
+![The value 10 mapped to the text Perfection!](/media/docs/grafana/panels-visualizations/screenshot-map-value-v10.4.png)
 
-You can also use the dots on the left to drag and reorder value mappings in the list.
+### Range
+
+A **Range** mapping maps numerical ranges to text and a color. For example, if a value is within a certain range, you can configure a range value mapping to display **Low** or **High** rather than the number. Use **Range** mapping when you want to format multiple, continuous values.
+![Ranges of numbers mapped to the text Low and High with colors yellow and red](/media/docs/grafana/panels-visualizations/screenshot-map-range-v10.4.png)
+
+### Regex
+
+A **Regex** mapping maps regular expressions to text and a color. For example, if a value is `www.example.com`, you can configure a regular expression value mapping so that Grafana displays **www** and truncates the domain. Use the **Regex** mapping when you want to format the text and color of a regular expression value.
+![A regular expression used to truncate full URLs to the text wwww](/media/docs/grafana/panels-visualizations/screenshot-map-regex-v10.4.png)
+
+### Special
+
+A **Special** mapping maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Use the **Special** mapping when you want to format uncommon, boolean, or empty values.
+![The value null mapped to the text N/A](/media/docs/grafana/panels-visualizations/screenshot-map-special-v10.4.png)
 
 ## Examples
 
@@ -50,19 +143,19 @@ Refer to the following examples to learn more about value mapping.
 
 ### Time series example
 
-The following image shows a time series visualization with value mappings. Value mapping colors are not applied to this visualization, but the display text is shown on the axis.
+The following image shows a time series visualization with value mappings. Value mapping colors aren't applied to this visualization, but the display text is shown on the axis.
 
 ![Value mappings time series example](/static/img/docs/value-mappings/value-mappings-summary-example-8-0.png)
 
 ### Stat example
 
-The following image shows a Stat visualization with value mappings and text colors applied. You can hide the sparkline so it doesn't interfere with the values.
+The following image shows a stat visualization with value mappings and text colors applied. You can hide the sparkline so it doesn't interfere with the values.
 
 ![Value mappings stat example](/static/img/docs/value-mappings/value-mappings-stat-example-8-0.png)
 
 ### Bar gauge example
 
-The following image shows a bar gauge visualization with value mappings. The value mapping colors are applied to the text, but not to the gauges.
+The following image shows a bar gauge visualization with value mappings. Note that the value mapping colors are applied to the text, but not to the gauges.
 
 ![Value mappings bar gauge example](/static/img/docs/value-mappings/value-mappings-bar-gauge-example-8-0.png)
 
@@ -72,64 +165,26 @@ The following image shows a table visualization with value mappings. If you want
 
 ![Value mappings table example](/static/img/docs/value-mappings/value-mappings-table-example-8-0.png)
 
-## Map a value
+## Add a value mapping
 
-Map a value when you want to format a single value.
+1. Navigate to the panel you want to update.
+1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Scroll to the **Value mappings** section and expand it.
+1. Click **Add value mappings**.
+1. Click **Add a new mapping** and then select one of the following:
 
-1. Open a panel for which you want to map a value.
-1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
-1. Click **Add a new mapping** and then select **Value**.
-1. Enter the value for Grafana to match.
+   - **Value** - Enter a single value to match.
+   - **Range** - Enter the beginning and ending values of a range to match.
+   - **Regex** - Enter a regular expression pattern to match.
+   - **Special** - Select a special value to match.
+
 1. (Optional) Enter display text.
 1. (Optional) Set the color.
+1. (Optional) Set an icon (canvas visualizations only).
 1. Click **Update** to save the value mapping.
 
-![Map a value](/static/img/docs/value-mappings/map-value-8-0.png)
+After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
 
-## Map a range
-
-Map a range of values when you want to format multiple, continuous values.
-
-1. Edit the panel for which you want to map a range of values.
-1. In panel display options, in the **Value mappings** section, click **Add value mappings**.
-1. Click **Add a new mapping** and then select **Range**.
-1. Enter the beginning and ending values in the range for Grafana to match.
-1. (Optional) Enter display text.
-1. (Optional) Set the color.
-1. Click **Update** to save the value mapping.
-
-![Map a range](/static/img/docs/value-mappings/map-range-8-0.png)
-
-## Map a regular expression
-
-Map a regular expression when you want to format the text and color of a regular expression value.
-
-1. Edit the panel for which you want to map a regular expression.
-1. In the **Value mappings** section of the panel display options, click **Add value mappings**.
-1. Click **Add a new mapping** and then select **Regex**.
-1. Enter the regular expression pattern for Grafana to match.
-1. (Optional) Enter display text.
-1. (Optional) Set the color.
-1. Click **Update** to save the value mapping.
-
-## Map a special value
-
-Map a special value when you want to format uncommon, boolean, or empty values.
-
-1. Edit the panel for which you want to map a special value.
-1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
-1. Click **Add a new mapping** and then select **Special**.
-1. Select the special value for Grafana to match.
-1. (Optional) Enter display text.
-1. (Optional) Set the color.
-1. Click **Update** to save the value mapping.
-
-![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
-
-## Edit a value mapping
-
-You can edit a value mapping at any time.
-
-1. Edit the panel that contains the value mapping you want to edit.
-1. In the panel display options, in the **Value mappings** section, click **Edit value mappings**.
-1. Make the changes and click **Update**.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.

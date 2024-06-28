@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
 
@@ -25,6 +24,7 @@ function renderPanel(logsVolumeData: DataQueryResponse) {
       onHiddenSeriesChanged={() => null}
       eventBus={new EventBusSrv()}
       allLogsVolumeMaximum={20}
+      annotations={[]}
     />
   );
 }

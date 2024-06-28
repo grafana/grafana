@@ -5,6 +5,7 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/usermig"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -140,6 +141,28 @@ func addUserMigrations(mg *Migrator) {
 			SQLite(migSQLITEisServiceAccountNullable).
 			Postgres("ALTER TABLE `user` ALTER COLUMN is_service_account DROP NOT NULL;").
 			Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
+
+	mg.AddMigration("Add uid column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Update uid column values for users", NewRawSQLMigration("").
+		SQLite("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"uid"}, Type: UniqueIndex,
+	}))
+
+	// Service accounts login were not unique per org. this migration is part of making it unique per org
+	// to be able to create service accounts that are unique per org
+	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
+
+	// Users login and email should be in lower case
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
+	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;

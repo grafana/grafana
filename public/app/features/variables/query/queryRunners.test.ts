@@ -1,24 +1,37 @@
 import { of } from 'rxjs';
 
-import { getDefaultTimeRange, VariableSupportType } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataSourceApi,
+  getDefaultTimeRange,
+  QueryVariableModel,
+  VariableRefresh,
+  VariableSupportType,
+} from '@grafana/data';
 
-import { VariableRefresh } from '../types';
-
-import { QueryRunners, variableDummyRefId } from './queryRunners';
+import { QueryRunners, RunnerArgs, variableDummyRefId } from './queryRunners';
 
 describe('QueryRunners', () => {
   describe('when using a legacy data source', () => {
-    const getLegacyTestContext = (variable?: any) => {
+    const getLegacyTestContext = (variable?: QueryVariableModel) => {
       const defaultTimeRange = getDefaultTimeRange();
-      variable = variable ?? { query: 'A query' };
+      variable = variable ?? ({ query: 'A query' } as QueryVariableModel);
       const timeSrv = {
         timeRange: jest.fn().mockReturnValue(defaultTimeRange),
       };
-      const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A', value: 'A' }]) };
+      const datasource = {
+        metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A', value: 'A' }]),
+      } as unknown as DataSourceApi;
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, defaultTimeRange };
     };
@@ -42,7 +55,7 @@ describe('QueryRunners', () => {
       const { datasource, runner, runnerArgs, request, timeSrv, defaultTimeRange } = getLegacyTestContext({
         query: 'A query',
         refresh: VariableRefresh.onTimeRangeChanged,
-      });
+      } as QueryVariableModel);
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
@@ -77,7 +90,7 @@ describe('QueryRunners', () => {
       const { datasource, runner, runnerArgs, request, timeSrv, defaultTimeRange } = getLegacyTestContext({
         query: 'A query',
         refresh: VariableRefresh.onDashboardLoad,
-      });
+      } as QueryVariableModel);
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
@@ -112,7 +125,7 @@ describe('QueryRunners', () => {
       const { datasource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
         query: 'A query',
         refresh: VariableRefresh.never,
-      });
+      } as QueryVariableModel);
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
@@ -145,19 +158,27 @@ describe('QueryRunners', () => {
   });
 
   describe('when using a data source with standard variable support', () => {
-    const getStandardTestContext = (datasource?: any) => {
-      const variable: any = { query: { refId: 'A', query: 'A query' } };
+    const getStandardTestContext = (datasource?: DataSourceApi) => {
+      const variable = { query: { refId: 'A', query: 'A query' } } as QueryVariableModel;
       const timeSrv = {};
-      datasource = datasource ?? {
-        variables: {
-          getType: () => VariableSupportType.Standard,
-          toDataQuery: (query: any) => ({ ...query, extra: 'extra' }),
-        },
-      };
+      datasource =
+        datasource ??
+        ({
+          variables: {
+            getType: () => VariableSupportType.Standard,
+            toDataQuery: (query: any) => ({ ...query, extra: 'extra' }),
+          },
+        } as DataSourceApi);
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
@@ -184,7 +205,7 @@ describe('QueryRunners', () => {
           toDataQuery: () => undefined,
           query: () => undefined,
         },
-      });
+      } as unknown as DataSourceApi);
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
@@ -203,7 +224,7 @@ describe('QueryRunners', () => {
     describe('and calling runRequest with a datasource that has no custom query', () => {
       const { runner, request, runnerArgs, runRequest, datasource } = getStandardTestContext({
         variables: { getType: () => VariableSupportType.Standard, toDataQuery: () => undefined },
-      });
+      } as unknown as DataSourceApi);
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
@@ -222,15 +243,21 @@ describe('QueryRunners', () => {
 
   describe('when using a data source with custom variable support', () => {
     const getCustomTestContext = () => {
-      const variable: any = { query: { refId: 'A', query: 'A query' } };
+      const variable = { query: { refId: 'A', query: 'A query' } } as QueryVariableModel;
       const timeSrv = {};
-      const datasource: any = {
+      const datasource = {
         variables: { getType: () => VariableSupportType.Custom, query: () => undefined, editor: {} },
-      };
+      } as unknown as DataSourceApi;
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
@@ -270,15 +297,21 @@ describe('QueryRunners', () => {
 
   describe('when using a data source with datasource variable support', () => {
     const getDatasourceTestContext = () => {
-      const variable: any = { query: { refId: 'A', query: 'A query' } };
+      const variable = { query: { refId: 'A', query: 'A query' } } as QueryVariableModel;
       const timeSrv = {};
-      const datasource: any = {
+      const datasource = {
         variables: { getType: () => VariableSupportType.Datasource },
-      };
+      } as unknown as DataSourceApi;
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
@@ -328,9 +361,9 @@ describe('QueryRunners', () => {
   describe('when using a data source with unknown variable support', () => {
     describe('and calling getRunnerForDatasource', () => {
       it('then it should throw', () => {
-        const datasource: any = {
+        const datasource = {
           variables: {},
-        };
+        } as unknown as DataSourceApi;
 
         expect(() => new QueryRunners().getRunnerForDatasource(datasource)).toThrow();
       });

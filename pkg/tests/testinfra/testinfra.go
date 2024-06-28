@@ -17,14 +17,15 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -33,7 +34,7 @@ import (
 
 // StartGrafana starts a Grafana server.
 // The server address is returned.
-func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLStore) {
+func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, db.DB) {
 	addr, env := StartGrafanaEnv(t, grafDir, cfgPath)
 	return addr, env.SQLStore
 }
@@ -50,12 +51,11 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	env, err := server.InitializeForTest(cfg, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
-	require.NoError(t, env.SQLStore.Sync())
 
-	require.NotNil(t, env.SQLStore.Cfg)
-	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")
+	require.NotNil(t, env.Cfg)
+	dbSec, err := env.Cfg.Raw.GetSection("database")
 	require.NoError(t, err)
 	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
 
@@ -99,21 +99,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	return addr, env
 }
 
-// SetUpDatabase sets up the Grafana database.
-func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
-	t.Helper()
-
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{
-		EnsureDefaultOrgAndUser: true,
-	})
-
-	// Make sure changes are synced with other goroutines
-	err := sqlStore.Sync()
-	require.NoError(t, err)
-
-	return sqlStore
-}
-
 // CreateGrafDir creates the Grafana directory.
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
 func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
@@ -154,17 +139,41 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	publicDir := filepath.Join(tmpDir, "public")
 	err = os.MkdirAll(publicDir, 0750)
 	require.NoError(t, err)
+
 	viewsDir := filepath.Join(publicDir, "views")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
 	require.NoError(t, err)
-	// Copy index template to index.html, since Grafana will try to use the latter
-	err = fs.CopyFile(filepath.Join(rootDir, "public", "views", "index-template.html"),
-		filepath.Join(viewsDir, "index.html"))
+
+	// add a stub manifest to the build directory
+	buildDir := filepath.Join(publicDir, "build")
+	err = os.MkdirAll(buildDir, 0750)
 	require.NoError(t, err)
-	// Copy error template to error.html, since Grafana will try to use the latter
-	err = fs.CopyFile(filepath.Join(rootDir, "public", "views", "error-template.html"),
-		filepath.Join(viewsDir, "error.html"))
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
+		"entrypoints": {
+		  "app": {
+			"assets": {
+			  "js": ["public/build/runtime.XYZ.js"]
+			}
+		  },
+		  "dark": {
+			"assets": {
+			  "css": ["public/build/dark.css"]
+			}
+		  },
+		  "light": {
+			"assets": {
+			  "css": ["public/build/light.css"]
+			}
+		  }
+		},
+		"runtime.50398398ecdeaf58968c.js": {
+		  "src": "public/build/runtime.XYZ.js",
+		  "integrity": "sha256-k1g7TksMHFQhhQGE"
+		}
+	  }
+	  `), 0750)
 	require.NoError(t, err)
+
 	emailsDir := filepath.Join(publicDir, "emails")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
 	require.NoError(t, err)
@@ -242,6 +251,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		return section, err
 	}
 
+	queryRetries := 3
 	for _, o := range opts {
 		if o.EnableCSP {
 			securitySect, err := cfg.NewSection("security")
@@ -311,12 +321,6 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = usersSection.NewKey("viewers_can_edit", "true")
 			require.NoError(t, err)
 		}
-		if o.DisableLegacyAlerting {
-			alertingSection, err := cfg.GetSection("alerting")
-			require.NoError(t, err)
-			_, err = alertingSection.NewKey("enabled", "false")
-			require.NoError(t, err)
-		}
 		if o.EnableUnifiedAlerting {
 			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
 			require.NoError(t, err)
@@ -342,6 +346,19 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 
+		if o.APIServerStorageType != "" {
+			section, err := getOrCreateSection("grafana-apiserver")
+			require.NoError(t, err)
+			_, err = section.NewKey("storage_type", o.APIServerStorageType)
+			require.NoError(t, err)
+
+			// Hardcoded local etcd until this is needed to run in CI
+			if o.APIServerStorageType == "etcd" {
+				_, err = section.NewKey("etcd_servers", "localhost:2379")
+				require.NoError(t, err)
+			}
+		}
+
 		if o.GRPCServerAddress != "" {
 			logSection, err := getOrCreateSection("grpc_server")
 			require.NoError(t, err)
@@ -349,15 +366,39 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 		// retry queries 3 times by default
-		queryRetries := 3
 		if o.QueryRetries != 0 {
 			queryRetries = int(o.QueryRetries)
 		}
-		logSection, err := getOrCreateSection("database")
-		require.NoError(t, err)
-		_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
-		require.NoError(t, err)
+
+		if o.NGAlertSchedulerBaseInterval > 0 {
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("scheduler_tick_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("min_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+		}
+
+		if o.GrafanaComAPIURL != "" {
+			grafanaComSection, err := getOrCreateSection("grafana_com")
+			require.NoError(t, err)
+			_, err = grafanaComSection.NewKey("api_url", o.GrafanaComAPIURL)
+			require.NoError(t, err)
+		}
+
+		if o.DualWriterDesiredModes != nil {
+			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
+			require.NoError(t, err)
+			for k, v := range o.DualWriterDesiredModes {
+				_, err = unifiedStorageMode.NewKey(k, fmt.Sprint(v))
+				require.NoError(t, err)
+			}
+		}
 	}
+	logSection, err := getOrCreateSection("database")
+	require.NoError(t, err)
+	_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
 	err = cfg.SaveTo(cfgPath)
@@ -382,6 +423,7 @@ type GrafanaOpts struct {
 	EnableFeatureToggles                  []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
+	NGAlertSchedulerBaseInterval          time.Duration
 	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64
@@ -397,19 +439,24 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+	APIServerStorageType                  string
+	GrafanaComAPIURL                      string
+	DualWriterDesiredModes                map[string]grafanarest.DualWriterMode
 }
 
-func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {
+func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
 	t.Helper()
 
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = 1
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 1
 	cmd.OrgID = 1
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(store, cfg)
+	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	o, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})

@@ -1,0 +1,248 @@
+import { screen, render, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { TestProvider } from 'test/helpers/TestProvider';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+
+import { selectors } from '@grafana/e2e-selectors';
+import { config, locationService } from '@grafana/runtime';
+import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { DashboardMeta } from 'app/types';
+
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+
+import { DashboardGridItem } from './DashboardGridItem';
+import { DashboardScene } from './DashboardScene';
+import { ToolbarActions } from './NavToolbarActions';
+
+jest.mock('app/features/playlist/PlaylistSrv', () => ({
+  playlistSrv: {
+    useState: jest.fn().mockReturnValue({ isPlaying: false }),
+    setState: jest.fn(),
+    isPlaying: true,
+    start: jest.fn(),
+    next: jest.fn(),
+    prev: jest.fn(),
+    stop: jest.fn(),
+  },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual<Record<string, any>>('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: jest.fn(),
+    getInstanceSettings: jest.fn().mockReturnValue({
+      uid: 'datasource-uid',
+      name: 'datasource-name',
+    }),
+  }),
+}));
+
+describe('NavToolbarActions', () => {
+  describe('Given an already saved dashboard', () => {
+    it('Should show correct buttons when not in editing', async () => {
+      setup();
+
+      expect(screen.queryByText('Save dashboard')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Add')).not.toBeInTheDocument();
+      expect(await screen.findByText('Edit')).toBeInTheDocument();
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+    });
+
+    it('Should show the correct buttons when playing a playlist', async () => {
+      jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
+      setup();
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+      expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+      expect(screen.queryByText('Share')).not.toBeInTheDocument();
+    });
+
+    it('Should call the playlist srv when using playlist controls', async () => {
+      jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
+      setup();
+
+      // Previous dashboard
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
+      await userEvent.click(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev));
+      expect(playlistSrv.prev).toHaveBeenCalledTimes(1);
+
+      // Next dashboard
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+      await userEvent.click(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next));
+      expect(playlistSrv.next).toHaveBeenCalledTimes(1);
+
+      // Stop playlist
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      await userEvent.click(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop));
+      expect(playlistSrv.stop).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should hide the playlist controls when it is not playing', async () => {
+      setup();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
+    });
+
+    it('Should show correct buttons when editing', async () => {
+      setup();
+
+      await userEvent.click(await screen.findByText('Edit'));
+
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Exit edit')).toBeInTheDocument();
+      expect(await screen.findByText('Add')).toBeInTheDocument();
+      expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+      expect(screen.queryByText('Share')).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
+    });
+
+    it('Should show correct buttons when in settings menu', async () => {
+      setup();
+
+      await userEvent.click(await screen.findByText('Edit'));
+      await userEvent.click(await screen.findByText('Settings'));
+
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
+    });
+
+    it('Should show correct buttons when editing a new panel', async () => {
+      const { dashboard } = setup();
+
+      await act(() => {
+        dashboard.onEnterEditMode();
+        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
+          .body as VizPanel;
+        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel, true) });
+      });
+
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Discard panel')).toBeInTheDocument();
+      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+    });
+
+    it('Should show correct buttons when editing an existing panel', async () => {
+      const { dashboard } = setup();
+
+      await act(() => {
+        dashboard.onEnterEditMode();
+        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
+          .body as VizPanel;
+        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel) });
+      });
+
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
+      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+    });
+  });
+
+  describe('Given new sharing button', () => {
+    it('Should show old share button when newDashboardSharingComponent FF is disabled', async () => {
+      setup();
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
+      expect(newShareButton).not.toBeInTheDocument();
+      const newExportButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).not.toBeInTheDocument();
+    });
+    it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
+      setup();
+
+      expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
+      const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
+      expect(newShareButton).toBeInTheDocument();
+    });
+    it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
+      setup();
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).toBeInTheDocument();
+    });
+  });
+
+  describe('Snapshot', () => {
+    it('should show link button when is a snapshot', () => {
+      setup({
+        isSnapshot: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+    it('should not show link button when is not found dashboard', () => {
+      setup({
+        isSnapshot: true,
+        dashboardNotFound: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).not.toBeInTheDocument();
+    });
+  });
+});
+
+function setup(meta?: DashboardMeta) {
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    meta: {
+      canEdit: true,
+      isNew: false,
+      canMakeEditable: true,
+      canSave: true,
+      canShare: true,
+      canStar: true,
+      canAdmin: true,
+      canDelete: true,
+      ...meta,
+    },
+    title: 'hello',
+    uid: 'dash-1',
+    body: new SceneGridLayout({
+      children: [
+        new DashboardGridItem({
+          key: 'griditem-1',
+          x: 0,
+          body: new VizPanel({
+            title: 'Panel A',
+            key: 'panel-1',
+            pluginId: 'table',
+            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+          }),
+        }),
+        new DashboardGridItem({
+          body: new VizPanel({
+            title: 'Panel B',
+            key: 'panel-2',
+            pluginId: 'table',
+          }),
+        }),
+      ],
+    }),
+  });
+
+  const context = getGrafanaContextMock();
+
+  locationService.push('/');
+
+  render(
+    <TestProvider grafanaContext={context}>
+      <UrlSyncContextProvider scene={dashboard}>
+        <ToolbarActions dashboard={dashboard} />
+      </UrlSyncContextProvider>
+    </TestProvider>
+  );
+
+  const actions = context.chrome.state.getValue().actions;
+
+  return { dashboard, actions };
+}

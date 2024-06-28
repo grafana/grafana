@@ -1,5 +1,7 @@
 import { omit } from 'lodash';
 
+import { DateTime, dateTime, dateTimeForTimeZone } from '@grafana/data';
+
 import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
@@ -25,22 +27,27 @@ export function filterAndSortQueries(
   return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
-export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) => {
-  const today = new Date();
-  const date = new Date(today.setDate(today.getDate() - days));
+export const createRetentionPeriodBoundary = (
+  days: number,
+  options: { isLastTs: boolean; tz?: string; now?: DateTime }
+): number => {
+  let now = options.now;
+  if (!now) {
+    now = options.tz ? dateTimeForTimeZone(options.tz) : dateTime();
+  }
+  now.add(-days, 'd');
+
   /*
    * As a retention period boundaries, we consider:
    * - The last timestamp equals to the 24:00 of the last day of retention
    * - The first timestamp that equals to the 00:00 of the first day of retention
    */
-  const boundary = isLastTs ? date.setHours(24, 0, 0, 0) : date.setHours(0, 0, 0, 0);
-  return boundary;
+  const boundary = options.isLastTs ? now.endOf('d') : now.startOf('d');
+  return boundary.valueOf();
 };
 
 function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
-  const filter1 = createRetentionPeriodBoundary(timeFilter[0], true); // probably the vars should have a different name
-  const filter2 = createRetentionPeriodBoundary(timeFilter[1], false);
-  return queries.filter((q) => q.createdAt < filter1 && q.createdAt > filter2);
+  return queries.filter((q) => q.createdAt > timeFilter[0] && q.createdAt < timeFilter[1]);
 }
 
 function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
@@ -57,8 +64,8 @@ function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: 
 
     const listOfMatchingQueries = query.queries.filter((query) =>
       // Remove fields in which we don't want to be searching
-      Object.values(omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some(
-        (value) => value?.toString().includes(searchFilter)
+      Object.values(omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value) =>
+        value?.toString().includes(searchFilter)
       )
     );
 
@@ -94,6 +101,7 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
 export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
   starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
-  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
+  legacyActiveDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly', // @deprecated
+  activeDatasourcesOnly: 'grafana.explore.richHistory.activeDatasourcesOnly',
   datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };

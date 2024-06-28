@@ -24,11 +24,12 @@ type ClientV2 struct {
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
+	grpcplugin.AdmissionClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
 
-func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (pluginClient, error) {
+func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (*ClientV2, error) {
 	rawDiagnostics, err := rpcClient.Dispense("diagnostics")
 	if err != nil {
 		return nil, err
@@ -40,6 +41,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawData, err := rpcClient.Dispense("data")
+	if err != nil {
+		return nil, err
+	}
+
+	rawAdmission, err := rpcClient.Dispense("admission")
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +65,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		return nil, err
 	}
 
-	c := ClientV2{}
+	c := &ClientV2{}
 	if rawDiagnostics != nil {
 		if diagnosticsClient, ok := rawDiagnostics.(grpcplugin.DiagnosticsClient); ok {
 			c.DiagnosticsClient = diagnosticsClient
@@ -75,6 +81,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	if rawData != nil {
 		if dataClient, ok := rawData.(grpcplugin.DataClient); ok {
 			c.DataClient = dataClient
+		}
+	}
+
+	if rawAdmission != nil {
+		if admissionClient, ok := rawAdmission.(grpcplugin.AdmissionClient); ok {
+			c.AdmissionClient = admissionClient
 		}
 	}
 
@@ -108,7 +120,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	return &c, nil
+	return c, nil
 }
 
 func (c *ClientV2) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
@@ -256,4 +268,61 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			return err
 		}
 	}
+}
+
+func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if c.AdmissionClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().AdmissionRequest(req)
+	protoResp, err := c.AdmissionClient.ValidateAdmission(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to ValidateAdmission", err)
+	}
+
+	return backend.FromProto().ValidationResponse(protoResp), nil
+}
+
+func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if c.AdmissionClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().AdmissionRequest(req)
+	protoResp, err := c.AdmissionClient.MutateAdmission(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to MutateAdmission", err)
+	}
+
+	return backend.FromProto().MutationResponse(protoResp), nil
+}
+
+func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if c.AdmissionClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().ConversionRequest(req)
+	protoResp, err := c.AdmissionClient.ConvertObject(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to ConvertObject", err)
+	}
+
+	return backend.FromProto().ConversionResponse(protoResp), nil
 }

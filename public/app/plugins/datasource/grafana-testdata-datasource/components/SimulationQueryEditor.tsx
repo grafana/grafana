@@ -1,11 +1,11 @@
-import React, { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrameJSON, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { SimulationQuery } from '../dataquery.gen';
+import { SimulationQuery } from '../dataquery';
 
 import { SimulationSchemaForm } from './SimulationSchemaForm';
 
@@ -25,7 +25,7 @@ interface SimInfo {
 
 export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
-  const simKey = simQuery.key ?? ({} as typeof simQuery.key);
+  const simKey = simQuery.key ?? {};
   // keep track of updated config state to pass down to form
   const [cfgValue, setCfgValue] = useState<Record<string, any>>({});
 
@@ -90,7 +90,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.postResource('sim/' + path, config).then((res) => {
+    ds.postResource<SimInfo>('sim/' + path, config).then((res) => {
       setCfgValue(res.config);
     });
   };

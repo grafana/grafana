@@ -1,5 +1,6 @@
 import { FieldType, GrafanaConfig, locationUtil, toDataFrame, VariableOrigin } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
+import { DashboardLink } from '@grafana/schema';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv, setTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TimeModel } from 'app/features/dashboard/state/TimeModel';
@@ -32,7 +33,7 @@ describe('linkSrv', () => {
     const timeSrv = new TimeSrv({} as ContextSrv);
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
-    _dashboard.refresh = false;
+    _dashboard.refresh = undefined;
     setTimeSrv(timeSrv);
 
     templateSrv = initTemplateSrv('key', [
@@ -176,9 +177,27 @@ describe('linkSrv', () => {
     it('converts link urls', () => {
       const linkUrl = linkSrv.getLinkUrl({
         url: '/graph',
+        asDropdown: false,
+        icon: 'external link',
+        targetBlank: false,
+        includeVars: false,
+        keepTime: false,
+        tags: [],
+        title: 'Visit home',
+        tooltip: 'Visit home',
+        type: 'link',
       });
       const linkUrlWithVar = linkSrv.getLinkUrl({
         url: '/graph?home=$home',
+        asDropdown: false,
+        icon: 'external link',
+        targetBlank: false,
+        includeVars: false,
+        keepTime: false,
+        tags: [],
+        title: 'Visit home',
+        tooltip: 'Visit home',
+        type: 'link',
       });
 
       expect(linkUrl).toBe('/graph');
@@ -187,8 +206,16 @@ describe('linkSrv', () => {
 
     it('appends current dashboard time range if keepTime is true', () => {
       const anchorInfoKeepTime = linkSrv.getLinkUrl({
-        keepTime: true,
         url: '/graph',
+        asDropdown: false,
+        icon: 'external link',
+        targetBlank: false,
+        includeVars: false,
+        keepTime: true,
+        tags: [],
+        title: 'Visit home',
+        tooltip: 'Visit home',
+        type: 'link',
       });
 
       expect(anchorInfoKeepTime).toBe('/graph?from=now-1h&to=now');
@@ -196,16 +223,33 @@ describe('linkSrv', () => {
 
     it('adds all variables to the url if includeVars is true', () => {
       const anchorInfoIncludeVars = linkSrv.getLinkUrl({
-        includeVars: true,
         url: '/graph',
+        asDropdown: false,
+        icon: 'external link',
+        targetBlank: false,
+        includeVars: true,
+        keepTime: false,
+        tags: [],
+        title: 'Visit home',
+        tooltip: 'Visit home',
+        type: 'link',
       });
 
       expect(anchorInfoIncludeVars).toBe('/graph?var-home=127.0.0.1&var-server1=192.168.0.100');
     });
 
     it('respects config disableSanitizeHtml', () => {
-      const anchorInfo = {
+      const anchorInfo: DashboardLink = {
         url: 'javascript:alert(document.domain)',
+        asDropdown: false,
+        icon: 'external link',
+        targetBlank: false,
+        includeVars: false,
+        keepTime: false,
+        tags: [],
+        title: 'Visit home',
+        tooltip: 'Visit home',
+        type: 'link',
       };
 
       expect(linkSrv.getLinkUrl(anchorInfo)).toBe('about:blank');

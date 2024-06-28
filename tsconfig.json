@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react",
+    "jsx": "react-jsx",
     "baseUrl": "public/",
     "outDir": "public/dist",
     "rootDirs": ["public/"],
@@ -10,7 +10,6 @@
     "useUnknownInCatchVariables": true,
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
-    "preserveSymlinks": true,
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
     }
@@ -19,7 +18,7 @@
   "include": [
     "public/app/**/*.ts*",
     "public/e2e-test/**/*.ts",
-    "public/test/**/*.ts",
+    "public/test/**/*.ts*",
     "public/vendor/**/*.ts",
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"

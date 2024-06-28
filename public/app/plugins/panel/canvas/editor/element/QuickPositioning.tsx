@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { IconButton, useStyles2 } from '@grafana/ui/src';
-import { HorizontalConstraint, Placement, QuickPlacement, VerticalConstraint } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { QuickPlacement } from 'app/features/canvas/types';
+
+import { HorizontalConstraint, VerticalConstraint, Placement } from '../../panelcfg.gen';
 
 import { CanvasEditorOptions } from './elementEditor';
 
@@ -110,13 +111,13 @@ export const QuickPositioning = ({ onPositionChange, element, settings }: Props)
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonGroup: css`
-    display: flex;
-    flex-wrap: wrap;
-    padding: 12px 0 12px 0;
-  `,
-  button: css`
-    margin-left: 5px;
-    margin-right: 5px;
-  `,
+  buttonGroup: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    padding: '12px 0 12px 0',
+  }),
+  button: css({
+    marginLeft: '5px',
+    marginRight: '5px',
+  }),
 });

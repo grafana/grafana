@@ -1,13 +1,13 @@
-import { css, cx } from '@emotion/css';
-import React from 'react';
-import { useToggle } from 'react-use';
+import { css } from '@emotion/css';
+import * as React from 'react';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Icon, useStyles2, RadioButtonGroup, MultiSelect, Input, clearButtonStyles, Button } from '@grafana/ui';
+import { useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
 
 import { Query } from '../types';
 
 import { EditorField } from './EditorField';
+import { QueryOptionGroup } from './QueryOptionGroup';
 import { Stack } from './Stack';
 
 export interface Props {
@@ -34,7 +34,6 @@ function getTypeOptions(app?: CoreApp) {
  * Base on QueryOptionGroup component from grafana/ui but that is not available yet.
  */
 export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
-  const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
   const typeOptions = getTypeOptions(app);
   const groupByOptions = labels
@@ -43,26 +42,21 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
         value: l,
       }))
     : [];
-  const buttonStyles = useStyles2(clearButtonStyles);
+
+  let collapsedInfo = [`Type: ${query.queryType}`];
+  if (query.groupBy?.length) {
+    collapsedInfo.push(`Group by: ${query.groupBy.join(', ')}`);
+  }
+  if (query.spanSelector?.length) {
+    collapsedInfo.push(`Span ID: ${query.spanSelector.join(', ')}`);
+  }
+  if (query.maxNodes) {
+    collapsedInfo.push(`Max nodes: ${query.maxNodes}`);
+  }
 
   return (
     <Stack gap={0} direction="column">
-      <Button className={cx(styles.header, buttonStyles)} onClick={toggleOpen} title="Click to edit options">
-        <div className={styles.toggle}>
-          <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-        </div>
-        <h6 className={styles.title}>Options</h6>
-        {!isOpen && (
-          <div className={styles.description}>
-            {[`Type: ${query.queryType}`, query.groupBy?.length ? `Group by: ${query.groupBy.join(', ')}` : undefined]
-              .filter((v) => v)
-              .map((v, i) => (
-                <span key={i}>{v}</span>
-              ))}
-          </div>
-        )}
-      </Button>
-      {isOpen && (
+      <QueryOptionGroup title="Options" collapsedInfo={collapsedInfo}>
         <div className={styles.body}>
           <EditorField label={'Query Type'}>
             <RadioButtonGroup
@@ -92,6 +86,19 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
+          <EditorField label={'Span ID'} tooltip={<>Sets the span ID from which to search for profiles.</>}>
+            <Input
+              value={query.spanSelector || ['']}
+              type="string"
+              placeholder="64f170a95f537095"
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                onQueryChange({
+                  ...query,
+                  spanSelector: event.currentTarget.value !== '' ? [event.currentTarget.value] : [],
+                });
+              }}
+            />
+          </EditorField>
           <EditorField label={'Max Nodes'} tooltip={<>Sets the maximum number of nodes to return in the flamegraph.</>}>
             <Input
               value={query.maxNodes || ''}
@@ -105,7 +112,7 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
             />
           </EditorField>
         </div>
-      )}
+      </QueryOptionGroup>
     </Stack>
   );
 }
@@ -120,38 +127,11 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.primary,
       },
     }),
-    header: css({
-      display: 'flex',
-      cursor: 'pointer',
-      alignItems: 'baseline',
-      color: theme.colors.text.primary,
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-      },
-    }),
-    title: css({
-      flexGrow: 1,
-      overflow: 'hidden',
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      margin: 0,
-    }),
-    description: css({
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      paddingLeft: theme.spacing(2),
-      gap: theme.spacing(2),
-      display: 'flex',
-    }),
     body: css({
       display: 'flex',
       paddingTop: theme.spacing(2),
       gap: theme.spacing(2),
       flexWrap: 'wrap',
-    }),
-    toggle: css({
-      color: theme.colors.text.secondary,
-      marginRight: `${theme.spacing(1)}`,
     }),
   };
 };

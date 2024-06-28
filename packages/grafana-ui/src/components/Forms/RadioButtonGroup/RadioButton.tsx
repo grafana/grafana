@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { StringSelector } from '@grafana/e2e-selectors';
+import { StringSelector, selectors } from '@grafana/e2e-selectors';
 
-import { useTheme2, stylesFactory } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
@@ -41,23 +42,34 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
     },
     ref
   ) => {
-    const theme = useTheme2();
-    const styles = getRadioButtonStyles(theme, size, fullWidth);
+    const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
 
-    return (
-      <div className={styles.radioOption}>
-        <input
-          type="radio"
-          className={styles.radio}
-          onChange={onChange}
-          onClick={onClick}
-          disabled={disabled}
-          id={id}
-          checked={active}
-          name={name}
-          aria-label={ariaLabel || description}
-          ref={ref}
-        />
+    const inputRadioButton = (
+      <input
+        type="radio"
+        className={styles.radio}
+        onChange={onChange}
+        onClick={onClick}
+        disabled={disabled}
+        id={id}
+        checked={active}
+        name={name}
+        aria-label={ariaLabel}
+        ref={ref}
+      />
+    );
+    return description ? (
+      <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
+        <Tooltip content={description} placement="bottom">
+          {inputRadioButton}
+        </Tooltip>
+        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
+          {children}
+        </label>
+      </div>
+    ) : (
+      <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
+        {inputRadioButton}
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
         </label>
@@ -68,7 +80,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
 RadioButton.displayName = 'RadioButton';
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
+const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
   const textColor = theme.colors.text.secondary;
@@ -87,15 +99,16 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
     radio: css({
       position: 'absolute',
       opacity: 0,
-      zIndex: -1000,
+      zIndex: 2,
       width: '100% !important',
       height: '100%',
+      cursor: 'pointer',
 
       '&:checked + label': {
         color: theme.colors.text.primary,
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.action.selected,
-        zIndex: 3,
+        zIndex: 1,
       },
 
       '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
@@ -110,6 +123,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
     radioLabel: css({
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       fontSize,
       height: `${labelHeight}px`,
       // Deduct border from line-height for perfect vertical centering on windows and linux
@@ -119,7 +133,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       cursor: 'pointer',
-      zIndex: 1,
       userSelect: 'none',
       whiteSpace: 'nowrap',
       flexGrow: 1,
@@ -129,4 +142,4 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       },
     }),
   };
-});
+};

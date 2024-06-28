@@ -1,13 +1,13 @@
 import { startCase } from 'lodash';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
-import { FieldConfigEditorBuilder, FieldConfigEditorProps } from '@grafana/data';
+import { FieldConfigEditorBuilder, StandardEditorProps } from '@grafana/data';
 import { HideableFieldConfig, HideSeriesConfig } from '@grafana/schema';
 
 import { FilterPill } from '../../components/FilterPill/FilterPill';
-import { HorizontalGroup } from '../../components/Layout/Layout';
+import { Stack } from '../../components/Layout/Stack/Stack';
 
-const SeriesConfigEditor = ({ value, onChange }: FieldConfigEditorProps<HideSeriesConfig, {}>) => {
+const SeriesConfigEditor = ({ value, onChange }: StandardEditorProps<HideSeriesConfig, {}>) => {
   const onChangeToggle = useCallback(
     (prop: keyof HideSeriesConfig) => {
       onChange({ ...value, [prop]: !value[prop] });
@@ -16,7 +16,7 @@ const SeriesConfigEditor = ({ value, onChange }: FieldConfigEditorProps<HideSeri
   );
 
   return (
-    <HorizontalGroup spacing="xs">
+    <Stack gap={0.5}>
       {Object.keys(value).map((k) => {
         const key = k as keyof HideSeriesConfig;
         return (
@@ -29,7 +29,7 @@ const SeriesConfigEditor = ({ value, onChange }: FieldConfigEditorProps<HideSeri
           />
         );
       })}
-    </HorizontalGroup>
+    </Stack>
   );
 };
 

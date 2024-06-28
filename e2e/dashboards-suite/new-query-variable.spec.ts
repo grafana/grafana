@@ -69,7 +69,7 @@ describe('Variables - Query - Add variable', () => {
     });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().should('not.exist');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
   });
 
   it('adding a single value query variable', () => {
@@ -108,7 +108,7 @@ describe('Variables - Query - Add variable', () => {
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        cy.get('.variable-link-wrapper').should('be.visible').click();
+        e2e.components.Variables.variableLinkWrapper().should('be.visible').click();
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
@@ -152,7 +152,7 @@ describe('Variables - Query - Add variable', () => {
       cy.get('input[type="checkbox"]').click({ force: true }).should('be.checked');
     });
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().within((input) => {
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().within((input) => {
       expect(input.attr('placeholder')).equals('blank = auto');
       expect(input.val()).equals('');
     });
@@ -168,7 +168,7 @@ describe('Variables - Query - Add variable', () => {
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        cy.get('.variable-link-wrapper').should('be.visible').click();
+        e2e.components.Variables.variableLinkWrapper().should('be.visible').click();
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {

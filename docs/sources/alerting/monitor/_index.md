@@ -3,7 +3,7 @@ aliases:
   - ./meta-monitoring/ # /docs/grafana/<GRAFANA_VERSION>/alerting/meta-monitoring/
   - ./set-up/meta-monitoring/ # /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/meta-monitoring/
 canonical: https://grafana.com/docs/grafana/latest/alerting/monitor/
-description: Meta monitoring
+description: Monitor your alerting metrics to ensure you identify potential issues before they become critical.
 keywords:
   - grafana
   - alerting
@@ -29,9 +29,9 @@ Identify which metrics are critical to your monitoring system (i.e. Grafana) and
 
 You can use meta-monitoring metrics to understand the health of your alerting system in the following ways:
 
-1. [Optional] Create a dashboard in Grafana that uses this metric in a panel (just like you would for any other kind of metric).
-2. [Optional] Create an alert rule in Grafana that checks this metric regularly (just like you would do for any other kind of alert rule).
-3. [Optional] Use the Explore module in Grafana.
+1. Optional: Create a dashboard in Grafana that uses this metric in a panel (just like you would for any other kind of metric).
+2. Optional: Create an alert rule in Grafana that checks this metric regularly (just like you would do for any other kind of alert rule).
+3. Optional: Use the Explore module in Grafana.
 
 ## Metrics for Grafana-managed alerts
 
@@ -68,19 +68,19 @@ This metric is a gauge that shows you the number of alert rules scheduled. An al
 
 #### grafana_alerting_schedule_periodic_duration_seconds_bucket
 
-This metric is a histogram that shows you the time it takes to process an individual tick in the scheduler that evaluates alert rules. If the scheduler takes longer than 10 seconds to process a tick then pending evaluations will start to accumulate such that alert rules might later than expected.
+This metric is a histogram that shows you the time it takes to process an individual tick in the scheduler that evaluates alert rules. If the scheduler takes longer than 10 seconds to process a tick then pending evaluations start to accumulate such that alert rules might later than expected.
 
 #### grafana_alerting_schedule_query_alert_rules_duration_seconds_bucket
 
-This metric is a histogram that shows you how long it takes the scheduler to fetch the latest rules from the database. If this metric is elevated then so will `schedule_periodic_duration_seconds`.
+This metric is a histogram that shows you how long it takes the scheduler to fetch the latest rules from the database. If this metric is elevated, `schedule_periodic_duration_seconds` is also evaluated.
 
 #### grafana_alerting_scheduler_behind_seconds
 
-This metric is a gauge that shows you the number of seconds that the scheduler is behind where it should be. This number will increase if `schedule_periodic_duration_seconds` is longer than 10 seconds, and decrease when it is less than 10 seconds. The smallest possible value of this metric is 0.
+This metric is a gauge that shows you the number of seconds that the scheduler is behind where it should be. This number increases if `schedule_periodic_duration_seconds` is longer than 10 seconds, and decrease when it is less than 10 seconds. The smallest possible value of this metric is 0.
 
 #### grafana_alerting_notification_latency_seconds_bucket
 
-This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric will let you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
+This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric lets you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
 
 ## Metrics for Mimir-managed alerts
 
@@ -121,7 +121,7 @@ This metric is a counter that shows you the number of active, suppressed, and un
 
 #### alertmanager_alerts_invalid_total
 
-This metric is a counter that shows you the number of invalid alerts that were sent to Alertmanager. This counter should not exceed 0, and so in most cases you will want to create an alert that fires if whenever this metric increases.
+This metric is a counter that shows you the number of invalid alerts that were sent to Alertmanager. This counter should not exceed 0, and so in most cases, create an alert that fires if whenever this metric increases.
 
 #### alertmanager_notifications_total
 
@@ -129,7 +129,7 @@ This metric is a counter that shows you how many notifications have been sent by
 
 #### alertmanager_notifications_failed_total
 
-This metric is a counter that shows you how many notifications have failed in total. This metric also uses a label "integration" to show the number of failed notifications by integration, such as failed emails. In most cases you will want to use the `rate` function to understand how often notifications are failing to be sent.
+This metric is a counter that shows you how many notifications have failed in total. This metric also uses a label "integration" to show the number of failed notifications by integration, such as failed emails. In most cases, use the `rate` function to understand how often notifications are failing to be sent.
 
 #### alertmanager_notification_latency_seconds_bucket
 
@@ -157,4 +157,4 @@ This metric is a gauge. It has a constant value `1`, and contains a label called
 
 #### alertmanager_cluster_reconnections_failed_total
 
-This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
+This metric is a counter that shows you the number of failed peer connection attempts. In most cases you should use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.

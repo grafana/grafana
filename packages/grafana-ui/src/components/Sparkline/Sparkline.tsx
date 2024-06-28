@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { AlignedData, Range } from 'uplot';
 
 import {
@@ -10,6 +10,7 @@ import {
   FieldSparkline,
   FieldType,
   getFieldColorModeForField,
+  nullToValue,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -62,7 +63,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
   }
 
   static getDerivedStateFromProps(props: SparklineProps, state: State) {
-    const frame = preparePlotFrame(props.sparkline, props.config);
+    const _frame = preparePlotFrame(props.sparkline, props.config);
+    const frame = nullToValue(_frame);
     if (!frame) {
       return { ...state };
     }
@@ -84,7 +86,12 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     let rebuildConfig = false;
 
     if (prevProps.sparkline !== this.props.sparkline) {
-      rebuildConfig = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
+      const isStructureChanged = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
+      const isRangeChanged = !isEqual(
+        alignedDataFrame.fields[1].state?.range,
+        prevState.alignedDataFrame.fields[1].state?.range
+      );
+      rebuildConfig = isStructureChanged || isRangeChanged;
     } else {
       rebuildConfig = !isEqual(prevProps.config, this.props.config);
     }
@@ -96,6 +103,12 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   getYRange(field: Field): Range.MinMax {
     let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
+    const noValue = +this.state.alignedDataFrame.fields[1].config?.noValue!;
+
+    if (!Number.isNaN(noValue)) {
+      min = Math.min(min!, +noValue);
+      max = Math.max(max!, +noValue);
+    }
 
     if (min === max) {
       if (min === 0) {

@@ -1,8 +1,6 @@
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
-import { CustomVariableModel, DataQueryError, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CustomVariableModel, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
 
 import { CloudWatchMetricsQueryRunner } from '../query-runner/CloudWatchMetricsQueryRunner';
 import { CloudWatchJsonData, CloudWatchQuery } from '../types';
@@ -11,37 +9,18 @@ import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchData
 import { TimeRangeMock } from './timeRange';
 
 export function setupMockedMetricsQueryRunner({
-  data = {
-    results: {},
-  },
+  response = { data: [] },
   variables,
-  mockGetVariableName = true,
-  throws = false,
   instanceSettings = CloudWatchSettings,
 }: {
-  data?: BackendDataSourceResponse | DataQueryError;
+  response?: DataQueryResponse;
   variables?: CustomVariableModel[];
-  mockGetVariableName?: boolean;
-  throws?: boolean;
   instanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
-  let templateService = new TemplateSrv();
-  if (variables) {
-    templateService = setupMockedTemplateService(variables);
-    if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name.replace('$', '');
-    }
-  }
+  const templateService = setupMockedTemplateService(variables);
 
+  const queryMock = jest.fn().mockImplementation(() => of(response));
   const runner = new CloudWatchMetricsQueryRunner(instanceSettings, templateService);
-  const fetchMock = throws
-    ? jest.fn().mockImplementation(() => throwError(data))
-    : jest.fn().mockReturnValue(of({ data }));
-
-  setBackendSrv({
-    ...getBackendSrv(),
-    fetch: fetchMock,
-  });
 
   const request: DataQueryRequest<CloudWatchQuery> = {
     range: TimeRangeMock,
@@ -56,5 +35,5 @@ export function setupMockedMetricsQueryRunner({
     startTime: 0,
   };
 
-  return { runner, fetchMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
+  return { runner, queryMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
 }

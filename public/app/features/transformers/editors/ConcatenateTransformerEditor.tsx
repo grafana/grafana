@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import { PureComponent, ChangeEvent } from 'react';
 
 import {
   DataTransformerID,
@@ -12,7 +12,9 @@ import {
   ConcatenateFrameNameMode,
   ConcatenateTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/concat';
-import { Input, Select } from '@grafana/ui';
+import { InlineField, Input, Select } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
 
@@ -22,7 +24,7 @@ const nameModes: Array<SelectableValue<ConcatenateFrameNameMode>> = [
   { value: ConcatenateFrameNameMode.Drop, label: 'Ignore the frame name' },
 ];
 
-export class ConcatenateTransformerEditor extends React.PureComponent<ConcatenateTransformerEditorProps> {
+export class ConcatenateTransformerEditor extends PureComponent<ConcatenateTransformerEditorProps> {
   constructor(props: ConcatenateTransformerEditorProps) {
     super(props);
   }
@@ -55,29 +57,18 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
 
     return (
       <div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <div className="gf-form-label width-8">Name</div>
-            <Select
-              className="width-18"
-              options={nameModes}
-              value={nameModes.find((v) => v.value === frameNameMode)}
-              onChange={this.onModeChanged}
-            />
-          </div>
-        </div>
+        <InlineField label="Name" labelWidth={16} grow>
+          <Select
+            width={36}
+            options={nameModes}
+            value={nameModes.find((v) => v.value === frameNameMode)}
+            onChange={this.onModeChanged}
+          />
+        </InlineField>
         {frameNameMode === ConcatenateFrameNameMode.Label && (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="gf-form-label width-8">Label</div>
-              <Input
-                className="width-18"
-                value={options.frameNameLabel ?? ''}
-                placeholder="frame"
-                onChange={this.onLabelChanged}
-              />
-            </div>
-          </div>
+          <InlineField label="Label" labelWidth={16} grow>
+            <Input width={36} value={options.frameNameLabel ?? ''} placeholder="frame" onChange={this.onLabelChanged} />
+          </InlineField>
         )}
       </div>
     );
@@ -88,8 +79,9 @@ export const concatenateTransformRegistryItem: TransformerRegistryItem<Concatena
   id: DataTransformerID.concatenate,
   editor: ConcatenateTransformerEditor,
   transformation: standardTransformers.concatenateTransformer,
-  name: 'Concatenate fields',
+  name: standardTransformers.concatenateTransformer.name,
   description:
     'Combine all fields into a single frame.  Values will be appended with undefined values if not the same length.',
   categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(DataTransformerID.concatenate).helperDocs,
 };

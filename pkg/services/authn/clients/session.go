@@ -7,32 +7,29 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
-	features *featuremgmt.FeatureManager) *Session {
+func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService, authInfoService login.AuthInfoService) *Session {
 	return &Session{
-		cfg:            cfg,
-		features:       features,
-		sessionService: sessionService,
-		log:            log.New(authn.ClientSession),
+		cfg:             cfg,
+		log:             log.New(authn.ClientSession),
+		sessionService:  sessionService,
+		authInfoService: authInfoService,
 	}
 }
 
 type Session struct {
-	cfg            *setting.Cfg
-	features       *featuremgmt.FeatureManager
-	sessionService auth.UserTokenService
-	log            log.Logger
+	cfg             *setting.Cfg
+	log             log.Logger
+	sessionService  auth.UserTokenService
+	authInfoService login.AuthInfoService
 }
 
 func (s *Session) Name() string {
@@ -55,20 +52,34 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
-		if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
-			return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
-		}
+	if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
+		return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
 	}
 
-	return &authn.Identity{
-		ID:           authn.NamespacedID(authn.NamespaceUser, token.UserId),
+	ident := &authn.Identity{
+		ID:           authn.NewNamespaceID(authn.NamespaceUser, token.UserId),
 		SessionToken: token,
 		ClientParams: authn.ClientParams{
 			FetchSyncedUser: true,
 			SyncPermissions: true,
 		},
-	}, nil
+	}
+
+	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: token.UserId})
+	if err != nil {
+		if !errors.Is(err, user.ErrUserNotFound) {
+			s.log.FromContext(ctx).Error("Failed to fetch auth info", "err", err)
+		}
+		return ident, nil
+	}
+
+	ident.AuthID = info.AuthId
+	ident.AuthenticatedBy = info.AuthModule
+	return ident, nil
+}
+
+func (s *Session) IsEnabled() bool {
+	return true
 }
 
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
@@ -85,41 +96,4 @@ func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
 
 func (s *Session) Priority() uint {
 	return 60
-}
-
-func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.SessionToken == nil || s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
-		return nil
-	}
-
-	r.Resp.Before(func(w web.ResponseWriter) {
-		if w.Written() || errors.Is(ctx.Err(), context.Canceled) {
-			return
-		}
-
-		// FIXME (jguer): get real values
-		addr := web.RemoteAddr(r.HTTPRequest)
-		userAgent := r.HTTPRequest.UserAgent()
-
-		// addr := reqContext.RemoteAddr()
-		ip, err := network.GetIPFromAddress(addr)
-		if err != nil {
-			s.log.Debug("Failed to get client IP address", "addr", addr, "err", err)
-			ip = nil
-		}
-		rotated, newToken, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
-		if err != nil {
-			s.log.Error("Failed to rotate token", "error", err)
-			return
-		}
-
-		if rotated {
-			identity.SessionToken = newToken
-			s.log.Debug("Rotated session token", "user", identity.ID)
-
-			authn.WriteSessionCookie(w, s.cfg, identity.SessionToken)
-		}
-	})
-
-	return nil
 }

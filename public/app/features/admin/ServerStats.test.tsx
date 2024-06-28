@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
+
+import config from 'app/core/config';
 
 import { ServerStats } from './ServerStats';
 import { ServerStat } from './state/apis';
@@ -10,6 +11,7 @@ const stats: ServerStat = {
   activeSessions: 1,
   activeUsers: 1,
   activeViewers: 0,
+  activeDevices: 1,
   admins: 1,
   alerts: 5,
   dashboards: 1599,
@@ -43,7 +45,15 @@ describe('ServerStats', () => {
     expect(screen.getByText('Snapshots')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage dashboards' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage data sources' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage alerts' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage users' })).toBeInTheDocument();
+  });
+
+  it('Should render page with anonymous stats', async () => {
+    config.anonymousEnabled = true;
+    config.anonymousDeviceLimit = 10;
+    render(<ServerStats />);
+    expect(await screen.findByRole('heading', { name: /instance statistics/i })).toBeInTheDocument();
+    expect(screen.getByText('Active anonymous devices')).toBeInTheDocument();
   });
 });

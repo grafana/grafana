@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-import { NavModelItem } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
+import { NEW_LINK } from 'app/features/dashboard-scene/settings/links/utils';
 
 import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
-import { newLink } from '../LinksSettings/LinkSettingsEdit';
 
 import { SettingsPageProps } from './types';
 
@@ -20,7 +19,7 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
   };
 
   const onNew = () => {
-    dashboard.links = [...dashboard.links, { ...newLink }];
+    dashboard.links = [...dashboard.links, { ...NEW_LINK }];
     setIsNew(true);
     locationService.partial({ editIndex: dashboard.links.length - 1 });
   };
@@ -32,11 +31,7 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
 
   const isEditing = editIndex !== undefined;
 
-  let pageNav: NavModelItem | undefined;
-
-  if (config.featureToggles.dockedMegaMenu) {
-    pageNav = sectionNav.node.parentItem;
-  }
+  let pageNav = sectionNav.node.parentItem;
 
   if (isEditing) {
     const title = isNew ? 'New link' : 'Edit link';
@@ -46,13 +41,11 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
       subTitle: description,
     };
 
-    if (config.featureToggles.dockedMegaMenu) {
-      const parentUrl = sectionNav.node.url;
-      pageNav.parentItem = sectionNav.node.parentItem && {
-        ...sectionNav.node.parentItem,
-        url: parentUrl,
-      };
-    }
+    const parentUrl = sectionNav.node.url;
+    pageNav.parentItem = sectionNav.node.parentItem && {
+      ...sectionNav.node.parentItem,
+      url: parentUrl,
+    };
   }
 
   return (

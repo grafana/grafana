@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Field, StandardEditorProps } from '@grafana/data';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
@@ -47,7 +46,6 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
                 },
                 id: `arc-field-${i}`,
                 name: `arc-field-${i}`,
-                editor: () => null,
               }}
             />
             <ColorPicker

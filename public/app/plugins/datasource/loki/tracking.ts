@@ -1,17 +1,17 @@
 import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { QueryEditorMode } from '@grafana/experimental';
 import { reportInteraction, config } from '@grafana/runtime';
-import { variableRegex } from 'app/features/variables/utils';
-
-import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
 import {
   REF_ID_STARTER_ANNOTATION,
   REF_ID_DATA_SAMPLES,
   REF_ID_STARTER_LOG_ROW_CONTEXT,
   REF_ID_STARTER_LOG_VOLUME,
+  REF_ID_STARTER_LOG_SAMPLE,
 } from './datasource';
 import pluginJson from './plugin.json';
-import { getNormalizedLokiQuery, isLogsQuery, obfuscate, parseToNodeNamesArray } from './queryUtils';
+import { getNormalizedLokiQuery, isLogsQuery, obfuscate } from './queryUtils';
+import { variableRegex } from './querybuilder/parsingUtils';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
@@ -63,8 +63,8 @@ export const onDashboardLoadedHandler = ({
   try {
     // We only want to track visible Loki queries
     const lokiQueries = queries[pluginJson.id]
-      .filter((query) => !query.hide)
-      .map((query) => getNormalizedLokiQuery(query));
+      ?.filter((query) => !query.hide)
+      ?.map((query) => getNormalizedLokiQuery(query));
 
     if (!lokiQueries?.length) {
       return;
@@ -128,9 +128,15 @@ const isQueryWithChangedLegend = (query: LokiQuery): boolean => {
 };
 
 const shouldNotReportBasedOnRefId = (refId: string): boolean => {
-  const starters = [REF_ID_STARTER_ANNOTATION, REF_ID_STARTER_LOG_ROW_CONTEXT, REF_ID_STARTER_LOG_VOLUME];
+  const starters = [
+    REF_ID_STARTER_ANNOTATION,
+    REF_ID_STARTER_LOG_ROW_CONTEXT,
+    REF_ID_STARTER_LOG_VOLUME,
+    REF_ID_STARTER_LOG_SAMPLE,
+    REF_ID_DATA_SAMPLES,
+  ];
 
-  if (refId === REF_ID_DATA_SAMPLES || starters.some((starter) => refId.startsWith(starter))) {
+  if (starters.some((starter) => refId.startsWith(starter))) {
     return true;
   }
   return false;
@@ -158,7 +164,7 @@ export function trackQuery(
   // We only want to track usage for these specific apps
   const { app, targets: queries } = request;
 
-  if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
+  if (app !== CoreApp.Explore) {
     return;
   }
 
@@ -169,15 +175,13 @@ export function trackQuery(
       return;
     }
 
-    reportInteraction('grafana_loki_query_executed', {
-      app,
+    reportInteraction('grafana_explore_loki_query_executed', {
       grafana_version: config.buildInfo.version,
       editor_mode: query.editorMode,
       has_data: response.data.some((frame) => frame.length > 0),
       has_error: response.error !== undefined,
       legend: query.legendFormat,
       line_limit: query.maxLines,
-      parsed_query: parseToNodeNamesArray(query.expr).join(','),
       obfuscated_query: obfuscate(query.expr),
       query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,

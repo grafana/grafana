@@ -1,14 +1,15 @@
 package navtreeimpl
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -28,10 +29,11 @@ type ServiceImpl struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
 	accessControl        ac.AccessControl
+	authnService         authn.Service
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
-	features             *featuremgmt.FeatureManager
+	features             featuremgmt.FeatureToggles
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
@@ -50,11 +52,14 @@ type NavigationAppConfig struct {
 	Icon       string
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
+	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
+	license licensing.Licensing, authnService authn.Service) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
 		accessControl:        accessControl,
+		authnService:         authnService,
 		pluginStore:          pluginStore,
 		pluginSettings:       pluginSettings,
 		starService:          starService,
@@ -114,29 +119,27 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(dashboardLink)
 	}
 
-	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		exploreChildNavLinks := s.buildExploreNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
-			Id:         "explore",
+			Id:         navtree.NavIDExplore,
 			SubTitle:   "Explore your data",
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
 			Url:        s.cfg.AppSubURL + "/explore",
+			Children:   exploreChildNavLinks,
 		})
 	}
 
-	if setting.ProfileEnabled && c.IsSignedIn {
+	if s.cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
 	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.SignedInUser.GetOrgID()]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
-		if legacyAlertSection := s.buildLegacyAlertNavLinks(c); legacyAlertSection != nil {
-			treeRoot.AddSection(legacyAlertSection)
-		}
-	} else if uaVisibleForOrg {
+	if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
 			treeRoot.AddSection(alertingSection)
 		}
@@ -148,7 +151,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 
 	orgAdminNode, err := s.getAdminNode(c)
 
-	if orgAdminNode != nil {
+	if orgAdminNode != nil && len(orgAdminNode.Children) > 0 {
 		treeRoot.AddSection(orgAdminNode)
 	} else if err != nil {
 		return nil, err
@@ -190,15 +193,10 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 }
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
-	if setting.HelpEnabled {
-		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
-		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
-			helpVersion = setting.ApplicationName
-		}
-
+	if s.cfg.HelpEnabled {
+		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
-			SubTitle:   helpVersion,
 			Id:         "help",
 			Url:        "#",
 			Icon:       "question-circle",
@@ -231,10 +229,10 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
-	if c.SignedInUser.Login != c.SignedInUser.NameOrFallback() {
-		login = c.SignedInUser.Login
+	if c.SignedInUser.GetLogin() != c.SignedInUser.GetDisplayName() {
+		login = c.SignedInUser.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(c.Email)
+	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
 
 	children := []*navtree.NavLink{
 		{
@@ -253,7 +251,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		})
 	}
 
-	if !setting.DisableSignoutMenu {
+	if !s.cfg.DisableSignoutMenu {
 		// add sign out first
 		children = append(children, &navtree.NavLink{
 			Text:         "Sign out",
@@ -266,7 +264,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 
 	return &navtree.NavLink{
-		Text:       c.SignedInUser.NameOrFallback(),
+		Text:       c.SignedInUser.GetDisplayName(),
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
@@ -280,8 +278,9 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
 	query := star.GetUserStarsQuery{
-		UserID: c.SignedInUser.UserID,
+		UserID: userID,
 	}
 
 	starredDashboardResult, err := s.starService.GetByUser(c.Req.Context(), &query)
@@ -346,7 +345,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		if s.features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
@@ -354,15 +353,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Icon: "library-panel",
 			})
 		}
-	}
 
-	if s.features.IsEnabled(featuremgmt.FlagScenes) {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Scenes",
-			Id:   "scenes",
-			Url:  s.cfg.AppSubURL + "/scenes",
-			Icon: "apps",
-		})
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Recently Deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "dashboards/recently-deleted",
+				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
+			})
+		}
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
@@ -377,32 +376,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	}
 
 	return dashboardChildNavs
-}
-
-func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
-	var alertChildNavs []*navtree.NavLink
-	alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-		Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-	})
-
-	if c.HasRole(org.RoleEditor) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting/notifications",
-			Icon: "comment-alt-share",
-		})
-	}
-
-	var alertNav = navtree.NavLink{
-		Text:       "Alerting",
-		SubTitle:   "Learn about problems in your systems moments after they occur",
-		Id:         "alerting-legacy",
-		Icon:       "bell",
-		Children:   alertChildNavs,
-		SortWeight: navtree.WeightAlerting,
-		Url:        s.cfg.AppSubURL + "/alerting",
-	}
-
-	return &alertNav
 }
 
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
@@ -423,14 +396,31 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingInstanceRead),
+		ac.EvalPermission(ac.ActionAlertingInstancesExternalRead),
+		ac.EvalPermission(ac.ActionAlertingSilencesRead),
+	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Silences", SubTitle: "Stop notifications from one or more alerting rules", Id: "silences", Url: s.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+	}
+
+	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts from an Alertmanager instance", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
-	if c.OrgRole == org.RoleAdmin {
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Admin", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
+			Text:     "History",
+			SubTitle: "History of events that were generated by your Grafana-managed alert rules. Silences and Mute timings are ignored.",
+			Id:       "alerts-history",
+			Url:      s.cfg.AppSubURL + "/alerting/history",
+			Icon:     "history",
+		})
+	}
+
+	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
 		})
 	}
@@ -475,6 +465,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			SubTitle: "Browse and create new connections",
 			Url:      baseUrl + "/add-new-connection",
 			Children: []*navtree.NavLink{},
+			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
 		})
 
 		// Data sources
@@ -501,4 +492,18 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
+}
+
+func (s *ServiceImpl) buildExploreNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
+	exploreChildNavs := []*navtree.NavLink{}
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) {
+		exploreChildNavs = append(exploreChildNavs, &navtree.NavLink{
+			Text:     "Metrics",
+			SubTitle: "Queryless exploration of your metrics",
+			Id:       "explore/metrics",
+			Url:      s.cfg.AppSubURL + "/explore/metrics",
+			Icon:     "code-branch",
+		})
+	}
+	return exploreChildNavs
 }

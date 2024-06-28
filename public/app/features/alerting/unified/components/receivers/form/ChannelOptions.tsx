@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-form';
 
 import { Button, Field, Input } from '@grafana/ui';
@@ -42,7 +42,7 @@ export function ChannelOptions<R extends ChannelValues>({
         // pathPrefix = items.index.
         const paths = pathPrefix.split('.');
         const selectedOptionValue =
-          paths.length >= 2 ? currentFormValues.items[Number(paths[1])].settings[option.showWhen.field] : undefined;
+          paths.length >= 2 ? currentFormValues.items?.[Number(paths[1])].settings?.[option.showWhen.field] : undefined;
 
         if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
           return null;

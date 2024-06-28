@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 
 import { HoverCard } from '../HoverCard';
 
@@ -30,7 +29,7 @@ export function TemplateDataDocs() {
   );
 
   return (
-    <Stack gap={2} flexGrow={1}>
+    <Stack gap={2}>
       <TemplateDataTable
         caption={<h4 className={styles.header}>Template Data</h4>}
         dataItems={GlobalTemplateData}
@@ -53,22 +52,22 @@ export function TemplateDataDocs() {
 }
 
 const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
-  header: css`
-    color: ${theme.colors.text.primary};
+  header: css({
+    color: theme.colors.text.primary,
 
-    span {
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    }
-  `,
-  interactiveType: css`
-    color: ${theme.colors.text.link};
-  `,
+    span: {
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
+  }),
+  interactiveType: css({
+    color: theme.colors.text.link,
+  }),
 });
 
 interface TemplateDataTableProps {
   dataItems: TemplateDataItem[];
-  caption: JSX.Element | string;
+  caption?: JSX.Element | string;
   typeRenderer?: (type: TemplateDataItem['type']) => React.ReactNode;
 }
 
@@ -77,7 +76,7 @@ export function TemplateDataTable({ dataItems, caption, typeRenderer }: Template
 
   return (
     <table className={styles.table}>
-      <caption>{caption}</caption>
+      {caption && <caption>{caption}</caption>}
       <thead>
         <tr>
           <th>Name</th>
@@ -133,33 +132,32 @@ function KeyValueTemplateDataTable() {
 }
 
 const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    border-collapse: collapse;
-    width: 100%;
+  table: css({
+    borderCollapse: 'collapse',
+    width: '100%',
 
-    caption {
-      caption-side: top;
-    }
+    caption: {
+      captionSide: 'top',
+    },
 
-    td,
-    th {
-      padding: ${theme.spacing(1, 1)};
-    }
+    'td, th': {
+      padding: theme.spacing(1, 1),
+    },
 
-    thead {
-      font-weight: ${theme.typography.fontWeightBold};
-    }
+    thead: {
+      fontWeight: theme.typography.fontWeightBold,
+    },
 
-    tbody tr:nth-child(2n + 1) {
-      background-color: ${theme.colors.background.secondary};
-    }
+    'tbody tr:nth-child(2n + 1)': {
+      backgroundColor: theme.colors.background.secondary,
+    },
 
-    tbody td:nth-child(1) {
-      font-weight: ${theme.typography.fontWeightBold};
-    }
+    'tbody td:nth-child(1)': {
+      fontWeight: theme.typography.fontWeightBold,
+    },
 
-    tbody td:nth-child(2) {
-      font-style: italic;
-    }
-  `,
+    'tbody td:nth-child(2)': {
+      fontStyle: 'italic',
+    },
+  }),
 });

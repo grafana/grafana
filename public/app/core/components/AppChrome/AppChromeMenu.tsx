@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types';
 
-import { MegaMenu, MENU_WIDTH } from './DockedMegaMenu/MegaMenu';
+import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { TOGGLE_BUTTON_ID } from './NavToolbar/NavToolbar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -27,8 +27,8 @@ export function AppChromeMenu({}: Props) {
   const animationSpeed = theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed);
 
-  const isOpen = state.megaMenu === 'open';
-  const onClose = () => chrome.setMegaMenu('closed');
+  const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
+  const onClose = () => chrome.setMegaMenuOpen(false);
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -57,7 +57,7 @@ export function AppChromeMenu({}: Props) {
           classNames={animationStyles.overlay}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus restoreFocus>
             <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
           </FocusScope>
         </CSSTransition>
@@ -76,7 +76,7 @@ export function AppChromeMenu({}: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
-  const topPosition = (searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2) + 1;
+  const topPosition = searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
 
   return {
     backdrop: css({
@@ -125,8 +125,10 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
 
 const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const commonTransition = {
-    transitionDuration: `${animationDuration}ms`,
-    transitionTimingFunction: theme.transitions.easing.easeInOut,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transitionDuration: `${animationDuration}ms`,
+      transitionTimingFunction: theme.transitions.easing.easeInOut,
+    },
     [theme.breakpoints.down('md')]: {
       overflow: 'hidden',
     },

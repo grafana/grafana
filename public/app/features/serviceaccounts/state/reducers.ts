@@ -32,12 +32,24 @@ export const serviceAccountProfileSlice = createSlice({
     serviceAccountTokensLoaded: (state, action: PayloadAction<ApiKey[]>): ServiceAccountProfileState => {
       return { ...state, tokens: action.payload, isLoading: false };
     },
+    rolesFetchBegin: (state) => {
+      return { ...state, rolesLoading: true };
+    },
+    rolesFetchEnd: (state) => {
+      return { ...state, rolesLoading: false };
+    },
   },
 });
 
 export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
-export const { serviceAccountLoaded, serviceAccountTokensLoaded, serviceAccountFetchBegin, serviceAccountFetchEnd } =
-  serviceAccountProfileSlice.actions;
+export const {
+  serviceAccountLoaded,
+  serviceAccountTokensLoaded,
+  serviceAccountFetchBegin,
+  serviceAccountFetchEnd,
+  rolesFetchBegin,
+  rolesFetchEnd,
+} = serviceAccountProfileSlice.actions;
 
 // serviceAccountsListPage
 export const initialStateList: ServiceAccountsState = {

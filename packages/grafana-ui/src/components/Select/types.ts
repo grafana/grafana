@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import {
   ActionMeta as SelectActionMeta,
   CommonProps as ReactSelectCommonProps,
@@ -18,6 +18,7 @@ export type LoadOptionsCallback<T> = (options: Array<SelectableValue<T>>) => voi
 export interface SelectCommonProps<T> {
   /** Aria label applied to the input field */
   ['aria-label']?: string;
+  ['data-testid']?: string;
   allowCreateWhileLoading?: boolean;
   allowCustomValue?: boolean;
   /** Focus is set to the Select when rendered*/
@@ -36,7 +37,7 @@ export interface SelectCommonProps<T> {
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
   formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
   /** Function for formatting the text that is displayed when creating a new value*/
-  formatCreateLabel?: (input: string) => string;
+  formatCreateLabel?: (input: string) => React.ReactNode;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
   getOptionValue?: (item: SelectableValue<T>) => T | undefined;
   hideSelectedOptions?: boolean;
@@ -99,6 +100,8 @@ export interface SelectCommonProps<T> {
   ) => boolean;
   /** Message to display isLoading=true*/
   loadingMessage?: string;
+  /** Disables wrapping of multi value values when closed */
+  noMultiValueWrap?: boolean;
 }
 
 export interface SelectAsyncProps<T> {

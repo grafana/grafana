@@ -1,18 +1,20 @@
-import React from 'react';
-
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { INSTANCE_ID, PANEL_STYLES } from '../../../home/Insights';
 import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRulesPerGroupScene(datasource: DataSourceRef, panelTitle: string) {
+  const expr = INSTANCE_ID
+    ? `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group", id="${INSTANCE_ID}"})`
+    : `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`;
+
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`,
+        expr,
         range: true,
         legendFormat: 'number of rules',
       },

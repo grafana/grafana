@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-export interface SelectionInfo<T = any> {
+export interface SelectionInfo<T> {
   options: Array<SelectableValue<T>>;
   current?: SelectableValue<T>;
 }

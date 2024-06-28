@@ -46,7 +46,12 @@ describe('dataFrameView', () => {
   it('Should support array indexes', () => {
     expect(vector.length).toEqual(3);
 
-    const first = vector.get(0) as any;
+    const first = vector.get(0) as unknown as [
+      MySpecialObject['time'],
+      MySpecialObject['name'],
+      MySpecialObject['value'],
+      MySpecialObject['more'],
+    ];
     expect(first[0]).toEqual(100);
     expect(first[1]).toEqual('a');
     expect(first[2]).toEqual(1);
@@ -84,7 +89,10 @@ describe('dataFrameView', () => {
   });
 
   it('Can handle fields with number name', () => {
-    const view = new DataFrameView<MySpecialObject>(
+    const view = new DataFrameView<{
+      '1': string;
+      '2': string;
+    }>(
       new MutableDataFrame({
         fields: [
           { name: '1', type: FieldType.string, values: ['a'] },
@@ -93,7 +101,7 @@ describe('dataFrameView', () => {
       })
     );
 
-    const obj = view.get(0) as any;
+    const obj = view.get(0);
     expect(obj['1']).toEqual('a');
     expect(obj['2']).toEqual('b');
   });

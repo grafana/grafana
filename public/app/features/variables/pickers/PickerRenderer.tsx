@@ -1,14 +1,14 @@
-import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
+import { PropsWithChildren, ReactElement, useMemo } from 'react';
 
+import { TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip } from '@grafana/ui';
+import { Stack, Tooltip } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
 import { VARIABLE_PREFIX } from '../constants';
-import { VariableHide, VariableModel } from '../types';
 
 interface Props {
-  variable: VariableModel;
+  variable: TypedVariableModel;
   readOnly?: boolean;
 }
 
@@ -20,12 +20,12 @@ export const PickerRenderer = (props: Props) => {
   }
 
   return (
-    <div className="gf-form">
+    <Stack gap={0}>
       <PickerLabel variable={props.variable} />
       {props.variable.hide !== VariableHide.hideVariable && PickerToRender && (
         <PickerToRender variable={props.variable} readOnly={props.readOnly ?? false} />
       )}
-    </div>
+    </Stack>
   );
 };
 

@@ -1,6 +1,14 @@
 import { extend } from 'lodash';
 
-import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import {
+  AnalyticsSettings,
+  OrgRole,
+  rangeUtil,
+  WithAccessControlMetadata,
+  userHasPermission,
+  userHasPermissionInMetadata,
+  userHasAnyPermission,
+} from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
 import { AccessControlAction, UserPermission } from 'app/types';
@@ -15,6 +23,7 @@ export const AutoRefreshInterval = 'auto';
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
   id: number;
+  uid: string;
   login: string;
   email: string;
   name: string;
@@ -39,6 +48,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
 
   constructor() {
     this.id = 0;
+    this.uid = '';
     this.isGrafanaAdmin = false;
     this.isSignedIn = false;
     this.orgRole = '';
@@ -129,12 +139,12 @@ export class ContextSrv {
 
   // Checks whether user has required permission
   hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
-    return !!object.accessControl?.[action];
+    return userHasPermissionInMetadata(action, object);
   }
 
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
-    return !!this.user.permissions?.[action];
+    return userHasPermission(action, this.user);
   }
 
   isGrafanaVisible() {
@@ -169,7 +179,7 @@ export class ContextSrv {
 
   // evaluates access control permissions, granting access if the user has any of them
   evaluatePermission(actions: string[]) {
-    if (actions.some((action) => this.hasPermission(action))) {
+    if (userHasAnyPermission(actions, this.user)) {
       return [];
     }
     // Hack to reject when user does not have permission
@@ -209,11 +219,6 @@ export class ContextSrv {
       return false;
     }
 
-    // skip if feature toggle is not enabled
-    if (!config.featureToggles.clientTokenRotation) {
-      return false;
-    }
-
     // skip if there is no session to rotate
     // if a user has a session but not yet a session expiry cookie, can happen during upgrade
     // from an older version of grafana, we never schedule the job and the fallback logic
@@ -227,7 +232,7 @@ export class ContextSrv {
   }
 
   private cancelTokenRotationJob() {
-    if (config.featureToggles.clientTokenRotation && this.tokenRotationJobId > 0) {
+    if (this.tokenRotationJobId > 0) {
       clearTimeout(this.tokenRotationJobId);
     }
   }

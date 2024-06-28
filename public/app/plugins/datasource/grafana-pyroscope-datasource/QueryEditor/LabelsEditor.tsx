@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAsync, useLatest } from 'react-use';
 
 import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
@@ -32,7 +32,7 @@ export function LabelsEditor(props: Props) {
       <CodeEditor
         value={props.value}
         language={langId}
-        onBlur={props.onChange}
+        onChange={props.onChange}
         containerStyles={styles.queryField}
         monacoOptions={{
           folding: false,

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
+import { Trans, t } from 'app/core/internationalization';
 import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
@@ -18,10 +18,17 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
   const { data: dashboards, isLoading } = useGetActiveUserDashboardsQuery(email);
 
   return (
-    <Modal className={styles.modal} isOpen title="Public dashboards" onDismiss={onDismiss}>
+    <Modal
+      className={styles.modal}
+      isOpen
+      title={t('public-dashboard-users-access-list.modal.dashboard-modal-title', 'Public dashboards')}
+      onDismiss={onDismiss}
+    >
       {isLoading ? (
         <div className={styles.loading}>
-          <LoadingPlaceholder text="Loading..." />
+          <LoadingPlaceholder
+            text={t('public-dashboard-users-access-list.dashboard-modal.loading-text', 'Loading...')}
+          />
         </div>
       ) : (
         dashboards?.map((dash) => (
@@ -35,15 +42,19 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
                 onClick={onDismiss}
               >
-                Public dashboard URL
+                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-link">
+                  Public dashboard URL
+                </Trans>
               </a>
               <span className={styles.urlsDivider}>•</span>
               <a
                 className={cx('external-link', styles.url)}
-                href={generatePublicDashboardConfigUrl(dash.dashboardUid)}
+                href={generatePublicDashboardConfigUrl(dash.dashboardUid, dash.slug)}
                 onClick={onDismiss}
               >
-                Public dashboard settings
+                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-setting">
+                  Public dashboard settings
+                </Trans>
               </a>
             </div>
             <hr className={styles.divider} />
@@ -54,20 +65,26 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
   );
 };
 
-export const DashboardsListModalButton = ({ email }: { email: string }) => (
-  <ModalsController>
-    {({ showModal, hideModal }) => (
-      <Button
-        variant="secondary"
-        size="sm"
-        icon="question-circle"
-        title="Open dashboards list"
-        aria-label="Open dashboards list"
-        onClick={() => showModal(DashboardsListModal, { email, onDismiss: hideModal })}
-      />
-    )}
-  </ModalsController>
-);
+export const DashboardsListModalButton = ({ email }: { email: string }) => {
+  const translatedDashboardListModalButtonText = t(
+    'public-dashboard-users-access-list.dashboard-modal.open-dashboard-list-text',
+    'Open dashboards list'
+  );
+  return (
+    <ModalsController>
+      {({ showModal, hideModal }) => (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="question-circle"
+          title={translatedDashboardListModalButtonText}
+          aria-label={translatedDashboardListModalButtonText}
+          onClick={() => showModal(DashboardsListModal, { email, onDismiss: hideModal })}
+        />
+      )}
+    </ModalsController>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`

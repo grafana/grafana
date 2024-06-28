@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { InlineField, Input, InlineFieldRow, CodeEditor } from '@grafana/ui';
 import { SearchQuery } from 'app/features/search/service';
@@ -29,7 +30,7 @@ export default function SearchEditor({ value, onChange }: Props) {
     setJSON(JSON.stringify({ ...emptySearchQuery, ...value }, null, 2));
   }, [value]);
 
-  const handleSearchBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleSearchBlur = () => {
     if (query !== value.query) {
       onChange({ ...value, query });
     }
@@ -39,12 +40,12 @@ export default function SearchEditor({ value, onChange }: Props) {
     if (e.key !== 'Enter') {
       return;
     }
-    handleSearchBlur(e as any);
+    handleSearchBlur();
   };
 
   const onSaveSearchJSON = (rawSearchJSON: string) => {
     try {
-      const searchQuery = JSON.parse(rawSearchJSON) as SearchQuery;
+      const searchQuery: SearchQuery = JSON.parse(rawSearchJSON);
       onChange(searchQuery);
       setQuery(searchQuery.query ?? '');
     } catch (ex) {

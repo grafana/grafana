@@ -13,34 +13,41 @@ const (
 
 	WeightHome = (iota - 20) * 100
 	WeightSavedItems
-	WeightCreate
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
 	WeightAlertsAndIncidents
+	WeightTestingAndSynthetics
 	WeightMonitoring
+	WeightCloudServiceProviders
+	WeightInfrastructure
+	WeightApplication
+	WeightFrontend
+	WeightAsserts
 	WeightDataConnections
 	WeightApps
 	WeightPlugin
 	WeightConfig
-	WeightAdmin
 	WeightProfile
 	WeightHelp
 )
 
 const (
-	NavIDRoot               = "root"
-	NavIDDashboards         = "dashboards/browse"
-	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
-	NavIDAlertsAndIncidents = "alerts-and-incidents"
-	NavIDAlerting           = "alerting"
-	NavIDAlertingLegacy     = "alerting-legacy"
-	NavIDMonitoring         = "monitoring"
-	NavIDReporting          = "reports"
-	NavIDApps               = "apps"
-	NavIDCfgGeneral         = "cfg/general"
-	NavIDCfgPlugins         = "cfg/plugins"
-	NavIDCfgAccess          = "cfg/access"
+	NavIDRoot                 = "root"
+	NavIDDashboards           = "dashboards/browse"
+	NavIDExplore              = "explore"
+	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
+	NavIDAlertsAndIncidents   = "alerts-and-incidents"
+	NavIDTestingAndSynthetics = "testing-and-synthetics"
+	NavIDAlerting             = "alerting"
+	NavIDMonitoring           = "monitoring"
+	NavIDInfrastructure       = "infrastructure"
+	NavIDFrontend             = "frontend"
+	NavIDReporting            = "reports"
+	NavIDApps                 = "apps"
+	NavIDCfgGeneral           = "cfg/general"
+	NavIDCfgPlugins           = "cfg/plugins"
+	NavIDCfgAccess            = "cfg/access"
 )
 
 type NavLink struct {
@@ -61,6 +68,7 @@ type NavLink struct {
 	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
 	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 	IsCreateAction bool       `json:"isCreateAction,omitempty"`
+	Keywords       []string   `json:"keywords,omitempty"`
 }
 
 func (node *NavLink) Sort() {
@@ -120,129 +128,58 @@ func Sort(nodes []*NavLink) {
 	}
 }
 
-func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
+func (root *NavTreeRoot) ApplyHelpVersion(version string) {
+	helpNode := root.FindById("help")
+
+	if helpNode != nil {
+		helpNode.SubTitle = version
+	}
+}
+
+func (root *NavTreeRoot) ApplyCostManagementIA() {
 	orgAdminNode := root.FindById(NavIDCfg)
+	var costManagementApp *NavLink
+	var adaptiveMetricsApp *NavLink
+	var attributionsApp *NavLink
+	var logVolumeExplorerApp *NavLink
 
 	if orgAdminNode != nil {
 		adminNodeLinks := []*NavLink{}
-
-		if navAdminSubsectionsEnabled {
-			generalNodeLinks := []*NavLink{}
-			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("upgrading")) // TODO does this even exist
-			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("licensing"))
-			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("org-settings"))
-			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("server-settings"))
-			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
-			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("feature-toggles"))
-			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("storage"))
-
-			generalNode := &NavLink{
-				Text:     "General",
-				SubTitle: "Manage default preferences and settings across Grafana",
-				Id:       NavIDCfgGeneral,
-				Url:      "/admin/general",
-				Icon:     "shield",
-				Children: generalNodeLinks,
+		for _, element := range orgAdminNode.Children {
+			switch navId := element.Id; navId {
+			case "plugin-page-grafana-costmanagementui-app":
+				costManagementApp = element
+			case "plugin-page-grafana-adaptive-metrics-app":
+				adaptiveMetricsApp = element
+			case "plugin-page-grafana-attributions-app":
+				attributionsApp = element
+			case "plugin-page-grafana-logvolumeexplorer-app":
+				logVolumeExplorerApp = element
+			default:
+				adminNodeLinks = append(adminNodeLinks, element)
 			}
-
-			pluginsNodeLinks := []*NavLink{}
-			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugins"))
-			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("datasources"))
-			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("recordedQueries"))
-			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("correlations"))
-			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugin-page-grafana-cloud-link-app"))
-
-			pluginsNode := &NavLink{
-				Text:     "Plugins and data",
-				SubTitle: "Install plugins and define the relationships between data",
-				Id:       NavIDCfgPlugins,
-				Url:      "/admin/plugins",
-				Icon:     "shield",
-				Children: pluginsNodeLinks,
-			}
-
-			accessNodeLinks := []*NavLink{}
-			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("global-users"))
-			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
-			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app"))
-			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("serviceaccounts"))
-			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("apikeys"))
-
-			usersNode := &NavLink{
-				Text:     "Users and access",
-				SubTitle: "Configure access for individual users, teams, and service accounts",
-				Id:       NavIDCfgAccess,
-				Url:      "/admin/access",
-				Icon:     "shield",
-				Children: accessNodeLinks,
-			}
-
-			if len(generalNode.Children) > 0 {
-				adminNodeLinks = append(adminNodeLinks, generalNode)
-			}
-
-			if len(pluginsNode.Children) > 0 {
-				adminNodeLinks = append(adminNodeLinks, pluginsNode)
-			}
-
-			if len(usersNode.Children) > 0 {
-				adminNodeLinks = append(adminNodeLinks, usersNode)
-			}
-
-			authenticationNode := root.FindById("authentication")
-			if authenticationNode != nil {
-				authenticationNode.IsSection = true
-				adminNodeLinks = append(adminNodeLinks, authenticationNode)
-			}
-
-			costManagementNode := root.FindById("plugin-page-grafana-costmanagementui-app")
-
-			if costManagementNode != nil {
-				adminNodeLinks = append(adminNodeLinks, costManagementNode)
-			}
-
-			costManagementMetricsNode := root.FindByURL("/a/grafana-costmanagementui-app/metrics")
-			adaptiveMetricsNode := root.FindById("plugin-page-grafana-adaptive-metrics-app")
-
-			if costManagementMetricsNode != nil && adaptiveMetricsNode != nil {
-				costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
-			}
-
-			costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")
-			logVolumeExplorerNode := root.FindById("plugin-page-grafana-logvolumeexplorer-app")
-
-			if costManagementLogsNode != nil && logVolumeExplorerNode != nil {
-				costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerNode)
-			}
-		} else {
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("datasources"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugins"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-users"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("teams"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("serviceaccounts"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("apikeys"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("org-settings"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("authentication"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("feature-toggles"))
-
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("upgrading"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("licensing"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("recordedQueries")) // enterprise only
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("correlations"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugin-page-grafana-cloud-link-app"))
-
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("ldap"))
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("storage"))
 		}
 
-		if len(adminNodeLinks) > 0 {
-			orgAdminNode.Children = adminNodeLinks
-		} else {
-			root.RemoveSection(orgAdminNode)
+		if costManagementApp != nil {
+			costManagementMetricsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/metrics")
+			if costManagementMetricsNode != nil {
+				if adaptiveMetricsApp != nil {
+					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsApp)
+				}
+				if attributionsApp != nil {
+					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsApp)
+				}
+			}
+
+			costManagementLogsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/logs")
+			if costManagementLogsNode != nil {
+				if logVolumeExplorerApp != nil {
+					costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerApp)
+				}
+			}
+			adminNodeLinks = append(adminNodeLinks, costManagementApp)
 		}
+		orgAdminNode.Children = adminNodeLinks
 	}
 }
 

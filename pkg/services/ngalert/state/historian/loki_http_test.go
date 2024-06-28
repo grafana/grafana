@@ -11,13 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
-	"github.com/weaveworks/common/http/client"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func TestLokiConfig(t *testing.T) {
@@ -111,10 +112,10 @@ func TestLokiHTTPClient(t *testing.T) {
 		req := NewFakeRequester()
 		client := createTestLokiClient(req)
 		now := time.Now().UTC()
-		data := []stream{
+		data := []Stream{
 			{
 				Stream: map[string]string{},
-				Values: []sample{
+				Values: []Sample{
 					{
 						T: now,
 						V: "some line",
@@ -123,7 +124,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			},
 		}
 
-		err := client.push(context.Background(), data)
+		err := client.Push(context.Background(), data)
 
 		require.NoError(t, err)
 		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
@@ -145,7 +146,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			now := time.Now().UTC().UnixNano()
 			q := `{from="state-history"}`
 
-			_, err := client.rangeQuery(context.Background(), q, now-100, now, 1100)
+			_, err := client.RangeQuery(context.Background(), q, now-100, now, 1100)
 
 			require.NoError(t, err)
 			params := req.lastRequest.URL.Query()
@@ -165,7 +166,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			now := time.Now().UTC().UnixNano()
 			q := `{from="state-history"}`
 
-			_, err := client.rangeQuery(context.Background(), q, now-100, now, 0)
+			_, err := client.RangeQuery(context.Background(), q, now-100, now, 0)
 
 			require.NoError(t, err)
 			params := req.lastRequest.URL.Query()
@@ -185,7 +186,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			now := time.Now().UTC().UnixNano()
 			q := `{from="state-history"}`
 
-			_, err := client.rangeQuery(context.Background(), q, now-100, now, -100)
+			_, err := client.RangeQuery(context.Background(), q, now-100, now, -100)
 
 			require.NoError(t, err)
 			params := req.lastRequest.URL.Query()
@@ -205,7 +206,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			now := time.Now().UTC().UnixNano()
 			q := `{from="state-history"}`
 
-			_, err := client.rangeQuery(context.Background(), q, now-100, now, maximumPageSize+1000)
+			_, err := client.RangeQuery(context.Background(), q, now-100, now, maximumPageSize+1000)
 
 			require.NoError(t, err)
 			params := req.lastRequest.URL.Query()
@@ -223,14 +224,14 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
-		client := newLokiClient(LokiConfig{
+		client := NewLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
 			Encoder:      JsonEncoder{},
-		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
+		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem), log.NewNopLogger(), tracing.InitializeTracerForTest())
 
 		// Unauthorized request should fail against Grafana Cloud.
-		err = client.ping(context.Background())
+		err = client.Ping(context.Background())
 		require.Error(t, err)
 
 		client.cfg.BasicAuthUser = "<your_username>"
@@ -241,7 +242,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		// client.cfg.TenantID = "<your_tenant_id>"
 
 		// Authorized request should not fail against Grafana Cloud.
-		err = client.ping(context.Background())
+		err = client.Ping(context.Background())
 		require.NoError(t, err)
 	})
 
@@ -249,13 +250,13 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
-		client := newLokiClient(LokiConfig{
+		client := NewLokiClient(LokiConfig{
 			ReadPathURL:       url,
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
 			Encoder:           JsonEncoder{},
-		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
+		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem), log.NewNopLogger(), tracing.InitializeTracerForTest())
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.
@@ -268,7 +269,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
-		res, err := client.rangeQuery(context.Background(), logQL, start, end, defaultPageSize)
+		res, err := client.RangeQuery(context.Background(), logQL, start, end, defaultPageSize)
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})
@@ -276,7 +277,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 
 func TestRow(t *testing.T) {
 	t.Run("marshal", func(t *testing.T) {
-		row := sample{
+		row := Sample{
 			T: time.Unix(0, 1234),
 			V: "some sample",
 		}
@@ -290,7 +291,7 @@ func TestRow(t *testing.T) {
 	t.Run("unmarshal", func(t *testing.T) {
 		jsn := []byte(`["1234", "some sample"]`)
 
-		row := sample{}
+		row := Sample{}
 		err := json.Unmarshal(jsn, &row)
 
 		require.NoError(t, err)
@@ -301,7 +302,7 @@ func TestRow(t *testing.T) {
 	t.Run("unmarshal invalid", func(t *testing.T) {
 		jsn := []byte(`{"key": "wrong shape"}`)
 
-		row := sample{}
+		row := Sample{}
 		err := json.Unmarshal(jsn, &row)
 
 		require.ErrorContains(t, err, "failed to deserialize sample")
@@ -310,7 +311,7 @@ func TestRow(t *testing.T) {
 	t.Run("unmarshal bad timestamp", func(t *testing.T) {
 		jsn := []byte(`["not-unix-nano", "some sample"]`)
 
-		row := sample{}
+		row := Sample{}
 		err := json.Unmarshal(jsn, &row)
 
 		require.ErrorContains(t, err, "timestamp in Loki sample")
@@ -319,9 +320,9 @@ func TestRow(t *testing.T) {
 
 func TestStream(t *testing.T) {
 	t.Run("marshal", func(t *testing.T) {
-		stream := stream{
+		stream := Stream{
 			Stream: map[string]string{"a": "b"},
-			Values: []sample{
+			Values: []Sample{
 				{T: time.Unix(0, 1), V: "one"},
 				{T: time.Unix(0, 2), V: "two"},
 			},
@@ -338,15 +339,58 @@ func TestStream(t *testing.T) {
 	})
 }
 
-func createTestLokiClient(req client.Requester) *httpLokiClient {
+func TestClampRange(t *testing.T) {
+	tc := []struct {
+		name     string
+		oldRange []int64
+		max      int64
+		newRange []int64
+	}{
+		{
+			name:     "clamps start value if max is smaller than range",
+			oldRange: []int64{5, 10},
+			max:      1,
+			newRange: []int64{9, 10},
+		},
+		{
+			name:     "returns same values if max is greater than range",
+			oldRange: []int64{5, 10},
+			max:      20,
+			newRange: []int64{5, 10},
+		},
+		{
+			name:     "returns same values if max is equal to range",
+			oldRange: []int64{5, 10},
+			max:      5,
+			newRange: []int64{5, 10},
+		},
+		{
+			name:     "returns same values if max is zero",
+			oldRange: []int64{5, 10},
+			max:      0,
+			newRange: []int64{5, 10},
+		},
+	}
+
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			start, end := ClampRange(c.oldRange[0], c.oldRange[1], c.max)
+
+			require.Equal(t, c.newRange[0], start)
+			require.Equal(t, c.newRange[1], end)
+		})
+	}
+}
+
+func createTestLokiClient(req client.Requester) *HttpLokiClient {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL: url,
 		ReadPathURL:  url,
 		Encoder:      JsonEncoder{},
 	}
-	met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
-	return newLokiClient(cfg, req, met, log.NewNopLogger())
+	met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+	return NewLokiClient(cfg, req, met, log.NewNopLogger(), tracing.InitializeTracerForTest())
 }
 
 func reqBody(t *testing.T, req *http.Request) string {

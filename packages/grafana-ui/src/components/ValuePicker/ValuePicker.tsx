@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -65,7 +65,7 @@ export function ValuePicker<T>({
           variant={variant}
           fill={fill}
           fullWidth={isFullWidth}
-          aria-label={selectors.components.ValuePicker.button(ariaLabel ?? label)}
+          data-testid={selectors.components.ValuePicker.button(ariaLabel ?? label)}
         >
           {label}
         </Button>

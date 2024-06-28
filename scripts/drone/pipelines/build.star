@@ -13,6 +13,9 @@ load(
     "frontend_metrics_step",
     "grafana_server_step",
     "identify_runner_step",
+    "playwright_e2e_report_post_link",
+    "playwright_e2e_report_upload",
+    "playwright_e2e_tests_step",
     "publish_images_step",
     "release_canary_npm_packages_step",
     "store_storybook_step",
@@ -28,8 +31,8 @@ load(
 )
 load(
     "scripts/drone/steps/rgm.star",
+    "rgm_artifacts_step",
     "rgm_build_docker_step",
-    "rgm_package_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -70,28 +73,43 @@ def build_e2e(trigger, ver_mode):
             [
                 build_frontend_package_step(),
                 enterprise_downstream_step(ver_mode = ver_mode),
-                rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"),
+                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64", "targz:grafana:linux/arm/v7"], file = "packages.txt"),
             ],
         )
     else:
         build_steps.extend([
             update_package_json_version(),
             build_frontend_package_step(depends_on = ["update-package-json-version"]),
-            rgm_package_step(depends_on = ["update-package-json-version"], distros = "linux/amd64,linux/arm64", file = "packages.txt"),
+            rgm_artifacts_step(
+                artifacts = [
+                    "targz:grafana:linux/amd64",
+                    "targz:grafana:linux/arm64",
+                    "targz:grafana:linux/arm/v7",
+                ],
+                depends_on = ["update-package-json-version"],
+                file = "packages.txt",
+            ),
         ])
 
     build_steps.extend(
         [
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
+            e2e_tests_step("scenes/dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),
+            e2e_tests_step("scenes/smoke-tests-suite"),
             e2e_tests_step("panels-suite"),
+            e2e_tests_step("scenes/panels-suite"),
             e2e_tests_step("various-suite"),
+            e2e_tests_step("scenes/various-suite"),
             cloud_plugins_e2e_tests_step(
                 "cloud-plugins-suite",
                 cloud = "azure",
                 trigger = trigger_oss,
             ),
+            playwright_e2e_tests_step(),
+            playwright_e2e_report_upload(),
+            playwright_e2e_report_post_link(),
             e2e_tests_artifacts(),
             build_storybook_step(ver_mode = ver_mode),
             test_a11y_frontend_step(ver_mode = ver_mode),
@@ -104,9 +122,9 @@ def build_e2e(trigger, ver_mode):
                 store_storybook_step(trigger = trigger_oss, ver_mode = ver_mode),
                 frontend_metrics_step(trigger = trigger_oss),
                 rgm_build_docker_step(
-                    "packages.txt",
                     images["ubuntu"],
                     images["alpine"],
+                    depends_on = ["update-package-json-version"],
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
                     ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
                 ),
@@ -135,7 +153,6 @@ def build_e2e(trigger, ver_mode):
         build_steps.extend(
             [
                 rgm_build_docker_step(
-                    "packages.txt",
                     images["ubuntu"],
                     images["alpine"],
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",

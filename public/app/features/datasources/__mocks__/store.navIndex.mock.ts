@@ -557,13 +557,13 @@ export const navIndex: NavIndex = {
       },
       {
         id: 'alerting-admin',
-        text: 'Admin',
+        text: 'Settings',
         icon: 'cog',
         url: '/alerting/admin',
       },
       {
         id: 'alert',
-        text: 'Create alert rule',
+        text: 'New alert rule',
         subTitle: 'Create an alert rule',
         icon: 'plus',
         url: '/alerting/new',
@@ -616,13 +616,13 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alerting-admin',
-          text: 'Admin',
+          text: 'Settings',
           icon: 'cog',
           url: '/alerting/admin',
         },
         {
           id: 'alert',
-          text: 'Create alert rule',
+          text: 'New alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -676,13 +676,13 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alerting-admin',
-          text: 'Admin',
+          text: 'Settings',
           icon: 'cog',
           url: '/alerting/admin',
         },
         {
           id: 'alert',
-          text: 'Create alert rule',
+          text: 'New alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -736,13 +736,13 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alerting-admin',
-          text: 'Admin',
+          text: 'Settings',
           icon: 'cog',
           url: '/alerting/admin',
         },
         {
           id: 'alert',
-          text: 'Create alert rule',
+          text: 'New alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -796,13 +796,13 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alerting-admin',
-          text: 'Admin',
+          text: 'Settings',
           icon: 'cog',
           url: '/alerting/admin',
         },
         {
           id: 'alert',
-          text: 'Create alert rule',
+          text: 'New alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -856,13 +856,13 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alerting-admin',
-          text: 'Admin',
+          text: 'Settings',
           icon: 'cog',
           url: '/alerting/admin',
         },
         {
           id: 'alert',
-          text: 'Create alert rule',
+          text: 'New alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -873,7 +873,7 @@ export const navIndex: NavIndex = {
   },
   'alerting-admin': {
     id: 'alerting-admin',
-    text: 'Admin',
+    text: 'Settings',
     icon: 'cog',
     url: '/alerting/admin',
     parentItem: {
@@ -916,13 +916,13 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alerting-admin',
-          text: 'Admin',
+          text: 'Settings',
           icon: 'cog',
           url: '/alerting/admin',
         },
         {
           id: 'alert',
-          text: 'Create alert rule',
+          text: 'New alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -933,7 +933,7 @@ export const navIndex: NavIndex = {
   },
   alert: {
     id: 'alert',
-    text: 'Create alert rule',
+    text: 'New alert rule',
     subTitle: 'Create an alert rule',
     icon: 'plus',
     url: '/alerting/new',
@@ -978,13 +978,13 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alerting-admin',
-          text: 'Admin',
+          text: 'Settings',
           icon: 'cog',
           url: '/alerting/admin',
         },
         {
           id: 'alert',
-          text: 'Create alert rule',
+          text: 'New alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -2174,7 +2174,7 @@ export const navIndex: NavIndex = {
   },
   profile: {
     id: 'profile',
-    text: 'admin',
+    text: 'Settings',
     img: '/avatar/46d229b033af06a191ff2267bca9ae56',
     url: '/profile',
     sortWeight: -1100,
@@ -2214,7 +2214,7 @@ export const navIndex: NavIndex = {
     url: '/profile',
     parentItem: {
       id: 'profile',
-      text: 'admin',
+      text: 'Settings',
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2255,7 +2255,7 @@ export const navIndex: NavIndex = {
     url: '/notifications',
     parentItem: {
       id: 'profile',
-      text: 'admin',
+      text: 'Settings',
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2296,7 +2296,7 @@ export const navIndex: NavIndex = {
     url: '/profile/password',
     parentItem: {
       id: 'profile',
-      text: 'admin',
+      text: 'Settings',
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2339,7 +2339,7 @@ export const navIndex: NavIndex = {
     hideFromTabs: true,
     parentItem: {
       id: 'profile',
-      text: 'admin',
+      text: 'Settings',
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,

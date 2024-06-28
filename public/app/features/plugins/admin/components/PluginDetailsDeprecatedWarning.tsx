@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
+import { renderMarkdown } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 
 import { CatalogPlugin } from '../types';
@@ -13,16 +15,31 @@ export function PluginDetailsDeprecatedWarning(props: Props): React.ReactElement
   const { className, plugin } = props;
   const [dismissed, setDismissed] = useState(false);
   const isWarningVisible = plugin.isDeprecated && !dismissed;
-  let deprecationMessage = `This ${plugin.type} plugin is deprecated and has been removed from the catalog. No further updates will be made to the
-  plugin.`;
-
-  if (plugin.details?.statusContext) {
-    deprecationMessage += ` More information: ${plugin.details.statusContext}`;
-  }
 
   return isWarningVisible ? (
     <Alert severity="warning" title="Deprecated" className={className} onRemove={() => setDismissed(true)}>
-      <p>{deprecationMessage}</p>
+      <p>
+        This {plugin.type} plugin is{' '}
+        <a
+          className="external-link"
+          href="https://grafana.com/legal/plugin-deprecation/"
+          rel="noreferrer"
+          target="_blank"
+        >
+          deprecated
+        </a>{' '}
+        and has been removed from the catalog.
+      </p>
+
+      {/* Additional contextual deprecation message supporting markdown */}
+      {plugin.details?.statusContext && (
+        <div
+          className="markdown-html"
+          dangerouslySetInnerHTML={{
+            __html: renderMarkdown(plugin.details.statusContext),
+          }}
+        />
+      )}
     </Alert>
   ) : null;
 }

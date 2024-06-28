@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 
@@ -19,7 +18,11 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
 
   // Populate info
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
-  const version = plugin.installedVersion || latestCompatibleVersion?.version;
+  const useLatestCompatibleInfo = !plugin.isInstalled;
+  let version = plugin.installedVersion;
+  if (!version && useLatestCompatibleInfo && latestCompatibleVersion?.version) {
+    version = latestCompatibleVersion?.version;
+  }
 
   if (Boolean(version)) {
     info.push({
@@ -47,15 +50,16 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   }
 
   const pluginDependencies = plugin.details?.pluginDependencies;
-  const grafanaDependency = plugin.isInstalled
-    ? plugin.details?.grafanaDependency
-    : latestCompatibleVersion?.grafanaDependency || plugin.details?.grafanaDependency;
+  let grafanaDependency = plugin.details?.grafanaDependency;
+  if (useLatestCompatibleInfo && latestCompatibleVersion?.grafanaDependency) {
+    grafanaDependency = latestCompatibleVersion?.grafanaDependency;
+  }
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
 
   if (!hasNoDependencyInfo) {
     info.push({
       label: 'Dependencies',
-      value: <PluginDetailsHeaderDependencies plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />,
+      value: <PluginDetailsHeaderDependencies plugin={plugin} grafanaDependency={grafanaDependency} />,
     });
   }
 

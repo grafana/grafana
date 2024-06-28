@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { PureComponent, ReactNode } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 
@@ -18,7 +18,7 @@ interface LokiQueryFieldState {
   labelsLoaded: boolean;
 }
 
-export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
+export class LokiQueryField extends PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   _isMounted = false;
 
   constructor(props: LokiQueryFieldProps) {
@@ -29,7 +29,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
   async componentDidMount() {
     this._isMounted = true;
-    await this.props.datasource.languageProvider.start();
+    await this.props.datasource.languageProvider.start(this.props.range);
     if (this._isMounted) {
       this.setState({ labelsLoaded: true });
     }
@@ -47,7 +47,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     const refreshLabels = shouldRefreshLabels(range, prevProps.range);
     // We want to refresh labels when range changes (we round up intervals to a minute)
     if (refreshLabels) {
-      languageProvider.fetchLabels();
+      languageProvider.fetchLabels({ timeRange: range });
     }
   }
 
@@ -65,7 +65,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource, history, onRunQuery } = this.props;
+    const { ExtraFieldElement, query, datasource, history, onRunQuery, range } = this.props;
     const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
 
     return (
@@ -82,6 +82,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               onRunQuery={onRunQuery}
               initialValue={query.expr ?? ''}
               placeholder={placeholder}
+              timeRange={range}
             />
           </div>
         </div>

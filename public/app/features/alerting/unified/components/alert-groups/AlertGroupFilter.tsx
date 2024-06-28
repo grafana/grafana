@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -39,13 +39,11 @@ export const AlertGroupFilter = ({ groups }: Props) => {
     <div className={styles.wrapper}>
       <div className={styles.filterSection}>
         <MatcherFilter
-          className={styles.filterInput}
           key={matcherFilterKey}
           defaultQueryString={queryString}
           onFilterChange={(value) => setQueryParams({ queryString: value ? value : null })}
         />
         <GroupBy
-          className={styles.filterInput}
           groups={groups}
           groupBy={groupBy}
           onGroupingChange={(keys) => setQueryParams({ groupBy: keys.length ? keys.join(',') : null })}
@@ -65,23 +63,18 @@ export const AlertGroupFilter = ({ groups }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    border-bottom: 1px solid ${theme.colors.border.medium};
-    margin-bottom: ${theme.spacing(3)};
-  `,
-  filterSection: css`
-    display: flex;
-    flex-direction: row;
-    margin-bottom: ${theme.spacing(3)};
-  `,
-  filterInput: css`
-    width: 340px;
-    & + & {
-      margin-left: ${theme.spacing(1)};
-    }
-  `,
-  clearButton: css`
-    margin-left: ${theme.spacing(1)};
-    margin-top: 19px;
-  `,
+  wrapper: css({
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+    marginBottom: theme.spacing(3),
+  }),
+  filterSection: css({
+    display: 'flex',
+    flexDirection: 'row',
+    marginBottom: theme.spacing(3),
+    gap: theme.spacing(1),
+  }),
+  clearButton: css({
+    marginLeft: theme.spacing(1),
+    marginTop: '19px',
+  }),
 });

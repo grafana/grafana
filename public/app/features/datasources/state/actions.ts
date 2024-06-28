@@ -22,12 +22,11 @@ import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
-import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
+import { AccessControlAction, DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
-import { findNewName, nameExits } from '../utils';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -177,6 +176,9 @@ export const testDataSource = (
 
 export function loadDataSources(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
+    if (!contextSrv.hasPermission(AccessControlAction.DataSourcesRead)) {
+      return;
+    }
     dispatch(dataSourcesLoad());
     const response = await api.getDataSources();
     dispatch(dataSourcesLoaded(response));
@@ -229,26 +231,11 @@ export function addDataSource(
   plugin: DataSourcePluginMeta,
   editRoute = DATASOURCES_ROUTES.Edit
 ): ThunkResult<Promise<void>> {
-  return async (dispatch, getStore) => {
-    // update the list of datasources first.
-    // We later use this list to check whether the name of the datasource
-    // being created is unuque or not and assign a new name to it if needed.
-    const response = await api.getDataSources();
-    dispatch(dataSourcesLoaded(response));
-
-    const dataSources = getStore().dataSources.dataSources;
-    const isFirstDataSource = dataSources.length === 0;
+  return async () => {
     const newInstance = {
-      name: plugin.name,
       type: plugin.id,
       access: 'proxy',
-      isDefault: isFirstDataSource,
     };
-
-    // TODO: typo in name
-    if (nameExits(dataSources, newInstance.name)) {
-      newInstance.name = findNewName(dataSources, newInstance.name);
-    }
 
     const result = await api.createDataSource(newInstance);
     const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
@@ -290,7 +277,7 @@ export function updateDataSource(dataSource: DataSourceSettings) {
 
       dispatch(testDataSourceFailed(formattedError));
 
-      return Promise.reject(dataSource);
+      return Promise.reject(err);
     }
 
     await getDatasourceSrv().reload();

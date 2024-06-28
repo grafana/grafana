@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -10,13 +8,12 @@ export function BrowseFilters() {
   return (
     <div>
       <ActionRow
-        hideLayout
         showStarredFilter
+        showLayout
         state={searchState}
         getTagOptions={stateManager.getTagOptions}
         getSortOptions={getGrafanaSearcher().getSortOptions}
         sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-        includePanels={searchState.includePanels ?? false}
         onLayoutChange={stateManager.onLayoutChange}
         onStarredFilterChange={stateManager.onStarredFilterChange}
         onSortChange={stateManager.onSortChange}

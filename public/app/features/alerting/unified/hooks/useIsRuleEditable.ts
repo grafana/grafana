@@ -9,6 +9,7 @@ import { useFolder } from './useFolder';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 interface ResultBag {
+  isRulerAvailable?: boolean;
   isEditable?: boolean;
   isRemovable?: boolean;
   loading: boolean;
@@ -42,6 +43,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     if (!folder) {
       // Loading or invalid folder UID
       return {
+        isRulerAvailable: true,
         isEditable: false,
         isRemovable: false,
         loading,
@@ -52,6 +54,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     const canRemoveGrafanaRules = contextSrv.hasPermissionInMetadata(rulePermission.delete, folder);
 
     return {
+      isRulerAvailable: true,
       isEditable: canEditGrafanaRules,
       isRemovable: canRemoveGrafanaRules,
       loading: loading || isLoading,
@@ -65,6 +68,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const canRemoveCloudRules = contextSrv.hasPermission(rulePermission.delete);
 
   return {
+    isRulerAvailable,
     isEditable: canEditCloudRules && isRulerAvailable,
     isRemovable: canRemoveCloudRules && isRulerAvailable,
     loading: isLoading || dataSources[rulesSourceName]?.loading,

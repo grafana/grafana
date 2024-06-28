@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -39,12 +38,12 @@ describe('MenuItem', () => {
     render(getMenuItem({ childItems }));
 
     expect(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')).nodeName).toBe('DIV');
-    expect(screen.getByLabelText(selectors.components.Menu.SubMenu.icon)).toBeInTheDocument();
-    expect(screen.queryByLabelText(selectors.components.Menu.SubMenu.container)).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Menu.SubMenu.icon)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Menu.SubMenu.container)).not.toBeInTheDocument();
 
     fireEvent.mouseOver(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')));
 
-    const subMenuContainer = await screen.findByLabelText(selectors.components.Menu.SubMenu.container);
+    const subMenuContainer = await screen.findByTestId(selectors.components.Menu.SubMenu.container);
 
     expect(subMenuContainer).toBeInTheDocument();
     expect(subMenuContainer.firstChild?.childNodes.length).toBe(2);
@@ -72,10 +71,26 @@ describe('MenuItem', () => {
 
     render(getMenuItem({ childItems }));
 
-    expect(screen.queryByLabelText(selectors.components.Menu.SubMenu.container)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Menu.SubMenu.container)).not.toBeInTheDocument();
 
     fireEvent.keyDown(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')), { key: 'ArrowRight' });
 
-    expect(await screen.findByLabelText(selectors.components.Menu.SubMenu.container)).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.components.Menu.SubMenu.container)).toBeInTheDocument();
+  });
+
+  it('renders with role="link" when URL is passed', async () => {
+    render(<MenuItem label="URL Item" url="/some-url" />);
+    expect(screen.getByRole('link', { name: 'URL Item' })).toBeInTheDocument();
+  });
+
+  it('renders with expected role when URL and role are passed', async () => {
+    render(<MenuItem label="URL Item" url="/some-url" role="menuitem" />);
+    expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
+  });
+
+  it('renders extra component if provided', async () => {
+    render(<MenuItem label="main label" component={() => <p>extra content</p>} />);
+    expect(screen.getByText('main label')).toBeInTheDocument();
+    expect(screen.getByText('extra content')).toBeInTheDocument();
   });
 });

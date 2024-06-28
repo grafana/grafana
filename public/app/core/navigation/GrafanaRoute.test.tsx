@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { History, Location } from 'history';
-import React, { ComponentType } from 'react';
+import { lazy, ComponentType } from 'react';
 import { match } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -47,13 +47,13 @@ describe('GrafanaRoute', () => {
   });
 
   it('Shows loading on lazy load', async () => {
-    const PageComponent = React.lazy(() => {
+    const PageComponent = lazy(() => {
       return new Promise<{ default: ComponentType }>(() => {});
     });
 
     setup({ route: { component: PageComponent, path: '' } });
 
-    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Loading')).toBeInTheDocument();
   });
 
   it('Shows error on page error', async () => {

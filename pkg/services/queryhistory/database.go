@@ -45,7 +45,7 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 // searchQueries searches for queries in query history based on provided parameters
 func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
 	var dtos []QueryHistoryDTO
-	var allQueries []any
+	var totalCount int
 
 	if query.To <= 0 {
 		query.To = s.now().Unix()
@@ -73,7 +73,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 			query_history.comment,
 			query_history.queries,
 		`)
-		writeStarredSQL(query, s.store, &dtosBuilder)
+		writeStarredSQL(query, s.store, &dtosBuilder, false)
 		writeFiltersSQL(query, user, s.store, &dtosBuilder)
 		writeSortSQL(query, s.store, &dtosBuilder)
 		writeLimitSQL(query, s.store, &dtosBuilder)
@@ -87,9 +87,9 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 		countBuilder := db.SQLBuilder{}
 		countBuilder.Write(`SELECT
 		`)
-		writeStarredSQL(query, s.store, &countBuilder)
+		writeStarredSQL(query, s.store, &countBuilder, true)
 		writeFiltersSQL(query, user, s.store, &countBuilder)
-		err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&allQueries)
+		_, err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Get(&totalCount)
 		return err
 	})
 
@@ -99,7 +99,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 
 	response := QueryHistorySearchResult{
 		QueryHistory: dtos,
-		TotalCount:   len(allQueries),
+		TotalCount:   totalCount,
 		Page:         query.Page,
 		PerPage:      query.Limit,
 	}
@@ -137,7 +137,7 @@ func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *user.S
 	var queryHistory QueryHistory
 	var isStarred bool
 
-	err := s.store.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
 		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
 			return err
@@ -182,7 +182,7 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *user.SignedInU
 	var queryHistory QueryHistory
 	var isStarred bool
 
-	err := s.store.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
 		// Check if query exists as we want to star only existing queries
 		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
@@ -232,7 +232,7 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *user.SignedI
 	var queryHistory QueryHistory
 	var isStarred bool
 
-	err := s.store.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
 		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
 			return err
@@ -312,7 +312,7 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, limit int, starredQueries bool) (int, error) {
 	var deletedRowsCount int64
 
-	err := s.store.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
 		var rowsCount int64
 		var err error
 		if starredQueries {

@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { Input } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
-import { Field } from '../Field';
+import { Field } from '../shared/Field';
 
 import { setLegendAlias } from './setQueryValue';
 

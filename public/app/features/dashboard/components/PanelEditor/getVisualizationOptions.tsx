@@ -1,19 +1,23 @@
 import { get as lodashGet } from 'lodash';
-import React from 'react';
 
 import {
   EventBus,
   InterpolateFunction,
   PanelData,
+  PanelPlugin,
   StandardEditorContext,
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import {
-  isNestedPanelOptions,
   NestedValueAccess,
   PanelOptionsEditorBuilder,
+  isNestedPanelOptions,
 } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { VizPanel } from '@grafana/scenes';
+import { Input } from '@grafana/ui';
+import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
+import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -134,6 +138,138 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
           const onChange = (v: any) => {
             onFieldConfigsChange(
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
+            );
+          };
+
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
+        },
+      })
+    );
+  }
+
+  return Object.values(categoryIndex);
+}
+
+export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryVizPanel): OptionsPaneCategoryDescriptor {
+  const descriptor = new OptionsPaneCategoryDescriptor({
+    title: 'Library panel options',
+    id: 'Library panel options',
+    isOpenDefault: true,
+  });
+
+  descriptor
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Name',
+        value: libraryPanel,
+        popularRank: 1,
+        render: function renderName() {
+          return (
+            <Input
+              id="LibraryPanelFrameName"
+              data-testid="library panel name input"
+              defaultValue={libraryPanel.state.name}
+              onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
+            />
+          );
+        },
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Information',
+        render: function renderLibraryPanelInformation() {
+          return <LibraryVizPanelInfo libraryPanel={libraryPanel} />;
+        },
+      })
+    );
+
+  return descriptor;
+}
+
+export interface OptionPaneRenderProps2 {
+  panel: VizPanel;
+  eventBus: EventBus;
+  plugin: PanelPlugin;
+  data?: PanelData;
+  instanceState: unknown;
+}
+
+export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
+  const { plugin, panel, data, eventBus, instanceState } = props;
+
+  const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
+  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
+    const categoryName = categoryNames?.[0] ?? plugin.meta.name;
+    const category = categoryIndex[categoryName];
+
+    if (category) {
+      return category;
+    }
+
+    return (categoryIndex[categoryName] = new OptionsPaneCategoryDescriptor({
+      title: categoryName,
+      id: categoryName,
+      sandboxId: plugin.meta.id,
+    }));
+  };
+
+  const currentOptions = panel.state.options;
+  const access: NestedValueAccess = {
+    getValue: (path) => lodashGet(currentOptions, path),
+    onChange: (path, value) => {
+      const newOptions = setOptionImmutably(currentOptions, path, value);
+      panel.onOptionsChange(newOptions);
+    },
+  };
+
+  const context = getStandardEditorContext({
+    data,
+    replaceVariables: panel.interpolate,
+    options: currentOptions,
+    eventBus: eventBus,
+    instanceState,
+  });
+
+  // Load the options into categories
+  fillOptionsPaneItems(plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+
+  // Field options
+  const currentFieldConfig = panel.state.fieldConfig;
+  for (const fieldOption of plugin.fieldConfigRegistry.list()) {
+    const hideOption =
+      fieldOption.showIf &&
+      (fieldOption.isCustom
+        ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)
+        : !fieldOption.showIf(currentFieldConfig.defaults, data?.series));
+    if (fieldOption.hideFromDefaults || hideOption) {
+      continue;
+    }
+
+    const category = getOptionsPaneCategory(fieldOption.category);
+    const Editor = fieldOption.editor;
+
+    const defaults = currentFieldConfig.defaults;
+    const value = fieldOption.isCustom
+      ? defaults.custom
+        ? lodashGet(defaults.custom, fieldOption.path)
+        : undefined
+      : lodashGet(defaults, fieldOption.path);
+
+    if (fieldOption.getItemsCount) {
+      category.props.itemsCount = fieldOption.getItemsCount(value);
+    }
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: fieldOption.name,
+        description: fieldOption.description,
+        overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
+        render: function renderEditor() {
+          const onChange = (v: unknown) => {
+            panel.onFieldConfigChange(
+              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
+              true
             );
           };
 

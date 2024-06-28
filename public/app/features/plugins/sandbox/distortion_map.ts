@@ -1,13 +1,13 @@
 import { ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep, isFunction } from 'lodash';
 
-import { PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Monaco } from '@grafana/ui';
 
 import { loadScriptIntoSandbox } from './code_loader';
 import { forbiddenElements } from './constants';
-import { SandboxEnvironment } from './types';
+import { recursivePatchObjectAsLiveTarget } from './document_sandbox';
+import { SandboxEnvironment, SandboxPluginMeta } from './types';
 import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
 /**
@@ -63,7 +63,7 @@ import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
 type DistortionMap = Map<
   unknown,
-  (originalAttrOrMethod: unknown, pluginMeta: PluginMeta, sandboxEnv?: SandboxEnvironment) => unknown
+  (originalAttrOrMethod: unknown, pluginMeta: SandboxPluginMeta, sandboxEnv?: SandboxEnvironment) => unknown
 >;
 const generalDistortionMap: DistortionMap = new Map();
 
@@ -85,11 +85,12 @@ export function getGeneralSandboxDistortionMap() {
     distortDocument(generalDistortionMap);
     distortMonacoEditor(generalDistortionMap);
     distortPostMessage(generalDistortionMap);
+    distortLodash(generalDistortionMap);
   }
   return generalDistortionMap;
 }
 
-function failToSet(originalAttrOrMethod: unknown, meta: PluginMeta) {
+function failToSet(originalAttrOrMethod: unknown, meta: SandboxPluginMeta) {
   logWarning(`Plugin ${meta.id} tried to set a sandboxed property`, {
     pluginId: meta.id,
     attrOrMethod: String(originalAttrOrMethod),
@@ -110,7 +111,7 @@ function distortIframeAttributes(distortions: DistortionMap) {
   for (const property of iframeHtmlForbiddenProperties) {
     const descriptor = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, property);
     if (descriptor) {
-      function fail(originalAttrOrMethod: unknown, meta: PluginMeta) {
+      function fail(originalAttrOrMethod: unknown, meta: SandboxPluginMeta) {
         const pluginId = meta.id;
         logWarning(`Plugin ${pluginId} tried to access iframe.${property}`, {
           pluginId,
@@ -144,7 +145,7 @@ function distortIframeAttributes(distortions: DistortionMap) {
 function distortConsole(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(window, 'console');
   if (descriptor?.value) {
-    function getSandboxConsole(originalAttrOrMethod: unknown, meta: PluginMeta) {
+    function getSandboxConsole(originalAttrOrMethod: unknown, meta: SandboxPluginMeta) {
       const pluginId = meta.id;
       // we don't monitor the console because we expect a high volume of calls
       if (monitorOnly) {
@@ -173,7 +174,7 @@ function distortConsole(distortions: DistortionMap) {
 
 // set distortions to alert to always output to the console
 function distortAlert(distortions: DistortionMap) {
-  function getAlertDistortion(originalAttrOrMethod: unknown, meta: PluginMeta) {
+  function getAlertDistortion(originalAttrOrMethod: unknown, meta: SandboxPluginMeta) {
     const pluginId = meta.id;
     logWarning(`Plugin ${pluginId} accessed window.alert`, {
       pluginId,
@@ -199,11 +200,14 @@ function distortAlert(distortions: DistortionMap) {
 }
 
 function distortInnerHTML(distortions: DistortionMap) {
-  function getInnerHTMLDistortion(originalMethod: unknown, meta: PluginMeta) {
+  function getInnerHTMLDistortion(originalMethod: unknown, meta: SandboxPluginMeta) {
     const pluginId = meta.id;
     return function innerHTMLDistortion(this: HTMLElement, ...args: string[]) {
       for (const arg of args) {
-        const lowerCase = arg?.toLowerCase() || '';
+        // NOTE: DOMPurify anti-tamper mechanism requires us to clone the string
+        // calling any method whatsoever on a string will cause the string to be tampered
+        // and DOMPurify will return empty strings
+        const lowerCase = String(arg || '').toLowerCase();
         for (const forbiddenElement of forbiddenElements) {
           if (lowerCase.includes('<' + forbiddenElement)) {
             logWarning(`Plugin ${pluginId} tried to set ${forbiddenElement} in innerHTML`, {
@@ -222,7 +226,7 @@ function distortInnerHTML(distortions: DistortionMap) {
       }
 
       if (isFunction(originalMethod)) {
-        originalMethod.apply(this, args);
+        return originalMethod.apply(this, args);
       }
     };
   }
@@ -244,7 +248,7 @@ function distortInnerHTML(distortions: DistortionMap) {
 }
 
 function distortCreateElement(distortions: DistortionMap) {
-  function getCreateElementDistortion(originalMethod: unknown, meta: PluginMeta) {
+  function getCreateElementDistortion(originalMethod: unknown, meta: SandboxPluginMeta) {
     const pluginId = meta.id;
     return function createElementDistortion(this: HTMLElement, arg?: string, options?: unknown) {
       if (arg && forbiddenElements.includes(arg)) {
@@ -270,7 +274,7 @@ function distortCreateElement(distortions: DistortionMap) {
 }
 
 function distortInsert(distortions: DistortionMap) {
-  function getInsertDistortion(originalMethod: unknown, meta: PluginMeta) {
+  function getInsertDistortion(originalMethod: unknown, meta: SandboxPluginMeta) {
     const pluginId = meta.id;
     return function insertChildDistortion(this: HTMLElement, node?: Node, ref?: Node) {
       const nodeType = node?.nodeName?.toLowerCase() || '';
@@ -292,7 +296,7 @@ function distortInsert(distortions: DistortionMap) {
     };
   }
 
-  function getinsertAdjacentElementDistortion(originalMethod: unknown, meta: PluginMeta) {
+  function getinsertAdjacentElementDistortion(originalMethod: unknown, meta: SandboxPluginMeta) {
     const pluginId = meta.id;
     return function insertAdjacentElementDistortion(this: HTMLElement, position?: string, node?: Node) {
       const nodeType = node?.nodeName?.toLowerCase() || '';
@@ -334,7 +338,7 @@ function distortInsert(distortions: DistortionMap) {
 // set distortions to append elements to the document
 function distortAppend(distortions: DistortionMap) {
   // append accepts an array of nodes to append https://developer.mozilla.org/en-US/docs/Web/API/Node/append
-  function getAppendDistortion(originalMethod: unknown, meta: PluginMeta) {
+  function getAppendDistortion(originalMethod: unknown, meta: SandboxPluginMeta) {
     const pluginId = meta.id;
     return function appendDistortion(this: HTMLElement, ...args: Node[]) {
       let acceptedNodes = args;
@@ -361,7 +365,7 @@ function distortAppend(distortions: DistortionMap) {
   }
 
   // appendChild accepts a single node to add https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
-  function getAppendChildDistortion(originalMethod: unknown, meta: PluginMeta, sandboxEnv?: SandboxEnvironment) {
+  function getAppendChildDistortion(originalMethod: unknown, meta: SandboxPluginMeta, sandboxEnv?: SandboxEnvironment) {
     const pluginId = meta.id;
     return function appendChildDistortion(this: HTMLElement, arg?: Node) {
       const nodeType = arg?.nodeName?.toLowerCase() || '';
@@ -381,7 +385,7 @@ function distortAppend(distortions: DistortionMap) {
       // this allows webpack chunks to be loaded into the sandbox
       // loadScriptIntoSandbox has restrictions on what scripts can be loaded
       if (sandboxEnv && arg && nodeType === 'script' && arg instanceof HTMLScriptElement) {
-        loadScriptIntoSandbox(arg.src, meta, sandboxEnv)
+        loadScriptIntoSandbox(arg.src, sandboxEnv)
           .then(() => {
             arg.onload?.call(arg, new Event('load'));
           })
@@ -526,26 +530,32 @@ async function distortPostMessage(distortions: DistortionMap) {
  * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions.
  * We put here only distortions that can't be static because they are dynamicly loaded
  */
-export function distortLiveApis(originalValue: ProxyTarget): ProxyTarget | undefined {
+export function distortLiveApis(_originalValue: ProxyTarget): ProxyTarget | undefined {
   distortMonacoEditor(generalDistortionMap);
+  return;
+}
 
-  // This distorts the `history.replace` function in react-router-dom.
-  // constructed for each browser history and is only accessible within the react context.
-  // Note that this distortion does not affect `String.prototype.replace` calls.
-  // because they don't go through distortions
-  if (
-    originalValue instanceof Function &&
-    originalValue.name === 'replace' &&
-    originalValue.prototype.constructor.length === 2
-  ) {
-    return function replace(this: unknown, ...args: unknown[]) {
-      // validate history.replace signature further
-      if (args && args[0] && typeof args[0] === 'string' && args[1] && !(args[1] instanceof Function)) {
-        const newArgs = cloneDeep(args);
-        return Reflect.apply(originalValue, this, newArgs);
-      }
-      return Reflect.apply(originalValue, this, args);
+export function distortLodash(distortions: DistortionMap) {
+  /**
+   * This is a distortion for lodash clone Deep function
+   * because lodash deep clones execute in the blue realm
+   * it returns objects that plugins can't modify because they are not
+   * lived tracked.
+   *
+   * We need to patch it so that plugins can modify the cloned object
+   * in places such as query editors.
+   *
+   */
+  function cloneDeepDistortion(originalValue: unknown) {
+    // here to please typescript, this if is never true
+    if (!isFunction(originalValue)) {
+      return originalValue;
+    }
+    return function (this: unknown, ...args: unknown[]) {
+      const cloned = originalValue.apply(this, args);
+      recursivePatchObjectAsLiveTarget(cloned);
+      return cloned;
     };
   }
-  return;
+  distortions.set(cloneDeep, cloneDeepDistortion);
 }

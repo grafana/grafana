@@ -4,29 +4,32 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 export interface Options extends common.SingleStatBaseOptions {
   displayMode: common.BarGaugeDisplayMode;
+  maxVizHeight: number;
   minVizHeight: number;
   minVizWidth: number;
   namePlacement: common.BarGaugeNamePlacement;
   showUnfilled: boolean;
+  sizing: common.BarGaugeSizing;
   valueMode: common.BarGaugeValueMode;
 }
 
 export const defaultOptions: Partial<Options> = {
   displayMode: common.BarGaugeDisplayMode.Gradient,
-  minVizHeight: 10,
-  minVizWidth: 0,
+  maxVizHeight: 300,
+  minVizHeight: 16,
+  minVizWidth: 8,
   namePlacement: common.BarGaugeNamePlacement.Auto,
   showUnfilled: true,
+  sizing: common.BarGaugeSizing.Auto,
   valueMode: common.BarGaugeValueMode.Color,
 };

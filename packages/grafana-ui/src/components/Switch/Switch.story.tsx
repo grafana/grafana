@@ -1,5 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import * as React from 'react';
 
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
 
@@ -19,7 +20,6 @@ const meta: Meta<typeof Switch> = {
   args: {
     disabled: false,
     value: false,
-    transparent: false,
     invalid: false,
   },
 };
@@ -29,13 +29,13 @@ export const Controlled: StoryFn<typeof Switch> = (args) => {
     <div>
       <div style={{ marginBottom: '32px' }}>
         <Field label="Normal switch" description="For horizontal forms" invalid={args.invalid}>
-          <Switch value={args.value} disabled={args.disabled} transparent={args.transparent} />
+          <Switch value={args.value} disabled={args.disabled} />
         </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
-          <InlineField label="My switch" invalid={args.invalid}>
-            <InlineSwitch value={args.value} disabled={args.disabled} transparent={args.transparent} />
+          <InlineField label="My switch" invalid={args.invalid} disabled={args.disabled}>
+            <InlineSwitch value={args.value} />
           </InlineField>
         </InlineFieldRow>
       </div>
@@ -47,7 +47,6 @@ export const Controlled: StoryFn<typeof Switch> = (args) => {
             showLabel={true}
             value={args.value}
             disabled={args.disabled}
-            transparent={args.transparent}
             invalid={args.invalid}
           />
         </span>
@@ -62,15 +61,7 @@ export const Uncontrolled: StoryFn<typeof Switch> = (args) => {
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
     [setChecked]
   );
-  return (
-    <Switch
-      value={checked}
-      disabled={args.disabled}
-      transparent={args.transparent}
-      onChange={onChange}
-      invalid={args.invalid}
-    />
-  );
+  return <Switch value={checked} disabled={args.disabled} onChange={onChange} invalid={args.invalid} />;
 };
 
 export default meta;

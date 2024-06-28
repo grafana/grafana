@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DerivedFields } from './DerivedFields';
 
@@ -35,7 +34,8 @@ describe('DerivedFields', () => {
     const onChange = jest.fn();
     render(<DerivedFields onChange={onChange} />);
 
-    userEvent.click(screen.getByText('Add'));
+    const addButton = await screen.findByText('Add');
+    await userEvent.click(addButton);
 
     await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
   });
@@ -44,7 +44,7 @@ describe('DerivedFields', () => {
     const onChange = jest.fn();
     render(<DerivedFields fields={testFields} onChange={onChange} />);
 
-    userEvent.click((await screen.findAllByTitle('Remove field'))[0]);
+    await userEvent.click((await screen.findAllByTitle('Remove field'))[0]);
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith([testFields[1]]));
   });
@@ -62,12 +62,13 @@ describe('DerivedFields', () => {
     ];
     render(<DerivedFields onChange={jest.fn()} fields={repeatedFields} />);
 
-    userEvent.click(screen.getAllByPlaceholderText('Field name')[0]);
+    const inputs = await screen.findAllByPlaceholderText('Field name');
+    await userEvent.click(inputs[0]);
 
     expect(await screen.findAllByText('The name is already in use')).toHaveLength(2);
   });
 
-  it('does not validate empty names as repeated', () => {
+  it('does not validate empty names as repeated', async () => {
     const repeatedFields = [
       {
         matcherRegex: '',
@@ -80,7 +81,8 @@ describe('DerivedFields', () => {
     ];
     render(<DerivedFields onChange={jest.fn()} fields={repeatedFields} />);
 
-    userEvent.click(screen.getAllByPlaceholderText('Field name')[0]);
+    const inputs = await screen.findAllByPlaceholderText('Field name');
+    await userEvent.click(inputs[0]);
 
     expect(screen.queryByText('The name is already in use')).not.toBeInTheDocument();
   });

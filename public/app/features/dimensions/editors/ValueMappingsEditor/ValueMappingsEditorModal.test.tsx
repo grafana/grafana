@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { MappingType } from '@grafana/data';
@@ -58,7 +57,7 @@ describe('ValueMappingsEditorModal', () => {
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.RangeToText,
           options: {
@@ -74,12 +73,12 @@ describe('ValueMappingsEditorModal', () => {
     });
   });
 
-  describe('When adding and updating value mapp', () => {
+  describe('When adding and updating value map', () => {
     it('should be 3', async () => {
       const onChangeSpy = jest.fn();
       setup(onChangeSpy);
 
-      await userEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
+      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByLabelText(
         selectors.components.ValuePicker.select('Add a new mapping')
       );
@@ -94,7 +93,7 @@ describe('ValueMappingsEditorModal', () => {
       await userEvent.type(screen.getAllByPlaceholderText('Optional display text')[2], 'display');
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.ValueToText,
           options: {
@@ -129,7 +128,7 @@ describe('ValueMappingsEditorModal', () => {
       setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
-      await userEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
+      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByLabelText(
         selectors.components.ValuePicker.select('Add a new mapping')
       );
@@ -146,7 +145,7 @@ describe('ValueMappingsEditorModal', () => {
 
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.RangeToText,
           options: {
@@ -168,7 +167,7 @@ describe('ValueMappingsEditorModal', () => {
       setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
-      await userEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
+      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByLabelText(
         selectors.components.ValuePicker.select('Add a new mapping')
       );
@@ -182,7 +181,7 @@ describe('ValueMappingsEditorModal', () => {
 
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.RegexToText,
           options: {

@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+import { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
 import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
@@ -23,6 +24,8 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   /** @deprecated Use `Card.Description` instead */
   description?: string;
   isSelected?: boolean;
+  /** If true, the padding of the Card will be smaller */
+  isCompact?: boolean;
 }
 
 export interface CardInterface extends FC<Props> {
@@ -47,7 +50,16 @@ const CardContext = React.createContext<{
  *
  * @public
  */
-export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
+export const Card: CardInterface = ({
+  disabled,
+  href,
+  onClick,
+  children,
+  isSelected,
+  isCompact,
+  className,
+  ...htmlProps
+}) => {
   const hasHeadingComponent = useMemo(
     () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Heading),
     [children]
@@ -55,8 +67,7 @@ export const Card: CardInterface = ({ disabled, href, onClick, children, isSelec
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
-  const theme = useTheme2();
-  const styles = getCardContainerStyles(theme, disabled, disableHover, isSelected);
+  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected, isCompact);
 
   return (
     <CardContainer
@@ -85,7 +96,11 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
-  const { href, onClick, isSelected } = context ?? { href: undefined, onClick: undefined, isSelected: undefined };
+  const { href, onClick, isSelected } = context ?? {
+    href: undefined,
+    onClick: undefined,
+    isSelected: undefined,
+  };
 
   return (
     <h2 className={cx(styles.heading, className)}>
@@ -100,7 +115,8 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly checked={isSelected} />}
+      {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
+      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} readOnly />}
     </h2>
   );
 };
@@ -120,6 +136,9 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
     lineHeight: theme.typography.body.lineHeight,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
+    '& input[readonly]': {
+      cursor: 'inherit',
+    },
   }),
   linkHack: css({
     all: 'unset',
@@ -283,22 +302,22 @@ const BaseActions = ({ children, disabled, variant, className }: ActionsProps) =
 
 const getActionStyles = (theme: GrafanaTheme2) => ({
   actions: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
     gridArea: 'Actions',
     marginTop: theme.spacing(2),
-    '& > *': {
-      marginRight: theme.spacing(1),
-    },
   }),
   secondaryActions: css({
-    display: 'flex',
-    gridArea: 'Secondary',
     alignSelf: 'center',
     color: theme.colors.text.secondary,
-    marginTtop: theme.spacing(2),
-
-    '& > *': {
-      marginRight: `${theme.spacing(1)} !important`,
-    },
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    gridArea: 'Secondary',
+    marginTop: theme.spacing(2),
   }),
 });
 

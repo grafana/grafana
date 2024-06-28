@@ -48,6 +48,21 @@ export const notificationsPermissions = {
   },
 };
 
+export const silencesPermissions = {
+  read: {
+    grafana: AccessControlAction.AlertingSilenceRead,
+    external: AccessControlAction.AlertingInstanceRead,
+  },
+  create: {
+    grafana: AccessControlAction.AlertingSilenceCreate,
+    external: AccessControlAction.AlertingInstancesExternalWrite,
+  },
+  update: {
+    grafana: AccessControlAction.AlertingSilenceUpdate,
+    external: AccessControlAction.AlertingInstancesExternalWrite,
+  },
+};
+
 export const provisioningPermissions = {
   read: AccessControlAction.AlertingProvisioningRead,
   readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
@@ -124,9 +139,6 @@ export function getRulesAccess() {
     canEditRules: (rulesSourceName: string) => {
       return contextSrv.hasPermission(getRulesPermissions(rulesSourceName).update);
     },
-    canReadProvisioning:
-      contextSrv.hasPermission(provisioningPermissions.read) ||
-      contextSrv.hasPermission(provisioningPermissions.readSecrets),
   };
 }
 

@@ -1,73 +1,31 @@
 // Libraries
 import { css, cx, keyframes } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import React from 'react';
+import * as React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
-import { stylesFactory, useTheme2 } from '@grafana/ui';
-
-// Types
-
-const drawerSlide = (theme: GrafanaTheme2) => keyframes`
-  0% {
-    transform: translateY(${theme.components.horizontalDrawer.defaultHeight}px);
-  }
-
-  100% {
-    transform: translateY(0px);
-  }
-`;
-
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    container: css`
-      position: fixed !important;
-      bottom: 0;
-      background: ${theme.colors.background.primary};
-      border-top: 1px solid ${theme.colors.border.weak};
-      margin: ${theme.spacing(0, -2, 0, -2)};
-      box-shadow: ${theme.shadows.z3};
-      z-index: ${theme.zIndex.navbarFixed};
-    `,
-    drawerActive: css`
-      opacity: 1;
-      animation: 0.5s ease-out ${drawerSlide(theme)};
-    `,
-    rzHandle: css`
-      background: ${theme.colors.secondary.main};
-      transition: 0.3s background ease-in-out;
-      position: relative;
-      width: 200px !important;
-      height: 7px !important;
-      left: calc(50% - 100px) !important;
-      top: -4px !important;
-      cursor: grab;
-      border-radius: ${theme.shape.radius.pill};
-      &:hover {
-        background: ${theme.colors.secondary.shade};
-      }
-    `,
-  };
-});
+import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {
-  width: number;
   children: React.ReactNode;
   onResize?: ResizeCallback;
+  initialHeight?: string;
 }
 
 export function ExploreDrawer(props: Props) {
-  const { width, children, onResize } = props;
+  const { children, onResize, initialHeight } = props;
   const theme = useTheme2();
-  const styles = getStyles(theme);
-  const drawerWidth = `${width + 31.5}px`;
+  const styles = useStyles2(getStyles);
+  const dragStyles = getDragStyles(theme);
+
+  const height = initialHeight || `${theme.components.horizontalDrawer.defaultHeight}px`;
 
   return (
     <Resizable
-      className={cx(styles.container, styles.drawerActive)}
-      defaultSize={{ width: drawerWidth, height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
-      handleClasses={{ top: styles.rzHandle }}
+      className={cx(styles.fixed, styles.container, styles.drawerActive)}
+      defaultSize={{ width: '100%', height }}
+      handleClasses={{ top: dragStyles.dragHandleHorizontal }}
       enable={{
         top: true,
         right: false,
@@ -79,11 +37,39 @@ export function ExploreDrawer(props: Props) {
         topLeft: false,
       }}
       maxHeight="100vh"
-      maxWidth={drawerWidth}
-      minWidth={drawerWidth}
       onResize={onResize}
     >
       {children}
     </Resizable>
   );
 }
+
+const drawerSlide = (theme: GrafanaTheme2) => keyframes`
+  0% {
+    transform: translateY(${theme.components.horizontalDrawer.defaultHeight}px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+`;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  // @ts-expect-error csstype doesn't allow !important. see https://github.com/frenic/csstype/issues/114
+  fixed: css({
+    position: 'absolute !important',
+  }),
+  container: css({
+    bottom: 0,
+    background: theme.colors.background.primary,
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    boxShadow: theme.shadows.z3,
+    zIndex: theme.zIndex.navbarFixed,
+  }),
+  drawerActive: css({
+    opacity: 1,
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `0.5s ease-out ${drawerSlide(theme)}`,
+    },
+  }),
+});

@@ -11,17 +11,23 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 const (
@@ -31,6 +37,10 @@ const (
 )
 
 var updateSnapshotFlag = false
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationPlugins(t *testing.T) {
 	if testing.Short() {
@@ -47,7 +57,8 @@ func TestIntegrationPlugins(t *testing.T) {
 		setting.BuildVersion = origBuildVersion
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, cfgPath)
+	store := env.SQLStore
 
 	type testCase struct {
 		desc        string
@@ -57,8 +68,8 @@ func TestIntegrationPlugins(t *testing.T) {
 	}
 
 	t.Run("Install", func(t *testing.T) {
-		createUser(t, store, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
-		createUser(t, store, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
+		createUser(t, store, env.Cfg, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
+		createUser(t, store, env.Cfg, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
 
 		t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
 			status, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
@@ -108,11 +119,13 @@ func TestIntegrationPlugins(t *testing.T) {
 				require.Equal(t, tc.expStatus, resp.StatusCode)
 				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
+				var result dtos.PluginList
+				err = json.Unmarshal(b, &result)
+				require.NoError(t, err)
 
 				expResp := expectedResp(t, tc.expRespPath)
 
-				same := assert.JSONEq(t, expResp, string(b))
-				if !same {
+				if diff := cmp.Diff(expResp, result, cmpopts.IgnoreFields(plugins.Info{}, "Version")); diff != "" {
 					if updateSnapshotFlag {
 						t.Log("updating snapshot results")
 						var prettyJSON bytes.Buffer
@@ -121,6 +134,7 @@ func TestIntegrationPlugins(t *testing.T) {
 						}
 						updateRespSnapshot(t, tc.expRespPath, prettyJSON.String())
 					}
+					t.Errorf("unexpected response (-want +got):\n%s", diff)
 					t.FailNow()
 				}
 			})
@@ -179,16 +193,19 @@ func TestIntegrationPluginAssets(t *testing.T) {
 	})
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) {
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) {
 	t.Helper()
 
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = 1
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	_, err = usrSvc.Create(context.Background(), &cmd)
@@ -218,14 +235,19 @@ func grafanaAPIURL(username string, grafanaListedAddr string, path string) strin
 	return fmt.Sprintf("http://%s:%s@%s/api/%s", username, defaultPassword, grafanaListedAddr, path)
 }
 
-func expectedResp(t *testing.T, filename string) string {
+func expectedResp(t *testing.T, filename string) dtos.PluginList {
 	//nolint:GOSEC
 	contents, err := os.ReadFile(filepath.Join("data", filename))
 	if err != nil {
 		t.Errorf("failed to load %s: %v", filename, err)
 	}
 
-	return string(contents)
+	var result dtos.PluginList
+	err = json.Unmarshal(contents, &result)
+	if err != nil {
+		t.Errorf("failed to unmarshal %s: %v", filename, err)
+	}
+	return result
 }
 
 func updateRespSnapshot(t *testing.T, filename string, body string) {

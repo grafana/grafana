@@ -1,8 +1,9 @@
 import { isEqual } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { EditorList } from '@grafana/experimental';
 
+import { type CloudWatchDatasource } from '../../datasource';
 import { MultiFilters } from '../../types';
 
 import { MultiFilterItem } from './MultiFilterItem';
@@ -11,6 +12,7 @@ export interface Props {
   filters?: MultiFilters;
   onChange: (filters: MultiFilters) => void;
   keyPlaceholder?: string;
+  datasource: CloudWatchDatasource;
 }
 
 export interface MultiFilterCondition {
@@ -32,7 +34,7 @@ const filterConditionsToMultiFilters = (filters: MultiFilterCondition[]) => {
   return res;
 };
 
-export const MultiFilter = ({ filters, onChange, keyPlaceholder }: Props) => {
+export const MultiFilter = ({ filters, onChange, keyPlaceholder, datasource }: Props) => {
   const [items, setItems] = useState<MultiFilterCondition[]>([]);
   useEffect(() => setItems(filters ? multiFiltersToFilterConditions(filters) : []), [filters]);
   const onFiltersChange = (newItems: Array<Partial<MultiFilterCondition>>) => {
@@ -46,10 +48,12 @@ export const MultiFilter = ({ filters, onChange, keyPlaceholder }: Props) => {
     }
   };
 
-  return <EditorList items={items} onChange={onFiltersChange} renderItem={makeRenderFilter(keyPlaceholder)} />;
+  return (
+    <EditorList items={items} onChange={onFiltersChange} renderItem={makeRenderFilter(datasource, keyPlaceholder)} />
+  );
 };
 
-function makeRenderFilter(keyPlaceholder?: string) {
+function makeRenderFilter(datasource: CloudWatchDatasource, keyPlaceholder?: string) {
   function renderFilter(
     item: MultiFilterCondition,
     onChange: (item: MultiFilterCondition) => void,
@@ -61,6 +65,7 @@ function makeRenderFilter(keyPlaceholder?: string) {
         onChange={(item) => onChange(item)}
         onDelete={onDelete}
         keyPlaceholder={keyPlaceholder}
+        datasource={datasource}
       />
     );
   }

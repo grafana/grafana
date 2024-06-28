@@ -1,5 +1,5 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import React, { createContext, Dispatch, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, Dispatch, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
@@ -76,7 +76,7 @@ export const GraphiteQueryEditorContext = ({
     () => {
       if (needsRefresh && state) {
         setNeedsRefresh(false);
-        onChange({ ...query, target: state.target.target });
+        onChange({ ...query, target: state.target.target, targetFull: state.target.targetFull });
         onRunQuery();
       }
     },
@@ -92,8 +92,8 @@ export const GraphiteQueryEditorContext = ({
         datasource: datasource,
         range: range,
         templateSrv: getTemplateSrv(),
-        // list of queries is passed only when the editor is in Dashboards. This is to allow interpolation
-        // of sub-queries which are stored in "targetFull" property used by alerting in the backend.
+        // list of queries is passed only when the editor is in Dashboards or Alerting. This is to allow interpolation
+        // of sub-queries which are stored in "targetFull" property. This is used by alerting in the backend.
         queries: queries || [],
         refresh: () => {
           // do not run onChange/onRunQuery straight away to ensure the internal state gets updated first

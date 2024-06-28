@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Drawer, ToolbarButton, useStyles2, Text } from '@grafana/ui';
+import { IconButton, Drawer, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 
@@ -25,7 +24,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
         <Drawer
           title={
             <div className={styles.title}>
-              <Text element="h3">{t('news.title', 'Latest from the blog')}</Text>
+              <Text element="h2">{t('news.title', 'Latest from the blog')}</Text>
               <a
                 href="https://grafana.com/blog/"
                 target="_blank"
@@ -36,12 +35,12 @@ export function NewsContainer({ className }: NewsContainerProps) {
                 <img src="public/img/grot-news.svg" alt="Grot reading news" />
               </a>
               <div className={styles.actions}>
-                <Button
-                  icon="times"
+                <IconButton
+                  name="times"
                   variant="secondary"
-                  fill="text"
                   onClick={onToggleShowNewsDrawer}
-                  aria-label={selectors.components.Drawer.General.close}
+                  data-testid={selectors.components.Drawer.General.close}
+                  tooltip={t(`news.drawer.close`, 'Close Drawer')}
                 />
               </div>
             </div>

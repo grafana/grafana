@@ -96,7 +96,7 @@ func TestTemplateDecorateFunc(t *testing.T) {
 }
 
 func Test_configureAppChildPlugin(t *testing.T) {
-	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
+	t.Run("Child plugin will inherit parent version information when version is empty", func(t *testing.T) {
 		child := &plugins.Plugin{
 			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
 		}
@@ -104,45 +104,105 @@ func Test_configureAppChildPlugin(t *testing.T) {
 			JSONData: plugins.JSONData{
 				Type: plugins.TypeApp,
 				ID:   "testdata-app",
+				Info: plugins.Info{Version: "1.0.0"},
 			},
 			Class:   plugins.ClassCore,
 			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
-			BaseURL: "/public/app/plugins/app/testdata-app",
+			BaseURL: "public/app/plugins/app/testdata-app",
 		}
 
-		configureAppChildPlugin(&config.Cfg{}, parent, child)
+		configureAppChildPlugin(parent, child)
 
-		require.Equal(t, "core:plugin/testdata-app/datasources/datasource", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)
-		require.Equal(t, "/public/app/plugins/app/testdata-app", child.BaseURL)
-
-		t.Run("App sub URL has no effect on Core plugins", func(t *testing.T) {
-			configureAppChildPlugin(&config.Cfg{GrafanaAppSubURL: "/grafana"}, parent, child)
-
-			require.Equal(t, "core:plugin/testdata-app/datasources/datasource", child.Module)
-			require.Equal(t, "testdata-app", child.IncludedInAppID)
-			require.Equal(t, "/public/app/plugins/app/testdata-app", child.BaseURL)
-		})
+		require.Equal(t, parent.Info.Version, child.Info.Version)
 	})
 
-	t.Run("When setting paths based on external plugin with app sub URL", func(t *testing.T) {
+	t.Run("Child plugin will not inherit parent version information when version is non-empty", func(t *testing.T) {
 		child := &plugins.Plugin{
 			FS: fakes.NewFakePluginFiles("/plugins/parent-app/child-panel"),
+			JSONData: plugins.JSONData{
+				Info: plugins.Info{Version: "2.0.2"},
+			},
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				Type: plugins.TypeApp,
 				ID:   "testdata-app",
+				Info: plugins.Info{Version: "2.0.0"},
 			},
 			Class:   plugins.ClassExternal,
 			FS:      fakes.NewFakePluginFiles("/plugins/parent-app"),
-			BaseURL: "/grafana/plugins/parent-app",
+			BaseURL: "plugins/parent-app",
 		}
 
-		configureAppChildPlugin(&config.Cfg{GrafanaAppSubURL: "/grafana"}, parent, child)
+		configureAppChildPlugin(parent, child)
 
-		require.Equal(t, "/grafana/public/plugins/testdata-app/child-panel/module.js", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)
-		require.Equal(t, "/grafana/plugins/parent-app", child.BaseURL)
+		require.NotEqual(t, parent.Info.Version, child.Info.Version)
+	})
+}
+
+func TestSkipEnvVarsDecorateFunc(t *testing.T) {
+	const pluginID = "plugin-id"
+
+	t.Run("config field is false", func(t *testing.T) {
+		f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
+			Features: config.Features{SkipHostEnvVarsEnabled: false},
+		})
+		p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
+		require.NoError(t, err)
+		require.False(t, p.SkipHostEnvVars)
+	})
+
+	t.Run("config field is true", func(t *testing.T) {
+		t.Run("no plugin settings should set SkipHostEnvVars to true", func(t *testing.T) {
+			f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
+				Features: config.Features{SkipHostEnvVarsEnabled: true},
+			})
+			p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
+			require.NoError(t, err)
+			require.True(t, p.SkipHostEnvVars)
+		})
+
+		t.Run("plugin setting", func(t *testing.T) {
+			for _, tc := range []struct {
+				name               string
+				forwardHostEnvVars []string
+				expSkipHostEnvVars bool
+			}{
+				{
+					name:               "plugin id not present in forwardHostEnvVars should set SkipHostEnvVars to true (empty)",
+					forwardHostEnvVars: []string{},
+					expSkipHostEnvVars: true,
+				},
+				{
+					name:               "plugin id not present in forwardHostEnvVars should set SkipHostEnvVars to true (other id)",
+					forwardHostEnvVars: []string{"other-id", "yet-another-id"},
+					expSkipHostEnvVars: true,
+				},
+				{
+					name:               "plugin id in forwardHostEnvVars should set SkipHostEnvVars to false (only)",
+					forwardHostEnvVars: []string{pluginID},
+					expSkipHostEnvVars: false,
+				},
+				{
+					name:               "plugin id in forwardHostEnvVars should set SkipHostEnvVars to false (with other)",
+					forwardHostEnvVars: []string{"a-plugin", pluginID, "other-id"},
+					expSkipHostEnvVars: false,
+				},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
+						Features: config.Features{
+							SkipHostEnvVarsEnabled: true,
+						},
+						ForwardHostEnvVars: tc.forwardHostEnvVars,
+					})
+					p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
+					require.NoError(t, err)
+					require.Equal(t, tc.expSkipHostEnvVars, p.SkipHostEnvVars)
+				})
+			}
+		})
 	})
 }

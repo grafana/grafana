@@ -7,9 +7,9 @@ import (
 	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -35,13 +35,16 @@ type ParcaDatasource struct {
 }
 
 // NewParcaDatasource creates a new datasource instance.
-func NewParcaDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewParcaDatasource(ctx context.Context, httpClientProvider *httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	ctxLogger := logger.FromContext(ctx)
 	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
+		ctxLogger.Error("Failed to get HTTP options", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
+		ctxLogger.Error("Failed to create HTTP client", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 
@@ -58,7 +61,8 @@ func (d *ParcaDatasource) Dispose() {
 }
 
 func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
+	ctxLogger := logger.FromContext(ctx)
+	ctxLogger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body, "function", logEntrypoint())
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.CallResource", trace.WithAttributes(attribute.String("path", req.Path), attribute.String("method", req.Method)))
 	defer span.End()
 
@@ -69,6 +73,7 @@ func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallRes
 		return d.callLabelNames(ctx, req, sender)
 	}
 	if req.Path == "labelValues" {
+		ctxLogger.Debug("CallResource completed", "function", logEntrypoint())
 		return d.callLabelValues(ctx, req, sender)
 	}
 	return sender.Send(&backend.CallResourceResponse{
@@ -81,8 +86,6 @@ func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallRes
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("QueryData called", "queries", req.Queries)
-
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
@@ -103,8 +106,7 @@ func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataR
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *ParcaDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Debug("CheckHealth called")
-
+	ctxLogger := logger.FromContext(ctx)
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
@@ -113,6 +115,7 @@ func (d *ParcaDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealt
 		message = err.Error()
 	}
 
+	ctxLogger.Debug("CheckHealth completed", "function", logEntrypoint())
 	return &backend.CheckHealthResult{
 		Status:  status,
 		Message: message,

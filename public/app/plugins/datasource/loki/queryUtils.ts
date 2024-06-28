@@ -18,67 +18,76 @@ import {
   Matcher,
   Identifier,
   Range,
-  formatLokiQuery,
   Logfmt,
   Json,
+  OrFilter,
+  FilterOp,
 } from '@grafana/lezer-logql';
-import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
-
-import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { ErrorId } from './querybuilder/parsingUtils';
 import { LokiQuery, LokiQueryType } from './types';
-
-export function formatQuery(selector: string | undefined): string {
-  return `${selector || ''}`.trim();
-}
 
 /**
  * Returns search terms from a LogQL query.
  * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
  */
-export function getHighlighterExpressionsFromQuery(input: string): string[] {
+export function getHighlighterExpressionsFromQuery(input = ''): string[] {
   const results = [];
 
   const filters = getNodesFromQuery(input, [LineFilter]);
 
-  for (let filter of filters) {
+  for (const filter of filters) {
     const pipeExact = filter.getChild(Filter)?.getChild(PipeExact);
     const pipeMatch = filter.getChild(Filter)?.getChild(PipeMatch);
-    const string = filter.getChild(String);
+    const strings = getStringsFromLineFilter(filter);
 
-    if ((!pipeExact && !pipeMatch) || !string) {
+    if ((!pipeExact && !pipeMatch) || !strings.length) {
       continue;
     }
 
-    const filterTerm = input.substring(string.from, string.to).trim();
-    const backtickedTerm = filterTerm[0] === '`';
-    const unwrappedFilterTerm = filterTerm.substring(1, filterTerm.length - 1);
+    for (const string of strings) {
+      const filterTerm = input.substring(string.from, string.to).trim();
+      const backtickedTerm = filterTerm[0] === '`';
+      const unwrappedFilterTerm = filterTerm.substring(1, filterTerm.length - 1);
 
-    if (!unwrappedFilterTerm) {
-      continue;
-    }
+      if (!unwrappedFilterTerm) {
+        continue;
+      }
 
-    let resultTerm = '';
+      let resultTerm = '';
 
-    // Only filter expressions with |~ operator are treated as regular expressions
-    if (pipeMatch) {
-      // When using backticks, Loki doesn't require to escape special characters and we can just push regular expression to highlights array
-      // When using quotes, we have extra backslash escaping and we need to replace \\ with \
-      resultTerm = backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\');
-    } else {
-      // We need to escape this string so it is not matched as regular expression
-      resultTerm = escapeRegExp(unwrappedFilterTerm);
-    }
+      // Only filter expressions with |~ operator are treated as regular expressions
+      if (pipeMatch) {
+        // When using backticks, Loki doesn't require to escape special characters and we can just push regular expression to highlights array
+        // When using quotes, we have extra backslash escaping and we need to replace \\ with \
+        resultTerm = backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\');
+      } else {
+        // We need to escape this string so it is not matched as regular expression
+        resultTerm = escapeRegExp(unwrappedFilterTerm);
+      }
 
-    if (resultTerm) {
-      results.push(resultTerm);
+      if (resultTerm) {
+        results.push(resultTerm);
+      }
     }
   }
   return results;
+}
+
+export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
+  const nodes: SyntaxNode[] = [];
+  let node: SyntaxNode | null = filter;
+  do {
+    const string = node.getChild(String);
+    if (string && !node.getChild(FilterOp)) {
+      nodes.push(string);
+    }
+    node = node.getChild(OrFilter);
+  } while (node != null);
+
+  return nodes;
 }
 
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
@@ -182,7 +191,7 @@ export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | 
 }
 
 /**
- * Parses the query and looks for error nodes. If there is at least one, it returns false.
+ * Parses the query and looks for error nodes. If there is at least one, it returns true.
  * Grafana variables are considered errors, so if you need to validate a query
  * with variables you should interpolate it first.
  */
@@ -297,8 +306,7 @@ export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
     return false;
   }
 
-  const lokiQuery = query as LokiQuery;
-  return lokiQuery.expr !== undefined;
+  return 'expr' in query && query.expr !== undefined;
 };
 
 export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefined => {
@@ -308,39 +316,3 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
 
   return query;
 };
-
-export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
-  const isInvalid = isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars));
-
-  reportInteraction('grafana_loki_format_query_clicked', {
-    is_invalid: isInvalid,
-    query_type: isLogsQuery(query) ? 'logs' : 'metric',
-  });
-
-  if (isInvalid) {
-    return query;
-  }
-
-  let transformedQuery = replaceVariables(query);
-  const transformationMatches = [];
-  const tree = parser.parse(transformedQuery);
-
-  // Variables are considered errors inside of the parser, so we need to remove them before formatting
-  // We replace all variables with [0s] and keep track of the replaced variables
-  // After formatting we replace [0s] with the original variable
-  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
-    const pattern = /\[__V_[0-2]__\w+__V__\]/g;
-    transformationMatches.push(...transformedQuery.matchAll(pattern));
-    transformedQuery = transformedQuery.replace(pattern, '[0s]');
-  }
-
-  let formatted = formatLokiQuery(transformedQuery);
-
-  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
-    transformationMatches.forEach((match) => {
-      formatted = formatted.replace('[0s]', match[0]);
-    });
-  }
-
-  return returnVariables(formatted);
-}

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { Button, useTheme2 } from '@grafana/ui';
@@ -9,7 +9,7 @@ import { FeatureStyleConfig } from '../types';
 
 import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
 
-type Props = StandardEditorProps<FeatureStyleConfig[], unknown, unknown>;
+type Props = StandardEditorProps<FeatureStyleConfig[], StyleRuleEditorSettings, unknown>;
 
 export const GeomapStyleRulesEditor = ({ value, onChange, context, item }: Props) => {
   const theme = useTheme2();
@@ -43,9 +43,9 @@ export const GeomapStyleRulesEditor = ({ value, onChange, context, item }: Props
   const styleOptions =
     value &&
     value.map((style, idx: number) => {
-      const itemSettings: StandardEditorsRegistryItem<any, StyleRuleEditorSettings> = {
+      const itemSettings = {
         settings,
-      } as StandardEditorsRegistryItem;
+      } as StandardEditorsRegistryItem<FeatureStyleConfig, StyleRuleEditorSettings>;
 
       return (
         <StyleRuleEditor

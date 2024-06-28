@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -24,6 +24,15 @@ export enum HeatmapColorMode {
 export enum HeatmapColorScale {
   Exponential = 'exponential',
   Linear = 'linear',
+}
+
+/**
+ * Controls which axis to allow selection on
+ */
+export enum HeatmapSelectionMode {
+  X = 'x',
+  Xy = 'xy',
+  Y = 'y',
 }
 
 /**
@@ -126,10 +135,16 @@ export interface FilterValueRange {
  * Controls tooltip options
  */
 export interface HeatmapTooltip {
+  maxHeight?: number;
+  maxWidth?: number;
   /**
-   * Controls if the tooltip is shown
+   * Controls how the tooltip is shown
    */
-  show: boolean;
+  mode: ui.TooltipDisplayMode;
+  /**
+   * Controls if the tooltip shows a color scale in header
+   */
+  showColorScale?: boolean;
   /**
    * Controls if the tooltip shows a histogram of the y-axis values
    */
@@ -215,6 +230,10 @@ export interface Options {
    */
   rowsFrame?: RowsHeatmapOptions;
   /**
+   * Controls which axis to allow selection on
+   */
+  selectionMode?: HeatmapSelectionMode;
+  /**
    * | *{
    * 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
    * }
@@ -257,10 +276,12 @@ export const defaultOptions: Partial<Options> = {
   legend: {
     show: true,
   },
+  selectionMode: HeatmapSelectionMode.X,
   showValue: ui.VisibilityMode.Auto,
   tooltip: {
-    show: true,
+    mode: ui.TooltipDisplayMode.Single,
     yHistogram: false,
+    showColorScale: false,
   },
 };
 

@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Dropdown, Field, Icon, Menu, MenuItem, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
@@ -29,6 +28,7 @@ import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryRe
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
+import { DESCRIPTIONS } from './descriptions';
 import {
   addExpressions,
   addNewDataQuery,
@@ -81,15 +81,18 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
-  const runQueriesPreview = useCallback(() => {
-    if (isCloudAlertRuleType) {
-      // we will skip preview for cloud rules, these do not have any time series preview
-      // Grafana Managed rules and recording rules do
-      return;
-    }
+  const runQueriesPreview = useCallback(
+    (condition?: string) => {
+      if (isCloudAlertRuleType) {
+        // we will skip preview for cloud rules, these do not have any time series preview
+        // Grafana Managed rules and recording rules do
+        return;
+      }
 
-    runQueries(getValues('queries'));
-  }, [isCloudAlertRuleType, runQueries, getValues]);
+      runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
+    },
+    [isCloudAlertRuleType, runQueries, getValues]
+  );
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -138,7 +141,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         return;
       }
 
-      runQueriesPreview(); //we need to run the queries to know if the condition is valid
+      runQueriesPreview(refId); //we need to run the queries to know if the condition is valid
 
       setValue('condition', refId);
     },
@@ -172,8 +175,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
       // As a workaround we update form values as soon as possible to avoid stale state
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
-      setValue('queries', updatedQueries, { shouldValidate: false });
-
+      const previousQueries = getValues('queries');
+      const expressionQueries = previousQueries.filter((query) => isExpressionQuery(query.model));
+      setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
       dispatch(setDataQueries(updatedQueries));
@@ -185,7 +189,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, setValue, updateExpressionAndDatasource]
+    [queries, updateExpressionAndDatasource, getValues, setValue]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -228,6 +232,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
         expr,
+        instant: true,
         model: {
           refId: 'A',
           hide: false,
@@ -355,23 +360,22 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     condition,
   ]);
 
+  const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
+
   return (
     <RuleEditorSection
       stepNo={2}
-      title={type !== RuleFormType.cloudRecording ? 'Define query and alert condition' : 'Define query'}
+      title={sectionTitle}
       description={
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           <Text variant="bodySmall" color="secondary">
-            Define queries and/or expressions and then choose one of them as the alert rule condition. This is the
-            threshold that an alert rule must meet or exceed in order to fire.
+            {helpLabel}
           </Text>
           <NeedHelpInfo
-            contentText={`An alert rule consists of one or more queries and expressions that select the data you want to measure.
-          Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire.
-          For more information on queries and expressions, see Query and transform data.`}
-            externalLink={`https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/`}
-            linkText={`Read about query and condition`}
-            title="Define query and alert condition"
+            contentText={helpContent}
+            externalLink={helpLink}
+            linkText={'Read more on our documentation website'}
+            title={helpLabel}
           />
         </Stack>
       }
@@ -398,7 +402,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {isCloudAlertRuleType && dataSourceName && (
         <Stack direction="column">
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-            <InputControl
+            <Controller
               name="expression"
               render={({ field: { ref, ...field } }) => {
                 return (
@@ -432,7 +436,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
-            onRunQueries={runQueriesPreview}
+            onRunQueries={() => runQueriesPreview()}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
             panelData={queryPreviewData}
@@ -446,7 +450,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 dispatch(addNewDataQuery());
               }}
               variant="secondary"
-              aria-label={selectors.components.QueryTab.addQuery}
+              data-testid={selectors.components.QueryTab.addQuery}
               disabled={noCompatibleDataSources}
               className={styles.addQueryButton}
             >
@@ -493,7 +497,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             )}
             {!isPreviewLoading && (
-              <Button icon="sync" type="button" onClick={runQueriesPreview} disabled={emptyQueries}>
+              <Button
+                data-testid={selectors.components.AlertRules.previewButton}
+                icon="sync"
+                type="button"
+                onClick={() => runQueriesPreview()}
+                disabled={emptyQueries}
+              >
                 Preview
               </Button>
             )}
@@ -537,26 +547,26 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addQueryButton: css`
-    width: fit-content;
-  `,
-  helpInfo: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: fit-content;
-    font-weight: ${theme.typography.fontWeightMedium};
-    margin-left: ${theme.spacing(1)};
-    font-size: ${theme.typography.size.sm};
-    cursor: pointer;
-  `,
-  helpInfoText: css`
-    margin-left: ${theme.spacing(0.5)};
-    text-decoration: underline;
-  `,
-  infoLink: css`
-    color: ${theme.colors.text.link};
-  `,
+  addQueryButton: css({
+    width: 'fit-content',
+  }),
+  helpInfo: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 'fit-content',
+    fontWeight: theme.typography.fontWeightMedium,
+    marginLeft: theme.spacing(1),
+    fontSize: theme.typography.size.sm,
+    cursor: 'pointer',
+  }),
+  helpInfoText: css({
+    marginLeft: theme.spacing(0.5),
+    textDecoration: 'underline',
+  }),
+  infoLink: css({
+    color: theme.colors.text.link,
+  }),
 });
 
 const useSetExpressionAndDataSource = () => {

@@ -10,10 +10,10 @@ describe('Create a public dashboard with template variables shows a template var
     e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
 
     // Open sharing modal
-    e2e.pages.ShareDashboardModal.shareButton().click();
+    e2e.pages.Dashboard.DashNav.shareButton().click();
 
     // Select public dashboards tab
-    e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e.components.Tab.title('Public dashboard').click();
 
     // Warning Alert dashboard cannot be made public because it has template variables
     e2e.pages.ShareDashboardModal.PublicDashboard.TemplateVariablesWarningAlert().should('be.visible');

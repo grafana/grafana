@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { SyntheticEvent, useEffect, useRef, useState } from 'react';
+import { SyntheticEvent, useEffect, useRef, useState } from 'react';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
@@ -106,43 +106,43 @@ export function InlineEdit({ onClose, id, scene }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  inlineEditorContainer: css`
-    display: flex;
-    flex-direction: column;
-    background: ${theme.components.panel.background};
-    border: 1px solid ${theme.colors.border.weak};
-    box-shadow: ${theme.shadows.z3};
-    z-index: 1000;
-    opacity: 1;
-    min-width: 400px;
-  `,
-  draggableWrapper: css`
-    width: 0;
-    height: 0;
-  `,
-  inlineEditorHeader: css`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: ${theme.colors.background.canvas};
-    border-bottom: 1px solid ${theme.colors.border.weak};
-    height: 40px;
-    cursor: move;
-  `,
-  inlineEditorContent: css`
-    white-space: pre-wrap;
-    padding: 10px;
-  `,
-  inlineEditorClose: css`
-    margin-left: auto;
-  `,
-  placeholder: css`
-    width: 24px;
-    height: 24px;
-    visibility: hidden;
-    margin-right: auto;
-  `,
-  inlineEditorContentWrapper: css`
-    overflow: scroll;
-  `,
+  inlineEditorContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    background: theme.components.panel.background,
+    border: `1px solid ${theme.colors.border.weak}`,
+    boxShadow: theme.shadows.z3,
+    zIndex: 1000,
+    opacity: 1,
+    minWidth: '400px',
+  }),
+  draggableWrapper: css({
+    width: 0,
+    height: 0,
+  }),
+  inlineEditorHeader: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: theme.colors.background.canvas,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    height: '40px',
+    cursor: 'move',
+  }),
+  inlineEditorContent: css({
+    whiteSpace: 'pre-wrap',
+    padding: '10px',
+  }),
+  inlineEditorClose: css({
+    marginLeft: 'auto',
+  }),
+  placeholder: css({
+    width: '24px',
+    height: '24px',
+    visibility: 'hidden',
+    marginRight: 'auto',
+  }),
+  inlineEditorContentWrapper: css({
+    overflow: 'scroll',
+  }),
 });

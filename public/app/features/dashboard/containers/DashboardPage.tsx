@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
@@ -13,11 +13,12 @@ import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaCont
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
+import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
@@ -32,35 +33,16 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { ShareModal } from '../components/ShareModal';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
+import { explicitlyControlledMigrationPanels, autoMigrateAngular } from '../state/PanelModel';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
-import { calculateNewPanelGridPos } from '../utils/panel';
 
-export interface DashboardPageRouteParams {
-  uid?: string;
-  type?: string;
-  slug?: string;
-  accessToken?: string;
-}
-
-export type DashboardPageRouteSearchParams = {
-  tab?: string;
-  folderUid?: string;
-  editPanel?: string;
-  viewPanel?: string;
-  editview?: string;
-  addWidget?: boolean;
-  panelType?: string;
-  inspect?: string;
-  from?: string;
-  to?: string;
-  refresh?: string;
-  kiosk?: string | true;
-};
+import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
@@ -286,29 +268,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
-  // Todo: Remove this when we remove the emptyDashboardPage toggle
-  onAddPanel = () => {
-    const { dashboard } = this.props;
-
-    if (!dashboard) {
-      return;
-    }
-
-    // Return if the "Add panel" exists already
-    if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
-      return;
-    }
-
-    dashboard.addPanel({
-      type: 'add-panel',
-      gridPos: calculateNewPanelGridPos(dashboard),
-      title: 'Panel Title',
-    });
-
-    // scroll to top after adding panel
-    this.setState({ updateScrollTop: 0 });
-  };
-
   setScrollRef = (scrollElement: HTMLDivElement): void => {
     this.setState({ scrollElement });
   };
@@ -332,6 +291,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return inspectPanel;
   }
 
+  onCloseShareModal = () => {
+    locationService.partial({ shareView: null });
+  };
+
   render() {
     const { dashboard, initError, queryParams } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
@@ -342,7 +305,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview && dashboard.isSubMenuVisible();
 
     const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
@@ -358,6 +321,50 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         </Page>
       );
     }
+
+    const migrationFeatureFlags = new Set([
+      'autoMigrateOldPanels',
+      'autoMigrateGraphPanel',
+      'autoMigrateTablePanel',
+      'autoMigratePiechartPanel',
+      'autoMigrateWorldmapPanel',
+      'autoMigrateStatPanel',
+      'disableAngular',
+    ]);
+
+    const isAutoMigrationFlagSet = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      let isFeatureFlagSet = false;
+
+      urlParams.forEach((value, key) => {
+        if (key.startsWith('__feature.')) {
+          const featureName = key.substring(10);
+          const toggleState = value === 'true' || value === '';
+          const featureToggles = config.featureToggles as Record<string, boolean>;
+
+          if (featureToggles[featureName]) {
+            return;
+          }
+
+          if (migrationFeatureFlags.has(featureName) && toggleState) {
+            isFeatureFlagSet = true;
+            return;
+          }
+        }
+      });
+
+      return isFeatureFlagSet;
+    };
+
+    const dashboardWasAngular = dashboard.panels.some(
+      (panel) => panel.autoMigrateFrom && autoMigrateAngular[panel.autoMigrateFrom] != null
+    );
+
+    const showDashboardMigrationNotice =
+      config.featureToggles.angularDeprecationUI &&
+      dashboardWasAngular &&
+      isAutoMigrationFlagSet() &&
+      dashboard.uid !== null;
 
     return (
       <>
@@ -376,7 +383,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 title={dashboard.title}
                 folderTitle={dashboard.meta.folderTitle}
                 isFullscreen={!!viewPanel}
-                onAddPanel={this.onAddPanel}
                 kioskMode={kioskMode}
                 hideTimePicker={dashboard.timepicker.hidden}
               />
@@ -390,8 +396,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
           {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
-            <AngularDeprecationNotice dashboardUid={dashboard.uid} />
+            <AngularDeprecationNotice
+              dashboardUid={dashboard.uid}
+              showAutoMigrateLink={dashboard.panels.some((panel) =>
+                explicitlyControlledMigrationPanels.includes(panel.type)
+              )}
+            />
           )}
+          {showDashboardMigrationNotice && <AngularMigrationNotice dashboardUid={dashboard.uid} />}
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
@@ -400,6 +412,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+          {queryParams.shareView && <ShareModal dashboard={dashboard} onDismiss={this.onCloseShareModal} />}
         </Page>
         {editPanel && (
           <PanelEditor
@@ -445,32 +458,6 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  const { folderTitle, folderUid } = dashboard.meta;
-  if (folderUid && pageNav) {
-    if (newBrowseDashboardsEnabled()) {
-      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-      // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
-      // don't show the "page not found" breadcrumb
-      if (folderNavModel.id !== 'not-found') {
-        pageNav = {
-          ...pageNav,
-          parentItem: folderNavModel,
-        };
-      }
-    } else {
-      // Check if folder changed
-      if (folderTitle && pageNav.parentItem?.text !== folderTitle) {
-        pageNav = {
-          ...pageNav,
-          parentItem: {
-            text: folderTitle,
-            url: `/dashboards/f/${dashboard.meta.folderUid}`,
-          },
-        };
-      }
-    }
-  }
-
   if (props.route.routeName === DashboardRoutes.Path) {
     sectionNav = getRootContentNavModel();
     const pageNav = getPageNavFromSlug(props.match.params.slug!);
@@ -478,7 +465,24 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
+    sectionNav = getNavModel(
+      props.navIndex,
+      ID_PREFIX + dashboard.uid,
+      getNavModel(props.navIndex, 'dashboards/browse')
+    );
+  }
+
+  const { folderUid } = dashboard.meta;
+  if (folderUid && pageNav && sectionNav.main.id !== 'starred') {
+    const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+    // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+    // don't show the "page not found" breadcrumb
+    if (folderNavModel.id !== 'not-found') {
+      pageNav = {
+        ...pageNav,
+        parentItem: folderNavModel,
+      };
+    }
   }
 
   if (state.editPanel || state.viewPanel) {

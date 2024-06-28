@@ -1,34 +1,46 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
-import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
+import {
+  getRuleGroupLocationFromRuleWithLocation,
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+} from 'app/features/alerting/unified/utils/rules';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { logInfo, LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
+import {
+  LogMessages,
+  logInfo,
+  trackAlertRuleFormError,
+  trackAlertRuleFormCancelled,
+  trackAlertRuleFormSaved,
+} from '../../../Analytics';
+import { useDeleteRuleFromGroup } from '../../../hooks/useProduceNewRuleGroup';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
-import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
+import { saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
+  MANUAL_ROUTING_KEY,
+  DEFAULT_GROUP_EVALUATION_INTERVAL,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
-  MINUTE,
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
-import * as ruleId from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameInput } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -51,7 +63,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
-  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
+  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
+  const [deleteRuleFromGroup, _deleteRuleState] = useDeleteRuleFromGroup();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -110,6 +123,17 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return;
     }
 
+    trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
+
+    // when creating a new rule, we save the manual routing setting in local storage
+    if (!existing) {
+      if (values.manualRouting) {
+        localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+      } else {
+        localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+      }
+    }
+
     dispatch(
       saveRuleFormAction({
         values: {
@@ -132,39 +156,36 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     );
   };
 
-  const deleteRule = () => {
+  const deleteRule = async () => {
     if (existing) {
-      const identifier = ruleId.fromRulerRule(
-        existing.ruleSourceName,
-        existing.namespace,
-        existing.group.name,
-        existing.rule
-      );
+      const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
 
-      dispatch(deleteRuleAction(identifier, { navigateTo: '/alerting/list' }));
+      await deleteRuleFromGroup(ruleGroupIdentifier, existing.rule);
+      locationService.replace(returnTo);
     }
   };
 
-  const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
-    if (!existing) {
-      trackNewAlerRuleFormError({
-        grafana_version: config.buildInfo.version,
-        org_id: contextSrv.user.orgId,
-        user_id: contextSrv.user.id,
-        error: Object.keys(errors).toString(),
-      });
-    }
+  const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
+    trackAlertRuleFormError({
+      grafana_version: config.buildInfo.version,
+      org_id: contextSrv.user.orgId,
+      user_id: contextSrv.user.id,
+      error: Object.keys(errors).toString(),
+      formAction: existing ? 'update' : 'create',
+    });
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
+    trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
   };
+
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
   const actionButtons = (
-    <HorizontalGroup height="auto" justify="flex-end">
+    <Stack justifyContent="flex-end" alignItems="center">
       {existing && (
         <Button
           variant="primary"
@@ -197,7 +218,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           Delete
         </Button>
       ) : null}
-
       {existing && isCortexLokiOrRecordingRule(watch) && (
         <Button
           variant="secondary"
@@ -209,14 +229,16 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           Edit YAML
         </Button>
       )}
-    </HorizontalGroup>
+    </Stack>
   );
 
+  const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   return (
     <FormProvider {...formAPI}>
       <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
+          {isPaused && <InfoPausedRule />}
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <Stack direction="column" gap={3}>
               {/* Step 1 */}
@@ -241,10 +263,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
 
                   {/* Step 4 & 5 */}
-                  {/* Annotations only for cloud and Grafana */}
-                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
                   {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
+                  {/* Annotations only for cloud and Grafana */}
+                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
                 </>
               )}
             </Stack>
@@ -297,7 +319,7 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
     queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
     type: type || RuleFormType.grafana,
-    evaluateEvery: MINUTE,
+    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
   });
 }
 
@@ -321,6 +343,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   contentOuter: css({
     background: theme.colors.background.primary,
     overflow: 'hidden',
+    maxWidth: theme.breakpoints.values.xl,
     flex: 1,
   }),
   flexRow: css({

@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2 } from '@grafana/ui';
+import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { FolderState, useDispatch } from 'app/types';
@@ -51,7 +50,8 @@ export const AlertsFolderView = ({ folder }: Props) => {
   const { nameFilter, labelFilter, sortOrder, setNameFilter, setLabelFilter, setSortOrder } =
     useAlertsFolderViewParams();
 
-  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.name === folder.title);
+  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.uid === folder.uid);
+
   const alertRules = matchingNamespace?.groups.flatMap((group) => group.rules) ?? [];
 
   const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
@@ -87,7 +87,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
           />
         </Stack>
 
-        <Stack gap={1}>
+        <Stack direction="column" gap={1}>
           {pageItems.map((currentRule) => (
             <Card
               key={currentRule.name}
@@ -141,8 +141,8 @@ function useAlertsFolderViewParams() {
     sortParam === SortOrder.Ascending
       ? SortOrder.Ascending
       : sortParam === SortOrder.Descending
-      ? SortOrder.Descending
-      : undefined
+        ? SortOrder.Descending
+        : undefined
   );
 
   useDebounce(
@@ -177,24 +177,24 @@ function filterAndSortRules(
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(1)};
-  `,
-  card: css`
-    grid-template-columns: auto 1fr 2fr;
-    margin: 0;
-  `,
-  pagination: css`
-    align-self: center;
-  `,
-  filterLabelsInput: css`
-    flex: 1;
-    width: auto;
-    min-width: 240px;
-  `,
-  noResults: css`
-    padding: ${theme.spacing(2)};
-    background-color: ${theme.colors.background.secondary};
-    font-style: italic;
-  `,
+  container: css({
+    padding: theme.spacing(1),
+  }),
+  card: css({
+    gridTemplateColumns: 'auto 1fr 2fr',
+    margin: 0,
+  }),
+  pagination: css({
+    alignSelf: 'center',
+  }),
+  filterLabelsInput: css({
+    flex: 1,
+    width: 'auto',
+    minWidth: '240px',
+  }),
+  noResults: css({
+    padding: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    fontStyle: 'italic',
+  }),
 });

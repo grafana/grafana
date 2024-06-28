@@ -1,7 +1,6 @@
-import { render, waitFor, screen, fireEvent, within, Matcher, getByRole } from '@testing-library/react';
+import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
-import React from 'react';
 import { openMenu } from 'react-select-event';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -9,6 +8,7 @@ import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourcePluginMeta, SupportedTransformationType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { BackendSrv, setDataSourceSrv, BackendSrvRequest, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -270,13 +270,13 @@ describe('CorrelationsPage', () => {
 
       // step 2:
       // set target datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^target/i), { keyCode: 40 });
+      await userEvent.click(screen.getByLabelText(/^target/i));
       await userEvent.click(screen.getByText('prometheus'));
       await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
 
       // step 3:
       // set source datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^source/i), { keyCode: 40 });
+      await userEvent.click(screen.getByLabelText(/^source/i));
       await userEvent.click(screen.getByText('loki'));
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
@@ -427,14 +427,16 @@ describe('CorrelationsPage', () => {
 
       // step 2:
       // set target datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^target/i), { keyCode: 40 });
+      await userEvent.click(screen.getByLabelText(/^target/i));
       await userEvent.click(screen.getByText('elastic'));
       await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
 
       // step 3:
       // set source datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^source/i), { keyCode: 40 });
-      await userEvent.click(within(screen.getByLabelText('Select options menu')).getByText('prometheus'));
+      await userEvent.click(screen.getByLabelText(/^source/i));
+      await userEvent.click(
+        within(screen.getByTestId(selectors.components.DataSourcePicker.dataSourceList)).getByText('prometheus')
+      );
 
       await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
@@ -538,7 +540,7 @@ describe('CorrelationsPage', () => {
 
       // select Regex, be sure expression field is not disabled and contains the former expression
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression', { selector: 'span' }));
+      await userEvent.click(screen.getByText('Regular expression'));
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();
@@ -554,7 +556,8 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
       typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression'));
+      const menu = await screen.findByLabelText('Select options menu');
+      await userEvent.click(within(menu).getByText('Regular expression'));
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();

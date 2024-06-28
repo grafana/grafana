@@ -1,11 +1,11 @@
 import { defaults } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMount } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
-import { defaultParca, defaultParcaQueryType, Parca } from '../dataquery.gen';
+import { defaultParcaDataQuery, defaultParcaQueryType, ParcaDataQuery as Parca } from '../dataquery.gen';
 import { ParcaDataSource } from '../datasource';
 import { ParcaDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
@@ -17,7 +17,7 @@ import { QueryOptions } from './QueryOptions';
 export type Props = QueryEditorProps<ParcaDataSource, Query, ParcaDataSourceOptions>;
 
 export const defaultQuery: Partial<Parca> = {
-  ...defaultParca,
+  ...defaultParcaDataQuery,
   queryType: defaultParcaQueryType,
 };
 

@@ -2,10 +2,10 @@ import { ComponentType } from 'react';
 
 import {
   NumberFieldConfigSettings,
-  SliderFieldConfigSettings,
   SelectFieldConfigSettings,
+  SliderFieldConfigSettings,
   StringFieldConfigSettings,
-} from '../field';
+} from '../field/overrides/processors';
 import { RegistryItem, Registry } from '../utils/Registry';
 
 import { OptionEditorConfig } from './options';
@@ -30,7 +30,7 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>
 /**
  * Describes an API for option editors UI builder
  */
-export interface OptionsUIRegistryBuilderAPI<
+interface OptionsUIRegistryBuilderAPI<
   TOptions,
   TEditorProps,
   T extends OptionsEditorItem<TOptions, any, TEditorProps, any>,

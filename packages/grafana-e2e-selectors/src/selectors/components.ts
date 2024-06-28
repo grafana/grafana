@@ -10,18 +10,24 @@
  * @alpha
  */
 export const Components = {
+  RadioButton: {
+    container: 'data-testid radio-button',
+  },
   Breadcrumbs: {
     breadcrumb: (title: string) => `data-testid ${title} breadcrumb`,
   },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
-    fromField: 'Time Range from field',
-    toField: 'Time Range to field',
+    overlayContent: 'data-testid TimePicker Overlay Content',
+    fromField: 'data-testid Time Range from field',
+    toField: 'data-testid Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
+    copyTimeRange: 'data-testid TimePicker copy button',
+    pasteTimeRange: 'data-testid TimePicker paste button',
     calendar: {
-      label: 'Time Range calendar',
-      openButton: 'Open time range calendar',
-      closeButton: 'Close time range Calendar',
+      label: 'data-testid Time Range calendar',
+      openButton: 'data-testid Open time range calendar',
+      closeButton: 'data-testid Close time range Calendar',
     },
     absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
@@ -30,6 +36,9 @@ export const Components = {
     roleType: 'Role to add new permission to',
     rolePicker: 'Built-in role picker',
     permissionLevel: 'Permission Level',
+  },
+  DateTimePicker: {
+    input: 'data-testid date-time-input',
   },
   DataSource: {
     TestData: {
@@ -46,18 +55,92 @@ export const Components = {
       },
     },
     DataSourceHttpSettings: {
-      urlInput: 'Datasource HTTP settings url',
+      urlInput: 'data-testid Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
     },
     Prometheus: {
       configPage: {
-        connectionSettings: 'Data source connection URL',
-        exemplarsAddButton: 'Add exemplar config button',
-        internalLinkSwitch: 'Internal link switch',
+        connectionSettings: 'Data source connection URL', // aria-label in grafana experimental
+        manageAlerts: 'prometheus-alerts-manager', // id for switch component
+        scrapeInterval: 'data-testid scrape interval',
+        queryTimeout: 'data-testid query timeout',
+        defaultEditor: 'data-testid default editor',
+        disableMetricLookup: 'disable-metric-lookup', // id for switch component
+        prometheusType: 'data-testid prometheus type',
+        prometheusVersion: 'data-testid prometheus version',
+        cacheLevel: 'data-testid cache level',
+        incrementalQuerying: 'prometheus-incremental-querying', // id for switch component
+        queryOverlapWindow: 'data-testid query overlap window',
+        disableRecordingRules: 'disable-recording-rules', // id for switch component
+        customQueryParameters: 'data-testid custom query parameters',
+        httpMethod: 'data-testid http method',
+        exemplarsAddButton: 'data-testid Add exemplar config button',
+        internalLinkSwitch: 'data-testid Internal link switch',
+        codeModeMetricNamesSuggestionLimit: 'data-testid code mode metric names suggestion limit',
       },
-      exemplarMarker: 'Exemplar marker',
+      queryEditor: {
+        // kickstart: '', see QueryBuilder queryPatterns below
+        explain: 'data-testid prometheus explain switch wrapper',
+        editorToggle: 'data-testid QueryEditorModeToggle', // wrapper for toggle
+        options: 'data-testid prometheus options', // wrapper for options group
+        legend: 'data-testid prometheus legend wrapper', // wrapper for multiple compomnents
+        format: 'data-testid prometheus format',
+        step: 'prometheus-step', // id for autosize component
+        type: 'data-testid prometheus type', //wrapper for radio button group
+        exemplars: 'prometheus-exemplars', // id for editor switch component
+        builder: {
+          // see QueryBuilder below for commented selectors
+          // labelSelect: 'data-testid Select label',
+          // valueSelect: 'data-testid Select value',
+          // matchOperatorSelect: 'data-testid Select match operator',
+          metricSelect: 'data-testid metric select',
+          hints: 'data-testid prometheus hints', // wrapper for hints component
+          metricsExplorer: 'data-testid metrics explorer',
+          queryAdvisor: 'data-testid query advisor',
+        },
+        code: {
+          queryField: 'data-testid prometheus query field',
+          metricsCountInfo: 'data-testid metrics count disclaimer',
+          metricsBrowser: {
+            openButton: 'data-testid open metrics browser',
+            selectMetric: 'data-testid select a metric',
+            metricList: 'data-testid metric list',
+            labelNamesFilter: 'data-testid label names filter',
+            labelValuesFilter: 'data-testid label values filter',
+            useQuery: 'data-testid use query',
+            useAsRateQuery: 'data-testid use as rate query',
+            validateSelector: 'data-testid validate selector',
+            clear: 'data-testid clear',
+          },
+        },
+      },
+      exemplarMarker: 'data-testid Exemplar marker',
+      variableQueryEditor: {
+        queryType: 'data-testid query type',
+        labelnames: {
+          metricRegex: 'data-testid label names metric regex',
+        },
+        labelValues: {
+          labelSelect: 'data-testid label values label select',
+          // metric select see queryEditor: builder for more context
+          // label select for metric filtering see queryEditor: builder for more context
+        },
+        metricNames: {
+          metricRegex: 'data-testid metric names metric regex',
+        },
+        varQueryResult: 'data-testid variable query result',
+        seriesQuery: 'data-testid prometheus series query',
+        classicQuery: 'data-testid prometheus classic query',
+      },
+      annotations: {
+        minStep: 'prometheus-annotation-min-step', // id for autosize input
+        title: 'data-testid prometheus annotation title',
+        tags: 'data-testid prometheus annotation tags',
+        text: 'data-testid prometheus annotation text',
+        seriesValueAsTimestamp: 'data-testid prometheus annotation series value as timestamp',
+      },
     },
   },
   Menu: {
@@ -65,13 +148,14 @@ export const Components = {
     MenuGroup: (title: string) => `${title} menu group`,
     MenuItem: (title: string) => `${title} menu item`,
     SubMenu: {
-      container: 'SubMenu container',
-      icon: 'SubMenu icon',
+      container: 'data-testid SubMenu container',
+      icon: 'data-testid SubMenu icon',
     },
   },
   Panels: {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
+      content: 'data-testid panel content',
       headerItems: (item: string) => `data-testid Panel header item ${item}`,
       menuItems: (item: string) => `data-testid Panel menu item ${item}`,
       menu: (title: string) => `data-testid Panel menu ${title}`,
@@ -83,6 +167,7 @@ export const Components = {
         container: 'data-testid hover-header-container',
         dragIcon: 'data-testid drag-icon',
       },
+      PanelDataErrorMessage: 'data-testid Panel data error message',
     },
     Visualization: {
       Graph: {
@@ -106,7 +191,7 @@ export const Components = {
         valueV2: 'data-testid Bar gauge value',
       },
       PieChart: {
-        svgSlice: 'Pie Chart Slice',
+        svgSlice: 'data testid Pie Chart Slice',
       },
       Text: {
         container: () => '.markdown-html',
@@ -119,34 +204,41 @@ export const Components = {
     },
   },
   VizLegend: {
-    seriesName: (name: string) => `VizLegend series ${name}`,
+    seriesName: (name: string) => `data-testid VizLegend series ${name}`,
   },
   Drawer: {
     General: {
       title: (title: string) => `Drawer title ${title}`,
       expand: 'Drawer expand',
       contract: 'Drawer contract',
-      close: 'Drawer close',
+      close: 'data-testid Drawer close',
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
+      subtitle: 'data-testid drawer subtitle',
+    },
+    DashboardSaveDrawer: {
+      saveButton: 'data-testid Save dashboard drawer button',
+      saveAsButton: 'data-testid Save as dashboard drawer button',
+      saveAsTitleInput: 'Save dashboard title field',
     },
   },
   PanelEditor: {
     General: {
-      content: 'Panel editor content',
+      content: 'data-testid Panel editor content',
     },
     OptionsPane: {
-      content: 'Panel editor option pane content',
+      content: 'data-testid Panel editor option pane content',
       select: 'Panel editor option pane select',
       fieldLabel: (type: string) => `${type} field property editor`,
+      fieldInput: (title: string) => `data-testid Panel editor option pane field input ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
-      content: 'Panel editor data pane content',
+      content: 'data-testid Panel editor data pane content',
     },
     applyButton: 'data-testid Apply changes and go back to dashboard',
     toggleVizPicker: 'data-testid toggle-viz-picker',
     toggleVizOptions: 'data-testid toggle-viz-options',
-    toggleTableView: 'toggle-table-view',
+    toggleTableView: 'data-testid toggle-table-view',
 
     // [Geomap] Map controls
     showZoomField: 'Map controls Show zoom control field property editor',
@@ -165,7 +257,7 @@ export const Components = {
       content: 'Panel inspector Stats content',
     },
     Json: {
-      content: 'Panel inspector Json content',
+      content: 'data-testid Panel inspector Json content',
     },
     Query: {
       content: 'Panel inspector Query content',
@@ -174,7 +266,7 @@ export const Components = {
     },
   },
   Tab: {
-    title: (title: string) => `Tab ${title}`,
+    title: (title: string) => `data-testid Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {
@@ -194,6 +286,8 @@ export const Components = {
     queryInspectorButton: 'Query inspector button',
     queryHistoryButton: 'data-testid query-history-button',
     addQuery: 'data-testid query-tab-add-query',
+    queryGroupTopSection: 'data-testid query group top section',
+    addExpression: 'data-testid query-tab-add-expression',
   },
   QueryHistory: {
     queryText: 'Query text',
@@ -202,12 +296,26 @@ export const Components = {
     rows: 'Query editor row',
   },
   QueryEditorRow: {
-    actionButton: (title: string) => `${title}`,
+    actionButton: (title: string) => `data-testid ${title}`,
     title: (refId: string) => `Query editor row title ${refId}`,
     container: (refId: string) => `Query editor row ${refId}`,
   },
   AlertTab: {
-    content: 'Alert editor tab content',
+    content: 'data-testid Alert editor tab content',
+  },
+  AlertRules: {
+    groupToggle: 'data-testid group-collapse-toggle',
+    toggle: 'data-testid collapse-toggle',
+    expandedContent: 'data-testid expanded-content',
+    previewButton: 'data-testid alert-rule preview-button',
+    ruleNameField: 'data-testid alert-rule name-field',
+    newFolderButton: 'data-testid alert-rule new-folder-button',
+    newFolderNameField: 'data-testid alert-rule name-folder-name-field',
+    newFolderNameCreateButton: 'data-testid alert-rule name-folder-name-create-button',
+    newEvaluationGroupButton: 'data-testid alert-rule new-evaluation-group-button',
+    newEvaluationGroupName: 'data-testid alert-rule new-evaluation-group-name',
+    newEvaluationGroupInterval: 'data-testid alert-rule new-evaluation-group-interval',
+    newEvaluationGroupCreate: 'data-testid alert-rule new-evaluation-group-create-button',
   },
   Alert: {
     /**
@@ -224,9 +332,10 @@ export const Components = {
   },
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
+    disableTransformationButton: 'data-testid Disable transformation button',
     Reduce: {
-      modeLabel: 'Transform mode label',
-      calculationsLabel: 'Transform calculations label',
+      modeLabel: 'data-testid Transform mode label',
+      calculationsLabel: 'data-testid Transform calculations label',
     },
     SpatialOperations: {
       actionLabel: 'root Action field property editor',
@@ -249,15 +358,17 @@ export const Components = {
         },
       },
     },
-    searchInput: 'search transformations',
+    searchInput: 'data-testid search transformations',
+    noTransformationsMessage: 'data-testid no transformations message',
     addTransformationButton: 'data-testid add transformation button',
+    removeAllTransformationsButton: 'data-testid remove all transformations button',
   },
   NavBar: {
     Configuration: {
       button: 'Configuration',
     },
     Toggle: {
-      button: 'Toggle menu',
+      button: 'data-testid Toggle menu',
     },
     Reporting: {
       button: 'Reporting',
@@ -269,7 +380,25 @@ export const Components = {
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
+    shareDashboard: 'data-testid Share dashboard',
+    markAsFavorite: 'data-testid Mark as favorite',
+    editDashboard: {
+      editButton: 'data-testid Edit dashboard button',
+      saveButton: 'data-testid Save dashboard button',
+      exitButton: 'data-testid Exit edit mode button',
+      settingsButton: 'data-testid Dashboard settings',
+      addRowButton: 'data-testid Add row button',
+      addLibraryPanelButton: 'data-testid Add a panel from the panel library button',
+      addVisualizationButton: 'data-testid Add new visualization menu item',
+      pastePanelButton: 'data-testid Paste panel button',
+      discardChangesButton: 'data-testid Discard changes button',
+      discardLibraryPanelButton: 'data-testid Discard library panel button',
+      unlinkLibraryPanelButton: 'data-testid Unlink library panel button',
+      saveLibraryPanelButton: 'data-testid Save library panel button',
+      backToDashboardButton: 'data-testid Back to dashboard button',
+    },
   },
+
   PageToolbar: {
     container: () => '.page-toolbar',
     item: (tooltip: string) => `${tooltip}`,
@@ -279,18 +408,19 @@ export const Components = {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
   },
   BackButton: {
-    backArrow: 'Go Back',
+    backArrow: 'data-testid Go Back',
   },
   OptionsGroup: {
-    group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
-    toggle: (title?: string) => (title ? `Options group ${title} toggle` : 'Options group toggle'),
+    group: (title?: string) => (title ? `data-testid Options group ${title}` : 'data-testid Options group'),
+    toggle: (title?: string) =>
+      title ? `data-testid Options group ${title} toggle` : 'data-testid Options group toggle',
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,
     current: () => '[class*="-currentVisualizationItem"]',
   },
   Select: {
-    option: 'Select option',
+    option: 'data-testid Select option',
     input: () => 'input[id*="time-options-input"]',
     singleValue: () => 'div[class*="-singleValue"]',
   },
@@ -306,7 +436,7 @@ export const Components = {
      */
     container: 'Folder picker select container',
     containerV2: 'data-testid Folder picker select container',
-    input: 'Select a folder',
+    input: 'data-testid folder-picker-input',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
@@ -318,6 +448,11 @@ export const Components = {
      */
     input: () => 'input[id="data-source-picker"]',
     inputV2: 'data-testid Select a data source',
+    dataSourceList: 'data-testid Data source list dropdown',
+    advancedModal: {
+      dataSourceList: 'data-testid Data source list',
+      builtInDataSourceList: 'data-testid Built in data source list',
+    },
   },
   TimeZonePicker: {
     /**
@@ -325,6 +460,7 @@ export const Components = {
      */
     container: 'Time zone picker select container',
     containerV2: 'data-testid Time zone picker select container',
+    changeTimeSettingsButton: 'data-testid Time zone picker Change time settings button',
   },
   WeekStartPicker: {
     /**
@@ -337,16 +473,17 @@ export const Components = {
   TraceViewer: {
     spanBar: 'data-testid SpanBar--wrapper',
   },
-  QueryField: { container: 'Query field' },
+  QueryField: { container: 'data-testid Query field' },
   QueryBuilder: {
-    queryPatterns: 'Query patterns',
-    labelSelect: 'Select label',
-    valueSelect: 'Select value',
-    matchOperatorSelect: 'Select match operator',
+    queryPatterns: 'data-testid Query patterns',
+    labelSelect: 'data-testid Select label',
+    inputSelect: 'data-testid Select label-input',
+    valueSelect: 'data-testid Select value',
+    matchOperatorSelect: 'data-testid Select match operator',
   },
   ValuePicker: {
-    button: (name: string) => `Value picker button ${name}`,
-    select: (name: string) => `Value picker select ${name}`,
+    button: (name: string) => `data-testid Value picker button ${name}`,
+    select: (name: string) => `data-testid Value picker select ${name}`,
   },
   Search: {
     /**
@@ -374,7 +511,7 @@ export const Components = {
     link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
-    icon: 'Loading indicator',
+    icon: 'data-testid Loading indicator',
   },
   CallToActionCard: {
     /**
@@ -384,10 +521,13 @@ export const Components = {
     buttonV2: (name: string) => `data-testid Call to action button ${name}`,
   },
   DataLinksContextMenu: {
-    singleLink: 'Data link',
+    singleLink: 'data-testid Data link',
   },
   CodeEditor: {
     container: 'data-testid Code editor container',
+  },
+  ReactMonacoEditor: {
+    editorLazy: 'data-testid ReactMonacoEditor editorLazy',
   },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',
@@ -398,7 +538,7 @@ export const Components = {
     submit: 'data-testid-import-dashboard-submit',
   },
   PanelAlertTabContent: {
-    content: 'Unified alert editor tab content',
+    content: 'data-testid Unified alert editor tab content',
   },
   VisualizationPreview: {
     card: (name: string) => `data-testid suggestion-${name}`,
@@ -414,6 +554,8 @@ export const Components = {
     preferencesSaveButton: 'data-testid-shared-prefs-save',
     orgsTable: 'data-testid-user-orgs-table',
     sessionsTable: 'data-testid-user-sessions-table',
+    extensionPointTabs: 'data-testid-extension-point-tabs',
+    extensionPointTab: (tabId: string) => `data-testid-extension-point-tab-${tabId}`,
   },
   FileUpload: {
     inputField: 'data-testid-file-upload-input-field',
@@ -430,12 +572,38 @@ export const Components = {
   },
   Variables: {
     variableOption: 'data-testid variable-option',
+    variableLinkWrapper: 'data-testid variable-link-wrapper',
   },
   Annotations: {
-    annotationsTypeInput: 'annotations-type-input',
-    annotationsChoosePanelInput: 'choose-panels-input',
+    annotationsTypeInput: 'data-testid annotations-type-input',
+    annotationsChoosePanelInput: 'data-testid choose-panels-input',
+    editor: {
+      testButton: 'data-testid annotations-test-button',
+      resultContainer: 'data-testid annotations-query-result-container',
+    },
   },
   Tooltip: {
     container: 'data-testid tooltip',
+  },
+  ReturnToPrevious: {
+    buttonGroup: 'data-testid dismissable button group',
+    backButton: 'data-testid back',
+    dismissButton: 'data-testid dismiss',
+  },
+  SQLQueryEditor: {
+    selectColumn: 'data-testid select-column',
+    selectAggregation: 'data-testid select-aggregation',
+    selectAlias: 'data-testid select-alias',
+    filterConjunction: 'data-testid filter-conjunction',
+    filterField: 'data-testid filter-field',
+    filterOperator: 'data-testid filter-operator',
+    headerTableSelector: 'data-testid header-table-selector',
+    headerFilterSwitch: 'data-testid header-filter-switch',
+    headerGroupSwitch: 'data-testid header-group-switch',
+    headerOrderSwitch: 'data-testid header-order-switch',
+    headerPreviewSwitch: 'data-testid header-preview-switch',
+  },
+  EntityNotFound: {
+    container: 'data-testid entity-not-found',
   },
 };

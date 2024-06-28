@@ -1,18 +1,20 @@
 import { css } from '@emotion/css';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import * as React from 'react';
 
 import {
   AbsoluteTimeRange,
   DataFrame,
   DataQueryResponse,
+  DataTopic,
   EventBus,
   GrafanaTheme2,
   LoadingState,
   SplitOpen,
   TimeZone,
 } from '@grafana/data';
-import { Button, InlineField, Alert, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -31,6 +33,7 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
 };
 
 export const LogsVolumePanelList = ({
@@ -44,14 +47,19 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
   onClose,
+  toggleLegendRef,
 }: Props) => {
   const {
     logVolumes,
     maximumValue: allLogsVolumeMaximumValue,
     maximumRange: allLogsVolumeMaximumRange,
+    annotations,
   } = useMemo(() => {
     let maximumValue = -Infinity;
-    const sorted = sortBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
+    const data = logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations);
+    const annotations =
+      logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic === DataTopic.Annotations) || [];
+    const sorted = sortBy(data || [], 'meta.custom.datasourceName');
     const grouped = groupBy(sorted, 'meta.custom.datasourceName');
     const logVolumes = mapValues(grouped, (value) => {
       const mergedData = mergeLogsVolumeDataFrames(value);
@@ -63,6 +71,7 @@ export const LogsVolumePanelList = ({
       maximumValue,
       maximumRange,
       logVolumes,
+      annotations,
     };
   }, [logsVolumeData]);
 
@@ -115,6 +124,7 @@ export const LogsVolumePanelList = ({
         const logsVolumeData = { data: logVolumes[name] };
         return (
           <LogsVolumePanel
+            toggleLegendRef={toggleLegendRef}
             key={index}
             absoluteRange={visibleRange}
             allLogsVolumeMaximum={allLogsVolumeMaximumValue}
@@ -127,6 +137,7 @@ export const LogsVolumePanelList = ({
             // TODO: Support filtering level from multiple log levels
             onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
             eventBus={eventBus}
+            annotations={annotations}
           />
         );
       })}

@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
+import { SqlExpr } from 'app/features/expressions/components/SqlExpr';
 import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
   ExpressionQuery,
@@ -57,6 +58,19 @@ export const Expression: FC<ExpressionProps> = ({
 
   const queryType = query?.type;
 
+  const { setError, clearErrors } = useFormContext();
+
+  const onQueriesValidationError = useCallback(
+    (errorMsg: string | undefined) => {
+      if (errorMsg) {
+        setError('queries', { type: 'custom', message: errorMsg });
+      } else {
+        clearErrors('queries');
+      }
+    },
+    [setError, clearErrors]
+  );
+
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
@@ -86,13 +100,25 @@ export const Expression: FC<ExpressionProps> = ({
           return <ClassicConditions onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
 
         case ExpressionQueryType.threshold:
-          return <Threshold onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
+          return (
+            <Threshold
+              onChange={onChangeQuery}
+              query={query}
+              labelWidth={'auto'}
+              refIds={availableRefIds}
+              onError={onQueriesValidationError}
+              useHysteresis={true}
+            />
+          );
+
+        case ExpressionQueryType.sql:
+          return <SqlExpr onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
 
         default:
           return <>Expression not supported: {query.type}</>;
       }
     },
-    [onChangeQuery, queries]
+    [onChangeQuery, queries, onQueriesValidationError]
   );
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
@@ -114,12 +140,20 @@ export const Expression: FC<ExpressionProps> = ({
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
           onSetCondition={onSetCondition}
-          warning={warning}
-          error={error}
           query={query}
           alertCondition={alertCondition}
         />
         <div className={styles.expression.body}>
+          {error && (
+            <Alert title="Expression failed" severity="error">
+              {error.message}
+            </Alert>
+          )}
+          {warning && (
+            <Alert title="Expression warning" severity="warning">
+              {warning.message}
+            </Alert>
+          )}
           <div className={styles.expression.description}>{selectedExpressionDescription}</div>
           {renderExpressionType(query)}
         </div>
@@ -253,8 +287,6 @@ interface HeaderProps {
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
   onUpdateExpressionType: (type: ExpressionQueryType) => void;
-  warning?: Error;
-  error?: Error;
   onSetCondition: (refId: string) => void;
   query: ExpressionQuery;
   alertCondition: boolean;
@@ -265,11 +297,9 @@ const Header: FC<HeaderProps> = ({
   queryType,
   onUpdateRefId,
   onRemoveExpression,
-  warning,
   onSetCondition,
   alertCondition,
   query,
-  error,
 }) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
@@ -288,7 +318,7 @@ const Header: FC<HeaderProps> = ({
   return (
     <header className={styles.header.wrapper}>
       <Stack direction="row" gap={0.5} alignItems="center">
-        <Stack direction="row" gap={1} alignItems="center" wrap={false}>
+        <Stack direction="row" gap={1} alignItems="center">
           {!editingRefId && (
             <button type="button" className={cx(clearButton, styles.editable)} onClick={() => setEditMode('refId')}>
               <div className={styles.expression.refId}>{refId}</div>
@@ -313,12 +343,7 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
-        <ExpressionStatusIndicator
-          error={error}
-          warning={warning}
-          onSetCondition={() => onSetCondition(query.refId)}
-          isCondition={alertCondition}
-        />
+        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={alertCondition} />
         <IconButton
           name="trash-alt"
           variant="secondary"
@@ -433,161 +458,159 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
 
 const getStyles = (theme: GrafanaTheme2) => ({
   expression: {
-    wrapper: css`
-      display: flex;
-      border: solid 1px ${theme.colors.border.medium};
-      flex: 1;
-      flex-basis: 400px;
-      border-radius: ${theme.shape.radius.default};
-    `,
-    stack: css`
-      display: flex;
-      flex-direction: column;
-      flex-wrap: nowrap;
-      gap: 0;
-      width: 100%;
-      min-width: 0; // this one is important to prevent text overflow
-    `,
-    classic: css`
-      max-width: 100%;
-    `,
-    nonClassic: css`
-      max-width: 640px;
-    `,
-    alertCondition: css``,
-    body: css`
-      padding: ${theme.spacing(1)};
-      flex: 1;
-    `,
-    description: css`
-      margin-bottom: ${theme.spacing(1)};
-      font-size: ${theme.typography.size.xs};
-      color: ${theme.colors.text.secondary};
-    `,
-    refId: css`
-      font-weight: ${theme.typography.fontWeightBold};
-      color: ${theme.colors.primary.text};
-    `,
-    results: css`
-      display: flex;
-      flex-direction: column;
-      flex-wrap: nowrap;
+    wrapper: css({
+      display: 'flex',
+      border: `solid 1px ${theme.colors.border.medium}`,
+      flex: 1,
+      flexBasis: '400px',
+      borderRadius: theme.shape.radius.default,
+    }),
+    stack: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexWrap: 'nowrap',
+      gap: 0,
+      width: '100%',
+      minWidth: '0', // this one is important to prevent text overflow
+    }),
+    classic: css({
+      maxWidth: '100%',
+    }),
+    nonClassic: css({
+      maxWidth: '640px',
+    }),
+    alertCondition: css({}),
+    body: css({
+      padding: theme.spacing(1),
+      flex: 1,
+    }),
+    description: css({
+      marginBottom: theme.spacing(1),
+      fontSize: theme.typography.size.xs,
+      color: theme.colors.text.secondary,
+    }),
+    refId: css({
+      fontWeight: theme.typography.fontWeightBold,
+      color: theme.colors.primary.text,
+    }),
+    results: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexWrap: 'nowrap',
 
-      border-top: solid 1px ${theme.colors.border.medium};
-    `,
-    noResults: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
-    resultsRow: css`
-      padding: ${theme.spacing(0.75)} ${theme.spacing(1)};
+      borderTop: `solid 1px ${theme.colors.border.medium}`,
+    }),
+    noResults: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    resultsRow: css({
+      padding: `${theme.spacing(0.75)} ${theme.spacing(1)}`,
 
-      &:nth-child(odd) {
-        background-color: ${theme.colors.background.secondary};
-      }
+      '&:nth-child(odd)': {
+        backgroundColor: theme.colors.background.secondary,
+      },
 
-      &:hover {
-        background-color: ${theme.colors.background.canvas};
-      }
-    `,
-    labelKey: css`
-      color: ${theme.isDark ? '#73bf69' : '#56a64b'};
-    `,
-    labelValue: css`
-      color: ${theme.isDark ? '#ce9178' : '#a31515'};
-    `,
-    resultValue: css`
-      text-align: right;
-    `,
-    resultLabel: css`
-      flex: 1;
-      overflow-x: auto;
+      '&:hover': {
+        backgroundColor: theme.colors.background.canvas,
+      },
+    }),
+    labelKey: css({
+      color: theme.isDark ? '#73bf69' : '#56a64b',
+    }),
+    labelValue: css({
+      color: theme.isDark ? '#ce9178' : '#a31515',
+    }),
+    resultValue: css({
+      textAlign: 'right',
+    }),
+    resultLabel: css({
+      flex: 1,
+      overflowX: 'auto',
 
-      display: inline-block;
-      white-space: nowrap;
-    `,
-    noData: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: ${theme.spacing()};
-    `,
+      display: 'inline-block',
+      whiteSpace: 'nowrap',
+    }),
+    noData: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: theme.spacing(),
+    }),
   },
-  mutedText: css`
-    color: ${theme.colors.text.secondary};
-    font-size: 0.9em;
+  mutedText: css({
+    color: theme.colors.text.secondary,
+    fontSize: '0.9em',
 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
   header: {
-    wrapper: css`
-      background: ${theme.colors.background.secondary};
-      padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-      border-bottom: solid 1px ${theme.colors.border.weak};
-    `,
+    wrapper: css({
+      background: theme.colors.background.secondary,
+      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+      borderBottom: `solid 1px ${theme.colors.border.weak}`,
+    }),
   },
-  footer: css`
-    background: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(1)};
-    border-top: solid 1px ${theme.colors.border.weak};
-  `,
-  draggableIcon: css`
-    cursor: grab;
-  `,
-  mutedIcon: css`
-    color: ${theme.colors.text.secondary};
-  `,
-  editable: css`
-    padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
+  footer: css({
+    background: theme.colors.background.secondary,
+    padding: theme.spacing(1),
+    borderTop: `solid 1px ${theme.colors.border.weak}`,
+  }),
+  draggableIcon: css({
+    cursor: 'grab',
+  }),
+  mutedIcon: css({
+    color: theme.colors.text.secondary,
+  }),
+  editable: css({
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+    border: `solid 1px ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
 
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: ${theme.spacing(1)};
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    cursor: 'pointer',
+  }),
+  timeseriesTableWrapper: css({
+    maxHeight: '500px',
 
-    cursor: pointer;
-  `,
-  timeseriesTableWrapper: css`
-    max-height: 500px;
+    overflowY: 'scroll',
+  }),
+  timeseriesTable: css({
+    tableLayout: 'auto',
 
-    overflow-y: scroll;
-  `,
-  timeseriesTable: css`
-    table-layout: auto;
+    width: '100%',
+    height: '100%',
 
-    width: 100%;
-    height: 100%;
+    'td, th': {
+      padding: theme.spacing(1),
+    },
 
-    td,
-    th {
-      padding: ${theme.spacing(1)};
-    }
+    td: {
+      background: theme.colors.background.primary,
+    },
 
-    td {
-      background: ${theme.colors.background.primary};
-    }
+    th: {
+      background: theme.colors.background.secondary,
+    },
 
-    th {
-      background: ${theme.colors.background.secondary};
-    }
+    tr: {
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
 
-    tr {
-      border-bottom: 1px solid ${theme.colors.border.medium};
-
-      &:last-of-type {
-        border-bottom: none;
-      }
-    }
-  `,
+      '&:last-of-type': {
+        borderBottom: 'none',
+      },
+    },
+  }),
   pagination: {
-    wrapper: css`
-      border-top: 1px solid ${theme.colors.border.medium};
-      padding: ${theme.spacing()};
-    `,
+    wrapper: css({
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      padding: theme.spacing(),
+    }),
   },
 });

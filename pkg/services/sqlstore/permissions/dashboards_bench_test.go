@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -56,7 +58,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboards.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported)
+		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboardaccess.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported)
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()
@@ -75,14 +77,14 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		nestingLevel = folder.MaxNestedFolderDepth
 	}
 
-	store := db.InitTestDB(b)
+	store, cfg := db.InitTestDBWithCfg(b)
 
 	quotaService := quotatest.New(false, nil)
 
-	dashboardWriteStore, err := database.ProvideDashboardStore(store, store.Cfg, features, tagimpl.ProvideService(store, store.Cfg), quotaService)
+	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store), quotaService)
 	require.NoError(b, err)
 
-	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), store.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features)
+	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
@@ -124,15 +126,15 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		str := fmt.Sprintf("dashboard under folder %s", leaf.Title)
 		now := time.Now()
 		dashes = append(dashes, dashboards.Dashboard{
-			OrgID:    usr.OrgID,
-			IsFolder: false,
-			UID:      str,
-			Slug:     str,
-			Title:    str,
-			Data:     simplejson.New(),
-			Created:  now,
-			Updated:  now,
-			FolderID: leaf.ID,
+			OrgID:     usr.OrgID,
+			IsFolder:  false,
+			UID:       str,
+			Slug:      str,
+			Title:     str,
+			Data:      simplejson.New(),
+			Created:   now,
+			Updated:   now,
+			FolderUID: leaf.UID,
 		})
 	}
 
@@ -176,7 +178,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 			})
 			for _, dash := range dashes {
 				// add permission to read dashboards under the general
-				if dash.FolderID == 0 {
+				if dash.FolderUID == "" {
 					permissions = append(permissions, accesscontrol.Permission{
 						RoleID:  int64(i),
 						Action:  dashboards.ActionDashboardsRead,

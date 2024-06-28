@@ -1,9 +1,9 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
-import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { defaultIntervals, RefreshPicker } from '@grafana/ui';
+import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { defaultIntervals, getWeekStart, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -17,6 +17,9 @@ export interface Props {
   dashboard: DashboardModel;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   isOnCanvas?: boolean;
+  onToolbarRefreshClick?: () => void;
+  onToolbarZoomClick?: () => void;
+  onToolbarTimePickerClick?: () => void;
 }
 
 export class DashNavTimeControls extends Component<Props> {
@@ -75,7 +78,17 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
+    if (this.props.onToolbarZoomClick) {
+      this.props.onToolbarZoomClick();
+    }
     appEvents.publish(new ZoomOutEvent({ scale: 2 }));
+  };
+
+  onRefreshClick = () => {
+    if (this.props.onToolbarRefreshClick) {
+      this.props.onToolbarRefreshClick();
+    }
+    this.onRefresh();
   };
 
   render() {
@@ -87,6 +100,7 @@ export class DashNavTimeControls extends Component<Props> {
     const timeZone = dashboard.getTimezone();
     const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
     const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
+    const weekStart = dashboard.weekStart || getWeekStart(config.bootData.user.weekStart);
 
     let text: string | undefined = undefined;
     if (dashboard.refresh === AutoRefreshInterval) {
@@ -106,10 +120,12 @@ export class DashNavTimeControls extends Component<Props> {
           onChangeTimeZone={this.onChangeTimeZone}
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
           isOnCanvas={isOnCanvas}
+          onToolbarTimePickerClick={this.props.onToolbarTimePickerClick}
+          weekStart={weekStart}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
-          onRefresh={this.onRefresh}
+          onRefresh={this.onRefreshClick}
           value={dashboard.refresh}
           intervals={intervals}
           isOnCanvas={isOnCanvas}

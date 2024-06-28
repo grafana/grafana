@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/annotations/
   - ../../panels/visualizations/annotations/
   - ../../visualizations/annotations/
-description: Annotations visualization documentation
+description: Configure options for Grafana's annotations list visualization
 keywords:
   - grafana
   - Annotations
@@ -21,6 +21,10 @@ weight: 100
 # Annotations list
 
 The annotations list shows a list of available annotations you can use to view annotated data. Various options are available to filter the list based on tags and on the current dashboard.
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Annotation query
 

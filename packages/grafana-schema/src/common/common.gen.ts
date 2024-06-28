@@ -9,6 +9,16 @@
 
 
 /**
+ * A topic is attached to DataFrame metadata in query results.
+ * This specifies where the data should be used.
+ */
+export enum DataTopic {
+  AlertStates = 'alertStates',
+  Annotations = 'annotations',
+  Series = 'series',
+}
+
+/**
  * TODO docs
  */
 export interface DataSourceJsonData {
@@ -33,9 +43,7 @@ export interface DataQuery {
    */
   datasource?: unknown;
   /**
-   * true if query is disabled (ie should not be returned to the dashboard)
-   * Note this does not always imply that the query should not be executed since
-   * the results from a hidden query may be used as the input to other queries (SSE etc)
+   * If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
    */
   hide?: boolean;
   /**
@@ -399,7 +407,7 @@ export interface HideableFieldConfig {
 /**
  * TODO docs
  */
-export enum GraphTresholdsStyleMode {
+export enum GraphThresholdsStyleMode {
   Area = 'area',
   Dashed = 'dashed',
   DashedAndArea = 'dashed+area',
@@ -413,7 +421,7 @@ export enum GraphTresholdsStyleMode {
  * TODO docs
  */
 export interface GraphThresholdsStyleConfig {
-  mode: GraphTresholdsStyleMode;
+  mode: GraphThresholdsStyleMode;
 }
 
 /**
@@ -545,6 +553,15 @@ export enum BigValueTextMode {
 }
 
 /**
+ * TODO docs
+ */
+export enum PercentChangeColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}
+
+/**
  * TODO -- should not be table specific!
  * TODO docs
  */
@@ -593,6 +610,7 @@ export enum SortOrder {
 export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig, BarConfig, StackableFieldConfig, HideableFieldConfig {
   drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
+  insertNulls?: (boolean | number);
   thresholdsStyle?: GraphThresholdsStyleConfig;
   transform?: GraphTransform;
 }
@@ -645,9 +663,19 @@ export enum BarGaugeNamePlacement {
 }
 
 /**
+ * Allows for the bar gauge size to be set explicitly
+ */
+export enum BarGaugeSizing {
+  Auto = 'auto',
+  Manual = 'manual',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
+  maxHeight?: number;
+  maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
@@ -667,6 +695,7 @@ export enum TableCellDisplayMode {
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   Custom = 'custom',
+  DataLinks = 'data-links',
   Gauge = 'gauge',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
@@ -720,6 +749,7 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
  */
 export interface TableAutoCellOptions {
   type: TableCellDisplayMode.Auto;
+  wrapText?: boolean;
 }
 
 /**
@@ -727,6 +757,7 @@ export interface TableAutoCellOptions {
  */
 export interface TableColorTextCellOptions {
   type: TableCellDisplayMode.ColorText;
+  wrapText?: boolean;
 }
 
 /**
@@ -741,6 +772,13 @@ export interface TableJsonViewCellOptions {
  */
 export interface TableImageCellOptions {
   type: TableCellDisplayMode.Image;
+}
+
+/**
+ * Show data links in the cell
+ */
+export interface TableDataLinksCellOptions {
+  type: TableCellDisplayMode.DataLinks;
 }
 
 /**
@@ -764,14 +802,17 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
  * Colored background cell options
  */
 export interface TableColoredBackgroundCellOptions {
+  applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
+  wrapText?: boolean;
 }
 
 /**
  * Height of a table cell
  */
 export enum TableCellHeight {
+  Auto = 'auto',
   Lg = 'lg',
   Md = 'md',
   Sm = 'sm',
@@ -781,7 +822,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone

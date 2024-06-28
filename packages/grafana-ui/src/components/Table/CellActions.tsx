@@ -1,11 +1,12 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip';
 
-import { TableCellInspectModal } from './TableCellInspectModal';
+import { TableCellInspector } from './TableCellInspector';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
@@ -48,8 +49,8 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
 
   return (
     <>
-      <div className={`cellActions ${isRightAligned ? 'cellActionsLeft' : ''}`}>
-        <HorizontalGroup spacing="xs">
+      <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
+        <Stack gap={0.5}>
           {inspectEnabled && (
             <IconButton
               name="eye"
@@ -66,11 +67,11 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
           {showFilters && (
             <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
           )}
-        </HorizontalGroup>
+        </Stack>
       </div>
 
       {isInspecting && (
-        <TableCellInspectModal
+        <TableCellInspector
           mode={previewMode}
           value={cell.value}
           onDismiss={() => {

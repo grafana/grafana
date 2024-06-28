@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import {
   DataTransformerID,
@@ -14,6 +14,8 @@ import {
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 import { getTemplateSrv } from '@grafana/runtime/src/services';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -251,7 +253,8 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<Fi
   id: DataTransformerID.filterFieldsByName,
   editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,
-  name: 'Filter by name',
+  name: standardTransformers.filterFieldsByNameTransformer.name,
   description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
   categories: new Set([TransformerCategory.Filter]),
+  help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
 };

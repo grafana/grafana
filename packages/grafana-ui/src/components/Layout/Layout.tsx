@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps } from 'react';
+import { HTMLProps } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -30,6 +31,9 @@ export interface ContainerProps {
   shrink?: number;
 }
 
+/**
+ * @deprecated use Stack component instead
+ */
 export const Layout = ({
   children,
   orientation = Orientation.Horizontal,
@@ -58,6 +62,9 @@ export const Layout = ({
   );
 };
 
+/**
+ * @deprecated use Stack component instead
+ */
 export const HorizontalGroup = ({
   children,
   spacing,
@@ -79,6 +86,10 @@ export const HorizontalGroup = ({
     {children}
   </Layout>
 );
+
+/**
+ * @deprecated use Stack component with the "column" direction instead
+ */
 export const VerticalGroup = ({
   children,
   spacing,

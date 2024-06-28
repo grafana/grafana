@@ -1,52 +1,60 @@
-import React from 'react';
+import { useMemo } from 'react';
+import * as React from 'react';
 
-import { Icon } from '@grafana/ui';
+import { Column, Icon, InteractiveTable } from '@grafana/ui';
 import { LdapPermissions } from 'app/types';
 
 interface Props {
   permissions: LdapPermissions;
 }
 
+interface TableRow {
+  permission: string;
+  value: React.ReactNode;
+}
+
 export const LdapUserPermissions = ({ permissions }: Props) => {
-  return (
-    <div className="gf-form-group">
-      <div className="gf-form">
-        <table className="filter-table form-inline">
-          <thead>
-            <tr>
-              <th colSpan={1}>Permissions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="width-16"> Grafana admin</td>
-              <td>
-                {permissions.isGrafanaAdmin ? (
-                  <>
-                    <Icon name="shield" /> Yes
-                  </>
-                ) : (
-                  'No'
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td className="width-16">Status</td>
-              <td>
-                {permissions.isDisabled ? (
-                  <>
-                    <Icon name="times" /> Inactive
-                  </>
-                ) : (
-                  <>
-                    <Icon name="check" /> Active
-                  </>
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+  const columns = useMemo<Array<Column<TableRow>>>(
+    () => [
+      {
+        id: 'permission',
+        header: 'Permissions',
+        disableGrow: true,
+      },
+      {
+        id: 'value',
+      },
+    ],
+    []
   );
+
+  const data = useMemo<TableRow[]>(
+    () => [
+      {
+        permission: 'Grafana admin',
+        value: permissions.isGrafanaAdmin ? (
+          <>
+            <Icon name="shield" /> Yes
+          </>
+        ) : (
+          'No'
+        ),
+      },
+      {
+        permission: 'Status',
+        value: permissions.isDisabled ? (
+          <>
+            <Icon name="times" /> Inactive
+          </>
+        ) : (
+          <>
+            <Icon name="check" /> Active
+          </>
+        ),
+      },
+    ],
+    [permissions]
+  );
+
+  return <InteractiveTable data={data} columns={columns} getRowId={(row) => row.permission} />;
 };

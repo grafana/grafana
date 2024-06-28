@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +9,7 @@ import { Button, getTagColorIndexFromName, TagList, useStyles2 } from '@grafana/
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
+import { getAmMatcherFormatter } from '../../../utils/alertmanager';
 import { AlertInstanceMatch } from '../../../utils/notification-policies';
 import { CollapseToggle } from '../../CollapseToggle';
 import { MetaText } from '../../MetaText';
@@ -58,14 +59,16 @@ function NotificationRouteHeader({
         <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
           <Stack gap={1} direction="row" alignItems="center">
             Notification policy
-            <NotificationPolicyMatchers route={route} />
+            <NotificationPolicyMatchers
+              route={route}
+              matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
+            />
           </Stack>
         </div>
         <Spacer />
         <Stack gap={2} direction="row" alignItems="center">
           <MetaText icon="layers-alt" data-testid="matching-instances">
-            {instancesCount ?? '-'}
-            <span>{pluralize('instance', instancesCount)}</span>
+            {instancesCount ?? '-'} {pluralize('instance', instancesCount)}
           </MetaText>
           <Stack gap={1} direction="row" alignItems="center">
             <div>
@@ -173,68 +176,68 @@ export function NotificationRoute({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  textMuted: css`
-    color: ${theme.colors.text.secondary};
-  `,
-  textItalic: css`
-    font-style: italic;
-  `,
-  expandable: css`
-    cursor: pointer;
-  `,
-  routeHeader: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(1)};
-    align-items: center;
-    border-bottom: 1px solid ${theme.colors.border.weak};
-    &:hover {
-      background-color: ${theme.components.table.rowHoverBackground};
-    }
-    padding: ${theme.spacing(0.5, 0.5, 0.5, 0)};
-  `,
-  labelList: css`
-    flex: 0 1 auto;
-    justify-content: flex-start;
-  `,
-  labelSeparator: css`
-    width: 1px;
-    background-color: ${theme.colors.border.weak};
-  `,
-  tagListCard: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(2)};
+  textMuted: css({
+    color: theme.colors.text.secondary,
+  }),
+  textItalic: css({
+    fontStyle: 'italic',
+  }),
+  expandable: css({
+    cursor: 'pointer',
+  }),
+  routeHeader: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(0.5, 0.5, 0.5, 0),
+    '&:hover': {
+      backgroundColor: theme.components.table.rowHoverBackground,
+    },
+  }),
+  labelList: css({
+    flex: '0 1 auto',
+    justifyContent: 'flex-start',
+  }),
+  labelSeparator: css({
+    width: '1px',
+    backgroundColor: theme.colors.border.weak,
+  }),
+  tagListCard: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(2),
 
-    position: relative;
-    background: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(1)};
+    position: 'relative',
+    background: theme.colors.background.secondary,
+    padding: theme.spacing(1),
 
-    border-radius: ${theme.shape.borderRadius(2)};
-    border: solid 1px ${theme.colors.border.weak};
-  `,
-  routeInstances: css`
-    padding: ${theme.spacing(1, 0, 1, 4)};
-    position: relative;
+    borderRadius: theme.shape.borderRadius(2),
+    border: `solid 1px ${theme.colors.border.weak}`,
+  }),
+  routeInstances: css({
+    padding: theme.spacing(1, 0, 1, 4),
+    position: 'relative',
 
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
 
-    &:before {
-      content: '';
-      position: absolute;
-      left: ${theme.spacing(2)};
-      height: calc(100% - ${theme.spacing(2)});
-      width: ${theme.spacing(4)};
-      border-left: solid 1px ${theme.colors.border.weak};
-    }
-  `,
-  verticalBar: css`
-    width: 1px;
-    height: 20px;
-    background-color: ${theme.colors.secondary.main};
-    margin-left: ${theme.spacing(1)};
-    margin-right: ${theme.spacing(1)};
-  `,
+    '&:before': {
+      content: '""',
+      position: 'absolute',
+      left: theme.spacing(2),
+      height: `calc(100% - ${theme.spacing(2)})`,
+      width: theme.spacing(4),
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
+  }),
+  verticalBar: css({
+    width: '1px',
+    height: '20px',
+    backgroundColor: theme.colors.secondary.main,
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+  }),
 });

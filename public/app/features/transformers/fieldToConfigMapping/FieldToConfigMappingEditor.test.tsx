@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, getByText, getByLabelText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { toDataFrame, FieldType } from '@grafana/data';
@@ -88,5 +87,19 @@ describe('FieldToConfigMappingEditor', () => {
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.arrayContaining([{ fieldName: 'max', handlerKey: 'max', reducerId: 'last' }])
     );
+  });
+
+  it('Shows additional settings', async () => {
+    setup({ mappings: [{ fieldName: 'max', handlerKey: 'threshold1' }] });
+
+    const select = await screen.findByText('Additional settings');
+    expect(select).toBeInTheDocument();
+  });
+
+  it('Does not show additional settings', async () => {
+    setup();
+
+    const select = screen.queryByText('Additional settings');
+    expect(select).not.toBeInTheDocument();
   });
 });

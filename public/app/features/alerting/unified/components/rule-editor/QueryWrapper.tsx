@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
+import * as React from 'react';
 
 import {
   CoreApp,
@@ -12,9 +13,8 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { DataQuery } from '@grafana/schema';
-import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -46,7 +46,7 @@ interface Props {
   onRunQueries: () => void;
   index: number;
   thresholds: ThresholdsConfig;
-  thresholdsType?: GraphTresholdsStyleMode;
+  thresholdsType?: GraphThresholdsStyleMode;
   onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
@@ -131,16 +131,15 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-        <ExpressionStatusIndicator
-          error={error}
-          onSetCondition={() => onSetCondition(query.refId)}
-          isCondition={isAlertCondition}
-        />
+        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={isAlertCondition} />
       </Stack>
     );
   }
 
   const showVizualisation = data.state !== LoadingState.NotStarted;
+  // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
+  // TypeScript isn't complaining here because the interfaces just happen to be compatible
+  const editorQueries = cloneDeep(queries.map((query) => query.model));
 
   return (
     <Stack direction="column" gap={0.5}>
@@ -160,10 +159,10 @@ export const QueryWrapper = ({
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
-          queries={queries}
+          queries={editorQueries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
-          hideDisableQuery={true}
+          hideHideQueryButton={true}
         />
       </div>
       {showVizualisation && (
@@ -214,7 +213,7 @@ export function MaxDataPointsOption({
       <Input
         type="number"
         width={10}
-        placeholder={DEFAULT_MAX_DATA_POINTS.toLocaleString()}
+        placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}
@@ -244,12 +243,12 @@ export function MinIntervalOption({
 
   return (
     <InlineField
-      label="Min interval"
+      label="Interval"
       labelWidth={24}
       tooltip={
         <>
-          A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if your
-          data is written every minute.
+          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
+          your data is written every minute.
         </>
       }
     >
@@ -266,22 +265,22 @@ export function MinIntervalOption({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    label: AlertingQueryWrapper;
-    margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
+  wrapper: css({
+    label: 'AlertingQueryWrapper',
+    marginBottom: theme.spacing(1),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
 
-    button {
-      overflow: visible;
-    }
-  `,
-  dsTooltip: css`
-    display: flex;
-    align-items: center;
-    &:hover {
-      opacity: 0.85;
-      cursor: pointer;
-    }
-  `,
+    button: {
+      overflow: 'visible',
+    },
+  }),
+  dsTooltip: css({
+    display: 'flex',
+    alignItems: 'center',
+    '&:hover': {
+      opacity: 0.85,
+      cursor: 'pointer',
+    },
+  }),
 });

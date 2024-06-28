@@ -1,4 +1,3 @@
-import React from 'react';
 import { Observable, map } from 'rxjs';
 
 import { DataFrame } from '@grafana/data';
@@ -11,16 +10,17 @@ import {
 } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 
 export function getGrafanaMissedIterationsScene(datasource: DataSourceRef, panelTitle: string) {
+  const expr = `sum by(rule_group) (grafanacloud_instance_rule_group_iterations_missed_total:rate5m{id="${INSTANCE_ID}"})`;
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'sum by (rule_group) (grafanacloud_instance_rule_group_iterations_missed_total:rate5m)',
+        expr,
         range: true,
         legendFormat: '{{rule_group}}',
       },

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { renderMarkdown } from '@grafana/data';
@@ -26,6 +26,7 @@ function mapStateToProps(state: StoreState) {
     invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
     externalUserMngInfo: state.users.externalUserMngInfo,
     isLoading: state.users.isLoading,
+    rolesLoading: state.users.rolesLoading,
   };
 }
 
@@ -53,6 +54,7 @@ export const UsersListPageUnconnected = ({
   invitees,
   externalUserMngInfo,
   isLoading,
+  rolesLoading,
   loadUsers,
   fetchInvitees,
   changePage,
@@ -86,6 +88,7 @@ export const UsersListPageUnconnected = ({
         <OrgUsersTable
           users={users}
           orgId={contextSrv.user.orgId}
+          rolesLoading={rolesLoading}
           onRoleChange={onRoleChange}
           onRemoveUser={onRemoveUser}
           fetchData={changeSort}

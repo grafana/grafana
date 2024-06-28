@@ -5,16 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/weaveworks/common/http/client"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -40,10 +45,30 @@ const (
 
 const defaultQueryRange = 6 * time.Hour
 
+var (
+	ErrLokiQueryTooLong = errutil.BadRequest("loki.requestTooLong").MustTemplate(
+		"Request to Loki exceeded ({{.Public.QuerySize}} bytes) configured maximum size of {{.Public.MaxLimit}} bytes",
+		errutil.WithPublic("Query for Loki exceeded the configured limit of {{.Public.MaxLimit}} bytes. Remove some filters and try again."),
+	)
+)
+
+func NewErrLokiQueryTooLong(query string, maxLimit int) error {
+	return ErrLokiQueryTooLong.Build(errutil.TemplateData{
+		Private: map[string]any{
+			"query": query,
+		},
+		Public: map[string]any{
+			"MaxLimit":  maxLimit,
+			"QuerySize": len(query),
+		},
+	})
+}
+
 type remoteLokiClient interface {
-	ping(context.Context) error
-	push(context.Context, []stream) error
-	rangeQuery(ctx context.Context, logQL string, start, end, limit int64) (queryRes, error)
+	Ping(context.Context) error
+	Push(context.Context, []Stream) error
+	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error)
+	MaxQuerySize() int
 }
 
 // RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
@@ -53,27 +78,30 @@ type RemoteLokiBackend struct {
 	clock          clock.Clock
 	metrics        *metrics.Historian
 	log            log.Logger
+	ac             AccessControl
+	ruleStore      RuleStore
 }
 
-func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
-	logger := log.New("ngalert.state.historian", "backend", "loki")
+func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
-		client:         newLokiClient(cfg, req, metrics, logger),
+		client:         NewLokiClient(cfg, req, metrics, logger, tracer),
 		externalLabels: cfg.ExternalLabels,
 		clock:          clock.New(),
 		metrics:        metrics,
 		log:            logger,
+		ac:             ac,
+		ruleStore:      ruleStore,
 	}
 }
 
 func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
-	return h.client.ping(ctx)
+	return h.client.Ping(ctx)
 }
 
 // Record writes a number of state transitions for a given rule to an external Loki instance.
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	logStream := statesToStream(rule, states, h.externalLabels, logger)
+	logStream := StatesToStream(rule, states, h.externalLabels, logger)
 
 	errCh := make(chan error, 1)
 	if len(logStream.Values) == 0 {
@@ -100,7 +128,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
 		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(logStream.Values)))
 
-		if err := h.recordStreams(ctx, []stream{logStream}, logger); err != nil {
+		if err := h.recordStreams(ctx, []Stream{logStream}, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
 			h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
 			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(logStream.Values)))
@@ -112,9 +140,17 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 // Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
 func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	logQL, err := buildLogQuery(query)
+	uids, err := h.getFolderUIDsForFilter(ctx, query)
 	if err != nil {
 		return nil, err
+	}
+
+	logQL, filterByFolderSkipped, err := BuildLogQuery(query, uids, h.client.MaxQuerySize())
+	if err != nil {
+		return nil, err
+	}
+	if filterByFolderSkipped {
+		h.log.FromContext(ctx).Warn("Filter by folder skipped because it's too long. Use in-memory filtering", "folders", len(uids))
 	}
 
 	now := time.Now().UTC()
@@ -126,11 +162,11 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	}
 
 	// Timestamps are expected in RFC3339Nano.
-	res, err := h.client.rangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano(), int64(query.Limit))
+	res, err := h.client.RangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano(), int64(query.Limit))
 	if err != nil {
 		return nil, err
 	}
-	return merge(res, query.RuleUID)
+	return merge(res, uids)
 }
 
 func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
@@ -155,7 +191,12 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res queryRes, ruleUID string) (*data.Frame, error) {
+func merge(res QueryRes, folderUIDToFilter []string) (*data.Frame, error) {
+	filterByFolderUIDMap := make(map[string]struct{}, len(folderUIDToFilter))
+	for _, uid := range folderUIDToFilter {
+		filterByFolderUIDMap[uid] = struct{}{}
+	}
+
 	// Find the total number of elements in all arrays.
 	totalLen := 0
 	for _, arr := range res.Data.Result {
@@ -181,7 +222,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	pointers := make([]int, len(res.Data.Result))
 	for {
 		minTime := int64(math.MaxInt64)
-		minEl := sample{}
+		minEl := Sample{}
 		minElStreamIdx := -1
 		// Find the element with the earliest time among all arrays.
 		for i, stream := range res.Data.Result {
@@ -189,6 +230,18 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 			if len(stream.Values) == pointers[i] {
 				continue
 			}
+			// check if stream should be in the results
+			if len(filterByFolderUIDMap) > 0 {
+				folderLbl, ok := stream.Stream[FolderUIDLabel]
+				if !ok {
+					continue // skip entries without folder UID, only if needs filtering
+				}
+				_, ok = filterByFolderUIDMap[folderLbl]
+				if !ok {
+					continue
+				}
+			}
+
 			curTime := stream.Values[pointers[i]].T.UnixNano()
 			if pointers[i] < len(stream.Values) && curTime < minTime {
 				minTime = curTime
@@ -200,7 +253,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 		if minElStreamIdx == -1 {
 			break
 		}
-		var entry lokiEntry
+		var entry LokiEntry
 		err := json.Unmarshal([]byte(minEl.V), &entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
@@ -231,7 +284,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	return frame, nil
 }
 
-func statesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) stream {
+func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) Stream {
 	labels := mergeLabels(make(map[string]string), externalLabels)
 	// System-defined labels take precedence over user-defined external labels.
 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
@@ -239,14 +292,14 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 	labels[GroupLabel] = fmt.Sprint(rule.Group)
 	labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 
-	samples := make([]sample, 0, len(states))
+	samples := make([]Sample, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
 		}
 
 		sanitizedLabels := removePrivateLabels(state.Labels)
-		entry := lokiEntry{
+		entry := LokiEntry{
 			SchemaVersion:  1,
 			Previous:       state.PreviousFormatted(),
 			Current:        state.Formatted(),
@@ -255,6 +308,8 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
 			Fingerprint:    labelFingerprint(sanitizedLabels),
+			RuleTitle:      rule.Title,
+			RuleID:         rule.ID,
 			RuleUID:        rule.UID,
 			InstanceLabels: sanitizedLabels,
 		}
@@ -269,20 +324,20 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 		line := string(jsn)
 
-		samples = append(samples, sample{
+		samples = append(samples, Sample{
 			T: state.State.LastEvaluationTime,
 			V: line,
 		})
 	}
 
-	return stream{
+	return Stream{
 		Stream: labels,
 		Values: samples,
 	}
 }
 
-func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
-	if err := h.client.push(ctx, streams); err != nil {
+func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []Stream, logger log.Logger) error {
+	if err := h.client.Push(ctx, streams); err != nil {
 		return err
 	}
 
@@ -290,7 +345,7 @@ func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream,
 	return nil
 }
 
-type lokiEntry struct {
+type LokiEntry struct {
 	SchemaVersion int              `json:"schemaVersion"`
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
@@ -300,6 +355,8 @@ type lokiEntry struct {
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
 	Fingerprint   string           `json:"fingerprint"`
+	RuleTitle     string           `json:"ruleTitle"`
+	RuleID        int64            `json:"ruleID"`
 	RuleUID       string           `json:"ruleUID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
@@ -318,7 +375,7 @@ func jsonifyRow(line string) (json.RawMessage, error) {
 	// Ser/deser to validate the contents of the log line before shipping it forward.
 	// TODO: We may want to remove this in the future, as we already have the value in the form of a []byte, and json.RawMessage is also a []byte.
 	// TODO: Though, if the log line does not contain valid JSON, this can cause problems later on when rendering the dataframe.
-	var entry lokiEntry
+	var entry LokiEntry
 	if err := json.Unmarshal([]byte(line), &entry); err != nil {
 		return nil, err
 	}
@@ -340,7 +397,7 @@ func NewSelector(label, op, value string) (Selector, error) {
 	return Selector{Label: label, Op: Operator(op), Value: value}, nil
 }
 
-func selectorString(selectors []Selector) string {
+func selectorString(selectors []Selector, folderUIDs []string) string {
 	if len(selectors) == 0 {
 		return "{}"
 	}
@@ -349,8 +406,23 @@ func selectorString(selectors []Selector) string {
 	for _, s := range selectors {
 		query += fmt.Sprintf("%s%s%q,", s.Label, s.Op, s.Value)
 	}
-	// Remove the last comma, as we append one to every selector.
-	query = query[:len(query)-1]
+
+	if len(folderUIDs) > 0 {
+		b := strings.Builder{}
+		b.Grow(len(folderUIDs)*40 + len(FolderUIDLabel)) // rough estimate of the length
+		b.WriteString(FolderUIDLabel)
+		b.WriteString("=~`")
+		b.WriteString(regexp.QuoteMeta(folderUIDs[0]))
+		for _, uid := range folderUIDs[1:] {
+			b.WriteString("|")
+			b.WriteString(regexp.QuoteMeta(uid))
+		}
+		b.WriteString("`")
+		query += b.String()
+	} else {
+		// Remove the last comma, as we append one to every selector.
+		query = query[:len(query)-1]
+	}
 	return "{" + query + "}"
 }
 
@@ -362,13 +434,19 @@ func isValidOperator(op string) bool {
 	return false
 }
 
-func buildLogQuery(query models.HistoryQuery) (string, error) {
+// BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to a Loki query.
+// If query size exceeds the `maxQuerySize` then it re-builds query ignoring the folderUIDs. If it's still bigger - returns ErrQueryTooLong.
+// Returns a tuple:
+// - loki query
+// - true if filter by folder UID was not added to the query ignored
+// - error if log query cannot be constructed, and ErrQueryTooLong if user-defined query exceeds maximum allowed size
+func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize int) (string, bool, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {
-		return "", fmt.Errorf("failed to build the provided selectors: %w", err)
+		return "", false, fmt.Errorf("failed to build the provided selectors: %w", err)
 	}
 
-	logQL := selectorString(selectors)
+	logQL := selectorString(selectors, folderUIDs)
 
 	if queryHasLogFilters(query) {
 		logQL = fmt.Sprintf("%s | json", logQL)
@@ -396,7 +474,23 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 	}
 	logQL += labelFilters
 
-	return logQL, nil
+	if len(logQL) > maxQuerySize {
+		// if request is too long, try to drop filter by folder UIDs.
+		if len(folderUIDs) > 0 {
+			logQL, tooLong, err := BuildLogQuery(query, nil, maxQuerySize)
+			if err != nil {
+				return "", false, err
+			}
+			if tooLong {
+				return "", false, NewErrLokiQueryTooLong(logQL, maxQuerySize)
+			}
+			return logQL, true, nil
+		}
+		// if the query is too long even without filter by folders, then fail
+		return "", false, NewErrLokiQueryTooLong(logQL, maxQuerySize)
+	}
+
+	return logQL, false, nil
 }
 
 func queryHasLogFilters(query models.HistoryQuery) bool {
@@ -404,4 +498,49 @@ func queryHasLogFilters(query models.HistoryQuery) bool {
 		query.DashboardUID != "" ||
 		query.PanelID != 0 ||
 		len(query.Labels) > 0
+}
+
+func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query models.HistoryQuery) ([]string, error) {
+	bypass, err := h.ac.CanReadAllRules(ctx, query.SignedInUser)
+	if err != nil {
+		return nil, err
+	}
+	if bypass { // if user has access to all rules and folder, remove filter
+		return nil, nil
+	}
+	// if there is a filter by rule UID, find that rule UID and make sure that user has access to it.
+	if query.RuleUID != "" {
+		rule, err := h.ruleStore.GetAlertRuleByUID(ctx, &models.GetAlertRuleByUIDQuery{
+			UID:   query.RuleUID,
+			OrgID: query.OrgID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch alert rule by UID: %w", err)
+		}
+		if rule == nil {
+			return nil, models.ErrAlertRuleNotFound
+		}
+		return nil, h.ac.AuthorizeAccessInFolder(ctx, query.SignedInUser, rule)
+	}
+	// if no filter, then we need to get all namespaces user has access to
+	folders, err := h.ruleStore.GetUserVisibleNamespaces(ctx, query.OrgID, query.SignedInUser)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch folders that user can access: %w", err)
+	}
+	uids := make([]string, 0, len(folders))
+	// now keep only UIDs of folder in which user can read rules.
+	for _, f := range folders {
+		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.Namespace(*f))
+		if err != nil {
+			return nil, err
+		}
+		if !hasAccess {
+			continue
+		}
+		uids = append(uids, f.UID)
+	}
+	if len(uids) == 0 {
+		return nil, accesscontrol.NewAuthorizationErrorGeneric("read rules in any folder")
+	}
+	return uids, nil
 }

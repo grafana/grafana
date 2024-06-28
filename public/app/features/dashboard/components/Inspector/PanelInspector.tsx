@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
@@ -35,7 +35,7 @@ const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
     withFieldConfig: true,
   });
 
-  const { data, isLoading, hasError } = usePanelLatestData(panel, dataOptions, true);
+  const { data, isLoading, hasError } = usePanelLatestData(panel, dataOptions, false);
   const metaDs = useDatasourceMetadata(data);
   const tabs = useInspectTabs(panel, dashboard, plugin, hasError, metaDs);
 

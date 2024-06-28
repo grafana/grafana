@@ -4,9 +4,6 @@ import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { createErrorNotification } from '../../../../core/copy/appNotification';
-import { notifyApp } from '../../../../core/reducers/appNotification';
-import { dispatch } from '../../../../store/store';
 import TempoLanguageProvider from '../language_provider';
 
 import { getSituation, Situation } from './situation';
@@ -14,6 +11,7 @@ import { intrinsics, scopes } from './traceql';
 
 interface Props {
   languageProvider: TempoLanguageProvider;
+  setAlertText: (text?: string) => void;
 }
 
 type MinimalCompletionItem = {
@@ -33,9 +31,11 @@ type MinimalCompletionItem = {
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
   registerInteractionCommandId: string | null;
+  setAlertText: (text?: string) => void;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
+    this.setAlertText = props.setAlertText;
     this.registerInteractionCommandId = null;
   }
 
@@ -171,18 +171,18 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   ];
 
   // Functions (aggregator, selector, and combining operators)
-  static readonly spansetAggregatorOps: MinimalCompletionItem[] = [
-    {
-      label: 'count',
-      insertText: 'count()$0',
-      detail: 'Number of spans',
-      documentation: 'Counts the number of spans in a spanset',
-    },
+  static readonly aggregatorFunctions: MinimalCompletionItem[] = [
     {
       label: 'avg',
       insertText: 'avg($0)',
       detail: 'Average of attribute',
       documentation: 'Computes the average of a given numeric attribute or intrinsic for a spanset.',
+    },
+    {
+      label: 'count',
+      insertText: 'count()$0',
+      detail: 'Number of spans',
+      documentation: 'Counts the number of spans in a spanset.',
     },
     {
       label: 'max',
@@ -205,12 +205,36 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   ];
 
   static readonly functions: MinimalCompletionItem[] = [
-    ...this.spansetAggregatorOps,
+    ...this.aggregatorFunctions,
     {
       label: 'by',
       insertText: 'by($0)',
       detail: 'Grouping of attributes',
       documentation: 'Groups by arbitrary attributes.',
+    },
+    {
+      label: 'count_over_time',
+      insertText: 'count_over_time()$0',
+      detail: 'Number of spans over time',
+      documentation: 'Counts the number of spans over time.',
+    },
+    {
+      label: 'histogram_over_time',
+      insertText: 'histogram_over_time($0)',
+      detail: 'Histogram of attribute over time',
+      documentation: 'Retrieves a histogram of an attributes values over time which are sorted into buckets.',
+    },
+    {
+      label: 'quantile_over_time',
+      insertText: 'quantile_over_time($0)',
+      detail: 'Quantile of attribute over time',
+      documentation: 'Retrieves one or more quantiles of an attributes numeric values over time.',
+    },
+    {
+      label: 'rate',
+      insertText: 'rate()$0',
+      detail: 'Rate of spans',
+      documentation: 'Counts the rate of spans per second.',
     },
     {
       label: 'select',
@@ -243,7 +267,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
     const situation = getSituation(model.getValue(), offset);
-    const completionItems = situation != null ? this.getCompletions(situation) : Promise.resolve([]);
+    const completionItems = situation != null ? this.getCompletions(situation, this.setAlertText) : Promise.resolve([]);
 
     return completionItems.then((items) => {
       // monaco by-default alphabetically orders the items.
@@ -282,12 +306,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private async getTagValues(tagName: string, query: string): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
+    const cacheKey = `${tagName}:${query}`;
 
-    if (this.cachedValues.hasOwnProperty(tagName)) {
-      tagValues = this.cachedValues[tagName];
+    if (this.cachedValues.hasOwnProperty(cacheKey)) {
+      tagValues = this.cachedValues[cacheKey];
     } else {
       tagValues = await this.languageProvider.getOptionsV2(tagName, query);
-      this.cachedValues[tagName] = tagValues;
+      this.cachedValues[cacheKey] = tagValues;
     }
     return tagValues;
   }
@@ -297,15 +322,15 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private async getCompletions(situation: Situation): Promise<Completion[]> {
+  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<Completion[]> {
     switch (situation.type) {
       // This should only happen for cases that we do not support yet
       case 'UNKNOWN': {
         return [];
       }
       case 'EMPTY': {
-        return this.getScopesCompletions('{ ')
-          .concat(this.getIntrinsicsCompletions('{ '))
+        return this.getScopesCompletions('{ ', '$0 }')
+          .concat(this.getIntrinsicsCompletions('{ ', '$0 }'))
           .concat(this.getTagsCompletions('{ .'));
       }
       case 'SPANSET_EMPTY':
@@ -369,11 +394,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         let tagValues;
         try {
           tagValues = await this.getTagValues(situation.tagName, situation.query);
+          setAlertText(undefined);
         } catch (error) {
           if (isFetchError(error)) {
-            dispatch(notifyApp(createErrorNotification(error.data.error, new Error(error.data.message))));
+            setAlertText(error.data.error);
           } else if (error instanceof Error) {
-            dispatch(notifyApp(createErrorNotification('Error', error)));
+            setAlertText(`Error: ${error.message}`);
           }
         }
 

@@ -1,5 +1,5 @@
 import { isArray } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { dataFrameToJSON, toDataFrame, toDataFrameDTO } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
@@ -25,7 +25,7 @@ export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
 
       // Copy paste from panel json
       if (isArray(json.series) && json.state) {
-        data = json.series.map((v: any) => toDataFrameDTO(toDataFrame(v)));
+        data = json.series.map((v: unknown) => toDataFrameDTO(toDataFrame(v)));
       } else {
         // Chek if it is a copy of the raw resuls
         const v = toDataQueryResponse({ data: json });

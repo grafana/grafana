@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
+import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -19,7 +19,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
     // null/undefined are valid react children so we need to filter them out to prevent unnecessary padding
-    const childrenWithoutNull = React.Children.toArray(children).filter((child) => child != null);
+    const childrenWithoutNull = Children.toArray(children).filter((child) => child != null);
     const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(false));
     const containerRef = useRef<HTMLDivElement>(null);
     const [showOverflowItems, setShowOverflowItems] = useState(false);
@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment:
     alignItems: 'center',
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.shadows.z2,
     display: 'flex',
     flexWrap: 'wrap',
     gap: theme.spacing(1),
@@ -128,7 +128,7 @@ const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment:
     right: 0,
     top: '100%',
     width: 'max-content',
-    zIndex: theme.zIndex.sidemenu,
+    zIndex: theme.zIndex.dropdown,
   }),
   container: css({
     alignItems: 'center',

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import {
   FieldType,
@@ -9,7 +8,7 @@ import {
   QueryResultMetaStat,
   TimeZone,
 } from '@grafana/data';
-import { stylesFactory, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 interface InspectStatsTableProps {
   timeZone: TimeZone;
@@ -19,7 +18,7 @@ interface InspectStatsTableProps {
 
 export const InspectStatsTable = ({ timeZone, name, stats }: InspectStatsTableProps) => {
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   if (!stats || !stats.length) {
     return null;
@@ -27,7 +26,7 @@ export const InspectStatsTable = ({ timeZone, name, stats }: InspectStatsTablePr
 
   return (
     <div className={styles.wrapper}>
-      <div className="section-heading">{name}</div>
+      <div className={styles.heading}>{name}</div>
       <table className="filter-table width-30">
         <tbody>
           {stats.map((stat, index) => {
@@ -56,13 +55,15 @@ function formatStat(stat: QueryResultMetaStat, timeZone: TimeZone, theme: Grafan
   return formattedValueToString(display(stat.value));
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    wrapper: css`
-      padding-bottom: ${theme.spacing(2)};
-    `,
-    cell: css`
-      text-align: right;
-    `,
-  };
+const getStyles = (theme: GrafanaTheme2) => ({
+  heading: css({
+    fontSize: theme.typography.body.fontSize,
+    marginBottom: theme.spacing(1),
+  }),
+  wrapper: css({
+    paddingBottom: theme.spacing(2),
+  }),
+  cell: css({
+    textAlign: 'right',
+  }),
 });

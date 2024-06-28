@@ -1,10 +1,9 @@
 import { render, RenderResult, screen } from '@testing-library/react';
 import { noop } from 'lodash';
-import React from 'react';
 
 import { CoreApp } from '@grafana/data';
 
-import { createLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../__mocks__/datasource';
 
 import { testIds as regularTestIds } from './LokiQueryEditor';
 import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';

@@ -1,11 +1,10 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { ConnectionConfig } from '@grafana/google-sdk';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import { Divider, SecureSocksProxySettings } from '@grafana/ui';
-import { config } from 'app/core/config';
 
 import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types/types';
 

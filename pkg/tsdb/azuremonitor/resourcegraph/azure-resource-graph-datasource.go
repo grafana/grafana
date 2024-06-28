@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,7 +31,8 @@ type AzureResourceGraphResponse struct {
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
 type AzureResourceGraphDatasource struct {
-	Proxy types.ServiceProxy
+	Proxy  types.ServiceProxy
+	Logger log.Logger
 }
 
 // AzureResourceGraphQuery is the query request that is built from the saved values for
@@ -56,7 +58,7 @@ func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, r
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -86,9 +88,8 @@ type argJSONQuery struct {
 }
 
 func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
-	var azureResourceGraphQueries []*AzureResourceGraphQuery
-
-	for _, query := range queries {
+	azureResourceGraphQueries := make([]*AzureResourceGraphQuery, len(queries))
+	for i, query := range queries {
 		queryJSONModel := argJSONQuery{}
 		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
@@ -103,19 +104,18 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 		}
 
 		interpolatedQuery, err := macros.KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
-
 		if err != nil {
 			return nil, err
 		}
 
-		azureResourceGraphQueries = append(azureResourceGraphQueries, &AzureResourceGraphQuery{
+		azureResourceGraphQueries[i] = &AzureResourceGraphQuery{
 			RefID:             query.RefID,
 			ResultFormat:      resultFormat,
 			JSON:              query.JSON,
 			InterpolatedQuery: interpolatedQuery,
 			TimeRange:         query.TimeRange,
 			QueryType:         query.QueryType,
-		})
+		}
 	}
 
 	return azureResourceGraphQueries, nil
@@ -160,7 +160,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	)
 
 	defer span.End()
-	backend.Logger.Debug("azure resource graph query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
+	e.Logger.Debug("azure resource graph query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -188,12 +188,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return &dataResponse, nil
 	}
 
-	azurePortalUrl, err := loganalytics.GetAzurePortalUrl(dsInfo.Cloud)
-	if err != nil {
-		return nil, err
-	}
-
-	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
+	url := dsInfo.Routes["Azure Portal"].URL + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
 	frameWithLink := loganalytics.AddConfigLinks(*frame, url, nil)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
@@ -224,7 +219,7 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			e.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 

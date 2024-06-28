@@ -1,77 +1,28 @@
-import { chain, difference } from 'lodash';
+import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
-import Prism, { Grammar } from 'prismjs';
 
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
-import {
-  extractLabelMatchers,
-  parseSelector,
-  processLabels,
-  toPromLikeExpr,
-} from 'app/plugins/datasource/prometheus/language_utils';
+import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
-import { LokiDatasource } from './datasource';
+import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
+import { getStreamSelectorsFromQuery } from './queryUtils';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import {
   extractLabelKeysFromDataFrame,
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
-import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType } from './types';
+import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
 
-const DEFAULT_KEYS = ['job', 'namespace'];
-const EMPTY_SELECTOR = '{}';
-const HISTORY_ITEM_COUNT = 10;
-const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const NS_IN_MS = 1000000;
-
-// When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
-// @see public/app/plugins/datasource/prometheus/promql.ts
-const RATE_RANGES: CompletionItem[] = [
-  { label: '$__auto', sortValue: '$__auto' },
-  { label: '1m', sortValue: '00:01:00' },
-  { label: '5m', sortValue: '00:05:00' },
-  { label: '10m', sortValue: '00:10:00' },
-  { label: '30m', sortValue: '00:30:00' },
-  { label: '1h', sortValue: '01:00:00' },
-  { label: '1d', sortValue: '24:00:00' },
-];
-
-export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
-
-const wrapLabel = (label: string) => ({ label, filterText: `\"${label}\"` });
-
-export type LokiHistoryItem = HistoryItem<LokiQuery>;
-
-type TypeaheadContext = {
-  history?: LokiHistoryItem[];
-  absoluteRange?: AbsoluteTimeRange;
-};
-
-export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryItem[]): CompletionItem {
-  const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter((h) => h.ts > cutoffTs && h.query.expr === item.label);
-  let hint = `Queried ${historyForItem.length} times in the last 24h.`;
-  const recent = historyForItem[0];
-
-  if (recent) {
-    const lastQueried = dateTime(recent.ts).fromNow();
-    hint = `${hint} Last queried ${lastQueried}.`;
-  }
-
-  return {
-    ...item,
-    documentation: hint,
-  };
-}
+const EMPTY_SELECTOR = '{}';
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
-  labelFetchTs: number;
   started = false;
+  startedTimeRange?: TimeRange;
   datasource: LokiDatasource;
-  lookupsDisabled = false; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -86,19 +37,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.labelKeys = [];
-    this.labelFetchTs = 0;
 
     Object.assign(this, initialValues);
   }
 
-  // Strip syntax chars
-  cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%\|]/g, '').trim();
-
-  getSyntax(): Grammar {
-    return syntax;
-  }
-
-  request = async (url: string, params?: any): Promise<any> => {
+  request = async (url: string, params?: Record<string, string | number>) => {
     try {
       return await this.datasource.metadataRequest(url, params);
     } catch (error) {
@@ -109,12 +52,18 @@ export default class LokiLanguageProvider extends LanguageProvider {
   };
 
   /**
-   * Initialise the language provider by fetching set of labels. Without this initialisation the provider would return
-   * just a set of hardcoded default labels on provideCompletionItems or a recent queries from history.
+   * Initialize the language provider by fetching set of labels.
    */
-  start = () => {
-    if (!this.startTask) {
-      this.startTask = this.fetchLabels().then(() => {
+  start = (timeRange?: TimeRange) => {
+    const range = timeRange ?? this.getDefaultTimeRange();
+    // refetch labels if either there's not already a start task or the time range has changed
+    if (
+      !this.startTask ||
+      this.startedTimeRange?.from.isSame(range.from) === false ||
+      this.startedTimeRange?.to.isSame(range.to) === false
+    ) {
+      this.startedTimeRange = range;
+      this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
         this.started = true;
         return [];
       });
@@ -123,244 +72,72 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
+  /**
+   * Returns the label keys that have been fetched.
+   * If labels have not been fetched yet, it will return an empty array.
+   * For updated labels (which should not happen often), use fetchLabels.
+   * @todo It is quite complicated to know when to use fetchLabels and when to use getLabelKeys.
+   * We should consider simplifying this and use caching in the same way as with seriesCache and labelsCache
+   * and just always use fetchLabels.
+   * Caching should be thought out properly, so we are not fetching this often, as labelKeys should not be changing often.
+   *
+   * @returns {string[]} An array of label keys or an empty array if labels have not been fetched.
+   */
   getLabelKeys(): string[] {
     return this.labelKeys;
-  }
-
-  /**
-   * Return suggestions based on input that can be then plugged into a typeahead dropdown.
-   * Keep this DOM-free for testing
-   * @param input
-   * @param context Is optional in types but is required in case we are doing getLabelCompletionItems
-   * @param context.absoluteRange Required in case we are doing getLabelCompletionItems
-   * @param context.history Optional used only in getEmptyCompletionItems
-   */
-  async provideCompletionItems(input: TypeaheadInput, context?: TypeaheadContext): Promise<TypeaheadOutput> {
-    const { wrapperClasses, value, prefix, text } = input;
-    const emptyResult: TypeaheadOutput = { suggestions: [] };
-
-    if (!value) {
-      return emptyResult;
-    }
-
-    // Local text properties
-    const empty = value?.document.text.length === 0;
-    const selectedLines = value.document.getTextsAtRange(value.selection);
-    const currentLine = selectedLines.size === 1 ? selectedLines.first().getText() : null;
-
-    const nextCharacter = currentLine ? currentLine[value.selection.anchor.offset] : null;
-
-    // Syntax spans have 3 classes by default. More indicate a recognized token
-    const tokenRecognized = wrapperClasses.length > 3;
-
-    // Non-empty prefix, but not inside known token
-    const prefixUnrecognized = prefix && !tokenRecognized;
-
-    // Prevent suggestions in `function(|suffix)`
-    const noSuffix = !nextCharacter || nextCharacter === ')';
-
-    // Prefix is safe if it does not immediately follow a complete expression and has no text after it
-    const safePrefix = prefix && !text.match(/^['"~=\]})\s]+$/) && noSuffix;
-
-    // About to type next operand if preceded by binary operator
-    const operatorsPattern = /[+\-*/^%]/;
-    const isNextOperand = text.match(operatorsPattern);
-
-    // Determine candidates by CSS context
-    if (wrapperClasses.includes('context-range')) {
-      // Suggestions for metric[|]
-      return this.getRangeCompletionItems();
-    } else if (wrapperClasses.includes('context-labels')) {
-      // Suggestions for {|} and {foo=|}
-      return await this.getLabelCompletionItems(input);
-    } else if (wrapperClasses.includes('context-pipe')) {
-      return this.getPipeCompletionItem();
-    } else if (empty) {
-      // Suggestions for empty query field
-      return this.getEmptyCompletionItems(context);
-    } else if (prefixUnrecognized && noSuffix && !isNextOperand) {
-      // Show term suggestions in a couple of scenarios
-      return this.getBeginningCompletionItems(context);
-    } else if (prefixUnrecognized && safePrefix) {
-      // Show term suggestions in a couple of scenarios
-      return this.getTermCompletionItems();
-    }
-
-    return emptyResult;
-  }
-
-  getBeginningCompletionItems = (context?: TypeaheadContext): TypeaheadOutput => {
-    return {
-      suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
-    };
-  };
-
-  getEmptyCompletionItems(context?: TypeaheadContext): TypeaheadOutput {
-    const history = context?.history;
-    const suggestions = [];
-
-    if (history?.length) {
-      const historyItems = chain(history)
-        .map((h) => h.query.expr)
-        .filter()
-        .uniq()
-        .take(HISTORY_ITEM_COUNT)
-        .map(wrapLabel)
-        .map((item) => addHistoryMetadata(item, history))
-        .value();
-
-      suggestions.push({
-        prefixMatch: true,
-        skipSort: true,
-        label: 'History',
-        items: historyItems,
-      });
-    }
-
-    return { suggestions };
-  }
-
-  getTermCompletionItems = (): TypeaheadOutput => {
-    const suggestions = [];
-
-    suggestions.push({
-      prefixMatch: true,
-      label: 'Functions',
-      items: FUNCTIONS.map((suggestion) => ({ ...suggestion, kind: 'function' })),
-    });
-
-    return { suggestions };
-  };
-
-  getPipeCompletionItem = (): TypeaheadOutput => {
-    const suggestions = [];
-
-    suggestions.push({
-      label: 'Operators',
-      items: PIPE_OPERATORS.map((suggestion) => ({ ...suggestion, kind: 'operators' })),
-    });
-
-    suggestions.push({
-      label: 'Parsers',
-      items: PIPE_PARSERS.map((suggestion) => ({ ...suggestion, kind: 'parsers' })),
-    });
-
-    return { suggestions };
-  };
-
-  getRangeCompletionItems(): TypeaheadOutput {
-    return {
-      context: 'context-range',
-      suggestions: [
-        {
-          label: 'Range vector',
-          items: [...RATE_RANGES],
-        },
-      ],
-    };
-  }
-
-  async getLabelCompletionItems({ text, wrapperClasses, labelKey, value }: TypeaheadInput): Promise<TypeaheadOutput> {
-    let context = 'context-labels';
-    const suggestions: CompletionItemGroup[] = [];
-    if (!value) {
-      return { context, suggestions: [] };
-    }
-    const line = value.anchorBlock.getText();
-    const cursorOffset = value.selection.anchor.offset;
-    const isValueStart = text.match(/^(=|=~|!=|!~)/);
-
-    // Get normalized selector
-    let selector;
-    let parsedSelector;
-    try {
-      parsedSelector = parseSelector(line, cursorOffset);
-      selector = parsedSelector.selector;
-    } catch {
-      selector = EMPTY_SELECTOR;
-    }
-
-    if (!labelKey && selector === EMPTY_SELECTOR) {
-      // start task gets all labels
-      await this.start();
-      const allLabels = this.getLabelKeys();
-      return { context, suggestions: [{ label: `Labels`, items: allLabels.map(wrapLabel) }] };
-    }
-
-    const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
-
-    let labelValues;
-    // Query labels for selector
-    if (selector) {
-      if (selector === EMPTY_SELECTOR && labelKey) {
-        const labelValuesForKey = await this.getLabelValues(labelKey);
-        labelValues = { [labelKey]: labelValuesForKey };
-      } else {
-        labelValues = await this.getSeriesLabels(selector);
-      }
-    }
-
-    if (!labelValues) {
-      console.warn(`Server did not return any values for selector = ${selector}`);
-      return { context, suggestions };
-    }
-
-    if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
-      // Label values
-      if (labelKey && labelValues[labelKey]) {
-        context = 'context-label-values';
-        suggestions.push({
-          label: `Label values for "${labelKey}"`,
-          // Filter to prevent previously selected values from being repeatedly suggested
-          items: labelValues[labelKey].map(wrapLabel).filter(({ filterText }) => filterText !== text),
-        });
-      }
-    } else {
-      // Label keys
-      const labelKeys = labelValues ? Object.keys(labelValues) : DEFAULT_KEYS;
-      if (labelKeys) {
-        const possibleKeys = difference(labelKeys, existingKeys);
-        if (possibleKeys.length) {
-          const newItems = possibleKeys.map((key) => ({ label: key }));
-          const newSuggestion: CompletionItemGroup = { label: `Labels`, items: newItems };
-          suggestions.push(newSuggestion);
-        }
-      }
-    }
-
-    return { context, suggestions };
   }
 
   importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
     return {
       refId: labelBasedQuery.refId,
-      expr: toPromLikeExpr(labelBasedQuery),
+      expr: abstractQueryToExpr(labelBasedQuery),
       queryType: LokiQueryType.Range,
     };
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {
-    const lokiQuery = query.expr;
-    if (!lokiQuery || lokiQuery.length === 0) {
+    if (!query.expr || query.expr.length === 0) {
       return { refId: query.refId, labelMatchers: [] };
     }
-    const tokens = Prism.tokenize(lokiQuery, syntax);
+    const streamSelectors = getStreamSelectorsFromQuery(query.expr);
+
+    const labelMatchers = streamSelectors.map((streamSelector) => {
+      const visualQuery = buildVisualQueryFromString(streamSelector).query;
+      const matchers = visualQuery.labels.map((label) => {
+        return {
+          name: label.label,
+          value: label.value,
+          operator: mapAbstractOperatorsToOp[label.op],
+        };
+      });
+      return matchers;
+    });
+
     return {
       refId: query.refId,
-      labelMatchers: extractLabelMatchers(tokens),
+      labelMatchers: flatten(labelMatchers),
     };
   }
 
-  async getSeriesLabels(selector: string) {
-    if (this.lookupsDisabled) {
-      return undefined;
-    }
-    try {
-      return await this.fetchSeriesLabels(selector);
-    } catch (error) {
-      // TODO: better error handling
-      console.error(error);
-      return undefined;
+  /**
+   * Fetch label keys using the best applicable endpoint.
+   *
+   * This asynchronous function returns all available label keys from the data source.
+   * It returns a promise that resolves to an array of strings containing the label keys.
+   *
+   * @param options - (Optional) An object containing additional options.
+   * @param options.streamSelector - (Optional) The stream selector to filter label keys. If not provided, all label keys are fetched.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
+   * @returns A promise containing an array of label keys.
+   * @throws An error if the fetch operation fails.
+   */
+  async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
+    // If there is no stream selector - use /labels endpoint (https://github.com/grafana/loki/pull/11982)
+    if (!options || !options.streamSelector) {
+      return this.fetchLabelsByLabelsEndpoint(options);
+    } else {
+      const data = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });
+      return Object.keys(data ?? {});
     }
   }
 
@@ -369,13 +146,15 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * This asynchronous function returns all available label keys from the data source.
    * It returns a promise that resolves to an array of strings containing the label keys.
    *
+   * @param options - (Optional) An object containing additional options - currently only time range.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
    * @returns A promise containing an array of label keys.
    * @throws An error if the fetch operation fails.
    */
-  async fetchLabels(): Promise<string[]> {
+  private async fetchLabelsByLabelsEndpoint(options?: { timeRange?: TimeRange }): Promise<string[]> {
     const url = 'labels';
-    const timeRange = this.datasource.getTimeRangeParams();
-    this.labelFetchTs = Date.now().valueOf();
+    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const timeRange = this.datasource.getTimeRangeParams(range);
 
     const res = await this.request(url, timeRange);
     if (Array.isArray(res)) {
@@ -397,19 +176,28 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * It returns a promise that resolves to a record mapping label names to their corresponding values.
    *
    * @param streamSelector - The stream selector for which you want to retrieve labels.
+   * @param options - (Optional) An object containing additional options - currently only time range.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
    * @returns A promise containing a record of label names and their values.
    * @throws An error if the fetch operation fails.
    */
-  fetchSeriesLabels = async (streamSelector: string): Promise<Record<string, string[]>> => {
+  fetchSeriesLabels = async (
+    streamSelector: string,
+    options?: { timeRange?: TimeRange }
+  ): Promise<Record<string, string[]>> => {
     const interpolatedMatch = this.datasource.interpolateString(streamSelector);
     const url = 'series';
-    const { start, end } = this.datasource.getTimeRangeParams();
+    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const { start, end } = this.datasource.getTimeRangeParams(range);
 
     const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
     let value = this.seriesCache.get(cacheKey);
     if (!value) {
       const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
+      if (!Array.isArray(data)) {
+        return {};
+      }
       const { values } = processLabels(data);
       value = values;
       this.seriesCache.set(cacheKey, value);
@@ -420,10 +208,15 @@ export default class LokiLanguageProvider extends LanguageProvider {
   /**
    * Fetch series for a selector. Use this for raw results. Use fetchSeriesLabels() to get labels.
    * @param match
+   * @param streamSelector - The stream selector for which you want to retrieve labels.
+   * @param options - (Optional) An object containing additional options.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
+   * @returns A promise containing array with records of label names and their value.
    */
-  fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
+  fetchSeries = async (match: string, options?: { timeRange?: TimeRange }): Promise<Array<Record<string, string>>> => {
     const url = 'series';
-    const { start, end } = this.datasource.getTimeRangeParams();
+    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const { start, end } = this.datasource.getTimeRangeParams(range);
     const params = { 'match[]': match, start, end };
     return await this.request(url, params);
   };
@@ -432,17 +225,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
   // millisecond while still actually getting all the keys for the correct interval. This still can create problems
   // when user does not the newest values for a minute if already cached.
-  generateCacheKey(url: string, start: number, end: number, param: string): string {
+  private generateCacheKey(url: string, start: number, end: number, param: string): string {
     return [url, this.roundTime(start), this.roundTime(end), param].join();
   }
 
-  // Round nanos epoch to nearest 5 minute interval
-  roundTime(nanos: number): number {
-    return nanos ? Math.floor(nanos / NS_IN_MS / 1000 / 60 / 5) : 0;
-  }
-
-  async getLabelValues(key: string): Promise<string[]> {
-    return await this.fetchLabelValues(key);
+  // Round nanoseconds epoch to nearest 5 minute interval
+  private roundTime(nanoseconds: number): number {
+    return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
   }
 
   /**
@@ -452,18 +241,36 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * It returns a promise that resolves to an array of strings containing the label values.
    *
    * @param labelName - The name of the label for which you want to retrieve values.
+   * @param options - (Optional) An object containing additional options.
+   * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label values. If not provided, the default time range is used.
    * @returns A promise containing an array of label values.
    * @throws An error if the fetch operation fails.
    */
-  async fetchLabelValues(labelName: string): Promise<string[]> {
-    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(labelName));
+  async fetchLabelValues(
+    labelName: string,
+    options?: { streamSelector?: string; timeRange?: TimeRange }
+  ): Promise<string[]> {
+    const label = encodeURIComponent(this.datasource.interpolateString(labelName));
+    // Loki doesn't allow empty streamSelector {}, so we should not send it.
+    const streamParam =
+      options?.streamSelector && options.streamSelector !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(options.streamSelector)
+        : undefined;
 
-    const url = `label/${interpolatedKey}/values`;
-    const rangeParams = this.datasource.getTimeRangeParams();
+    const url = `label/${label}/values`;
+    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const rangeParams = this.datasource.getTimeRangeParams(range);
     const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end };
+    let paramCacheKey = label;
 
-    const cacheKey = this.generateCacheKey(url, start, end, interpolatedKey);
-    const params = { start, end };
+    if (streamParam) {
+      params.query = streamParam;
+      paramCacheKey += streamParam;
+    }
+
+    const cacheKey = this.generateCacheKey(url, start, end, paramCacheKey);
 
     let labelValues = this.labelsCache.get(cacheKey);
     if (!labelValues) {
@@ -492,24 +299,63 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * - `unwrapLabelKeys`: An array of label keys that can be used for unwrapping log data.
    *
    * @param streamSelector - The selector for the log stream you want to analyze.
+   * @param options - (Optional) An object containing additional options.
+   * @param options.maxLines - (Optional) The number of log lines requested when determining parsers and label keys.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
+   * Smaller maxLines is recommended for improved query performance. The default count is 10.
    * @returns A promise containing an object with parser and label key information.
    * @throws An error if the fetch operation fails.
    */
-  async getParserAndLabelKeys(streamSelector: string): Promise<ParserAndLabelKeysResult> {
-    const series = await this.datasource.getDataSamples({ expr: streamSelector, refId: 'data-samples' });
+  async getParserAndLabelKeys(
+    streamSelector: string,
+    options?: { maxLines?: number; timeRange?: TimeRange }
+  ): Promise<ParserAndLabelKeysResult> {
+    const empty = {
+      extractedLabelKeys: [],
+      structuredMetadataKeys: [],
+      unwrapLabelKeys: [],
+      hasJSON: false,
+      hasLogfmt: false,
+      hasPack: false,
+    };
+    if (!config.featureToggles.lokiQueryHints) {
+      return empty;
+    }
+
+    const series = await this.datasource.getDataSamples(
+      {
+        expr: streamSelector,
+        refId: 'data-samples',
+        maxLines: options?.maxLines || DEFAULT_MAX_LINES_SAMPLE,
+      },
+      options?.timeRange ?? this.getDefaultTimeRange()
+    );
 
     if (!series.length) {
-      return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false, hasPack: false };
+      return empty;
     }
 
     const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
 
     return {
-      extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
+      extractedLabelKeys: [
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Indexed),
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Parsed),
+      ],
+      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.StructuredMetadata),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
       hasPack,
       hasLogfmt,
     };
+  }
+
+  /**
+   * Get the default time range
+   *
+   * @returns {TimeRange} The default time range
+   */
+  private getDefaultTimeRange(): TimeRange {
+    return getDefaultTimeRange();
   }
 }

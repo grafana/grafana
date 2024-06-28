@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
-import { RegisterOptions, useFormContext } from 'react-hook-form';
+import { useCallback, useEffect, useState } from 'react';
+import { Controller, RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Field, Icon, IconButton, Input, InputControl, Label, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleFormValues } from '../../types/rule-form';
@@ -19,6 +19,7 @@ import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 import { FolderAndGroup, useFolderGroupOptions } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
+import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -46,14 +47,19 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
         const millisEvery = parsePrometheusDuration(evaluateEvery);
         return millisFor >= millisEvery
           ? true
-          : 'For duration must be greater than or equal to the evaluation interval.';
+          : t(
+              'alert-rule-form.evaluation-behaviour-for.validation',
+              'Pending period must be greater than or equal to the evaluation interval.'
+            );
       } catch (err) {
         // if we fail to parse "every", assume validation is successful, or the error messages
         // will overlap in the UI
         return true;
       }
     } catch (error) {
-      return error instanceof Error ? error.message : 'Failed to parse duration';
+      return error instanceof Error
+        ? error.message
+        : t('alert-rule-form.evaluation-behaviour-for.error-parsing', 'Failed to parse duration');
     }
   },
 });
@@ -81,16 +87,16 @@ function FolderGroupAndEvaluationInterval({
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
-  const [groupName, folderName] = watch(['group', 'folder.title']);
+  const [groupName, folderUid, folderName] = watch(['group', 'folder.uid', 'folder.title']);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const grafanaNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const existingNamespace = grafanaNamespaces.find((ns) => ns.name === folderName);
+  const existingNamespace = grafanaNamespaces.find((ns) => ns.uid === folderUid);
   const existingGroup = existingNamespace?.groups.find((g) => g.name === groupName);
 
-  const isNewGroup = useIsNewGroup(folderName ?? '', groupName);
+  const isNewGroup = useIsNewGroup(folderUid ?? '', groupName);
 
   useEffect(() => {
     if (!isNewGroup && existingGroup?.interval) {
@@ -107,7 +113,7 @@ function FolderGroupAndEvaluationInterval({
 
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
-  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderName || !groupName;
+  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
 
   const emptyNamespace: CombinedRuleNamespace = {
     name: folderName,
@@ -126,6 +132,7 @@ function FolderGroupAndEvaluationInterval({
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
           group={existingGroup ?? emptyGroup}
+          folderUid={folderUid}
           onClose={() => closeEditGroupModal()}
           intervalEditOnly
           hideFolder={true}
@@ -138,7 +145,9 @@ function FolderGroupAndEvaluationInterval({
               <Stack direction="column" gap={1}>
                 {getValues('group') && getValues('evaluateEvery') && (
                   <span>
-                    All rules in the selected group are evaluated every {evaluateEvery}.{' '}
+                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text" evaluateEvery={evaluateEvery}>
+                      All rules in the selected group are evaluated every {{ evaluateEvery }}.
+                    </Trans>
                     {!isNewGroup && (
                       <IconButton
                         name="pen"
@@ -163,9 +172,16 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const {
     register,
     formState: { errors },
+    setValue,
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const evaluateForId = 'eval-for-input';
+  const currentPendingPeriod = watch('evaluateFor');
+
+  const setPendingPeriod = (pendingPeriod: string) => {
+    setValue('evaluateFor', pendingPeriod);
+  };
 
   return (
     <Stack direction="row" justify-content="flex-start" align-items="flex-start">
@@ -173,18 +189,46 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor="evaluateFor"
-            description="Period in which an alert rule can be in breach of the condition until the alert rule fires."
+            description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
           >
-            Pending period
+            <Trans i18nKey="alert-rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
           </Label>
         }
         className={styles.inlineField}
         error={errors.evaluateFor?.message}
-        invalid={!!errors.evaluateFor?.message}
+        invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+        <Stack direction="row" alignItems="center">
+          <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+          <PendingPeriodQuickPick
+            selectedPendingPeriod={currentPendingPeriod}
+            groupEvaluationInterval={evaluateEvery}
+            onSelect={setPendingPeriod}
+          />
+        </Stack>
       </Field>
+    </Stack>
+  );
+}
+
+function NeedHelpInfoForConfigureNoDataError() {
+  const docsLink =
+    'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling';
+
+  return (
+    <Stack direction="row" gap={0.5} alignItems="center">
+      <Text variant="bodySmall" color="secondary">
+        <Trans i18nKey="alert-rule-form.evaluation-behaviour.info-help.text">
+          Define the alert behavior when the evaluation fails or the query returns no data.
+        </Trans>
+      </Text>
+      <NeedHelpInfo
+        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        externalLink={docsLink}
+        linkText={`Read more about this option`}
+        title="Configure no data and error handling"
+      />
     </Stack>
   );
 }
@@ -193,15 +237,37 @@ function getDescription() {
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
 
   return (
-    <Stack direction="row" gap={0.5} alignItems="baseline">
+    <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
-        Define how the alert rule is evaluated.
+        <Trans i18nKey="alert-rule-form.evaluation-behaviour.description.text">
+          Define how the alert rule is evaluated.
+        </Trans>
       </Text>
       <NeedHelpInfo
-        contentText="Evaluation groups are containers for evaluating alert and recording rules. An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially"
+        contentText={
+          <>
+            <p>
+              <Trans i18nKey="alert-rule-form.evaluation-behaviour-description1">
+                Evaluation groups are containers for evaluating alert and recording rules.
+              </Trans>
+            </p>
+            <p>
+              <Trans i18nKey="alert-rule-form.evaluation-behaviour-description2">
+                An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within
+                the same evaluation group are evaluated over the same evaluation interval.
+              </Trans>
+            </p>
+            <p>
+              <Trans i18nKey="alert-rule-form.evaluation-behaviour-description3">
+                Pending period specifies how long the threshold condition must be met before the alert starts firing.
+                This option helps prevent alerts from being triggered by temporary issues.
+              </Trans>
+            </p>
+          </>
+        }
         externalLink={docsLink}
-        linkText={`Read about evaluation`}
-        title="Evaluation"
+        linkText={`Read about evaluation and alert states`}
+        title="Alert rule evaluation"
       />
     </Stack>
   );
@@ -238,7 +304,7 @@ export function GrafanaEvaluationBehavior({
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
-            <InputControl
+            <Controller
               render={() => (
                 <Stack gap={1} direction="row" alignItems="center">
                   <Switch
@@ -249,7 +315,7 @@ export function GrafanaEvaluationBehavior({
                     value={Boolean(isPaused)}
                   />
                   <label htmlFor="pause-alert" className={styles.switchLabel}>
-                    Pause evaluation
+                    <Trans i18nKey="alert-rule-form.pause">Pause evaluation</Trans>
                     <Tooltip placement="top" content="Turn on to pause evaluation for this alert rule." theme={'info'}>
                       <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
                     </Tooltip>
@@ -268,8 +334,9 @@ export function GrafanaEvaluationBehavior({
       />
       {showErrorHandling && (
         <>
+          <NeedHelpInfoForConfigureNoDataError />
           <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
@@ -284,7 +351,7 @@ export function GrafanaEvaluationBehavior({
             />
           </Field>
           <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <GrafanaAlertStatePicker
                   {...field}
@@ -305,44 +372,44 @@ export function GrafanaEvaluationBehavior({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  inlineField: css`
-    margin-bottom: 0;
-  `,
-  evaluateLabel: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  evaluationContainer: css`
-    color: ${theme.colors.text.secondary};
-    max-width: ${theme.breakpoints.values.sm}px;
-    font-size: ${theme.typography.size.sm};
-  `,
-  intervalChangedLabel: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  warningIcon: css`
-    justify-self: center;
-    margin-right: ${theme.spacing(1)};
-    color: ${theme.colors.warning.text};
-  `,
-  infoIcon: css`
-    margin-left: 10px;
-  `,
-  warningMessage: css`
-    color: ${theme.colors.warning.text};
-  `,
-  bold: css`
-    font-weight: bold;
-  `,
-  alignInterval: css`
-    margin-top: ${theme.spacing(1)};
-    margin-left: -${theme.spacing(1)};
-  `,
-  marginTop: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  switchLabel: css(`
-    color: ${theme.colors.text.primary},
+  inlineField: css({
+    marginBottom: 0,
+  }),
+  evaluateLabel: css({
+    marginRight: theme.spacing(1),
+  }),
+  evaluationContainer: css({
+    color: theme.colors.text.secondary,
+    maxWidth: `${theme.breakpoints.values.sm}px`,
+    fontSize: theme.typography.size.sm,
+  }),
+  intervalChangedLabel: css({
+    marginBottom: theme.spacing(1),
+  }),
+  warningIcon: css({
+    justifySelf: 'center',
+    marginRight: theme.spacing(1),
+    color: theme.colors.warning.text,
+  }),
+  infoIcon: css({
+    marginLeft: '10px',
+  }),
+  warningMessage: css({
+    color: theme.colors.warning.text,
+  }),
+  bold: css({
+    fontWeight: 'bold',
+  }),
+  alignInterval: css({
+    marginTop: theme.spacing(1),
+    marginLeft: `-${theme.spacing(1)}`,
+  }),
+  marginTop: css({
+    marginTop: theme.spacing(1),
+  }),
+  switchLabel: css({
+    color: theme.colors.text.primary,
     cursor: 'pointer',
-    fontSize: ${theme.typography.bodySmall.fontSize},
-  `),
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

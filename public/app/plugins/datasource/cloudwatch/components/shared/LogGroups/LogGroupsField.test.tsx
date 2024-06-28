@@ -1,11 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 // eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
-import React from 'react';
 
 import { config } from '@grafana/runtime';
 
-import { logGroupNamesVariable, setupMockedDataSource } from '../../../__mocks__/CloudWatchDataSource';
+import {
+  logGroupNamesVariable,
+  setupMockedDataSource,
+  setupMockedTemplateService,
+} from '../../../__mocks__/CloudWatchDataSource';
 
 import { LogGroupsField } from './LogGroupsField';
 
@@ -17,6 +20,7 @@ const defaultProps = {
   region: '',
   onChange: jest.fn(),
 };
+
 describe('LogGroupSelection', () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -35,6 +39,7 @@ describe('LogGroupSelection', () => {
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
       .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
+    defaultProps.datasource.resources.templateSrv = setupMockedTemplateService();
     render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname']} />);
 
     await waitFor(async () => expect(screen.getByText('Select log groups')).toBeInTheDocument());
@@ -51,7 +56,8 @@ describe('LogGroupSelection', () => {
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
       .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
-    render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname', logGroupNamesVariable.name]} />);
+    const varName = '$' + logGroupNamesVariable.name;
+    render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname', varName]} />);
 
     await waitFor(async () => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     expect(defaultProps.datasource.resources.getLogGroups).toHaveBeenCalledTimes(1);
@@ -61,7 +67,7 @@ describe('LogGroupSelection', () => {
     });
     expect(defaultProps.onChange).toHaveBeenCalledWith([
       { arn: 'arn', name: 'loggroupname' },
-      { arn: logGroupNamesVariable.name, name: logGroupNamesVariable.name },
+      { arn: varName, name: varName },
     ]);
   });
 
@@ -70,6 +76,7 @@ describe('LogGroupSelection', () => {
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
       .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
+    defaultProps.datasource.resources.templateSrv = setupMockedTemplateService();
     render(<LogGroupsField {...defaultProps} logGroups={[{ arn: 'arn', name: 'loggroupname' }]} />);
     await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     expect(defaultProps.datasource.resources.getLogGroups).not.toHaveBeenCalled();

@@ -139,11 +139,12 @@ func TestNonElasticError(t *testing.T) {
 	// to access the database for some reason.
 	response := []byte(`Access to the database is forbidden`)
 
-	_, err := queryDataTestWithResponseCode(query, 403, response)
+	res, err := queryDataTestWithResponseCode(query, 403, response)
 	// FIXME: we should return something better.
 	// currently it returns the error-message about being unable to decode JSON
 	// it is not 100% clear what we should return to the browser
 	// (and what to debug-log for example), we could return
 	// at least something like "unknown response, http status code 403"
-	require.ErrorContains(t, err, "invalid character")
+	require.NoError(t, err)
+	require.Contains(t, res.response.Responses["A"].Error.Error(), "invalid character")
 }

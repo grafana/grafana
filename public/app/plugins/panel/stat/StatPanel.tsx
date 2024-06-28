@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import {
   DisplayValueAlignmentFactors,
@@ -24,7 +24,7 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    const { value, alignmentFactors, width, height, count, orientation } = valueProps;
+    const { value, alignmentFactors, width, height, count } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
     if (sparkline) {
@@ -41,14 +41,14 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
-        parentOrientation={orientation}
         text={options.text}
         width={width}
         height={height}
         theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
-        disableWideLayout={true}
+        disableWideLayout={!options.wideLayout}
+        percentChangeColorMode={options.percentChangeColorMode}
       />
     );
   };
@@ -113,6 +113,7 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
       theme: config.theme2,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
+      percentChange: options.showPercentChange,
       timeZone,
     });
   };

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -111,6 +111,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     tabContent: css`
       overflow: auto;
       height: 100%;
+      padding-left: 5px;
     `,
   };
 };

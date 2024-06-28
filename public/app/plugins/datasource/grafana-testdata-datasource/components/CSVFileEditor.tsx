@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
@@ -18,6 +16,7 @@ export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
     'ohlc_dogecoin.csv',
     'weight_height.csv',
     'browser_marketshare.csv',
+    'automobiles.csv',
   ].map((name) => ({ label: name, value: name }));
 
   return (

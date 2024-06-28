@@ -1,12 +1,23 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { VariableQueryEditor } from './VariableQueryEditor';
 import { PyroscopeDataSource } from './datasource';
 import { PyroscopeDataSourceOptions } from './types';
+
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    getTemplateSrv: () => {
+      return {
+        replace: jest.fn(),
+      };
+    },
+  };
+});
 
 describe('VariableQueryEditor', () => {
   it('renders correctly with type profileType', () => {
@@ -69,7 +80,7 @@ describe('VariableQueryEditor', () => {
 });
 
 function getMockDatasource() {
-  const ds = new PyroscopeDataSource({} as DataSourceInstanceSettings<PyroscopeDataSourceOptions>, new TemplateSrv());
+  const ds = new PyroscopeDataSource({} as DataSourceInstanceSettings<PyroscopeDataSourceOptions>, getTemplateSrv());
   ds.getResource = jest.fn();
   (ds.getResource as jest.Mock).mockImplementation(async (type: string) => {
     if (type === 'profileTypes') {

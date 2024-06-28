@@ -10,7 +10,7 @@ import './jquery.flot.events';
 
 import $ from 'jquery';
 import { clone, find, flatten, isUndefined, map, max as _max, min as _min, sortBy as _sortBy, toNumber } from 'lodash';
-import React from 'react';
+import { createElement } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
 import {
@@ -36,7 +36,7 @@ import {
   PanelEvents,
   toUtc,
 } from '@grafana/data';
-import { graphTickFormatter, graphTimeFormat, MenuItemProps, MenuItemsGroup } from '@grafana/ui';
+import { MenuItemProps, MenuItemsGroup } from '@grafana/ui';
 import { coreModule } from 'app/angular/core_module';
 import config from 'app/core/config';
 import { updateLegendValues } from 'app/core/core';
@@ -44,9 +44,8 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { tickStep } from 'app/core/utils/ticks';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-
-import { DashboardModel } from '../../../features/dashboard/state';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { GraphLegendProps, Legend } from './Legend/Legend';
@@ -57,7 +56,7 @@ import { convertToHistogramData } from './histogram';
 import { GraphCtrl } from './module';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
-import { isLegacyGraphHoverEvent } from './utils';
+import { isLegacyGraphHoverEvent, graphTickFormatter, graphTimeFormat } from './utils';
 
 const LegendWithThemeProvider = provideTheme(Legend, config.theme2);
 
@@ -163,7 +162,7 @@ class GraphElement {
       renderCallback: this.renderPanel.bind(this),
     };
 
-    const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
+    const legendReactElem = createElement(LegendWithThemeProvider, legendProps);
 
     // render callback isn't supported in react 18+, see: https://github.com/reactwg/react-18/discussions/5
     this.legendElemRoot.render(legendReactElem);

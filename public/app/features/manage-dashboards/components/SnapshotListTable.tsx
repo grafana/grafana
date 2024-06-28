@@ -1,15 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { getBackendSrv, config } from '@grafana/runtime';
-import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { config } from '@grafana/runtime';
+import { ConfirmModal, EmptyState, TextLink } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
+import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
-import { Snapshot } from '../types';
+import { SnapshotListTableRow } from './SnapshotListTableRow';
 
-export function getSnapshots() {
-  return getBackendSrv()
-    .get('/api/dashboard/snapshots')
+export async function getSnapshots() {
+  return getDashboardSnapshotSrv()
+    .getSnapshots()
     .then((result: Snapshot[]) => {
       return result.map((snapshot) => ({
         ...snapshot,
@@ -19,9 +20,12 @@ export function getSnapshots() {
 }
 export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [isFetching, setIsFetching] = useState(false);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
   useAsync(async () => {
+    setIsFetching(true);
     const response = await getSnapshots();
+    setIsFetching(false);
     setSnapshots(response);
   }, [setSnapshots]);
 
@@ -29,14 +33,33 @@ export const SnapshotListTable = () => {
     async (snapshot: Snapshot) => {
       const filteredSnapshots = snapshots.filter((ss) => ss.key !== snapshot.key);
       setSnapshots(filteredSnapshots);
-      await getBackendSrv()
-        .delete(`/api/snapshots/${snapshot.key}`)
+      await getDashboardSnapshotSrv()
+        .deleteSnapshot(snapshot.key)
         .catch(() => {
           setSnapshots(snapshots);
         });
     },
     [snapshots]
   );
+
+  if (!isFetching && snapshots.length === 0) {
+    return (
+      <EmptyState
+        variant="call-to-action"
+        message={t('snapshot.empty-state.message', "You haven't created any snapshots yet")}
+      >
+        <Trans i18nKey="snapshot.empty-state.more-info">
+          You can create a snapshot of any dashboard through the <b>Share</b> modal.{' '}
+          <TextLink
+            external
+            href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot"
+          >
+            Learn more
+          </TextLink>
+        </Trans>
+      </EmptyState>
+    );
+  }
 
   return (
     <div>
@@ -59,34 +82,21 @@ export const SnapshotListTable = () => {
           </tr>
         </thead>
         <tbody>
-          {snapshots.map((snapshot) => {
-            const url = snapshot.externalUrl || snapshot.url;
-            return (
-              <tr key={snapshot.key}>
-                <td>
-                  <a href={url}>{snapshot.name}</a>
-                </td>
-                <td>
-                  <a href={url}>{url}</a>
-                </td>
-                <td>
-                  {snapshot.external && (
-                    <span className="query-keyword">
-                      <Trans i18nKey="snapshot.external-badge">External</Trans>
-                    </span>
-                  )}
-                </td>
-                <td className="text-center">
-                  <LinkButton href={url} variant="secondary" size="sm" icon="eye">
-                    <Trans i18nKey="snapshot.view-button">View</Trans>
-                  </LinkButton>
-                </td>
-                <td className="text-right">
-                  <Button variant="destructive" size="sm" icon="times" onClick={() => setRemoveSnapshot(snapshot)} />
-                </td>
-              </tr>
-            );
-          })}
+          {isFetching ? (
+            <>
+              <SnapshotListTableRow.Skeleton />
+              <SnapshotListTableRow.Skeleton />
+              <SnapshotListTableRow.Skeleton />
+            </>
+          ) : (
+            snapshots.map((snapshot) => (
+              <SnapshotListTableRow
+                key={snapshot.key}
+                snapshot={snapshot}
+                onRemove={() => setRemoveSnapshot(snapshot)}
+              />
+            ))
+          )}
         </tbody>
       </table>
 

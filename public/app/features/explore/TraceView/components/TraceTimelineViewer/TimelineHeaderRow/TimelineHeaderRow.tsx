@@ -13,14 +13,11 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
-import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { ubFlex, ubPx2 } from '../../uberUtilityStyles';
 import Ticks from '../Ticks';
 import TimelineRow from '../TimelineRow';
 import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
@@ -52,6 +49,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     TimelineHeaderWrapper: css`
       label: TimelineHeaderWrapper;
       align-items: center;
+      display: flex;
+      padding-left: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(1)};
     `,
   };
 };
@@ -90,7 +90,7 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
   const styles = useStyles2(getStyles);
   return (
     <TimelineRow className={styles.TimelineHeaderRow} data-testid="TimelineHeaderRow">
-      <TimelineRow.Cell className={cx(ubFlex, ubPx2, styles.TimelineHeaderWrapper)} width={nameColumnWidth}>
+      <TimelineRow.Cell className={styles.TimelineHeaderWrapper} width={nameColumnWidth}>
         <h4 className={styles.TimelineHeaderRowTitle}>Service &amp; Operation</h4>
         <TimelineCollapser
           onCollapseAll={onCollapseAll}

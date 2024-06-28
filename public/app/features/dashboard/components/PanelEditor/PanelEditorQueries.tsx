@@ -1,19 +1,15 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { DataQuery, getDataSourceRef } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
-import {
-  getLastUsedDatasourceFromStorage,
-  initLastUsedDatasourceKeyForDashboard,
-  setLastUsedDatasourceKeyForDashboard,
-} from '../../utils/dashboard';
+import { getLastUsedDatasourceFromStorage } from '../../utils/dashboard';
 
 interface Props {
   /** Current panel */
@@ -29,16 +25,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
 
   // store last used datasource in local storage
   updateLastUsedDatasource = (datasource: QueryGroupDataSource) => {
-    if (!datasource.uid) {
-      return;
-    }
-
-    const dashboardUid = getDashboardSrv().getCurrent()?.uid ?? '';
-    // if datasource is MIXED reset datasource uid in storage, because Mixed datasource can contain multiple ds
-    if (datasource.uid === MIXED_DATASOURCE_NAME) {
-      return initLastUsedDatasourceKeyForDashboard(dashboardUid!);
-    }
-    setLastUsedDatasourceKeyForDashboard(dashboardUid, datasource.uid);
+    storeLastUsedDataSourceInLocalStorage(datasource);
   };
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {

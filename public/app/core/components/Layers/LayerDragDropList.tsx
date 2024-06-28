@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -122,54 +121,50 @@ export const LayerDragDropList = <T extends LayerElement>({
   );
 };
 
-LayerDragDropList.defaultProps = {
-  isGroup: () => false,
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  row: css`
-    padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.radius.default};
-    background: ${theme.colors.background.secondary};
-    min-height: ${theme.spacing(4)};
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 3px;
-    cursor: pointer;
+  wrapper: css({
+    marginBottom: theme.spacing(2),
+  }),
+  row: css({
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.background.secondary,
+    minHeight: theme.spacing(4),
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '3px',
+    cursor: 'pointer',
 
-    border: 1px solid ${theme.components.input.borderColor};
-    &:hover {
-      border: 1px solid ${theme.components.input.borderHover};
-    }
-  `,
-  sel: css`
-    border: 1px solid ${theme.colors.primary.border};
-    &:hover {
-      border: 1px solid ${theme.colors.primary.border};
-    }
-  `,
-  dragIcon: css`
-    cursor: drag;
-  `,
-  actionIcon: css`
-    color: ${theme.colors.text.secondary};
-    &:hover {
-      color: ${theme.colors.text};
-    }
-  `,
-  typeWrapper: css`
-    color: ${theme.colors.primary.text};
-    margin-right: 5px;
-  `,
-  textWrapper: css`
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    overflow: hidden;
-    margin-right: ${theme.spacing(1)};
-  `,
+    border: `1px solid ${theme.components.input.borderColor}`,
+    '&:hover': {
+      border: `1px solid ${theme.components.input.borderHover}`,
+    },
+  }),
+  sel: css({
+    border: `1px solid ${theme.colors.primary.border}`,
+    '&:hover': {
+      border: `1px solid ${theme.colors.primary.border}`,
+    },
+  }),
+  dragIcon: css({
+    cursor: 'drag',
+  }),
+  actionIcon: css({
+    color: theme.colors.text.secondary,
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
+  typeWrapper: css({
+    color: theme.colors.primary.text,
+    marginRight: '5px',
+  }),
+  textWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    flexGrow: 1,
+    overflow: 'hidden',
+    marginRight: theme.spacing(1),
+  }),
 });

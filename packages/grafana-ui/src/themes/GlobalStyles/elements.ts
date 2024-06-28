@@ -1,4 +1,4 @@
-import { css, CSSObject } from '@emotion/react';
+import { css } from '@emotion/react';
 
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
@@ -40,6 +40,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
       margin: theme.spacing(0, 0, 2),
     },
 
+    textarea: {
+      overflow: 'auto',
+    },
+
     button: {
       letterSpacing: theme.typography.body.letterSpacing,
 
@@ -65,6 +69,82 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     cite: {
       fontStyle: 'normal',
+    },
+
+    'audio, canvas, progress, video': {
+      display: 'inline-block',
+      verticalAlign: 'baseline',
+    },
+
+    // Prevent modern browsers from displaying `audio` without controls.
+    // Remove excess height in iOS 5 devices.
+    'audio:not([controls])': {
+      display: 'none',
+      height: 0,
+    },
+
+    // Address styling not present in Safari.
+    'abbr[title]': {
+      borderBottom: '1px dotted',
+    },
+    dfn: {
+      fontStyle: 'italic',
+    },
+
+    // Prevent `sub` and `sup` affecting `line-height` in all browsers.
+    'sub, sup': {
+      fontSize: '75%',
+      lineHeight: 0,
+      position: 'relative',
+      verticalAlign: 'baseline',
+    },
+    sup: {
+      top: '-0.5em',
+    },
+    sub: {
+      bottom: '-0.25em',
+    },
+
+    // 1. Correct color not being inherited.
+    //    Known issue: affects color of disabled elements.
+    // 2. Correct font properties not being inherited.
+    // 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
+    'button, input, optgroup, select, textarea': {
+      color: 'inherit',
+      font: 'inherit',
+      margin: 0,
+    },
+
+    // Don't inherit the `font-weight` (applied by a rule above).
+    // NOTE: the default cannot safely be changed in Chrome and Safari on OS X.
+    optgroup: {
+      fontWeight: 'bold',
+    },
+
+    // 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+    //    and `video` controls.
+    // 2. Correct inability to style clickable `input` types in iOS.
+    // 3. Improve usability and consistency of cursor style between image-type
+    //    `input` and others.
+    'button, html input[type="button"], input[type="submit"]': {
+      WebkitAppearance: 'button',
+      cursor: 'pointer',
+    },
+
+    // Remove inner padding and search cancel button in Safari and Chrome on OS X.
+    // Safari (but not Chrome) clips the cancel button when the search input has
+    // padding (and `textfield` appearance).
+    'input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration': {
+      WebkitAppearance: 'none',
+    },
+
+    table: {
+      borderCollapse: 'collapse',
+      borderSpacing: 0,
+    },
+
+    'td, th': {
+      padding: 0,
     },
 
     // Utility classes
@@ -144,7 +224,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
   });
 }
 
-export function getVariantStyles(variant: ThemeTypographyVariant): CSSObject {
+export function getVariantStyles(variant: ThemeTypographyVariant) {
   return {
     margin: 0,
     fontSize: variant.fontSize,

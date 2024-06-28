@@ -13,6 +13,7 @@ const (
 	TypeFolder      = "dash-folder"
 	TypeDashboard   = "dash-db"
 	TypeAlertFolder = "dash-folder-alerting"
+	TypeAnnotation  = "dash-annotation"
 )
 
 type TypeFilter struct {
@@ -196,4 +197,16 @@ var _ model.FilterWhere = &FolderWithAlertsFilter{}
 
 func (f FolderWithAlertsFilter) Where() (string, []any) {
 	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
+}
+
+type DeletedFilter struct {
+	Deleted bool
+}
+
+func (f DeletedFilter) Where() (string, []any) {
+	if f.Deleted {
+		return "dashboard.deleted IS NOT NULL", nil
+	}
+
+	return "dashboard.deleted IS NULL", nil
 }

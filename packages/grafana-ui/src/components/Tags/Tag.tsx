@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, HTMLAttributes } from 'react';
+import { forwardRef, HTMLAttributes } from 'react';
+import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getTagColor, getTagColorsFromName } from '../../utils';
+import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
 
 /**
@@ -50,18 +52,12 @@ const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, clas
 });
 TagComponent.displayName = 'Tag';
 
-const TagSkeleton = () => {
+const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
-  return <Skeleton width={60} height={22} containerClassName={styles.container} />;
+  return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
-interface TagWithSkeleton extends React.ForwardRefExoticComponent<Props & React.RefAttributes<HTMLElement>> {
-  Skeleton: typeof TagSkeleton;
-}
-
-export const Tag: TagWithSkeleton = Object.assign(TagComponent, {
-  Skeleton: TagSkeleton,
-});
+export const Tag = attachSkeleton(TagComponent, TagSkeleton);
 
 const getSkeletonStyles = () => ({
   container: css({

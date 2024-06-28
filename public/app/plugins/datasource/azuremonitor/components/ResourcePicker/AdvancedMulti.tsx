@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
-import { Collapse } from '@grafana/ui';
+import { Collapse, Space } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorResource } from '../../types';
-import { Space } from '../Space';
 
 export interface ResourcePickerProps<T> {
   resources: T[];

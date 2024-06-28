@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { PartialObserver, Unsubscribable } from 'rxjs';
 
 import {
@@ -52,7 +52,7 @@ export class EventBusLoggerPanel extends PureComponent<Props, State> {
 
   eventObserver: PartialObserver<BusEvent> = {
     next: (event: BusEvent) => {
-      const origin = event.origin as any;
+      const origin: any = event.origin;
       this.history.add({
         key: counter++,
         type: event.type,

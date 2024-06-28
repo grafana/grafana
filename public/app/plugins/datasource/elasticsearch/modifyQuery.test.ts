@@ -1,4 +1,4 @@
-import { queryHasFilter, removeFilterFromQuery, addFilterToQuery } from './modifyQuery';
+import { queryHasFilter, removeFilterFromQuery, addFilterToQuery, addStringFilterToQuery } from './modifyQuery';
 
 describe('queryHasFilter', () => {
   it('should return true if the query contains the positive filter', () => {
@@ -106,5 +106,33 @@ describe('removeFilterFromQuery', () => {
   });
   it('should support filters with quotes', () => {
     expect(removeFilterFromQuery('label\\:name:"the \\"value\\""', 'label:name', 'the "value"')).toBe('');
+  });
+});
+
+describe('addStringFilterToQuery', () => {
+  it('should add a positive filter to a query', () => {
+    expect(addStringFilterToQuery('label:"value"', 'filter')).toBe('label:"value" AND "filter"');
+    expect(addStringFilterToQuery('', 'filter')).toBe('"filter"');
+    expect(addStringFilterToQuery(' ', 'filter')).toBe('"filter"');
+  });
+
+  it('should add a negative filter to a query', () => {
+    expect(addStringFilterToQuery('label:"value"', 'filter', false)).toBe('label:"value" NOT "filter"');
+    expect(addStringFilterToQuery('', 'filter', false)).toBe('NOT "filter"');
+    expect(addStringFilterToQuery(' ', 'filter', false)).toBe('NOT "filter"');
+  });
+
+  it('should escape filter values', () => {
+    expect(addStringFilterToQuery('label:"value"', '"filter"')).toBe('label:"value" AND "\\"filter\\""');
+    expect(addStringFilterToQuery('label:"value"', '"filter"', false)).toBe('label:"value" NOT "\\"filter\\""');
+  });
+
+  it('should escape filter values with backslashes', () => {
+    expect(addStringFilterToQuery('label:"value"', '"filter with \\"')).toBe(
+      'label:"value" AND "\\"filter with \\\\\\""'
+    );
+    expect(addStringFilterToQuery('label:"value"', '"filter with \\"', false)).toBe(
+      'label:"value" NOT "\\"filter with \\\\\\""'
+    );
   });
 });

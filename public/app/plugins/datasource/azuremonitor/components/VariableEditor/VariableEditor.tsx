@@ -1,9 +1,9 @@
 import { get, isEqual } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { Alert, Field, Select } from '@grafana/ui';
+import { Alert, Field, Select, Space } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -12,7 +12,6 @@ import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../typ
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
-import { Space } from '../Space';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
 
@@ -247,6 +246,7 @@ const VariableEditor = (props: Props) => {
             variableOptionGroup={variableOptionGroup}
             setError={setError}
             hideFormatAs={true}
+            basicLogsEnabled={datasource.azureMonitorDatasource.basicLogsEnabled ?? false}
           />
           {errorMessage && (
             <>

@@ -1,6 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
@@ -29,12 +30,13 @@ const SegmentFrame = ({
   loadOptions: (options: Array<SelectableValue<string>>) => Promise<Array<SelectableValue<string>>>;
 }>) => (
   <>
-    <SegmentSection label="Segment Name">
+    <SegmentSection label="Segment">
       {children}
       <SegmentAsync
         Component={AddButton}
         onChange={(value) => action('New value added')(value)}
         loadOptions={() => loadOptions(options)}
+        inputMinWidth={100}
       />
     </SegmentSection>
   </>

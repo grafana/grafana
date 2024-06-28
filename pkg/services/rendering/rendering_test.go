@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,7 +27,7 @@ func TestGetUrl(t *testing.T) {
 	t.Run("When renderer and callback url configured should return callback url plus path", func(t *testing.T) {
 		rs.Cfg.RendererUrl = "http://localhost:8081/render"
 		rs.Cfg.RendererCallbackUrl = "http://public-grafana.com/"
-		url := rs.getURL(path)
+		url := rs.getGrafanaCallbackURL(path)
 		require.Equal(t, rs.Cfg.RendererCallbackUrl+path+"&render=1", url)
 	})
 
@@ -41,13 +40,13 @@ func TestGetUrl(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
 			rs.Cfg.Protocol = setting.HTTPScheme
-			url := rs.getURL(path)
+			url := rs.getGrafanaCallbackURL(path)
 			require.Equal(t, "http://localhost:3000/"+path+"&render=1", url)
 
 			t.Run("And serve from sub path should return expected path", func(t *testing.T) {
 				rs.Cfg.ServeFromSubPath = true
 				rs.Cfg.AppSubURL = "/grafana"
-				url := rs.getURL(path)
+				url := rs.getGrafanaCallbackURL(path)
 				require.Equal(t, "http://localhost:3000/grafana/"+path+"&render=1", url)
 			})
 		})
@@ -56,7 +55,7 @@ func TestGetUrl(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
 			rs.Cfg.Protocol = setting.HTTPSScheme
-			url := rs.getURL(path)
+			url := rs.getGrafanaCallbackURL(path)
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})
 
@@ -64,7 +63,7 @@ func TestGetUrl(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
 			rs.Cfg.Protocol = setting.HTTP2Scheme
-			url := rs.getURL(path)
+			url := rs.getGrafanaCallbackURL(path)
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})
 	})
@@ -104,18 +103,14 @@ func TestRenderErrorImage(t *testing.T) {
 	})
 }
 
-type unavailableRendererManager struct{}
-
-func (m unavailableRendererManager) Renderer(_ context.Context) *plugins.Plugin { return nil }
-
 func TestRenderUnavailableError(t *testing.T) {
 	rs := RenderingService{
 		Cfg:                   &setting.Cfg{},
 		log:                   log.New("test"),
-		RendererPluginManager: unavailableRendererManager{},
+		RendererPluginManager: &dummyPluginManager{},
 	}
 	opts := Opts{ErrorOpts: ErrorOpts{ErrorRenderUnavailable: true}}
-	result, err := rs.Render(context.Background(), opts, nil)
+	result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
 	assert.Equal(t, ErrRenderUnavailable, err)
 	assert.Nil(t, result)
 }
@@ -156,8 +151,8 @@ func TestRenderLimitImage(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := Opts{Theme: tc.theme, ConcurrentLimit: 1}
-			result, err := rs.Render(context.Background(), opts, nil)
+			opts := Opts{Theme: tc.theme, CommonOpts: CommonOpts{ConcurrentLimit: 1}}
+			result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result.FilePath)
 		})
@@ -171,11 +166,11 @@ func TestRenderLimitImageError(t *testing.T) {
 		log:             log.New("test"),
 	}
 	opts := Opts{
-		ErrorOpts:       ErrorOpts{ErrorConcurrentLimitReached: true},
-		ConcurrentLimit: 1,
-		Theme:           models.ThemeDark,
+		CommonOpts: CommonOpts{ConcurrentLimit: 1},
+		ErrorOpts:  ErrorOpts{ErrorConcurrentLimitReached: true},
+		Theme:      models.ThemeDark,
 	}
-	result, err := rs.Render(context.Background(), opts, nil)
+	result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
 	assert.Equal(t, ErrConcurrentLimitReached, err)
 	assert.Nil(t, result)
 }

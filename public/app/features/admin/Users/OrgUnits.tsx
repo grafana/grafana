@@ -1,8 +1,7 @@
-import React, { forwardRef, PropsWithChildren } from 'react';
+import { forwardRef, PropsWithChildren } from 'react';
 
 import { IconName } from '@grafana/data';
-import { Icon, Tooltip, Box } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { Icon, Tooltip, Box, Stack } from '@grafana/ui';
 import { Unit } from 'app/types';
 
 type OrgUnitProps = { units?: Unit[]; icon: IconName };
@@ -15,7 +14,7 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
   return units.length > 1 ? (
     <Tooltip
       placement={'top'}
-      content={<Flex direction={'column'}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</Flex>}
+      content={<Stack direction={'column'}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</Stack>}
     >
       <Content icon={icon}>{units.length}</Content>
     </Tooltip>

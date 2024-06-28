@@ -49,7 +49,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				cfg:               tt.cfg,
 				log:               log.NewNopLogger(),
 				orgService:        &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.err},
-				anonDeviceService: &anontest.FakeAnonymousSessionService{},
+				anonDeviceService: anontest.NewFakeService(),
 			}
 
 			identity, err := c.Authenticate(context.Background(), &authn.Request{})
@@ -63,6 +63,70 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				assert.Equal(t, tt.org.ID, identity.OrgID)
 				assert.Equal(t, tt.org.Name, identity.OrgName)
 				assert.Equal(t, tt.cfg.AnonymousOrgRole, string(identity.GetOrgRole()))
+			}
+		})
+	}
+}
+
+func TestAnonymous_ResolveIdentity(t *testing.T) {
+	type TestCase struct {
+		desc        string
+		cfg         *setting.Cfg
+		orgID       int64
+		namespaceID authn.NamespaceID
+		org         *org.Org
+		orgErr      error
+		expectedErr error
+	}
+
+	tests := []TestCase{
+		{
+			desc: "should return error when org id is not the configured one",
+			org:  &org.Org{ID: 2, Name: "some org"},
+			cfg: &setting.Cfg{
+				AnonymousOrgName: "some org",
+			},
+			orgID:       1,
+			namespaceID: authn.AnonymousNamespaceID,
+			expectedErr: errInvalidOrg,
+		},
+		{
+			desc: "should return error when namespace id does not match anonymous namespace id",
+			org:  &org.Org{ID: 1, Name: "some org"},
+			cfg: &setting.Cfg{
+				AnonymousOrgName: "some org",
+			},
+			orgID:       1,
+			namespaceID: authn.MustParseNamespaceID("anonymous:1"),
+			expectedErr: errInvalidID,
+		},
+		{
+			desc: "should resolve identity",
+			org:  &org.Org{ID: 1, Name: "some org"},
+			cfg: &setting.Cfg{
+				AnonymousOrgName: "some org",
+			},
+			orgID:       1,
+			namespaceID: authn.AnonymousNamespaceID,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			c := Anonymous{
+				cfg:               tt.cfg,
+				log:               log.NewNopLogger(),
+				orgService:        &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.orgErr},
+				anonDeviceService: anontest.NewFakeService(),
+			}
+
+			identity, err := c.ResolveIdentity(context.Background(), tt.orgID, tt.namespaceID)
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+				assert.Nil(t, identity)
+			} else {
+				assert.NoError(t, err)
+				assert.EqualValues(t, c.newAnonymousIdentity(tt.org), identity)
 			}
 		})
 	}

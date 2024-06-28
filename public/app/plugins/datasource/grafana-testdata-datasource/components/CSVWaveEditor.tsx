@@ -1,9 +1,10 @@
-import React, { PureComponent, useState } from 'react';
+import { PureComponent, useState } from 'react';
+import * as React from 'react';
 
 import { Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { defaultCSVWaveQuery } from '../constants';
-import type { CSVWave } from '../dataquery.gen';
+import type { CSVWave } from '../dataquery';
 
 interface WavesProps {
   waves?: CSVWave[];

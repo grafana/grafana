@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,6 +10,7 @@ interface BaseQueryOperationActionProps {
   title: string;
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
+  dataTestId?: string;
 }
 
 function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperationToggleActionProps) {
@@ -24,7 +25,7 @@ function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperat
         disabled={!!props.disabled}
         onClick={props.onClick}
         type="button"
-        aria-label={selectors.components.QueryEditorRow.actionButton(props.title)}
+        data-testid={props.dataTestId ?? selectors.components.QueryEditorRow.actionButton(props.title)}
         {...('active' in props && { 'aria-pressed': props.active })}
       />
     </div>
@@ -45,23 +46,23 @@ export const QueryOperationToggleAction = (props: QueryOperationToggleActionProp
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      display: flex;
-      position: relative;
-      color: ${theme.colors.text.secondary};
-    `,
-    active: css`
-      &::before {
-        display: block;
-        content: ' ';
-        position: absolute;
-        left: -1px;
-        right: 2px;
-        height: 3px;
-        border-radius: ${theme.shape.radius.default};
-        bottom: -8px;
-        background-image: ${theme.colors.gradients.brandHorizontal} !important;
-      }
-    `,
+    icon: css({
+      display: 'flex',
+      position: 'relative',
+      color: theme.colors.text.secondary,
+    }),
+    active: css({
+      '&:before': {
+        display: 'block',
+        content: '" "',
+        position: 'absolute',
+        left: -1,
+        right: 2,
+        height: 3,
+        borderRadius: theme.shape.radius.default,
+        bottom: -8,
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+      },
+    }),
   };
 };

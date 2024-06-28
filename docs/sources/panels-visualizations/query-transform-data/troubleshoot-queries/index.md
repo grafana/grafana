@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../troubleshooting/troubleshoot-queries/
-description: Guide to troubleshooting Grafana queries
+description: Troubleshoot Grafana queries
 keywords:
   - grafana
   - troubleshooting
@@ -15,6 +15,12 @@ labels:
     - oss
 title: Troubleshoot queries
 weight: 200
+refs:
+  inspect:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/#inspect-query-request-and-response-data
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/#inspect-query-request-and-response-data
 ---
 
 # Troubleshoot queries
@@ -31,7 +37,7 @@ The most common problems are related to the query and response from your data so
 like a bug or visualization issue in Grafana, it is almost always a problem with the data source query or
 the data source response. Start by inspecting your panel query and response.
 
-For more information, refer to [Inspect request and response data][inspect].
+For more information, refer to [Inspect request and response data](ref:inspect).
 
 ## My query is slow
 
@@ -40,8 +46,3 @@ How many data points is your query returning? A query that returns lots of data 
 - In **Query options**, limit the **Max data points** returned.
 - In **Query options**, increase the **Min interval** time.
 - In your query, use a `group by` function.
-
-{{% docs/reference %}}
-[inspect]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector#inspect-query-request-and-response-data"
-[inspect]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector#inspect-query-request-and-response-data"
-{{% /docs/reference %}}

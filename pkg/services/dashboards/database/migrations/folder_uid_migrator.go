@@ -5,6 +5,18 @@ import (
 	"xorm.io/xorm"
 )
 
+type DummyMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *DummyMigration) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *DummyMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) error {
+	return nil
+}
+
 // FolderUIDMigration is a code migration that populates folder_uid column
 type FolderUIDMigration struct {
 	migrator.MigrationBase
@@ -39,11 +51,14 @@ func (m *FolderUIDMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) 
 	}
 
 	// for folders the source of truth is the folder table
+	// covered by UQE_folder_org_id_uid
 	q = `UPDATE dashboard
 	SET folder_uid = folder.parent_uid
 	FROM folder
 	WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id
 	AND dashboard.is_folder = ?`
+
+	// covered by UQE_folder_org_id_uid
 	if mgrtr.Dialect.DriverName() == migrator.MySQL {
 		q = `UPDATE dashboard
 		SET folder_uid = (
@@ -75,7 +90,20 @@ func AddDashboardFolderMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("Populate dashboard folder_uid column", &FolderUIDMigration{})
 
-	mg.AddMigration("Add unique index for dashboard_org_id_folder_uid_title", migrator.NewAddIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
-		Cols: []string{"org_id", "folder_uid", "title"}, Type: migrator.UniqueIndex,
+	mg.AddMigration("Add unique index for dashboard_org_id_folder_uid_title", &DummyMigration{})
+
+	mg.AddMigration("Delete unique index for dashboard_org_id_folder_id_title", migrator.NewDropIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
+		Cols: []string{"org_id", "folder_id", "title"}, Type: migrator.UniqueIndex,
+	}))
+
+	mg.AddMigration("Delete unique index for dashboard_org_id_folder_uid_title", &DummyMigration{})
+
+	mg.AddMigration("Add unique index for dashboard_org_id_folder_uid_title_is_folder", migrator.NewAddIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
+		Cols: []string{"org_id", "folder_uid", "title", "is_folder"}, Type: migrator.UniqueIndex,
+	}))
+
+	// Temporary index until decommisioning of folder_id in query
+	mg.AddMigration("Restore index for dashboard_org_id_folder_id_title", migrator.NewAddIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
+		Cols: []string{"org_id", "folder_id", "title"},
 	}))
 }

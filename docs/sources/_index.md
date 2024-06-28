@@ -3,134 +3,87 @@ aliases:
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
   - guides/reference/admin/
-description: Open source documentation for Grafana
+cascade:
+  TEMPO_VERSION: latest
+  PYROSCOPE_VERSION: latest
+description: Find answers to your technical questions and learn how to use Grafana OSS and Enterprise products.
 keywords:
   - grafana
-  - open source
-  - installation
+  - get started
   - documentation
 labels:
   products:
     - enterprise
     - oss
-title: Grafana open source documentation
+menuTitle: Grafana documentation
+title: Grafana OSS and Enterprise
+hero:
+  title: Grafana OSS and Enterprise
+  level: 1
+  width: 100
+  image: /media/docs/grafana-cloud/infrastructure/grafanalogo.svg
+  height: 100
+  description: Query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored.
+cards:
+  title_class: pt-0 lh-1
+  items:
+    - title: What's new
+      href: ./whatsnew/
+      description: Browse release highlights, deprecations, and breaking changes in Grafana releases.
+      height: 24
+    - title: Introduction
+      href: ./fundamentals/
+      description: Learn about observability topics in general and some of the products included in Grafana.
+      height: 24
+    - title: Set up
+      href: ./setup-grafana/
+      description: Get up and running with Grafana.
+      height: 24
+    - title: Data sources
+      href: ./datasources/
+      description: Manage data sources and how to configure or query the built-in data sources.
+      height: 24
+    - title: Dashboards
+      href: ./dashboards/
+      description: Query, transform, visualize, and understand your data no matter where it’s stored.
+      height: 24
+    - title: Panels and Visualizations
+      href: ./panels-visualizations/
+      description: Easily collect, correlate, and visualize data to make informed decisions in real-time.
+      height: 24
+    - title: Explore
+      href: ./explore/
+      description: Explore your data using a query instead of creating a dashboard.
+      height: 24
+    - title: Alerting
+      href: ./alerting/
+      description: Learn about problems in your systems moments after they occur.
+      height: 24
+    - title: Administration
+      href: ./administration/
+      description: Perform administrative tasks such as configuring user management and roles and permissions.
+      height: 24
+    - title: Troubleshooting
+      href: ./troubleshooting/
+      description: Troubleshoot common Grafana issues.
+      height: 24
+    - title: Upgrade
+      href: ./upgrade-guide/
+      description: Upgrade Grafana to stay current with the latest fixes and enhancements.
+      height: 24
 ---
 
-# Grafana open source documentation
+{{< docs/hero-simple key="hero" >}}
 
-## Installing Grafana
+---
 
-<div class="nav-cards">
-    <a href="{{< relref "setup-grafana/installation/debian/" >}}" class="nav-cards__item nav-cards__item--install">
-        <div class="nav-cards__icon fa fa-linux">
-        </div>
-        <h5>Install on Linux</h5>
-    </a>
-    <a href="{{< relref "setup-grafana/installation/mac/" >}}" class="nav-cards__item nav-cards__item--install">
-        <div class="nav-cards__icon fa fa-apple">
-        </div>
-        <h5>Install on macOS</h5>
-    </a>
-    <a href="{{< relref "setup-grafana/installation/windows/" >}}" class="nav-cards__item nav-cards__item--install">
-        <div class="nav-cards__icon fa fa-windows">
-        </div>
-        <h5>Install on Windows</h5>
-    </a>
-    <a href="{{< relref "setup-grafana/installation/docker/" >}}" class="nav-cards__item nav-cards__item--install">
-        <img src="/static/img/logos/logo-docker.svg">
-        <h5>Run Docker image</h5>
-    </a>
-    <a href="https://grafana.com/docs/grafana-cloud/" class="nav-cards__item nav-cards__item--install">
-        <div class="nav-cards__icon fa fa-cloud">
-        </div>
-        <h5>Grafana Cloud</h5>
-    </a>
-    <a href="https://grafana.com/grafana/download/nightly?edition=oss" class="nav-cards__item nav-cards__item--install">
-        <div class="nav-cards__icon fa fa-moon-o">
-        </div>
-        <h5>Nightly builds</h5>
-    </a>
-</div>
+## Overview
 
-## Guides
+_Grafana Open Source Software (OSS)_ enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they're stored. Grafana data source plugins enable you to query data sources including time series databases like Prometheus and CloudWatch, logging tools like Loki and Elasticsearch, NoSQL/SQL databases like Postgres, CI/CD tooling like GitHub, and many more. Grafana OSS provides you with tools to display that data on live dashboards with insightful graphs and visualizations.
 
-<div class="nav-cards">
-    <a href="{{< relref "getting-started/build-first-dashboard/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Getting started</h4>
-        <p>Learn the basics of using Grafana.</p>
-    </a>
-    <a href="{{< relref "fundamentals/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Grafana fundamentals</h4>
-        <p>Learn basic observability.</p>
-    </a>
-    <a href="{{< relref "setup-grafana/configure-grafana/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Configure Grafana</h4>
-        <p>Review the configuration and setup options.</p>
-    </a>
-    <a href="{{< relref "fundamentals/timeseries/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Intro to time series</h4>
-        <p>Learn about time series data.</p>
-    </a>
-    <a href="{{< relref "administration/provisioning/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Provisioning</h4>
-        <p>Learn how to automate your Grafana configuration.</p>
-    </a>
-    <a href="{{< relref "whatsnew/whats-new-in-v10-2/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v10.2</h4>
-        <p>Explore the features and enhancements in the latest release.</p>
-    </a>
+_Grafana Enterprise_ is a commercial edition of Grafana that includes exclusive data source plugins and additional features not found in the open source version. You also get 24x7x365 support and training from the core Grafana team.
+To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features-in-grafana-cloud).
 
-</div>
+## Learn
 
-## Data source guides
-
-<div class="nav-cards">
-    <a href="{{< relref "datasources/graphite/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_graphite.svg" >
-      <h5>Graphite</h5>
-    </a>
-    <a href="{{< relref "datasources/elasticsearch/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_elasticsearch.svg" >
-      <h5>Elasticsearch</h5>
-    </a>
-    <a href="{{< relref "datasources/influxdb/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_influxdb.svg" >
-      <h5>InfluxDB</h5>
-    </a>
-    <a href="{{< relref "datasources/prometheus/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_prometheus.svg" >
-      <h5>Prometheus</h5>
-    </a>
-    <a href="{{< relref "datasources/google-cloud-monitoring/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_cloudmonitoring.svg">
-      <h5>Google Cloud Monitoring</h5>
-    </a>
-    <a href="{{< relref "datasources/aws-cloudwatch/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_cloudwatch.svg">
-      <h5>AWS CloudWatch</h5>
-    </a>
-    <a href="{{< relref "datasources/azure-monitor/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
-      <h5>Azure Monitor</h5>
-    </a>
-    <a href="{{< relref "datasources/loki/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_loki.svg">
-      <h5>Loki</h5>
-    </a>
-    <a href="{{< relref "datasources/mysql/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_mysql.png" >
-      <h5>MySQL</h5>
-    </a>
-    <a href="{{< relref "datasources/postgres/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_postgres.svg" >
-      <h5>Postgres</h5>
-    </a>
-    <a href="{{< relref "datasources/mssql/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/sql_server_logo.svg">
-      <h5>Microsoft SQL Server</h5>
-    </a>
-    <a href="{{< relref "datasources/opentsdb/" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/static/img/docs/logos/icon_opentsdb.png" >
-      <h5>OpenTSDB</h5>
-    </a>
-</div>
+{{< card-grid key="cards" type="simple" >}}

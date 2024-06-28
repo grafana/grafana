@@ -3,7 +3,6 @@ import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
 import { colorManipulator, GrafanaTheme2, LogLevel } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { styleMixins } from '@grafana/ui';
 
 export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
@@ -44,7 +43,6 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
 export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
   const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
-  const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
   return {
     logsRowLevel: css`
       label: logs-row__level;
@@ -60,6 +58,10 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
         left: ${theme.spacing(0.5)};
       }
     `,
+    // Compared to logsRowLevel we need to make error logs wider to accommodate the icon
+    logsRowWithError: css({
+      maxWidth: `${theme.spacing(1.5)}`,
+    }),
     logsRowMatchHighLight: css`
       label: logs-row__match-highlight;
       background: inherit;
@@ -67,12 +69,15 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       color: ${theme.components.textHighlight.text}
       background-color: ${theme.components.textHighlight};
     `,
+    logRows: css({
+      position: 'relative',
+    }),
     logsRowsTable: css`
       label: logs-rows;
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
-      ${!scrollableLogsContainer && `margin-bottom: ${theme.spacing(2.25)};`}
+      position: relative;
     `,
     logsRowsTableContain: css`
       contain: strict;
@@ -112,9 +117,16 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: 4em;
       cursor: default;
     `,
-    logIconError: css`
-      color: ${theme.colors.warning.main};
-    `,
+    logIconError: css({
+      color: theme.colors.warning.main,
+      position: 'relative',
+      top: '-2px',
+    }),
+    logIconInfo: css({
+      color: theme.colors.info.main,
+      position: 'relative',
+      top: '-2px',
+    }),
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
       font-size: 9px;

@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { PluginType } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -27,7 +26,6 @@ jest.mock('@grafana/runtime', () => ({
     partial: jest.fn(),
   },
   reportInteraction: jest.fn(),
-  config: {},
 }));
 
 jest.mock('app/features/dashboard/utils/dashboard', () => ({
@@ -68,7 +66,7 @@ it('renders with all buttons enabled except paste a panel', () => {
   expect(screen.getByText('visualization', { exact: false })).not.toBeDisabled();
   expect(screen.getByText('row', { exact: false })).not.toBeDisabled();
   expect(screen.getByText('library', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('paste panel', { exact: false })).toBeDisabled();
+  expect(screen.getByRole('menuitem', { name: 'Paste panel' })).toBeDisabled();
 });
 
 it('renders with all buttons enabled', () => {

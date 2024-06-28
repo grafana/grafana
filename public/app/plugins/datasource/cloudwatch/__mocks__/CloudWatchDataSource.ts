@@ -6,20 +6,70 @@ import {
   DataSourcePluginMeta,
   PluginMetaInfo,
   PluginType,
+  ScopedVars,
   VariableHide,
 } from '@grafana/data';
-import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
+import { getBackendSrv, setBackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
 
+import { initialCustomVariableModelState } from '../__mocks__/CloudWatchVariables';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData } from '../types';
+import { getVariableName } from '../utils/templateVariableUtils';
 
-export function setupMockedTemplateService(variables: CustomVariableModel[]) {
-  const templateService = new TemplateSrv();
-  templateService.init(variables);
-  templateService.getVariables = jest.fn().mockReturnValue(variables);
+const queryMock = jest.fn().mockReturnValue(of({ data: [] }));
+jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation((args) => queryMock(args));
+const separatorMap = new Map<string, string>([
+  ['pipe', '|'],
+  ['raw', ','],
+  ['text', ' + '],
+]);
+
+export function setupMockedTemplateService(variables?: CustomVariableModel[]): TemplateSrv {
+  const templateService = {
+    replace: jest.fn().mockImplementation((input: string, scopedVars?: ScopedVars, format?: string) => {
+      if (!input) {
+        return '';
+      }
+      let output = input;
+      ['datasource', 'dimension'].forEach((name) => {
+        const variable = scopedVars ? scopedVars[name] : undefined;
+        if (variable) {
+          output = output.replace('$' + name, variable.value);
+        }
+      });
+
+      if (variables) {
+        variables.forEach((variable) => {
+          let repVal = '';
+          let value = format === 'text' ? variable.current.text : variable.current.value;
+          let separator = separatorMap.get(format ?? 'raw');
+          if (Array.isArray(value)) {
+            repVal = value.join(separator);
+          } else {
+            repVal = value;
+          }
+          output = output.replace('$' + variable.name, repVal);
+          output = output.replace('[[' + variable.name + ']]', repVal);
+        });
+      }
+      return output;
+    }),
+    getVariables: jest.fn().mockReturnValue(variables ?? []),
+    containsTemplate: jest.fn().mockImplementation((name) => {
+      const varName = getVariableName(name);
+      if (!varName || !variables) {
+        return false;
+      }
+      let found = false;
+      variables.forEach((variable) => {
+        if (varName === variable.name) {
+          found = true;
+        }
+      });
+      return found;
+    }),
+    updateTimeRange: jest.fn(),
+  };
   return templateService;
 }
 
@@ -60,25 +110,16 @@ export const CloudWatchSettings: DataSourceInstanceSettings<CloudWatchJsonData> 
 
 export function setupMockedDataSource({
   variables,
-  mockGetVariableName = true,
   getMock = jest.fn(),
   customInstanceSettings = CloudWatchSettings,
 }: {
   getMock?: jest.Func;
   variables?: CustomVariableModel[];
-  mockGetVariableName?: boolean;
   customInstanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
-  let templateService = new TemplateSrv();
-  if (variables) {
-    templateService = setupMockedTemplateService(variables);
-    if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name.replace('$', '');
-    }
-  }
+  const templateService = setupMockedTemplateService(variables);
 
-  const timeSrv = getTimeSrv();
-  const datasource = new CloudWatchDatasource(customInstanceSettings, templateService, timeSrv);
+  const datasource = new CloudWatchDatasource(customInstanceSettings, templateService);
   datasource.getVariables = () => ['test'];
   datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
   datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
@@ -93,7 +134,7 @@ export function setupMockedDataSource({
     get: getMock,
   });
 
-  return { datasource, fetchMock, templateService, timeSrv };
+  return { datasource, fetchMock, queryMock, templateService };
 }
 
 export const metricVariable: CustomVariableModel = {

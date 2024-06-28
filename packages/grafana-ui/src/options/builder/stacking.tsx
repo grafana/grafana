@@ -1,25 +1,29 @@
-import React from 'react';
-
 import {
   FieldConfigEditorBuilder,
-  FieldOverrideEditorProps,
+  StandardEditorProps,
   FieldType,
   identityOverrideProcessor,
+  SelectableValue,
 } from '@grafana/data';
 import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
 
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { IconButton } from '../../components/IconButton/IconButton';
 import { Input } from '../../components/Input/Input';
-import { HorizontalGroup } from '../../components/Layout/Layout';
+import { Stack } from '../../components/Layout/Stack/Stack';
 import { graphFieldOptions } from '../../components/uPlot/config';
 
-export const StackingEditor = ({ value, context, onChange, item }: FieldOverrideEditorProps<StackingConfig, any>) => {
+export const StackingEditor = ({
+  value,
+  context,
+  onChange,
+  item,
+}: StandardEditorProps<StackingConfig, { options: Array<SelectableValue<StackingMode>> }>) => {
   return (
-    <HorizontalGroup>
+    <Stack>
       <RadioButtonGroup
         value={value?.mode || StackingMode.None}
-        options={item.settings.options}
+        options={item.settings?.options ?? []}
         onChange={(v) => {
           onChange({
             ...value,
@@ -41,7 +45,7 @@ export const StackingEditor = ({ value, context, onChange, item }: FieldOverride
           }}
         />
       )}
-    </HorizontalGroup>
+    </Stack>
   );
 };
 

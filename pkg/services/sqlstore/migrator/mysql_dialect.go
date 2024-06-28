@@ -69,6 +69,9 @@ func (db *MySQLDialect) SQLType(c *Column) string {
 		c.Length = 64
 	case DB_NVarchar:
 		res = DB_Varchar
+	case DB_Uuid:
+		res = DB_Char
+		c.Length = 36
 	default:
 		res = c.Type
 	}

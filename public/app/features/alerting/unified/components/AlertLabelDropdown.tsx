@@ -1,8 +1,9 @@
-import React, { FC } from 'react';
+import { css } from '@emotion/css';
+import { forwardRef, FC } from 'react';
 import { createFilter, GroupBase, OptionsOrGroups } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
-import { Field, Select } from '@grafana/ui';
+import { Field, Select, useStyles2 } from '@grafana/ui';
 
 export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
@@ -25,7 +26,7 @@ function customFilter(opt: SelectableValue, searchQuery: string) {
 
 const handleIsValidNewOption = (
   inputValue: string,
-  value: SelectableValue<string> | null,
+  _: SelectableValue<string> | null,
   options: OptionsOrGroups<SelectableValue<string>, GroupBase<SelectableValue<string>>>
 ) => {
   const exactValueExists = options.some((el) => el.label === inputValue);
@@ -33,11 +34,13 @@ const handleIsValidNewOption = (
   return !Boolean(exactValueExists) && Boolean(valueIsNotEmpty);
 };
 
-const AlertLabelDropdown: FC<AlertLabelDropdownProps> = React.forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
-  function labelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {} }, ref) {
+const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
+  function LabelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {} }, ref) {
+    const styles = useStyles2(getStyles);
+
     return (
       <div ref={ref}>
-        <Field disabled={false} data-testid={`alertlabel-${type}-picker`}>
+        <Field disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>
           <Select<string>
             placeholder={`Choose ${type}`}
             width={29}
@@ -58,5 +61,9 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = React.forwardRef<HTMLDiv
     );
   }
 );
+
+const getStyles = () => ({
+  resetMargin: css({ marginBottom: 0 }),
+});
 
 export default AlertLabelDropdown;

@@ -1,5 +1,4 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import {
   DataTransformerID,
@@ -10,7 +9,9 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { RenameByRegexTransformerOptions } from '@grafana/data/src/transformations/transformers/renameByRegex';
-import { Field, Input } from '@grafana/ui';
+import { InlineField, Input } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 interface RenameByRegexTransformerEditorProps extends TransformerUIProps<RenameByRegexTransformerOptions> {}
 
@@ -81,44 +82,29 @@ export class RenameByRegexTransformerEditor extends React.PureComponent<
     const { regex, renamePattern, isRegexValid } = this.state;
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label width-8">Match</div>
-            <Field
-              invalid={!isRegexValid}
-              error={!isRegexValid ? 'Invalid pattern' : undefined}
-              className={css`
-                margin-bottom: 0;
-              `}
-            >
-              <Input
-                placeholder="Regular expression pattern"
-                value={regex || ''}
-                onChange={this.handleRegexChange}
-                onBlur={this.handleRegexBlur}
-                width={25}
-              />
-            </Field>
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label width-8">Replace</div>
-            <Field
-              className={css`
-                margin-bottom: 0;
-              `}
-            >
-              <Input
-                placeholder="Replacement pattern"
-                value={renamePattern || ''}
-                onChange={this.handleRenameChange}
-                onBlur={this.handleRenameBlur}
-                width={25}
-              />
-            </Field>
-          </div>
-        </div>
+        <InlineField
+          label="Match"
+          labelWidth={16}
+          invalid={!isRegexValid}
+          error={!isRegexValid ? 'Invalid pattern' : undefined}
+        >
+          <Input
+            placeholder="Regular expression pattern"
+            value={regex || ''}
+            onChange={this.handleRegexChange}
+            onBlur={this.handleRegexBlur}
+            width={25}
+          />
+        </InlineField>
+        <InlineField label="Replace" labelWidth={16}>
+          <Input
+            placeholder="Replacement pattern"
+            value={renamePattern || ''}
+            onChange={this.handleRenameChange}
+            onBlur={this.handleRenameBlur}
+            width={25}
+          />
+        </InlineField>
       </>
     );
   }
@@ -128,7 +114,8 @@ export const renameByRegexTransformRegistryItem: TransformerRegistryItem<RenameB
   id: DataTransformerID.renameByRegex,
   editor: RenameByRegexTransformerEditor,
   transformation: standardTransformers.renameByRegexTransformer,
-  name: 'Rename by regex',
+  name: standardTransformers.renameByRegexTransformer.name,
   description: 'Renames part of the query result by using regular expression with placeholders.',
   categories: new Set([TransformerCategory.ReorderAndRename]),
+  help: getTransformationContent(DataTransformerID.renameByRegex).helperDocs,
 };

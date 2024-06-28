@@ -1,54 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-
-import { dateTime, TimeRange } from '@grafana/data';
-import { setTemplateSrv } from '@grafana/runtime';
-
-import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from '../../../../features/panel/panellinks/link_srv';
 
 import { DebugSection } from './DebugSection';
 
-// We do not need more here and TimeSrv is hard to setup fully.
-jest.mock('app/features/dashboard/services/TimeSrv', () => ({
-  getTimeSrv: () => ({
-    timeRangeForUrl() {
-      const from = dateTime().subtract(1, 'h');
-      const to = dateTime();
-      return { from, to, raw: { from, to } };
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
     },
   }),
 }));
 
 describe('DebugSection', () => {
-  let originalLinkSrv: LinkService;
-
-  // This needs to be setup so we can test interpolation in the debugger
-  beforeAll(() => {
-    const linkService = new LinkSrv();
-    originalLinkSrv = getLinkSrv();
-    setLinkSrv(linkService);
-  });
-
-  beforeEach(() => {
-    setTemplateSrv({
-      replace(target, scopedVars, format) {
-        return target ?? '';
-      },
-      getVariables() {
-        return [];
-      },
-      containsTemplate() {
-        return false;
-      },
-      updateTimeRange(timeRange: TimeRange) {},
-    });
-  });
-
-  afterAll(() => {
-    setLinkSrv(originalLinkSrv);
-  });
-
   it('does not render any table rows if no debug text', () => {
     render(<DebugSection derivedFields={[]} />);
     expect(screen.queryByRole('row')).not.toBeInTheDocument();

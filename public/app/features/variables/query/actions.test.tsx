@@ -1,7 +1,14 @@
-import React from 'react';
-
-import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import {
+  DataSourceApi,
+  DataSourceRef,
+  getDefaultTimeRange,
+  LoadingState,
+  QueryVariableModel,
+  VariableHide,
+  VariableRefresh,
+  VariableSort,
+} from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
@@ -29,7 +36,7 @@ import {
   variableStateFetching,
 } from '../state/sharedReducer';
 import { variablesInitTransaction } from '../state/transactionReducer';
-import { QueryVariableModel, VariableHide, VariableQueryEditorProps, VariableRefresh, VariableSort } from '../types';
+import { VariableQueryEditorProps } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
@@ -60,7 +67,7 @@ const mocks: Record<string, any> = {
   },
 };
 
-setDataSourceSrv(mocks.dataSourceSrv as any);
+setDataSourceSrv(mocks.dataSourceSrv as DataSourceSrv);
 
 jest.mock('../../plugins/plugin_loader', () => ({
   importDataSourcePlugin: () => mocks.pluginLoader.importDataSourcePlugin(),
@@ -353,7 +360,7 @@ describe('query actions', () => {
       it('then correct actions are dispatched', async () => {
         const variable = createVariable({ datasource: { uid: 'other' } });
         const editor = mocks.VariableQueryEditor;
-        const previousDataSource: any = { type: 'previous' };
+        const previousDataSource = { type: 'previous' } as DataSourceApi;
         const templatingState = {
           editor: {
             ...initialVariableEditorState,
@@ -843,8 +850,8 @@ describe('query actions', () => {
   });
 });
 
-function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: any[]) {
-  const metrics: Record<string, any[]> = {
+function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: unknown[]) {
+  const metrics: Record<string, unknown[]> = {
     [variable.query]: optionsMetrics,
   };
 

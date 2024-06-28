@@ -33,6 +33,36 @@ describe('toUrlParams', () => {
     });
     expect(url).toBe('datasource=testDs%5B%21%27%28%29%2A%5D');
   });
+  it('should encode object properties as url parameters', () => {
+    const params = urlUtil.serializeParams({
+      server: 'backend-01',
+      hasSpace: 'has space',
+      many: ['1', '2', '3'],
+      true: true,
+      number: 20,
+      isNull: null,
+      isUndefined: undefined,
+      oneMore: false,
+    });
+    expect(params).toBe(
+      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=&oneMore=false'
+    );
+  });
+
+  it('should not encode special character the same way as angular js', () => {
+    const params = urlUtil.serializeParams({
+      server: ':@',
+    });
+    expect(params).not.toBe('server=:@');
+  });
+
+  it('should keep booleans', () => {
+    const url = urlUtil.serializeParams({
+      bool1: true,
+      bool2: false,
+    });
+    expect(url).toBe('bool1&bool2=false');
+  });
 });
 
 describe('parseKeyValue', () => {

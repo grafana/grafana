@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
@@ -24,8 +24,9 @@ export const CloseButton = ({ onClick, 'aria-label': ariaLabel, style }: Props) 
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => css`
-  position: absolute;
-  right: ${theme.spacing(0.5)};
-  top: ${theme.spacing(1)};
-`;
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    position: 'absolute',
+    right: theme.spacing(0.5),
+    top: theme.spacing(1),
+  });

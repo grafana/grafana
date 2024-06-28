@@ -1,29 +1,35 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
+import { setPluginExtensionsHook } from '@grafana/runtime';
+import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
-import { getCloudRule, getGrafanaRule } from '../../mocks';
+import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { getCloudRule, getGrafanaRule, getMockPluginMeta } from '../../mocks';
 
 import { RulesTable } from './RulesTable';
 
-jest.mock('../../hooks/useIsRuleEditable');
+jest.mock('../../hooks/useAbilities');
 
 const mocks = {
-  useIsRuleEditable: jest.mocked(useIsRuleEditable),
+  useAlertRuleAbility: jest.mocked(useAlertRuleAbility),
 };
+
+setPluginExtensionsHook(() => ({
+  extensions: [],
+  isLoading: false,
+}));
 
 const ui = {
   actionButtons: {
     edit: byRole('link', { name: 'Edit' }),
     view: byRole('link', { name: 'View' }),
-    more: byRole('button', { name: 'More' }),
+    more: byRole('button', { name: /More/ }),
   },
   moreActionItems: {
     delete: byRole('menuitem', { name: 'Delete' }),
@@ -42,18 +48,31 @@ function renderRulesTable(rule: CombinedRule) {
   );
 }
 
+const user = userEvent.setup();
+const server = setupMswServer();
+
 describe('RulesTable RBAC', () => {
+  beforeEach(() => {
+    mockApi(server).plugins.getPluginSettings({
+      ...getMockPluginMeta('grafana-incident-app', 'Grafana Incident'),
+    });
+  });
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
-    it('Should not render Edit button for users without the update permission', () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+
+    it('Should not render Edit button for users without the update permission', async () => {
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Update ? [true, false] : [true, true];
+      });
       renderRulesTable(grafanaRule);
+
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
-      const user = userEvent.setup();
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Delete ? [true, false] : [true, true];
+      });
 
       renderRulesTable(grafanaRule);
       await user.click(ui.actionButtons.more.get());
@@ -62,14 +81,17 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Edit button for users with the update permission', () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Update ? [true, true] : [false, false];
+      });
       renderRulesTable(grafanaRule);
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
-      const user = userEvent.setup();
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Delete ? [true, true] : [false, false];
+      });
 
       renderRulesTable(grafanaRule);
 
@@ -81,28 +103,39 @@ describe('RulesTable RBAC', () => {
 
   describe('Cloud rules action buttons', () => {
     const cloudRule = getCloudRule({ name: 'Cloud' });
+
     it('Should not render Edit button for users without the update permission', () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Update ? [true, false] : [true, true];
+      });
+
       renderRulesTable(cloudRule);
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Delete ? [true, false] : [true, true];
+      });
 
       renderRulesTable(cloudRule);
-      expect(ui.actionButtons.more.query()).not.toBeInTheDocument();
+      await user.click(ui.actionButtons.more.get());
+      expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
     });
 
     it('Should render Edit button for users with the update permission', () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Update ? [true, true] : [false, false];
+      });
+
       renderRulesTable(cloudRule);
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
-      const user = userEvent.setup();
+      mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
+        return action === AlertRuleAction.Delete ? [true, true] : [false, false];
+      });
 
       renderRulesTable(cloudRule);
       await user.click(ui.actionButtons.more.get());

@@ -2,6 +2,7 @@ import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isStr
 
 import {
   AnnotationQuery,
+  ConstantVariableModel,
   DataLink,
   DataLinkBuiltInVars,
   DataQuery,
@@ -19,10 +20,12 @@ import {
   SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  TextBoxVariableModel,
   ThresholdsConfig,
   urlUtil,
   ValueMap,
   ValueMapping,
+  VariableHide,
 } from '@grafana/data';
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
@@ -59,7 +62,6 @@ import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
-import { ConstantVariableModel, TextBoxVariableModel, VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -74,6 +76,10 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * To add a dashboard migration increment this number
  * and then add your migration at the bottom of 'updateSchema'
  * hint: search "Add migration here"
+ *
+ * This number also needs to be updated on the CUE schema:
+ * kinds/dashboard/dashboard_kind.cue
+ * Example PR: #87712
  */
 export const DASHBOARD_SCHEMA_VERSION = 39;
 export class DashboardMigrator {
@@ -157,7 +163,7 @@ export class DashboardMigrator {
     if (oldVersion < 3) {
       // ensure panel IDs
       let maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (!panel.id) {
           panel.id = maxId;
           maxId += 1;
@@ -187,7 +193,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move drop-downs to new schema
-      const annotations: any = find(old.pulldowns, { type: 'annotations' });
+      const annotations = find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -278,7 +284,7 @@ export class DashboardMigrator {
     // schema version 9 changes
     if (oldVersion < 9) {
       // move aliasYAxis changes
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
           return panel;
         }
@@ -318,16 +324,18 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      each(this.dashboard.getVariables(), (templateVariable: any) => {
-        if (templateVariable.refresh) {
-          templateVariable.refresh = 1;
+      each(this.dashboard.getVariables(), (templateVariable) => {
+        if ('refresh' in templateVariable) {
+          if (templateVariable.refresh) {
+            templateVariable.refresh = 1;
+          }
+          if (!templateVariable.refresh) {
+            templateVariable.refresh = 0;
+          }
         }
-        if (!templateVariable.refresh) {
-          templateVariable.refresh = 0;
-        }
-        if (templateVariable.hideVariable) {
+        if ('hideVariable' in templateVariable && templateVariable.hideVariable) {
           templateVariable.hide = 2;
-        } else if (templateVariable.hideLabel) {
+        } else if ('hideLabel' in templateVariable && templateVariable.hideLabel) {
           templateVariable.hide = 1;
         }
       });
@@ -627,7 +635,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 26) {
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         const wasReactText = panel.type === 'text2';
         if (!wasReactText) {
           return panel;
@@ -877,7 +885,7 @@ export class DashboardMigrator {
             let tableTransformOptions: TimeSeriesTableTransformerOptions = {};
 
             // For each {refIdtoStat} record which maps refId to a statistic
-            // we add that to the stat property of the the new
+            // we add that to the stat property of the new
             // RefIdTransformerOptions interface which includes multiple settings
             for (const [refId, stat] of Object.entries(transformation.options.refIdToStat)) {
               let newSettings: RefIdTransformerOptions = {};
@@ -993,7 +1001,7 @@ export class DashboardMigrator {
         continue;
       }
 
-      const height: any = row.height || DEFAULT_ROW_HEIGHT;
+      const height = row.height || DEFAULT_ROW_HEIGHT;
       const rowGridHeight = getGridHeight(height);
 
       const rowPanel: any = {};
@@ -1401,7 +1409,7 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
 }
 
 function migrateTooltipOptions(panel: PanelModel) {
-  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+  if (panel.type === 'timeseries' || panel.type === 'xychart' || panel.type === 'xychart2') {
     if (panel.options.tooltipOptions) {
       panel.options = {
         ...panel.options,

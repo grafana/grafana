@@ -1,10 +1,6 @@
-import {
-  DataQuery,
-  DataSourceApi,
-  DataSourceWithQueryExportSupport,
-  DataSourceWithQueryImportSupport,
-} from '@grafana/data';
+import { DataSourceApi, DataSourceWithQueryExportSupport, DataSourceWithQueryImportSupport } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataQuery } from '@grafana/schema';
 import { TestQuery } from 'app/core/utils/query.test';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -380,7 +376,7 @@ describe('updateQueries with import', () => {
           const importedQueries = queries.map((q) => ({ ...q, imported: true }));
           return Promise.resolve(importedQueries);
         },
-      } as DataSourceWithQueryImportSupport<any>;
+      } as DataSourceWithQueryImportSupport<DataQuery>;
 
       const oldUidDSWithAbstract = {
         uid: 'old-uid',
@@ -419,8 +415,8 @@ describe('updateQueries with import', () => {
         oldUidDSWithAbstract as any
       );
 
-      expect(exportSpy).toBeCalledWith(queries);
-      expect(importSpy).toBeCalledWith(queries.map((q) => ({ ...q, exported: true })));
+      expect(exportSpy).toHaveBeenCalledWith(queries);
+      expect(importSpy).toHaveBeenCalledWith(queries.map((q) => ({ ...q, exported: true })));
 
       expect(updated).toMatchInlineSnapshot(`
         [
@@ -456,7 +452,7 @@ describe('updateQueries with import', () => {
         importFromAbstractQueries: () => {
           return Promise.resolve([]);
         },
-      } as DataSourceWithQueryImportSupport<any>;
+      } as DataSourceWithQueryImportSupport<DataQuery>;
 
       const oldUidDSWithAbstract = {
         uid: 'old-uid',
@@ -543,7 +539,7 @@ describe('updateQueries with import', () => {
 
       const updated = await updateQueries(newUidDSWithImport, newUidDSWithImport.uid, queries, oldUidDS);
 
-      expect(importSpy).toBeCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
+      expect(importSpy).toHaveBeenCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
 
       expect(updated).toMatchInlineSnapshot(`
         [
@@ -577,7 +573,7 @@ describe('updateQueries with import', () => {
         importQueries: (queries, origin) => {
           return Promise.resolve([] as DataQuery[]);
         },
-      } as DataSourceApi<any>;
+      } as DataSourceApi;
 
       const oldUidDS = {
         uid: 'old-uid',

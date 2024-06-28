@@ -3,6 +3,7 @@ aliases:
   - ../basics/timeseries-dimensions/
   - ../getting-started/timeseries-dimensions/
   - ../guides/timeseries-dimensions/
+  - /docs/grafana-cloud/introduction/timeseries-dimensions/
 description: time series dimensions
 keywords:
   - grafana
@@ -18,17 +19,28 @@ labels:
     - oss
 title: Time series dimensions
 weight: 500
+refs:
+  create-grafana-managed-rule:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule
+  time-series-databases:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/#time-series-databases
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/#time-series-databases
 ---
 
 # Time series dimensions
 
-In [Introduction to time series][time-series-databases], the concept of _labels_, also called _tags_, is introduced:
+In [Introduction to time series](ref:time-series-databases), the concept of _labels_, also called _tags_, is introduced:
 
 > Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken.
 
 With time series data, the data often contain more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
-{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" alt="Temperature by location" >}}
 
 The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property. In this case, multiple series are returned back from that single query and each series has unique location as a dimension.
 
@@ -94,7 +106,7 @@ More than one dimension is currently only supported in the Logs queries within t
 
 {{% admonition type="note" %}}
 Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert.
-For more information, see the documentation on [creating alerts with multiple series][create-grafana-managed-rule].
+For more information, see the documentation on [creating alerts with multiple series](ref:create-grafana-managed-rule).
 {{% /admonition %}}
 
 ### Multiple values
@@ -102,12 +114,3 @@ For more information, see the documentation on [creating alerts with multiple se
 In the case of SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions, can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
 Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series](/developers/plugin-tools/introduction/data-frames#data-frames-as-time-series).
-
-{{% docs/reference %}}
-
-[create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
-[create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
-
-[time-series-databases]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
-[time-series-databases]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
-{{% /docs/reference %}}

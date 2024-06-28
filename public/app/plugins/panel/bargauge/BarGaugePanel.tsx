@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import {
   DisplayValueAlignmentFactors,
@@ -12,11 +12,12 @@ import {
   DisplayValue,
   VizOrientation,
 } from '@grafana/data';
+import { BarGaugeSizing } from '@grafana/schema';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { Options } from './panelcfg.gen';
+import { Options, defaultOptions } from './panelcfg.gen';
 
 export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
@@ -93,8 +94,39 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     return 10;
   }
 
+  getOrientation(): VizOrientation {
+    const { options, width, height } = this.props;
+    const { orientation } = options;
+
+    if (orientation === VizOrientation.Auto) {
+      if (width > height) {
+        return VizOrientation.Vertical;
+      } else {
+        return VizOrientation.Horizontal;
+      }
+    }
+
+    return orientation;
+  }
+
+  calcBarSize() {
+    const { options } = this.props;
+
+    const orientation = this.getOrientation();
+    const isManualSizing = options.sizing === BarGaugeSizing.Manual;
+    const isVertical = orientation === VizOrientation.Vertical;
+    const isHorizontal = orientation === VizOrientation.Horizontal;
+    const minVizWidth = isManualSizing && isVertical ? options.minVizWidth : defaultOptions.minVizWidth;
+    const minVizHeight = isManualSizing && isHorizontal ? options.minVizHeight : defaultOptions.minVizHeight;
+    const maxVizHeight = isManualSizing && isHorizontal ? options.maxVizHeight : defaultOptions.maxVizHeight;
+
+    return { minVizWidth, minVizHeight, maxVizHeight };
+  }
+
   render() {
     const { height, width, options, data, renderCounter } = this.props;
+
+    const { minVizWidth, minVizHeight, maxVizHeight } = this.calcBarSize();
 
     return (
       <VizRepeater
@@ -105,8 +137,9 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         renderCounter={renderCounter}
         width={width}
         height={height}
-        minVizWidth={options.minVizWidth}
-        minVizHeight={options.minVizHeight}
+        maxVizHeight={maxVizHeight}
+        minVizWidth={minVizWidth}
+        minVizHeight={minVizHeight}
         itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />

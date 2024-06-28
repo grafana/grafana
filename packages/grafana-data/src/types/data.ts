@@ -33,6 +33,7 @@ export const preferredVisualizationTypes = [
 export type PreferredVisualisationType = (typeof preferredVisualizationTypes)[number];
 
 /**
+ * Should be kept in sync with https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/frame_meta.go
  * @public
  */
 export interface QueryResultMeta {
@@ -52,9 +53,6 @@ export interface QueryResultMeta {
 
   /** Meta Notices */
   notices?: QueryResultMetaNotice[];
-
-  /** Used to track transformation ids that where part of the processing */
-  transformations?: string[];
 
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
@@ -107,6 +105,14 @@ export interface QueryResultMeta {
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
   instant?: boolean;
+
+  /**
+   * Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID
+   * but that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially
+   * with streaming data with frequent updates.
+   * Example: TraceID in Tempo, table name + primary key in SQL
+   */
+  uniqueRowIdFields?: number[];
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
@@ -213,3 +219,27 @@ export interface DataConfigSource {
 
 type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T;
 export const isTruthy = <T>(value: T): value is Truthy<T> => Boolean(value);
+
+/**
+ * Serves no runtime purpose - only used to make typescript check a value has been correctly
+ * narrowed to an object
+ */
+function identityObject(value: object): object {
+  return value;
+}
+
+/**
+ * Utility type predicate to check if a value is typeof object, but excludes "null".
+ *
+ * We normally discourage the use of type predicates in favor of just inline typescript narrowing,
+ * but this is a special case to handle null annoyingly being typeof object
+ */
+export function isObject(value: unknown): value is object {
+  if (typeof value === 'object' && value !== null) {
+    identityObject(value);
+
+    return true;
+  }
+
+  return false;
+}

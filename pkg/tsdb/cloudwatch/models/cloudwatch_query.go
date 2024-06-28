@@ -7,17 +7,17 @@ import (
 	"math"
 	"net/url"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type (
@@ -50,6 +50,16 @@ const (
 	chinaConsoleURL   = "console.amazonaws.cn"
 )
 
+type SQLExpressionGroupBy struct {
+	Expressions []dataquery.QueryEditorGroupByExpression `json:"expressions"`
+	Type        dataquery.QueryEditorArrayExpressionType `json:"type"`
+}
+
+type sqlExpression struct {
+	dataquery.SQLExpression
+	GroupBy *SQLExpressionGroupBy `json:"groupBy,omitempty"`
+}
+
 type CloudWatchQuery struct {
 	logger            log.Logger
 	RefId             string
@@ -59,6 +69,7 @@ type CloudWatchQuery struct {
 	MetricName        string
 	Statistic         string
 	Expression        string
+	Sql               sqlExpression
 	SqlExpression     string
 	ReturnData        bool
 	Dimensions        map[string][]string
@@ -210,8 +221,9 @@ var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 
 type metricsDataQuery struct {
 	dataquery.CloudWatchMetricsQuery
-	Type              string `json:"type"`
-	TimezoneUTCOffset string `json:"timezoneUTCOffset"`
+	Sql               *sqlExpression `json:"sql,omitempty"`
+	Type              string         `json:"type"`
+	TimezoneUTCOffset string         `json:"timezoneUTCOffset"`
 }
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
@@ -240,9 +252,9 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
 			RefId:             refId,
-			Id:                mdq.Id,
-			Region:            mdq.Region,
-			Namespace:         mdq.Namespace,
+			Id:                utils.Depointerizer(mdq.Id),
+			Region:            utils.Depointerizer(mdq.Region),
+			Namespace:         utils.Depointerizer(mdq.Namespace),
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
 
@@ -252,6 +264,10 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 
 		if mdq.MetricQueryType != nil {
 			cwQuery.MetricQueryType = *mdq.MetricQueryType
+		}
+
+		if mdq.Sql != nil {
+			cwQuery.Sql = *mdq.Sql
 		}
 
 		if mdq.SqlExpression != nil {
@@ -315,7 +331,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		q.AccountId = metricsDataQuery.AccountId
 	}
 
-	if metricsDataQuery.Id == "" {
+	if utils.Depointerizer(metricsDataQuery.Id) == "" {
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
 		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
 		// it would likely collide with some ref id. That's why the `query` prefix is used.
@@ -479,22 +495,7 @@ func parseDimensions(dimensions map[string]any) (map[string][]string, error) {
 		}
 	}
 
-	sortedDimensions := sortDimensions(parsedDimensions)
-	return sortedDimensions, nil
-}
-
-func sortDimensions(dimensions map[string][]string) map[string][]string {
-	sortedDimensions := make(map[string][]string, len(dimensions))
-	keys := make([]string, 0, len(dimensions))
-	for k := range dimensions {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		sortedDimensions[k] = dimensions[k]
-	}
-	return sortedDimensions
+	return parsedDimensions, nil
 }
 
 func getEndpoint(region string) string {

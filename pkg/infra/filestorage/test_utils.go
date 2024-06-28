@@ -321,7 +321,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		}
 		resp, err := fs.List(ctx, inputPath, &Paging{
 			After: "",
-			First: 100000,
+			Limit: 100000,
 		}, opts)
 		require.NotNil(t, resp)
 		require.NoError(t, err, "%s: should be able to list folders in %s", queryName, inputPath)

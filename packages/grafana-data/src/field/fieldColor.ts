@@ -6,11 +6,10 @@ import { colorManipulator } from '../themes';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
 import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
-import { RegistryItem } from '../utils';
-import { Registry } from '../utils/Registry';
+import { Registry, RegistryItem } from '../utils/Registry';
 
 import { getScaleCalculator, ColorScaleValue } from './scale';
-import { fallBackTreshold } from './thresholds';
+import { fallBackThreshold } from './thresholds';
 
 /** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
@@ -46,7 +45,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       description: 'Derive colors from thresholds',
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
-          const thresholdSafe = threshold ?? fallBackTreshold;
+          const thresholdSafe = threshold ?? fallBackThreshold;
           return theme.visualization.getColorByName(thresholdSafe.color);
         };
       },
@@ -251,7 +250,7 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
   if (!mode.isByValue) {
     return {
       color: mode.getCalculator(field, theme)(0, 0),
-      threshold: fallBackTreshold,
+      threshold: fallBackThreshold,
       percent: 1,
     };
   }

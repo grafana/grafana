@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
+import { LRParser } from '@lezer/lr';
 
-import { parser } from '@grafana/lezer-logql';
-import { ErrorId } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
+import { ErrorId } from '../../../querybuilder/parsingUtils';
 
 interface ParserErrorBoundary {
   startLineNumber: number;
@@ -26,7 +26,8 @@ interface ParseError {
 export function validateQuery(
   query: string,
   interpolatedQuery: string,
-  queryLines: string[]
+  queryLines: string[],
+  parser: LRParser
 ): ParserErrorBoundary[] | false {
   if (!query) {
     return false;
@@ -39,14 +40,14 @@ export function validateQuery(
    * have different lengths. With this, we also exclude irrelevant parser errors that are produced by
    * lezer not understanding $variables and $__variables, which usually generate 2 or 3 error SyntaxNode.
    */
-  const interpolatedErrors: ParseError[] = parseQuery(interpolatedQuery);
+  const interpolatedErrors: ParseError[] = parseQuery(interpolatedQuery, parser);
   if (!interpolatedErrors.length) {
     return false;
   }
 
   let parseErrors: ParseError[] = interpolatedErrors;
   if (query !== interpolatedQuery) {
-    const queryErrors: ParseError[] = parseQuery(query);
+    const queryErrors: ParseError[] = parseQuery(query, parser);
     parseErrors = interpolatedErrors.flatMap(
       (interpolatedError) =>
         queryErrors.filter((queryError) => interpolatedError.text === queryError.text) || interpolatedError
@@ -56,7 +57,7 @@ export function validateQuery(
   return parseErrors.map((parseError) => findErrorBoundary(query, queryLines, parseError)).filter(isErrorBoundary);
 }
 
-function parseQuery(query: string) {
+function parseQuery(query: string, parser: LRParser) {
   const parseErrors: ParseError[] = [];
   const tree = parser.parse(query);
   tree.iterate({
@@ -115,6 +116,7 @@ function isErrorBoundary(boundary: ParserErrorBoundary | null): boundary is Pars
 
 export const placeHolderScopedVars = {
   __interval: { text: '1s', value: '1s' },
+  __rate_interval: { text: '1s', value: '1s' },
   __auto: { text: '1s', value: '1s' },
   __interval_ms: { text: '1000', value: 1000 },
   __range_ms: { text: '1000', value: 1000 },

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type errorResponseBody struct {
@@ -28,6 +30,10 @@ type errorResponseBody struct {
 type TestContext struct {
 	env server.TestEnv
 	t   *testing.T
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
 }
 
 func NewTestEnv(t *testing.T) TestContext {
@@ -45,7 +51,7 @@ func NewTestEnv(t *testing.T) TestContext {
 
 type User struct {
 	User     user.User
-	password string
+	password user.Password
 }
 
 type GetParams struct {
@@ -137,9 +143,9 @@ func (c TestContext) getURL(url string, user User) string {
 func (c TestContext) createOrg(name string) int64 {
 	c.t.Helper()
 	store := c.env.SQLStore
-	store.Cfg.AutoAssignOrg = false
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	c.env.Cfg.AutoAssignOrg = false
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	orgId, err := orgService.GetOrCreate(context.Background(), name)
 	require.NoError(c.t, err)
@@ -149,13 +155,16 @@ func (c TestContext) createOrg(name string) int64 {
 func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	c.t.Helper()
 	store := c.env.SQLStore
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = 1
+	c.env.Cfg.AutoAssignOrg = true
+	c.env.Cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		store, orgService, c.env.Cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(c.t, err)
 
 	user, err := usrSvc.Create(context.Background(), &cmd)

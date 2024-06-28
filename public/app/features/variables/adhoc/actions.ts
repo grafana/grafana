@@ -1,8 +1,7 @@
 import { cloneDeep } from 'lodash';
 
-import { DataSourceRef } from '@grafana/data';
+import { AdHocVariableFilter, AdHocVariableModel, DataSourceRef } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { StoreState, ThunkResult } from 'app/types';
 
 import { changeVariableEditorExtended } from '../editor/reducer';
@@ -149,7 +148,12 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel | undefined => {
   const key = getLastKey(state);
   const templatingState = getVariablesState(key, state);
-  return Object.values(templatingState.variables).find(
-    (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid
-  ) as AdHocVariableModel;
+  let result: AdHocVariableModel | undefined;
+  for (const v of Object.values(templatingState.variables)) {
+    if (isAdHoc(v) && v.datasource?.uid === options.datasource.uid) {
+      result = v;
+      break;
+    }
+  }
+  return result;
 };

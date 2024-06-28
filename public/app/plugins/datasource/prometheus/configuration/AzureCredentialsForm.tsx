@@ -1,11 +1,9 @@
 import { cx } from '@emotion/css';
-import React, { ChangeEvent, useEffect, useMemo, useReducer, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useReducer, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { InlineFormLabel, Button } from '@grafana/ui/src/components';
-import { Input } from '@grafana/ui/src/components/Forms/Legacy/Input/Input';
-import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
+import { InlineFormLabel, Button, Select, Input } from '@grafana/ui';
 
 import { AzureAuthType, AzureCredentials, isCredentialsComplete } from './AzureCredentials';
 
@@ -97,8 +95,8 @@ export const AzureCredentialsForm = (props: Props) => {
     const defaultAuthType = managedIdentityEnabled
       ? 'msi'
       : workloadIdentityEnabled
-      ? 'workloadidentity'
-      : 'clientsecret';
+        ? 'workloadidentity'
+        : 'clientsecret';
     const updated: AzureCredentials = {
       ...credentials,
       authType: selected.value || defaultAuthType,

@@ -5,10 +5,13 @@ import (
 	"os"
 
 	"xorm.io/core"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DB interface {
@@ -29,8 +32,13 @@ type DB interface {
 	GetDialect() migrator.Dialect
 	// GetDBType returns the name of the database type available to the runtime.
 	GetDBType() core.DbType
+	// GetEngine returns the underlying xorm engine.
+	GetEngine() *xorm.Engine
 	// GetSqlxSession is an experimental extension to use sqlx instead of xorm to
 	// communicate with the database.
+	// NOTE: when using this session with mysql, the connection will *not* have:
+	// the expected parameters: "&sql_mode='ANSI_QUOTES" and "&parseTime=true"
+	// The sqlx session is useful, but be careful not to expect automagic date parsing
 	GetSqlxSession() *session.SessionDB
 	// InTransaction creates a new SQL transaction that is placed on the context.
 	// Use together with [DB.WithDbSession] to run database operations.
@@ -45,9 +53,27 @@ type DB interface {
 type Session = sqlstore.DBSession
 type InitTestDBOpt = sqlstore.InitTestDBOpt
 
-var InitTestDB = sqlstore.InitTestDB
-var InitTestDBwithCfg = sqlstore.InitTestDBWithCfg
+var SetupTestDB = sqlstore.SetupTestDB
+var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
+
+func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
+	db, _ := InitTestDBWithCfg(t, opts...)
+	return db
+}
+
+func InitTestReplDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.ReplStore, *setting.Cfg) {
+	return sqlstore.InitTestReplDB(t, opts...)
+}
+
+func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.ReplStore {
+	db, _ := InitTestReplDBWithCfg(t, opts...)
+	return db
+}
+
+func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
+	return sqlstore.InitTestDB(t, opts...)
+}
 
 func IsTestDbSQLite() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); !present || db == "sqlite" {

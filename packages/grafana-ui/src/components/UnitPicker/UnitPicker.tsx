@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { getValueFormats, SelectableValue } from '@grafana/data';
 
@@ -62,6 +62,7 @@ export class UnitPicker extends PureComponent<UnitPickerProps> {
         formatCreateLabel={formatCreateLabel}
         options={groupOptions}
         placeholder="Choose"
+        isClearable
         onSelect={this.props.onChange}
       />
     );

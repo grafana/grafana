@@ -1,22 +1,27 @@
 import { css, cx } from '@emotion/css';
 import { compact } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Modal, Stack, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
-import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
+import { getAmMatcherFormatter } from '../../../utils/alertmanager';
+import { MatcherFormatter } from '../../../utils/matchers';
 import { makeAMLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
 import { hasEmptyMatchers, isDefaultPolicy, RouteWithPath } from './route';
 
-function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithPath }) {
+interface Props {
+  routesByIdMap: Map<string, RouteWithPath>;
+  route: RouteWithPath;
+  matcherFormatter: MatcherFormatter;
+}
+
+function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
   const styles = useStyles2(getStyles);
   const routePathIds = route.path?.slice(1) ?? [];
   const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
@@ -31,7 +36,7 @@ function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, Route
               {hasEmptyMatchers(pathRoute) ? (
                 <div className={styles.textMuted}>No matchers</div>
               ) : (
-                <Matchers matchers={pathRoute.object_matchers ?? []} />
+                <Matchers matchers={pathRoute.object_matchers ?? []} formatter={matcherFormatter} />
               )}
             </div>
           </div>
@@ -60,7 +65,7 @@ export function NotificationRouteDetailsModal({
   const isDefault = isDefaultPolicy(route);
 
   return (
-    <AlertmanagerProvider accessType="notification" alertmanagerSourceName={GRAFANA_DATASOURCE_NAME}>
+    <AlertmanagerProvider accessType="notification" alertmanagerSourceName={alertManagerSourceName}>
       <Modal
         className={styles.detailsModal}
         isOpen={true}
@@ -77,7 +82,11 @@ export function NotificationRouteDetailsModal({
           <div className={styles.separator(1)} />
           {!isDefault && (
             <>
-              <PolicyPath route={route} routesByIdMap={routesByIdMap} />
+              <PolicyPath
+                route={route}
+                routesByIdMap={routesByIdMap}
+                matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
+              />
             </>
           )}
           <div className={styles.separator(4)} />
@@ -114,68 +123,64 @@ export function NotificationRouteDetailsModal({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  textMuted: css`
-    color: ${theme.colors.text.secondary};
-  `,
-  link: css`
-    display: block;
-    color: ${theme.colors.text.link};
-  `,
-  button: css`
-    justify-content: flex-end;
-    display: flex;
-  `,
-  detailsModal: css`
-    max-width: 560px;
-  `,
-  defaultPolicy: css`
-    padding: ${theme.spacing(0.5)};
-    background: ${theme.colors.background.secondary};
-    width: fit-content;
-  `,
-  contactPoint: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(1)};
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  policyPathWrapper: css`
-    display: flex;
-    flex-direction: column;
-    margin-top: ${theme.spacing(1)};
-  `,
-  separator: (units: number) => css`
-    margin-top: ${theme.spacing(units)};
-  `,
-  marginBottom: (units: number) => css`
-    margin-bottom: ${theme.spacing(theme.spacing(units))};
-  `,
-  policyInPath: (index = 0, higlight = false) => css`
-    margin-left: ${30 + index * 30}px;
-    padding: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(1)};
-    border: solid 1px ${theme.colors.border.weak};
-    background: ${theme.colors.background.secondary};
-    width: fit-content;
-    position: relative;
-
-    ${
-      higlight &&
-      css`
-        border: solid 1px ${theme.colors.info.border};
-      `
-    },
-    &:before {
-      content: '';
-      position: absolute;
-      height: calc(100% - 10px);
-      width: ${theme.spacing(1)};
-      border-left: solid 1px ${theme.colors.border.weak};
-      border-bottom: solid 1px ${theme.colors.border.weak};
-      margin-top: ${theme.spacing(-2)};
-      margin-left: -17px;
-    }
-  }  `,
+  textMuted: css({
+    color: theme.colors.text.secondary,
+  }),
+  link: css({
+    display: 'block',
+    color: theme.colors.text.link,
+  }),
+  button: css({
+    justifyContent: 'flex-end',
+    display: 'flex',
+  }),
+  detailsModal: css({
+    maxWidth: '560px',
+  }),
+  defaultPolicy: css({
+    padding: theme.spacing(0.5),
+    background: theme.colors.background.secondary,
+    width: 'fit-content',
+  }),
+  contactPoint: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing(1),
+  }),
+  policyPathWrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: theme.spacing(1),
+  }),
+  separator: (units: number) =>
+    css({
+      marginTop: theme.spacing(units),
+    }),
+  marginBottom: (units: number) =>
+    css({
+      marginBottom: theme.spacing(theme.spacing(units)),
+    }),
+  policyInPath: (index = 0, highlight = false) =>
+    css({
+      marginLeft: `${30 + index * 30}px`,
+      padding: theme.spacing(1),
+      marginTop: theme.spacing(1),
+      border: `solid 1px ${highlight ? theme.colors.info.border : theme.colors.border.weak}`,
+      background: theme.colors.background.secondary,
+      width: 'fit-content',
+      position: 'relative',
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        height: 'calc(100% - 10px)',
+        width: theme.spacing(1),
+        borderLeft: `solid 1px ${theme.colors.border.weak}`,
+        borderBottom: `solid 1px ${theme.colors.border.weak}`,
+        marginTop: theme.spacing(-2),
+        marginLeft: `-17px`,
+      },
+    }),
 });

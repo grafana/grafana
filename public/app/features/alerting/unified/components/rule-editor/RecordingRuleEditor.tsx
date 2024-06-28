@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { PanelData, CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -68,8 +68,11 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
         datasource: changedQuery.datasource,
         refId: changedQuery.refId,
         editorMode: changedQuery.editorMode,
-        instant: Boolean(changedQuery.instant),
-        range: Boolean(changedQuery.range),
+        // Instant and range are used by Prometheus queries
+        instant: changedQuery.instant,
+        range: changedQuery.range,
+        // Query type is used by Loki queries
+        queryType: changedQuery.queryType,
         legendFormat: changedQuery.legendFormat,
       },
     };
@@ -112,7 +115,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  vizWrapper: css`
-    margin: ${theme.spacing(1, 0)};
-  `,
+  vizWrapper: css({
+    margin: theme.spacing(1, 0),
+  }),
 });

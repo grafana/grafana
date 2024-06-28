@@ -1,8 +1,9 @@
 import { cloneDeep } from 'lodash';
 
+import { QueryVariableModel, VariableOption } from '@grafana/data';
+
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../constants';
-import { QueryVariableModel, VariableOption } from '../../types';
 
 import {
   cleanPickerState,
@@ -48,24 +49,24 @@ describe('optionsPickerReducer', () => {
     ];
 
     const expectToggleOptionState = (args: {
-      options: any;
-      multi: any;
-      forceSelect: any;
-      clearOthers: any;
-      option: any;
-      expectSelected: any;
+      options: typeof opsAll;
+      multi: boolean;
+      forceSelect: boolean;
+      clearOthers: boolean;
+      option: string;
+      expectSelected: string[];
     }) => {
       const { initialState } = getVariableTestContext({
         options: args.options,
         multi: args.multi,
-        selectedValues: args.options.filter((o: any) => o.selected),
+        selectedValues: args.options.filter((o) => o.selected),
       });
       const payload = {
         forceSelect: args.forceSelect,
         clearOthers: args.clearOthers,
         option: { text: args.option, value: args.option, selected: true },
       };
-      const expectedAsRecord = args.expectSelected.reduce((all: any, current: any) => {
+      const expectedAsRecord = args.expectSelected.reduce<Record<string, string>>((all, current) => {
         all[current] = current;
         return all;
       }, {});
@@ -75,8 +76,8 @@ describe('optionsPickerReducer', () => {
         .whenActionIsDispatched(toggleOption(payload))
         .thenStateShouldEqual({
           ...initialState,
-          selectedValues: args.expectSelected.map((value: any) => ({ value, text: value, selected: true })),
-          options: args.options.map((option: any) => {
+          selectedValues: args.expectSelected.map((value) => ({ value, text: value, selected: true })),
+          options: args.options.map((option) => {
             return { ...option, selected: !!expectedAsRecord[option.value] };
           }),
         });
@@ -124,7 +125,17 @@ describe('optionsPickerReducer', () => {
           ${'$__all'} | ${false}    | ${true}     | ${['$__all']}
         `(
           'and we toggle $option with options: { forceSelect: $forceSelect, clearOthers: $clearOthers } we expect $expectSelected to be selected',
-          ({ option, forceSelect, clearOthers, expectSelected }) =>
+          ({
+            option,
+            forceSelect,
+            clearOthers,
+            expectSelected,
+          }: {
+            option: string;
+            forceSelect: boolean;
+            clearOthers: boolean;
+            expectSelected: string[];
+          }) =>
             expectToggleOptionState({
               options,
               multi,
@@ -309,7 +320,7 @@ describe('optionsPickerReducer', () => {
   describe('when showOptions is dispatched and queryValue and variable has no searchFilter', () => {
     it('then state should be correct', () => {
       const query = '*.';
-      const queryValue: any = null;
+      const queryValue = null;
       const current = { text: ALL_VARIABLE_TEXT, selected: true, value: [ALL_VARIABLE_VALUE] };
       const options = [
         { text: 'All', value: '$__all', selected: true },
@@ -317,7 +328,7 @@ describe('optionsPickerReducer', () => {
         { text: 'B', value: 'B', selected: false },
       ];
       const { initialState } = getVariableTestContext({});
-      const payload = { type: 'query', id: '0', current, query, options, queryValue } as QueryVariableModel;
+      const payload = { type: 'query', id: '0', current, query, options, queryValue } as unknown as QueryVariableModel;
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
@@ -546,11 +557,11 @@ describe('optionsPickerReducer', () => {
       it('then state should be correct', () => {
         const queryValue = 'A';
 
-        const options: any = [
+        const options = [
           { text: 'All', value: '$__all', selected: true },
           { text: null, value: null, selected: false },
           { text: [null], value: [null], selected: false },
-        ];
+        ] as VariableOption[];
 
         const { initialState } = getVariableTestContext({ queryValue });
 
@@ -559,8 +570,11 @@ describe('optionsPickerReducer', () => {
           .whenActionIsDispatched(updateOptionsAndFilter(options))
           .thenStateShouldEqual({
             ...initialState,
-            options: [{ text: 'All', value: '$__all', selected: true }],
-            selectedValues: [{ text: 'All', value: '$__all', selected: true }],
+            options: [
+              { text: '> A', value: 'A', selected: false },
+              { text: 'All', value: '$__all', selected: false },
+            ],
+            selectedValues: [],
             queryValue: 'A',
             highlightIndex: 0,
           });
@@ -770,6 +784,78 @@ describe('optionsPickerReducer', () => {
           selectedValues: [],
           queryValue: 'option:11256',
           highlightIndex: 0,
+        });
+    });
+  });
+
+  describe('when similar data for updateOptionsAndFilter', () => {
+    it('should properly rank by match quality', () => {
+      const searchQuery = 'C';
+
+      const options: VariableOption[] = 'A AA AB AC BC C CD'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expect: VariableOption[] = 'C CD AC BC'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expect,
+          selectedValues: [],
+          queryValue: 'C',
+          highlightIndex: 0,
+        });
+    });
+
+    it('should offer as-typed option even when matches exist', () => {
+      const searchQuery = 'a.*';
+
+      const options: VariableOption[] = 'A AA AB C'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expect: VariableOption[] = [
+        {
+          selected: false,
+          text: '> ' + searchQuery,
+          value: searchQuery,
+        },
+      ].concat(
+        'A AA AB'.split(' ').map((v) => ({
+          selected: false,
+          text: v,
+          value: v,
+        }))
+      );
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expect,
+          selectedValues: [],
+          queryValue: searchQuery,
+          highlightIndex: 1,
         });
     });
   });

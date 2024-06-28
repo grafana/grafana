@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataQueryError } from '@grafana/data';
 import { Alert, JSONFormatter } from '@grafana/ui';
 
@@ -7,7 +5,7 @@ interface InspectErrorTabProps {
   errors?: DataQueryError[];
 }
 
-const parseErrorMessage = (message: string): { msg: string; json?: any } => {
+const parseErrorMessage = (message: string) => {
   try {
     const [msg, json] = message.split(/(\{.+)/);
     const jsonError = JSON.parse(json);

@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { PageProps } from 'app/core/components/Page/types';
 
 type Props = {
   children: React.ReactNode | React.ReactNode[];
   title: string;
+  renderTitle?: PageProps['renderTitle'];
   wrapInContent?: boolean;
 };
 
@@ -17,11 +19,11 @@ const defaultPageNav: Partial<NavModelItem> = {
 };
 
 export function RuleViewerLayout(props: Props): JSX.Element | null {
-  const { wrapInContent = true, children, title } = props;
+  const { wrapInContent = true, children, title, renderTitle } = props;
   const styles = useStyles2(getPageStyles);
 
   return (
-    <Page pageNav={{ ...defaultPageNav, text: title }} navId="alert-list">
+    <Page pageNav={{ ...defaultPageNav, text: title }} renderTitle={renderTitle} navId="alert-list">
       <Page.Contents>
         <div className={styles.content}>{wrapInContent ? <RuleViewerLayoutContent {...props} /> : children}</div>
       </Page.Contents>
@@ -41,19 +43,19 @@ export function RuleViewerLayoutContent({ children, padding = 2 }: ContentProps)
 
 const getPageStyles = (theme: GrafanaTheme2) => {
   return {
-    content: css`
-      max-width: ${theme.breakpoints.values.xxl}px;
-    `,
+    content: css({
+      maxWidth: `${theme.breakpoints.values.xxl}px`,
+    }),
   };
 };
 
 const getContentStyles = (padding: number) => (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.radius.default};
-      padding: ${theme.spacing(padding)};
-    `,
+    wrapper: css({
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(padding),
+    }),
   };
 };

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import * as React from 'react';
 
 import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
 
@@ -69,7 +70,12 @@ export const LegendTableItem = ({
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon color={item.color} seriesName={item.label} readonly={readonly} />
+          <VizLegendSeriesIcon
+            color={item.color}
+            seriesName={item.fieldName ?? item.label}
+            readonly={readonly}
+            lineStyle={item.lineStyle}
+          />
           <button
             disabled={readonly}
             type="button"
@@ -126,6 +132,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: '600px',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
+      userSelect: 'text',
     }),
     labelDisabled: css({
       label: 'LegendLabelDisabled',

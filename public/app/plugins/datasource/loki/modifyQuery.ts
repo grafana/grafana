@@ -1,6 +1,7 @@
 import { NodeType, SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
+import { QueryBuilderLabelFilter } from '@grafana/experimental';
 import {
   Identifier,
   LabelFilter,
@@ -20,14 +21,14 @@ import {
   JsonExpressionParser,
   LogfmtExpressionParser,
   Expr,
+  LabelFormatExpr,
 } from '@grafana/lezer-logql';
-
-import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
 import { unescapeLabelValue } from './languageUtils';
 import { getNodePositionsFromQuery } from './queryUtils';
 import { lokiQueryModeller as modeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString, handleQuotes } from './querybuilder/parsing';
+import { LabelType } from './types';
 
 export class NodePosition {
   from: number;
@@ -142,19 +143,13 @@ function getMatchersWithFilter(query: string, label: string, operator: string, v
  *
  * This operates on substrings of the query with labels and operates just on those. This makes this
  * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
- *
- * @param {string} query
- * @param {string} key
- * @param {string} operator
- * @param {string} value
- * @param {boolean} [forceAsLabelFilter=false]  - if true, it will add a LabelFilter expression even if there is no parser in the query
  */
 export function addLabelToQuery(
   query: string,
   key: string,
   operator: string,
   value: string,
-  forceAsLabelFilter = false
+  labelType?: LabelType | null
 ): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
@@ -165,46 +160,62 @@ export function addLabelToQuery(
     return query;
   }
 
+  const parserPositions = getParserPositions(query);
+  const labelFilterPositions = getLabelFilterPositions(query);
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
+  const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
       (matcherPosition) =>
         matcherPosition.from >= streamSelectorPosition.from && matcherPosition.to <= streamSelectorPosition.to
     )
   );
-  const parserPositions = getParserPositions(query);
-  const labelFilterPositions = getLabelFilterPositions(query);
 
   const filter = toLabelFilter(key, value, operator);
-  // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
-  // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
-  if (forceAsLabelFilter) {
-    // `forceAsLabelFilter` is mostly used for structured metadata labels. Those are not
-    // very well distinguishable from real labels, but need to be added as label
-    // filters after the last stream selector, parser or label filter. This is
-    // just a quickfix for now and still has edge-cases where it can fail.
-    // TODO: improve this once we have a better API in Loki to distinguish
-    // between the origins of labels.
-    const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
-    return addFilterAsLabelFilter(query, [positionToAdd], filter);
-  } else if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
-    // in case we are not adding the label to stream selectors we need to find the last position to add in each expression
-    const subExpressions = findLeaves(getNodePositionsFromQuery(query, [Expr]));
-    const parserFilterPositions = [...parserPositions, ...labelFilterPositions];
-
-    // find last position for each subexpression
-    const lastPositionsPerExpression = subExpressions.map((subExpression) => {
-      return findLastPosition(
-        parserFilterPositions.filter((p) => {
-          return subExpression.contains(p);
-        })
-      );
-    });
+  if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
+    const lastPositionsPerExpression = getLastPositionPerExpression(query, [
+      ...streamSelectorPositions,
+      ...labelFilterPositions,
+      ...parserPositions,
+      ...labelFormatPositions,
+    ]);
 
     return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
-  } else {
+  } else if (labelType === LabelType.Indexed) {
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
+  } else {
+    // labelType is not set, so we need to figure out where to add the label
+    // if we don't have a parser, or have empty stream selectors, we will just add it to the stream selector
+    if (parserPositions.length === 0 || everyStreamSelectorHasMatcher === false) {
+      return addFilterToStreamSelector(query, streamSelectorPositions, filter);
+    } else {
+      // If `labelType` is not set, it indicates a potential metric query (`labelType` is present only in log queries that came from a Loki instance supporting the `categorize-labels` API). In case we are not adding the label to stream selectors we need to find the last position to add in each expression.
+      // E.g. in `sum(rate({foo="bar"} | logfmt [$__auto])) / sum(rate({foo="baz"} | logfmt [$__auto]))` we need to add the label at two places.
+      const lastPositionsPerExpression = getLastPositionPerExpression(query, [
+        ...parserPositions,
+        ...labelFilterPositions,
+        ...labelFormatPositions,
+      ]);
+
+      return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
+    }
   }
+}
+
+function getLastPositionPerExpression(query: string, positions: NodePosition[]): NodePosition[] {
+  const subExpressions = findLeaves(getNodePositionsFromQuery(query, [Expr]));
+  const subPositions = [...positions];
+
+  // find last position for each subexpression
+  const lastPositionsPerExpression = subExpressions.map((subExpression) => {
+    return findLastPosition(
+      subPositions.filter((p) => {
+        return subExpression.contains(p);
+      })
+    );
+  });
+  return lastPositionsPerExpression;
 }
 
 /**
@@ -291,19 +302,6 @@ export function getStreamSelectorPositions(query: string): NodePosition[] {
       if (type.id === Selector) {
         positions.push(NodePosition.fromNode(node));
         return false;
-      }
-    },
-  });
-  return positions;
-}
-
-function getMatcherInStreamPositions(query: string): NodePosition[] {
-  const tree = parser.parse(query);
-  const positions: NodePosition[] = [];
-  tree.iterate({
-    enter: ({ node }): false | void => {
-      if (node.type.id === Selector) {
-        positions.push(...getAllPositionsInNodeByType(node, Matcher));
       }
     },
   });
@@ -540,14 +538,14 @@ function addLabelFormat(
   return newQuery;
 }
 
-export function addLineFilter(query: string): string {
+export function addLineFilter(query: string, value = '', operator = '|='): string {
   const streamSelectorPositions = getStreamSelectorPositions(query);
   if (!streamSelectorPositions.length) {
     return query;
   }
   const streamSelectorEnd = streamSelectorPositions[0].to;
 
-  const newQueryExpr = query.slice(0, streamSelectorEnd) + ' |= ``' + query.slice(streamSelectorEnd);
+  const newQueryExpr = query.slice(0, streamSelectorEnd) + ` ${operator} \`${value}\`` + query.slice(streamSelectorEnd);
   return newQueryExpr;
 }
 
@@ -579,7 +577,20 @@ function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabe
  * @param positions
  */
 export function findLastPosition(positions: NodePosition[]): NodePosition {
+  if (!positions.length) {
+    return new NodePosition(0, 0);
+  }
   return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
+}
+
+/**
+ * Gets all leaves of the nodes given. Leaves are nodes that don't contain any other nodes.
+ *
+ * @param {NodePosition[]} nodes
+ * @return
+ */
+function findLeaves(nodes: NodePosition[]): NodePosition[] {
+  return nodes.filter((node) => nodes.every((n) => node.contains(n) === false || node === n));
 }
 
 function getAllPositionsInNodeByType(node: SyntaxNode, type: number): NodePosition[] {
@@ -598,12 +609,15 @@ function getAllPositionsInNodeByType(node: SyntaxNode, type: number): NodePositi
   return positions;
 }
 
-/**
- * Gets all leaves of the nodes given. Leaves are nodes that don't contain any other nodes.
- *
- * @param {NodePosition[]} nodes
- * @return
- */
-function findLeaves(nodes: NodePosition[]): NodePosition[] {
-  return nodes.filter((node) => nodes.every((n) => node.contains(n) === false || node === n));
+function getMatcherInStreamPositions(query: string): NodePosition[] {
+  const tree = parser.parse(query);
+  const positions: NodePosition[] = [];
+  tree.iterate({
+    enter: ({ node }): false | void => {
+      if (node.type.id === Selector) {
+        positions.push(...getAllPositionsInNodeByType(node, Matcher));
+      }
+    },
+  });
+  return positions;
 }

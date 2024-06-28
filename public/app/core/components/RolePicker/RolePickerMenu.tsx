@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { Button, CustomScrollbar, HorizontalGroup, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, CustomScrollbar, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
 
@@ -63,6 +63,7 @@ interface RolePickerMenuProps {
   updateDisabled?: boolean;
   apply?: boolean;
   offset: { vertical: number; horizontal: number };
+  menuLeft?: boolean;
 }
 
 export const RolePickerMenu = ({
@@ -78,6 +79,7 @@ export const RolePickerMenu = ({
   onUpdate,
   updateDisabled,
   offset,
+  menuLeft,
   apply,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
@@ -206,11 +208,12 @@ export const RolePickerMenu = ({
       className={cx(
         styles.menu,
         customStyles.menuWrapper,
-        { [customStyles.menuLeft]: offset.horizontal > 0 },
-        css`
-          bottom: ${offset.vertical > 0 ? `${offset.vertical}px` : 'unset'};
-          top: ${offset.vertical < 0 ? `${Math.abs(offset.vertical)}px` : 'unset'};
-        `
+        { [customStyles.menuLeft]: menuLeft },
+        css({
+          top: `${offset.vertical}px`,
+          left: !menuLeft ? `${offset.horizontal}px` : 'unset',
+          right: menuLeft ? `${offset.horizontal}px` : 'unset',
+        })
       )}
     >
       <div className={customStyles.menu} aria-label="Role picker menu">
@@ -248,19 +251,19 @@ export const RolePickerMenu = ({
               selectedOptions={selectedOptions}
               onRoleChange={onChange}
               onClearSubMenu={onClearSubMenu}
-              showOnLeftSubMenu={offset.horizontal > 0}
+              showOnLeftSubMenu={menuLeft}
             />
           ))}
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
-          <HorizontalGroup justify="flex-end">
+          <Stack justifyContent="flex-end">
             <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
               Clear all
             </Button>
             <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
               {apply ? `Apply` : `Update`}
             </Button>
-          </HorizontalGroup>
+          </Stack>
         </div>
       </div>
       <div ref={subMenuNode} />

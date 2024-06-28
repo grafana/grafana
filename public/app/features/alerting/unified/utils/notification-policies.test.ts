@@ -1,10 +1,13 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {
-  findMatchingRoutes,
-  normalizeRoute,
-  getInheritedProperties,
+  InheritableProperties,
   computeInheritedTree,
+  findMatchingRoutes,
+  getInheritedProperties,
+  matchLabels,
+  normalizeRoute,
+  unquoteRouteMatchers,
 } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
@@ -22,6 +25,7 @@ describe('findMatchingRoutes', () => {
     routes: [
       {
         receiver: 'A',
+        object_matchers: [['team', MatcherOperator.equal, 'operations']],
         routes: [
           {
             receiver: 'B1',
@@ -29,10 +33,9 @@ describe('findMatchingRoutes', () => {
           },
           {
             receiver: 'B2',
-            object_matchers: [['region', MatcherOperator.notEqual, 'europe']],
+            object_matchers: [['region', MatcherOperator.equal, 'nasa']],
           },
         ],
-        object_matchers: [['team', MatcherOperator.equal, 'operations']],
       },
       {
         receiver: 'C',
@@ -53,6 +56,19 @@ describe('findMatchingRoutes', () => {
     const matches = findMatchingRoutes(policies, [['team', 'operations']]);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'A');
+  });
+
+  it('should match route with negative matchers', () => {
+    const policiesWithNegative = {
+      ...policies,
+      routes: policies.routes?.concat({
+        receiver: 'D',
+        object_matchers: [['name', MatcherOperator.notEqual, 'gilles']],
+      }),
+    };
+    const matches = findMatchingRoutes(policiesWithNegative, [['name', 'konrad']]);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].route).toHaveProperty('receiver', 'D');
   });
 
   it('should match child route of matching parent', () => {
@@ -189,9 +205,19 @@ describe('getInheritedProperties()', () => {
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_by', ['label']);
     });
+
+    it('should inherit from grandparent when parent is inheriting', () => {
+      const parentInheritedProperties: InheritableProperties = { receiver: 'grandparent' };
+      const parent: Route = { receiver: null, group_by: ['foo'] };
+      const child: Route = { receiver: null };
+
+      const childInherited = getInheritedProperties(parent, child, parentInheritedProperties);
+      expect(childInherited).toHaveProperty('receiver', 'grandparent');
+      expect(childInherited.group_by).toEqual(['foo']);
+    });
   });
 
-  describe('regular "undefined" values', () => {
+  describe('regular "undefined" or "null" values', () => {
     it('should compute inherited properties being undefined', () => {
       const parent: Route = {
         receiver: 'PARENT',
@@ -204,6 +230,20 @@ describe('getInheritedProperties()', () => {
 
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_wait', '10s');
+    });
+
+    it('should compute inherited properties being null', () => {
+      const parent: Route = {
+        receiver: 'PARENT',
+        group_wait: '10s',
+      };
+
+      const child: Route = {
+        receiver: null,
+      };
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('receiver', 'PARENT');
     });
 
     it('should compute inherited properties being undefined from parent inherited properties', () => {
@@ -279,6 +319,21 @@ describe('getInheritedProperties()', () => {
       expect(childInherited).toHaveProperty('group_wait', '1m');
       expect(childInherited).toHaveProperty('group_interval', '2m');
     });
+  });
+  it('should not inherit mute timings from parent route', () => {
+    const parent: Route = {
+      receiver: 'PARENT',
+      group_by: ['parentLabel'],
+      mute_time_intervals: ['Mon-Fri 09:00-17:00'],
+    };
+
+    const child: Route = {
+      receiver: 'CHILD',
+      group_by: ['childLabel'],
+    };
+
+    const childInherited = getInheritedProperties(parent, child);
+    expect(childInherited).not.toHaveProperty('mute_time_intervals');
   });
 });
 
@@ -376,5 +431,96 @@ describe('normalizeRoute', () => {
 
     expect(normalized).not.toHaveProperty('match');
     expect(normalized).not.toHaveProperty('match_re');
+  });
+});
+
+describe('matchLabels', () => {
+  it('should match with non-matching matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.equal, ''],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('should match with non-equal matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.notEqual, 'bar'],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('should not match with a set of matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.notEqual, 'bar'],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [
+        ['team', 'operations'],
+        ['foo', 'bar'],
+      ]
+    );
+
+    expect(result).toHaveProperty('matches', false);
+    expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('does not match unanchored regular expressions', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, 'bar']], [['foo', 'barbarbar']]);
+    // This may seem unintuitive, but this is how Alertmanager matches, as it anchors the regex
+    expect(result.matches).toEqual(false);
+  });
+
+  it('matches regular expressions with wildcards', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, '.*bar.*']], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
+  });
+});
+
+describe('unquoteRouteMatchers', () => {
+  it('should unquote and unescape matchers values', () => {
+    const route: RouteWithID = {
+      id: '1',
+      object_matchers: [
+        ['foo', MatcherOperator.equal, 'bar'],
+        ['foo', MatcherOperator.equal, '"bar"'],
+        ['foo', MatcherOperator.equal, '"b\\\\ar b\\"az"'],
+      ],
+    };
+
+    const unwrapped = unquoteRouteMatchers(route);
+
+    expect(unwrapped.object_matchers).toHaveLength(3);
+    expect(unwrapped.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'bar']);
+    expect(unwrapped.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'bar']);
+    expect(unwrapped.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'b\\ar b"az']);
+  });
+
+  it('should unquote and unescape matcher names', () => {
+    const route: RouteWithID = {
+      id: '1',
+      object_matchers: [
+        ['"f\\"oo with quote"', MatcherOperator.equal, 'bar'],
+        ['"f\\\\oo with slash"', MatcherOperator.equal, 'bar'],
+      ],
+    };
+
+    const unwrapped = unquoteRouteMatchers(route);
+
+    expect(unwrapped.object_matchers).toHaveLength(2);
+    expect(unwrapped.object_matchers).toContainEqual(['f"oo with quote', MatcherOperator.equal, 'bar']);
+    expect(unwrapped.object_matchers).toContainEqual(['f\\oo with slash', MatcherOperator.equal, 'bar']);
   });
 });

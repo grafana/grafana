@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -14,10 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/secretscan"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,6 +26,7 @@ const (
 )
 
 type ServiceAccountsService struct {
+	acService         accesscontrol.Service
 	store             store
 	log               log.Logger
 	backgroundLog     log.Logger
@@ -39,15 +38,12 @@ type ServiceAccountsService struct {
 
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
-	ac accesscontrol.AccessControl,
-	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
-	store *sqlstore.SQLStore,
+	store db.DB,
 	apiKeyService apikey.Service,
 	kvStore kvstore.KVStore,
 	userService user.Service,
 	orgService org.Service,
-	permissionService accesscontrol.ServiceAccountPermissionsService,
 	accesscontrolService accesscontrol.Service,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
@@ -59,6 +55,7 @@ func ProvideServiceAccountsService(
 		orgService,
 	)
 	s := &ServiceAccountsService{
+		acService:     accesscontrolService,
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
@@ -69,9 +66,6 @@ func ProvideServiceAccountsService(
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
-
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
-	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
 	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
@@ -146,6 +140,8 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	}
 }
 
+var _ serviceaccounts.Service = (*ServiceAccountsService)(nil)
+
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
@@ -180,7 +176,10 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	if err := validServiceAccountID(serviceAccountID); err != nil {
 		return err
 	}
-	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
+	if err := sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID); err != nil {
+		return err
+	}
+	return sa.acService.DeleteUserPermissions(ctx, orgID, serviceAccountID)
 }
 
 func (sa *ServiceAccountsService) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {

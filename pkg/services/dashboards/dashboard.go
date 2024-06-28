@@ -2,9 +2,10 @@ package dashboards
 
 import (
 	"context"
+	"time"
 
-	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
@@ -13,20 +14,26 @@ import (
 //
 //go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 type DashboardService interface {
-	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
+	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
+	// GetDashboard fetches a dashboard.
+	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
+	// eg. util.Pointer("")
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
-	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
-	UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error
-	DeleteACLByUser(ctx context.Context, userID int64) error
-	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
+	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
+	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
+	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
+	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
+	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
+	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -43,7 +50,7 @@ type DashboardProvisioningService interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
-	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*Dashboard, error)
+	SaveFolderForProvisionedDashboards(context.Context, *folder.CreateFolderCommand) (*folder.Folder, error)
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
@@ -56,7 +63,6 @@ type Store interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
-	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
@@ -65,19 +71,22 @@ type Store interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
-	// SaveAlerts saves dashboard alerts.
-	SaveAlerts(ctx context.Context, dashID int64, alerts []*alertmodels.Alert) error
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
 	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
-	UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
-	DeleteACLByUser(context.Context, int64) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
-	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
-	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
+	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
+	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
+
+	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
+	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
+	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error
+	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string, folder *folder.Folder) error
+	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }

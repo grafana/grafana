@@ -1,8 +1,8 @@
 package annotations
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type ItemQuery struct {
@@ -42,6 +42,21 @@ type Tag struct {
 type TagsDTO struct {
 	Tag   string `json:"tag"`
 	Count int64  `json:"count"`
+}
+
+// sort tags in ascending order by tag string
+type SortedTags []*TagsDTO
+
+func (s SortedTags) Len() int {
+	return len(s)
+}
+
+func (s SortedTags) Less(i, j int) bool {
+	return s[i].Tag < s[j].Tag
+}
+
+func (s SortedTags) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 // FindTagsResult is the result of a tags search.
@@ -87,6 +102,7 @@ func (i Item) TableName() string {
 	return "annotation"
 }
 
+// swagger:model Annotation
 type ItemDTO struct {
 	ID           int64            `json:"id" xorm:"id"`
 	AlertID      int64            `json:"alertId" xorm:"alert_id"`
@@ -107,6 +123,24 @@ type ItemDTO struct {
 	Email        string           `json:"email"`
 	AvatarURL    string           `json:"avatarUrl" xorm:"avatar_url"`
 	Data         *simplejson.Json `json:"data"`
+}
+
+type SortedItems []*ItemDTO
+
+// sort annotations in descending order by end time, then by start time
+func (s SortedItems) Len() int {
+	return len(s)
+}
+
+func (s SortedItems) Less(i, j int) bool {
+	if s[i].TimeEnd != s[j].TimeEnd {
+		return s[i].TimeEnd > s[j].TimeEnd
+	}
+	return s[i].Time > s[j].Time
+}
+
+func (s SortedItems) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 type annotationType int

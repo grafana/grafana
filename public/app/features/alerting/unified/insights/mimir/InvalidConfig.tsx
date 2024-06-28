@@ -1,18 +1,20 @@
-import React from 'react';
-
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 
 export function getInvalidConfigScene(datasource: DataSourceRef, panelTitle: string) {
+  const expr = INSTANCE_ID
+    ? `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config{id="${INSTANCE_ID}"})`
+    : `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)`;
+
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)',
+        expr,
         range: true,
         legendFormat: '{{cluster}}',
       },

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import * as React from 'react';
 import { VariableSizeList } from 'react-window';
 
 import { DataFrame } from '@grafana/data';
@@ -23,7 +24,7 @@ export function useFixScrollbarContainer(
       // Select Table custom scrollbars
       const tableScrollbarView = tableDivRef.current.firstChild;
 
-      //If they exists, move the scrollbar element to the Table container scope
+      //If they exist, move the scrollbar element to the Table container scope
       if (tableScrollbarView && listVerticalScrollbarHTML) {
         listVerticalScrollbarHTML.remove();
         if (tableScrollbarView instanceof HTMLElement) {
@@ -36,41 +37,47 @@ export function useFixScrollbarContainer(
 }
 
 /**
-  react-table caches the height of cells so we need to reset them when expanding/collapsing rows
-   We need to take the minimum of the current expanded indexes and the previous expandedIndexes array to account
-  for collapsed rows, since they disappear from expandedIndexes but still keep their expanded height
+  react-table caches the height of cells, so we need to reset them when expanding/collapsing rows.
+  We use `lastExpandedOrCollapsedIndex` since collapsed rows disappear from `expandedIndexes` but still keep their expanded
+  height.
  */
 export function useResetVariableListSizeCache(
   extendedState: GrafanaTableState,
   listRef: React.RefObject<VariableSizeList>,
-  data: DataFrame
+  data: DataFrame,
+  hasUniqueId: boolean
 ) {
+  // Make sure we trigger the reset when keys change in any way
+  const expandedRowsRepr = JSON.stringify(Object.keys(extendedState.expanded));
+
   useEffect(() => {
-    if (extendedState.lastExpandedIndex !== undefined) {
-      // Gets the expanded row with the lowest index. Needed to reset all expanded row heights from that index on
-      let resetIndex = extendedState.lastExpandedIndex;
-      const expandedIndexes = Object.keys(extendedState.expanded);
-      if (expandedIndexes.length > 0) {
-        const lowestExpandedIndex = parseInt(expandedIndexes[0], 10);
-        if (!isNaN(lowestExpandedIndex)) {
-          resetIndex = Math.min(resetIndex, lowestExpandedIndex);
-        }
+    // By default, reset all rows
+    let resetIndex = 0;
+
+    // If we have unique field, extendedState.expanded keys are not row indexes but IDs so instead of trying to search
+    // for correct index we just reset the whole table.
+    if (!hasUniqueId) {
+      // If we don't have we reset from the last changed index.
+      if (Number.isFinite(extendedState.lastExpandedOrCollapsedIndex)) {
+        resetIndex = extendedState.lastExpandedOrCollapsedIndex!;
       }
 
-      const index =
+      // Account for paging.
+      resetIndex =
         extendedState.pageIndex === 0
           ? resetIndex - 1
           : resetIndex - extendedState.pageIndex - extendedState.pageIndex * extendedState.pageSize;
-      listRef.current?.resetAfterIndex(Math.max(index, 0));
-      return;
     }
+
+    listRef.current?.resetAfterIndex(Math.max(resetIndex, 0));
+    return;
   }, [
-    extendedState.lastExpandedIndex,
-    extendedState.toggleRowExpandedCounter,
-    extendedState.pageIndex,
+    extendedState.lastExpandedOrCollapsedIndex,
     extendedState.pageSize,
+    extendedState.pageIndex,
     listRef,
     data,
-    extendedState.expanded,
+    expandedRowsRepr,
+    hasUniqueId,
   ]);
 }

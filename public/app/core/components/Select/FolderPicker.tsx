@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { config } from '@grafana/runtime';
 
@@ -28,7 +28,7 @@ interface FolderPickerProps extends NestedFolderPickerProps {
 // Temporary wrapper component to switch between the NestedFolderPicker and the old flat
 // FolderPicker depending on feature flags
 export function FolderPicker(props: FolderPickerProps) {
-  const nestedEnabled = config.featureToggles.nestedFolders && config.featureToggles.nestedFolderPicker;
+  const nestedEnabled = config.featureToggles.newFolderPicker || config.featureToggles.nestedFolders;
   const { initialTitle, dashboardId, enableCreateNew, ...newFolderPickerProps } = props;
 
   return nestedEnabled ? <NestedFolderPicker {...newFolderPickerProps} /> : <OldFolderPickerWrapper {...props} />;

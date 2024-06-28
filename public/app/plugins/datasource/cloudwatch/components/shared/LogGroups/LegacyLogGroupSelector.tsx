@@ -1,12 +1,11 @@
 import { debounce, unionBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { AppEvents, SelectableValue, toOption } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { MultiSelect } from '@grafana/ui';
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { dispatch } from 'app/store/store';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { appendTemplateVariables } from '../../../utils/utils';
@@ -51,7 +50,10 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         const logGroups = await datasource.resources.legacyDescribeLogGroups(region, logGroupNamePrefix);
         return logGroups;
       } catch (err) {
-        dispatch(notifyApp(createErrorNotification(typeof err === 'string' ? err : JSON.stringify(err))));
+        getAppEvents().publish({
+          type: AppEvents.alertError.name,
+          payload: [typeof err === 'string' ? err : JSON.stringify(err)],
+        });
         return [];
       }
     },
@@ -69,7 +71,10 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
     const logGroupNamePattern = /^[\.\-_/#A-Za-z0-9]+$/;
     if (!logGroupNamePattern.test(searchTerm)) {
       if (searchTerm !== '') {
-        dispatch(notifyApp(createErrorNotification('Invalid Log Group name: ' + searchTerm)));
+        getAppEvents().publish({
+          type: AppEvents.alertError.name,
+          payload: ['Invalid Log Group name: ' + searchTerm],
+        });
       }
       return;
     }

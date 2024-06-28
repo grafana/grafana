@@ -1,26 +1,19 @@
-import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { PureComponent } from 'react';
+import { ConnectedProps, connect } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
-import { VerticalGroup } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, Organization, StoreState } from 'app/types';
+import { AccessControlAction, StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';
 import { setOrganizationName } from './state/reducers';
 
-export interface Props {
-  navModel: NavModel;
-  organization: Organization;
-  loadOrganization: typeof loadOrganization;
-  setOrganizationName: typeof setOrganizationName;
-  updateOrganization: typeof updateOrganization;
-}
+interface OwnProps {}
 
 export class OrgDetailsPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -58,7 +51,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
-            <VerticalGroup spacing="lg">
+            <Stack direction="column" gap={3}>
               {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
               {canReadPreferences && (
                 <SharedPreferences
@@ -68,7 +61,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
                   onConfirm={this.handleConfirm}
                 />
               )}
-            </VerticalGroup>
+            </Stack>
           )}
         </Page.Contents>
       </Page>
@@ -89,4 +82,7 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export default connector(OrgDetailsPage);

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import moment, { Moment } from 'moment/moment';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, FieldSet, HorizontalGroup, Select, TimeZonePicker, useStyles2 } from '@grafana/ui';
+import { Button, Field, FieldSet, Select, Stack, TimeZonePicker, useStyles2 } from '@grafana/ui';
 import { TimeZoneOffset } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
@@ -125,7 +125,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
   return (
     <FieldSet className={styles.wrapper}>
       <Field label="From">
-        <HorizontalGroup spacing="xs">
+        <Stack gap={0.5}>
           <Select
             options={days}
             isClearable
@@ -141,10 +141,10 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
             placeholder="HH:mm"
             width={100}
           />
-        </HorizontalGroup>
+        </Stack>
       </Field>
       <Field label="To">
-        <HorizontalGroup spacing="xs">
+        <Stack gap={0.5}>
           {(value.fromDayOfWeek || value.toDayOfWeek) && (
             <Select
               options={days}
@@ -162,7 +162,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
             placeholder="HH:mm"
             width={100}
           />
-        </HorizontalGroup>
+        </Stack>
       </Field>
       <Field label="Timezone">{renderTimezone()}</Field>
     </FieldSet>

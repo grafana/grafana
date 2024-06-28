@@ -4,19 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const RootFolderName = "General"
@@ -38,9 +36,11 @@ type Dashboard struct {
 
 	Created time.Time
 	Updated time.Time
+	Deleted time.Time
 
 	UpdatedBy int64
 	CreatedBy int64
+	// Deprecated: use FolderUID instead
 	FolderID  int64  `xorm:"folder_id"`
 	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
@@ -63,54 +63,6 @@ func (d *Dashboard) SetUID(uid string) {
 func (d *Dashboard) SetVersion(version int) {
 	d.Version = version
 	d.Data.Set("version", version)
-}
-
-func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
-	parent := dashboard.NewK8sResource(d.UID, nil)
-	res := kinds.GrafanaResource[simplejson.Json, any]{
-		Kind:       parent.Kind,
-		APIVersion: parent.APIVersion,
-		Metadata: kinds.GrafanaResourceMetadata{
-			Name:              d.UID,
-			Annotations:       make(map[string]string),
-			Labels:            make(map[string]string),
-			CreationTimestamp: v1.NewTime(d.Created),
-			ResourceVersion:   fmt.Sprintf("%d", d.Version),
-		},
-	}
-	if d.Data != nil {
-		copy := &simplejson.Json{}
-		db, _ := d.Data.ToDB()
-		_ = copy.FromDB(db)
-
-		copy.Del("id")
-		copy.Del("version") // ???
-		copy.Del("uid")     // duplicated to name
-		res.Spec = copy
-	}
-
-	d.UpdateSlug()
-	res.Metadata.SetUpdatedTimestamp(&d.Updated)
-	res.Metadata.SetSlug(d.Slug)
-	if d.CreatedBy > 0 {
-		res.Metadata.SetCreatedBy(fmt.Sprintf("user:%d", d.CreatedBy))
-	}
-	if d.UpdatedBy > 0 {
-		res.Metadata.SetUpdatedBy(fmt.Sprintf("user:%d", d.UpdatedBy))
-	}
-	if d.PluginID != "" {
-		res.Metadata.SetOriginInfo(&kinds.ResourceOriginInfo{
-			Name: "plugin",
-			Key:  d.PluginID,
-		})
-	}
-	if d.FolderID > 0 {
-		res.Metadata.SetFolder(fmt.Sprintf("folder:%d", d.FolderID))
-	}
-	if d.IsFolder {
-		res.Kind = "Folder"
-	}
-	return res
 }
 
 // NewDashboard creates a new dashboard
@@ -186,6 +138,8 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()
@@ -256,13 +210,8 @@ type SaveDashboardCommand struct {
 	UpdatedAt time.Time
 }
 
-type ValidateDashboardCommand struct {
-	Dashboard string `json:"dashboard" binding:"Required"`
-}
-
-type TrimDashboardCommand struct {
-	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
-	Meta      *simplejson.Json `json:"meta"`
+type RestoreDeletedDashboardCommand struct {
+	FolderUID string `json:"folderUid" xorm:"folder_uid"`
 }
 
 type DashboardProvisioning struct {
@@ -276,6 +225,7 @@ type DashboardProvisioning struct {
 
 type DeleteDashboardCommand struct {
 	ID                     int64
+	UID                    string
 	OrgID                  int64
 	ForceDeleteFolderRules bool
 }
@@ -302,11 +252,13 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 // Multiple constraints can be combined.
 type GetDashboardQuery struct {
-	ID       int64
-	UID      string
-	Title    *string
-	FolderID *int64
-	OrgID    int64
+	ID    int64
+	UID   string
+	Title *string
+	// Deprecated: use FolderUID instead
+	FolderID  *int64
+	FolderUID *string
+	OrgID     int64
 }
 
 type DashboardTagCloudItem struct {
@@ -348,17 +300,19 @@ type SaveDashboardDTO struct {
 }
 
 type DashboardSearchProjection struct {
-	ID          int64  `xorm:"id"`
-	UID         string `xorm:"uid"`
-	Title       string
-	Slug        string
-	Term        string
-	IsFolder    bool
+	ID       int64  `xorm:"id"`
+	UID      string `xorm:"uid"`
+	Title    string
+	Slug     string
+	Term     string
+	IsFolder bool
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	FolderUID   string `xorm:"folder_uid"`
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Deleted     *time.Time
 }
 
 const (
@@ -375,13 +329,14 @@ type CountDashboardsInFolderQuery struct {
 // to the store layer. The FolderID will be replaced with FolderUID when
 // dashboards are updated with parent folder UIDs.
 type CountDashboardsInFolderRequest struct {
-	FolderID int64
-	OrgID    int64
+	FolderUIDs []string
+	OrgID      int64
 }
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	return &folder.Folder{
-		ID:        dash.ID,
+		ID:        dash.ID, // nolint:staticcheck
 		UID:       dash.UID,
 		OrgID:     dash.OrgID,
 		Title:     dash.Title,
@@ -396,8 +351,8 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 }
 
 type DeleteDashboardsInFolderRequest struct {
-	FolderUID string
-	OrgID     int64
+	FolderUIDs []string
+	OrgID      int64
 }
 
 //
@@ -413,7 +368,7 @@ type DashboardACL struct {
 	UserID     int64         `xorm:"user_id"`
 	TeamID     int64         `xorm:"team_id"`
 	Role       *org.RoleType // pointer to be nullable
-	Permission PermissionType
+	Permission dashboardaccess.PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -422,74 +377,50 @@ type DashboardACL struct {
 func (p DashboardACL) TableName() string { return "dashboard_acl" }
 
 type DashboardACLInfoDTO struct {
-	OrgID       int64  `json:"-" xorm:"org_id"`
-	DashboardID int64  `json:"dashboardId,omitempty" xorm:"dashboard_id"`
-	FolderID    int64  `json:"folderId,omitempty" xorm:"folder_id"`
-	FolderUID   string `json:"folderUid,omitempty" xorm:"folder_uid"`
+	OrgID       int64 `json:"-" xorm:"org_id"`
+	DashboardID int64 `json:"dashboardId,omitempty" xorm:"dashboard_id"`
+	// Deprecated: use FolderUID instead
+	FolderID  int64  `json:"folderId,omitempty" xorm:"folder_id"`
+	FolderUID string `json:"folderUid,omitempty" xorm:"folder_uid"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	UserID         int64          `json:"userId" xorm:"user_id"`
-	UserLogin      string         `json:"userLogin"`
-	UserEmail      string         `json:"userEmail"`
-	UserAvatarURL  string         `json:"userAvatarUrl" xorm:"user_avatar_url"`
-	TeamID         int64          `json:"teamId" xorm:"team_id"`
-	TeamEmail      string         `json:"teamEmail"`
-	TeamAvatarURL  string         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
-	Team           string         `json:"team"`
-	Role           *org.RoleType  `json:"role,omitempty"`
-	Permission     PermissionType `json:"permission"`
-	PermissionName string         `json:"permissionName"`
-	UID            string         `json:"uid" xorm:"uid"`
-	Title          string         `json:"title"`
-	Slug           string         `json:"slug"`
-	IsFolder       bool           `json:"isFolder"`
-	URL            string         `json:"url" xorm:"url"`
-	Inherited      bool           `json:"inherited"`
-}
-
-func (dto *DashboardACLInfoDTO) hasSameRoleAs(other *DashboardACLInfoDTO) bool {
-	if dto.Role == nil || other.Role == nil {
-		return false
-	}
-
-	return dto.UserID <= 0 && dto.TeamID <= 0 && dto.UserID == other.UserID && dto.TeamID == other.TeamID && *dto.Role == *other.Role
-}
-
-func (dto *DashboardACLInfoDTO) hasSameUserAs(other *DashboardACLInfoDTO) bool {
-	return dto.UserID > 0 && dto.UserID == other.UserID
-}
-
-func (dto *DashboardACLInfoDTO) hasSameTeamAs(other *DashboardACLInfoDTO) bool {
-	return dto.TeamID > 0 && dto.TeamID == other.TeamID
-}
-
-// IsDuplicateOf returns true if other item has same role, same user or same team
-func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
-	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
-}
-
-// QUERIES
-type GetDashboardACLInfoListQuery struct {
-	DashboardID int64
-	OrgID       int64
+	UserID         int64                          `json:"userId" xorm:"user_id"`
+	UserLogin      string                         `json:"userLogin"`
+	UserEmail      string                         `json:"userEmail"`
+	UserAvatarURL  string                         `json:"userAvatarUrl" xorm:"user_avatar_url"`
+	TeamID         int64                          `json:"teamId" xorm:"team_id"`
+	TeamEmail      string                         `json:"teamEmail"`
+	TeamAvatarURL  string                         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
+	Team           string                         `json:"team"`
+	Role           *org.RoleType                  `json:"role,omitempty"`
+	Permission     dashboardaccess.PermissionType `json:"permission"`
+	PermissionName string                         `json:"permissionName"`
+	UID            string                         `json:"uid" xorm:"uid"`
+	Title          string                         `json:"title"`
+	Slug           string                         `json:"slug"`
+	IsFolder       bool                           `json:"isFolder"`
+	URL            string                         `json:"url" xorm:"url"`
+	Inherited      bool                           `json:"inherited"`
 }
 
 type FindPersistedDashboardsQuery struct {
 	Title         string
 	OrgId         int64
-	SignedInUser  *user.SignedInUser
+	SignedInUser  identity.Requester
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string
-	FolderIds     []int64
-	FolderUIDs    []string
-	Tags          []string
-	Limit         int64
-	Page          int64
-	Permission    PermissionType
-	Sort          model.SortOption
+	// Deprecated: use FolderUIDs instead
+	FolderIds  []int64
+	FolderUIDs []string
+	Tags       []string
+	Limit      int64
+	Page       int64
+	Permission dashboardaccess.PermissionType
+	Sort       model.SortOption
+	IsDeleted  bool
 
 	Filters []any
 }

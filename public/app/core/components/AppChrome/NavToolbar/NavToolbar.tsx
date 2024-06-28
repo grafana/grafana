@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
@@ -35,6 +36,8 @@ export function NavToolbar({
   onToggleSearchBar,
   onToggleKioskMode,
 }: Props) {
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
@@ -45,16 +48,20 @@ export function NavToolbar({
         <IconButton
           id={TOGGLE_BUTTON_ID}
           name="bars"
-          tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
+          tooltip={
+            state.megaMenuOpen
+              ? t('navigation.toolbar.close-menu', 'Close menu')
+              : t('navigation.toolbar.open-menu', 'Open menu')
+          }
           tooltipPlacement="bottom"
           size="xl"
           onClick={onToggleMegaMenu}
+          data-testid={Components.NavBar.Toggle.button}
         />
       </div>
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
       <div className={styles.actions}>
         {actions}
-        {actions && <NavToolbarSeparator />}
         {searchBarHidden && (
           <ToolbarButton
             onClick={onToggleKioskMode}
@@ -63,6 +70,7 @@ export function NavToolbar({
             icon="monitor"
           />
         )}
+        {actions && <NavToolbarSeparator />}
         <ToolbarButton
           onClick={onToggleSearchBar}
           narrow
@@ -89,6 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       padding: theme.spacing(0, 1, 0, 2),
       alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     menuButton: css({
       display: 'flex',
@@ -103,7 +112,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'flex-end',
       paddingLeft: theme.spacing(1),
       flexGrow: 1,
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
       minWidth: 0,
 
       '.body-drawer-open &': {

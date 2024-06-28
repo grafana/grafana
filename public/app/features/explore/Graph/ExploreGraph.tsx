@@ -1,29 +1,32 @@
 import { identity } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { usePrevious } from 'react-use';
 
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
   createFieldConfigRegistry,
+  DashboardCursorSync,
   DataFrame,
   dateTime,
+  EventBus,
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
   LoadingState,
   SplitOpen,
-  TimeZone,
   ThresholdsConfig,
-  DashboardCursorSync,
-  EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
-  LegendDisplayMode,
-  TooltipDisplayMode,
-  SortOrder,
   GraphThresholdsStyleConfig,
+  LegendDisplayMode,
+  SortOrder,
+  TimeZone,
+  TooltipDisplayMode,
+  VizLegendOptions,
 } from '@grafana/schema';
 import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
 import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
@@ -55,6 +58,8 @@ interface Props {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
+  vizLegendOverrides?: Partial<VizLegendOptions>;
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
 }
 
 export function ExploreGraph({
@@ -75,19 +80,22 @@ export function ExploreGraph({
   thresholdsConfig,
   thresholdsStyle,
   eventBus,
+  vizLegendOverrides,
+  toggleLegendRef,
 }: Props) {
   const theme = useTheme2();
-
+  const previousTimeRange = usePrevious(absoluteRange);
+  const baseTimeRange = loadingState === LoadingState.Loading && previousTimeRange ? previousTimeRange : absoluteRange;
   const timeRange = useMemo(
     () => ({
-      from: dateTime(absoluteRange.from),
-      to: dateTime(absoluteRange.to),
+      from: dateTime(baseTimeRange.from),
+      to: dateTime(baseTimeRange.to),
       raw: {
-        from: dateTime(absoluteRange.from),
-        to: dateTime(absoluteRange.to),
+        from: dateTime(baseTimeRange.from),
+        to: dateTime(baseTimeRange.to),
       },
     }),
-    [absoluteRange.from, absoluteRange.to]
+    [baseTimeRange.from, baseTimeRange.to]
   );
 
   const fieldConfigRegistry = useMemo(
@@ -147,8 +155,10 @@ export function ExploreGraph({
 
   const structureRev = useStructureRev(dataWithConfig);
 
+  const onHiddenSeriesChangedRef = useRef(onHiddenSeriesChanged);
+
   useEffect(() => {
-    if (onHiddenSeriesChanged) {
+    if (onHiddenSeriesChangedRef.current) {
       const hiddenFrames: string[] = [];
       dataWithConfig.forEach((frame) => {
         const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
@@ -156,19 +166,28 @@ export function ExploreGraph({
           hiddenFrames.push(getFrameDisplayName(frame));
         }
       });
-      onHiddenSeriesChanged(hiddenFrames);
+      onHiddenSeriesChangedRef.current(hiddenFrames);
     }
-  }, [dataWithConfig, onHiddenSeriesChanged]);
+  }, [dataWithConfig]);
 
   const panelContext: PanelContext = {
     eventsScope: 'explore',
     eventBus,
-    sync: () => DashboardCursorSync.Crosshair,
+    // TODO: Re-enable DashboardCursorSync.Crosshair when #81505 is fixed
+    sync: () => DashboardCursorSync.Off,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
     dataLinkPostProcessor,
   };
+
+  function toggleLegend(name: string, mode: SeriesVisibilityChangeMode) {
+    setFieldConfig(seriesVisibilityConfigFactory(name, mode, fieldConfig, data));
+  }
+
+  if (toggleLegendRef) {
+    toggleLegendRef.current = toggleLegend;
+  }
 
   const panelOptions: TimeSeriesOptions = useMemo(
     () => ({
@@ -178,9 +197,10 @@ export function ExploreGraph({
         showLegend: true,
         placement: 'bottom',
         calcs: [],
+        ...vizLegendOverrides,
       },
     }),
-    [tooltipDisplayMode]
+    [tooltipDisplayMode, vizLegendOverrides]
   );
 
   return (

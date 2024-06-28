@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { CoreApp, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
-import { getNextRefIdChar } from 'app/core/utils/query';
 
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { operationDefinitions } from '../operations';
 import { buildVisualQueryFromString } from '../parsing';
-import { LokiQueryPattern, LokiQueryPatternType } from '../types';
+import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from '../types';
 
 import { QueryPattern } from './QueryPattern';
 
@@ -23,6 +24,21 @@ type Props = {
   onChange: (query: LokiQuery) => void;
   onAddQuery?: (query: LokiQuery) => void;
 };
+
+const keepOperationCategories: string[] = [
+  LokiVisualQueryOperationCategory.Formats,
+  LokiVisualQueryOperationCategory.LineFilters,
+  LokiVisualQueryOperationCategory.LabelFilters,
+];
+const excludeOperationIds: string[] = [LokiOperationId.Unwrap];
+const keepOperations = operationDefinitions
+  .filter(
+    (operation) =>
+      operation.category &&
+      keepOperationCategories.includes(operation.category) &&
+      !excludeOperationIds.includes(operation.id)
+  )
+  .map((operation) => operation.id);
 
 export const QueryPatternsModal = (props: Props) => {
   const { isOpen, onClose, onChange, onAddQuery, query, queries, app } = props;
@@ -48,11 +64,18 @@ export const QueryPatternsModal = (props: Props) => {
       createNewQuery: hasNewQueryOption && selectAsNewQuery,
     });
 
-    visualQuery.query.operations = pattern.operations;
+    // Filter operations in the original query except those we configured to keep
+    visualQuery.query.operations = visualQuery.query.operations.filter((op) => keepOperations.includes(op.id));
+    // Filter operations in the pattern that are present in the original query
+    const patternOperations = pattern.operations.filter(
+      (patternOp) => visualQuery.query.operations.findIndex((op) => op.id === patternOp.id) < 0
+    );
+    visualQuery.query.operations = [...visualQuery.query.operations, ...patternOperations];
+
     if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,
-        refId: getNextRefIdChar(queries ?? [query]),
+        refId: getNextRefId(queries ?? [query]),
         expr: lokiQueryModeller.renderQuery(visualQuery.query),
       });
     } else {

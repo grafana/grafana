@@ -2,10 +2,21 @@ import { Subscription } from 'rxjs';
 
 import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, EventBusSrv } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
+import {
+  behaviors,
+  SceneDataLayerSet,
+  sceneGraph,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneObject,
+  VizPanel,
+} from '@grafana/scenes';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
+import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
+import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
 
 /**
@@ -17,6 +28,9 @@ export class DashboardModelCompatibilityWrapper {
 
   public constructor(private _scene: DashboardScene) {
     const timeRange = sceneGraph.getTimeRange(_scene);
+
+    // Copied from DashboardModel, as this function is passed around
+    this.formatDate = this.formatDate.bind(this);
 
     this._subs.add(
       timeRange.subscribeToState((state, prev) => {
@@ -39,6 +53,41 @@ export class DashboardModelCompatibilityWrapper {
     return this._scene.state.title;
   }
 
+  public get description() {
+    return this._scene.state.description;
+  }
+
+  public get editable() {
+    return this._scene.state.editable;
+  }
+
+  public get graphTooltip() {
+    return this._getSyncMode();
+  }
+
+  public get timepicker() {
+    return {
+      refresh_intervals: this._scene.state.controls!.state.refreshPicker.state.intervals,
+      hidden: this._scene.state.controls!.state.hideTimeControls ?? false,
+    };
+  }
+
+  public get timezone() {
+    return this.getTimezone();
+  }
+
+  public get weekStart() {
+    return sceneGraph.getTimeRange(this._scene).state.weekStart;
+  }
+
+  public get tags() {
+    return this._scene.state.tags;
+  }
+
+  public get links() {
+    return this._scene.state.links;
+  }
+
   public get meta() {
     return this._scene.state.meta;
   }
@@ -51,12 +100,24 @@ export class DashboardModelCompatibilityWrapper {
     };
   }
 
+  public get panels() {
+    const panels = findAllObjects(this._scene, (o) => {
+      return Boolean(o instanceof VizPanel);
+    });
+    return panels.map((p) => new PanelModelCompatibilityWrapper(p as VizPanel));
+  }
+
   /**
    * Used from from timeseries migration handler to migrate time regions to dashboard annotations
    */
   public get annotations(): { list: AnnotationQuery[] } {
-    console.error('Scenes DashboardModelCompatibilityWrapper.annotations not implemented (yet)');
-    return { list: [] };
+    const annotations: { list: AnnotationQuery[] } = { list: [] };
+
+    if (this._scene.state.$data instanceof SceneDataLayerSet) {
+      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
+    }
+
+    return annotations;
   }
 
   public getTimezone() {
@@ -95,23 +156,70 @@ export class DashboardModelCompatibilityWrapper {
     });
   }
 
-  public getPanelById(id: number): PanelCompatibilityWrapper | null {
+  public getPanelById(id: number): PanelModelCompatibilityWrapper | null {
     const vizPanel = findVizPanelByKey(this._scene, getVizPanelKeyForPanelId(id));
     if (vizPanel) {
-      return new PanelCompatibilityWrapper(vizPanel);
+      return new PanelModelCompatibilityWrapper(vizPanel);
     }
 
     return null;
   }
 
-  public removePanel(panel: PanelCompatibilityWrapper) {
-    // TODO
-    console.error('Scenes DashboardModelCompatibilityWrapper.removePanel not implemented (yet)');
+  /**
+   * Mainly implemented to support Getting started panel's dissmis button.
+   */
+  public removePanel(panel: PanelModelCompatibilityWrapper) {
+    const vizPanel = findVizPanelByKey(this._scene, getVizPanelKeyForPanelId(panel.id));
+    if (!vizPanel) {
+      console.error('Trying to remove a panel that was not found in scene', panel);
+      return;
+    }
+
+    const gridItem = vizPanel.parent;
+    if (!(gridItem instanceof DashboardGridItem)) {
+      console.error('Trying to remove a panel that is not wrapped in DashboardGridItem');
+      return;
+    }
+
+    const layout = sceneGraph.getLayout(vizPanel);
+    if (!(layout instanceof SceneGridLayout)) {
+      console.error('Trying to remove a panel in a layout that is not SceneGridLayout ');
+      return;
+    }
+
+    // if grid item is directly in the layout just remove it
+    if (layout === gridItem.parent) {
+      layout.setState({
+        children: layout.state.children.filter((child) => child !== gridItem),
+      });
+    }
+
+    // Removing from a row is a bit more complicated
+    if (gridItem.parent instanceof SceneGridRow) {
+      // Clone the row and remove the grid item
+      const newRow = layout.clone({
+        children: layout.state.children.filter((child) => child !== gridItem),
+      });
+
+      // Now update the grid layout and replace the row with the updated one
+      if (layout.parent instanceof SceneGridLayout) {
+        layout.parent.setState({
+          children: layout.parent.state.children.map((child) => (child === layout ? newRow : child)),
+        });
+      }
+    }
   }
 
   public canEditAnnotations(dashboardUID?: string) {
-    // TOOD
-    return false;
+    if (!this._scene.canEditDashboard()) {
+      return false;
+    }
+
+    if (dashboardUID) {
+      return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
+    }
+
+    return Boolean(this._scene.state.meta.annotationsPermissions?.organization.canEdit);
   }
 
   public panelInitialized() {}
@@ -120,36 +228,21 @@ export class DashboardModelCompatibilityWrapper {
     this.events.removeAllListeners();
     this._subs.unsubscribe();
   }
+
+  public hasUnsavedChanges() {
+    return this._scene.state.isDirty;
+  }
 }
 
-class PanelCompatibilityWrapper {
-  constructor(private _vizPanel: VizPanel) {}
-
-  public get type() {
-    return this._vizPanel.state.pluginId;
-  }
-
-  public get title() {
-    return this._vizPanel.state.title;
-  }
-
-  public get transformations() {
-    if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
-      return this._vizPanel.state.$data.state.transformations;
+function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean) {
+  let result: SceneObject[] = [];
+  root.forEachChild((child) => {
+    if (check(child)) {
+      result.push(child);
+    } else {
+      result = result.concat(findAllObjects(child, check));
     }
+  });
 
-    return [];
-  }
-
-  public refresh() {
-    console.error('Scenes PanelCompatibilityWrapper.refresh no implemented (yet)');
-  }
-
-  public render() {
-    console.error('Scenes PanelCompatibilityWrapper.render no implemented (yet)');
-  }
-
-  public getQueryRunner() {
-    console.error('Scenes PanelCompatibilityWrapper.getQueryRunner no implemented (yet)');
-  }
+  return result;
 }

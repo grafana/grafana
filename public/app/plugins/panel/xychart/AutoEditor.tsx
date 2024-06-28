@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import {
   SelectableValue,
@@ -15,7 +15,7 @@ import { XYDimensionConfig, Options } from './panelcfg.gen';
 
 interface XYInfo {
   numberFields: Array<SelectableValue<string>>;
-  xAxis: SelectableValue<string>;
+  xAxis?: SelectableValue<string>;
   yFields: Array<SelectableValue<boolean>>;
 }
 
@@ -24,7 +24,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
     if (context?.data?.length) {
       return context.data.map((f, idx) => ({
         value: idx,
-        label: getFrameDisplayName(f, idx),
+        label: `${getFrameDisplayName(f, idx)} (index: ${idx}, rows: ${f.length})`,
       }));
     }
     return [{ value: 0, label: 'First result' }];
@@ -33,23 +33,19 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
   const dims = useMemo(() => getXYDimensions(value, context.data), [context.data, value]);
 
   const info = useMemo(() => {
-    const first = {
-      label: '?',
-      value: undefined, // empty
-    };
     const v: XYInfo = {
-      numberFields: [first],
+      numberFields: [],
       yFields: [],
       xAxis: value?.x
         ? {
             label: `${value.x} (Not found)`,
             value: value.x, // empty
           }
-        : first,
+        : undefined,
     };
     const frame = context.data ? context.data[value?.frame ?? 0] : undefined;
     if (frame) {
-      const xName = dims.x ? getFieldDisplayName(dims.x, dims.frame, context.data) : undefined;
+      const xName = 'x' in dims ? getFieldDisplayName(dims.x, dims.frame, context.data) : undefined;
       for (let field of frame.fields) {
         if (isGraphable(field)) {
           const name = getFieldDisplayName(field, frame, context.data);
@@ -58,9 +54,6 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
             value: name,
           };
           v.numberFields.push(sel);
-          if (first.label === '?') {
-            first.label = `${name} (First)`;
-          }
           if (value?.x && name === value.x) {
             v.xAxis = sel;
           }
@@ -72,6 +65,9 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
           }
         }
       }
+      if (!v.xAxis) {
+        v.xAxis = { label: xName, value: xName };
+      }
     }
 
     return v;
@@ -79,7 +75,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
 
   const styles = useStyles2(getStyles);
 
-  if (!context.data) {
+  if (!context.data?.length) {
     return <div>No data...</div>;
   }
 
@@ -87,24 +83,29 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
     <div>
       <Field label={'Data'}>
         <Select
+          isClearable={true}
           options={frameNames}
-          value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
+          placeholder={'Change filter'}
+          value={frameNames.find((v) => v.value === value?.frame)}
           onChange={(v) => {
             onChange({
               ...value,
-              frame: v.value!,
+              frame: v?.value!,
+              x: undefined,
             });
           }}
         />
       </Field>
       <Field label={'X Field'}>
         <Select
+          isClearable={true}
           options={info.numberFields}
           value={info.xAxis}
+          placeholder={`${info.numberFields?.[0].label} (First numeric)`}
           onChange={(v) => {
             onChange({
               ...value,
-              x: v.value,
+              x: v?.value,
             });
           }}
         />

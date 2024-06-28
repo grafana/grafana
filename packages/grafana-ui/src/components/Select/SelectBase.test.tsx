@@ -1,12 +1,16 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
-
-import { selectOptionInTest } from '../../../../../public/test/helpers/selectOptionInTest';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { SelectBase } from './SelectBase';
+
+// Used to select an option or options from a Select in unit tests
+const selectOptionInTest = async (input: HTMLElement, optionOrOptions: string | RegExp | Array<string | RegExp>) =>
+  await waitFor(() => select(input, optionOrOptions, { container: document.body }));
 
 describe('SelectBase', () => {
   const onChangeHandler = jest.fn();
@@ -188,7 +192,7 @@ describe('SelectBase', () => {
     it('renders menu with provided options', async () => {
       render(<SelectBase options={options} onChange={onChangeHandler} />);
       await userEvent.click(screen.getByText(/choose/i));
-      const menuOptions = screen.getAllByLabelText('Select option');
+      const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
     });
 
@@ -214,7 +218,7 @@ describe('SelectBase', () => {
 
       await selectOptionInTest(selectEl, 'Option 2');
       await userEvent.click(screen.getByText(/option 2/i));
-      const menuOptions = screen.getAllByLabelText('Select option');
+      const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
     });
   });

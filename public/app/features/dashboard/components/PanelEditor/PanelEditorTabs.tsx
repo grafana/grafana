@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useCallback } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Tab, TabContent, TabsBar, toIconName, useForceUpdate, useStyles2 } from '@grafana/ui';
-import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
+import { PanelAlertTabContent } from 'app/features/alerting/unified/PanelAlertTabContent';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 import { DashboardModel, PanelModel } from '../../state';
@@ -22,7 +22,7 @@ interface PanelEditorTabsProps {
   onChangeTab: (tab: PanelEditorTab) => void;
 }
 
-export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab }: PanelEditorTabsProps) => {
+export const PanelEditorTabs = memo(({ panel, dashboard, tabs, onChangeTab }: PanelEditorTabsProps) => {
   const forceUpdate = useForceUpdate();
   const styles = useStyles2(getStyles);
 
@@ -55,12 +55,24 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
     return null;
   }
 
+  const alertingEnabled = config.unifiedAlertingEnabled;
+
   return (
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
-          if (tab.id === PanelEditorTabId.Alert) {
-            return renderAlertTab(tab, panel, dashboard, instrumentedOnChangeTab);
+          if (tab.id === PanelEditorTabId.Alert && alertingEnabled) {
+            return (
+              <PanelAlertTab
+                key={tab.id}
+                label={tab.text}
+                active={tab.active}
+                onChangeTab={() => onChangeTab(tab)}
+                icon={toIconName(tab.icon)}
+                panel={panel}
+                dashboard={dashboard}
+              />
+            );
           }
           return (
             <Tab
@@ -76,7 +88,7 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
-        {activeTab.id === PanelEditorTabId.Alert && <AlertTabIndex panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Alert && <PanelAlertTabContent panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
       </TabContent>
     </div>
@@ -99,69 +111,27 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
   return null;
 }
 
-function renderAlertTab(
-  tab: PanelEditorTab,
-  panel: PanelModel,
-  dashboard: DashboardModel,
-  onChangeTab: (tab: PanelEditorTab) => void
-) {
-  const alertingDisabled = !config.alertingEnabled && !config.unifiedAlertingEnabled;
-
-  if (alertingDisabled) {
-    return null;
-  }
-
-  if (config.unifiedAlertingEnabled) {
-    return (
-      <PanelAlertTab
-        key={tab.id}
-        label={tab.text}
-        active={tab.active}
-        onChangeTab={() => onChangeTab(tab)}
-        icon={toIconName(tab.icon)}
-        panel={panel}
-        dashboard={dashboard}
-      />
-    );
-  }
-
-  if (config.alertingEnabled) {
-    return (
-      <Tab
-        key={tab.id}
-        label={tab.text}
-        active={tab.active}
-        onChangeTab={() => onChangeTab(tab)}
-        icon={toIconName(tab.icon)}
-        counter={getCounter(panel, tab)}
-      />
-    );
-  }
-
-  return null;
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    `,
-    tabBar: css`
-      padding-left: ${theme.spacing(2)};
-    `,
-    tabContent: css`
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.components.panel.borderColor};
-      border-left: none;
-      border-bottom: none;
-      border-top-right-radius: ${theme.shape.borderRadius(1.5)};
-    `,
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+    }),
+    tabBar: css({
+      paddingLeft: theme.spacing(2),
+    }),
+    tabContent: css({
+      padding: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      minHeight: 0,
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.components.panel.borderColor}`,
+      borderLeft: 'none',
+      borderBottom: 'none',
+      borderTopRightRadius: theme.shape.borderRadius(1.5),
+    }),
   };
 };

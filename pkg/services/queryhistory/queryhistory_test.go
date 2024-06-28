@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -32,6 +34,10 @@ var (
 	testDsUID1 = "NCzh67i"
 	testDsUID2 = "ABch1a1"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type scenarioContext struct {
 	ctx           *web.Context
@@ -50,7 +56,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Form:   url.Values{},
 		}}
 		ctx.Req.Header.Add("Content-Type", "application/json")
-		sqlStore := db.InitTestDB(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		service := QueryHistoryService{
 			Cfg:   setting.NewCfg(),
 			store: sqlStore,
@@ -58,9 +64,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}
 		service.Cfg.QueryHistoryEnabled = true
 		quotaService := quotatest.New(false, nil)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := userimpl.ProvideService(
+			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
 		require.NoError(t, err)
 
 		usr := user.SignedInUser{

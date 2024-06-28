@@ -68,6 +68,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
   });
 }
 
+// Helper function to add template variables
 const addAzureMonitorVariable = (
   name: string,
   type: AzureQueryType,
@@ -89,62 +90,26 @@ const addAzureMonitorVariable = (
     .type(`${type.replace('Azure', '').trim()}{enter}`);
   switch (type) {
     case AzureQueryType.ResourceGroupsQuery:
-      e2eSelectors.variableEditor.subscription
-        .input()
-        .find('input')
-        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       break;
     case AzureQueryType.LocationsQuery:
-      e2eSelectors.variableEditor.subscription
-        .input()
-        .find('input')
-        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       break;
     case AzureQueryType.NamespacesQuery:
-      e2eSelectors.variableEditor.subscription
-        .input()
-        .find('input')
-        .type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup
-        .input()
-        .find('input')
-        .type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
       break;
     case AzureQueryType.ResourceNamesQuery:
-      e2eSelectors.variableEditor.subscription
-        .input()
-        .find('input')
-        .type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup
-        .input()
-        .find('input')
-        .type(`${options?.resourceGroup}{enter}`);
-      e2eSelectors.variableEditor.namespace
-        .input()
-        .find('input')
-        .type(`${options?.namespace}{enter}`);
-      e2eSelectors.variableEditor.region
-        .input()
-        .find('input')
-        .type(`${options?.region}{enter}`);
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.region.input().find('input').type(`${options?.region}{enter}`);
       break;
     case AzureQueryType.MetricNamesQuery:
-      e2eSelectors.variableEditor.subscription
-        .input()
-        .find('input')
-        .type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup
-        .input()
-        .find('input')
-        .type(`${options?.resourceGroup}{enter}`);
-      e2eSelectors.variableEditor.namespace
-        .input()
-        .find('input')
-        .type(`${options?.namespace}{enter}`);
-      e2eSelectors.variableEditor.resource
-        .input()
-        .find('input')
-        .type(`${options?.resource}{enter}`);
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.resource.input().find('input').type(`${options?.resource}{enter}`);
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
@@ -257,7 +222,7 @@ describe('Azure monitor datasource', () => {
           .click();
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(
-          "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
+          "Resources | where resourceGroup == 'cloud-plugins-e2e-test-azmon' | project name, resourceGroup"
         );
         e2e.components.PanelEditor.toggleTableView().click({ force: true });
       },
@@ -316,7 +281,7 @@ describe('Azure monitor datasource', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups')
       .parent()
       .find('input')
-      .type('cloud-plugins-e2e-test{downArrow}{enter}');
+      .type('cloud-plugins-e2e-test-azmon{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
       .parent()

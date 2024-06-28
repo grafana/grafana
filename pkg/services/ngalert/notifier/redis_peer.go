@@ -2,17 +2,20 @@ package notifier
 
 import (
 	"context"
+	"crypto/tls"
+	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/exp/slices"
 
 	"github.com/redis/go-redis/v9"
 
@@ -20,13 +23,17 @@ import (
 )
 
 type redisConfig struct {
-	addr     string
-	username string
-	password string
-	db       int
-	name     string
-	prefix   string
-	maxConns int
+	addr        string
+	username    string
+	password    string
+	db          int
+	name        string
+	prefix      string
+	maxConns    int
+	clusterMode bool
+
+	tlsEnabled bool
+	tls        dstls.ClientConfig
 }
 
 const (
@@ -51,10 +58,10 @@ const (
 
 type redisPeer struct {
 	name      string
-	redis     *redis.Client
+	redis     redis.UniversalClient
 	prefix    string
 	logger    log.Logger
-	states    map[string]cluster.State
+	states    map[string]alertingCluster.State
 	subs      map[string]*redis.PubSub
 	statesMtx sync.RWMutex
 
@@ -90,13 +97,35 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	if cfg.maxConns >= 0 {
 		poolSize = cfg.maxConns
 	}
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.addr,
-		Username: cfg.username,
-		Password: cfg.password,
-		DB:       cfg.db,
-		PoolSize: poolSize,
-	})
+
+	addrs := strings.Split(cfg.addr, ",")
+
+	var tlsClientConfig *tls.Config
+	var err error
+	if cfg.tlsEnabled {
+		tlsClientConfig, err = cfg.tls.GetTLSConfig()
+		if err != nil {
+			logger.Error("Failed to get TLS config", "err", err)
+			return nil, err
+		}
+	}
+
+	opts := &redis.UniversalOptions{
+		Addrs:     addrs,
+		Username:  cfg.username,
+		Password:  cfg.password,
+		DB:        cfg.db,
+		PoolSize:  poolSize,
+		TLSConfig: tlsClientConfig,
+	}
+
+	var rdb redis.UniversalClient
+	if cfg.clusterMode {
+		rdb = redis.NewClusterClient(opts.Cluster())
+	} else {
+		rdb = redis.NewClient(opts.Simple())
+	}
+
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
 		logger.Error("Failed to ping redis - redis-based alertmanager clustering may not be available", "err", cmd.Err())
@@ -110,7 +139,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		name:             name,
 		redis:            rdb,
 		logger:           logger,
-		states:           map[string]cluster.State{},
+		states:           map[string]alertingCluster.State{},
 		subs:             map[string]*redis.PubSub{},
 		pushPullInterval: pushPullInterval,
 		readyc:           make(chan struct{}),
@@ -425,18 +454,18 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	close(p.readyc)
 }
 
-func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Registerer) cluster.ClusterChannel {
+func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer) alertingCluster.ClusterChannel {
 	p.statesMtx.Lock()
 	defer p.statesMtx.Unlock()
 	p.states[key] = state
 	// As we also want to get the state from other nodes, we subscribe to the key.
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
-	go p.receiveLoop(key, sub)
+	go p.receiveLoop(sub)
 	p.subs[key] = sub
 	return newRedisChannel(p, key, p.withPrefix(key), update)
 }
 
-func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
+func (p *redisPeer) receiveLoop(channel *redis.PubSub) {
 	for {
 		select {
 		case <-p.shutdownc:
@@ -453,7 +482,7 @@ func (p *redisPeer) mergePartialState(buf []byte) {
 	p.messagesReceived.WithLabelValues(update).Inc()
 	p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(buf)))
 
-	var part clusterpb.Part
+	var part alertingClusterPB.Part
 	if err := proto.Unmarshal(buf, &part); err != nil {
 		p.logger.Warn("Error decoding the received broadcast message", "err", err)
 		return
@@ -510,7 +539,7 @@ func (p *redisPeer) mergeFullState(buf []byte) {
 	p.messagesReceived.WithLabelValues(fullState).Inc()
 	p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(buf)))
 
-	var fs clusterpb.FullState
+	var fs alertingClusterPB.FullState
 	if err := proto.Unmarshal(buf, &fs); err != nil {
 		p.logger.Warn("Error unmarshaling the received remote state", "err", err)
 		return
@@ -564,8 +593,8 @@ func (p *redisPeer) requestFullState() {
 func (p *redisPeer) LocalState() []byte {
 	p.statesMtx.RLock()
 	defer p.statesMtx.RUnlock()
-	all := &clusterpb.FullState{
-		Parts: make([]clusterpb.Part, 0, len(p.states)),
+	all := &alertingClusterPB.FullState{
+		Parts: make([]alertingClusterPB.Part, 0, len(p.states)),
 	}
 
 	for key, s := range p.states {
@@ -573,7 +602,7 @@ func (p *redisPeer) LocalState() []byte {
 		if err != nil {
 			p.logger.Warn("Error encoding the local state", "err", err, "key", key)
 		}
-		all.Parts = append(all.Parts, clusterpb.Part{Key: key, Data: b})
+		all.Parts = append(all.Parts, alertingClusterPB.Part{Key: key, Data: b})
 	}
 	b, err := proto.Marshal(all)
 	if err != nil {

@@ -1,8 +1,13 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+
+import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 
 import { MultiFilter } from './MultiFilter';
+
+const ds = setupMockedDataSource({
+  variables: [],
+});
 
 describe('MultiFilters', () => {
   describe('when rendered with two existing multifilters', () => {
@@ -12,7 +17,7 @@ describe('MultiFilters', () => {
         InstanceGroup: ['Group1'],
       };
       const onChange = jest.fn();
-      render(<MultiFilter filters={filters} onChange={onChange} />);
+      render(<MultiFilter filters={filters} onChange={onChange} datasource={ds.datasource} />);
       const filterItems = screen.getAllByTestId('cloudwatch-multifilter-item');
       expect(filterItems.length).toBe(2);
 
@@ -28,7 +33,7 @@ describe('MultiFilters', () => {
     it('it should add the new item but not call onChange', async () => {
       const filters = {};
       const onChange = jest.fn();
-      render(<MultiFilter filters={filters} onChange={onChange} />);
+      render(<MultiFilter filters={filters} onChange={onChange} datasource={ds.datasource} />);
 
       await userEvent.click(screen.getByLabelText('Add'));
       expect(screen.getByTestId('cloudwatch-multifilter-item')).toBeInTheDocument();
@@ -40,7 +45,7 @@ describe('MultiFilters', () => {
     it('it should add the new item but not call onChange', async () => {
       const filters = {};
       const onChange = jest.fn();
-      render(<MultiFilter filters={filters} onChange={onChange} />);
+      render(<MultiFilter filters={filters} onChange={onChange} datasource={ds.datasource} />);
 
       await userEvent.click(screen.getByLabelText('Add'));
       const filterItemElement = screen.getByTestId('cloudwatch-multifilter-item');
@@ -60,7 +65,7 @@ describe('MultiFilters', () => {
     it('it should add the new item and trigger onChange', async () => {
       const filters = {};
       const onChange = jest.fn();
-      render(<MultiFilter filters={filters} onChange={onChange} />);
+      render(<MultiFilter filters={filters} onChange={onChange} datasource={ds.datasource} />);
 
       const label = await screen.findByLabelText('Add');
       await userEvent.click(label);
@@ -88,7 +93,7 @@ describe('MultiFilters', () => {
     it('it should change the key and call onChange', async () => {
       const filters = { 'my-key': ['my-value'] };
       const onChange = jest.fn();
-      render(<MultiFilter filters={filters} onChange={onChange} />);
+      render(<MultiFilter filters={filters} onChange={onChange} datasource={ds.datasource} />);
 
       const filterItemElement = screen.getByTestId('cloudwatch-multifilter-item');
       expect(filterItemElement).toBeInTheDocument();

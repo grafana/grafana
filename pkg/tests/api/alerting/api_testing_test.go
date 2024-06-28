@@ -24,12 +24,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
 	TESTDATA_UID = "testdata"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestGrafanaRuleConfig(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -43,13 +48,15 @@ func TestGrafanaRuleConfig(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	userId := createUser(t, env.SQLStore, user.CreateUserCommand{
+	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	apiCli.CreateFolder(t, "NamespaceUID", "NamespaceTitle")
 
 	dsCmd := &datasources.AddDataSourceCommand{
 		Name:   "TestDatasource",
@@ -253,7 +260,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 
 		t.Skip("flakey tests - skipping") //TODO: Fix tests and remove skip.
 
-		testUserId := createUser(t, env.SQLStore, user.CreateUserCommand{
+		testUserId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 			DefaultOrgRole: "DOESNOTEXIST", // Needed so that the SignedInUser has OrgId=1. Otherwise, datasource will not be found.
 			Password:       "test",
 			Login:          "test",
@@ -268,7 +275,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		// access control permissions store
-		permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
+		permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
 			accesscontrol.GlobalOrgID,
 			accesscontrol.User{ID: testUserId},

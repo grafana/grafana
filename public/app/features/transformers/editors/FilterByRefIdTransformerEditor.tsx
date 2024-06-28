@@ -1,4 +1,4 @@
-import React from 'react';
+import { PureComponent } from 'react';
 
 import {
   DataTransformerID,
@@ -9,7 +9,9 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
-import { HorizontalGroup, FilterPill, FieldValidationMessage } from '@grafana/ui';
+import { HorizontalGroup, FilterPill, FieldValidationMessage, InlineField } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
 
@@ -23,7 +25,7 @@ interface RefIdInfo {
   refId: string;
   count: number;
 }
-export class FilterByRefIdTransformerEditor extends React.PureComponent<
+export class FilterByRefIdTransformerEditor extends PureComponent<
   FilterByRefIdTransformerEditorProps,
   FilterByRefIdTransformerEditorState
 > {
@@ -112,27 +114,24 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
             <FieldValidationMessage>Filter data by query expects multiple queries in the input.</FieldValidationMessage>
           </div>
         )}
-        <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label width-8">Series refId</div>
-            <HorizontalGroup spacing="xs" align="flex-start" wrap>
-              {options.map((o, i) => {
-                const label = `${o.refId}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
-                const isSelected = selected.indexOf(o.refId) > -1;
-                return (
-                  <FilterPill
-                    key={`${o.refId}/${i}`}
-                    onClick={() => {
-                      this.onFieldToggle(o.refId);
-                    }}
-                    label={label}
-                    selected={isSelected}
-                  />
-                );
-              })}
-            </HorizontalGroup>
-          </div>
-        </div>
+        <InlineField label="Series refId" labelWidth={16} shrink>
+          <HorizontalGroup spacing="xs" align="flex-start" wrap>
+            {options.map((o, i) => {
+              const label = `${o.refId}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
+              const isSelected = selected.indexOf(o.refId) > -1;
+              return (
+                <FilterPill
+                  key={`${o.refId}/${i}`}
+                  onClick={() => {
+                    this.onFieldToggle(o.refId);
+                  }}
+                  label={label}
+                  selected={isSelected}
+                />
+              );
+            })}
+          </HorizontalGroup>
+        </InlineField>
       </>
     );
   }
@@ -143,8 +142,9 @@ export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<F
     id: DataTransformerID.filterByRefId,
     editor: FilterByRefIdTransformerEditor,
     transformation: standardTransformers.filterFramesByRefIdTransformer,
-    name: 'Filter data by query',
+    name: standardTransformers.filterFramesByRefIdTransformer.name,
     description:
       'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
     categories: new Set([TransformerCategory.Filter]),
+    help: getTransformationContent(DataTransformerID.filterByRefId).helperDocs,
   };

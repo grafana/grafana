@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import * as React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Field, FieldProps } from '../Forms/Field';
@@ -104,17 +105,12 @@ export function AutoSaveField<T = string>(props: Props<T>) {
         )}
       </Field>
       {fieldState.isLoading && (
-        <InlineToast referenceElement={fieldRef.current} placement="right" alternativePlacement="bottom">
+        <InlineToast referenceElement={fieldRef.current} placement="right">
           Saving <EllipsisAnimated />
         </InlineToast>
       )}
       {fieldState.showSuccess && (
-        <InlineToast
-          suffixIcon={'check'}
-          referenceElement={fieldRef.current}
-          placement="right"
-          alternativePlacement="bottom"
-        >
+        <InlineToast suffixIcon={'check'} referenceElement={fieldRef.current} placement="right">
           Saved!
         </InlineToast>
       )}

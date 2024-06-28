@@ -37,7 +37,8 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 		INNER JOIN dashboard ON ids.id = dashboard.id`)
 	b.sql.WriteString("\n")
 
-	if b.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
+		// covered by UQE_folder_org_id_uid
 		b.sql.WriteString(
 			`LEFT OUTER JOIN folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`)
 	} else {
@@ -65,9 +66,10 @@ func (b *Builder) buildSelect() {
 			dashboard_tag.term,
 			dashboard.is_folder,
 			dashboard.folder_id,
+			dashboard.deleted,
 			folder.uid AS folder_uid,
 		`)
-	if b.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 		b.sql.WriteString(`
 			folder.title AS folder_slug,`)
 	} else {

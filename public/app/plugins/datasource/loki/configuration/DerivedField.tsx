@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
-import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Switch } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { DataSourcePicker } from '@grafana/runtime';
+import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
+
+type MatcherType = 'label' | 'regex';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
@@ -32,6 +35,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
   `,
   dataSource: css``,
+  nameMatcherField: css({
+    width: theme.spacing(20),
+    marginRight: theme.spacing(0.5),
+  }),
 });
 
 type Props = {
@@ -47,6 +54,7 @@ export const DerivedField = (props: Props) => {
   const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
   const previousUid = usePrevious(value.datasourceUid);
+  const [fieldType, setFieldType] = useState<MatcherType>(value.matcherType ?? 'regex');
 
   // Force internal link visibility change if uid changed outside of this component.
   useEffect(() => {
@@ -74,12 +82,45 @@ export const DerivedField = (props: Props) => {
           <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" invalid={invalidName} />
         </Field>
         <Field
-          className={styles.regexField}
+          className={styles.nameMatcherField}
           label={
             <TooltipLabel
-              label="Regex"
-              content="Use to parse and capture some part of the log message. You can use the captured groups in the template."
+              label="Type"
+              content="Derived fields can be created from labels or by applying a regular expression to the log message."
             />
+          }
+        >
+          <Select
+            options={[
+              { label: 'Regex in log line', value: 'regex' },
+              { label: 'Label', value: 'label' },
+            ]}
+            value={fieldType}
+            onChange={(type) => {
+              // make sure this is a valid MatcherType
+              if (type.value === 'label' || type.value === 'regex') {
+                setFieldType(type.value);
+                onChange({
+                  ...value,
+                  matcherType: type.value,
+                });
+              }
+            }}
+          />
+        </Field>
+        <Field
+          className={styles.regexField}
+          label={
+            <>
+              {fieldType === 'regex' && (
+                <TooltipLabel
+                  label="Regex"
+                  content="Use to parse and capture some part of the log message. You can use the captured groups in the template."
+                />
+              )}
+
+              {fieldType === 'label' && <TooltipLabel label="Label" content="Use to derive the field from a label." />}
+            </>
           }
         >
           <Input value={value.matcherRegex} onChange={handleChange('matcherRegex')} />

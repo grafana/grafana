@@ -1,20 +1,21 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
-import FlameGraphContextMenu from './FlameGraphContextMenu';
+import FlameGraphContextMenu, { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
 
 type Props = {
   data: FlameGraphDataContainer;
   rangeMin: number;
   rangeMax: number;
-  search: string;
+  matchedLabels: Set<string> | undefined;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   style?: React.CSSProperties;
@@ -32,13 +33,22 @@ type Props = {
   totalProfileTicks: number;
   totalProfileTicksRight?: number;
   totalViewTicks: number;
+  showFlameGraphOnly?: boolean;
+
+  collapsedMap: CollapsedMap;
+  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
+  collapsing?: boolean;
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+
+  selectedView: SelectedView;
+  search: string;
 };
 
 const FlameGraphCanvas = ({
   data,
   rangeMin,
   rangeMax,
-  search,
+  matchedLabels,
   setRangeMin,
   setRangeMax,
   onItemFocused,
@@ -52,6 +62,13 @@ const FlameGraphCanvas = ({
   root,
   direction,
   depth,
+  showFlameGraphOnly,
+  collapsedMap,
+  setCollapsedMap,
+  collapsing,
+  getExtraContextMenuButtons,
+  selectedView,
+  search,
 }: Props) => {
   const styles = getStyles();
 
@@ -71,13 +88,14 @@ const FlameGraphCanvas = ({
     depth,
     rangeMax,
     rangeMin,
-    search,
+    matchedLabels,
     textAlign,
     totalViewTicks,
     // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
     totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
     totalTicksRight: totalProfileTicksRight,
     wrapperWidth,
+    collapsedMap,
   });
 
   const onGraphClick = useCallback(
@@ -91,7 +109,8 @@ const FlameGraphCanvas = ({
         depth,
         pixelsPerTick,
         totalViewTicks,
-        rangeMin
+        rangeMin,
+        collapsedMap
       );
 
       // if clicking on a block in the canvas
@@ -107,7 +126,7 @@ const FlameGraphCanvas = ({
         setClickedItemData(undefined);
       }
     },
-    [data, rangeMin, rangeMax, totalViewTicks, root, direction, depth]
+    [data, rangeMin, rangeMax, totalViewTicks, root, direction, depth, collapsedMap]
   );
 
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>();
@@ -124,7 +143,8 @@ const FlameGraphCanvas = ({
           depth,
           pixelsPerTick,
           totalViewTicks,
-          rangeMin
+          rangeMin,
+          collapsedMap
         );
 
         if (item) {
@@ -133,7 +153,7 @@ const FlameGraphCanvas = ({
         }
       }
     },
-    [rangeMin, rangeMax, totalViewTicks, clickedItemData, setMousePosition, root, direction, depth]
+    [rangeMin, rangeMax, totalViewTicks, clickedItemData, setMousePosition, root, direction, depth, collapsedMap]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -165,10 +185,19 @@ const FlameGraphCanvas = ({
           onMouseLeave={onGraphMouseLeave}
         />
       </div>
-      <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalViewTicks} />
-      {clickedItemData && (
+      <FlameGraphTooltip
+        position={mousePosition}
+        item={tooltipItem}
+        data={data}
+        totalTicks={totalViewTicks}
+        collapseConfig={tooltipItem ? collapsedMap.get(tooltipItem) : undefined}
+      />
+      {!showFlameGraphOnly && clickedItemData && (
         <FlameGraphContextMenu
+          data={data}
           itemData={clickedItemData}
+          collapsing={collapsing}
+          collapseConfig={collapsedMap.get(clickedItemData.item)}
           onMenuItemClick={() => {
             setClickedItemData(undefined);
           }}
@@ -180,6 +209,23 @@ const FlameGraphCanvas = ({
           onSandwich={() => {
             onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));
           }}
+          onExpandGroup={() => {
+            setCollapsedMap(collapsedMap.setCollapsedStatus(clickedItemData.item, false));
+          }}
+          onCollapseGroup={() => {
+            setCollapsedMap(collapsedMap.setCollapsedStatus(clickedItemData.item, true));
+          }}
+          onExpandAllGroups={() => {
+            setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
+          }}
+          onCollapseAllGroups={() => {
+            setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
+          }}
+          allGroupsCollapsed={Array.from(collapsedMap.values()).every((i) => i.collapsed)}
+          allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
+          getExtraContextMenuButtons={getExtraContextMenuButtons}
+          selectedView={selectedView}
+          search={search}
         />
       )}
     </div>
@@ -190,7 +236,6 @@ const getStyles = () => ({
   graph: css({
     label: 'graph',
     overflow: 'auto',
-    height: '100%',
     flexGrow: 1,
     flexBasis: '50%',
   }),
@@ -217,7 +262,7 @@ const getStyles = () => ({
   }),
 });
 
-const convertPixelCoordinatesToBarCoordinates = (
+export const convertPixelCoordinatesToBarCoordinates = (
   // position relative to the start of the graph
   pos: { x: number; y: number },
   root: LevelItem,
@@ -225,7 +270,8 @@ const convertPixelCoordinatesToBarCoordinates = (
   depth: number,
   pixelsPerTick: number,
   totalTicks: number,
-  rangeMin: number
+  rangeMin: number,
+  collapsedMap: CollapsedMap
 ): LevelItem | undefined => {
   let next: LevelItem | undefined = root;
   let currentLevel = direction === 'children' ? 0 : depth - 1;
@@ -247,7 +293,13 @@ const convertPixelCoordinatesToBarCoordinates = (
       const xEnd = getBarX(child.start + child.value, totalTicks, rangeMin, pixelsPerTick);
       if (xStart <= pos.x && pos.x < xEnd) {
         next = child;
-        currentLevel = currentLevel + (direction === 'children' ? 1 : -1);
+        // Check if item is a collapsed item. if so also check if the item is the first collapsed item in the chain,
+        // which we render, or a child which we don't render. If it's a child in the chain then don't increase the
+        // level end effectively skip it.
+        const collapsedConfig = collapsedMap.get(child);
+        if (!collapsedConfig || !collapsedConfig.collapsed || collapsedConfig.items[0] === child) {
+          currentLevel = currentLevel + (direction === 'children' ? 1 : -1);
+        }
         break;
       }
     }

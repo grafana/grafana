@@ -4,12 +4,11 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 export enum TextMode {
   Code = 'code',

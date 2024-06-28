@@ -14,10 +14,12 @@ import {
   Pipe,
   ScalarFilter,
   SelectArgs,
+  SelectOperation,
   SpansetFilter,
   SpansetPipeline,
   SpansetPipelineExpression,
   Static,
+  String as StringNode,
   TraceQL,
 } from '@grafana/lezer-traceql';
 
@@ -86,7 +88,7 @@ type Path = Array<[Direction, NodeType[]]>;
 
 type Resolver = {
   path: NodeType[];
-  fun: (node: SyntaxNode, text: string, pos: number, originalPos: number) => SituationType | null;
+  fun: (node: SyntaxNode, text: string, pos: number, originalPos: number) => SituationType | void;
 };
 
 function getErrorNode(tree: Tree, cursorPos: number): SyntaxNode | null {
@@ -178,7 +180,7 @@ export function getSituation(text: string, offset: number): Situation | null {
     ids.push(cur.type.id);
   }
 
-  let situationType: SituationType | null = null;
+  let situationType: SituationType | void = undefined;
   for (let resolver of RESOLVERS) {
     if (isPathMatch(resolver.path, ids)) {
       situationType = resolver.fun(currentNode, text, shiftedOffset, offset);
@@ -202,9 +204,7 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [ERROR_NODE_ID, SpansetFilter],
-    fun: () => ({
-      type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
-    }),
+    fun: resolveSpansetWithNoClosedBrace,
   },
   {
     path: [ERROR_NODE_ID, Aggregate],
@@ -215,20 +215,20 @@ const RESOLVERS: Resolver[] = [
     fun: resolveAttributeForFunction,
   },
   {
+    path: [ERROR_NODE_ID, GroupOperation],
+    fun: resolveAttributeForFunction,
+  },
+  {
+    path: [ERROR_NODE_ID, SelectOperation],
+    fun: resolveAttributeForFunction,
+  },
+  {
     path: [ERROR_NODE_ID, SpansetPipelineExpression],
     fun: resolveSpansetPipeline,
   },
   {
     path: [ERROR_NODE_ID, ScalarFilter, SpansetPipeline],
     fun: resolveArithmeticOperator,
-  },
-  {
-    path: [ERROR_NODE_ID, TraceQL],
-    fun: () => {
-      return {
-        type: 'UNKNOWN',
-      };
-    },
   },
   // Curson on valid node cases (the whole query could contain errors nevertheless)
   {
@@ -247,22 +247,45 @@ const RESOLVERS: Resolver[] = [
     path: [TraceQL],
     fun: resolveNewSpansetExpression,
   },
+  {
+    path: [StringNode, Static],
+    fun: resolveExpression,
+  },
 ];
 
 const resolveAttributeCompletion = (node: SyntaxNode, text: string, pos: number): SituationType | void => {
   // The user is completing an expression. We can take advantage of the fact that the Monaco editor is smart
   // enough to automatically detect that there are some characters before the cursor and to take them into
   // account when providing suggestions.
-  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
-  if (endOfPathNode && text[pos - 1] !== ' ') {
-    const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
+  const getAttributeFieldUpToDot = (node: SyntaxNode) => {
+    const attributeFieldParent = walk(node, [['firstChild', [AttributeField]]]);
     const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
     const indexOfDot = attributeFieldParentText.indexOf('.');
-    const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
+    return attributeFieldParentText.slice(0, indexOfDot);
+  };
 
+  // If there is a space, for sure the attribute is completed and no suggestions to complete it should be provided
+  if (text[pos - 1] === ' ') {
+    return;
+  }
+
+  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
+  if (endOfPathNode) {
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
-      scope: attributeFieldUpToDot,
+      scope: getAttributeFieldUpToDot(endOfPathNode),
+    };
+  }
+
+  const endOfPathNode2 = walk(node, [
+    ['parent', [SpansetFilter]],
+    ['firstChild', [FieldExpression]],
+  ]);
+  // In this case, we also need to check the character at `pos`
+  if (endOfPathNode2 && text[pos] !== ' ') {
+    return {
+      type: 'SPANSET_IN_NAME_SCOPE',
+      scope: getAttributeFieldUpToDot(endOfPathNode2),
     };
   }
 };
@@ -336,8 +359,25 @@ function resolveExpression(node: SyntaxNode, text: string, _: number, originalPo
     return situation;
   }
 
+  if (
+    walk(node, [
+      ['parent', [Static]],
+      ['parent', [FieldExpression]],
+      ['prevSibling', [FieldOp]],
+    ])
+  ) {
+    let attributeField = node.parent?.parent?.prevSibling?.prevSibling;
+    if (attributeField) {
+      return {
+        type: 'SPANSET_IN_VALUE',
+        tagName: getNodeText(attributeField, text),
+        betweenQuotes: true,
+      };
+    }
+  }
+
   if (node.prevSibling?.type.id === FieldOp) {
-    let attributeField = node.prevSibling.prevSibling;
+    let attributeField = node.prevSibling?.prevSibling;
     if (attributeField) {
       return {
         type: 'SPANSET_IN_VALUE',
@@ -358,16 +398,12 @@ function resolveExpression(node: SyntaxNode, text: string, _: number, originalPo
   };
 }
 
-function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): SituationType {
-  if (node.prevSibling?.type.id === ComparisonOp) {
+function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): SituationType | void {
+  if (node.prevSibling?.type.id !== ComparisonOp) {
     return {
-      type: 'UNKNOWN',
+      type: 'SPANSET_COMPARISON_OPERATORS',
     };
   }
-
-  return {
-    type: 'SPANSET_COMPARISON_OPERATORS',
-  };
 }
 
 function resolveNewSpansetExpression(node: SyntaxNode, text: string, offset: number): SituationType {
@@ -393,16 +429,13 @@ function resolveNewSpansetExpression(node: SyntaxNode, text: string, offset: num
   };
 }
 
-function resolveAttributeForFunction(node: SyntaxNode, _0: string, _1: number): SituationType {
+function resolveAttributeForFunction(node: SyntaxNode, _0: string, _1: number): SituationType | void {
   const parent = node?.parent;
-  if (!!parent && [IntrinsicField, Aggregate, GroupOperation, SelectArgs].includes(parent.type.id)) {
+  if (!!parent && [IntrinsicField, Aggregate, GroupOperation, SelectOperation, SelectArgs].includes(parent.type.id)) {
     return {
       type: 'ATTRIBUTE_FOR_FUNCTION',
     };
   }
-  return {
-    type: 'UNKNOWN',
-  };
 }
 
 function resolveSpansetPipeline(node: SyntaxNode, _1: string, _2: number): SituationType {
@@ -413,5 +446,16 @@ function resolveSpansetPipeline(node: SyntaxNode, _1: string, _2: number): Situa
   }
   return {
     type: 'NEW_SPANSET',
+  };
+}
+
+function resolveSpansetWithNoClosedBrace(node: SyntaxNode, text: string, originalPos: number): SituationType {
+  const situation = resolveAttributeCompletion(node, text, originalPos);
+  if (situation) {
+    return situation;
+  }
+
+  return {
+    type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
   };
 }

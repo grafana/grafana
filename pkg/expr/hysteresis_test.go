@@ -15,7 +15,7 @@ import (
 
 func TestHysteresisExecute(t *testing.T) {
 	number := func(label string, value float64) mathexp.Number {
-		n := mathexp.NewNumber("A", data.Labels{"label": label})
+		n := mathexp.NewNumber("B", data.Labels{"label": label})
 		n.SetValue(&value)
 		return n
 	}
@@ -95,13 +95,13 @@ func TestHysteresisExecute(t *testing.T) {
 					ReferenceVar:  "A",
 					RefID:         "B",
 					ThresholdFunc: ThresholdIsAbove,
-					Conditions:    []float64{loadThreshold},
+					predicate:     greaterThanPredicate{loadThreshold},
 				},
 				UnloadingThresholdFunc: ThresholdCommand{
 					ReferenceVar:  "A",
 					RefID:         "B",
 					ThresholdFunc: ThresholdIsAbove,
-					Conditions:    []float64{unloadThreshold},
+					predicate:     greaterThanPredicate{unloadThreshold},
 				},
 				LoadedDimensions: tc.loadedDimensions,
 			}
@@ -183,6 +183,39 @@ func TestLoadedDimensionsFromFrame(t *testing.T) {
 				b, _ := json.Marshal(testCase.frame)
 				t.Log(string(b))
 			}
+		})
+	}
+}
+
+func TestFingerprintsToFrame(t *testing.T) {
+	testCases := []struct {
+		name          string
+		input         Fingerprints
+		expected      Fingerprints
+		expectedError bool
+	}{
+		{
+			name:     "when empty map",
+			input:    Fingerprints{},
+			expected: Fingerprints{},
+		},
+		{
+			name:     "when nil",
+			input:    nil,
+			expected: Fingerprints{},
+		},
+		{
+			name:     "when has values",
+			input:    Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
+			expected: Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			frame := FingerprintsToFrame(testCase.input)
+			actual, err := FingerprintsFromFrame(frame)
+			require.NoError(t, err)
+			require.EqualValues(t, testCase.expected, actual)
 		})
 	}
 }

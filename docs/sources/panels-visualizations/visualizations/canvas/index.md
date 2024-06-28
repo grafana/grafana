@@ -2,7 +2,7 @@
 aliases:
   - ../../features/panels/canvas/
   - ../../visualizations/canvas/
-description: Canvas visualization documentation
+description: Configure options for Grafana's canvas visualization
 keywords:
   - grafana
   - canvas
@@ -15,6 +15,17 @@ labels:
     - oss
 title: Canvas
 weight: 100
+refs:
+  data-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
+  add-field-from-calculation-transform:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
 ---
 
 # Canvas
@@ -27,6 +38,24 @@ Canvases combine the power of Grafana with the flexibility of custom elements. C
 
 ## Elements
 
+Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. You can rotate and move elements around the canvas. When you move elements, snapping and alignment guides help you create more precise layouts.
+
+{{% admonition type="note" %}}
+Element snapping and alignment only works when the canvas is not zoomed in.
+{{% /admonition %}}
+
+When you select an element that you've added to a canvas, you can access editing options for it that are dependent on the element type. The following sections describe the different elements available.
+
+### Basic shapes
+
+A basic shape element can display text (both fixed and field data) and its background color can be changed based on data thresholds. You can add the following basic shapes to a canvas:
+
+- Cloud
+- Ellipse
+- Parallelogram
+- Rectangle
+- Triangle
+
 ### Metric value
 
 The metric value element lets you easily select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
@@ -38,14 +67,6 @@ The metric value element lets you easily select the data you want to display on 
 The text element lets you easily add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
-
-### Ellipse
-
-The ellipse element lets you add a basic ellipse to the canvas. An ellipse element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
-
-### Rectangle
-
-The rectangle element lets you add a basic rectangle to the canvas. A rectangle element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
 
 ### Icon
 
@@ -67,13 +88,29 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
+{{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
+
 ## Connections
 
-When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
+When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on.
+
+To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
 
 {{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
-You can set both the size and color of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
+### Adjust connectors
+
+You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the midpoint back until the midpoint controls disappear.
+
+If you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line.
+
+<!-- TODO: Use updated demo from what's new when uploaded to YouTube -->
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4" alt="Changing a connector from a straight line to a right angle" >}}
+
+### Style connectors
+
+You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
@@ -84,6 +121,26 @@ You can set both the size and color of connections based on fixed or field value
 You can edit your canvas inline while in the context of dashboard mode.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" caption="Inline editor demo" >}}
+
+### Pan and zoom
+
+You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
+
+{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
+
+{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
+
+#### Infinite panning
+
+You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
+
+{{% admonition type="note" %}}
+Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
+{{% /admonition %}}
+
+<!-- TODO: Add gif -->
 
 ### Context menu
 
@@ -107,7 +164,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 ### Data links
 
-Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). You can create a data link for a metric-value element and display it for all elements that use the field name by following these steps:
+Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
 1. Set an element to be tied to a field value.
 1. Turn off the inline editing toggle.
@@ -118,7 +175,7 @@ Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-vis
 1. Hover over the element to display the data link tooltip.
 1. Click on the element to be able to open the data link.
 
-If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element.
+If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](ref:add-field-from-calculation-transform). The alias you create in the transformation will appear as a field you can use with an element.
 
 1. In the panel editor for the canvas, click the **Transform** tab.
 1. Select **Add field from calculation** from the list of transformations, or click **+ Add transformation** to display the list first.
@@ -128,3 +185,23 @@ If multiple elements use the same field name, and you want to control which elem
 1. Reference the new unique field alias to create the element and field override.
 
 {{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

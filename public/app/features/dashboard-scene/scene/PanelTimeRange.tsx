@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
 import {
@@ -12,7 +11,7 @@ import {
 import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
-interface PanelTimeRangeState extends SceneTimeRangeState {
+export interface PanelTimeRangeState extends SceneTimeRangeState {
   timeFrom?: string;
   timeShift?: string;
   hideTimeOverride?: boolean;
@@ -30,8 +29,21 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       to: 'now',
       value: getDefaultTimeRange(),
     });
+
+    this.addActivationHandler(() => this._onActivate());
   }
 
+  private _onActivate() {
+    this._subs.add(
+      this.subscribeToState((n, p) => {
+        // Listen to own changes and update time info when required
+        if (n.timeFrom !== p.timeFrom || n.timeShift !== p.timeShift) {
+          const { timeInfo, timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+          this.setState({ timeInfo, value: timeRange });
+        }
+      })
+    );
+  }
   protected ancestorTimeRangeChanged(timeRange: SceneTimeRangeState): void {
     const overrideResult = this.getTimeOverride(timeRange.value);
     this.setState({ value: overrideResult.timeRange, timeInfo: overrideResult.timeInfo });
@@ -104,6 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     timeshift: css({
       color: theme.colors.text.link,
       gap: theme.spacing(0.5),
+      whiteSpace: 'nowrap',
     }),
   };
 };

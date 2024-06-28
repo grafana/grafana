@@ -1,29 +1,34 @@
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
+import { SetupServer } from 'msw/node';
 
 import { AlertmanagerChoice, AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversStateDTO } from 'app/types';
 
-import { mockApi, setupMswServer } from '../../../mockApi';
+import { mockApi } from '../../../mockApi';
 import { mockAlertmanagerChoiceResponse } from '../../../mocks/alertmanagerApi';
 import { grafanaNotifiersMock } from '../../../mocks/grafana-notifiers';
 
 import alertmanagerMock from './alertmanager.config.mock.json';
 import receiversMock from './receivers.mock.json';
 
-export default () => {
-  const server = setupMswServer();
-
+export default (server: SetupServer) => {
   server.use(
     // this endpoint is a grafana built-in alertmanager
-    rest.get('/api/alertmanager/grafana/config/api/v1/alerts', (_req, res, ctx) =>
-      res(ctx.json<AlertManagerCortexConfig>(alertmanagerMock))
+    http.get('/api/alertmanager/grafana/config/api/v1/alerts', () =>
+      HttpResponse.json<AlertManagerCortexConfig>(alertmanagerMock)
     ),
     // this endpoint is only available for the built-in alertmanager
-    rest.get('/api/alertmanager/grafana/config/api/v1/receivers', (_req, res, ctx) =>
-      res(ctx.json<ReceiversStateDTO[]>(receiversMock))
+    http.get('/api/alertmanager/grafana/config/api/v1/receivers', () =>
+      HttpResponse.json<ReceiversStateDTO[]>(receiversMock)
     ),
     // this endpoint will respond if the OnCall plugin is installed
-    rest.get('/api/plugins/grafana-oncall-app/settings', (_req, res, ctx) => res(ctx.status(404)))
+    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json({}, { status: 404 })),
+
+    // this endpoint looks up alerts when copying notification template
+    http.get('/api/alertmanager/grafana/api/v2/alerts', () => HttpResponse.json([])),
+
+    // this endpoint returns preview of a template we're editing
+    http.post('/api/alertmanager/grafana/config/api/v1/templates/test', () => HttpResponse.json({}, { status: 200 }))
   );
 
   // this endpoint is for rendering the "additional AMs to configure" warning
@@ -36,4 +41,46 @@ export default () => {
   mockApi(server).grafanaNotifiers(grafanaNotifiersMock);
 
   return server;
+};
+
+export const setupTestEndpointMock = (server: SetupServer) => {
+  const mock = jest.fn();
+
+  server.use(
+    http.post(
+      '/api/alertmanager/grafana/config/api/v1/receivers/test',
+      async ({ request }) => {
+        const requestBody = await request.json();
+        mock(requestBody);
+
+        return HttpResponse.json({});
+      },
+      {
+        once: true,
+      }
+    )
+  );
+
+  return mock;
+};
+
+export const setupSaveEndpointMock = (server: SetupServer) => {
+  const mock = jest.fn();
+
+  server.use(
+    http.post(
+      '/api/alertmanager/grafana/config/api/v1/alerts',
+      async ({ request }) => {
+        const requestBody = await request.json();
+        mock(requestBody);
+
+        return HttpResponse.json({});
+      },
+      {
+        once: true,
+      }
+    )
+  );
+
+  return mock;
 };

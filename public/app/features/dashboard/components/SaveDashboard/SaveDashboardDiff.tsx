@@ -1,13 +1,11 @@
-import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { Box, Spinner, Stack } from '@grafana/ui';
+import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
-import { DiffGroup } from '../VersionHistory/DiffGroup';
-import { DiffViewer } from '../VersionHistory/DiffViewer';
-import { Diffs } from '../VersionHistory/utils';
+import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
+import { DiffViewer } from '../../../dashboard-scene/settings/version-history/DiffViewer';
 
 interface SaveDashboardDiffProps {
   oldValue?: unknown;
@@ -15,10 +13,19 @@ interface SaveDashboardDiffProps {
 
   // calculated by parent so we can see summary in tabs
   diff?: Diffs;
+  hasFolderChanges?: boolean;
+  oldFolder?: string;
+  newFolder?: string;
 }
 
-export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDiffProps) => {
-  const styles = useStyles2(getStyles);
+export const SaveDashboardDiff = ({
+  diff,
+  oldValue,
+  newValue,
+  hasFolderChanges,
+  oldFolder,
+  newFolder,
+}: SaveDashboardDiffProps) => {
   const loader = useAsync(async () => {
     const oldJSON = JSON.stringify(oldValue ?? {}, null, 2);
     const newJSON = JSON.stringify(newValue ?? {}, null, 2);
@@ -27,6 +34,7 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
     let schemaChange: ReactElement | undefined = undefined;
     const diffs: ReactElement[] = [];
     let count = 0;
+
     if (diff) {
       for (const [key, changes] of Object.entries(diff)) {
         // this takes a long time for large diffs (so this is async)
@@ -39,6 +47,7 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
         count += changes.length;
       }
     }
+
     return {
       schemaChange,
       diffs,
@@ -49,28 +58,38 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
   }, [diff, oldValue, newValue]);
 
   const { value } = loader;
-  if (!value || !oldValue) {
-    return <Spinner />;
-  }
-
-  if (value.count < 1) {
-    return <div>No changes in this dashboard</div>;
-  }
 
   return (
-    <div>
-      {value.schemaChange && <div className={styles.spacer}>{value.schemaChange}</div>}
-
-      {value.showDiffs && <div className={styles.spacer}>{value.diffs}</div>}
-
-      <h4>JSON Model</h4>
-      {value.jsonView}
-    </div>
+    <Stack direction="column" gap={1}>
+      {hasFolderChanges && (
+        <DiffGroup
+          diffs={[
+            {
+              op: 'replace',
+              value: newFolder,
+              originalValue: oldFolder,
+              path: [],
+              startLineNumber: 0,
+              endLineNumber: 0,
+            },
+          ]}
+          key={'folder'}
+          title={'folder'}
+        />
+      )}
+      {(!value || !oldValue) && <Spinner />}
+      {value && value.count >= 1 ? (
+        <>
+          {value && value.schemaChange && value.schemaChange}
+          {value && value.showDiffs && value.diffs}
+          <Box paddingTop={1}>
+            <h4>Full JSON diff</h4>
+            {value.jsonView}
+          </Box>
+        </>
+      ) : (
+        <Box paddingTop={1}>No changes in the dashboard JSON</Box>
+      )}
+    </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  spacer: css`
-    margin-bottom: ${theme.v1.spacing.xl};
-  `,
-});

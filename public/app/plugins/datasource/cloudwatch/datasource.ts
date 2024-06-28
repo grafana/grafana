@@ -3,7 +3,6 @@ import { merge, Observable, of } from 'rxjs';
 
 import {
   CoreApp,
-  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -13,16 +12,18 @@ import {
   LogRowModel,
   ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import { SQLCompletionItemProvider } from './language/cloudwatch-sql/completion/CompletionItemProvider';
-import { LogsCompletionItemProvider } from './language/logs/completion/CompletionItemProvider';
+import {
+  LogsCompletionItemProvider,
+  LogsCompletionItemProviderFunc,
+  queryContext,
+} from './language/logs/completion/CompletionItemProvider';
 import { MetricMathCompletionItemProvider } from './language/metric-math/completion/CompletionItemProvider';
 import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnotationQueryRunner';
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
@@ -45,7 +46,7 @@ export class CloudWatchDatasource
   languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
-  logsCompletionItemProvider: LogsCompletionItemProvider;
+  logsCompletionItemProviderFunc: (queryContext: queryContext) => LogsCompletionItemProvider;
   defaultLogGroups?: string[];
 
   type = 'cloudwatch';
@@ -57,8 +58,7 @@ export class CloudWatchDatasource
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    timeSrv: TimeSrv = getTimeSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
@@ -67,8 +67,8 @@ export class CloudWatchDatasource
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
-    this.logsCompletionItemProvider = new LogsCompletionItemProvider(this.resources, this.templateSrv);
-    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
+    this.logsCompletionItemProviderFunc = LogsCompletionItemProviderFunc(this.resources, this.templateSrv);
+    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv);
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
     this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
@@ -79,6 +79,11 @@ export class CloudWatchDatasource
     return query.hide !== true || (isCloudWatchMetricsQuery(query) && query.id !== '');
   }
 
+  // reminder: when queries are made on the backend through alerting they will not go through this function
+  // we have duplicated code here to retry queries on the frontend so that the we can show partial results to users
+  // but ultimately anytime we add special error handling or logic retrying here we should ask ourselves
+  // could it only live in the backend? if so let's implement it there. If not, should it also live in the backend or just in the frontend?
+  // another note that at the end of the day all of these queries call super.query which is what forwards the request to the backend through /query
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = cloneDeep(options);
 
@@ -100,15 +105,19 @@ export class CloudWatchDatasource
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length) {
-      dataQueryResponses.push(this.logsQueryRunner.handleLogQueries(logQueries, options));
+      dataQueryResponses.push(this.logsQueryRunner.handleLogQueries(logQueries, options, super.query.bind(this)));
     }
 
     if (metricsQueries.length) {
-      dataQueryResponses.push(this.metricsQueryRunner.handleMetricQueries(metricsQueries, options));
+      dataQueryResponses.push(
+        this.metricsQueryRunner.handleMetricQueries(metricsQueries, options, super.query.bind(this))
+      );
     }
 
     if (annotationQueries.length) {
-      dataQueryResponses.push(this.annotationQueryRunner.handleAnnotationQuery(annotationQueries, options));
+      dataQueryResponses.push(
+        this.annotationQueryRunner.handleAnnotationQuery(annotationQueries, options, super.query.bind(this))
+      );
     }
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(dataQueryResponses)) {
@@ -137,13 +146,13 @@ export class CloudWatchDatasource
     }));
   }
 
-  getLogRowContext = async (
-    row: LogRowModel,
-    context?: LogRowContextOptions,
-    query?: CloudWatchLogsQuery
-  ): Promise<{ data: DataFrame[] }> => {
-    return this.logsQueryRunner.getLogRowContext(row, context, query);
-  };
+  /**
+   * Get log row context for a given log row. This is called when the user clicks on a log row in the logs visualization and the "show context button"
+   * it shows the surrounding logs.
+   */
+  getLogRowContext(row: LogRowModel, context?: LogRowContextOptions, query?: CloudWatchLogsQuery) {
+    return this.logsQueryRunner.getLogRowContext(row, context, super.query.bind(this), query);
+  }
 
   targetContainsTemplate(target: any) {
     return (
@@ -154,10 +163,6 @@ export class CloudWatchDatasource
       target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
       find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
-  }
-
-  showContextToggle() {
-    return true;
   }
 
   getQueryDisplayText(query: CloudWatchQuery) {

@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/prometheus/promql"
 )
 
-// swagger:route Post /api/v1/rule/test/grafana testing RouteTestRuleGrafanaConfig
+// swagger:route Post /v1/rule/test/grafana testing RouteTestRuleGrafanaConfig
 //
 // Test a rule against Grafana ruler
 //
@@ -28,7 +28,7 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
-// swagger:route Post /api/v1/rule/test/{DatasourceUID} testing RouteTestRuleConfig
+// swagger:route Post /v1/rule/test/{DatasourceUID} testing RouteTestRuleConfig
 //
 // Test a rule against external data source ruler
 //
@@ -42,7 +42,7 @@ import (
 //       200: TestRuleResponse
 //       404: NotFound
 
-// swagger:route Post /api/v1/eval testing RouteEvalQueries
+// swagger:route Post /v1/eval testing RouteEvalQueries
 //
 // Test rule
 //
@@ -55,7 +55,7 @@ import (
 //     Responses:
 //       200: EvalQueriesResponse
 
-// swagger:route Post /api/v1/rule/backtest testing BacktestConfig
+// swagger:route Post /v1/rule/backtest testing BacktestConfig
 //
 // Test rule
 //
@@ -128,8 +128,9 @@ type EvalQueriesRequest struct {
 
 // swagger:model
 type EvalQueriesPayload struct {
-	Data []AlertQuery `json:"data"`
-	Now  time.Time    `json:"now"`
+	Condition string       `json:"condition"`
+	Data      []AlertQuery `json:"data"`
+	Now       time.Time    `json:"now"`
 }
 
 func (p *TestRulePayload) UnmarshalJSON(b []byte) error {

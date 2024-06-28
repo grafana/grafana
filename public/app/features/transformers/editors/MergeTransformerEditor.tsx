@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   DataTransformerID,
   standardTransformers,
@@ -9,6 +7,8 @@ import {
 } from '@grafana/data';
 import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge';
 import { FieldValidationMessage } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 export const MergeTransformerEditor = ({ input, options, onChange }: TransformerUIProps<MergeTransformerOptions>) => {
   if (input.length <= 1) {
@@ -22,8 +22,9 @@ export const mergeTransformerRegistryItem: TransformerRegistryItem<MergeTransfor
   id: DataTransformerID.merge,
   editor: MergeTransformerEditor,
   transformation: standardTransformers.mergeTransformer,
-  name: 'Merge',
+  name: standardTransformers.mergeTransformer.name,
   description: `Merge many series/tables and return a single table where mergeable values will be combined into the same row.
                 Useful for showing multiple series, tables or a combination of both visualized in a table.`,
   categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(DataTransformerID.merge).helperDocs,
 };

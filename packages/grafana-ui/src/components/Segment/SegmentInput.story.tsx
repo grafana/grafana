@@ -1,6 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
 
@@ -8,7 +9,7 @@ import { SegmentInputProps } from './SegmentInput';
 
 const SegmentFrame = ({ children }: React.PropsWithChildren) => (
   <>
-    <SegmentSection label="Segment Name">{children}</SegmentSection>
+    <SegmentSection label="Segment">{children}</SegmentSection>
   </>
 );
 

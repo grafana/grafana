@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
@@ -17,14 +17,17 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { DashboardDTO } from 'app/types';
 
+import { DashboardModel } from '../../../../dashboard/state';
 import { dashboardApi } from '../../api/dashboardApi';
+
+import { useDashboardQuery } from './useDashboardQuery';
 
 export interface PanelDTO {
   id?: number;
   title?: string;
   type: string;
+  collapsed?: boolean;
 }
 
 function panelSort(a: PanelDTO, b: PanelDTO) {
@@ -42,22 +45,10 @@ function panelSort(a: PanelDTO, b: PanelDTO) {
 
 interface DashboardPickerProps {
   isOpen: boolean;
-  dashboardUid?: string | undefined;
-  panelId?: string | undefined;
-  onChange: (dashboardUid: string, panelId: string) => void;
+  dashboardUid?: string;
+  panelId?: number;
+  onChange: (dashboardUid: string, panelId: number) => void;
   onDismiss: () => void;
-}
-
-export function mergePanels(dashboardResult: DashboardDTO | undefined) {
-  const panels = dashboardResult?.dashboard?.panels?.filter((panel) => panel.type !== 'row') || [];
-  const nestedPanels =
-    dashboardResult?.dashboard?.panels
-      ?.filter((row: { collapsed: boolean }) => row.collapsed)
-      .map((collapsedRow: { panels: PanelDTO[] }) => collapsedRow.panels) || [];
-
-  const allDashboardPanels = [...panels, ...nestedPanels.flat()];
-
-  return allDashboardPanels;
 }
 
 export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDismiss }: DashboardPickerProps) => {
@@ -70,30 +61,27 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
 
   const [panelFilter, setPanelFilter] = useState('');
-  const { useSearchQuery, useDashboardQuery } = dashboardApi;
+  const { useSearchQuery } = dashboardApi;
 
   const { currentData: filteredDashboards = [], isFetching: isDashSearchFetching } = useSearchQuery({
     query: debouncedDashboardFilter,
   });
-  const { currentData: dashboardResult, isFetching: isDashboardFetching } = useDashboardQuery(
-    { uid: selectedDashboardUid ?? '' },
-    { skip: !selectedDashboardUid }
-  );
+  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
 
   const handleDashboardChange = useCallback((dashboardUid: string) => {
     setSelectedDashboardUid(dashboardUid);
     setSelectedPanelId(undefined);
   }, []);
 
-  const allDashboardPanels = mergePanels(dashboardResult);
+  const allDashboardPanels = getVisualPanels(dashboardModel);
 
   const filteredPanels =
     allDashboardPanels
-      ?.filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
+      .filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
       .sort(panelSort) ?? [];
 
   const currentPanel: PanelDTO | undefined = allDashboardPanels.find(
-    (panel: PanelDTO) => isValidPanelIdentifier(panel) && panel.id?.toString() === selectedPanelId
+    (panel: PanelDTO) => isValidPanel(panel) && panel.id?.toString() === selectedPanelId
   );
 
   const selectedDashboardIndex = useMemo(() => {
@@ -136,7 +124,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       >
         <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.title}</div>
         <div className={styles.dashboardFolder}>
-          <Icon name="folder" /> {dashboard.folderTitle ?? 'General'}
+          <Icon name="folder" /> {dashboard.folderTitle ?? 'Dashboards'}
         </div>
       </button>
     );
@@ -145,9 +133,9 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const PanelRow = ({ index, style }: { index: number; style: CSSProperties }) => {
     const panel = filteredPanels[index];
     const panelTitle = panel.title || '<No title>';
-    const isSelected = panel.id && selectedPanelId === panel.id?.toString();
+    const isSelected = Boolean(panel.id) && selectedPanelId === panel.id;
     const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
-    const disabled = !isValidPanelIdentifier(panel);
+    const disabled = !isValidPanel(panel);
 
     return (
       <button
@@ -158,13 +146,13 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           [styles.rowOdd]: index % 2 === 1,
           [styles.rowSelected]: isSelected,
         })}
-        onClick={() => (disabled ? noop : setSelectedPanelId(panel.id?.toString()))}
+        onClick={() => (disabled ? noop : setSelectedPanelId(panel.id))}
       >
         <div className={styles.rowButtonTitle} title={panelTitle}>
           {panelTitle}
         </div>
         {!isAlertingCompatible && !disabled && (
-          <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
+          <Tooltip content="The alert tab and alert annotations are only supported on graph and timeseries panels.">
             <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
           </Tooltip>
         )}
@@ -187,11 +175,11 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       contentClassName={styles.modalContent}
     >
       {/* This alert shows if the selected dashboard is not found in the first page of dashboards */}
-      {!selectedDashboardIsInPageResult && dashboardUid && (
+      {!selectedDashboardIsInPageResult && dashboardUid && dashboardModel && (
         <Alert title="Current selection" severity="info" topSpacing={0} bottomSpacing={1} className={styles.modalAlert}>
           <div>
-            Dashboard: {dashboardResult?.dashboard.title} ({dashboardResult?.dashboard.uid}) in folder{' '}
-            {dashboardResult?.meta.folderTitle ?? 'General'}
+            Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
+            {dashboardModel.meta?.folderTitle ?? 'Dashboards'}
           </div>
           {currentPanel && (
             <div>
@@ -274,97 +262,114 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   );
 };
 
-const isValidPanelIdentifier = (panel: PanelDTO): boolean => {
-  return typeof panel.id === 'number' && typeof panel.type === 'string';
+export function getVisualPanels(dashboardModel: DashboardModel | undefined) {
+  if (!dashboardModel) {
+    return [];
+  }
+
+  const panelsWithoutRows = dashboardModel.panels.filter((panel) => panel.type !== 'row');
+  const panelsNestedInRows = dashboardModel.panels
+    .filter((rowPanel) => rowPanel.collapsed)
+    .flatMap((collapsedRow) => collapsedRow.panels ?? []);
+
+  const allDashboardPanels = [...panelsWithoutRows, ...panelsNestedInRows];
+  return allDashboardPanels;
+}
+
+const isValidPanel = (panel: PanelDTO): boolean => {
+  const hasValidID = typeof panel.id === 'number';
+  const isValidPanelType = typeof panel.type === 'string';
+  const isLibraryPanel = 'libraryPanel' in panel;
+
+  return hasValidID && (isValidPanelType || isLibraryPanel);
 };
 
 const getPickerStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    container: css`
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: min-content auto;
-      gap: ${theme.spacing(2)};
-      flex: 1;
-    `,
-    column: css`
-      flex: 1 1 auto;
-    `,
-    dashboardTitle: css`
-      height: 22px;
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
-    dashboardFolder: css`
-      height: 20px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-      column-gap: ${theme.spacing(1)};
-      align-items: center;
-    `,
-    rowButton: css`
-      ${clearButton};
-      padding: ${theme.spacing(0.5)};
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: left;
-      white-space: nowrap;
-      cursor: pointer;
-      border: 2px solid transparent;
+    container: css({
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gridTemplateRows: 'min-content auto',
+      gap: theme.spacing(2),
+      flex: 1,
+    }),
+    column: css({
+      flex: '1 1 auto',
+    }),
+    dashboardTitle: css({
+      height: '22px',
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    dashboardFolder: css({
+      height: '20px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      columnGap: theme.spacing(1),
+      alignItems: 'center',
+    }),
+    rowButton: css(clearButton, {
+      padding: theme.spacing(0.5),
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      textAlign: 'left',
+      whiteSpace: 'nowrap',
+      cursor: 'pointer',
+      border: '2px solid transparent',
 
-      &:disabled {
-        cursor: not-allowed;
-        color: ${theme.colors.text.disabled};
-      }
-    `,
-    rowButtonTitle: css`
-      text-overflow: ellipsis;
-      overflow: hidden;
-    `,
-    rowSelected: css`
-      border-color: ${theme.colors.primary.border};
-    `,
-    rowOdd: css`
-      background-color: ${theme.colors.background.secondary};
-    `,
-    panelButton: css`
-      display: flex;
-      gap: ${theme.spacing(1)};
-      justify-content: space-between;
-      align-items: center;
-    `,
-    loadingPlaceholder: css`
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    `,
-    selectDashboardPlaceholder: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      text-align: center;
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
-    modal: css`
-      height: 100%;
-    `,
-    modalContent: css`
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    `,
-    modalAlert: css`
-      flex-grow: 0;
-    `,
-    warnIcon: css`
-      fill: ${theme.colors.warning.main};
-    `,
+      '&:disabled': {
+        cursor: 'not-allowed',
+        color: theme.colors.text.disabled,
+      },
+    }),
+    rowButtonTitle: css({
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+    }),
+    rowSelected: css({
+      borderColor: theme.colors.primary.border,
+    }),
+    rowOdd: css({
+      backgroundColor: theme.colors.background.secondary,
+    }),
+    panelButton: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    loadingPlaceholder: css({
+      height: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }),
+    selectDashboardPlaceholder: css({
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      textAlign: 'center',
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    modal: css({
+      height: '100%',
+    }),
+    modalContent: css({
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    modalAlert: css({
+      flexGrow: 0,
+    }),
+    warnIcon: css({
+      fill: theme.colors.warning.main,
+    }),
   };
 };

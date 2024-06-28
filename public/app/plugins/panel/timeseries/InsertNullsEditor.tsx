@@ -1,6 +1,4 @@
-import React from 'react';
-
-import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
+import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { HorizontalGroup, RadioButtonGroup } from '@grafana/ui';
 
 import { InputPrefix, NullsThresholdInput } from './NullsThresholdInput';
@@ -16,7 +14,7 @@ const DISCONNECT_OPTIONS: Array<SelectableValue<boolean | number>> = [
   },
 ];
 
-type Props = FieldOverrideEditorProps<boolean | number, unknown>;
+type Props = StandardEditorProps<boolean | number, { isTime: boolean }>;
 
 export const InsertNullsEditor = ({ value, onChange, item }: Props) => {
   const isThreshold = typeof value === 'number';
@@ -30,7 +28,7 @@ export const InsertNullsEditor = ({ value, onChange, item }: Props) => {
           value={value}
           onChange={onChange}
           inputPrefix={InputPrefix.GreaterThan}
-          isTime={item.settings.isTime}
+          isTime={item.settings?.isTime ?? false}
         />
       )}
     </HorizontalGroup>

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import {
   PluginState,
@@ -7,9 +7,13 @@ import {
   ReducerID,
   isReducerID,
   SelectableValue,
-  getFieldDisplayName,
+  Field,
+  FieldType,
+  isTimeSeriesField,
 } from '@grafana/data';
-import { InlineFieldRow, InlineField, StatsPicker, InlineSwitch, Select } from '@grafana/ui';
+import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import {
   timeSeriesTableTransformer,
@@ -22,18 +26,7 @@ export function TimeSeriesTableTransformEditor({
   options,
   onChange,
 }: TransformerUIProps<TimeSeriesTableTransformerOptions>) {
-  const timeFields: Array<SelectableValue<string>> = [];
   const refIdMap = getRefData(input);
-
-  // Retrieve time fields
-  for (const frame of input) {
-    for (const field of frame.fields) {
-      if (field.type === 'time') {
-        const name = getFieldDisplayName(field, frame, input);
-        timeFields.push({ label: name, value: name });
-      }
-    }
-  }
 
   const onSelectTimefield = useCallback(
     (refId: string, value: SelectableValue<string>) => {
@@ -65,32 +58,45 @@ export function TimeSeriesTableTransformEditor({
     [onChange, options]
   );
 
-  const onMergeSeriesToggle = useCallback(
-    (refId: string) => {
-      const mergeSeries = options[refId]?.mergeSeries !== undefined ? !options[refId].mergeSeries : false;
-      onChange({
-        ...options,
-        [refId]: {
-          ...options[refId],
-          mergeSeries,
-        },
-      });
-    },
-    [onChange, options]
-  );
-
   let configRows = [];
   for (const refId of Object.keys(refIdMap)) {
+    // Get time fields for the current refId
+    const timeFields: Record<string, Field<FieldType.time>> = {};
+    const timeValues: Array<SelectableValue<string>> = [];
+
+    // Get a map of time fields, we map
+    // by field name and assume that time fields
+    // in the same query with the same name
+    // are the same
+    for (const frame of input) {
+      if (frame.refId === refId) {
+        for (const field of frame.fields) {
+          if (isTimeSeriesField(field)) {
+            timeFields[field.name] = field;
+          }
+        }
+      }
+    }
+
+    for (const timeField of Object.values(timeFields)) {
+      const { name } = timeField;
+      timeValues.push({ label: name, value: name });
+    }
+
     configRows.push(
       <InlineFieldRow key={refId}>
+        <InlineField>
+          <InlineLabel>{`Trend #${refId}`}</InlineLabel>
+        </InlineField>
         <InlineField
           label="Time field"
           tooltip="The time field that will be used for the time series. If not selected the first found will be used."
         >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}
-            options={timeFields}
+            options={timeValues}
             value={options[refId]?.timeField}
+            isClearable={true}
           />
         </InlineField>
         <InlineField label="Stat" tooltip="The statistic that should be calculated for this time series.">
@@ -98,15 +104,6 @@ export function TimeSeriesTableTransformEditor({
             stats={[options[refId]?.stat ?? ReducerID.lastNotNull]}
             onChange={onSelectStat.bind(null, refId)}
             filterOptions={(ext) => ext.id !== ReducerID.allValues && ext.id !== ReducerID.uniqueValues}
-          />
-        </InlineField>
-        <InlineField
-          label="Merge series"
-          tooltip="If selected, multiple series from a single datasource will be merged into one series."
-        >
-          <InlineSwitch
-            value={options[refId]?.mergeSeries !== undefined ? options[refId]?.mergeSeries : true}
-            onChange={onMergeSeriesToggle.bind(null, refId)}
           />
         </InlineField>
       </InlineFieldRow>
@@ -123,5 +120,5 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
-  help: ``,
+  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
 };

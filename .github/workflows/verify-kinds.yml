@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-    - '**/*.cue'
+      - '**/*.cue'
 
 jobs:
   main:
@@ -18,10 +18,9 @@ jobs:
       - name: "Setup Go"
         uses: "actions/setup-go@v4"
         with:
-          go-version: '1.20.10'
+          go-version-file: go.mod
 
       - name: "Verify kinds"
         run: go run .github/workflows/scripts/kinds/verify-kinds.go
         env:
-          CODEGEN_VERIFY: 1
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

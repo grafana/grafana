@@ -3,7 +3,6 @@
         "uid": "alertmanager UID",
         "name": "an alert manager receiver",
         "type": "prometheus-alertmanager",
-        "isDefault": false,
         "sendReminder": false,
         "disableResolveMessage": false,
         "frequency": "5m",

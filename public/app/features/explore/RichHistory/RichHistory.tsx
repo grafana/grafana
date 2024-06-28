@@ -1,179 +1,157 @@
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Themeable2, TabbedContainer, TabConfig, withTheme2 } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
+import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
+import { i18n } from '../QueriesDrawer/utils';
+import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
 
-export enum Tabs {
-  RichHistory = 'Query history',
-  Starred = 'Starred',
-  Settings = 'Settings',
-}
-
 export const getSortOrderOptions = () =>
   [
-    { label: 'Newest first', value: SortOrder.Descending },
-    { label: 'Oldest first', value: SortOrder.Ascending },
-    { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
-    { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
+    { label: t('explore.rich-history.newest-first', 'Newest first'), value: SortOrder.Descending },
+    { label: t('explore.rich-history.oldest-first', 'Oldest first'), value: SortOrder.Ascending },
+    { label: t('explore.rich-history.datasource-a-z', 'Data source A-Z'), value: SortOrder.DatasourceAZ },
+    { label: t('explore.rich-history.datasource-z-a', 'Data source Z-A'), value: SortOrder.DatasourceZA },
   ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
-export interface RichHistoryProps extends Themeable2 {
+export interface RichHistoryProps {
   richHistory: RichHistoryQuery[];
   richHistoryTotal?: number;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
-  updateHistorySearchFilters: (exploreId: string, filters: RichHistorySearchFilters) => void;
-  loadRichHistory: (exploreId: string) => void;
-  loadMoreRichHistory: (exploreId: string) => void;
-  clearRichHistoryResults: (exploreId: string) => void;
+  updateHistorySearchFilters: (filters: RichHistorySearchFilters) => void;
+  loadRichHistory: () => void;
+  loadMoreRichHistory: () => void;
+  clearRichHistoryResults: () => void;
   deleteRichHistory: () => void;
-  activeDatasourceInstance: string;
   firstTab: Tabs;
-  exploreId: string;
   height: number;
   onClose: () => void;
 }
 
-type RichHistoryState = {
-  loading: boolean;
-};
+export function RichHistory(props: RichHistoryProps) {
+  const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
-class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
-  state: RichHistoryState = {
-    loading: false,
+  const [loading, setLoading] = useState(false);
+
+  const { queryLibraryAvailable } = useQueriesDrawerContext();
+
+  const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
+    props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
   };
 
-  updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
-    this.props.updateHistorySettings({ ...this.props.richHistorySettings, ...settingsToUpdate });
-  };
-
-  updateFilters = (filtersToUpdate?: Partial<RichHistorySearchFilters>) => {
+  const updateFilters = (filtersToUpdate?: Partial<RichHistorySearchFilters>) => {
     const filters = {
-      ...this.props.richHistorySearchFilters!,
+      ...props.richHistorySearchFilters!,
       ...filtersToUpdate,
       page: 1, // always load fresh results when updating filters
     };
-    this.props.updateHistorySearchFilters(this.props.exploreId, filters);
-    this.loadRichHistory();
+    props.updateHistorySearchFilters(filters);
+    loadRichHistory();
   };
 
-  clearResults = () => {
-    this.props.clearRichHistoryResults(this.props.exploreId);
-  };
-
-  loadRichHistory = debounce(() => {
-    this.props.loadRichHistory(this.props.exploreId);
-    this.setState({
-      loading: true,
-    });
+  const loadRichHistory = debounce(() => {
+    props.loadRichHistory();
+    setLoading(true);
   }, 300);
 
-  onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
+  const onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
     if (retentionPeriod.value !== undefined) {
-      this.updateSettings({ retentionPeriod: retentionPeriod.value });
+      updateSettings({ retentionPeriod: retentionPeriod.value });
     }
   };
 
-  toggleStarredTabAsFirstTab = () =>
-    this.updateSettings({ starredTabAsFirstTab: !this.props.richHistorySettings.starredTabAsFirstTab });
+  const toggleStarredTabAsFirstTab = () =>
+    updateSettings({ starredTabAsFirstTab: !props.richHistorySettings.starredTabAsFirstTab });
 
-  toggleActiveDatasourceOnly = () =>
-    this.updateSettings({ activeDatasourceOnly: !this.props.richHistorySettings.activeDatasourceOnly });
+  const toggleActiveDatasourcesOnly = () =>
+    updateSettings({ activeDatasourcesOnly: !props.richHistorySettings.activeDatasourcesOnly });
 
-  componentDidUpdate(prevProps: Readonly<RichHistoryProps>) {
-    if (prevProps.richHistory !== this.props.richHistory) {
-      this.setState({
-        loading: false,
-      });
-    }
-  }
+  useEffect(() => {
+    setLoading(false);
+  }, [richHistory]);
 
-  render() {
-    const {
-      richHistory,
-      richHistoryTotal,
-      height,
-      exploreId,
-      deleteRichHistory,
-      onClose,
-      firstTab,
-      activeDatasourceInstance,
-    } = this.props;
-    const { loading } = this.state;
+  const QueryLibraryTab: TabConfig = {
+    label: i18n.queryLibrary,
+    value: Tabs.QueryLibrary,
+    content: <QueryLibrary />,
+    icon: 'book',
+  };
 
-    const QueriesTab: TabConfig = {
-      label: 'Query history',
-      value: Tabs.RichHistory,
-      content: (
-        <RichHistoryQueriesTab
-          queries={richHistory}
-          totalQueries={richHistoryTotal || 0}
-          loading={loading}
-          updateFilters={this.updateFilters}
-          clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
-          loadMoreRichHistory={() => this.props.loadMoreRichHistory(this.props.exploreId)}
-          activeDatasourceInstance={activeDatasourceInstance}
-          richHistorySettings={this.props.richHistorySettings}
-          richHistorySearchFilters={this.props.richHistorySearchFilters}
-          exploreId={exploreId}
-          height={height}
-        />
-      ),
-      icon: 'history',
-    };
+  const QueriesTab: TabConfig = {
+    label: i18n.queryHistory,
+    value: Tabs.RichHistory,
+    content: (
+      <RichHistoryQueriesTab
+        queries={richHistory}
+        totalQueries={richHistoryTotal || 0}
+        loading={loading}
+        updateFilters={updateFilters}
+        clearRichHistoryResults={() => props.clearRichHistoryResults()}
+        loadMoreRichHistory={() => props.loadMoreRichHistory()}
+        richHistorySettings={props.richHistorySettings}
+        richHistorySearchFilters={props.richHistorySearchFilters}
+        height={height}
+      />
+    ),
+    icon: 'history',
+  };
 
-    const StarredTab: TabConfig = {
-      label: 'Starred',
-      value: Tabs.Starred,
-      content: (
-        <RichHistoryStarredTab
-          queries={richHistory}
-          totalQueries={richHistoryTotal || 0}
-          loading={loading}
-          activeDatasourceInstance={activeDatasourceInstance}
-          updateFilters={this.updateFilters}
-          clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
-          loadMoreRichHistory={() => this.props.loadMoreRichHistory(this.props.exploreId)}
-          richHistorySettings={this.props.richHistorySettings}
-          richHistorySearchFilters={this.props.richHistorySearchFilters}
-          exploreId={exploreId}
-        />
-      ),
-      icon: 'star',
-    };
+  const StarredTab: TabConfig = {
+    label: t('explore.rich-history.starred', 'Starred'),
+    value: Tabs.Starred,
+    content: (
+      <RichHistoryStarredTab
+        queries={richHistory}
+        totalQueries={richHistoryTotal || 0}
+        loading={loading}
+        updateFilters={updateFilters}
+        clearRichHistoryResults={() => props.clearRichHistoryResults()}
+        loadMoreRichHistory={() => props.loadMoreRichHistory()}
+        richHistorySettings={props.richHistorySettings}
+        richHistorySearchFilters={props.richHistorySearchFilters}
+      />
+    ),
+    icon: 'star',
+  };
 
-    const SettingsTab: TabConfig = {
-      label: 'Settings',
-      value: Tabs.Settings,
-      content: (
-        <RichHistorySettingsTab
-          retentionPeriod={this.props.richHistorySettings.retentionPeriod}
-          starredTabAsFirstTab={this.props.richHistorySettings.starredTabAsFirstTab}
-          activeDatasourceOnly={this.props.richHistorySettings.activeDatasourceOnly}
-          onChangeRetentionPeriod={this.onChangeRetentionPeriod}
-          toggleStarredTabAsFirstTab={this.toggleStarredTabAsFirstTab}
-          toggleactiveDatasourceOnly={this.toggleActiveDatasourceOnly}
-          deleteRichHistory={deleteRichHistory}
-        />
-      ),
-      icon: 'sliders-v-alt',
-    };
+  const SettingsTab: TabConfig = {
+    label: t('explore.rich-history.settings', 'Settings'),
+    value: Tabs.Settings,
+    content: (
+      <RichHistorySettingsTab
+        retentionPeriod={props.richHistorySettings.retentionPeriod}
+        starredTabAsFirstTab={props.richHistorySettings.starredTabAsFirstTab}
+        activeDatasourcesOnly={props.richHistorySettings.activeDatasourcesOnly}
+        onChangeRetentionPeriod={onChangeRetentionPeriod}
+        toggleStarredTabAsFirstTab={toggleStarredTabAsFirstTab}
+        toggleActiveDatasourcesOnly={toggleActiveDatasourcesOnly}
+        deleteRichHistory={deleteRichHistory}
+      />
+    ),
+    icon: 'sliders-v-alt',
+  };
 
-    let tabs = [QueriesTab, StarredTab, SettingsTab];
-    return (
-      <TabbedContainer tabs={tabs} onClose={onClose} defaultTab={firstTab} closeIconTooltip="Close query history" />
-    );
-  }
+  let tabs = (queryLibraryAvailable ? [QueryLibraryTab] : []).concat([QueriesTab, StarredTab, SettingsTab]);
+  return (
+    <TabbedContainer
+      tabs={tabs}
+      onClose={onClose}
+      defaultTab={firstTab}
+      closeIconTooltip={t('explore.rich-history.close-tooltip', 'Close query history')}
+      testId={selectors.pages.Explore.QueryHistory.container}
+    />
+  );
 }
-
-export const RichHistory = withTheme2(UnThemedRichHistory);

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -16,9 +16,9 @@ import {
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
-import { Stack } from '@grafana/experimental';
-import { useTheme2, Select, StatsPicker, InlineField } from '@grafana/ui';
+import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -49,8 +49,28 @@ export const GroupByTransformerEditor = ({
     [onChange]
   );
 
+  // See if there's both an aggregation and grouping field configured
+  // for calculations. If not we display a warning because there
+  // needs to be a grouping for the calculation to have effect
+  let hasGrouping,
+    hasAggregation = false;
+
+  for (const field of Object.values(options.fields)) {
+    if (field.aggregations.length > 0 && field.operation !== null) {
+      hasAggregation = true;
+    }
+    if (field.operation === GroupByOperationID.groupBy) {
+      hasGrouping = true;
+    }
+  }
+
+  const showCalcAlert = hasAggregation && !hasGrouping;
+
   return (
-    <div>
+    <Stack direction="column">
+      {showCalcAlert && (
+        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+      )}
       {fieldNames.map((key) => (
         <GroupByFieldConfiguration
           onConfigChange={onConfigChange(key)}
@@ -59,7 +79,7 @@ export const GroupByTransformerEditor = ({
           key={key}
         />
       ))}
-    </div>
+    </Stack>
   );
 };
 
@@ -84,7 +104,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
-      <Stack gap={0.5} direction="row" wrap={false}>
+      <Stack gap={0.5} direction="row">
         <div className={styles.operation}>
           <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
         </div>
@@ -134,4 +154,5 @@ export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransf
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
+  help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
 };

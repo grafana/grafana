@@ -35,7 +35,7 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
-            "yarn install --immutable",
+            "yarn install --immutable || yarn install --immutable",
         ],
         "depends_on": [],
     }
@@ -199,24 +199,6 @@ def enterprise_downstream_step(ver_mode):
 
     return step
 
-def lint_backend_step():
-    return {
-        "name": "lint-backend",
-        "image": images["go"],
-        "environment": {
-            # We need CGO because of go-sqlite3
-            "CGO_ENABLED": "1",
-        },
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update make build-base",
-            # Don't use Make since it will re-download the linters
-            "make lint-go",
-        ],
-    }
-
 def validate_modfile_step():
     return {
         "name": "validate-modfile",
@@ -342,6 +324,8 @@ def e2e_tests_artifacts():
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
+            # if no videos found do nothing
+            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
             "apt-get update",
             "apt-get install -yq zip",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
@@ -353,6 +337,65 @@ def e2e_tests_artifacts():
             'echo "E2E Test artifacts uploaded to: $${E2E_ARTIFACTS_VIDEO_ZIP}"',
             'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA} -H "Authorization: token $${GITHUB_TOKEN}" -d ' +
             '"{\\"state\\":\\"success\\",\\"target_url\\":\\"$${E2E_ARTIFACTS_VIDEO_ZIP}\\", \\"description\\": \\"Click on the details to download e2e recording videos\\", \\"context\\": \\"e2e_artifacts\\"}"',
+        ],
+    }
+
+def playwright_e2e_report_upload():
+    return {
+        "name": "playwright-e2e-report-upload",
+        "image": images["cloudsdk"],
+        "depends_on": [
+            "playwright-plugin-e2e",
+        ],
+        "failure": "ignore",
+        "when": {
+            "status": [
+                "success",
+                "failure",
+            ],
+        },
+        "environment": {
+            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
+        },
+        "commands": [
+            "apt-get update",
+            "apt-get install -yq zip",
+            "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
+            "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
+            "gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report",
+            "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
+            'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
+        ],
+    }
+
+def playwright_e2e_report_post_link():
+    return {
+        "name": "playwright-e2e-report-post-link",
+        "image": images["curl"],
+        "depends_on": [
+            "playwright-e2e-report-upload",
+        ],
+        "failure": "ignore",
+        "when": {
+            "status": [
+                "success",
+                "failure",
+            ],
+        },
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            # if the trace doesn't folder exists, it means that there are no failed tests.
+            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
+            # if it exists, we will post a comment on the PR with the link to the report
+            "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
+            "curl -L " +
+            "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
+            '-H "Accept: application/vnd.github+json" ' +
+            '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
+            '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
+            '"{\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer. <br /> For information on how to run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests). \\"}"',
         ],
     }
 
@@ -434,7 +477,7 @@ def update_package_json_version():
         ],
         "commands": [
             "apk add --update jq",
-            "new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
+            "new_version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
             "echo \"New version: $new_version\"",
             "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
             "yarn install --mode=update-lockfile",
@@ -502,7 +545,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
+            "go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
         ],
     }
 
@@ -578,16 +621,15 @@ def lint_frontend_step():
 
 def verify_i18n_step():
     extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
-    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
+    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
-        "image": images["node"],
+        "image": images["node_deb"],
         "depends_on": [
             "yarn-install",
         ],
         "commands": [
-            "apk add --update git",
-            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
+            "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
@@ -597,7 +639,6 @@ def verify_i18n_step():
                 exit 1
             fi
             '''.format(uncommited_error_message),
-            "yarn run i18n:compile",
         ],
     }
 
@@ -614,7 +655,8 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
       Drone step.
     """
     commands = [
-        "yarn wait-on http://$HOST:$PORT",
+        # Note - this runs in a container running node 14, which does not support the -y option to npx
+        "npx wait-on@7.0.1 http://$HOST:$PORT",
     ]
     failure = "ignore"
     if ver_mode == "pr":
@@ -682,7 +724,7 @@ def codespell_step():
         "image": images["python"],
         "commands": [
             "pip3 install codespell",
-            "codespell -I .codespellignore docs/",
+            "codespell -I docs/.codespellignore docs/",
         ],
     }
 
@@ -732,6 +774,36 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
     }
 
+def start_storybook_step():
+    return {
+        "name": "start-storybook",
+        "image": images["node"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn storybook --quiet",
+        ],
+        "detach": True,
+    }
+
+def e2e_storybook_step():
+    return {
+        "name": "end-to-end-tests-storybook-suite",
+        "image": images["cypress"],
+        "depends_on": [
+            "start-storybook",
+        ],
+        "environment": {
+            "HOST": "start-storybook",
+            "PORT": "9001",
+        },
+        "commands": [
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
+            "yarn e2e:storybook",
+        ],
+    }
+
 def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 
@@ -771,7 +843,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
         "depends_on": [
             "grafana-server",
         ],
@@ -780,6 +852,25 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     }
     step = dict(step, when = when)
     return step
+
+def playwright_e2e_tests_step():
+    return {
+        "environment": {
+            "PORT": "3001",
+            "HOST": "grafana-server",
+            "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
+        },
+        "name": "playwright-plugin-e2e",
+        "image": images["node_deb"],
+        "depends_on": [
+            "grafana-server",
+        ],
+        "commands": [
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
+            "yarn playwright install --with-deps chromium",
+            "yarn e2e:playwright",
+        ],
+    }
 
 def build_docs_website_step():
     return {
@@ -953,7 +1044,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
+        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -965,12 +1056,11 @@ def redis_integration_tests_steps():
 def remote_alertmanager_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...",
+        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...",
     ]
 
     environment = {
         "AM_TENANT_ID": "test",
-        "AM_PASSWORD": "test",
         "AM_URL": "http://mimir_backend:8080",
     }
 
@@ -979,7 +1069,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
+        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1090,6 +1180,34 @@ def publish_grafanacom_step(ver_mode):
         "commands": [
             cmd,
         ],
+    }
+
+def verify_grafanacom_step(depends_on = ["publish-grafanacom"]):
+    return {
+        "name": "verify-grafanacom",
+        "image": images["node"],
+        "commands": [
+            # Download and install `curl` and `bash` - both of which aren't available inside of the `node:{version}-alpine` docker image.
+            "apk add curl bash",
+
+            # There may be a slight lag between when artifacts are uploaded to Google Storage,
+            # and when they become available on the website. This `for` loop sould account for that discrepancy.
+            # We attempt the verification up to 5 times. If successful, exit the loop with a success (0) status.
+            # If any attempt fails, but it's not the final attempt, wait 60 seconds before the next attempt.
+            # If the 5th (final) attempt fails, exit with error (1) status.
+            """
+            for i in {1..5}; do
+                if ./scripts/drone/verify-grafanacom.sh; then
+                    exit 0
+                elif [ $i -eq 5 ]; then
+                    exit 1
+                else
+                    sleep 60
+                fi
+            done
+            """,
+        ],
+        "depends_on": depends_on,
     }
 
 def publish_linux_packages_step(package_manager = "deb"):

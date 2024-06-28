@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { useStyles2, Tooltip } from '@grafana/ui';
@@ -12,8 +11,8 @@ import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 
-import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
+import RuleDetailsButtons from './RuleDetailsButtons';
 import { RuleDetailsDataSources } from './RuleDetailsDataSources';
 import { RuleDetailsExpression } from './RuleDetailsExpression';
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
@@ -37,7 +36,7 @@ export const RuleDetails = ({ rule }: Props) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={false} />
+      <RuleDetailsButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
@@ -53,7 +52,9 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
+      <DetailsField label="Instances" horizontal={true}>
+        <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
+      </DetailsField>
     </div>
   );
 };
@@ -70,7 +71,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
 
   // recording rules don't have a for duration
   if (!isRecordingRulerRule(rule.rulerRule)) {
-    forDuration = rule.rulerRule?.for;
+    forDuration = rule.rulerRule?.for ?? '0s';
   }
 
   return (
@@ -80,11 +81,10 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           Every {every}
         </DetailsField>
       )}
-      {forDuration && (
-        <DetailsField label="For" horizontal={true}>
-          {forDuration}
-        </DetailsField>
-      )}
+
+      <DetailsField label="Pending period" horizontal={true}>
+        {forDuration}
+      </DetailsField>
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
         <DetailsField label="Last evaluation" horizontal={true}>
@@ -110,21 +110,21 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: row;
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
 
-    ${theme.breakpoints.down('md')} {
-      flex-direction: column;
-    }
-  `,
-  leftSide: css`
-    flex: 1;
-  `,
-  rightSide: css`
-    ${theme.breakpoints.up('md')} {
-      padding-left: 90px;
-      width: 300px;
-    }
-  `,
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
+  }),
+  leftSide: css({
+    flex: 1,
+  }),
+  rightSide: css({
+    [theme.breakpoints.up('md')]: {
+      paddingLeft: '90px',
+      width: '300px',
+    },
+  }),
 });

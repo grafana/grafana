@@ -1,12 +1,10 @@
-import React from 'react';
-
 import { MetadataInspectorProps } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
+import { Stack } from '@grafana/ui';
 
-import { TestData } from './dataquery.gen';
+import { TestDataDataQuery } from './dataquery';
 import { TestDataDataSource } from './datasource';
 
-export type Props = MetadataInspectorProps<TestDataDataSource, TestData>;
+export type Props = MetadataInspectorProps<TestDataDataSource, TestDataDataQuery>;
 
 export function MetaDataInspector({ data }: Props) {
   return (

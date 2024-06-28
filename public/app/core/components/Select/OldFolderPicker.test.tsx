@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,10 +34,10 @@ describe('OldFolderPicker', () => {
 
     render(<OldFolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.uid !== 'wfTJJL5Wz')} />);
 
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
     expect(pickerOptions).toHaveLength(2);
     expect(pickerOptions[0]).toHaveTextContent('Dash 1');
@@ -62,7 +61,7 @@ describe('OldFolderPicker', () => {
     render(<OldFolderPicker onChange={onChangeFn} enableCreateNew={true} allowEmpty={true} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
 
-    await userEvent.type(screen.getByLabelText('Select a folder'), newFolder.title);
+    await userEvent.type(screen.getByTestId(selectors.components.FolderPicker.input), newFolder.title);
     const enter = await screen.findByText('Hit enter to add');
 
     await userEvent.click(enter);
@@ -76,7 +75,7 @@ describe('OldFolderPicker', () => {
     });
   });
 
-  it('should show the General folder by default for editors', async () => {
+  it('should show the Dashboards root by default for editors', async () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
@@ -89,15 +88,15 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
-    expect(pickerOptions[0]).toHaveTextContent('General');
+    expect(pickerOptions[0]).toHaveTextContent('Dashboards');
   });
 
-  it('should not show the General folder by default if showRoot is false', async () => {
+  it('should not show the Dashboards root by default if showRoot is false', async () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
@@ -110,15 +109,15 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} showRoot={false} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
-    expect(pickerOptions[0]).not.toHaveTextContent('General');
+    expect(pickerOptions[0]).not.toHaveTextContent('Dashboards');
   });
 
-  it('should not show the General folder by default for not editors', async () => {
+  it('should not show the Dashboards root by default for not editors', async () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
@@ -131,12 +130,12 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
-    expect(pickerOptions[0]).not.toHaveTextContent('General');
+    expect(pickerOptions[0]).not.toHaveTextContent('Dashboards');
   });
 
   it('should return the correct search results when typing in the select', async () => {
@@ -152,7 +151,7 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
 
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     await userEvent.type(pickerContainer, 'Test');
 
     expect(await screen.findByText('Dash Test')).toBeInTheDocument();

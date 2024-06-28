@@ -1,15 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { IconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { IconName } from '../../types/icon';
-import { Button, ButtonVariant } from '../Button';
-import { Input } from '../Input/Input';
-import { HorizontalGroup } from '../Layout/Layout';
+import { ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
+
+import { ConfirmContent } from './ConfirmContent';
 
 export interface ConfirmModalProps {
   /** Toggle modal's open/closed state */
@@ -46,6 +44,8 @@ export interface ConfirmModalProps {
   onDismiss(): void;
   /** Alternative action callback */
   onAlternative?(): void;
+  /** Disable the confirm button and the confirm text input if needed */
+  disabled?: boolean;
 }
 
 export const ConfirmModal = ({
@@ -65,84 +65,32 @@ export const ConfirmModal = ({
   onDismiss,
   onAlternative,
   confirmButtonVariant = 'destructive',
+  disabled,
 }: ConfirmModalProps): JSX.Element => {
-  const [disabled, setDisabled] = useState(Boolean(confirmationText));
   const styles = useStyles2(getStyles);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmationText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
-  };
-
-  useEffect(() => {
-    // for some reason autoFocus property did no work on this button, but this does
-    if (isOpen) {
-      buttonRef.current?.focus();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setDisabled(Boolean(confirmationText));
-    }
-  }, [isOpen, confirmationText]);
-
-  const onConfirmClick = async () => {
-    setDisabled(true);
-    try {
-      await onConfirm();
-    } finally {
-      setDisabled(false);
-    }
-  };
 
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
-      <div className={styles.modalText}>
-        {body}
-        {description ? <div className={styles.modalDescription}>{description}</div> : null}
-        {confirmationText ? (
-          <div className={styles.modalConfirmationInput}>
-            <HorizontalGroup>
-              <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
-            </HorizontalGroup>
-          </div>
-        ) : null}
-      </div>
-      <Modal.ButtonRow>
-        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
-          {dismissText}
-        </Button>
-        <Button
-          variant={confirmButtonVariant}
-          onClick={onConfirmClick}
-          disabled={disabled}
-          ref={buttonRef}
-          data-testid={selectors.pages.ConfirmModal.delete}
-        >
-          {confirmText}
-        </Button>
-        {onAlternative ? (
-          <Button variant="primary" onClick={onAlternative}>
-            {alternativeText}
-          </Button>
-        ) : null}
-      </Modal.ButtonRow>
+      <ConfirmContent
+        body={body}
+        description={description}
+        confirmButtonLabel={confirmText}
+        dismissButtonLabel={dismissText}
+        dismissButtonVariant={dismissVariant}
+        confirmPromptText={confirmationText}
+        alternativeButtonLabel={alternativeText}
+        confirmButtonVariant={confirmButtonVariant}
+        onConfirm={onConfirm}
+        onDismiss={onDismiss}
+        onAlternative={onAlternative}
+        disabled={disabled}
+      />
     </Modal>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   modal: css({
     width: '500px',
-  }),
-  modalText: css({
-    fontSize: theme.typography.h5.fontSize,
-    color: theme.colors.text.primary,
-  }),
-  modalDescription: css({
-    fontSize: theme.typography.body.fontSize,
-  }),
-  modalConfirmationInput: css({
-    paddingTop: theme.spacing(1),
   }),
 });

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import * as React from 'react';
 import { FieldErrors, FormProvider, SubmitErrorHandler, useForm, Validate } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +11,7 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { getMessageFromError } from '../../../../../../core/utils/errors';
-import { logAlertingError } from '../../../Analytics';
+import { logError } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
@@ -83,7 +84,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
-  const validateNameIsAvailable: Validate<string> = useCallback(
+  const validateNameIsAvailable: Validate<string, ReceiverFormValues<R>> = useCallback(
     (name: string) =>
       takenReceiverNames.map((name) => name.trim().toLowerCase()).includes(name.trim().toLowerCase())
         ? 'Another receiver with this name already exists.'
@@ -103,7 +104,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
         const error = new Error('Failed to save the contact point');
         error.cause = e;
-        logAlertingError(error);
+        logError(error);
       }
       throw e;
     }
@@ -177,7 +178,7 @@ export function ReceiverForm<R extends ChannelValues>({
               type="button"
               icon="plus"
               variant="secondary"
-              onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
+              onClick={() => append({ ...defaultItem, __id: String(Math.random()) })}
             >
               Add contact point integration
             </Button>
@@ -209,16 +210,16 @@ export function ReceiverForm<R extends ChannelValues>({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  heading: css`
-    margin: ${theme.spacing(4, 0)};
-  `,
-  buttons: css`
-    margin-top: ${theme.spacing(4)};
+  heading: css({
+    margin: theme.spacing(4, 0),
+  }),
+  buttons: css({
+    marginTop: theme.spacing(4),
 
-    & > * + * {
-      margin-left: ${theme.spacing(1)};
-    }
-  `,
+    '& > * + *': {
+      marginLeft: theme.spacing(1),
+    },
+  }),
 });
 
 function getErrorMessage(error: unknown) {

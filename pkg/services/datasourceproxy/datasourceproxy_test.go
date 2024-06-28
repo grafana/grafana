@@ -57,6 +57,10 @@ func TestDataProxy(t *testing.T) {
 				"/api/datasources/proxy/uid/26MI0wZ7k/api/services/afsd%2Fafsd/operations",
 				"api/services/afsd%2Fafsd/operations",
 			},
+			{
+				"/api/datasources/proxy/uid/26MI0wZ7k/api/services/afsd%2Fafsd/operations/",
+				"api/services/afsd%2Fafsd/operations/",
+			},
 		}
 		for _, tc := range testCases {
 			t.Run("Given raw path, should extract expected proxy path", func(t *testing.T) {
@@ -69,19 +73,16 @@ func TestDataProxy(t *testing.T) {
 // Tests request to datasource proxy service
 func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 	tcs := []struct {
-		name             string
-		dsURL            string
-		expectedErrorMsg string
+		name  string
+		dsURL string
 	}{
 		{
-			name:             "Empty datasource URL will return a 400 HTTP status code",
-			dsURL:            "",
-			expectedErrorMsg: "validation of data source URL \"\" failed: empty URL string",
+			name:  "Empty datasource URL will return a 400 HTTP status code",
+			dsURL: "",
 		},
 		{
-			name:             "Invalid datasource URL will return a 400 HTTP status code",
-			dsURL:            "://host/path",
-			expectedErrorMsg: "validation of data source URL \"://host/path\" failed: parse \"://host/path\": missing protocol scheme",
+			name:  "Invalid datasource URL will return a 400 HTTP status code",
+			dsURL: "://host/path",
 		},
 	}
 	for _, tc := range tcs {
@@ -124,7 +125,6 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 
 			require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 			require.Equal(t, fmt.Sprintf("Invalid data source URL: %q", tc.dsURL), jsonBody["message"])
-			require.Equal(t, tc.expectedErrorMsg, jsonBody["error"])
 		})
 	}
 }

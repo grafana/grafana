@@ -13,6 +13,8 @@ const filterTokenToTypeMap: Record<number, string> = {
   [terms.StateToken]: 'state',
   [terms.TypeToken]: 'type',
   [terms.HealthToken]: 'health',
+  [terms.DashboardToken]: 'dashboard',
+  [terms.PluginsToken]: 'plugins',
 };
 
 // This enum allows to configure parser behavior
@@ -27,6 +29,8 @@ export enum FilterSupportedTerm {
   state = 'stateFilter',
   type = 'typeFilter',
   health = 'healthFilter',
+  dashboard = 'dashboardFilter',
+  plugins = 'pluginsFilter',
 }
 
 export type QueryFilterMapper = Record<number, (filter: string) => void>;

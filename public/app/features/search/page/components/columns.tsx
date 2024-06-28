@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React from 'react';
+import { intervalToDuration } from 'date-fns';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -11,9 +11,10 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
+import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -25,6 +26,7 @@ import { ExplainScorePopup } from './ExplainScorePopup';
 import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
+const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
@@ -112,15 +114,20 @@ export const generateColumns = (
     Cell: (p) => {
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
+      const isDeleted = access.isDeleted?.values[p.row.index];
+
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
         name = loading ? 'Loading...' : 'Missing title'; // normal for panels
         classNames += ' ' + styles.missingTitleText;
       }
+
       return (
         <div className={styles.cell} {...p.cellProps}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
+          ) : isDeleted ? (
+            <span className={classNames}>{name}</span>
           ) : (
             <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
               {name}
@@ -136,9 +143,18 @@ export const generateColumns = (
   });
   availableWidth -= width;
 
-  width = TYPE_COLUMN_WIDTH;
-  columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
-  availableWidth -= width;
+  const showDeletedRemaining =
+    response.view.fields.permanentlyDeleteDate && hasValue(response.view.fields.permanentlyDeleteDate);
+
+  if (showDeletedRemaining && access.permanentlyDeleteDate) {
+    width = DURATION_COLUMN_WIDTH;
+    columns.push(makeDeletedRemainingColumn(response, access.permanentlyDeleteDate, width, styles));
+    availableWidth -= width;
+  } else {
+    width = TYPE_COLUMN_WIDTH;
+    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
+    availableWidth -= width;
+  }
 
   // Show datasources if we have any
   if (access.ds_uid && onDatasourceChange) {
@@ -173,11 +189,12 @@ export const generateColumns = (
                 {parts.map((p) => {
                   let info = meta.locationInfo[p];
                   if (!info && p === 'general') {
-                    info = { kind: 'folder', url: '/dashboards', name: 'General' };
+                    info = { kind: 'folder', url: '/dashboards', name: 'Dashboards' };
                   }
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>
                       <Icon name={getIconForKind(info.kind)} />
+
                       <Text variant="body" truncate>
                         {info.name}
                       </Text>
@@ -327,6 +344,46 @@ function makeDataSourceColumn(
   };
 }
 
+function makeDeletedRemainingColumn(
+  response: QueryResponse,
+  deletedField: Field<Date | undefined>,
+  width: number,
+  styles: Record<string, string>
+): TableColumn {
+  return {
+    id: 'column-delete-age',
+    field: deletedField,
+    width,
+    Header: t('search.results-table.deleted-remaining-header', 'Time remaining'),
+    Cell: (p) => {
+      const i = p.row.index;
+      const deletedDate = deletedField.values[i];
+
+      if (!deletedDate || !response.isItemLoaded(p.row.index)) {
+        return (
+          <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
+            <Skeleton width={100} />
+          </div>
+        );
+      }
+
+      const duration = calcCoarseDuration(new Date(), deletedDate);
+      const isDeletingSoon = !Object.values(duration).some((v) => v > 0);
+      const formatted = isDeletingSoon
+        ? t('search.results-table.deleted-less-than-1-min', '< 1 min')
+        : formatDuration(duration, { style: 'long' });
+
+      return (
+        <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
+          <Tooltip content={formatDate(deletedDate, { dateStyle: 'medium', timeStyle: 'short' })}>
+            <span>{formatted}</span>
+          </Tooltip>
+        </div>
+      );
+    },
+  };
+}
+
 function makeTypeColumn(
   response: QueryResponse,
   kindField: Field<string>,
@@ -440,4 +497,23 @@ function getDisplayValue({
     return '-';
   }
   return formattedValueToString(getDisplay(value));
+}
+
+/**
+ * Calculates the rough duration between two dates, keeping only the most significant unit
+ */
+function calcCoarseDuration(start: Date, end: Date) {
+  let { years = 0, months = 0, days = 0, hours = 0, minutes = 0 } = intervalToDuration({ start, end });
+
+  if (years > 0) {
+    return { years };
+  } else if (months > 0) {
+    return { months };
+  } else if (days > 0) {
+    return { days };
+  } else if (hours > 0) {
+    return { hours };
+  }
+
+  return { minutes };
 }

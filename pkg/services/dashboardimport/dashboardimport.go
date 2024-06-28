@@ -3,8 +3,8 @@ package dashboardimport
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // ImportDashboardInput definition of input parameters when importing a dashboard.
@@ -22,22 +22,24 @@ type ImportDashboardRequest struct {
 	Overwrite bool                   `json:"overwrite"`
 	Dashboard *simplejson.Json       `json:"dashboard"`
 	Inputs    []ImportDashboardInput `json:"inputs"`
-	FolderId  int64                  `json:"folderId"`
-	FolderUid string                 `json:"folderUid"`
+	// Deprecated: use FolderUID instead
+	FolderId  int64  `json:"folderId"`
+	FolderUid string `json:"folderUid"`
 
 	User identity.Requester `json:"-"`
 }
 
 // ImportDashboardResponse response object returned when importing a dashboard.
 type ImportDashboardResponse struct {
-	UID              string `json:"uid"`
-	PluginId         string `json:"pluginId"`
-	Title            string `json:"title"`
-	Imported         bool   `json:"imported"`
-	ImportedUri      string `json:"importedUri"`
-	ImportedUrl      string `json:"importedUrl"`
-	Slug             string `json:"slug"`
-	DashboardId      int64  `json:"dashboardId"`
+	UID         string `json:"uid"`
+	PluginId    string `json:"pluginId"`
+	Title       string `json:"title"`
+	Imported    bool   `json:"imported"`
+	ImportedUri string `json:"importedUri"`
+	ImportedUrl string `json:"importedUrl"`
+	Slug        string `json:"slug"`
+	DashboardId int64  `json:"dashboardId"`
+	// Deprecated: use FolderUID instead
 	FolderId         int64  `json:"folderId"`
 	FolderUID        string `json:"folderUid"`
 	ImportedRevision int64  `json:"importedRevision,omitempty"` // Only used for plugin imports

@@ -1,30 +1,262 @@
 package playlist
 
 import (
+	"cmp"
 	"context"
+	"encoding/json"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	playlistv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-func TestPlaylist(t *testing.T) {
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+var gvr = schema.GroupVersionResource{
+	Group:    "playlist.grafana.app",
+	Version:  "v0alpha1",
+	Resource: "playlists",
+}
+
+func TestIntegrationPlaylist(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	helper := apis.NewK8sTestHelper(t)
-	gvr := schema.GroupVersionResource{
-		Group:    "playlist.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "playlists",
-	}
 
+	t.Run("default setup", func(t *testing.T) {
+		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true, // do not start extra port 6443
+			DisableAnonymous:     true,
+			EnableFeatureToggles: []string{},
+		}))
+
+		// The accepted verbs will change when dual write is enabled
+		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
+		// fmt.Printf("%s", string(disco))
+		require.JSONEq(t, `[
+			{
+			  "version": "v0alpha1",
+			  "freshness": "Current",
+			  "resources": [
+				{
+				  "resource": "playlists",
+				  "responseKind": {
+					"group": "",
+					"kind": "Playlist",
+					"version": ""
+				  },
+				  "scope": "Namespaced",
+				  "singularResource": "playlist",
+				  "verbs": [
+					"create",
+					"delete",
+					"deletecollection",
+					"get",
+					"list",
+					"patch",
+					"update"
+				  ]
+				}
+			  ]
+			}
+		  ]`, disco)
+	})
+
+	t.Run("with k8s api flag", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: true, // do not start extra port 6443
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // <<< The change we are testing!
+			},
+		}))
+	})
+
+	t.Run("with dual write (file, mode 0)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
+			},
+		}))
+	})
+
+	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			},
+		}))
+	})
+
+	t.Run("with dual write (file, mode 2)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorage,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorage,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 2)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorage,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			},
+		}))
+	})
+
+	t.Run("with dual write (etcd, mode 0)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doPlaylistTests(t, helper)
+	})
+
+	t.Run("with dual write (etcd, mode 1)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doPlaylistTests(t, helper)
+	})
+
+	t.Run("with dual write (etcd, mode 2)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doPlaylistTests(t, helper)
+	})
+}
+
+func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
 	t.Run("Check direct List permissions from different org users", func(t *testing.T) {
 		// Check view permissions
 		rsp := helper.List(helper.Org1.Viewer, "default", gvr)
@@ -34,13 +266,13 @@ func TestPlaylist(t *testing.T) {
 		require.Nil(t, rsp.Status)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, "default", gvr)
-		require.Equal(t, 403, rsp.Response.StatusCode) // Org2 can not see default namespace
+		rsp = helper.List(helper.OrgB.Viewer, "default", gvr)
+		require.Equal(t, 403, rsp.Response.StatusCode) // OrgB can not see default namespace
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, "org-22", gvr)
+		rsp = helper.List(helper.OrgB.Viewer, "org-22", gvr)
 		require.Equal(t, 403, rsp.Response.StatusCode) // Unknown/not a member
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
@@ -59,7 +291,7 @@ func TestPlaylist(t *testing.T) {
 
 		// Check org2 viewer can not see org1 (default namespace)
 		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org2.Viewer,
+			User:      helper.OrgB.Viewer,
 			Namespace: "default", // actually org1
 			GVR:       gvr,
 		})
@@ -70,7 +302,7 @@ func TestPlaylist(t *testing.T) {
 
 		// Check invalid namespace
 		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org2.Viewer,
+			User:      helper.OrgB.Viewer,
 			Namespace: "org-22", // org 22 does not exist
 			GVR:       gvr,
 		})
@@ -127,6 +359,11 @@ func TestPlaylist(t *testing.T) {
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
+			  "annotations": {
+				"grafana.app/originPath": "${originPath}",
+				"grafana.app/originName": "SQL",
+				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
+			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
 			  "namespace": "default",
@@ -134,7 +371,6 @@ func TestPlaylist(t *testing.T) {
 			  "uid": "${uid}"
 			},
 			"spec": {
-			  "title": "Test",
 			  "interval": "20s",
 			  "items": [
 				{
@@ -145,7 +381,8 @@ func TestPlaylist(t *testing.T) {
 				  "type": "dashboard_by_tag",
 				  "value": "graph-ng"
 				}
-			  ]
+			  ],
+			  "title": "Test"
 			}
 		  }`
 
@@ -170,6 +407,7 @@ func TestPlaylist(t *testing.T) {
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{})
+		require.Equal(t, 200, dtoResponse.Response.StatusCode)
 		require.Equal(t, uid, dtoResponse.Result.Uid)
 		require.Equal(t, "10m", dtoResponse.Result.Interval)
 
@@ -179,16 +417,187 @@ func TestPlaylist(t *testing.T) {
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 
 		// Delete does not return anything
-		_ = apis.DoRequest(helper, apis.RequestParams{
+		deleteResponse := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodDelete,
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
 		}, &playlist.PlaylistDTO{}) // response is empty
+		require.Equal(t, 200, deleteResponse.Response.StatusCode)
 
 		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		statusError := helper.AsStatusError(err)
 		require.Nil(t, found)
 		require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
 	})
+
+	t.Run("Do CRUD via k8s (and check that legacy api still works)", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+
+		// Create the playlist "test"
+		first, err := client.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-create.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "test", first.GetName())
+		uids := []string{first.GetName()}
+
+		// Create (with name generation) two playlists
+		for i := 0; i < 2; i++ {
+			out, err := client.Resource.Create(context.Background(),
+				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+				metav1.CreateOptions{},
+			)
+			require.NoError(t, err)
+			uids = append(uids, out.GetName())
+		}
+		slices.Sort(uids) // make list compare stable
+
+		// Check that everything is returned from the List command
+		list, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, uids, SortSlice(Map(list.Items, func(item unstructured.Unstructured) string {
+			return item.GetName()
+		})))
+
+		// The legacy endpoint has the same results
+		searchResponse := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodGet,
+			Path:   "/api/playlists",
+		}, &playlist.Playlists{})
+		require.NotNil(t, searchResponse.Result)
+		require.Equal(t, uids, SortSlice(Map(*searchResponse.Result, func(item *playlist.Playlist) string {
+			return item.UID
+		})))
+
+		// Check all playlists
+		for _, uid := range uids {
+			getFromBothAPIs(t, helper, client, uid, nil)
+		}
+
+		// PUT :: Update the title (full payload)
+		updated, err := client.Resource.Update(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-replace.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, first.GetName(), updated.GetName())
+		require.Equal(t, first.GetUID(), updated.GetUID())
+		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+		out := getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+			Name:     "Test playlist (replaced from k8s; 22m; 1 items; PUT)",
+			Interval: "22m",
+		})
+		require.Equal(t, updated.GetResourceVersion(), out.GetResourceVersion())
+
+		// PATCH :: apply only some fields
+		updated, err = client.Resource.Apply(context.Background(), "test",
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
+			metav1.ApplyOptions{
+				Force:        true,
+				FieldManager: "testing",
+			},
+		)
+		require.NoError(t, err)
+		require.Equal(t, first.GetName(), updated.GetName())
+		require.Equal(t, first.GetUID(), updated.GetUID())
+		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+		getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+			Name:     "Test playlist (apply from k8s; ??m; ?? items; PATCH)",
+			Interval: "22m", // has not changed from previous update
+		})
+
+		// Now delete all playlist (three)
+		for _, uid := range uids {
+			err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+			require.NoError(t, err)
+
+			// Second call is not found!
+			err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+			statusError := helper.AsStatusError(err)
+			require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
+
+			// Not found from k8s getter
+			_, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+			statusError = helper.AsStatusError(err)
+			require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
+		}
+
+		// Check that they are all gone
+		list, err = client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+
+	return helper
+}
+
+// typescript style map function
+func Map[A any, B any](input []A, m func(A) B) []B {
+	output := make([]B, len(input))
+	for i, element := range input {
+		output[i] = m(element)
+	}
+	return output
+}
+
+func SortSlice[A cmp.Ordered](input []A) []A {
+	slices.Sort(input)
+	return input
+}
+
+// This does a get with both k8s and legacy API, and verifies the results are the same
+func getFromBothAPIs(t *testing.T,
+	helper *apis.K8sTestHelper,
+	client *apis.K8sResourceClient,
+	uid string,
+	// Optionally match some expect some values
+	expect *playlist.PlaylistDTO,
+) *unstructured.Unstructured {
+	t.Helper()
+
+	found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, uid, found.GetName())
+
+	dto := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   "/api/playlists/" + uid,
+	}, &playlist.PlaylistDTO{}).Result
+	require.NotNil(t, dto)
+	require.Equal(t, uid, dto.Uid)
+
+	spec, ok := found.Object["spec"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, dto.Uid, found.GetName())
+	require.Equal(t, dto.Name, spec["title"])
+	require.Equal(t, dto.Interval, spec["interval"])
+
+	a, errA := json.Marshal(spec["items"])
+	b, errB := json.Marshal(dto.Items)
+	require.NoError(t, errA)
+	require.NoError(t, errB)
+	require.JSONEq(t, string(a), string(b))
+
+	if expect != nil {
+		if expect.Name != "" {
+			require.Equal(t, expect.Name, dto.Name)
+			require.Equal(t, expect.Name, spec["title"])
+		}
+		if expect.Interval != "" {
+			require.Equal(t, expect.Interval, dto.Interval)
+			require.Equal(t, expect.Interval, spec["interval"])
+		}
+		if expect.Uid != "" {
+			require.Equal(t, expect.Uid, dto.Uid)
+			require.Equal(t, expect.Uid, found.GetName())
+		}
+	}
+	return found
 }

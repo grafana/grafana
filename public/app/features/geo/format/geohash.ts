@@ -33,7 +33,7 @@ export function decodeGeohash(geohash: string): [number, number] | undefined {
   return [lonCenter, latCenter];
 }
 
-function refineInterval(interval: any[], base32Decoded: number, mask: number) {
+function refineInterval(interval: number[], base32Decoded: number, mask: number) {
   /* tslint:disable no-bitwise*/
   if (base32Decoded & mask) {
     interval[0] = (interval[0] + interval[1]) / 2;

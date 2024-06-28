@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { ClassicCondition, ReducerType } from '../types';
@@ -73,7 +72,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
-    <Stack direction="row">
+    <Stack>
       <div style={{ flex: 1 }}>
         <InlineFieldRow>
           {index === 0 ? (

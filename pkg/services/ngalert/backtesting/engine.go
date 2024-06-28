@@ -9,14 +9,16 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -33,7 +35,8 @@ type backtestingEvaluator interface {
 }
 
 type stateManager interface {
-	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []state.StateTransition
+	ProcessEvalResults(context.Context, time.Time, *models.AlertRule, eval.Results, data.Labels, state.Sender) state.StateTransitions
+	schedule.RuleStateProvider
 }
 
 type Engine struct {
@@ -46,22 +49,21 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
 			cfg := state.ManagerCfg{
-				Metrics:                 nil,
-				ExternalURL:             appUrl,
-				InstanceStore:           nil,
-				Images:                  &NoopImageService{},
-				Clock:                   clock.New(),
-				Historian:               nil,
-				MaxStateSaveConcurrency: 1,
-				Tracer:                  tracer,
-				Log:                     log.New("ngalert.state.manager"),
+				Metrics:       nil,
+				ExternalURL:   appUrl,
+				InstanceStore: nil,
+				Images:        &NoopImageService{},
+				Clock:         clock.New(),
+				Historian:     nil,
+				Tracer:        tracer,
+				Log:           log.New("ngalert.state.manager"),
 			}
-			return state.NewManager(cfg)
+			return state.NewManager(cfg, state.NewNoopPersister())
 		},
 	}
 }
 
-func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models.AlertRule, from, to time.Time) (*data.Frame, error) {
+func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time) (*data.Frame, error) {
 	ruleCtx := models.WithRuleKey(ctx, rule.GetKey())
 	logger := logger.FromContext(ctx)
 
@@ -73,26 +75,29 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	}
 	length := int(to.Sub(from).Seconds()) / int(rule.IntervalSeconds)
 
-	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition())
+	stateManager := e.createStateManager()
+
+	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition(), &schedule.AlertingResultsFromRuleState{
+		Manager: stateManager,
+		Rule:    rule,
+	})
 	if err != nil {
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
-
-	stateManager := e.createStateManager()
 
 	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", length)
 
 	start := time.Now()
 
 	tsField := data.NewField("Time", nil, make([]time.Time, length))
-	valueFields := make(map[string]*data.Field)
+	valueFields := make(map[data.Fingerprint]*data.Field)
 
 	err = evaluator.Eval(ruleCtx, from, time.Duration(rule.IntervalSeconds)*time.Second, length, func(idx int, currentTime time.Time, results eval.Results) error {
 		if idx >= length {
 			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
 			return nil
 		}
-		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil)
+		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil, nil)
 		tsField.Set(idx, currentTime)
 		for _, s := range states {
 			field, ok := valueFields[s.CacheID]
@@ -125,7 +130,7 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	return result, nil
 }
 
-func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition) (backtestingEvaluator, error) {
+func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user identity.Requester, condition models.Condition, reader eval.AlertingResultsReader) (backtestingEvaluator, error) {
 	for _, q := range condition.Data {
 		if q.DatasourceUID == "__data__" || q.QueryType == "__data__" {
 			if len(condition.Data) != 1 {
@@ -151,9 +156,7 @@ func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFact
 		}
 	}
 
-	evaluator, err := evalFactory.Create(eval.EvaluationContext{Ctx: ctx,
-		User: user,
-	}, condition)
+	evaluator, err := evalFactory.Create(eval.NewContextWithPreviousResults(ctx, user, reader), condition)
 
 	if err != nil {
 		return nil, err

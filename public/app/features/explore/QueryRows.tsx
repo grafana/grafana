@@ -1,15 +1,15 @@
 import { createSelector } from '@reduxjs/toolkit';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
+import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -57,7 +57,7 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const onAddQuery = useCallback(
     (query: DataQuery) => {
-      onChange([...queries, { ...query, refId: getNextRefIdChar(queries) }]);
+      onChange([...queries, { ...query, refId: getNextRefId(queries) }]);
     },
     [onChange, queries]
   );
@@ -88,6 +88,18 @@ export const QueryRows = ({ exploreId }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      queryRowWrapper={(children, refId) => (
+        <ContentOutlineItem
+          title={refId}
+          icon="arrow"
+          key={refId}
+          panelId="Queries"
+          customTopOffset={-10}
+          level="child"
+        >
+          {children}
+        </ContentOutlineItem>
+      )}
     />
   );
 };

@@ -1,6 +1,16 @@
 {
-  "template_files": {},
+  "template_files": {
+    "some template": "{{ define 'some template' }}  something {{ end }}"
+  },
   "alertmanager_config": {
+    "route": {
+      "receiver": "grafana-default-email",
+      "routes": [
+        {
+          "receiver": "provisioned-contact-point"
+        }
+      ]
+    },
     "receivers": [
       {
         "name": "grafana-default-email",
@@ -63,6 +73,19 @@
             "disableResolveMessage": false,
             "settings": { "recipient": "test-alerts2" },
             "secureFields": { "token": true }
+          }
+        ]
+      },
+      {
+        "name": "OnCall Conctact point",
+        "grafana_managed_receiver_configs": [
+          {
+            "name": "Oncall-integration",
+            "type": "oncall",
+            "settings": {
+              "url": "https://oncall-endpoint.example.com"
+            },
+            "disableResolveMessage": false
           }
         ]
       }

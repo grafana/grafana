@@ -1,4 +1,4 @@
-import { Field } from '@grafana/data';
+import { Field, FieldType } from '@grafana/data';
 import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
 export interface DimensionSupplier<T = any> {
@@ -34,6 +34,7 @@ export interface ScaleDimensionOptions {
   max: number;
   step?: number;
   hideRange?: boolean; // false
+  filteredFieldType?: FieldType;
 }
 
 export interface ScalarDimensionOptions {
@@ -59,6 +60,7 @@ export interface ResourceDimensionOptions {
   placeholderValue?: string;
   // If you want your icon to be driven by value of a field
   showSourceRadio?: boolean;
+  maxFiles?: number;
 }
 
 export enum ResourceFolderName {

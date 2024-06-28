@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
+import * as React from 'react';
 import { useDebounce } from 'react-use';
 
 import { FilterInput } from '@grafana/ui';
@@ -10,7 +11,7 @@ interface Props {
 
 // useDebounce has a bug which causes it to fire on first render. This wrapper prevents that.
 // https://github.com/streamich/react-use/issues/759
-const useDebounceWithoutFirstRender = (callBack: () => any, delay = 0, deps: React.DependencyList = []) => {
+const useDebounceWithoutFirstRender = (callBack: () => void, delay = 0, deps: React.DependencyList = []) => {
   const isFirstRender = useRef(true);
   const debounceDeps = [...deps, isFirstRender];
 

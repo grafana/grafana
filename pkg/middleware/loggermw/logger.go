@@ -19,13 +19,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/util"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -64,7 +64,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			// put the start time on context so we can measure it later.
 			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
-			if l.flags.IsEnabled(featuremgmt.FlagUnifiedRequestLog) {
+			if l.flags.IsEnabled(r.Context(), featuremgmt.FlagUnifiedRequestLog) {
 				r = r.WithContext(errutil.SetUnifiedLogging(r.Context()))
 			}
 
@@ -74,6 +74,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			duration := time.Since(start)
 			timeTaken := duration / time.Millisecond
 			ctx := contexthandler.FromContext(r.Context())
+
 			if ctx != nil && ctx.PerfmonTimer != nil {
 				ctx.PerfmonTimer.Observe(float64(timeTaken))
 			}
@@ -112,7 +113,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		"size", rw.Size(),
 	}
 
-	referer, err := SanitizeURL(r.Referer())
+	referer, err := util.SanitizeURI(r.Referer())
 	// We add an empty referer when there's a parsing error, hence this is before the err check.
 	logParams = append(logParams, "referer", referer)
 	if err != nil {
@@ -128,10 +129,8 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		logParams = append(logParams, "handler", handler)
 	}
 
-	if l.flags.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
-		rmd := requestmeta.GetRequestMetaData(c.Req.Context())
-		logParams = append(logParams, "status_source", rmd.StatusSource)
-	}
+	rmd := requestmeta.GetRequestMetaData(c.Req.Context())
+	logParams = append(logParams, "status_source", rmd.StatusSource)
 
 	logParams = append(logParams, errorLogParams(c.Error)...)
 
@@ -153,28 +152,4 @@ func errorLogParams(err error) []any {
 		"errorMessageID", gfErr.MessageID,
 		"error", gfErr.LogMessage,
 	}
-}
-
-var sensitiveQueryStrings = [...]string{
-	"auth_token",
-}
-
-func SanitizeURL(s string) (string, error) {
-	if s == "" {
-		return s, nil
-	}
-
-	u, err := url.ParseRequestURI(s)
-	if err != nil {
-		return "", fmt.Errorf("failed to sanitize URL")
-	}
-
-	// strip out sensitive query strings
-	values := u.Query()
-	for _, query := range sensitiveQueryStrings {
-		values.Del(query)
-	}
-	u.RawQuery = values.Encode()
-
-	return u.String(), nil
 }

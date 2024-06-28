@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
-  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
-description: Configure recording rules
+description: Create recording rules for an external Grafana Mimir or Loki instance
 keywords:
   - grafana
   - alerting
@@ -16,19 +16,31 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Configure recording rules
+title: Create recording rules
 weight: 300
+refs:
+  configure-grafana:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
+  annotation-label:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
 ---
 
-# Configure recording rules
+# Create recording rules
 
-You can create and manage recording rules for an external Grafana Mimir or Loki instance. Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
+You can create and manage recording rules for an external Grafana Mimir or Loki instance.
+Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
+
+For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
 
 **Note:**
 
 Recording rules are run as instant rules, which means that they run every 10s. To overwrite this configuration, update the min_interval in your custom configuration file.
 
-[min_interval][configure-grafana] sets the minimum interval to enforce between rule evaluations. The default value is 10s which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as fewer evaluations are scheduled over time.
+[min_interval](ref:configure-grafana) sets the minimum interval to enforce between rule evaluations. The default value is 10s which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as fewer evaluations are scheduled over time.
 
 This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
@@ -48,13 +60,14 @@ To create recording rules, follow these steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Click the **More** dropdown and then **New recording rule**.
+1. Select **Rule type** -> **Recording**.
+1. Click **+New recording rule**.
 
-1. Set rule name.
+1. Enter recording rule name.
 
    The recording rule name must be a Prometheus metric name and contain no whitespace.
 
-1. Define query.
+1. Define recording rule.
    - Select your Loki or Prometheus data source.
    - Enter a query.
 1. Add namespace and group.
@@ -63,11 +76,3 @@ To create recording rules, follow these steps.
 1. Add labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
-
-{{% docs/reference %}}
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
-
-[configure-grafana]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
-[configure-grafana]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
-{{% /docs/reference %}}

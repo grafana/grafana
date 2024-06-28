@@ -6,18 +6,17 @@ import (
 	"net/url"
 	"path"
 	"strconv"
-	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 
+	alertingModels "github.com/grafana/alerting/models"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -33,7 +32,8 @@ const (
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
 //   - original alert name (label: model.AlertNameLabel) is backed up to OriginalAlertName
 //   - label model.AlertNameLabel is overwritten to either NoDataAlertName or ErrorAlertName
-func StateToPostableAlert(alertState *State, appURL *url.URL) *models.PostableAlert {
+func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.PostableAlert {
+	alertState := transition.State
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
 
@@ -71,11 +71,19 @@ func StateToPostableAlert(alertState *State, appURL *url.URL) *models.PostableAl
 		urlStr = ""
 	}
 
-	if alertState.State == eval.NoData {
+	state := alertState.State
+	if alertState.ResolvedAt != nil {
+		// If this is a resolved alert, we need to send an alert with the correct labels such that they will expire the previous alert.
+		// In most cases the labels on the state will be correct, however when the previous alert was a NoData or Error alert, we need to
+		// ensure to modify it appropriately.
+		state = transition.PreviousState
+	}
+
+	if state == eval.NoData {
 		return noDataAlert(nL, nA, alertState, urlStr)
 	}
 
-	if alertState.State == eval.Error {
+	if state == eval.Error {
 		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
@@ -130,27 +138,6 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 	}
 }
 
-func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
-	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	var sentAlerts []*State
-	ts := time.Now()
-
-	for _, alertState := range firingStates {
-		if !alertState.NeedsSending(stateManager.ResendDelay) {
-			continue
-		}
-		alert := StateToPostableAlert(alertState.State, appURL)
-		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
-		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
-			continue
-		}
-		alertState.LastSentAt = ts
-		sentAlerts = append(sentAlerts, alertState.State)
-	}
-	stateManager.Put(sentAlerts)
-	return alerts
-}
-
 // FromAlertsStateToStoppedAlert selects only transitions from firing states (states eval.Alerting, eval.NoData, eval.Error)
 // and converts them to models.PostableAlert with EndsAt set to time.Now
 func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
@@ -160,7 +147,7 @@ func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.U
 		if transition.PreviousState == eval.Normal || transition.PreviousState == eval.Pending {
 			continue
 		}
-		postableAlert := StateToPostableAlert(transition.State, appURL)
+		postableAlert := StateToPostableAlert(transition, appURL)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}

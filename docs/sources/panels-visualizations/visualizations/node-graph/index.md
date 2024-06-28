@@ -14,6 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's node graph visualization
 title: Node graph
 weight: 100
 ---
@@ -23,6 +24,12 @@ weight: 100
 Node graphs can visualize directed graphs or networks. They use a directed force layout to effectively position the nodes, so they can display complex infrastructure maps, hierarchies, or execution diagrams.
 
 ![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
+
+The following video provides beginner steps for creating node panel visualizations. You'll learn the data requirements and caveats, special customizations, and much more:
+
+{{< youtube id="VrvsMkRwoKw" >}}
+
+{{< docs/play title="Node graph panel" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
 
 ## Data requirements
 
@@ -103,13 +110,21 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                         |
-| ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| mainstat      | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown |
-| secondarystat | string/number | Same as mainStat, but shown right under it.                                                                                                                                                         |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                    |
-| thickness     | number        | The thickness of the edge. Default: `1`                                                                                                                                                             |
-| highlighted   | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                               |
+| Field name      | Type          | Description                                                                                                                                                                                                                                                               |
+| --------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mainstat        | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown                                                                       |
+| secondarystat   | string/number | Same as mainStat, but shown right under it.                                                                                                                                                                                                                               |
+| detail\_\_\*    | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                                                                                          |
+| thickness       | number        | The thickness of the edge. Default: `1`                                                                                                                                                                                                                                   |
+| highlighted     | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                     |
+| color           | string        | Sets the default color of the edge. It can be an acceptable HTML color string. Default: `#999`                                                                                                                                                                            |
+| strokeDasharray | string        | Sets the pattern of dashes and gaps used to render the edge. If unset, a solid line is used as edge. For more information and examples, refer to the [`stroke-dasharray` MDN documentation](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray). |
+
+{{< admonition type="caution" >}}
+Starting with 10.5, `highlighted` is deprecated.
+It will be removed in a future release.
+Use `color` to indicate a highlighted edge state instead.
+{{< /admonition >}}
 
 ### Nodes data frame structure
 
@@ -133,3 +148,7 @@ Optional fields:
 | icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana built in icons are allowed (see the available icons [here](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)).                                                                                                                      |
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                         |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                       |
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

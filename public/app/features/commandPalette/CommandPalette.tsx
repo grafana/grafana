@@ -12,11 +12,11 @@ import {
   useKBar,
   ActionImpl,
 } from 'kbar';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
@@ -58,14 +58,17 @@ export function CommandPalette() {
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
               <div className={styles.searchContainer}>
-                {isFetchingSearchResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
+                <Icon name="search" size="md" />
                 <KBarSearch
                   defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />
+                <div className={styles.loadingBarContainer}>
+                  {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
+                </div>
               </div>
               <div className={styles.resultsContainer}>
-                <RenderResults searchResults={searchResults} />
+                <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
               </div>
             </div>
           </FocusScope>
@@ -76,10 +79,11 @@ export function CommandPalette() {
 }
 
 interface RenderResultsProps {
+  isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
 }
 
-const RenderResults = ({ searchResults }: RenderResultsProps) => {
+const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
@@ -114,7 +118,15 @@ const RenderResults = ({ searchResults }: RenderResultsProps) => {
     return results;
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
-  return (
+  const showEmptyState = !isFetchingSearchResults && items.length === 0;
+
+  return showEmptyState ? (
+    <EmptyState
+      variant="not-found"
+      role="alert"
+      message={t('command-palette.empty-state.message', 'No results found')}
+    />
+  ) : (
     <KBarResults
       items={items}
       maxHeight={650}
@@ -161,6 +173,12 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
     }),
+    loadingBarContainer: css({
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+    }),
     searchContainer: css({
       alignItems: 'center',
       background: theme.components.input.background,
@@ -168,6 +186,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(1, 2),
+      position: 'relative',
     }),
     search: css({
       fontSize: theme.typography.fontSize,

@@ -17,7 +17,7 @@ export interface FuncDef {
   params: ParamDef[];
   defaultParams: Array<string | number>;
   category?: string;
-  shortName?: any;
+  shortName?: string;
   fake?: boolean;
   version?: string;
   description?: string;
@@ -990,7 +990,7 @@ function isVersionRelatedFunction(obj: { version?: string }, graphiteVersion: st
 export class FuncInstance {
   def: FuncDef;
   params: Array<string | number>;
-  text: any;
+  text = '';
   /**
    * True if this function was just added and not edited yet. It's used to focus on first
    * function param to edit it straight away after adding a function.
@@ -1004,7 +1004,7 @@ export class FuncInstance {
    */
   hidden?: boolean;
 
-  constructor(funcDef: FuncDef, options?: { withDefaultParams: any }) {
+  constructor(funcDef: FuncDef, options?: { withDefaultParams: boolean }) {
     this.def = funcDef;
     this.params = [];
 
@@ -1061,7 +1061,7 @@ export class FuncInstance {
     return str + parameters.join(', ') + ')';
   }
 
-  _hasMultipleParamsInString(strValue: any, index: number) {
+  _hasMultipleParamsInString(strValue: string, index: number) {
     if (strValue.indexOf(',') === -1) {
       return false;
     }
@@ -1077,7 +1077,7 @@ export class FuncInstance {
     return false;
   }
 
-  updateParam(strValue: any, index: any) {
+  updateParam(strValue: string, index: number) {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this._hasMultipleParamsInString(strValue, index)) {
@@ -1109,7 +1109,11 @@ export class FuncInstance {
   }
 }
 
-function createFuncInstance(funcDef: any, options?: { withDefaultParams: any }, idx?: any): FuncInstance {
+function createFuncInstance(
+  funcDef: FuncDef | string,
+  options?: { withDefaultParams: boolean },
+  idx?: any
+): FuncInstance {
   if (isString(funcDef)) {
     funcDef = getFuncDef(funcDef, idx);
   }
@@ -1181,7 +1185,7 @@ function parseFuncDefs(rawDefs: any): FuncDefs {
     }
 
     forEach(funcDef.params, (rawParam) => {
-      const param: any = {
+      const param: ParamDef = {
         name: rawParam.name,
         type: 'string',
         optional: !rawParam.required,

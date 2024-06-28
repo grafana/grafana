@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 import { first } from 'rxjs/operators';
 
 import { SelectableValue } from '@grafana/data';
@@ -7,6 +8,7 @@ import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { CanvasPanel } from '../CanvasPanel';
 import { AnchorPoint, LayerActionID } from '../types';
@@ -15,9 +17,10 @@ import { getElementTypes, onAddItem } from '../utils';
 type Props = {
   scene: Scene;
   panel: CanvasPanel;
+  onVisibilityChange: (v: boolean) => void;
 };
 
-export const CanvasContextMenu = ({ scene, panel }: Props) => {
+export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) => {
   const inlineEditorOpen = panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
@@ -29,7 +32,7 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
 
   const handleContextMenu = useCallback(
     (event: Event) => {
-      if (!(event instanceof MouseEvent)) {
+      if (!(event instanceof MouseEvent) || event.ctrlKey) {
         return;
       }
 
@@ -45,8 +48,9 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);
+      onVisibilityChange(true);
     },
-    [scene, panel]
+    [scene, panel, onVisibilityChange]
   );
 
   useEffect(() => {
@@ -65,9 +69,11 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);
+    onVisibilityChange(false);
   };
 
   const renderMenuItems = () => {
+    // This is disabled when panel is in edit mode because opening inline editor over panel editor is not ideal UX
     const openCloseEditorMenuItem = !scene.isPanelEditing && (
       <MenuItem
         label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
@@ -92,7 +98,7 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
           closeContextMenu();
         };
 
-        const element = scene.findElementByTarget(selectedElements[0]);
+        const element = findElementByTarget(selectedElements[0], scene.root.elements);
         return (
           element &&
           element.item.hasEditMode && (
@@ -114,9 +120,10 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
         let offsetY = anchorPoint.y;
         let offsetX = anchorPoint.x;
         if (scene.div) {
+          const transformScale = scene.scale;
           const sceneContainerDimensions = scene.div.getBoundingClientRect();
-          offsetY = offsetY - sceneContainerDimensions.top;
-          offsetX = offsetX - sceneContainerDimensions.left;
+          offsetY = (offsetY - sceneContainerDimensions.top) / transformScale;
+          offsetX = (offsetX - sceneContainerDimensions.left) / transformScale;
         }
 
         onAddItem(option, rootLayer, {
@@ -135,7 +142,7 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       return submenuItems;
     };
 
-    const addItemMenuItem = !scene.isPanelEditing && (
+    const addItemMenuItem = (
       <MenuItem
         label="Add item"
         className={styles.menuItem}
@@ -144,7 +151,7 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       />
     );
 
-    const setBackgroundMenuItem = !scene.isPanelEditing && (
+    const setBackgroundMenuItem = (
       <MenuItem
         label={'Set background'}
         onClick={() => {
@@ -244,7 +251,7 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
 };
 
 const getStyles = () => ({
-  menuItem: css`
-    max-width: 200px;
-  `,
+  menuItem: css({
+    maxWidth: '200px',
+  }),
 });

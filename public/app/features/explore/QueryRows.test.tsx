@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 
+import { DataSourceApi } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
@@ -22,9 +22,9 @@ function setup(queries: DataQuery[]) {
     name: 'newDs',
     uid: 'newDs-uid',
     meta: { id: 'newDs' },
-  };
+  } as DataSourceApi;
 
-  const datasources: Record<string, any> = {
+  const datasources: Record<string, DataSourceApi> = {
     'newDs-uid': defaultDs,
     'someDs-uid': {
       name: 'someDs',
@@ -33,7 +33,7 @@ function setup(queries: DataQuery[]) {
       components: {
         QueryEditor: () => 'someDs query editor',
       },
-    },
+    } as unknown as DataSourceApi,
   };
 
   setDataSourceSrv({
@@ -46,20 +46,20 @@ function setup(queries: DataQuery[]) {
     get(uid?: string) {
       return Promise.resolve(uid ? datasources[uid] || defaultDs : defaultDs);
     },
-  } as DataSourceSrv);
+  } as unknown as DataSourceSrv);
 
   const leftState = makeExplorePaneState();
   const initialState: ExploreState = {
+    richHistory: [],
     panes: {
       left: {
         ...leftState,
-        richHistory: [],
         datasourceInstance: datasources['someDs-uid'],
         queries,
         correlations: [],
       },
     },
-    correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
+    correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
     syncedTimes: false,
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,

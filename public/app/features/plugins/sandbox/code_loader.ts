@@ -1,10 +1,11 @@
-import { PluginMeta, patchArrayVectorProrotypeMethods } from '@grafana/data';
+import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolveWithCache } from '../loader/cache';
-import { isHostedOnCDN } from '../loader/utils';
+import { isHostedOnCDN, resolveModulePath } from '../loader/utils';
 
-import { SandboxEnvironment } from './types';
+import { SandboxEnvironment, SandboxPluginMeta } from './types';
 
 function isSameDomainAsHost(url: string): boolean {
   const locationUrl = new URL(window.location.href);
@@ -12,7 +13,7 @@ function isSameDomainAsHost(url: string): boolean {
   return locationUrl.host === paramUrl.host;
 }
 
-export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandboxEnv: SandboxEnvironment) {
+export async function loadScriptIntoSandbox(url: string, sandboxEnv: SandboxEnvironment) {
   let scriptCode = '';
 
   // same-domain
@@ -46,7 +47,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
   sandboxEnv.evaluate(scriptCode);
 }
 
-export async function getPluginCode(meta: PluginMeta): Promise<string> {
+export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
   if (isHostedOnCDN(meta.module)) {
     // Load plugin from CDN, no need for "resolveWithCache" as CDN URLs already include the version
     const url = meta.module;
@@ -60,9 +61,10 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     });
     return pluginCode;
   } else {
-    // local plugin. resolveWithCache will append a query parameter with its version
-    // to ensure correct cached version is served
-    const pluginCodeUrl = resolveWithCache(meta.module);
+    let modulePath = resolveModulePath(meta.module);
+    // resolveWithCache will append a query parameter with its version
+    // to ensure correct cached version is served for local plugins
+    const pluginCodeUrl = resolveWithCache(modulePath);
     const response = await fetch(pluginCodeUrl);
     let pluginCode = await response.text();
     pluginCode = transformPluginSourceForCDN({
@@ -86,4 +88,34 @@ export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvi
   sandboxEnvironment.evaluate(
     `${patchArrayVectorProrotypeMethods.toString()};${patchArrayVectorProrotypeMethods.name}()`
   );
+}
+
+export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
+  // find it in datasources
+  for (const datasource of Object.values(config.datasources)) {
+    if (datasource.type === pluginId) {
+      return datasource.meta;
+    }
+  }
+
+  //find it in panels
+  for (const panel of Object.values(config.panels)) {
+    if (panel.id === pluginId) {
+      return panel;
+    }
+  }
+
+  //find it in apps
+  //the information inside the apps object is more limited
+  for (const app of Object.values(config.apps)) {
+    if (app.id === pluginId) {
+      return {
+        id: pluginId,
+        type: PluginType.app,
+        module: app.path,
+      };
+    }
+  }
+
+  throw new Error(`Could not find plugin ${pluginId}`);
 }

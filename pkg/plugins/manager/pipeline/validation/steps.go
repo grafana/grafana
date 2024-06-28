@@ -3,6 +3,9 @@ package validation
 import (
 	"context"
 	"errors"
+	"fmt"
+	"regexp"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -13,7 +16,7 @@ import (
 )
 
 // DefaultValidateFuncs are the default ValidateFunc used for the Validate step of the Validation stage.
-func DefaultValidateFuncs(cfg *config.Cfg) []ValidateFunc {
+func DefaultValidateFuncs(cfg *config.PluginManagementCfg) []ValidateFunc {
 	return []ValidateFunc{
 		SignatureValidationStep(signature.NewValidator(signature.NewUnsignedAuthorizer(cfg))),
 		ModuleJSValidationStep(),
@@ -73,16 +76,16 @@ func (v *ModuleJSValidator) Validate(_ context.Context, p *plugins.Plugin) error
 }
 
 type AngularDetector struct {
-	cfg              *config.Cfg
+	cfg              *config.PluginManagementCfg
 	angularInspector angularinspector.Inspector
 	log              log.Logger
 }
 
-func AngularDetectionStep(cfg *config.Cfg, angularInspector angularinspector.Inspector) ValidateFunc {
+func AngularDetectionStep(cfg *config.PluginManagementCfg, angularInspector angularinspector.Inspector) ValidateFunc {
 	return newAngularDetector(cfg, angularInspector).Validate
 }
 
-func newAngularDetector(cfg *config.Cfg, angularInspector angularinspector.Inspector) *AngularDetector {
+func newAngularDetector(cfg *config.PluginManagementCfg, angularInspector angularinspector.Inspector) *AngularDetector {
 	return &AngularDetector{
 		cfg:              cfg,
 		angularInspector: angularInspector,
@@ -95,7 +98,7 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		var err error
 
 		cctx, canc := context.WithTimeout(ctx, time.Second*10)
-		p.AngularDetected, err = a.angularInspector.Inspect(cctx, p)
+		p.Angular.Detected, err = a.angularInspector.Inspect(cctx, p)
 		canc()
 
 		if err != nil {
@@ -103,9 +106,45 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		}
 
 		// Do not initialize plugins if they're using Angular and Angular support is disabled
-		if p.AngularDetected && !a.cfg.AngularSupportEnabled {
+		if p.Angular.Detected && !a.cfg.AngularSupportEnabled {
 			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginId", p.ID)
-			return errors.New("angular plugins are not supported")
+			return (&plugins.Error{
+				PluginID:  p.ID,
+				ErrorCode: plugins.ErrorAngular,
+			}).WithMessage("angular plugins are not supported")
+		}
+	}
+	p.Angular.HideDeprecation = slices.Contains(a.cfg.HideAngularDeprecation, p.ID)
+	return nil
+}
+
+// APIVersionValidation implements a ValidateFunc for validating plugin API versions.
+type APIVersionValidation struct {
+}
+
+// APIVersionValidationStep returns a new ValidateFunc for validating plugin signatures.
+func APIVersionValidationStep() ValidateFunc {
+	sv := &APIVersionValidation{}
+	return sv.Validate
+}
+
+// Validate validates the plugin signature. If a signature error is encountered, the error is recorded with the
+// pluginerrs.ErrorTracker.
+func (v *APIVersionValidation) Validate(ctx context.Context, p *plugins.Plugin) error {
+	if p.APIVersion != "" {
+		if !p.Backend {
+			return fmt.Errorf("plugin %s has an API version but is not a backend plugin", p.ID)
+		}
+		// Eventually, all backend plugins will be supported
+		if p.Type != plugins.TypeDataSource {
+			return fmt.Errorf("plugin %s has an API version but is not a datasource plugin", p.ID)
+		}
+		m, err := regexp.MatchString(`^v([\d]+)(?:(alpha|beta)([\d]+))?$`, p.APIVersion)
+		if err != nil {
+			return fmt.Errorf("failed to verify apiVersion %s: %v", p.APIVersion, err)
+		}
+		if !m {
+			return fmt.Errorf("plugin %s has an invalid API version %s", p.ID, p.APIVersion)
 		}
 	}
 

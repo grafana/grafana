@@ -1,6 +1,5 @@
 import { String } from '@grafana/lezer-logql';
 
-import { createLokiDatasource } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getLokiQueryType,
@@ -17,7 +16,6 @@ import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
-  formatLogqlQuery,
   getLogQueryFromMetricsQueryAtPosition,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -120,6 +118,14 @@ describe('getHighlighterExpressionsFromQuery', () => {
     ${'`"test"a`'} | ${'"test"a'}
   `('should correctly identify the type of quote used in the term', ({ input, expected }) => {
     expect(getHighlighterExpressionsFromQuery(`{foo="bar"} |= ${input}`)).toEqual([expected]);
+  });
+
+  it.each(['|=', '|~'])('returns multiple expressions when using or statements', (op: string) => {
+    expect(getHighlighterExpressionsFromQuery(`{app="frontend"} ${op} "line" or "text"`)).toEqual(['line', 'text']);
+  });
+
+  it.each(['|=', '|~'])('returns multiple expressions when using or statements and ip filters', (op: string) => {
+    expect(getHighlighterExpressionsFromQuery(`{app="frontend"} ${op} "line" or ip("10.0.0.1")`)).toEqual(['line']);
   });
 });
 
@@ -481,29 +487,5 @@ describe('getNodePositionsFromQuery', () => {
     // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
     const nodePositions = getNodePositionsFromQuery('not loql', [String]);
     expect(nodePositions.length).toBe(0);
-  });
-});
-
-describe('formatLogqlQuery', () => {
-  const ds = createLokiDatasource();
-
-  it('formats a logs query', () => {
-    expect(formatLogqlQuery('{job="grafana"}', ds)).toBe('{job="grafana"}');
-  });
-
-  it('formats a metrics query', () => {
-    expect(formatLogqlQuery('count_over_time({job="grafana"}[1m])', ds)).toBe(
-      'count_over_time(\n  {job="grafana"}\n  [1m]\n)'
-    );
-  });
-
-  it('formats a metrics query with variables', () => {
-    // mock the interpolateString return value so it passes the isValid check
-    ds.interpolateString = jest.fn(() => 'rate({job="grafana"}[1s])');
-
-    expect(formatLogqlQuery('rate({job="grafana"}[$__range])', ds)).toBe('rate(\n  {job="grafana"}\n  [$__range]\n)');
-    expect(formatLogqlQuery('rate({job="grafana"}[$__interval])', ds)).toBe(
-      'rate(\n  {job="grafana"}\n  [$__interval]\n)'
-    );
   });
 });

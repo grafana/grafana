@@ -1,14 +1,22 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { Dimensions, TimeZone } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
-import { FlotPosition } from '../Graph/types';
 import { Portal } from '../Portal/Portal';
 
 import { VizTooltipContainer } from './VizTooltipContainer';
+
+export interface FlotPosition {
+  pageX: number;
+  pageY: number;
+  x: number;
+  x1: number;
+  y: number;
+  y1: number;
+}
 
 // Describes active dimensions user interacts with
 // It's a key-value pair where:

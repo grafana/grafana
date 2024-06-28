@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { memo, Children, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,7 +34,7 @@ export interface Props {
 }
 
 /** @alpha */
-export const PageToolbar = React.memo(
+export const PageToolbar = memo(
   ({
     title,
     section,
@@ -92,7 +92,7 @@ export const PageToolbar = React.memo(
                 tooltip="Go back (Esc)"
                 tooltipPlacement="bottom"
                 size="xxl"
-                aria-label={selectors.components.BackButton.backArrow}
+                data-testid={selectors.components.BackButton.backArrow}
                 onClick={onGoBack}
               />
             </div>
@@ -146,7 +146,7 @@ export const PageToolbar = React.memo(
           </nav>
         </div>
         <ToolbarButtonRow alignment={buttonOverflowAlignment}>
-          {React.Children.toArray(children).filter(Boolean)}
+          {Children.toArray(children).filter(Boolean)}
         </ToolbarButtonRow>
       </nav>
     );

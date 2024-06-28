@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   FieldConfigEditorBuilder,
   FieldType,
@@ -43,6 +41,7 @@ export function addAxisConfig(
       defaultValue: '',
       settings: {
         placeholder: 'Optional text',
+        expandTemplateVars: true,
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
       // Do not apply default settings to time and string fields which are used as x-axis fields in Time series and Bar chart panels
@@ -99,8 +98,8 @@ export function addAxisConfig(
       path: 'scaleDistribution',
       name: 'Scale',
       category,
-      editor: ScaleDistributionEditor as any,
-      override: ScaleDistributionEditor as any,
+      editor: ScaleDistributionEditor,
+      override: ScaleDistributionEditor,
       defaultValue: { type: ScaleDistribution.Linear },
       shouldApply: (f) => f.type === FieldType.number,
       process: identityOverrideProcessor,

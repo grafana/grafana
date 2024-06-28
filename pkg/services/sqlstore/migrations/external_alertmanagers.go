@@ -77,7 +77,7 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 				ds.BasicAuth = true
 				ds.BasicAuthUser = u.User.Username()
 				if password, ok := u.User.Password(); ok {
-					ds.SecureJsonData = getEncryptedJsonData(map[string]string{
+					ds.SecureJsonData = getEncryptedJsonData(mg.Cfg, map[string]string{
 						"basicAuthPassword": password,
 					}, log.New("securejsondata"))
 				}
@@ -97,9 +97,8 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 }
 
 func removeDuplicates(strs []string) []string {
-	var res []string
-	found := map[string]bool{}
-
+	found := make(map[string]bool, len(strs))
+	res := make([]string, 0, len(strs))
 	for _, str := range strs {
 		if found[str] {
 			continue
@@ -132,10 +131,10 @@ func generateNewDatasourceUid(sess *xorm.Session, orgId int64) (string, error) {
 type secureJsonData map[string][]byte
 
 // getEncryptedJsonData returns map where all keys are encrypted.
-func getEncryptedJsonData(sjd map[string]string, log log.Logger) secureJsonData {
+func getEncryptedJsonData(cfg *setting.Cfg, sjd map[string]string, log log.Logger) secureJsonData {
 	encrypted := make(secureJsonData)
 	for key, data := range sjd {
-		encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
+		encryptedData, err := util.Encrypt([]byte(data), cfg.SecretKey)
 		if err != nil {
 			log.Error(err.Error())
 			os.Exit(1)

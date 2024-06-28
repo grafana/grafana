@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 
@@ -95,9 +93,9 @@ export const plugin = new PanelPlugin<Options>(AnnoListPanel)
       });
   })
   // TODO, we should support this directly in the plugin infrastructure
-  .setPanelChangeHandler((panel: PanelModel<Options>, prevPluginId: string, prevOptions: unknown) => {
+  .setPanelChangeHandler((panel: PanelModel<Options>, prevPluginId, prevOptions) => {
     if (prevPluginId === 'ryantxu-annolist-panel') {
-      return prevOptions as Options;
+      return prevOptions;
     }
 
     return panel.options;

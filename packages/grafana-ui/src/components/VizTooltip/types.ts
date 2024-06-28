@@ -1,3 +1,5 @@
+import { LineStyle } from '@grafana/schema';
+
 export enum ColorIndicator {
   series = 'series',
   value = 'value',
@@ -10,15 +12,24 @@ export enum ColorIndicator {
   marker_lg = 'marker_lg',
 }
 
-export enum LabelValuePlacement {
+export enum ColorPlacement {
   hidden = 'hidden',
+  first = 'first',
   leading = 'leading',
   trailing = 'trailing',
 }
 
-export interface LabelValue {
+export interface VizTooltipItem {
   label: string;
-  value: string | number | null;
+  value: string;
   color?: string;
   colorIndicator?: ColorIndicator;
+  colorPlacement?: ColorPlacement;
+  isActive?: boolean;
+  lineStyle?: LineStyle;
+
+  // internal/tmp for sorting
+  numeric?: number;
 }
+
+export const DEFAULT_COLOR_INDICATOR = ColorIndicator.series;

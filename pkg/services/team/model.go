@@ -4,11 +4,8 @@ import (
 	"errors"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/grafana/grafana/pkg/kinds/team"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
@@ -24,6 +21,9 @@ var (
 	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
 )
 
+const MemberPermissionName = "Member"
+const AdminPermissionName = "Admin"
+
 // Team model
 type Team struct {
 	ID    int64  `json:"id" xorm:"pk autoincr 'id'"`
@@ -34,18 +34,6 @@ type Team struct {
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
-}
-
-func (t *Team) ToResource() team.K8sResource {
-	r := team.NewK8sResource(t.UID, &team.Spec{
-		Name: t.Name,
-	})
-	r.Metadata.CreationTimestamp = v1.NewTime(t.Created)
-	r.Metadata.SetUpdatedTimestamp(&t.Updated)
-	if t.Email != "" {
-		r.Spec.Email = &t.Email
-	}
-	return r
 }
 
 // ---------------------
@@ -79,6 +67,11 @@ type GetTeamByIDQuery struct {
 // FilterIgnoreUser is used in a get / search teams query when the caller does not want to filter teams by user ID / membership
 const FilterIgnoreUser int64 = 0
 
+type GetTeamIDsByUserQuery struct {
+	OrgID  int64
+	UserID int64 `json:"userId"`
+}
+
 type GetTeamsByUserQuery struct {
 	OrgID        int64
 	UserID       int64 `json:"userId"`
@@ -92,20 +85,21 @@ type SearchTeamsQuery struct {
 	Page         int
 	OrgID        int64 `xorm:"org_id"`
 	SortOpts     []model.SortOption
+	TeamIds      []int64
 	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
 }
 
 type TeamDTO struct {
-	ID            int64                     `json:"id" xorm:"id"`
-	UID           string                    `json:"uid" xorm:"uid"`
-	OrgID         int64                     `json:"orgId" xorm:"org_id"`
-	Name          string                    `json:"name"`
-	Email         string                    `json:"email"`
-	AvatarURL     string                    `json:"avatarUrl"`
-	MemberCount   int64                     `json:"memberCount"`
-	Permission    dashboards.PermissionType `json:"permission"`
-	AccessControl map[string]bool           `json:"accessControl"`
+	ID            int64                          `json:"id" xorm:"id"`
+	UID           string                         `json:"uid" xorm:"uid"`
+	OrgID         int64                          `json:"orgId" xorm:"org_id"`
+	Name          string                         `json:"name"`
+	Email         string                         `json:"email"`
+	AvatarURL     string                         `json:"avatarUrl"`
+	MemberCount   int64                          `json:"memberCount"`
+	Permission    dashboardaccess.PermissionType `json:"permission"`
+	AccessControl map[string]bool                `json:"accessControl"`
 }
 
 type SearchTeamQueryResult struct {
@@ -122,7 +116,7 @@ type TeamMember struct {
 	TeamID     int64 `xorm:"team_id"`
 	UserID     int64 `xorm:"user_id"`
 	External   bool  // Signals that the membership has been created by an external systems, such as LDAP
-	Permission dashboards.PermissionType
+	Permission dashboardaccess.PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -132,18 +126,17 @@ type TeamMember struct {
 // COMMANDS
 
 type AddTeamMemberCommand struct {
-	UserID     int64                     `json:"userId" binding:"Required"`
-	OrgID      int64                     `json:"-"`
-	TeamID     int64                     `json:"-"`
-	External   bool                      `json:"-"`
-	Permission dashboards.PermissionType `json:"-"`
+	UserID     int64                          `json:"userId" binding:"Required"`
+	Permission dashboardaccess.PermissionType `json:"-"`
 }
 
 type UpdateTeamMemberCommand struct {
-	UserID     int64                     `json:"-"`
-	OrgID      int64                     `json:"-"`
-	TeamID     int64                     `json:"-"`
-	Permission dashboards.PermissionType `json:"permission"`
+	Permission dashboardaccess.PermissionType `json:"permission"`
+}
+
+type SetTeamMembershipsCommand struct {
+	Members []string `json:"members"`
+	Admins  []string `json:"admins"`
 }
 
 type RemoveTeamMemberCommand struct {
@@ -168,16 +161,16 @@ type GetTeamMembersQuery struct {
 // Projections and DTOs
 
 type TeamMemberDTO struct {
-	OrgID      int64                     `json:"orgId" xorm:"org_id"`
-	TeamID     int64                     `json:"teamId" xorm:"team_id"`
-	TeamUID    string                    `json:"teamUID" xorm:"uid"`
-	UserID     int64                     `json:"userId" xorm:"user_id"`
-	External   bool                      `json:"-"`
-	AuthModule string                    `json:"auth_module"`
-	Email      string                    `json:"email"`
-	Name       string                    `json:"name"`
-	Login      string                    `json:"login"`
-	AvatarURL  string                    `json:"avatarUrl" xorm:"avatar_url"`
-	Labels     []string                  `json:"labels"`
-	Permission dashboards.PermissionType `json:"permission"`
+	OrgID      int64                          `json:"orgId" xorm:"org_id"`
+	TeamID     int64                          `json:"teamId" xorm:"team_id"`
+	TeamUID    string                         `json:"teamUID" xorm:"uid"`
+	UserID     int64                          `json:"userId" xorm:"user_id"`
+	External   bool                           `json:"-"`
+	AuthModule string                         `json:"auth_module"`
+	Email      string                         `json:"email"`
+	Name       string                         `json:"name"`
+	Login      string                         `json:"login"`
+	AvatarURL  string                         `json:"avatarUrl" xorm:"avatar_url"`
+	Labels     []string                       `json:"labels"`
+	Permission dashboardaccess.PermissionType `json:"permission"`
 }

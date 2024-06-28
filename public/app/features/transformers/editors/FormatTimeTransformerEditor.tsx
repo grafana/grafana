@@ -1,4 +1,4 @@
-import React, { useCallback, ChangeEvent } from 'react';
+import { useCallback, ChangeEvent } from 'react';
 
 import {
   DataTransformerID,
@@ -12,6 +12,7 @@ import {
 import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
 import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
@@ -109,4 +110,5 @@ export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTi
   name: standardTransformers.formatTimeTransformer.name,
   state: PluginState.alpha,
   description: standardTransformers.formatTimeTransformer.description,
+  help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
 };

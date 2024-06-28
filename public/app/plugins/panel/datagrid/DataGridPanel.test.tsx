@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import * as React from 'react';
 
-import { ArrayVector, DataFrame, dateTime, EventBus, Field, FieldType, LoadingState } from '@grafana/data';
+import { DataFrame, dateTime, EventBus, Field, FieldType, LoadingState } from '@grafana/data';
 
 import { DataGridPanel, DataGridProps } from './DataGridPanel';
 import * as utils from './utils';
@@ -306,13 +306,13 @@ describe('DataGrid', () => {
 
       fireEvent.blur(columnInput);
 
-      expect(spy).toBeCalledWith(
+      expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           fields: expect.arrayContaining([
             expect.objectContaining({
               name: 'newColumn',
               type: 'string',
-              values: new ArrayVector(['', '', '', '']),
+              values: ['', '', '', ''],
             }),
           ]),
         }),

@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { ConfigEditor } from './ConfigEditor';
-import { createDefaultConfigOptions } from './mocks';
+import { createDefaultConfigOptions } from './__mocks__/configOptions';
 
 describe('ConfigEditor', () => {
   it('should render without error', () => {

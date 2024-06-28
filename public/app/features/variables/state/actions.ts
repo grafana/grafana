@@ -5,11 +5,20 @@ import {
   getDataSourceRef,
   isDataSourceRef,
   isEmptyObject,
+  isObject,
   LoadingState,
   TimeRange,
   TypedVariableModel,
   UrlQueryMap,
   UrlQueryValue,
+  OrgVariableModel,
+  QueryVariableModel,
+  DashboardVariableModel,
+  UserVariableModel,
+  VariableHide,
+  VariableOption,
+  VariableRefresh,
+  VariableWithOptions,
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
@@ -28,35 +37,17 @@ import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from '../constants';
 import { cleanEditorState } from '../editor/reducer';
-import {
-  hasCurrent,
-  hasLegacyVariableSupport,
-  hasOptions,
-  hasStandardVariableSupport,
-  isAdHoc,
-  isConstant,
-  isMulti,
-  isQuery,
-} from '../guard';
+import { hasCurrent, hasLegacyVariableSupport, hasOptions, hasStandardVariableSupport, isMulti } from '../guard';
 import { getAllAffectedPanelIdsForVariableChange, getPanelVars } from '../inspect/utils';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
 import {
-  DashboardVariableModel,
   initialVariableModelState,
-  OrgVariableModel,
-  QueryVariableModel,
   TransactionStatus,
-  UserVariableModel,
-  VariableHide,
-  VariableModel,
-  VariableOption,
-  VariableRefresh,
   VariablesChanged,
   VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
-  VariableWithOptions,
 } from '../types';
 import {
   ensureStringValues,
@@ -145,7 +136,7 @@ export const initDashboardTemplating = (key: string, dashboard: DashboardModel):
   };
 };
 
-export function fixSelectedInconsistency(model: VariableModel): VariableModel | VariableWithOptions {
+export function fixSelectedInconsistency(model: TypedVariableModel): TypedVariableModel | VariableWithOptions {
   if (!hasOptions(model)) {
     return model;
   }
@@ -275,7 +266,7 @@ export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, mu
   };
 };
 
-export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
+export const processVariableDependencies = async (variable: TypedVariableModel, state: StoreState) => {
   if (!variable.rootStateKey) {
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
@@ -305,7 +296,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
 };
 
 const isDependencyGraphCircular = (
-  variable: VariableModel,
+  variable: TypedVariableModel,
   state: StoreState,
   encounteredDependencyIds: Set<string> = new Set()
 ): boolean => {
@@ -320,12 +311,12 @@ const isDependencyGraphCircular = (
   });
 };
 
-const getDirectDependencies = (variable: VariableModel, state: StoreState) => {
+const getDirectDependencies = (variable: TypedVariableModel, state: StoreState) => {
   if (!variable.rootStateKey) {
     return [];
   }
 
-  const directDependencies: VariableModel[] = [];
+  const directDependencies: TypedVariableModel[] = [];
 
   for (const otherVariable of getVariablesByKey(variable.rootStateKey, state)) {
     if (variable === otherVariable) {
@@ -342,7 +333,7 @@ const getDirectDependencies = (variable: VariableModel, state: StoreState) => {
   return directDependencies;
 };
 
-const isWaitingForDependencies = (key: string, dependencies: VariableModel[], state: StoreState): boolean => {
+const isWaitingForDependencies = (key: string, dependencies: TypedVariableModel[], state: StoreState): boolean => {
   if (dependencies.length === 0) {
     return false;
   }
@@ -395,8 +386,7 @@ export const processVariables = (key: string): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const queryParams = locationService.getSearchObject();
     const promises = getVariablesByKey(key, getState()).map(
-      async (variable: VariableModel) =>
-        await dispatch(processVariable(toKeyedVariableIdentifier(variable), queryParams))
+      async (variable) => await dispatch(processVariable(toKeyedVariableIdentifier(variable), queryParams))
     );
 
     await Promise.all(promises);
@@ -516,7 +506,11 @@ export const validateVariableSelectionState = (
       // if none pick first
       if (selected.length === 0) {
         const option = variableInState.options[0];
-        return setValue(variableInState, option);
+        return setValue(variableInState, {
+          value: typeof option.value === 'string' ? [option.value] : option.value,
+          text: typeof option.text === 'string' ? [option.text] : option.text,
+          selected: true,
+        });
       }
 
       const option: VariableOption = {
@@ -571,7 +565,7 @@ export const setOptionAsCurrent = (
   };
 };
 
-export const createGraph = (variables: VariableModel[]) => {
+export const createGraph = (variables: TypedVariableModel[]) => {
   const g = new Graph();
 
   variables.forEach((v) => {
@@ -618,15 +612,17 @@ export const variableUpdated = (
     const panels = state.dashboard?.getModel()?.panels ?? [];
     const panelVars = getPanelVars(panels);
 
-    const event: VariablesChangedEvent = isAdHoc(variableInState)
-      ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
-      : {
-          refreshAll: false,
-          panelIds: Array.from(getAllAffectedPanelIdsForVariableChange([variableInState.id], g, panelVars)),
-        };
+    const event: VariablesChangedEvent =
+      variableInState.type === 'adhoc'
+        ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
+        : {
+            refreshAll: false,
+            panelIds: Array.from(getAllAffectedPanelIdsForVariableChange([variableInState.id], g, panelVars)),
+            variable: getVariable(identifier, state),
+          };
 
     const node = g.getNode(variableInState.name);
-    let promises: Array<Promise<any>> = [];
+    let promises: Array<Promise<void>> = [];
     if (node) {
       promises = node.getOptimizedInputEdges().map((e) => {
         const variable = variables.find((v) => v.name === e.inputNode?.name);
@@ -652,7 +648,12 @@ export interface OnTimeRangeUpdatedDependencies {
   events: typeof appEvents;
 }
 
-const dfs = (node: Node, visited: string[], variables: VariableModel[], variablesRefreshTimeRange: VariableModel[]) => {
+const dfs = (
+  node: Node,
+  visited: string[],
+  variables: TypedVariableModel[],
+  variablesRefreshTimeRange: TypedVariableModel[]
+) => {
   if (!visited.includes(node.name)) {
     visited.push(node.name);
   }
@@ -762,8 +763,8 @@ const getVariablesThatNeedRefreshOld = (key: string, state: StoreState): Variabl
   const allVariables = getVariablesByKey(key, state);
 
   const variablesThatNeedRefresh = allVariables.filter((variable) => {
-    if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
-      const variableWithRefresh = variable as unknown as QueryVariableModel;
+    if ('refresh' in variable && 'options' in variable) {
+      const variableWithRefresh = variable;
       return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
     }
     return false;
@@ -832,7 +833,7 @@ export const timeRangeUpdated =
 export const templateVarsChangedInUrl =
   (key: string, vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<void> =>
   async (dispatch, getState) => {
-    const update: Array<Promise<any>> = [];
+    const update: Array<Promise<void>> = [];
     const dashboard = getState().dashboard.getModel();
     const variables = getVariablesByKey(key, getState());
 
@@ -857,7 +858,7 @@ export const templateVarsChangedInUrl =
           value = variableInModel.current.value; // revert value to the value stored in dashboard json
         }
 
-        if (variableInModel && isConstant(variableInModel)) {
+        if (variableInModel && variableInModel.type === 'constant') {
           value = variableInModel.query; // revert value to the value stored in dashboard json, constants don't store current values in dashboard json
         }
       }
@@ -868,7 +869,9 @@ export const templateVarsChangedInUrl =
 
     const filteredVars = variables.filter((v) => {
       const key = VARIABLE_PREFIX + v.name;
-      return vars.hasOwnProperty(key) && isVariableUrlValueDifferentFromCurrent(v, vars[key].value) && !isAdHoc(v);
+      return (
+        vars.hasOwnProperty(key) && isVariableUrlValueDifferentFromCurrent(v, vars[key].value) && v.type !== 'adhoc'
+      );
     });
     const varGraph = createGraph(variables);
     const panelVars = getPanelVars(dashboard?.panels ?? []);
@@ -890,7 +893,7 @@ export const templateVarsChangedInUrl =
     }
   };
 
-export function isVariableUrlValueDifferentFromCurrent(variable: VariableModel, urlValue: any): boolean {
+export function isVariableUrlValueDifferentFromCurrent(variable: TypedVariableModel, urlValue: unknown): boolean {
   const variableValue = variableAdapters.get(variable.type).getValueForUrl(variable);
   let stringUrlValue = ensureStringValues(urlValue);
   if (Array.isArray(variableValue) && !Array.isArray(stringUrlValue)) {
@@ -962,7 +965,7 @@ export function migrateVariablesDatasourceNameToRef(
   return (dispatch, getState) => {
     const variables = getVariablesByKey(key, getState());
     for (const variable of variables) {
-      if (!isAdHoc(variable) && !isQuery(variable)) {
+      if (variable.type !== 'adhoc' && variable.type !== 'query') {
         continue;
       }
 
@@ -1034,12 +1037,12 @@ export const updateOptions =
 
 export const createVariableErrorNotification = (
   message: string,
-  error: any,
+  error: unknown,
   identifier?: KeyedVariableIdentifier
 ): AppNotification =>
   createErrorNotification(
     `${identifier ? `Templating [${identifier.id}]` : 'Templating'}`,
-    `${message} ${error.message}`
+    error instanceof Error ? `${message} ${error.message}` : `${message}`
   );
 
 export const completeVariableLoading =
@@ -1107,10 +1110,6 @@ export function upgradeLegacyQueries(
   };
 }
 
-function isDataQueryType(query: any): query is DataQuery {
-  if (!query) {
-    return false;
-  }
-
-  return query.hasOwnProperty('refId') && typeof query.refId === 'string';
+function isDataQueryType(query: unknown): query is DataQuery {
+  return isObject(query) && 'refId' in query && typeof query.refId === 'string';
 }

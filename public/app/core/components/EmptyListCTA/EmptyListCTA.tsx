@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent } from 'react';
+import { MouseEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
@@ -19,14 +19,14 @@ export interface Props {
   infoBoxTitle?: string;
 }
 
-const ctaStyle = css`
-  text-align: center;
-`;
+const ctaStyle = css({
+  textAlign: 'center',
+});
 
-const infoBoxStyles = css`
-  max-width: 700px;
-  margin: 0 auto;
-`;
+const infoBoxStyles = css({
+  maxWidth: '700px',
+  margin: '0 auto',
+});
 
 const EmptyListCTA = ({
   title,
@@ -71,9 +71,9 @@ const EmptyListCTA = ({
   };
 
   const ctaElementClassName = !footer()
-    ? css`
-        margin-bottom: 20px;
-      `
+    ? css({
+        marginBottom: '20px',
+      })
     : '';
 
   const ButtonEl = buttonLink ? LinkButton : Button;

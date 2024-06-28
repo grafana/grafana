@@ -1,6 +1,5 @@
-import { EngineSchema, Schema } from '@kusto/monaco-kusto';
-import { Uri } from 'monaco-editor';
-import React, { useCallback, useEffect, useState } from 'react';
+import { EngineSchema, getKustoWorker } from '@kusto/monaco-kusto';
+import { useCallback, useEffect, useState } from 'react';
 
 import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
 
@@ -13,16 +12,6 @@ interface MonacoEditorValues {
   monaco: Monaco;
 }
 
-interface MonacoLanguages {
-  kusto: {
-    getKustoWorker: () => Promise<
-      (url: Uri) => Promise<{
-        setSchema: (schema: Schema) => void;
-      }>
-    >;
-  };
-}
-
 const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps) => {
   const [monaco, setMonaco] = useState<MonacoEditorValues | undefined>();
 
@@ -33,10 +22,9 @@ const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps
 
     const setupEditor = async ({ monaco, editor }: MonacoEditorValues, schema: EngineSchema) => {
       try {
-        const languages = monaco.languages as unknown as MonacoLanguages;
         const model = editor.getModel();
         if (model) {
-          const kustoWorker = await languages.kusto.getKustoWorker();
+          const kustoWorker = await getKustoWorker();
           const kustoMode = await kustoWorker(model?.uri);
           await kustoMode.setSchema(schema);
         }

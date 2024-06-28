@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,6 +10,7 @@ import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFro
 import { RulesTable } from './components/rules/RulesTable';
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
 import { getRulesPermissions } from './utils/access-control';
+import { stringifyErrorLike } from './utils/misc';
 
 interface Props {
   dashboard: DashboardModel;
@@ -20,8 +20,8 @@ interface Props {
 export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   const styles = useStyles2(getStyles);
   const { errors, loading, rules } = usePanelCombinedRules({
-    dashboard,
-    panel,
+    dashboardUID: dashboard.uid,
+    panelId: panel.id,
     poll: true,
   });
   const permissions = getRulesPermissions('grafana');
@@ -30,7 +30,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   const alert = errors.length ? (
     <Alert title="Errors loading rules" severity="error">
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {error.message || 'Unknown error.'}</div>
+        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
       ))}
     </Alert>
   ) : null;
@@ -59,7 +59,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   }
 
   return (
-    <div aria-label={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
+    <div data-testid={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
       {alert}
       {!!dashboard.uid && (
         <>
@@ -77,15 +77,15 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  newButton: css`
-    margin-top: ${theme.spacing(3)};
-  `,
-  innerWrapper: css`
-    padding: ${theme.spacing(2)};
-  `,
-  noRulesWrapper: css`
-    margin: ${theme.spacing(2)};
-    background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(3)};
-  `,
+  newButton: css({
+    marginTop: theme.spacing(3),
+  }),
+  innerWrapper: css({
+    padding: theme.spacing(2),
+  }),
+  noRulesWrapper: css({
+    margin: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(3),
+  }),
 });

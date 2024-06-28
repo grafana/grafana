@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/v13/arrow"
-	"github.com/apache/arrow/go/v13/arrow/array"
-	"github.com/apache/arrow/go/v13/arrow/memory"
+	"github.com/apache/arrow/go/v15/arrow"
+	"github.com/apache/arrow/go/v15/arrow/array"
+	"github.com/apache/arrow/go/v15/arrow/memory"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -60,7 +60,7 @@ func TestNewQueryDataResponse(t *testing.T) {
 		newJSONArray(`[0, 1, 2]`, &arrow.TimestampType{}),
 	}
 
-	var arr []arrow.Array
+	arr := make([]arrow.Array, 0, len(strValues))
 	for _, v := range strValues {
 		tarr, _, err := array.FromJSON(
 			alloc,

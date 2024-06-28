@@ -1,23 +1,9 @@
 import { FieldMatcherID, fieldMatchers, FieldType, MutableDataFrame } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
-import { preparePlotFrame } from '../GraphNG/utils';
+import { preparePlotFrame } from '..';
 
-import { getStackingGroups, preparePlotData2, timeFormatToTemplate } from './utils';
-
-describe('timeFormatToTemplate', () => {
-  it.each`
-    format           | expected
-    ${'HH:mm:ss'}    | ${'{HH}:{mm}:{ss}'}
-    ${'HH:mm'}       | ${'{HH}:{mm}'}
-    ${'MM/DD HH:mm'} | ${'{MM}/{DD} {HH}:{mm}'}
-    ${'MM/DD'}       | ${'{MM}/{DD}'}
-    ${'YYYY-MM'}     | ${'{YYYY}-{MM}'}
-    ${'YYYY'}        | ${'{YYYY}'}
-  `('should convert $format to $expected', ({ format, expected }) => {
-    expect(timeFormatToTemplate(format)).toEqual(expected);
-  });
-});
+import { getStackingGroups, preparePlotData2 } from './utils';
 
 describe('preparePlotData2', () => {
   const df = new MutableDataFrame({

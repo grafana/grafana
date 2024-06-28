@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import {
   DataTransformerID,
@@ -14,6 +14,8 @@ import {
 import { FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
@@ -165,4 +167,5 @@ export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransf
   description: spatialTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.PerformSpatialOperations]),
+  help: getTransformationContent(DataTransformerID.spatial).helperDocs,
 };

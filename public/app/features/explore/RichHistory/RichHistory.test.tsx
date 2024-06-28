@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { SortOrder } from 'app/core/utils/richHistory';
 
-import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
+import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
-jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
+import { RichHistory, RichHistoryProps } from './RichHistory';
+
+jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,12 +20,14 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: () => ({ loading: false, value: [] }),
+}));
+
 const setup = (propOverrides?: Partial<RichHistoryProps>) => {
   const props: RichHistoryProps = {
-    theme: {} as GrafanaTheme2,
-    exploreId: 'left',
     height: 100,
-    activeDatasourceInstance: 'Test datasource',
     richHistory: [],
     richHistoryTotal: 0,
     firstTab: Tabs.RichHistory,
@@ -44,7 +47,7 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     richHistorySettings: {
       retentionPeriod: 0,
       starredTabAsFirstTab: false,
-      activeDatasourceOnly: true,
+      activeDatasourcesOnly: true,
       lastUsedDatasourceFilters: [],
     },
     updateHistorySearchFilters: jest.fn(),
@@ -53,13 +56,17 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
 
   Object.assign(props, propOverrides);
 
-  render(<RichHistory {...props} />);
+  render(
+    <TestProvider>
+      <RichHistory {...props} />
+    </TestProvider>
+  );
 };
 
 describe('RichHistory', () => {
   it('should render tabs as defined', () => {
     setup();
-    const tabs = screen.getAllByLabelText(/Tab*/);
+    const tabs = screen.getAllByRole('tab');
     expect(tabs).toHaveLength(3);
     expect(tabs[0]).toHaveTextContent('Query history');
     expect(tabs[1]).toHaveTextContent('Starred');
@@ -68,7 +75,7 @@ describe('RichHistory', () => {
 
   it('should render defined default', () => {
     setup();
-    const tabs = screen.getAllByLabelText(/Tab*/);
+    const tabs = screen.getAllByRole('tab');
     expect(tabs[0].className).toMatch(/-*activeTabStyle/);
     expect(tabs[1].className).not.toMatch(/-*activeTabStyle/);
   });

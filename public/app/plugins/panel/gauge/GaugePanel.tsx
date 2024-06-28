@@ -1,13 +1,14 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { FieldDisplay, getDisplayProcessor, getFieldDisplayValues, PanelProps } from '@grafana/data';
+import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
-import { Options } from './panelcfg.gen';
+import { defaultOptions, Options } from './panelcfg.gen';
 
 export class GaugePanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (
@@ -78,8 +79,24 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
     });
   };
 
+  calculateGaugeSize = () => {
+    const { options } = this.props;
+
+    const orientation = options.orientation;
+    const isManualSizing = options.sizing === BarGaugeSizing.Manual;
+    const isVerticalOrientation = orientation === VizOrientation.Vertical;
+    const isHorizontalOrientation = orientation === VizOrientation.Horizontal;
+
+    const minVizWidth = isManualSizing && isVerticalOrientation ? options.minVizWidth : defaultOptions.minVizWidth;
+    const minVizHeight = isManualSizing && isHorizontalOrientation ? options.minVizHeight : defaultOptions.minVizHeight;
+
+    return { minVizWidth, minVizHeight };
+  };
+
   render() {
     const { height, width, data, renderCounter, options } = this.props;
+
+    const { minVizHeight, minVizWidth } = this.calculateGaugeSize();
 
     return (
       <VizRepeater
@@ -91,8 +108,8 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
         autoGrid={true}
         renderCounter={renderCounter}
         orientation={options.orientation}
-        minVizHeight={options.minVizHeight}
-        minVizWidth={options.minVizWidth}
+        minVizHeight={minVizHeight}
+        minVizWidth={minVizWidth}
       />
     );
   }

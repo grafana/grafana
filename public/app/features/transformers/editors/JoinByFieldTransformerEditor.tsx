@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -11,8 +11,9 @@ import {
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
-import { useAllFieldNamesFromDataFrames } from '../utils';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 const modes = [
   {
@@ -27,11 +28,17 @@ const modes = [
     description:
       'Join on a field value with duplicated values. Non performant outer join best used for tabular(SQL like) data.',
   },
-  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables.' },
+  {
+    value: JoinMode.inner,
+    label: 'INNER',
+    description: 'Combine data from two tables whenever there are matching values in a fields common to both tables.',
+  },
 ];
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
-  const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+  const names = useFieldDisplayNames(input);
+  const fieldNames = useSelectOptions(names);
+
   const variables = getTemplateSrv()
     .getVariables()
     .map((v) => {
@@ -88,4 +95,5 @@ export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByF
   name: standardTransformers.joinByFieldTransformer.name,
   description: standardTransformers.joinByFieldTransformer.description,
   categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
 };

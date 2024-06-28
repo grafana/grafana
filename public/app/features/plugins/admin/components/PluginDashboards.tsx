@@ -1,5 +1,5 @@
 import { extend } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -102,10 +102,6 @@ export class PluginDashboards extends PureComponent<Props, State> {
       return <div>No dashboards are included with this plugin</div>;
     }
 
-    return (
-      <div className="gf-form-group">
-        <DashboardsTable dashboards={dashboards} onImport={this.import} onRemove={this.remove} />
-      </div>
-    );
+    return <DashboardsTable dashboards={dashboards} onImport={this.import} onRemove={this.remove} />;
   }
 }

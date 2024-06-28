@@ -1,7 +1,8 @@
 import { Property } from 'csstype';
-import { clone } from 'lodash';
+import { clone, sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
-import { Row } from 'react-table';
+import { Row, HeaderGroup } from 'react-table';
+import tinycolor from 'tinycolor2';
 
 import {
   DataFrame,
@@ -27,7 +28,10 @@ import {
   TableCellDisplayMode,
 } from '@grafana/schema';
 
+import { getTextColorForAlphaBackground } from '../../utils';
+
 import { BarGaugeCell } from './BarGaugeCell';
+import { DataLinksCell } from './DataLinksCell';
 import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
@@ -35,6 +39,7 @@ import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
 import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
+import { TableStyles } from './styles';
 import {
   CellComponent,
   TableCellOptions,
@@ -42,6 +47,7 @@ import {
   FooterItem,
   GrafanaTableColumn,
   TableFooterCalc,
+  CellColors,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -183,6 +189,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return SparklineCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.DataLinks:
+      return DataLinksCell;
   }
 
   if (field.type === FieldType.geo) {
@@ -382,10 +390,25 @@ export function getFooterItems(
 }
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
-  const fmt = field.display ?? getDisplayProcessor({ field, theme });
+  // If we don't have anything to return then we display nothing
   const calc = reducer[0];
-  const v = reduceField({ field, reducers: reducer })[calc];
-  return formattedValueToString(fmt(v));
+  if (calc === undefined) {
+    return '';
+  }
+
+  // Calculate the reduction
+  const format = field.display ?? getDisplayProcessor({ field, theme });
+  const fieldCalcValue = reduceField({ field, reducers: reducer })[calc];
+
+  // If the reducer preserves units then format the
+  // end value with the field display processor
+  const reducerInfo = fieldReducers.get(calc);
+  if (reducerInfo.preservesUnits) {
+    return formattedValueToString(format(fieldCalcValue));
+  }
+
+  // Otherwise we simply return the formatted string
+  return formattedValueToString({ text: fieldCalcValue });
 }
 
 // This strips the raw vales from the `rows` object.
@@ -532,4 +555,208 @@ export function getAlignmentFactor(
 
     return alignmentFactor;
   }
+}
+
+// since the conversion from timeseries panel crosshair to time is pixel based, we need
+// to set a threshold where the table row highlights when the crosshair is hovered over a certain point
+// because multiple pixels (converted to times) may represent the same point/row in table
+export function isPointTimeValAroundTableTimeVal(pointTime: number, rowTime: number, threshold: number) {
+  return Math.abs(Math.floor(pointTime) - rowTime) < threshold;
+}
+
+// calculate the threshold for which we consider a point in a chart
+// to match a row in a table based on a time value
+export function calculateAroundPointThreshold(timeField: Field): number {
+  let max = -Number.MAX_VALUE;
+  let min = Number.MAX_VALUE;
+
+  if (timeField.values.length < 2) {
+    return 0;
+  }
+
+  for (let i = 0; i < timeField.values.length; i++) {
+    const value = timeField.values[i];
+    if (value > max) {
+      max = value;
+    }
+    if (value < min) {
+      min = value;
+    }
+  }
+
+  return (max - min) / timeField.values.length;
+}
+
+/**
+ * Retrieve colors for a table cell (or table row).
+ *
+ * @param tableStyles
+ *  Styles for the table
+ * @param cellOptions
+ *  Table cell configuration options
+ * @param displayValue
+ *  The value that will be displayed
+ * @returns CellColors
+ */
+export function getCellColors(
+  tableStyles: TableStyles,
+  cellOptions: TableCellOptions,
+  displayValue: DisplayValue
+): CellColors {
+  // How much to darken elements depends upon if we're in dark mode
+  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
+
+  // Setup color variables
+  let textColor: string | undefined = undefined;
+  let bgColor: string | undefined = undefined;
+  let bgHoverColor: string | undefined = undefined;
+
+  if (cellOptions.type === TableCellDisplayMode.ColorText) {
+    textColor = displayValue.color;
+  } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
+    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+
+    if (mode === TableCellBackgroundDisplayMode.Basic) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = tinycolor(displayValue.color).toRgbString();
+      bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
+      const hoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+      bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
+    }
+  }
+
+  return { textColor, bgColor, bgHoverColor };
+}
+
+/**
+ * Calculate an estimated bounding box for a block
+ * of text using an offscreen canvas.
+ */
+export function guessTextBoundingBox(
+  text: string,
+  headerGroup: HeaderGroup,
+  osContext: OffscreenCanvasRenderingContext2D | null,
+  lineHeight: number,
+  defaultRowHeight: number
+) {
+  const width = Number(headerGroup.width ?? 300);
+  const LINE_SCALE_FACTOR = 1.17;
+  const LOW_LINE_PAD = 42;
+
+  if (osContext !== null && typeof text === 'string') {
+    const words = text.split(/\s/);
+    const lines = [];
+    let currentLine = '';
+    let wordCount = 0;
+    let extraLines = 0;
+
+    // Let's just wrap the lines and see how well the measurement works
+    for (let i = 0; i < words.length; i++) {
+      const currentWord = words[i];
+      let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
+
+      if (lineWidth < width) {
+        currentLine += ' ' + currentWord;
+        wordCount++;
+      } else {
+        lines.push({
+          width: lineWidth,
+          line: currentLine,
+        });
+
+        currentLine = currentWord;
+        wordCount = 0;
+      }
+    }
+
+    // We can have extra long strings, for these
+    // we estimate if it overshoots the line by
+    // at least one other line
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].width > width) {
+        let extra = Math.floor(lines[i].width / width) - 1;
+        extraLines += extra;
+      }
+    }
+
+    // Estimated height would be lines multiplied
+    // by the line height
+    let lineNumber = lines.length + extraLines;
+    let height = 38;
+    if (lineNumber > 5) {
+      height = lineNumber * lineHeight * LINE_SCALE_FACTOR;
+    } else {
+      height = lineNumber * lineHeight + LOW_LINE_PAD;
+    }
+
+    return { width, height };
+  }
+
+  return { width, height: defaultRowHeight };
+}
+
+/**
+ * A function to guess at which field has the longest text.
+ * To do this we either select a single record if there aren't many records
+ * or we select records at random and sample their size.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function guessLongestField(fieldConfig: any, data: DataFrame) {
+  let longestField = undefined;
+  const SAMPLE_SIZE = 3;
+
+  // If the default field option is set to allow text wrapping
+  // we determine the field to wrap text with here and then
+  // pass it to the RowsList
+  if (
+    fieldConfig !== undefined &&
+    fieldConfig.defaults.custom !== undefined &&
+    fieldConfig.defaults.custom.cellOptions.wrapText
+  ) {
+    const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
+
+    if (stringFields.length >= 1 && stringFields[0].values.length > 0) {
+      const numValues = stringFields[0].values.length;
+      let longestLength = 0;
+
+      // If we have less than 30 values we assume
+      // that the first record is representative
+      // of the overall data
+      if (numValues <= 30) {
+        for (const field of stringFields) {
+          const fieldLength = field.values[0].length;
+          if (fieldLength > longestLength) {
+            longestLength = fieldLength;
+            longestField = field;
+          }
+        }
+      }
+      // Otherwise we randomly sample SAMPLE_SIZE values and take
+      // the mean length
+      else {
+        for (const field of stringFields) {
+          // This could result in duplicate values but
+          // that should be fairly unlikely. This could potentially
+          // be improved using a Set datastructure but
+          // going to leave that one as an exercise for
+          // the reader to contemplate and possibly code
+          const vals = sampleSize(field.values, SAMPLE_SIZE);
+          const meanLength = (vals[0]?.length + vals[1]?.length + vals[2]?.length) / 3;
+
+          if (meanLength > longestLength) {
+            longestLength = meanLength;
+            longestField = field;
+          }
+        }
+      }
+    }
+  }
+
+  return longestField;
 }

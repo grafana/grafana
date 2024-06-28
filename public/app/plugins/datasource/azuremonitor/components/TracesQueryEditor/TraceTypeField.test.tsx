@@ -1,5 +1,4 @@
 import { render, screen, act } from '@testing-library/react';
-import React from 'react';
 import { openMenu } from 'react-select-event';
 
 import createMockDatasource from '../../__mocks__/datasource';
@@ -24,11 +23,10 @@ describe('TraceTypeField', () => {
       ...props.query,
       azureTraces: {
         ...props.query.azureTraces,
-        traceTypes: [],
       },
     };
+
     render(<TraceTypeField {...props} query={query} />);
-    expect(screen.getByText('Choose event types')).toBeInTheDocument();
 
     const menu = screen.getByLabelText(selectors.components.queryEditor.tracesQueryEditor.traceTypes.select);
     openMenu(menu);

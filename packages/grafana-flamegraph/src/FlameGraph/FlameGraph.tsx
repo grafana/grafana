@@ -17,22 +17,24 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { Icon } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import { FlameGraphDataContainer } from './dataTransform';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
   rangeMin: number;
   rangeMax: number;
-  search: string;
+  matchedLabels?: Set<string>;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   style?: React.CSSProperties;
@@ -44,13 +46,20 @@ type Props = {
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  showFlameGraphOnly?: boolean;
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+  collapsing?: boolean;
+  selectedView: SelectedView;
+  search: string;
+  collapsedMap: CollapsedMap;
+  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
 };
 
 const FlameGraph = ({
   data,
   rangeMin,
   rangeMax,
-  search,
+  matchedLabels,
   setRangeMin,
   setRangeMax,
   onItemFocused,
@@ -61,31 +70,54 @@ const FlameGraph = ({
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
+  showFlameGraphOnly,
+  getExtraContextMenuButtons,
+  collapsing,
+  selectedView,
+  search,
+  collapsedMap,
+  setCollapsedMap,
 }: Props) => {
   const styles = getStyles();
 
-  const [levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks] = useMemo(() => {
-    let levels = data.getLevels();
-    let totalProfileTicks = levels.length ? levels[0][0].value : 0;
-    let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
-    let totalViewTicks = totalProfileTicks;
-    let levelsCallers = undefined;
+  const [levels, setLevels] = useState<LevelItem[][]>();
+  const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
+  const [totalProfileTicks, setTotalProfileTicks] = useState<number>(0);
+  const [totalProfileTicksRight, setTotalProfileTicksRight] = useState<number>();
+  const [totalViewTicks, setTotalViewTicks] = useState<number>(0);
 
-    if (sandwichItem) {
-      const [callers, callees] = data.getSandwichLevels(sandwichItem);
-      levels = callees;
-      levelsCallers = callers;
-      // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
-      totalViewTicks = callees[0]?.[0]?.value ?? 0;
+  useEffect(() => {
+    if (data) {
+      let levels = data.getLevels();
+      let totalProfileTicks = levels.length ? levels[0][0].value : 0;
+      let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+      let totalViewTicks = totalProfileTicks;
+      let levelsCallers = undefined;
+
+      if (sandwichItem) {
+        const [callers, callees] = data.getSandwichLevels(sandwichItem);
+        levels = callees;
+        levelsCallers = callers;
+        // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
+        totalViewTicks = callees[0]?.[0]?.value ?? 0;
+      }
+      setLevels(levels);
+      setLevelsCallers(levelsCallers);
+      setTotalProfileTicks(totalProfileTicks);
+      setTotalProfileTicksRight(totalProfileTicksRight);
+      setTotalViewTicks(totalViewTicks);
     }
-    return [levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks];
   }, [data, sandwichItem]);
+
+  if (!levels) {
+    return null;
+  }
 
   const commonCanvasProps = {
     data,
     rangeMin,
     rangeMax,
-    search,
+    matchedLabels,
     setRangeMin,
     setRangeMax,
     onItemFocused,
@@ -96,6 +128,13 @@ const FlameGraph = ({
     totalProfileTicks,
     totalProfileTicksRight,
     totalViewTicks,
+    showFlameGraphOnly,
+    collapsedMap,
+    setCollapsedMap,
+    getExtraContextMenuButtons,
+    collapsing,
+    search,
+    selectedView,
   };
   const canvas = levelsCallers ? (
     <>
@@ -109,6 +148,8 @@ const FlameGraph = ({
           root={levelsCallers[levelsCallers.length - 1][0]}
           depth={levelsCallers.length}
           direction={'parents'}
+          // We do not support collapsing in sandwich view for now.
+          collapsing={false}
         />
       </div>
 
@@ -117,7 +158,13 @@ const FlameGraph = ({
           <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
           Callees
         </div>
-        <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
+        <FlameGraphCanvas
+          {...commonCanvasProps}
+          root={levels[0][0]}
+          depth={levels.length}
+          direction={'children'}
+          collapsing={false}
+        />
       </div>
     </>
   ) : (
@@ -140,34 +187,32 @@ const FlameGraph = ({
 };
 
 const getStyles = () => ({
-  graph: css`
-    label: graph;
-    overflow: auto;
-    height: 100%;
-    flex-grow: 1;
-    flex-basis: 50%;
-  `,
-  sandwichCanvasWrapper: css`
-    label: sandwichCanvasWrapper;
-    display: flex;
-    margin-bottom: ${PIXELS_PER_LEVEL / window.devicePixelRatio}px;
-  `,
-  sandwichMarker: css`
-    label: sandwichMarker;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    overflow: hidden;
-    white-space: nowrap;
-  `,
-
-  sandwichMarkerCalees: css`
-    label: sandwichMarkerCalees;
-    text-align: right;
-  `,
-  sandwichMarkerIcon: css`
-    label: sandwichMarkerIcon;
-    vertical-align: baseline;
-  `,
+  graph: css({
+    label: 'graph',
+    overflow: 'auto',
+    flexGrow: 1,
+    flexBasis: '50%',
+  }),
+  sandwichCanvasWrapper: css({
+    label: 'sandwichCanvasWrapper',
+    display: 'flex',
+    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
+  }),
+  sandwichMarker: css({
+    label: 'sandwichMarker',
+    writingMode: 'vertical-lr',
+    transform: 'rotate(180deg)',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  }),
+  sandwichMarkerCalees: css({
+    label: 'sandwichMarkerCalees',
+    textAlign: 'right',
+  }),
+  sandwichMarkerIcon: css({
+    label: 'sandwichMarkerIcon',
+    verticalAlign: 'baseline',
+  }),
 });
 
 export default FlameGraph;

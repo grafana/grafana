@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -187,12 +187,12 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 	userService := &usertest.FakeUserService{
 		ExpectedError: tt.expectedUserErr,
 		ExpectedUser:  &tt.expectedUser,
-		DisableFn: func(ctx context.Context, cmd *user.DisableUserCommand) error {
+		UpdateFn: func(ctx context.Context, cmd *user.UpdateUserCommand) error {
 			tt.disableCalled = true
 			return nil
 		},
 	}
-	authInfoService := &logintest.AuthInfoServiceFake{
+	authInfoService := &authinfotest.FakeService{
 		ExpectedUserAuth: &tt.expectedAuthInfo,
 		ExpectedError:    tt.expectedAuthInfoErr,
 	}

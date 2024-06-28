@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -31,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -164,7 +165,7 @@ type scenarioContext struct {
 	url                     string
 	userAuthTokenService    *authtest.FakeUserAuthTokenService
 	sqlStore                db.DB
-	authInfoService         *logintest.AuthInfoServiceFake
+	authInfoService         *authinfotest.FakeService
 	dashboardVersionService dashver.Service
 	userService             user.Service
 	ctxHdlr                 *contexthandler.ContextHandler
@@ -214,6 +215,40 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	return sc
 }
 
+func setupScenarioContextSamlLogout(t *testing.T, url string) *scenarioContext {
+	cfg := setting.NewCfg()
+	//seed sections and keys
+	cfg.Raw.DeleteSection("DEFAULT")
+	saml, err := cfg.Raw.NewSection("auth.saml")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("enabled", "true")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("allow_idp_initiated", "false")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("single_logout", "true")
+	assert.NoError(t, err)
+
+	ctxHdlr := getContextHandler(t, cfg)
+	sc := &scenarioContext{
+		url:     url,
+		t:       t,
+		cfg:     cfg,
+		ctxHdlr: ctxHdlr,
+	}
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
+	exists, err := fs.Exists(viewsPath)
+	require.NoError(t, err)
+	require.Truef(t, exists, "Views should be in %q", viewsPath)
+
+	sc.m = web.New()
+	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+	sc.m.Use(ctxHdlr.Middleware)
+
+	return sc
+}
+
+// FIXME: This user should not be anonymous
 func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
@@ -223,22 +258,23 @@ func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *u
 	return &user.SignedInUser{IsAnonymous: true, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
-func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
+func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 	if features == nil {
 		features = featuremgmt.WithFeatures()
 	}
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	// nolint:staticcheck
+	cfg := setting.NewCfgWithFeatures(features.IsEnabledGlobally)
 
 	return &HTTPServer{
 		Cfg:             cfg,
 		Features:        features,
 		License:         &licensing.OSSLicensingService{},
-		AccessControl:   acimpl.ProvideAccessControl(cfg),
+		AccessControl:   acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
-		authInfoService: &logintest.AuthInfoServiceFake{
+		authInfoService: &authinfotest.FakeService{
 			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
 		},
+		tracer: tracing.InitializeTracerForTest(),
 	}
 }
 
@@ -264,6 +300,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 		Features:           featuremgmt.WithFeatures(),
 		QuotaService:       quotatest.New(false, nil),
 		searchUsersService: &searchusers.OSSService{},
+		tracer:             tracing.InitializeTracerForTest(),
 	}
 
 	for _, opt := range opts {
@@ -275,7 +312,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	}
 
 	if hs.AccessControl == nil {
-		hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+		hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	}
 
 	hs.registerRoutes()

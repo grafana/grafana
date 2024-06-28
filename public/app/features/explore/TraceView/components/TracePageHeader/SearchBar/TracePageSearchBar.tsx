@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useMemo } from 'react';
+import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
@@ -31,6 +31,8 @@ export type TracePageSearchBarProps = {
   spanFilterMatches: Set<string> | undefined;
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
+  showCriticalPathSpansOnly: boolean;
+  setShowCriticalPathSpansOnly: (showCriticalPath: boolean) => void;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
@@ -46,6 +48,8 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     spanFilterMatches,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
+    showCriticalPathSpansOnly,
+    setShowCriticalPathSpansOnly,
     focusedSpanIndexForSearch,
     setFocusedSpanIndexForSearch,
     setFocusedSpanIdForSearch,
@@ -65,15 +69,24 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       search.tags.some((tag) => {
         return tag.key;
       }) ||
+      (search.query && search.query !== '') ||
       showSpanFilterMatchesOnly
     );
-  }, [search.serviceName, search.spanName, search.from, search.to, search.tags, showSpanFilterMatchesOnly]);
+  }, [
+    search.serviceName,
+    search.spanName,
+    search.from,
+    search.to,
+    search.tags,
+    search.query,
+    showSpanFilterMatchesOnly,
+  ]);
 
   return (
     <div className={styles.container}>
       <div className={styles.controls}>
         <>
-          <div className={styles.clearButton}>
+          <div>
             <Button
               variant="destructive"
               disabled={!clearEnabled}
@@ -99,6 +112,21 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!spanFilterMatches?.size}
               >
                 Show matches only
+              </Button>
+            </div>
+            <div className={styles.matchesOnly}>
+              <Switch
+                value={showCriticalPathSpansOnly}
+                onChange={(value) => setShowCriticalPathSpansOnly(value.currentTarget.checked ?? false)}
+                label="Show critical path only switch"
+              />
+              <Button
+                onClick={() => setShowCriticalPathSpansOnly(!showCriticalPathSpansOnly)}
+                className={styles.clearMatchesButton}
+                variant="secondary"
+                fill="text"
+              >
+                Show critical path only
               </Button>
             </div>
           </div>
@@ -133,9 +161,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       justify-content: flex-end;
       margin: 5px 0 0 0;
     `,
-    clearButton: css`
-      order: 1;
-    `,
     matchesOnly: css`
       display: inline-flex;
       margin: 0 0 0 25px;
@@ -151,7 +176,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     nextPrevResult: css`
       margin-left: auto;
-      order: 2;
+      display: flex;
+      align-items: center;
     `,
   };
 };

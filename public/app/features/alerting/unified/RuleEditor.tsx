@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
@@ -90,7 +90,7 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
   }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
 
   return (
-    <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={getPageNav(identifier, type)}>
+    <AlertingPageWrapper isLoading={loading} navId="alert-list" pageNav={getPageNav(identifier, type)}>
       {getContent()}
     </AlertingPageWrapper>
   );

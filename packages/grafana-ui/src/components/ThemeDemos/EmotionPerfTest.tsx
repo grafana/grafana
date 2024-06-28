@@ -1,7 +1,6 @@
+/** @jsxImportSource @emotion/react */
 /** @jsxRuntime classic */
-/** @jsx jsx */
-import { css, CSSInterpolation, cx } from '@emotion/css';
-import { jsx } from '@emotion/react';
+import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 
@@ -9,13 +8,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { Button } from '../Button';
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 export function EmotionPerfTest() {
   console.log('process.env.NODE_ENV', process.env.NODE_ENV);
 
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <div>Emotion performance tests</div>
       <TestScenario name="No styles" Component={NoStyles} />
       <TestScenario name="inline emotion/css" Component={InlineEmotionCSS} />
@@ -24,7 +23,7 @@ export function EmotionPerfTest() {
       <TestScenario name="useStyles with css prop" Component={UseStylesWithCSSProp} />
       <TestScenario name="useStyles with conditional css prop" Component={UseStylesWithConditionalCSS} />
       <TestScenario name="useStyles with conditional classnames" Component={UseStylesWithConditionalClassNames} />
-    </VerticalGroup>
+    </Stack>
   );
 }
 
@@ -126,14 +125,7 @@ function NoStyles({ index }: TestComponentProps) {
 }
 
 function MeasureRender({ children, id }: { children: React.ReactNode; id: string }) {
-  const onRender: ProfilerOnRenderCallback = (
-    id: string,
-    phase: 'mount' | 'update',
-    actualDuration: number,
-    baseDuration: number,
-    startTime: number,
-    commitTime: number
-  ) => {
+  const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDuration, startTime, commitTime) => {
     console.log('Profile ' + id, actualDuration);
   };
 
@@ -174,7 +166,7 @@ const getStylesObjects = (theme: GrafanaTheme2) => {
   };
 };
 
-function getStylesObjectMain(theme: GrafanaTheme2): CSSInterpolation {
+function getStylesObjectMain(theme: GrafanaTheme2) {
   return {
     background: 'blue',
     border: '1px solid red',
@@ -187,12 +179,12 @@ function getStylesObjectMain(theme: GrafanaTheme2): CSSInterpolation {
   };
 }
 
-function getStylesObjectChild(theme: GrafanaTheme2): CSSInterpolation {
+function getStylesObjectChild(theme: GrafanaTheme2) {
   return {
     padding: '2px',
     fontSize: '10px',
     boxShadow: 'none',
     textAlign: 'center',
     textDecoration: 'none',
-  };
+  } as const;
 }

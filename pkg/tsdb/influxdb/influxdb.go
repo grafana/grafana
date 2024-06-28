@@ -8,7 +8,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 
@@ -21,12 +23,14 @@ import (
 var logger log.Logger = log.New("tsdb.influxdb")
 
 type Service struct {
-	im instancemgmt.InstanceManager
+	im       instancemgmt.InstanceManager
+	features featuremgmt.FeatureToggles
 }
 
-func ProvideService(httpClient httpclient.Provider) *Service {
+func ProvideService(httpClient httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		im:       datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		features: features,
 	}
 }
 
@@ -77,10 +81,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			TimeInterval:  jsonData.TimeInterval,
 			DefaultBucket: jsonData.DefaultBucket,
 			Organization:  jsonData.Organization,
-			Metadata:      jsonData.Metadata,
 			MaxSeries:     maxSeries,
-			SecureGrpc:    true,
+			InsecureGrpc:  jsonData.InsecureGrpc,
 			Token:         settings.DecryptedSecureJSONData["token"],
+			Timeout:       opts.Timeouts.Timeout,
 		}
 		return model, nil
 	}
@@ -89,6 +93,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := logger.FromContext(ctx)
 	logger.Debug("Received a query request", "numQueries", len(req.Queries))
+
+	tracer := tracing.DefaultTracer()
 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
@@ -101,7 +107,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	case influxVersionFlux:
 		return flux.Query(ctx, dsInfo, *req)
 	case influxVersionInfluxQL:
-		return influxql.Query(ctx, dsInfo, req)
+		return influxql.Query(ctx, tracer, dsInfo, req, s.features)
 	case influxVersionSQL:
 		return fsql.Query(ctx, dsInfo, *req)
 	default:

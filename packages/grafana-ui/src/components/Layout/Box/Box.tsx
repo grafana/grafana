@@ -1,20 +1,22 @@
-import { css } from '@emotion/css';
-import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
+import { css, cx } from '@emotion/css';
+import { ElementType, forwardRef, PropsWithChildren } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { AlignItems, JustifyContent } from '../Flex/Flex';
+import { AlignItems, Direction, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
+import { getSizeStyles, SizeProps } from '../utils/styles';
 
-type Display = 'flex' | 'block' | 'inline' | 'none';
+type Display = 'flex' | 'block' | 'inline' | 'inline-block' | 'none';
 export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';
 export type BorderStyle = 'solid' | 'dashed';
 export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
@@ -53,11 +55,8 @@ interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' |
   borderRadius?: ResponsiveProp<BorderRadius>;
 
   // Flex Props
-  /** Sets the property `flex` */
-  grow?: ResponsiveProp<number>;
-  /** Sets the property `flex-shrink` */
-  shrink?: ResponsiveProp<number>;
   alignItems?: ResponsiveProp<AlignItems>;
+  direction?: ResponsiveProp<Direction>;
   justifyContent?: ResponsiveProp<JustifyContent>;
   gap?: ResponsiveProp<ThemeSpacingTokens>;
 
@@ -90,14 +89,23 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     backgroundColor,
     grow,
     shrink,
+    basis,
+    flex,
     borderColor,
     borderStyle,
     borderRadius,
+    direction,
     justifyContent,
     alignItems,
     boxShadow,
     element,
     gap,
+    width,
+    minWidth,
+    maxWidth,
+    height,
+    minHeight,
+    maxHeight,
     ...rest
   } = props;
   const styles = useStyles2(
@@ -120,18 +128,22 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     backgroundColor,
     grow,
     shrink,
+    basis,
+    flex,
     borderColor,
     borderStyle,
     borderRadius,
+    direction,
     justifyContent,
     alignItems,
     boxShadow,
     gap
   );
+  const sizeStyles = useStyles2(getSizeStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
   const Element = element ?? 'div';
 
   return (
-    <Element ref={ref} className={styles.root} {...rest}>
+    <Element ref={ref} className={cx(styles.root, sizeStyles)} {...rest}>
       {children}
     </Element>
   );
@@ -183,9 +195,12 @@ const getStyles = (
   backgroundColor: BoxProps['backgroundColor'],
   grow: BoxProps['grow'],
   shrink: BoxProps['shrink'],
+  basis: BoxProps['basis'],
+  flex: BoxProps['flex'],
   borderColor: BoxProps['borderColor'],
   borderStyle: BoxProps['borderStyle'],
   borderRadius: BoxProps['borderRadius'],
+  direction: BoxProps['direction'],
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
   boxShadow: BoxProps['boxShadow'],
@@ -245,11 +260,20 @@ const getStyles = (
       getResponsiveStyle(theme, backgroundColor, (val) => ({
         backgroundColor: customBackgroundColor(val, theme),
       })),
+      getResponsiveStyle(theme, direction, (val) => ({
+        flexDirection: val,
+      })),
       getResponsiveStyle(theme, grow, (val) => ({
-        flex: val,
+        flexGrow: val,
       })),
       getResponsiveStyle(theme, shrink, (val) => ({
         flexShrink: val,
+      })),
+      getResponsiveStyle(theme, basis, (val) => ({
+        flexBasis: val,
+      })),
+      getResponsiveStyle(theme, flex, (val) => ({
+        flex: val,
       })),
       getResponsiveStyle(theme, borderStyle, (val) => ({
         borderStyle: val,

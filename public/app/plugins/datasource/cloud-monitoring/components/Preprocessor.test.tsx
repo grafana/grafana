@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
-import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
+import { CustomVariableModel } from '@grafana/data';
 
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
@@ -10,10 +9,21 @@ import { MetricKind, ValueTypes } from '../types/query';
 
 import { Preprocessor } from './Preprocessor';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => new TemplateSrvMock({}),
-}));
+let getTempVars = () => [] as CustomVariableModel[];
+let replace = () => '';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: replace,
+      getVariables: getTempVars,
+      updateTimeRange: jest.fn(),
+      containsTemplate: jest.fn(),
+    }),
+  };
+});
 
 describe('Preprocessor', () => {
   it('only provides "None" as an option if no metric descriptor is provided', () => {

@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
 
 import {
   DataTransformerID,
@@ -12,6 +12,7 @@ import { LimitTransformerOptions } from '@grafana/data/src/transformations/trans
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../utils';
 
@@ -81,7 +82,8 @@ export const limitTransformRegistryItem: TransformerRegistryItem<LimitTransforme
   id: DataTransformerID.limit,
   editor: LimitTransformerEditor,
   transformation: standardTransformers.limitTransformer,
-  name: 'Limit',
+  name: standardTransformers.limitTransformer.name,
   description: `Limit the number of items displayed.`,
   categories: new Set([TransformerCategory.Filter]),
+  help: getTransformationContent(DataTransformerID.limit).helperDocs,
 };

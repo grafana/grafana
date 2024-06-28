@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFolderSupport(t *testing.T) {
 	root, lost, err := buildFolderTree([]*folderInfo{
-		{UID: "A", parentUID: "", Name: "A", originalSlug: "a"},
-		{UID: "AA", parentUID: "A", Name: "AA", originalSlug: "aa"},
-		{UID: "B", parentUID: "", Name: "B", originalSlug: "b"},
+		{GUID: "GA", UID: "A", ParentUID: "", Name: "A", Slug: "a"},
+		{GUID: "GAA", UID: "AA", ParentUID: "A", Name: "AA", Slug: "aa"},
+		{GUID: "GB", UID: "B", ParentUID: "", Name: "B", Slug: "b"},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, root)
@@ -51,7 +52,7 @@ func appendFolder(folder *folderInfo, frame *data.Frame) {
 	frame.AppendRow(
 		folder.UID,
 		folder.Name,
-		folder.Slug,
+		folder.SlugPath,
 		folder.depth,
 		folder.left,
 		folder.right,

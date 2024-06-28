@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Alert } from '@grafana/ui';
 
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
@@ -16,7 +14,7 @@ const NewMessageTemplate = () => {
 
   if (error) {
     return (
-      <Alert severity="error" title="Failed to fetch message template">
+      <Alert severity="error" title="Failed to fetch notification template">
         {String(error)}
       </Alert>
     );

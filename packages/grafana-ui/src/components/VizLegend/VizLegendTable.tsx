@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { orderBy } from 'lodash';
-import React from 'react';
 
-import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
 import { LegendTableItem } from './VizLegendTableItem';
-import { VizLegendTableProps } from './types';
+import { VizLegendItem, VizLegendTableProps } from './types';
+
+const nameSortKey = 'Name';
+const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
 
 /**
  * @internal
@@ -27,42 +28,48 @@ export const VizLegendTable = <T extends unknown>({
   isSortable,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles);
-  const stats: Record<string, DisplayValue> = {};
-  const nameSortKey = 'Name';
+  const header: Record<string, string> = {};
 
   if (isSortable) {
-    // placeholder displayValue for Name
-    stats[nameSortKey] = { description: 'name', numeric: 0, text: '' };
+    header[nameSortKey] = '';
   }
 
   for (const item of items) {
     if (item.getDisplayValues) {
       for (const displayValue of item.getDisplayValues()) {
-        stats[displayValue.title ?? '?'] = displayValue;
+        header[displayValue.title ?? '?'] = displayValue.description ?? '';
       }
     }
   }
 
-  const sortedItems = sortKey
-    ? orderBy(
-        items,
-        (item) => {
-          if (sortKey === nameSortKey) {
-            return item.label;
-          }
+  if (sortKey != null) {
+    let itemVals = new Map<VizLegendItem, number>();
 
-          if (item.getDisplayValues) {
-            const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
+    items.forEach((item) => {
+      if (sortKey !== nameSortKey && item.getDisplayValues) {
+        const stat = item.getDisplayValues().find((stat) => stat.title === sortKey);
+        const val = stat == null || Number.isNaN(stat.numeric) ? -Infinity : stat.numeric;
+        itemVals.set(item, val);
+      }
+    });
 
-            if (stat) {
-              return isNaN(stat.numeric) ? -Infinity : stat.numeric;
-            }
-          }
-          return undefined;
-        },
-        sortDesc ? 'desc' : 'asc'
-      )
-    : items;
+    let sortMult = sortDesc ? -1 : 1;
+
+    if (sortKey === nameSortKey) {
+      // string sort
+      items.sort((a, b) => {
+        return sortMult * naturalCompare(a.label, b.label);
+      });
+    } else {
+      // numeric sort
+      items.sort((a, b) => {
+        const aVal = itemVals.get(a) ?? 0;
+        const bVal = itemVals.get(b) ?? 0;
+
+        return sortMult * (aVal - bVal);
+      });
+    }
+  }
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -83,29 +90,26 @@ export const VizLegendTable = <T extends unknown>({
       <thead>
         <tr>
           {!isSortable && <th></th>}
-          {Object.keys(stats).map((columnTitle) => {
-            const displayValue = stats[columnTitle];
-            return (
-              <th
-                title={displayValue.description}
-                key={columnTitle}
-                className={cx(styles.header, onToggleSort && styles.headerSortable, isSortable && styles.nameHeader, {
-                  [styles.withIcon]: sortKey === columnTitle,
-                })}
-                onClick={() => {
-                  if (onToggleSort) {
-                    onToggleSort(columnTitle);
-                  }
-                }}
-              >
-                {columnTitle}
-                {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
-              </th>
-            );
-          })}
+          {Object.keys(header).map((columnTitle) => (
+            <th
+              title={header[columnTitle]}
+              key={columnTitle}
+              className={cx(styles.header, onToggleSort && styles.headerSortable, isSortable && styles.nameHeader, {
+                [styles.withIcon]: sortKey === columnTitle,
+              })}
+              onClick={() => {
+                if (onToggleSort) {
+                  onToggleSort(columnTitle);
+                }
+              }}
+            >
+              {columnTitle}
+              {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
+            </th>
+          ))}
         </tr>
       </thead>
-      <tbody>{sortedItems.map(itemRenderer!)}</tbody>
+      <tbody>{items.map(itemRenderer!)}</tbody>
     </table>
   );
 };

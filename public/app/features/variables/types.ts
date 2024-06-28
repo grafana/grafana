@@ -8,53 +8,9 @@ import {
   QueryEditorProps,
   BaseVariableModel,
   VariableHide,
+  TypedVariableModel,
 } from '@grafana/data';
-export {
-  /** @deprecated Import from @grafana/data instead */
-  VariableRefresh,
-  /** @deprecated Import from @grafana/data instead */
-  VariableSort,
-  /** @deprecated Import from @grafana/data instead */
-  VariableHide,
-  /** @deprecated Import from @grafana/data instead */
-  AdHocVariableFilter,
-  /** @deprecated Import from @grafana/data instead */
-  AdHocVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  VariableOption,
-  /** @deprecated Import from @grafana/data instead */
-  IntervalVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  CustomVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  DataSourceVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  QueryVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  TextBoxVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  ConstantVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  VariableWithMultiSupport,
-  /** @deprecated Import from @grafana/data instead */
-  VariableWithOptions,
-  /** @deprecated Import from @grafana/data instead */
-  DashboardProps,
-  /** @deprecated Import from @grafana/data instead */
-  DashboardVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  OrgProps,
-  /** @deprecated Import from @grafana/data instead */
-  OrgVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  UserProps,
-  /** @deprecated Import from @grafana/data instead */
-  UserVariableModel,
-  /** @deprecated Import from @grafana/data instead */
-  SystemVariable,
-  /** @deprecated Import from @grafana/data instead */
-  BaseVariableModel as VariableModel,
-} from '@grafana/data';
+export { BaseVariableModel as VariableModel } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { NEW_VARIABLE_ID } from './constants';
@@ -95,6 +51,7 @@ export type VariableQueryEditorType<
 export interface VariablesChangedEvent {
   refreshAll: boolean;
   panelIds: number[];
+  variable?: TypedVariableModel;
 }
 
 export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {

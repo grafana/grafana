@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Checkbox, HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { t, Trans } from 'app/core/internationalization';
@@ -21,21 +21,21 @@ function getLayoutOptions() {
   ];
 }
 
-interface Props {
+interface ActionRowProps {
+  state: SearchState;
+  showStarredFilter?: boolean;
+  showLayout?: boolean;
+  sortPlaceholder?: string;
+
   onLayoutChange: (layout: SearchLayout) => void;
   onSortChange: (value?: string) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
-  sortPlaceholder?: string;
   onDatasourceChange: (ds?: string) => void;
   onPanelTypeChange: (pt?: string) => void;
-  includePanels: boolean;
   onSetIncludePanels: (v: boolean) => void;
-  state: SearchState;
-  showStarredFilter?: boolean;
-  hideLayout?: boolean;
 }
 
 export function getValidQueryLayout(q: SearchState): SearchLayout {
@@ -52,29 +52,32 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
 }
 
 export const ActionRow = ({
+  state,
+  showStarredFilter,
+  showLayout,
+  sortPlaceholder,
   onLayoutChange,
   onSortChange,
   onStarredFilterChange = () => {},
   onTagFilterChange,
   getTagOptions,
   getSortOptions,
-  sortPlaceholder,
   onDatasourceChange,
   onPanelTypeChange,
   onSetIncludePanels,
-  state,
-  showStarredFilter,
-  hideLayout,
-}: Props) => {
+}: ActionRowProps) => {
   const styles = useStyles2(getStyles);
   const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = state.query || state.datasource || state.panel_type ? [SearchLayout.Folders] : [];
+  const disabledOptions =
+    state.tag.length || state.starred || state.query || state.datasource || state.panel_type
+      ? [SearchLayout.Folders]
+      : [];
 
   return (
     <div className={styles.actionRow}>
-      <HorizontalGroup spacing="md" width="auto">
+      <Stack gap={2} alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.panelTitleSearch && (
           <Checkbox
@@ -107,10 +110,10 @@ export const ActionRow = ({
             Panel: {state.panel_type}
           </Button>
         )}
-      </HorizontalGroup>
+      </Stack>
 
-      <HorizontalGroup spacing="md" width="auto">
-        {!hideLayout && (
+      <Stack gap={2}>
+        {showLayout && (
           <RadioButtonGroup
             options={getLayoutOptions()}
             disabledOptions={disabledOptions}
@@ -125,7 +128,7 @@ export const ActionRow = ({
           placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
           isClearable
         />
-      </HorizontalGroup>
+      </Stack>
     </div>
   );
 };

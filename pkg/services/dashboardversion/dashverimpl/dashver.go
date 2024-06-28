@@ -17,13 +17,15 @@ const (
 )
 
 type Service struct {
+	cfg     *setting.Cfg
 	store   store
 	dashSvc dashboards.DashboardService
 	log     log.Logger
 }
 
-func ProvideService(db db.DB, dashboardService dashboards.DashboardService) dashver.Service {
+func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService) dashver.Service {
 	return &Service{
+		cfg: cfg,
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
@@ -63,7 +65,7 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 }
 
 func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
-	versionsToKeep := setting.DashboardVersionsToKeep
+	versionsToKeep := s.cfg.DashboardVersionsToKeep
 	if versionsToKeep < 1 {
 		versionsToKeep = 1
 	}

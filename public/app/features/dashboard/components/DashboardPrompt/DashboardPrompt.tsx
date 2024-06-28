@@ -1,6 +1,6 @@
 import * as H from 'history';
 import { find } from 'lodash';
-import React, { useContext, useEffect, useState } from 'react';
+import { memo, useContext, useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
@@ -26,7 +26,7 @@ interface State {
   originalPath?: string;
 }
 
-export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
+export const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
   const dispatch = useDispatch();
   const { original, originalPath } = state;
@@ -146,6 +146,11 @@ export function ignoreChanges(current: DashboardModel | null, original: object |
     return true;
   }
 
+  // Ignore changes if original is unsaved
+  if ((original as DashboardModel).version === 0) {
+    return true;
+  }
+
   // Ignore changes if the user has been signed out
   if (!contextSrv.isSignedIn) {
     return true;
@@ -178,7 +183,7 @@ function cleanDashboardFromIgnoredChanges(dashData: Dashboard) {
 
   // ignore time and refresh
   delete dash.time;
-  dash.refresh = '';
+  delete dash.refresh;
   dash.schemaVersion = 0;
   delete dash.timezone;
 
@@ -202,6 +207,7 @@ export function hasChanges(current: DashboardModel, original: unknown) {
   if (current.hasUnsavedChanges()) {
     return true;
   }
+
   // TODO: Make getSaveModelClone return Dashboard type instead
   const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelCloneOld() as unknown as Dashboard);
   const originalClean = cleanDashboardFromIgnoredChanges(original as Dashboard);

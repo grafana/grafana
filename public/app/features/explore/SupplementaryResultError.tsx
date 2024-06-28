@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataQueryError, GrafanaTheme2 } from '@grafana/data';
 import { Alert, AlertVariant, Button, useTheme2 } from '@grafana/ui';
@@ -55,18 +55,18 @@ export function SupplementaryResultError(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    supplementaryErrorContainer: css`
-      width: 50%;
-      min-width: ${theme.breakpoints.values.sm}px;
-      margin: 0 auto;
-    `,
-    suggestedActionWrapper: css`
-      height: ${theme.spacing(6)};
-      button {
-        position: absolute;
-        right: ${theme.spacing(2)};
-        top: ${theme.spacing(7)};
-      }
-    `,
+    supplementaryErrorContainer: css({
+      width: '50%',
+      minWidth: `${theme.breakpoints.values.sm}px`,
+      margin: '0 auto',
+    }),
+    suggestedActionWrapper: css({
+      height: theme.spacing(6),
+      ['button']: {
+        position: 'absolute',
+        right: theme.spacing(2),
+        top: theme.spacing(7),
+      },
+    }),
   };
 };

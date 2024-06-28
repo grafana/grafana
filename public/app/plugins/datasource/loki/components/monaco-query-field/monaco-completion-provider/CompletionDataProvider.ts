@@ -1,9 +1,9 @@
 import { chain } from 'lodash';
 
-import { HistoryItem } from '@grafana/data';
-import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
+import { HistoryItem, TimeRange } from '@grafana/data';
 
 import LanguageProvider from '../../../LanguageProvider';
+import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { ParserAndLabelKeysResult, LokiQuery } from '../../../types';
 
 import { Label } from './situation';
@@ -15,7 +15,8 @@ interface HistoryRef {
 export class CompletionDataProvider {
   constructor(
     private languageProvider: LanguageProvider,
-    private historyRef: HistoryRef = { current: [] }
+    private historyRef: HistoryRef = { current: [] },
+    private timeRange: TimeRange | undefined
   ) {
     this.queryToLabelKeysCache = new Map();
   }
@@ -31,7 +32,8 @@ export class CompletionDataProvider {
 
   getHistory() {
     return chain(this.historyRef.current)
-      .map((history: HistoryItem<LokiQuery>) => history.query.expr)
+      .orderBy('ts', 'desc')
+      .map((history: HistoryItem<LokiQuery>) => history.query.expr.trim())
       .filter()
       .uniq()
       .value();
@@ -39,23 +41,24 @@ export class CompletionDataProvider {
 
   async getLabelNames(otherLabels: Label[] = []) {
     if (otherLabels.length === 0) {
-      // if there is no filtering, we have to use a special endpoint
+      // If there is no filtering, we use getLabelKeys because it has better caching
+      // and all labels should already be fetched
+      await this.languageProvider.start(this.timeRange);
       return this.languageProvider.getLabelKeys();
     }
-    const data = await this.getSeriesLabels(otherLabels);
-    const possibleLabelNames = Object.keys(data); // all names from datasource
+    const possibleLabelNames = await this.languageProvider.fetchLabels({
+      streamSelector: this.buildSelector(otherLabels),
+      timeRange: this.timeRange,
+    });
     const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
     return possibleLabelNames.filter((label) => !usedLabelNames.has(label));
   }
 
   async getLabelValues(labelName: string, otherLabels: Label[]) {
-    if (otherLabels.length === 0) {
-      // if there is no filtering, we have to use a special endpoint
-      return await this.languageProvider.getLabelValues(labelName);
-    }
-
-    const data = await this.getSeriesLabels(otherLabels);
-    return data[labelName] ?? [];
+    return await this.languageProvider.fetchLabelValues(labelName, {
+      streamSelector: this.buildSelector(otherLabels),
+      timeRange: this.timeRange,
+    });
   }
 
   /**
@@ -82,14 +85,10 @@ export class CompletionDataProvider {
         this.queryToLabelKeysCache.delete(firstKey);
       }
       // Fetch a fresh result from the backend
-      const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery);
+      const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery, { timeRange: this.timeRange });
       // Add the result to the cache
       this.queryToLabelKeysCache.set(logQuery, labelKeys);
       return labelKeys;
     }
-  }
-
-  async getSeriesLabels(labels: Label[]) {
-    return await this.languageProvider.getSeriesLabels(this.buildSelector(labels)).then((data) => data ?? {});
   }
 }

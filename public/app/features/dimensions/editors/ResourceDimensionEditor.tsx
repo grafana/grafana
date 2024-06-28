@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import * as React from 'react';
 
 import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
@@ -65,6 +66,7 @@ export const ResourceDimensionEditor = (
   const showSourceRadio = item.settings?.showSourceRadio ?? true;
   const mediaType = item.settings?.resourceType ?? MediaType.Icon;
   const folderName = item.settings?.folderName ?? ResourceFolderName.Icon;
+  const maxFiles = item.settings?.maxFiles; // undefined leads to backend default
   let srcPath = '';
   if (mediaType === MediaType.Icon) {
     if (value?.fixed) {
@@ -106,6 +108,7 @@ export const ResourceDimensionEditor = (
           mediaType={mediaType}
           folderName={folderName}
           size={ResourcePickerSize.NORMAL}
+          maxFiles={maxFiles}
         />
       )}
       {mode === ResourceDimensionMode.Mapping && (

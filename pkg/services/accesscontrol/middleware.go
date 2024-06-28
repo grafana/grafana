@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -13,13 +14,13 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -36,7 +37,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 				}
 
 				if !c.IsSignedIn && forceLogin {
-					unauthorized(c, nil)
+					unauthorized(c)
 					return
 				}
 			}
@@ -48,7 +49,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 					return
 				}
 
-				unauthorized(c, c.LookupTokenErr)
+				unauthorized(c)
 				return
 			}
 
@@ -112,7 +113,7 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	})
 }
 
-func unauthorized(c *contextmodel.ReqContext, err error) {
+func unauthorized(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
 		return
@@ -175,60 +176,37 @@ func newID() string {
 
 type OrgIDGetter func(c *contextmodel.ReqContext) (int64, error)
 
-type userCache interface {
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
-}
-
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(OrgIDGetter, Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
-			// We need to copy the user here because we're going to mutate it
-			userCopy := *(c.SignedInUser)
 			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
+				if errors.Is(err, ErrInvalidRequestBody) {
+					c.JSON(http.StatusBadRequest, map[string]string{
+						"message": err.Error(),
+						"traceID": tracing.TraceIDFromContext(c.Req.Context(), false),
+					})
+					return
+				}
 				deny(c, nil, fmt.Errorf("failed to get target org: %w", err))
 				return
 			}
 
-			if userCopy.OrgID != targetOrgID {
-				switch targetOrgID {
-				case GlobalOrgID:
-					userCopy.OrgID = GlobalOrgID
-					userCopy.OrgRole = org.RoleNone
-					userCopy.OrgName = ""
-				default:
-					query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
-					queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
-					if err != nil {
-						deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-						return
-					}
-					userCopy.OrgID = queryResult.OrgID
-					userCopy.OrgName = queryResult.OrgName
-					userCopy.OrgRole = queryResult.OrgRole
-				}
-			}
-
-			if userCopy.Permissions[targetOrgID] == nil {
-				permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
+			var orgUser identity.Requester = c.SignedInUser
+			if targetOrgID != c.SignedInUser.GetOrgID() {
+				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+					return
 				}
-
-				// guard against nil map
-				if userCopy.Permissions == nil {
-					userCopy.Permissions = make(map[int64]map[string][]string)
-				}
-				userCopy.Permissions[targetOrgID] = GroupScopesByAction(permissions)
 			}
-
-			authorize(c, ac, &userCopy, evaluator)
+			authorize(c, ac, orgUser, evaluator)
 
 			// guard against nil map
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[targetOrgID] = userCopy.Permissions[targetOrgID]
+			c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 		}
 	}
 }
@@ -250,6 +228,116 @@ func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 
 func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
+}
+
+// UseGlobalOrSingleOrg returns the global organization or the current organization in a single organization setup
+func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		if cfg.RBACSingleOrganization {
+			return c.GetOrgID(), nil
+		}
+		return GlobalOrgID, nil
+	}
+}
+
+// UseOrgFromRequestData returns the organization from the request data.
+// If no org is specified, then the org where user is logged in is returned.
+func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
+	query, err := getOrgQueryFromRequest(c)
+	if err != nil {
+		// Special case of macaron handling invalid params
+		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+	}
+
+	if query.OrgId == nil {
+		return c.SignedInUser.GetOrgID(), nil
+	}
+
+	return *query.OrgId, nil
+}
+
+// UseGlobalOrgFromRequestData returns global org if `global` flag is set or the org where user is logged in.
+// If RBACSingleOrganization is set, the org where user is logged in is returned - this is intended only for cloud workflows, where instances are limited to a single organization.
+func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		query, err := getOrgQueryFromRequest(c)
+		if err != nil {
+			if errors.Is(err, ErrInvalidRequestBody) {
+				return NoOrgID, err
+			}
+			// Special case of macaron handling invalid params
+			return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+		}
+
+		// We only check permissions in the global organization if we are not running a SingleOrganization setup
+		// That allows Organization Admins to modify global roles and make global assignments.
+		if query.Global && !cfg.RBACSingleOrganization {
+			return GlobalOrgID, nil
+		}
+
+		return c.SignedInUser.GetOrgID(), nil
+	}
+}
+
+// UseGlobalOrgFromRequestParams returns global org if `global` flag is set or the org where user is logged in.
+func UseGlobalOrgFromRequestParams(cfg *setting.Cfg) OrgIDGetter {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		// We only check permissions in the global organization if we are not running a SingleOrganization setup
+		// That allows Organization Admins to modify global roles and make global assignments, and is intended for use in hosted Grafana.
+		if c.QueryBool("global") && !cfg.RBACSingleOrganization {
+			return GlobalOrgID, nil
+		}
+
+		return c.SignedInUser.GetOrgID(), nil
+	}
+}
+
+func getOrgQueryFromRequest(c *contextmodel.ReqContext) (*QueryWithOrg, error) {
+	query := &QueryWithOrg{}
+
+	req, err := CloneRequest(c.Req)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := web.Bind(req, query); err != nil {
+		if err.Error() == "unexpected EOF" {
+			return nil, fmt.Errorf("%w: unexpected end of JSON input", ErrInvalidRequestBody)
+		}
+		return nil, err
+	}
+
+	return query, nil
+}
+
+// CloneRequest creates request copy including request body
+func CloneRequest(req *http.Request) (*http.Request, error) {
+	// Get copy of body to prevent error when reading closed body in request handler
+	bodyCopy, err := CopyRequestBody(req)
+	if err != nil {
+		return nil, err
+	}
+	reqCopy := req.Clone(req.Context())
+	reqCopy.Body = bodyCopy
+	return reqCopy, nil
+}
+
+// CopyRequestBody returns copy of request body and keeps the original one to prevent error when reading closed body
+func CopyRequestBody(req *http.Request) (io.ReadCloser, error) {
+	if req.Body == nil {
+		return nil, nil
+	}
+
+	body := req.Body
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(body); err != nil {
+		return nil, err
+	}
+	if err := body.Close(); err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(&buf)
+	return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
 }
 
 // scopeParams holds the parameters used to fill in scope templates

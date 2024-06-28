@@ -2,18 +2,23 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Store interface {
@@ -52,10 +57,10 @@ type Store interface {
 	DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error
 }
 
-func New(
+func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
@@ -63,6 +68,9 @@ func New(
 		permissions = append(permissions, permission)
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
+		}
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			actionSetService.StoreActionSet(options.Resource, permission, actions)
 		}
 	}
 
@@ -77,19 +85,21 @@ func New(
 	}
 
 	s := &Service{
-		ac:          ac,
-		store:       NewStore(sqlStore, features),
-		options:     options,
-		license:     license,
-		permissions: permissions,
-		actions:     actions,
-		sqlStore:    sqlStore,
-		service:     service,
-		teamService: teamService,
-		userService: userService,
+		ac:           ac,
+		features:     features,
+		store:        NewStore(cfg, sqlStore, features),
+		options:      options,
+		license:      license,
+		permissions:  permissions,
+		actions:      actions,
+		sqlStore:     sqlStore,
+		service:      service,
+		teamService:  teamService,
+		userService:  userService,
+		actionSetSvc: actionSetService,
 	}
 
-	s.api = newApi(ac, router, s)
+	s.api = newApi(cfg, ac, router, s)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
@@ -102,18 +112,20 @@ func New(
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	ac      accesscontrol.AccessControl
-	service accesscontrol.Service
-	store   Store
-	api     *api
-	license licensing.Licensing
+	ac       accesscontrol.AccessControl
+	features featuremgmt.FeatureToggles
+	service  accesscontrol.Service
+	store    Store
+	api      *api
+	license  licensing.Licensing
 
-	options     Options
-	permissions []string
-	actions     []string
-	sqlStore    db.DB
-	teamService team.Service
-	userService user.Service
+	options      Options
+	permissions  []string
+	actions      []string
+	sqlStore     db.DB
+	teamService  team.Service
+	userService  user.Service
+	actionSetSvc ActionSetService
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -126,9 +138,21 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 		}
 	}
 
-	return s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
+	actions := s.actions
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		for _, action := range s.actions {
+			actionSets := s.actionSetSvc.ResolveAction(action)
+			for _, actionSet := range actionSets {
+				if !slices.Contains(actions, actionSet) {
+					actions = append(actions, actionSet)
+				}
+			}
+		}
+	}
+
+	resourcePermissions, err := s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
 		User:                 user,
-		Actions:              s.actions,
+		Actions:              actions,
 		Resource:             s.options.Resource,
 		ResourceID:           resourceID,
 		ResourceAttribute:    s.options.ResourceAttribute,
@@ -136,6 +160,35 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 		OnlyManaged:          s.options.OnlyManaged,
 		EnforceAccessControl: s.license.FeatureEnabled("accesscontrol.enforcement"),
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		for i := range resourcePermissions {
+			actions := resourcePermissions[i].Actions
+			var expandedActions []string
+			for _, action := range actions {
+				if isFolderOrDashboardAction(action) {
+					actionSetActions := s.actionSetSvc.ResolveActionSet(action)
+					if len(actionSetActions) > 0 {
+						for _, actionSetAction := range actionSetActions {
+							// This check is needed for resolving inherited permissions - we don't want to include
+							// actions that are not related to dashboards when expanding folder action sets
+							if slices.Contains(s.actions, actionSetAction) {
+								expandedActions = append(expandedActions, actionSetAction)
+							}
+						}
+						continue
+					}
+				}
+				expandedActions = append(expandedActions, action)
+			}
+			resourcePermissions[i].Actions = expandedActions
+		}
+	}
+
+	return resourcePermissions, nil
 }
 
 func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
@@ -284,7 +337,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 			return v, nil
 		}
 	}
-	return nil, ErrInvalidPermission
+	return nil, ErrInvalidPermission.Build(ErrInvalidPermissionData(permission))
 }
 
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
@@ -296,27 +349,37 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 	if !s.options.Assignments.Users {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("users"))
 	}
 
 	_, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{OrgID: orgID, UserID: userID})
-	return err
+	switch {
+	case errors.Is(err, user.ErrUserNotFound):
+		return accesscontrol.ErrAssignmentEntityNotFound.Build(accesscontrol.ErrAssignmentEntityNotFoundData("user"))
+	default:
+		return err
+	}
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 	if !s.options.Assignments.Teams {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("teams"))
 	}
 
 	if _, err := s.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: orgID, ID: teamID}); err != nil {
-		return err
+		switch {
+		case errors.Is(err, team.ErrTeamNotFound):
+			return accesscontrol.ErrAssignmentEntityNotFound.Build(accesscontrol.ErrAssignmentEntityNotFoundData("team"))
+		default:
+			return err
+		}
 	}
 	return nil
 }
 
-func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
+func (s *Service) validateBuiltinRole(_ context.Context, builtinRole string) error {
 	if !s.options.Assignments.BuiltInRoles {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("builtInRoles"))
 	}
 
 	if err := accesscontrol.ValidateBuiltInRoles([]string{builtinRole}); err != nil {
@@ -352,4 +415,41 @@ func (s *Service) declareFixedRoles() error {
 	}
 
 	return s.service.DeclareFixedRoles(readerRole, writerRole)
+}
+
+type ActionSetService interface {
+	// ActionResolver defines method for expanding permissions from permissions with action sets to fine-grained permissions.
+	// We use an ActionResolver interface to avoid circular dependencies
+	accesscontrol.ActionResolver
+
+	// ResolveAction returns all the action sets that the action belongs to.
+	ResolveAction(action string) []string
+	// ResolveActionSet resolves an action set to a list of corresponding actions.
+	ResolveActionSet(actionSet string) []string
+
+	StoreActionSet(resource, permission string, actions []string)
+}
+
+// ActionSet is a struct that represents a set of actions that can be performed on a resource.
+// An example of an action set is "folders:edit" which represents the set of RBAC actions that are granted by edit access to a folder.
+type ActionSet struct {
+	Action  string   `json:"action"`
+	Actions []string `json:"actions"`
+}
+
+// InMemoryActionSets is an in-memory implementation of the ActionSetService.
+type InMemoryActionSets struct {
+	log                log.Logger
+	actionSetToActions map[string][]string
+	actionToActionSets map[string][]string
+}
+
+// NewActionSetService returns a new instance of InMemoryActionSetService.
+func NewActionSetService() ActionSetService {
+	actionSets := &InMemoryActionSets{
+		log:                log.New("resourcepermissions.actionsets"),
+		actionSetToActions: make(map[string][]string),
+		actionToActionSets: make(map[string][]string),
+	}
+	return actionSets
 }

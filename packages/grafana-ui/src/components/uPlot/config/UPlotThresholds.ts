@@ -2,7 +2,7 @@ import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2, Threshold, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
-import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '@grafana/schema';
+import { GraphThresholdsStyleConfig, GraphThresholdsStyleMode } from '@grafana/schema';
 
 import { getGradientRange, scaleGradient } from './gradientFills';
 
@@ -19,10 +19,10 @@ export interface UPlotThresholdOptions {
 
 export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
   const dashSegments =
-    options.config.mode === GraphTresholdsStyleMode.Dashed ||
-    options.config.mode === GraphTresholdsStyleMode.DashedAndArea
+    options.config.mode === GraphThresholdsStyleMode.Dashed ||
+    options.config.mode === GraphThresholdsStyleMode.DashedAndArea
       ? [10, 10]
-      : null;
+      : [];
 
   function addLines(u: uPlot, yScaleKey: string, steps: Threshold[], theme: GrafanaTheme2) {
     let ctx = u.ctx;
@@ -39,10 +39,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     ctx.lineWidth = 2;
-
-    if (dashSegments) {
-      ctx.setLineDash(dashSegments);
-    }
+    ctx.setLineDash(dashSegments);
 
     // Ignore the base -Infinity threshold by always starting on index 1
     for (let idx = 1; idx < steps.length; idx++) {
@@ -123,15 +120,15 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     ctx.save();
 
     switch (config.mode) {
-      case GraphTresholdsStyleMode.Line:
-      case GraphTresholdsStyleMode.Dashed:
+      case GraphThresholdsStyleMode.Line:
+      case GraphThresholdsStyleMode.Dashed:
         addLines(u, scaleKey, steps, theme);
         break;
-      case GraphTresholdsStyleMode.Area:
+      case GraphThresholdsStyleMode.Area:
         addAreas(u, scaleKey, steps, theme);
         break;
-      case GraphTresholdsStyleMode.LineAndArea:
-      case GraphTresholdsStyleMode.DashedAndArea:
+      case GraphThresholdsStyleMode.LineAndArea:
+      case GraphThresholdsStyleMode.DashedAndArea:
         addAreas(u, scaleKey, steps, theme);
         addLines(u, scaleKey, steps, theme);
     }

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
 import { ColorDimensionConfig } from '@grafana/schema';
 import { Select, ColorPicker, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
@@ -11,19 +11,30 @@ const fixedColorOption: SelectableValue<string> = {
   value: '_____fixed_____',
 };
 
-export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionConfig>) => {
-  const { value, context, onChange } = props;
+interface ColorDimensionSettings {
+  isClearable?: boolean;
+  baseNameMode?: FieldNamePickerBaseNameMode;
+  placeholder?: string;
+}
+
+export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionConfig, ColorDimensionSettings>) => {
+  const { value, context, onChange, item } = props;
 
   const defaultColor = 'dark-green';
 
   const styles = useStyles2(getStyles);
   const fieldName = value?.field;
-  const isFixed = Boolean(!fieldName);
+  const isFixed = value && Boolean(!fieldName) && value?.fixed;
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedColorOption);
+  const selectOptions = useSelectOptions(names, fieldName, fixedColorOption, undefined, item.settings?.baseNameMode);
 
   const onSelectChange = useCallback(
     (selection: SelectableValue<string>) => {
+      if (!selection) {
+        onChange(undefined);
+        return;
+      }
+
       const field = selection.value;
       if (field && field !== fixedColorOption.value) {
         onChange({
@@ -61,10 +72,12 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
           options={selectOptions}
           onChange={onSelectChange}
           noOptionsMessage="No fields found"
+          isClearable={item.settings?.isClearable}
+          placeholder={item.settings?.placeholder}
         />
         {isFixed && (
           <div className={styles.picker}>
-            <ColorPicker color={value?.fixed ?? defaultColor} onChange={onColorChange} enableNamedColors={true} />
+            <ColorPicker color={value?.fixed} onChange={onColorChange} enableNamedColors={true} />
           </div>
         )}
       </div>

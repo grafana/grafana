@@ -1,5 +1,4 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { CascaderOption } from '@grafana/ui';
 
@@ -37,7 +36,7 @@ describe('useServices', () => {
       },
     } as ZipkinDatasource;
 
-    const { result } = renderHook(() => useServices(ds));
+    const { result } = renderHook(() => useServices(ds, () => {}));
     await waitFor(() => {
       expect(result.current.value).toEqual([
         { label: 'service1', value: 'service1', isLeaf: false },
@@ -62,7 +61,7 @@ describe('useLoadOptions', () => {
       },
     } as ZipkinDatasource;
 
-    const { result } = renderHook(() => useLoadOptions(ds));
+    const { result } = renderHook(() => useLoadOptions(ds, () => {}));
     expect(result.current.allOptions).toEqual({});
 
     act(() => {

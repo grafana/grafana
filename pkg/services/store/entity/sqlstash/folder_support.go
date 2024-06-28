@@ -3,26 +3,30 @@ package sqlstash
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/grn"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store/entity"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 )
 
 type folderInfo struct {
-	UID  string `json:"uid"`
-	Name string `json:"name"` // original display name
-	Slug string `json:"slug"` // full slug
+	GUID string `json:"guid"`
+
+	UID      string `json:"uid"`
+	Name     string `json:"name"` // original display name
+	SlugPath string `json:"slug"` // full slug path
 
 	// original slug
-	originalSlug string
+	Slug string `json:"-"`
 
 	depth int32
 	left  int32
 	right int32
 
 	// Build the tree
-	parentUID string
+	ParentUID string
 
 	// Calculated after query
 	parent   *folderInfo
@@ -30,59 +34,101 @@ type folderInfo struct {
 	stack    []*folderInfo
 }
 
-// This will replace all entries in `entity_folder`
-// This is pretty heavy weight, but it does give us a sorted folder list
-// NOTE: this could be done async with a mutex/lock?  reconciler pattern
-func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) error {
-	_, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE tenant_id=?", tenant)
-	if err != nil {
-		return err
+func (fi *folderInfo) buildInsertItems(items *[]*sqlEntityFolderInsertRequestItem, namespace string, isLost bool) error {
+	var js strings.Builder
+	if err := json.NewEncoder(&js).Encode(fi.stack); err != nil {
+		return fmt.Errorf("marshal stack of folder %q to JSON: %w", fi.SlugPath, err)
 	}
 
-	all := []*folderInfo{}
-	rows, err := tx.Query(ctx, "SELECT uid,folder,name,slug FROM entity WHERE kind=? AND tenant_id=? ORDER BY slug asc;",
-		entity.StandardKindFolder, tenant)
-	if err != nil {
-		return err
-	}
-	for rows.Next() {
-		folder := folderInfo{
-			children: []*folderInfo{},
-		}
-		err = rows.Scan(&folder.UID, &folder.parentUID, &folder.Name, &folder.originalSlug)
-		if err != nil {
-			break
-		}
-		all = append(all, &folder)
-	}
-	errClose := rows.Close()
-	// TODO: Use some kind of multi-error.
-	// Until then, we want to prioritize errors coming from the .Scan
-	// over those coming from .Close.
-	if err != nil {
-		return err
-	}
-	if errClose != nil {
-		return errClose
-	}
+	*items = append(*items, &sqlEntityFolderInsertRequestItem{
+		GUID:      fi.GUID,
+		Namespace: namespace,
+		UID:       fi.UID,
+		SlugPath:  fi.SlugPath,
+		JS:        js.String(),
+		Depth:     fi.depth,
+		Left:      fi.left,
+		Right:     fi.right,
+		Detached:  isLost,
+	})
 
-	root, lost, err := buildFolderTree(all)
-	if err != nil {
-		return err
-	}
-
-	err = insertFolderInfo(ctx, tx, tenant, root, false)
-	if err != nil {
-		return err
-	}
-
-	for _, folder := range lost {
-		err = insertFolderInfo(ctx, tx, tenant, folder, true)
-		if err != nil {
-			return err
+	for _, sub := range fi.children {
+		if err := sub.buildInsertItems(items, namespace, isLost); err != nil {
+			return nil
 		}
 	}
-	return err
+
+	return nil
+}
+
+// This rebuilds the whole folders structure for a given namespace. This has to
+// be done each time an entity is created or deleted.
+// FIXME: This is very inefficient and time consuming. This could be implemented
+// with a different approach instead of MPTT, or at least mitigated by an async
+// job?
+// FIXME: This algorithm apparently allows lost trees which are called
+// "detached"? We should probably migrate to something safer.
+func (s *sqlEntityServer) updateFolderTree(ctx context.Context, x db.ContextExecer, namespace string) error {
+	_, err := x.ExecContext(ctx, "DELETE FROM entity_folder WHERE namespace=?", namespace)
+	if err != nil {
+		return fmt.Errorf("clear entity_folder for namespace %q: %w", namespace, err)
+	}
+
+	listReq := sqlEntityListFolderElementsRequest{
+		SQLTemplate: sqltemplate.New(s.sqlDialect),
+		Group:       folder.GROUP,
+		Resource:    folder.RESOURCE,
+		Namespace:   namespace,
+		FolderInfo:  new(folderInfo),
+	}
+	query, err := sqltemplate.Execute(sqlEntityListFolderElements, listReq)
+	if err != nil {
+		return fmt.Errorf("execute SQL template to list folder items in namespace %q: %w", namespace, err)
+	}
+
+	rows, err := x.QueryContext(ctx, query, listReq.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("list folder items in namespace %q: %w", namespace, err)
+	}
+
+	var itemList []*folderInfo
+	for i := 1; rows.Next(); i++ {
+		if err := rows.Scan(listReq.GetScanDest()...); err != nil {
+			return fmt.Errorf("scan row #%d listing folder items in namespace %q: %w", i, namespace, err)
+		}
+		fi := *listReq.FolderInfo
+		itemList = append(itemList, &fi)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("rows error after listing folder items in namespace %q: %w", namespace, err)
+	}
+
+	root, lost, err := buildFolderTree(itemList)
+	if err != nil {
+		return fmt.Errorf("build folder tree for namespace %q: %w", namespace, err)
+	}
+
+	var insertItems []*sqlEntityFolderInsertRequestItem
+	if err = root.buildInsertItems(&insertItems, namespace, false); err != nil {
+		return fmt.Errorf("build insert items for root tree in namespace %q: %w", namespace, err)
+	}
+
+	for i, lostItem := range lost {
+		if err = lostItem.buildInsertItems(&insertItems, namespace, false); err != nil {
+			return fmt.Errorf("build insert items for lost folder #%d tree in namespace %q: %w", i, namespace, err)
+		}
+	}
+
+	insReq := sqlEntityFolderInsertRequest{
+		SQLTemplate: sqltemplate.New(s.sqlDialect),
+		Items:       insertItems,
+	}
+	if _, err = exec(ctx, x, sqlEntityFolderInsert, insReq); err != nil {
+		return fmt.Errorf("insert rebuilt tree for namespace %q: %w", namespace, err)
+	}
+
+	return nil
 }
 
 func buildFolderTree(all []*folderInfo) (*folderInfo, []*folderInfo, error) {
@@ -102,7 +148,7 @@ func buildFolderTree(all []*folderInfo) (*folderInfo, []*folderInfo, error) {
 
 	// already sorted by slug
 	for _, folder := range all {
-		parent, ok := lookup[folder.parentUID]
+		parent, ok := lookup[folder.ParentUID]
 		if ok {
 			folder.parent = parent
 			parent.children = append(parent.children, folder)
@@ -123,9 +169,9 @@ func setMPTTOrder(folder *folderInfo, stack []*folderInfo, idx int32) (int32, er
 	folder.stack = stack
 
 	if folder.depth > 0 {
-		folder.Slug = "/"
+		folder.SlugPath = "/"
 		for _, f := range stack {
-			folder.Slug += f.originalSlug + "/"
+			folder.SlugPath += f.Slug + "/"
 		}
 	}
 
@@ -137,34 +183,4 @@ func setMPTTOrder(folder *folderInfo, stack []*folderInfo, idx int32) (int32, er
 	}
 	folder.right = idx + 1
 	return folder.right, nil
-}
-
-func insertFolderInfo(ctx context.Context, tx *session.SessionTx, tenant int64, folder *folderInfo, isDetached bool) error {
-	js, _ := json.Marshal(folder.stack)
-	grn2 := grn.GRN{TenantID: tenant, ResourceKind: entity.StandardKindFolder, ResourceIdentifier: folder.UID}
-	_, err := tx.Exec(ctx,
-		`INSERT INTO entity_folder `+
-			"(grn, tenant_id, uid, slug_path, tree, depth, left, right, detached) "+
-			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		grn2.ToGRNString(),
-		tenant,
-		folder.UID,
-		folder.Slug,
-		string(js),
-		folder.depth,
-		folder.left,
-		folder.right,
-		isDetached,
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, sub := range folder.children {
-		err := insertFolderInfo(ctx, tx, tenant, sub, isDetached)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

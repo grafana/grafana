@@ -2,7 +2,7 @@ import { FieldConfigSource } from '@grafana/data';
 
 export interface VizTypeChangeDetails {
   pluginId: string;
-  options?: any;
+  options?: Record<string, unknown>;
   fieldConfig?: FieldConfigSource;
   withModKey?: boolean;
 }

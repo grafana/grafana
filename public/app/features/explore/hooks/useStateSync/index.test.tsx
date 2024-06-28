@@ -2,7 +2,7 @@ import { act, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { createMemoryHistory } from 'history';
 import { stringify } from 'querystring';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -138,7 +138,14 @@ describe('useStateSync', () => {
     const { location, waitForNextUpdate, store } = setup({
       queryParams: {
         panes: JSON.stringify({
-          one: { datasource: 'loki-uid', queries: [{ datasource: { name: 'loki', uid: 'loki-uid' }, refId: '1+2' }] },
+          one: {
+            datasource: 'loki-uid',
+            queries: [
+              { datasource: { name: 'loki', uid: 'loki-uid' }, refId: '1+2' },
+              { datasource: 'loki-uid', refId: '3' },
+              { datasource: 'loki', refId: '4' },
+            ],
+          },
           two: { datasource: 'elastic-uid', queries: [{ datasource: { name: 'elastic', uid: 'elastic-uid' } }] },
         }),
         schemaVersion: 1,
@@ -182,9 +189,16 @@ describe('useStateSync', () => {
     if (panes) {
       // check if the URL is properly encoded when finishing rendering the hook. (this would be '1 2' otherwise)
       expect(JSON.parse(panes)['one'].queries[0].refId).toBe('1+2');
+      expect(JSON.parse(panes)['one'].queries[0].datasource?.uid).toBe('loki-uid');
 
       // we expect panes in the state to be in the same order as the ones in the URL
       expect(Object.keys(store.getState().explore.panes)).toStrictEqual(Object.keys(JSON.parse(panes)));
+
+      // check that the datasources for the queries resolved correctly when set to a name or uid
+      expect(JSON.parse(panes)['one'].queries[1].refId).toBe('3');
+      expect(JSON.parse(panes)['one'].queries[1].datasource?.uid).toBe('loki-uid');
+      expect(JSON.parse(panes)['one'].queries[2].refId).toBe('4');
+      expect(JSON.parse(panes)['one'].queries[2].datasource?.uid).toBe('loki-uid');
     }
   });
 
@@ -211,6 +225,69 @@ describe('useStateSync', () => {
     expect(queries).toHaveLength(1);
 
     expect(queries?.[0].datasource?.uid).toBe('loki-uid');
+  });
+
+  it('inits with mixed datasource if there are multiple datasources in queries and no root level datasource is defined', async () => {
+    const { location, waitForNextUpdate, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            queries: [
+              { datasource: { name: 'loki', uid: 'loki-uid' } },
+              { datasource: { name: 'elastic', uid: 'elastic-uid' } },
+            ],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    const initialHistoryLength = location.getHistory().length;
+
+    await waitForNextUpdate();
+
+    expect(location.getHistory().length).toBe(initialHistoryLength);
+
+    const search = location.getSearchObject();
+    expect(search.panes).toBeDefined();
+
+    const paneState = store.getState().explore.panes['one'];
+    expect(paneState?.datasourceInstance?.name).toBe(MIXED_DATASOURCE_NAME);
+
+    expect(paneState?.queries).toHaveLength(2);
+    expect(paneState?.queries?.[0].datasource?.uid).toBe('loki-uid');
+    expect(paneState?.queries?.[1].datasource?.uid).toBe('elastic-uid');
+  });
+
+  it("inits with a query's datasource if there are multiple datasources in queries, no root level datasource, and only one query has a valid datsource", async () => {
+    const { location, waitForNextUpdate, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            queries: [
+              { datasource: { name: 'loki', uid: 'loki-uid' } },
+              { datasource: { name: 'UNKNOWN', uid: 'UNKNOWN-UID' } },
+            ],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    const initialHistoryLength = location.getHistory().length;
+
+    await waitForNextUpdate();
+
+    expect(location.getHistory().length).toBe(initialHistoryLength);
+
+    const search = location.getSearchObject();
+    expect(search.panes).toBeDefined();
+
+    const paneState = store.getState().explore.panes['one'];
+    expect(paneState?.datasourceInstance?.getRef().uid).toBe('loki-uid');
+
+    expect(paneState?.queries).toHaveLength(1);
+    expect(paneState?.queries?.[0].datasource?.uid).toBe('loki-uid');
   });
 
   it('inits with the last used datasource from localStorage', async () => {

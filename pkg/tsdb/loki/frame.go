@@ -93,14 +93,26 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery, dataplane bool) error 
 func adjustLegacyLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	// we check if the fields are of correct type and length
 	fields := frame.Fields
-	if len(fields) != 4 {
-		return fmt.Errorf("invalid field length in logs frame. expected 4, got %d", len(fields))
+	if len(fields) != 4 && len(fields) != 5 {
+		return fmt.Errorf("invalid field length in logs frame. expected 4 or 5, got %d", len(fields))
 	}
 
 	labelsField := fields[0]
 	timeField := fields[1]
 	lineField := fields[2]
 	stringTimeField := fields[3]
+	if len(fields) == 5 {
+		labelTypesField := fields[4]
+		if labelTypesField.Type() != data.FieldTypeJSON {
+			return fmt.Errorf("invalid field types in logs frame. expected json, got %s", labelTypesField.Type())
+		}
+		labelTypesField.Name = "labelTypes"
+		labelTypesField.Config = &data.FieldConfig{
+			Custom: map[string]interface{}{
+				"hidden": true,
+			},
+		}
+	}
 
 	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeJSON) || (stringTimeField.Type() != data.FieldTypeString) {
 		return fmt.Errorf("invalid field types in logs frame. expected time, string, json and string, got %s, %s, %s and %s", timeField.Type(), lineField.Type(), labelsField.Type(), stringTimeField.Type())
@@ -149,14 +161,27 @@ func adjustLegacyLogsFrame(frame *data.Frame, query *lokiQuery) error {
 func adjustDataplaneLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	// we check if the fields are of correct type and length
 	fields := frame.Fields
-	if len(fields) != 4 {
-		return fmt.Errorf("invalid field length in logs frame. expected 4, got %d", len(fields))
+	if len(fields) != 4 && len(fields) != 5 {
+		return fmt.Errorf("invalid field length in logs frame. expected 4 or 5, got %d", len(fields))
 	}
 
 	labelsField := fields[0]
 	timeField := fields[1]
 	lineField := fields[2]
 	stringTimeField := fields[3]
+	var labelTypesField *data.Field
+	if len(fields) == 5 {
+		labelTypesField = fields[4]
+		if labelTypesField.Type() != data.FieldTypeJSON {
+			return fmt.Errorf("invalid field types in logs frame. expected json, got %s", labelTypesField.Type())
+		}
+		labelTypesField.Name = "labelTypes"
+		labelTypesField.Config = &data.FieldConfig{
+			Custom: map[string]interface{}{
+				"hidden": true,
+			},
+		}
+	}
 
 	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeJSON) || (stringTimeField.Type() != data.FieldTypeString) {
 		return fmt.Errorf("invalid field types in logs frame. expected time, string, json and string, got %s, %s, %s and %s", timeField.Type(), lineField.Type(), labelsField.Type(), stringTimeField.Type())
@@ -173,7 +198,7 @@ func adjustDataplaneLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	}
 
 	timeField.Name = "timestamp"
-	labelsField.Name = "attributes"
+	labelsField.Name = "labels"
 	lineField.Name = "body"
 
 	if frame.Meta == nil {
@@ -190,7 +215,12 @@ func adjustDataplaneLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	if err != nil {
 		return err
 	}
-	frame.Fields = data.Fields{labelsField, timeField, lineField, idField}
+
+	if labelTypesField != nil {
+		frame.Fields = data.Fields{labelsField, timeField, lineField, idField, labelTypesField}
+	} else {
+		frame.Fields = data.Fields{labelsField, timeField, lineField, idField}
+	}
 	return nil
 }
 

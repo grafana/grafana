@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Field } from '@grafana/data';
 
@@ -8,6 +8,8 @@ export enum SpanLinkType {
   Logs = 'log',
   Traces = 'trace',
   Metrics = 'metric',
+  Profiles = 'profile',
+  Session = 'session',
   Unknown = 'unknown',
 }
 

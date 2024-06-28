@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -21,6 +21,8 @@ import {
   FilterByValueType,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
@@ -47,7 +49,7 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
     }
 
     const filters = cloneDeep(options.filters);
-    const matcher = valueMatchers.get(ValueMatcherID.greater);
+    const matcher = valueMatchers.get(ValueMatcherID.isNull);
 
     filters.push({
       fieldName: getFieldDisplayName(field, frame, input),
@@ -135,6 +137,7 @@ export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterB
   description:
     'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
   categories: new Set([TransformerCategory.Filter]),
+  help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
 };
 
 const useFieldsInfo = (data: DataFrame[]): DataFrameFieldsInfo => {

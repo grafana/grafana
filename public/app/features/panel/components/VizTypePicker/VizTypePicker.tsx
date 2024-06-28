@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { GrafanaTheme2, PanelData, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { EmptySearchResult, useStyles2 } from '@grafana/ui';
 
@@ -11,29 +11,25 @@ import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizTypeChangeDetails } from './types';
 
 export interface Props {
-  current: PanelPluginMeta;
-  data?: PanelData;
-  onChange: (options: VizTypeChangeDetails) => void;
+  pluginId: string;
   searchQuery: string;
-  onClose: () => void;
+  onChange: (options: VizTypeChangeDetails) => void;
   isWidget?: boolean;
 }
 
-export function VizTypePicker({ searchQuery, onChange, current, data, isWidget = false }: Props) {
+export function VizTypePicker({ pluginId, searchQuery, onChange, isWidget = false }: Props) {
   const styles = useStyles2(getStyles);
-  const pluginsList: PanelPluginMeta[] = useMemo(() => {
+  const pluginsList = useMemo(() => {
     if (config.featureToggles.vizAndWidgetSplit) {
-      if (isWidget) {
-        return getWidgetPluginMeta();
-      }
-      return getVizPluginMeta();
+      return isWidget ? getWidgetPluginMeta() : getVizPluginMeta();
     }
     return getAllPanelPluginMeta();
   }, [isWidget]);
 
-  const filteredPluginTypes = useMemo((): PanelPluginMeta[] => {
-    return filterPluginList(pluginsList, searchQuery, current);
-  }, [current, pluginsList, searchQuery]);
+  const filteredPluginTypes = useMemo(
+    () => filterPluginList(pluginsList, searchQuery, pluginId),
+    [pluginsList, searchQuery, pluginId]
+  );
 
   if (filteredPluginTypes.length === 0) {
     return <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>;
@@ -41,16 +37,16 @@ export function VizTypePicker({ searchQuery, onChange, current, data, isWidget =
 
   return (
     <div className={styles.grid}>
-      {filteredPluginTypes.map((plugin, index) => (
+      {filteredPluginTypes.map((plugin) => (
         <VizTypePickerPlugin
           disabled={false}
           key={plugin.id}
-          isCurrent={plugin.id === current.id}
+          isCurrent={plugin.id === pluginId}
           plugin={plugin}
           onClick={(e) =>
             onChange({
               pluginId: plugin.id,
-              withModKey: Boolean(e.metaKey || e.ctrlKey || e.altKey),
+              withModKey: e.metaKey || e.ctrlKey || e.altKey,
             })
           }
         />
@@ -59,16 +55,14 @@ export function VizTypePicker({ searchQuery, onChange, current, data, isWidget =
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    grid: css`
-      max-width: 100%;
-      display: grid;
-      grid-gap: ${theme.spacing(0.5)};
-    `,
-    heading: css({
-      ...theme.typography.h5,
-      margin: theme.spacing(0, 0.5, 1),
-    }),
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  grid: css({
+    maxWidth: '100%',
+    display: 'grid',
+    gridGap: theme.spacing(0.5),
+  }),
+  heading: css({
+    ...theme.typography.h5,
+    margin: theme.spacing(0, 0.5, 1),
+  }),
+});

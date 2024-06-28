@@ -5,7 +5,9 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -34,13 +36,15 @@ type Query struct {
 	Limit         int64
 	Page          int64
 	IsStarred     bool
+	IsDeleted     bool
 	Type          string
 	DashboardUIDs []string
 	DashboardIds  []int64
-	FolderIds     []int64
-	FolderUIDs    []string
-	Permission    dashboards.PermissionType
-	Sort          string
+	// Deprecated: use FolderUID instead
+	FolderIds  []int64
+	FolderUIDs []string
+	Permission dashboardaccess.PermissionType
+	Sort       string
 }
 
 type Service interface {
@@ -77,18 +81,20 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		}
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Search).Inc()
 	dashboardQuery := dashboards.FindPersistedDashboardsQuery{
 		Title:         query.Title,
 		SignedInUser:  query.SignedInUser,
 		DashboardUIDs: query.DashboardUIDs,
 		DashboardIds:  query.DashboardIds,
 		Type:          query.Type,
-		FolderIds:     query.FolderIds,
+		FolderIds:     query.FolderIds, // nolint:staticcheck
 		FolderUIDs:    query.FolderUIDs,
 		Tags:          query.Tags,
 		Limit:         query.Limit,
 		Page:          query.Page,
 		Permission:    query.Permission,
+		IsDeleted:     query.IsDeleted,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {

@@ -1,22 +1,21 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { hasOptions, isAdHoc, isQuery } from '../guard';
+import { hasOptions } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { KeyedVariableIdentifier } from '../state/types';
-import { VariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 export interface VariableEditorListRowProps {
   index: number;
-  variable: VariableModel;
+  variable: TypedVariableModel;
   usageTree: VariableUsageTree[];
   usagesNetwork: UsagesToNetwork[];
   onEdit: (identifier: KeyedVariableIdentifier) => void;
@@ -37,7 +36,7 @@ export function VariableEditorListRow({
   const styles = useStyles2(getStyles);
   const definition = getDefinition(variable);
   const usages = getVariableUsages(variable.id, usageTree);
-  const passed = usages > 0 || isAdHoc(variable);
+  const passed = usages > 0 || variable.type === 'adhoc';
   const identifier = toKeyedVariableIdentifier(variable);
 
   return (
@@ -81,7 +80,7 @@ export function VariableEditorListRow({
           <td role="gridcell" className={styles.column}>
             <div className={styles.icons}>
               <VariableCheckIndicator passed={passed} />
-              <VariableUsagesButton id={variable.id} isAdhoc={isAdHoc(variable)} usages={usagesNetwork} />
+              <VariableUsagesButton id={variable.id} isAdhoc={variable.type === 'adhoc'} usages={usagesNetwork} />
               <IconButton
                 onClick={(event) => {
                   event.preventDefault();
@@ -113,9 +112,9 @@ export function VariableEditorListRow({
   );
 }
 
-function getDefinition(model: VariableModel): string {
+function getDefinition(model: TypedVariableModel): string {
   let definition = '';
-  if (isQuery(model)) {
+  if (model.type === 'query') {
     if (model.definition) {
       definition = model.definition;
     } else if (typeof model.query === 'string') {

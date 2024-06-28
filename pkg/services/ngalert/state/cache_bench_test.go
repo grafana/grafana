@@ -16,7 +16,7 @@ import (
 
 func BenchmarkGetOrCreateTest(b *testing.B) {
 	cache := newCache()
-	rule := models.AlertRuleGen(func(rule *models.AlertRule) {
+	rule := models.RuleGen.With(func(rule *models.AlertRule) {
 		for i := 0; i < 2; i++ {
 			rule.Labels = data.Labels{
 				"label-1": "{{ $value }}",
@@ -27,7 +27,7 @@ func BenchmarkGetOrCreateTest(b *testing.B) {
 				"anno-2": "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
 			}
 		}
-	})()
+	}).GenerateRef()
 	result := eval.ResultGen(func(r *eval.Result) {
 		r.Values = map[string]eval.NumberValueCapture{
 			"A": {

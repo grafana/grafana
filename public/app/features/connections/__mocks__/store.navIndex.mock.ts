@@ -150,14 +150,21 @@ export const navIndex: NavIndex = {
         url: '/alerting/groups',
       },
       {
+        id: 'history',
+        text: 'History',
+        subTitle: 'Alert state history',
+        icon: 'history',
+        url: '/alerting/history',
+      },
+      {
         id: 'alerting-admin',
-        text: 'Admin',
+        text: 'Settings',
         icon: 'cog',
         url: '/alerting/admin',
       },
       {
         id: 'alert',
-        text: 'Create alert rule',
+        text: 'New alert rule',
         subTitle: 'Create an alert rule',
         icon: 'plus',
         url: '/alerting/new',
@@ -209,13 +216,13 @@ export const navIndex: NavIndex = {
   },
   'alerting-admin': {
     id: 'alerting-admin',
-    text: 'Admin',
+    text: 'Settings',
     icon: 'cog',
     url: '/alerting/admin',
   },
   alert: {
     id: 'alert',
-    text: 'Create alert rule',
+    text: 'New alert rule',
     subTitle: 'Create an alert rule',
     icon: 'plus',
     url: '/alerting/new',
@@ -490,7 +497,7 @@ export const navIndex: NavIndex = {
   monitoring: {
     id: 'monitoring',
     text: 'Observability',
-    subTitle: 'Monitoring and infrastructure apps',
+    subTitle: 'Out-of-the-box observability solutions',
     icon: 'heart-rate',
     url: '/monitoring',
     sortWeight: -900,

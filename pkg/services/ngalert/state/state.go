@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -12,12 +13,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	prometheusModel "github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type State struct {
@@ -26,7 +27,7 @@ type State struct {
 
 	// CacheID is a unique, opaque identifier for the state, and is used to find the state
 	// in the state cache. It tends to be derived from the state's labels.
-	CacheID string
+	CacheID data.Fingerprint
 
 	// State represents the current state.
 	State eval.State
@@ -34,16 +35,15 @@ type State struct {
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
 
-	// Results contains the result of the current and previous evaluations.
-	Results []Evaluation
+	// ResultFingerprint is a hash of labels of the result before it is processed by
+	ResultFingerprint data.Fingerprint
+
+	// LatestResult contains the result of the most recent evaluation, if available.
+	LatestResult *Evaluation
 
 	// Error is set if the current evaluation returned an error. If error is non-nil results
 	// can still contain the results of previous evaluations.
 	Error error
-
-	// Resolved is set to true if this state is the transitional state between Firing and Normal.
-	// All subsequent states will be false until the next transition from Firing to Normal.
-	Resolved bool
 
 	// Image contains an optional image for the state. It tends to be included in notifications
 	// as a visualization to show why the alert fired.
@@ -61,9 +61,15 @@ type State struct {
 	// conditions.
 	Values map[string]float64
 
-	StartsAt             time.Time
-	EndsAt               time.Time
-	LastSentAt           time.Time
+	StartsAt time.Time
+	// EndsAt is different from the Prometheus EndsAt as EndsAt is updated for both Normal states
+	// and states that have been resolved. It cannot be used to determine when a state was resolved.
+	EndsAt time.Time
+	// ResolvedAt is set when the state is first resolved. That is to say, when the state first transitions
+	// from Alerting, NoData, or Error to Normal. It is reset to zero when the state transitions from Normal
+	// to any other state.
+	ResolvedAt           *time.Time
+	LastSentAt           *time.Time
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
@@ -130,17 +136,31 @@ func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
 	a.Error = nil
 }
 
-// Resolve sets the State to Normal. It updates the StateReason, the end time, and sets Resolved to true.
-func (a *State) Resolve(reason string, endsAt time.Time) {
-	a.State = eval.Normal
-	a.StateReason = reason
-	a.Resolved = true
-	a.EndsAt = endsAt
-}
-
 // Maintain updates the end time using the most recent evaluation.
 func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
+}
+
+// AddErrorAnnotations adds annotations to the state to indicate that an error occurred.
+func (a *State) AddErrorAnnotations(err error, rule *models.AlertRule) {
+	if err == nil {
+		return
+	}
+
+	a.Annotations["Error"] = err.Error()
+	// If the evaluation failed because a query returned an error then add the Ref ID and
+	// Datasource UID as labels
+	var utilError errutil.Error
+	if errors.As(a.Error, &utilError) &&
+		(errors.Is(a.Error, expr.QueryError) || errors.Is(a.Error, expr.ConversionError)) {
+		for _, next := range rule.Data {
+			if next.RefID == utilError.PublicPayload["refId"].(string) {
+				a.Labels["ref_id"] = next.RefID
+				a.Labels["datasource_uid"] = next.DatasourceUID
+				break
+			}
+		}
+	}
 }
 
 // IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
@@ -167,6 +187,19 @@ func (c StateTransition) Changed() bool {
 	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
 }
 
+type StateTransitions []StateTransition
+
+// StaleStates returns the subset of StateTransitions that are stale.
+func (c StateTransitions) StaleStates() StateTransitions {
+	var result StateTransitions
+	for _, t := range c {
+		if t.IsStale() {
+			result = append(result, t)
+		}
+	}
+	return result
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
@@ -187,7 +220,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger) {
+func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
 	if state.State == eval.Normal {
 		logger.Debug("Keeping state", "state", state.State)
 	} else {
@@ -202,11 +235,11 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 			"next_ends_at",
 			nextEndsAt)
 		// Normal states have the same start and end timestamps
-		state.SetNormal("", nextEndsAt, nextEndsAt)
+		state.SetNormal(reason, nextEndsAt, nextEndsAt)
 	}
 }
 
-func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
 	switch state.State {
 	case eval.Alerting:
 		prevEndsAt := state.EndsAt
@@ -231,7 +264,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				state.EndsAt,
 				"next_ends_at",
 				nextEndsAt)
-			state.SetAlerting("", result.EvaluatedAt, nextEndsAt)
+			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
@@ -246,7 +279,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				state.EndsAt,
 				"next_ends_at",
 				nextEndsAt)
-			state.SetPending("", result.EvaluatedAt, nextEndsAt)
+			state.SetPending(reason, result.EvaluatedAt, nextEndsAt)
 		} else {
 			logger.Debug("Changing state",
 				"previous_state",
@@ -257,21 +290,25 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				state.EndsAt,
 				"next_ends_at",
 				nextEndsAt)
-			state.SetAlerting("", result.EvaluatedAt, nextEndsAt)
+			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
 		}
 	}
 }
+
 func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	handlerStr := "resultError"
+
 	switch rule.ExecErrState {
 	case models.AlertingErrState:
-		logger.Debug("Execution error state is Alerting", "handler", "resultAlerting", "previous_handler", "resultError")
-		resultAlerting(state, rule, result, logger)
+		logger.Debug("Execution error state is Alerting", "handler", "resultAlerting", "previous_handler", handlerStr)
+		resultAlerting(state, rule, result, logger, models.StateReasonError)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
-		state.StateReason = models.StateReasonError
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
+			state.Error = result.Error
+			state.AddErrorAnnotations(result.Error, rule)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 			logger.Debug("Keeping state",
 				"state",
@@ -293,27 +330,14 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				"next_ends_at",
 				nextEndsAt)
 			state.SetError(result.Error, result.EvaluatedAt, nextEndsAt)
-
-			if result.Error != nil {
-				state.Annotations["Error"] = result.Error.Error()
-				// If the evaluation failed because a query returned an error then add the Ref ID and
-				// Datasource UID as labels
-				var utilError errutil.Error
-				if errors.As(state.Error, &utilError) &&
-					(errors.Is(state.Error, expr.QueryError) || errors.Is(state.Error, expr.ConversionError)) {
-					for _, next := range rule.Data {
-						if next.RefID == utilError.PublicPayload["refId"].(string) {
-							state.Labels["ref_id"] = next.RefID
-							state.Labels["datasource_uid"] = next.DatasourceUID
-							break
-						}
-					}
-				}
-			}
+			state.AddErrorAnnotations(result.Error, rule)
 		}
 	case models.OkErrState:
-		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", "resultError")
-		resultNormal(state, rule, result, logger)
+		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
+		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
+	case models.KeepLastErrState:
+		logger := logger.New("previous_handler", handlerStr)
+		resultKeepLast(state, rule, result, logger)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -322,11 +346,12 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 }
 
 func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	handlerStr := "resultNoData"
+
 	switch rule.NoDataState {
 	case models.Alerting:
-		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
-		resultAlerting(state, rule, result, logger)
-		state.StateReason = models.StateReasonNoData
+		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", handlerStr)
+		resultAlerting(state, rule, result, logger, models.StateReasonNoData)
 	case models.NoData:
 		if state.State == eval.NoData {
 			prevEndsAt := state.EndsAt
@@ -353,9 +378,11 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 			state.SetNoData("", result.EvaluatedAt, nextEndsAt)
 		}
 	case models.OK:
-		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
-		resultNormal(state, rule, result, logger)
-		state.StateReason = models.StateReasonNoData
+		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
+		resultNormal(state, rule, result, logger, models.StateReasonNoData)
+	case models.KeepLast:
+		logger := logger.New("previous_handler", handlerStr)
+		resultKeepLast(state, rule, result, logger)
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -363,19 +390,56 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	}
 }
 
-func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	switch a.State {
+func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	reason := models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
+
+	switch state.State {
+	case eval.Alerting:
+		logger.Debug("Execution keep last state is Alerting", "handler", "resultAlerting")
+		resultAlerting(state, rule, result, logger, reason)
 	case eval.Pending:
-		// We do not send notifications for pending states
-		return false
+		// respect 'for' setting on rule
+		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
+			logger.Debug("Execution keep last state is Pending", "handler", "resultAlerting")
+			resultAlerting(state, rule, result, logger, reason)
+		} else {
+			logger.Debug("Ignoring set next state to pending")
+		}
 	case eval.Normal:
-		// We should send a notification if the state is Normal because it was resolved
-		return a.Resolved
+		logger.Debug("Execution keep last state is Normal", "handler", "resultNormal")
+		resultNormal(state, rule, result, logger, reason)
 	default:
-		// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay
-		nextSent := a.LastSentAt.Add(resendDelay)
-		return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
+		// this should not happen, add as failsafe
+		logger.Debug("Reverting invalid state to normal", "handler", "resultNormal")
+		resultNormal(state, rule, result, logger, reason)
 	}
+}
+
+// NeedsSending returns true if the given state needs to be sent to the Alertmanager.
+// Reasons for sending include:
+// - The state has been resolved since the last notification.
+// - The state is firing and the last notification was sent at least resendDelay ago.
+// - The state was resolved within the resolvedRetention period, and the last notification was sent at least resendDelay ago.
+func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.Duration) bool {
+	if a.State == eval.Pending {
+		// We do not send notifications for pending states.
+		return false
+	}
+
+	// We should send a notification if the state has been resolved since the last notification.
+	if a.ResolvedAt != nil && (a.LastSentAt == nil || a.ResolvedAt.After(*a.LastSentAt)) {
+		return true
+	}
+
+	// For normal states, we should only be sending if this is a resolved notification or a re-send of the resolved
+	// notification within the resolvedRetention period.
+	if a.State == eval.Normal && (a.ResolvedAt == nil || a.LastEvaluationTime.Sub(*a.ResolvedAt) > resolvedRetention) {
+		return false
+	}
+
+	// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay.
+	// This can include normal->normal transitions that were resolved in recent past evaluations.
+	return a.LastSentAt == nil || !a.LastSentAt.Add(resendDelay).After(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {
@@ -388,20 +452,6 @@ func (a *State) Equals(b *State) bool {
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
-}
-
-func (a *State) TrimResults(alertRule *models.AlertRule) {
-	numBuckets := int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds
-	if numBuckets == 0 {
-		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
-	}
-
-	if len(a.Results) < int(numBuckets) {
-		return
-	}
-	newResults := make([]Evaluation, numBuckets)
-	copy(newResults, a.Results[len(a.Results)-int(numBuckets):])
-	a.Results = newResults
 }
 
 func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
@@ -427,11 +477,11 @@ func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
 }
 
 func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
-	if len(a.Results) <= 0 {
+	if a.LatestResult == nil {
 		return nil
 	}
 
-	lastResult := a.Results[len(a.Results)-1]
+	lastResult := *a.LatestResult
 	r := make(map[string]float64, len(lastResult.Values))
 
 	for refID, value := range lastResult.Values {
@@ -445,6 +495,11 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 	}
 
 	return r
+}
+
+// IsStale returns true if the state is stale, meaning that the state is ready to be evicted from the cache.
+func (a *State) IsStale() bool {
+	return a.StateReason == models.StateReasonMissingSeries
 }
 
 // shouldTakeImage returns true if the state just has transitioned to alerting from another state,
@@ -479,8 +534,36 @@ func FormatStateAndReason(state eval.State, reason string) string {
 	return s
 }
 
+// ParseFormattedState parses a state string in the format "state (reason)"
+// and returns the state and reason separately.
+func ParseFormattedState(stateStr string) (eval.State, string, error) {
+	p := 0
+	// walk string until we find a space
+	for i, c := range stateStr {
+		if c == ' ' {
+			p = i
+			break
+		}
+	}
+	if p == 0 {
+		p = len(stateStr)
+	}
+
+	state, err := eval.ParseStateString(stateStr[:p])
+	if err != nil {
+		return -1, "", err
+	}
+
+	if p == len(stateStr) {
+		return state, "", nil
+	}
+
+	reason := strings.Trim(stateStr[p+1:], "()")
+	return state, reason, nil
+}
+
 // GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.
-func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
+func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
 	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
@@ -489,6 +572,16 @@ func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolde
 
 	if includeFolder {
 		extraLabels[models.FolderTitleLabel] = folderTitle
+	}
+
+	if len(rule.NotificationSettings) > 0 {
+		// Notification settings are defined as a slice to workaround xorm behavior.
+		// Any items past the first should not exist so we ignore them.
+		if len(rule.NotificationSettings) > 1 {
+			ignored, _ := json.Marshal(rule.NotificationSettings[1:])
+			l.Error("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
+		}
+		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels())
 	}
 	return extraLabels
 }

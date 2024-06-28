@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
@@ -78,22 +78,23 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   const onApplyPanelModel = useCallback(() => {
     if (panel && dashboard && text) {
       try {
-        if (!dashboard!.meta.canEdit) {
+        if (!dashboard.meta.canEdit) {
           appEvents.emit(AppEvents.alertError, ['Unable to apply']);
         } else {
           const updates = JSON.parse(text);
-          dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
+          dashboard.shouldUpdateDashboardPanelFromJSON(updates, panel);
 
           //Report relevant updates
           reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
-            panel_type_changed: panel!.type !== updates.type,
-            panel_id_changed: panel!.id !== updates.id,
-            panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
-            panel_targets_changed: !isEqual(panel!.targets, updates.targets),
+            panel_type_changed: panel.type !== updates.type,
+            panel_id_changed: panel.id !== updates.id,
+            panel_grid_pos_changed: !isEqual(panel.gridPos, updates.gridPos),
+            panel_targets_changed: !isEqual(panel.targets, updates.targets),
           });
 
-          panel!.restoreModel(updates);
-          panel!.refresh();
+          panel.restoreModel(updates);
+          panel.configRev++;
+          panel.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
         }
       } catch (err) {
@@ -117,7 +118,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
+      <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
         <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
           <Select
             inputId="select-source-dropdown"
@@ -131,7 +132,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
             Apply
           </Button>
         )}
-        {show === ShowContent.DataFrames && (
+        {show === ShowContent.DataFrames && dashboard !== undefined && (
           <Button className={styles.toolbarItem} onClick={onShowHelpWizard}>
             Support
           </Button>
@@ -146,7 +147,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
               height={height}
               language="json"
               showLineNumbers={true}
-              showMiniMap={(text && text.length) > 100}
+              showMiniMap={text.length > 100}
               value={text || ''}
               readOnly={!isPanelJSON}
               onBlur={setText}

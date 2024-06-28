@@ -1,11 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { uniqueId } from 'lodash';
-import React from 'react';
 
 import { dateMath, dateTime, EventBus, LoadingState, TimeRange, toDataFrame, VizOrientation } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
-import { BarGaugeNamePlacement } from '@grafana/schema/dist/esm/common/common.gen';
+import { BarGaugeNamePlacement, BarGaugeSizing } from '@grafana/schema/dist/esm/common/common.gen';
 
 import { BarGaugePanel, BarGaugePanelProps } from './BarGaugePanel';
 
@@ -100,10 +99,12 @@ function buildPanelData(overrideValues?: Partial<BarGaugePanelProps>): BarGaugeP
       },
       orientation: VizOrientation.Horizontal,
       showUnfilled: true,
+      maxVizHeight: 100,
       minVizHeight: 10,
       minVizWidth: 0,
       valueMode: BarGaugeValueMode.Color,
       namePlacement: BarGaugeNamePlacement.Auto,
+      sizing: BarGaugeSizing.Auto,
     },
     transparent: false,
     timeRange,

@@ -35,18 +35,10 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		},
 	)
 
-	histogramLabels := []string{"handler", "status_code", "method"}
-
-	if features.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
-		histogramLabels = append(histogramLabels, "status_source")
-	}
+	histogramLabels := []string{"handler", "status_code", "method", "status_source", "slo_group"}
 
 	if cfg.MetricsIncludeTeamLabel {
 		histogramLabels = append(histogramLabels, "grafana_team")
-	}
-
-	if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
-		histogramLabels = append(histogramLabels, "slo_group")
 	}
 
 	histogramOptions := prometheus.HistogramOpts{
@@ -56,15 +48,22 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		Buckets:   defBuckets,
 	}
 
-	if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
 		// the recommended default value from the prom_client
 		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
-		// Giving this variable an value means the client will expose the histograms as an
-		// native histogram instead of normal a normal histogram.
+		// Giving this variable a value means the client will expose a native
+		// histogram.
 		histogramOptions.NativeHistogramBucketFactor = 1.1
 		// The default value in OTel. It probably good enough for us as well.
 		histogramOptions.NativeHistogramMaxBucketNumber = 160
 		histogramOptions.NativeHistogramMinResetDuration = time.Hour
+
+		if features.IsEnabledGlobally(featuremgmt.FlagDisableClassicHTTPHistogram) {
+			// setting Buckets to nil with native options set means the classic
+			// histogram will no longer be exposed - this can be a good way to
+			// reduce cardinality in the exposed metrics
+			histogramOptions.Buckets = nil
+		}
 	}
 
 	httpRequestDurationHistogram := prometheus.NewHistogramVec(
@@ -95,7 +94,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 					handler = "notfound"
 				} else {
 					// log requests where we could not identify handler so we can register them.
-					if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+					if features.IsEnabled(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
 						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
 					}
 				}
@@ -104,16 +103,10 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			labelValues := []string{handler, code, r.Method}
 			rmd := requestmeta.GetRequestMetaData(r.Context())
 
-			if features.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
-				labelValues = append(labelValues, string(rmd.StatusSource))
-			}
+			labelValues = append(labelValues, string(rmd.StatusSource), string(rmd.SLOGroup))
 
 			if cfg.MetricsIncludeTeamLabel {
 				labelValues = append(labelValues, rmd.Team)
-			}
-
-			if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
-				labelValues = append(labelValues, string(rmd.SLOGroup))
 			}
 
 			// avoiding the sanitize functions for in the new instrumentation

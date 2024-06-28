@@ -1,4 +1,4 @@
-import { toDataFrame } from '../../dataframe';
+import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType, DataTransformerConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
@@ -66,6 +66,33 @@ describe('OrganizeFields Transformer', () => {
             },
             type: FieldType.number,
             values: [10000.3, 10000.4, 10000.5, 10000.6],
+          },
+        ]);
+      });
+    });
+
+    it('should order and filter (inclusion) according to config', async () => {
+      const cfg: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
+        id: DataTransformerID.organize,
+        options: {
+          excludeByName: {},
+          indexByName: {},
+          includeByName: {
+            time: true,
+          },
+          renameByName: {},
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const organized = data[0];
+        expect(organized.fields).toEqual([
+          {
+            config: {},
+            name: 'time',
+            type: FieldType.time,
+            values: [3000, 4000, 5000, 6000],
           },
         ]);
       });

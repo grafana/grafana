@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -23,12 +24,9 @@ func SetupDisabledTestService(tb testing.TB, store secrets.Store) *SecretsServic
 	return setupTestService(tb, store, featuremgmt.WithFeatures(featuremgmt.FlagDisableEnvelopeEncryption))
 }
 
-func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.FeatureManager) *SecretsService {
+func setupTestService(tb testing.TB, store secrets.Store, features featuremgmt.FeatureToggles) *SecretsService {
 	tb.Helper()
 	defaultKey := "SdlklWklckeLS"
-	if len(setting.SecretKey) > 0 {
-		defaultKey = setting.SecretKey
-	}
 	raw, err := ini.Load([]byte(`
 		[security]
 		secret_key = ` + defaultKey + `
@@ -43,10 +41,11 @@ func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.
 	encProvider := encryptionprovider.Provider{}
 	usageStats := &usagestats.UsageStatsMock{}
 
-	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, cfg)
+	encryption, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
 	require.NoError(tb, err)
 
 	secretsService, err := ProvideSecretsService(
+		tracing.InitializeTracerForTest(),
 		store,
 		osskmsproviders.ProvideService(encryption, cfg, features),
 		encryption,

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -24,16 +25,18 @@ type PluginInstaller struct {
 	pluginRegistry       registry.Service
 	pluginLoader         loader.Service
 	log                  log.Logger
+	serviceRegistry      auth.ExternalServiceRegistry
 }
 
-func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service) *PluginInstaller {
+func ProvideInstaller(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
 	return New(pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc)
+		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc, serviceRegistry)
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc) *PluginInstaller {
+	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc,
+	serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:         pluginLoader,
 		pluginRegistry:       pluginRegistry,
@@ -41,6 +44,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 		pluginStorage:        pluginStorage,
 		pluginStorageDirFunc: pluginStorageDirFunc,
 		log:                  log.New("plugin.installer"),
+		serviceRegistry:      serviceRegistry,
 	}
 }
 
@@ -51,7 +55,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	}
 
 	var pluginArchive *repo.PluginArchive
-	if plugin, exists := m.plugin(ctx, pluginID); exists {
+	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
@@ -80,7 +84,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		// remove existing installation of plugin
-		err = m.Remove(ctx, plugin.ID)
+		err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
 		if err != nil {
 			return err
 		}
@@ -135,8 +139,8 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	return nil
 }
 
-func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugin(ctx, pluginID)
+func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
+	plugin, exists := m.plugin(ctx, pluginID, version)
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
@@ -156,12 +160,16 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		}
 	}
 
-	return nil
+	has, err := m.serviceRegistry.HasExternalService(ctx, pluginID)
+	if err == nil && has {
+		return m.serviceRegistry.RemoveExternalService(ctx, pluginID)
+	}
+	return err
 }
 
 // plugin finds a plugin with `pluginID` from the store
-func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (m *PluginInstaller) plugin(ctx context.Context, pluginID, pluginVersion string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID, pluginVersion)
 	if !exists {
 		return nil, false
 	}

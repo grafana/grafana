@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { defaultFilters } from '../../../useSearch';
 import { trace } from '../TracePageHeader.test';
@@ -31,10 +30,12 @@ describe('<TracePageSearchBar>', () => {
       setFocusedSpanIdForSearch: jest.fn(),
       focusedSpanIndexForSearch: -1,
       setFocusedSpanIndexForSearch: jest.fn(),
+      setShowCriticalPathSpansOnly: jest.fn(),
       datasourceType: '',
       clear: jest.fn(),
       totalSpans: 100,
       showSpanFilters: true,
+      showCriticalPathSpansOnly: false,
     };
 
     return <TracePageSearchBar {...searchBarProps} />;

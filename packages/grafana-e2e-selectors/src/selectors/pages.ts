@@ -8,20 +8,20 @@ import { Components } from './components';
 export const Pages = {
   Login: {
     url: '/login',
-    username: 'Username input field',
-    password: 'Password input field',
-    submit: 'Login button',
-    skip: 'Skip change password button',
+    username: 'data-testid Username input field',
+    password: 'data-testid Password input field',
+    submit: 'data-testid Login button',
+    skip: 'data-testid Skip change password button',
   },
   Home: {
     url: '/',
   },
   DataSource: {
-    name: 'Data source settings page name input field',
+    name: 'data-testid Data source settings page name input field',
     delete: 'Data source settings page Delete button',
-    readOnly: 'Data source settings page read only message',
+    readOnly: 'data-testid Data source settings page read only message',
     saveAndTest: 'data-testid Data source settings page Save and Test button',
-    alert: 'Data source settings page Alert',
+    alert: 'data-testid Data source settings page Alert',
   },
   DataSources: {
     url: '/datasources',
@@ -43,9 +43,9 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     itemButton: (title: string) => `data-testid ${title}`,
-    addNewPanel: 'Add new panel',
-    addNewRow: 'Add new row',
-    addNewPanelLibrary: 'Add new panel from panel library',
+    addNewPanel: 'data-testid Add new panel',
+    addNewRow: 'data-testid Add new row',
+    addNewPanelLibrary: 'data-testid Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
@@ -56,7 +56,34 @@ export const Pages = {
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
+      shareButton: 'data-testid share-button',
+      scrollContainer: 'data-testid Dashboard canvas scroll container',
+      newShareButton: {
+        container: 'data-testid new share button',
+        shareLink: 'data-testid new share link-button',
+        arrowMenu: 'data-testid new share button arrow menu',
+        menu: {
+          container: 'data-testid new share button menu',
+          shareInternally: 'data-testid new share button share internally',
+          shareExternally: 'data-testid new share button share externally',
+          shareSnapshot: 'data-testid new share button share snapshot',
+        },
+      },
+      NewExportButton: {
+        container: 'data-testid new export button',
+        arrowMenu: 'data-testid new export button arrow menu',
+        Menu: {
+          container: 'data-testid new export button menu',
+          exportAsJson: 'data-testid new export button export as json',
+        },
+      },
+      playlistControls: {
+        prev: 'data-testid playlist previous dashboard button',
+        stop: 'data-testid playlist stop dashboard button',
+        next: 'data-testid playlist next dashboard button',
+      },
     },
+    Controls: 'data-testid dashboard controls',
     SubMenu: {
       submenu: 'Dashboard submenu',
       submenuItem: 'data-testid template variable',
@@ -77,7 +104,7 @@ export const Pages = {
         close: 'data-testid dashboard-settings-close',
       },
       General: {
-        deleteDashBoard: 'Dashboard settings page delete dashboard button',
+        deleteDashBoard: 'data-testid Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
@@ -85,7 +112,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Tab General',
+        title: 'General',
       },
       Annotations: {
         List: {
@@ -94,14 +121,19 @@ export const Pages = {
            */
           addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
           addAnnotationCTAV2: Components.CallToActionCard.buttonV2('Add annotation query'),
+          annotations: 'data-testid list-annotations',
         },
         Settings: {
-          name: 'Annotations settings name input',
+          name: 'data-testid Annotations settings name input',
         },
         NewAnnotation: {
           panelFilterSelect: 'data-testid annotations-panel-filter',
-          showInLabel: 'show-in-label',
+          showInLabel: 'data-testid show-in-label',
           previewInDashboard: 'data-testid annotations-preview',
+          delete: 'data-testid annotations-delete',
+          apply: 'data-testid annotations-apply',
+          enable: 'data-testid annotation-enable',
+          hide: 'data-testid annotation-hide',
         },
       },
       Variables: {
@@ -136,23 +168,22 @@ export const Pages = {
             generalLabelInputV2: 'data-testid Variable editor Form Label field',
             generalHideSelect: 'Variable editor Form Hide select',
             generalHideSelectV2: 'data-testid Variable editor Form Hide select',
-            selectionOptionsMultiSwitch: 'Variable editor Form Multi switch',
-            selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
-            selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
-            selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
-            previewOfValuesOption: 'Variable editor Preview of Values option',
-            submitButton: 'Variable editor Submit button',
+            selectionOptionsMultiSwitch: 'data-testid Variable editor Form Multi switch',
+            selectionOptionsIncludeAllSwitch: 'data-testid Variable editor Form IncludeAll switch',
+            selectionOptionsCustomAllInput: 'data-testid Variable editor Form IncludeAll field',
+            previewOfValuesOption: 'data-testid Variable editor Preview of Values option',
+            submitButton: 'data-testid Variable editor Run Query button',
             applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
-            queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
+            queryOptionsDataSourceSelect: Components.DataSourcePicker.inputV2,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRefreshSelectV2: 'data-testid Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
             queryOptionsRegExInputV2: 'data-testid Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
             queryOptionsSortSelectV2: 'data-testid Variable editor Form Query Sort select',
-            queryOptionsQueryInput: 'Variable editor Form Default Variable Query Editor textarea',
+            queryOptionsQueryInput: 'data-testid Variable editor Form Default Variable Query Editor textarea',
             valueGroupsTagsEnabledSwitch: 'Variable editor Form Query UseTags switch',
             valueGroupsTagsTagsQueryInput: 'Variable editor Form Query TagsQuery field',
             valueGroupsTagsTagsValuesQueryInput: 'Variable editor Form Query TagsValuesQuery field',
@@ -173,6 +204,19 @@ export const Pages = {
           },
           IntervalVariable: {
             intervalsValueInput: 'data-testid interval variable intervals input',
+            autoEnabledCheckbox: 'data-testid interval variable auto value checkbox',
+            stepCountIntervalSelect: 'data-testid interval variable step count input',
+            minIntervalInput: 'data-testid interval variable mininum interval input',
+          },
+          GroupByVariable: {
+            dataSourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid group by variable info text',
+            modeToggle: 'data-testid group by variable mode toggle',
+          },
+          AdHocFiltersVariable: {
+            datasourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid ad-hoc filters variable info text',
+            modeToggle: 'data-testid ad-hoc filters variable mode toggle',
           },
         },
       },
@@ -203,14 +247,13 @@ export const Pages = {
     save: 'Dashboard settings Save Dashboard Modal Save button',
     saveVariables: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
     saveTimerange: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+    saveRefresh: 'Dashboard settings Save Dashboard Modal Save refresh checkbox',
   },
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
   },
   ShareDashboardModal: {
-    shareButton: 'Share dashboard',
     PublicDashboard: {
-      Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
@@ -235,6 +278,32 @@ export const Pages = {
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
     },
+    SnapshotScene: {
+      url: (key: string) => `/dashboard/snapshot/${key}`,
+      PublishSnapshot: 'data-testid publish snapshot button',
+      CopyUrlButton: 'data-testid snapshot copy url button',
+      CopyUrlInput: 'data-testid snapshot copy url input',
+    },
+  },
+  ShareDashboardDrawer: {
+    ShareExternally: {
+      container: 'data-testid share externally drawer container',
+      copyUrlButton: 'data-testid share externally copy url button',
+      shareTypeSelect: 'data-testid share externally share type select',
+    },
+    ShareSnapshot: {
+      container: 'data-testid share snapshot drawer container',
+    },
+  },
+  ExportDashboardDrawer: {
+    ExportAsJson: {
+      container: 'data-testid export as Json drawer container',
+      codeEditor: 'data-testid export as Json code editor',
+      exportExternallyToggle: 'data-testid export externally toggle type select',
+      saveToFileButton: 'data-testid save to file button',
+      copyToClipboardButton: 'data-testid copy to clipboard button',
+      cancelButton: 'data-testid cancel button',
+    },
   },
   PublicDashboard: {
     page: 'public-dashboard-page',
@@ -243,6 +312,12 @@ export const Pages = {
       title: 'public-dashboard-title',
       pausedDescription: 'public-dashboard-paused-description',
     },
+    footer: 'public-dashboard-footer',
+  },
+  PublicDashboardScene: {
+    loadingPage: 'public-dashboard-scene-loading-page',
+    page: 'public-dashboard-scene-page',
+    controls: 'public-dashboard-controls',
   },
   RequestViewAccess: {
     form: 'request-view-access-form',
@@ -260,6 +335,9 @@ export const Pages = {
       table: 'Explore Table',
       scrollView: 'data-testid explorer scroll view',
     },
+    QueryHistory: {
+      container: 'data-testid QueryHistory',
+    },
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
@@ -268,12 +346,12 @@ export const Pages = {
     page: 'Plugins list page',
     list: 'Plugins list',
     listItem: 'Plugins list item',
-    signatureErrorNotice: 'Unsigned plugins notice',
+    signatureErrorNotice: 'data-testid Unsigned plugins notice',
   },
   PluginPage: {
     page: 'Plugin page',
-    signatureInfo: 'Plugin signature info',
-    disabledInfo: 'Plugin disabled info',
+    signatureInfo: 'data-testid Plugin signature info',
+    disabledInfo: 'data-testid Plugin disabled info',
   },
   PlaylistForm: {
     name: 'Playlist name',
@@ -310,6 +388,7 @@ export const Pages = {
     tabs: {
       allUsers: 'data-testid all-users-tab',
       orgUsers: 'data-testid org-users-tab',
+      anonUserDevices: 'data-testid anon-user-devices-tab',
       publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
       users: 'data-testid users-tab',
     },
@@ -327,6 +406,9 @@ export const Pages = {
     },
     UsersListPage: {
       container: 'data-testid users-list-page',
+    },
+    UserAnonListPage: {
+      container: 'data-testid user-anon-list-page',
     },
     UsersListPublicDashboardsPage: {
       container: 'data-testid users-list-public-dashboards-page',

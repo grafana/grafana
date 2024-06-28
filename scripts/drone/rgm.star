@@ -137,6 +137,8 @@ def rgm_run(name, script):
     """
     env = {
         "GO_VERSION": golang_version,
+        "ALPINE_BASE": images["alpine"],
+        "UBUNTU_BASE": images["ubuntu"],
     }
     rgm_run_step = {
         "name": name,
@@ -164,7 +166,7 @@ def rgm_copy(src, dst):
       dst: destination of the files.
 
     Returns:
-      Drone steps.
+      Drone step.
     """
     commands = [
         "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
@@ -172,19 +174,12 @@ def rgm_copy(src, dst):
         "gcloud storage cp -r {} {}".format(src, dst),
     ]
 
-    if not dst.startswith("gs://"):
-        commands.insert(0, "mkdir -p {}".format(dst))
-
-    rgm_copy_step = {
+    return {
         "name": "rgm-copy",
         "image": "google/cloud-sdk:alpine",
         "commands": commands,
         "environment": rgm_env_secrets({}),
     }
-
-    return [
-        rgm_copy_step,
-    ]
 
 def rgm_publish_packages(bucket = "grafana-packages"):
     """Publish deb and rpm packages.
@@ -256,10 +251,18 @@ def rgm_version_branch():
     )
 
 def rgm_nightly_build():
+    """Nightly build pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
     src = "$${DRONE_WORKSPACE}/dist/*"
     dst = "$${DESTINATION}/$${DRONE_BUILD_EVENT}"
+    copy_step = rgm_copy(src, dst)
+    if not dst.startswith("gs://"):
+        copy_step["commands"].insert(0, "mkdir -p {}".format(dst))
 
-    copy_steps = with_deps(rgm_copy(src, dst), ["rgm-build"])
+    copy_steps = with_deps([copy_step], ["rgm-build"])
 
     return pipeline(
         name = "rgm-nightly-build",
@@ -279,11 +282,13 @@ def rgm_nightly_publish():
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
     package_steps = with_deps(rgm_publish_packages(), ["rgm-publish"])
-
+    copy_step = rgm_copy(src, dst)
+    if not dst.startswith("gs://"):
+        copy_step["commands"].insert(0, "mkdir -p {}".format(dst))
     return pipeline(
         name = "rgm-nightly-publish",
         trigger = nightly_trigger,
-        steps = rgm_copy(src, dst) + publish_steps + package_steps,
+        steps = [copy_step] + publish_steps + package_steps,
         depends_on = ["rgm-nightly-build"],
     )
 
@@ -331,10 +336,69 @@ def rgm_main_pipeline():
         rgm_main(),
     ]
 
+def rgm_promotion_pipeline():
+    """Promotion build pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
+    promotion_trigger = {
+        "event": ["promote"],
+        "target": "upload-packages",
+    }
+
+    env = {
+        "GO_VERSION": golang_version,
+        "ALPINE_BASE": images["alpine"],
+        "UBUNTU_BASE": images["ubuntu"],
+    }
+
+    # Expected promotion args:
+    # * GRAFANA_REF = commit hash, branch name, or tag name
+    # * ENTERPRISE_REF = commit hash, branch name, or tag name. If not building an enterprise artifact, then this can be
+    #   left empty.
+    # * ARTIFACTS = comma delimited list of artifacts (ex: "targz:grafana:linux/amd64,rpm:grafana:linux/amd64")
+    # * VERSION = version string of Grafana that is being built (ex: v10.0.0)
+    # * UPLOAD_TO = Google Cloud Storage URL to upload the built artifacts to. (ex: gs://some-bucket/path)
+    build_step = {
+        "name": "rgm-build",
+        "image": "grafana/grafana-build:main",
+        "pull": "always",
+        "commands": [
+            "dagger run --silent /src/grafana-build artifacts " +
+            "-a $${ARTIFACTS} " +
+            "--grafana-ref=$${GRAFANA_REF} " +
+            "--enterprise-ref=$${ENTERPRISE_REF} " +
+            "--grafana-repo=$${GRAFANA_REPO} " +
+            "--version=$${VERSION} ",
+            "--go-version={}".format(golang_version),
+        ],
+        "environment": rgm_env_secrets(env),
+        # The docker socket is a requirement for running dagger programs
+        # In the future we should find a way to use dagger without mounting the docker socket.
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+    }
+
+    publish_step = rgm_copy("dist/*", "$${UPLOAD_TO}")
+
+    steps = [
+        build_step,
+        publish_step,
+    ]
+
+    return [
+        pipeline(
+            name = "rgm-promotion",
+            trigger = promotion_trigger,
+            steps = steps,
+        ),
+    ]
+
 def rgm():
     return (
         rgm_main_pipeline() +
         rgm_tag_pipeline() +
         rgm_version_branch_pipeline() +
-        rgm_nightly_pipeline()
+        rgm_nightly_pipeline() +
+        rgm_promotion_pipeline()
     )

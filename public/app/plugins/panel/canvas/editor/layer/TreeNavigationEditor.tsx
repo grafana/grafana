@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Tree, { TreeNodeProps } from 'rc-tree';
-import React, { Key, useEffect, useMemo, useState } from 'react';
+import { Key, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
@@ -20,7 +21,7 @@ import { getTreeData, onNodeDrop, TreeElement } from './tree';
 
 let allowSelection = true;
 
-export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeViewEditorProps, Options>) => {
+export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, TreeViewEditorProps, Options>) => {
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
@@ -77,7 +78,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     const data = onNodeDrop(info, treeData);
 
     setTreeData(data);
-    destEl.parent?.scene.reorderElements(srcEl, destEl, info.dropToGap, destPosition);
+    reorderElements(srcEl, destEl, info.dropToGap, destPosition);
   };
 
   const onExpand = (expandedKeys: Key[]) => {
@@ -118,7 +119,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   // TODO: This functionality is currently kinda broken / no way to decouple / delete created frames at this time
   const onFrameSelection = () => {
     if (layer.scene) {
-      layer.scene.frameSelection();
+      frameSelection(layer.scene);
     } else {
       console.warn('no scene!');
     }
@@ -147,7 +148,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         multiple={true}
       />
 
-      <HorizontalGroup justify="space-between">
+      <Stack justifyContent="space-between" direction="row">
         <div className={styles.addLayerButton}>
           <AddLayerButton onChange={(sel) => onAddItem(sel, layer)} options={typeOptions} label={'Add item'} />
         </div>
@@ -161,14 +162,14 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
             Frame selection
           </Button>
         )}
-      </HorizontalGroup>
+      </Stack>
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addLayerButton: css`
-    margin-left: 18px;
-    min-width: 150px;
-  `,
+  addLayerButton: css({
+    marginLeft: '18px',
+    minWidth: '150px',
+  }),
 });

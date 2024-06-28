@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const benchmarkPlugin = require('./e2e/cypress/plugins/benchmark/index');
-const compareScreenshots = require('./e2e/cypress/plugins/compareScreenshots');
 const readProvisions = require('./e2e/cypress/plugins/readProvisions');
+const smtpTester = require('./e2e/cypress/plugins/smtpTester');
 const typescriptPreprocessor = require('./e2e/cypress/plugins/typescriptPreprocessor');
 
 module.exports = defineConfig({
@@ -28,8 +28,11 @@ module.exports = defineConfig({
         benchmarkPlugin.initialize(on, config);
       }
 
+      if (config.env['SMTP_PLUGIN_ENABLED'] === true) {
+        smtpTester.initialize(on, config);
+      }
+
       on('task', {
-        compareScreenshots,
         readProvisions: (filePaths) => readProvisions({ CWD: process.cwd(), filePaths }),
       });
 

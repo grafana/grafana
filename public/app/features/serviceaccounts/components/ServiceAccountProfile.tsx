@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useState, useEffect } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Label, TextLink, useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
@@ -19,7 +19,7 @@ interface Props {
 export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
-  const [roles, setRoleOptions] = React.useState<Role[]>([]);
+  const [roles, setRoleOptions] = useState<Role[]>([]);
 
   const onRoleChange = (role: OrgRole) => {
     onChange({ ...serviceAccount, role: role });
@@ -29,7 +29,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
     onChange({ ...serviceAccount, name: newValue });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function fetchOptions() {
       try {
         if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
@@ -53,7 +53,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
           <ServiceAccountProfileRow
             label="Name"
             value={serviceAccount.name}
-            onChange={onNameChange}
+            onChange={!serviceAccount.isExternal ? onNameChange : undefined}
             disabled={!ableToWrite || serviceAccount.isDisabled}
           />
           <ServiceAccountProfileRow label="ID" value={serviceAccount.login} disabled={serviceAccount.isDisabled} />
@@ -68,6 +68,16 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
             value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
             disabled={serviceAccount.isDisabled}
           />
+          {serviceAccount.isExternal && serviceAccount.requiredBy && (
+            <tr>
+              <td>
+                <Label>Used by</Label>
+              </td>
+              <td>
+                <TextLink href={`/plugins/${serviceAccount.requiredBy}`}>{serviceAccount.requiredBy}</TextLink>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

@@ -1,18 +1,20 @@
-import React from 'react';
-
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { INSTANCE_ID, overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
 import { InsightsRatingModal } from '../../RatingModal';
 
 export function getMissedIterationsScene(datasource: DataSourceRef, panelTitle: string) {
+  const expr = INSTANCE_ID
+    ? `sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m{id="${INSTANCE_ID}"})`
+    : `sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m)`;
+
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m)',
+        expr,
         range: true,
         legendFormat: 'missed',
       },

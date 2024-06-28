@@ -1,16 +1,21 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import uFuzzy from '@leeoniya/ufuzzy';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
+import { CollapsedMap, FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
+
+const ufuzzy = new uFuzzy();
 
 export type Props = {
   /**
@@ -50,9 +55,24 @@ export type Props = {
   extraHeaderElements?: React.ReactNode;
 
   /**
+   * Extra buttons that will be shown in the context menu when user clicks on a Node.
+   */
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+
+  /**
    * If true the flamegraph will be rendered on top of the table.
    */
   vertical?: boolean;
+
+  /**
+   * If true only the flamegraph will be rendered.
+   */
+  showFlameGraphOnly?: boolean;
+
+  /**
+   * Disable behaviour where similar items in the same stack will be collapsed into single item.
+   */
+  disableCollapsing?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -65,6 +85,9 @@ const FlameGraphContainer = ({
   stickyHeader,
   extraHeaderElements,
   vertical,
+  showFlameGraphOnly,
+  disableCollapsing,
+  getExtraContextMenuButtons,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -76,17 +99,21 @@ const FlameGraphContainer = ({
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
   const [sandwichItem, setSandwichItem] = useState<string>();
+  const [collapsedMap, setCollapsedMap] = useState(new CollapsedMap());
 
-  const theme = getTheme();
-
+  const theme = useMemo(() => getTheme(), [getTheme]);
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
       return;
     }
-    return new FlameGraphDataContainer(data, theme);
-  }, [data, theme]);
+
+    const container = new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+    setCollapsedMap(container.getCollapsedMap());
+    return container;
+  }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
-  const styles = getStyles(theme, vertical);
+  const styles = getStyles(theme);
+  const matchedLabels = useLabelSearch(search, dataContainer);
 
   // If user resizes window with both as the selected view
   useEffect(() => {
@@ -132,75 +159,109 @@ const FlameGraphContainer = ({
     return null;
   }
 
+  const flameGraph = (
+    <FlameGraph
+      data={dataContainer}
+      rangeMin={rangeMin}
+      rangeMax={rangeMax}
+      matchedLabels={matchedLabels}
+      setRangeMin={setRangeMin}
+      setRangeMax={setRangeMax}
+      onItemFocused={(data) => setFocusedItemData(data)}
+      focusedItemData={focusedItemData}
+      textAlign={textAlign}
+      sandwichItem={sandwichItem}
+      onSandwich={(label: string) => {
+        resetFocus();
+        setSandwichItem(label);
+      }}
+      onFocusPillClick={resetFocus}
+      onSandwichPillClick={resetSandwich}
+      colorScheme={colorScheme}
+      showFlameGraphOnly={showFlameGraphOnly}
+      collapsing={!disableCollapsing}
+      getExtraContextMenuButtons={getExtraContextMenuButtons}
+      selectedView={selectedView}
+      search={search}
+      collapsedMap={collapsedMap}
+      setCollapsedMap={setCollapsedMap}
+    />
+  );
+
+  const table = (
+    <FlameGraphTopTableContainer
+      data={dataContainer}
+      onSymbolClick={onSymbolClick}
+      search={search}
+      matchedLabels={matchedLabels}
+      sandwichItem={sandwichItem}
+      onSandwich={setSandwichItem}
+      onSearch={setSearch}
+      onTableSort={onTableSort}
+      colorScheme={colorScheme}
+    />
+  );
+
+  let body;
+  if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
+    body = flameGraph;
+  } else if (selectedView === SelectedView.TopTable) {
+    body = <div className={styles.tableContainer}>{table}</div>;
+  } else if (selectedView === SelectedView.Both) {
+    if (vertical) {
+      body = (
+        <div>
+          <div className={styles.verticalGraphContainer}>{flameGraph}</div>
+          <div className={styles.verticalTableContainer}>{table}</div>
+        </div>
+      );
+    } else {
+      body = (
+        <div className={styles.horizontalContainer}>
+          <div className={styles.horizontalTableContainer}>{table}</div>
+          <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
+        </div>
+      );
+    }
+  }
+
   return (
     // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
     // isn't already provided.
     <ThemeContext.Provider value={theme}>
       <div ref={sizeRef} className={styles.container}>
-        <FlameGraphHeader
-          search={search}
-          setSearch={setSearch}
-          selectedView={selectedView}
-          setSelectedView={(view) => {
-            setSelectedView(view);
-            onViewSelected?.(view);
-          }}
-          containerWidth={containerWidth}
-          onReset={() => {
-            resetFocus();
-            resetSandwich();
-          }}
-          textAlign={textAlign}
-          onTextAlignChange={(align) => {
-            setTextAlign(align);
-            onTextAlignSelected?.(align);
-          }}
-          showResetButton={Boolean(focusedItemData || sandwichItem)}
-          colorScheme={colorScheme}
-          onColorSchemeChange={setColorScheme}
-          stickyHeader={Boolean(stickyHeader)}
-          extraHeaderElements={extraHeaderElements}
-          vertical={vertical}
-          isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
-        />
+        {!showFlameGraphOnly && (
+          <FlameGraphHeader
+            search={search}
+            setSearch={setSearch}
+            selectedView={selectedView}
+            setSelectedView={(view) => {
+              setSelectedView(view);
+              onViewSelected?.(view);
+            }}
+            containerWidth={containerWidth}
+            onReset={() => {
+              resetFocus();
+              resetSandwich();
+            }}
+            textAlign={textAlign}
+            onTextAlignChange={(align) => {
+              setTextAlign(align);
+              onTextAlignSelected?.(align);
+            }}
+            showResetButton={Boolean(focusedItemData || sandwichItem)}
+            colorScheme={colorScheme}
+            onColorSchemeChange={setColorScheme}
+            stickyHeader={Boolean(stickyHeader)}
+            extraHeaderElements={extraHeaderElements}
+            vertical={vertical}
+            isDiffMode={dataContainer.isDiffFlamegraph()}
+            setCollapsedMap={setCollapsedMap}
+            collapsedMap={collapsedMap}
+          />
+        )}
 
-        <div className={styles.body}>
-          {selectedView !== SelectedView.FlameGraph && (
-            <FlameGraphTopTableContainer
-              data={dataContainer}
-              onSymbolClick={onSymbolClick}
-              height={selectedView === SelectedView.TopTable ? 600 : undefined}
-              search={search}
-              sandwichItem={sandwichItem}
-              onSandwich={setSandwichItem}
-              onSearch={setSearch}
-              onTableSort={onTableSort}
-              vertical={vertical}
-            />
-          )}
-
-          {selectedView !== SelectedView.TopTable && (
-            <FlameGraph
-              data={dataContainer}
-              rangeMin={rangeMin}
-              rangeMax={rangeMax}
-              search={search}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-              onItemFocused={(data) => setFocusedItemData(data)}
-              focusedItemData={focusedItemData}
-              textAlign={textAlign}
-              sandwichItem={sandwichItem}
-              onSandwich={(label: string) => {
-                resetFocus();
-                setSandwichItem(label);
-              }}
-              onFocusPillClick={resetFocus}
-              onSandwichPillClick={resetSandwich}
-              colorScheme={colorScheme}
-            />
-          )}
-        </div>
+        <div className={styles.body}>{body}</div>
       </div>
     </ThemeContext.Provider>
   );
@@ -218,10 +279,36 @@ function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
   return [colorScheme, setColorScheme] as const;
 }
 
-function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
+/**
+ * Based on the search string it does a fuzzy search over all the unique labels, so we can highlight them later.
+ */
+function useLabelSearch(
+  search: string | undefined,
+  data: FlameGraphDataContainer | undefined
+): Set<string> | undefined {
+  return useMemo(() => {
+    if (search && data) {
+      const foundLabels = new Set<string>();
+      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
+
+      if (idxs) {
+        for (let idx of idxs) {
+          foundLabels.add(data.getUniqueLabels()[idx]);
+        }
+      }
+
+      return foundLabels;
+    }
+    // In this case undefined means there was no search so no attempt to highlighting anything should be made.
+    return undefined;
+  }, [search, data]);
+}
+
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       label: 'container',
+      overflow: 'auto',
       height: '100%',
       display: 'flex',
       flex: '1 1 0',
@@ -231,11 +318,39 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
     }),
     body: css({
       label: 'body',
-      display: 'flex',
       flexGrow: 1,
+    }),
+
+    tableContainer: css({
+      // This is not ideal for dashboard panel where it creates a double scroll. In a panel it should be 100% but then
+      // in explore we need a specific height.
+      height: 800,
+    }),
+
+    horizontalContainer: css({
+      label: 'horizontalContainer',
+      display: 'flex',
       minHeight: 0,
-      flexDirection: vertical ? 'column-reverse' : 'row',
+      flexDirection: 'row',
       columnGap: theme.spacing(1),
+      width: '100%',
+    }),
+
+    horizontalGraphContainer: css({
+      flexBasis: '50%',
+    }),
+
+    horizontalTableContainer: css({
+      flexBasis: '50%',
+      maxHeight: 800,
+    }),
+
+    verticalGraphContainer: css({
+      marginBottom: theme.spacing(1),
+    }),
+
+    verticalTableContainer: css({
+      height: 800,
     }),
   };
 }

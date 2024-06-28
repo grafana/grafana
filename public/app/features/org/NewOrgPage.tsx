@@ -1,8 +1,8 @@
-import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
-import { Button, Input, Field, Form, FieldSet } from '@grafana/ui';
+import { Button, Input, Field, FieldSet } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 

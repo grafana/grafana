@@ -1,7 +1,7 @@
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
 import { config } from '@grafana/runtime';
-import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup, Label, TextArea } from '@grafana/ui';
+import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -110,12 +110,12 @@ export const SaveDashboardAsForm = ({
             render={({ field: { ref, ...field } }) => (
               <Field
                 label={
-                  <HorizontalGroup justify="space-between">
+                  <Stack justifyContent="space-between">
                     <Label htmlFor="title">Title</Label>
                     {config.featureToggles.dashgpt && isNew && (
-                      <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} dashboard={dashboard} />
+                      <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} />
                     )}
-                  </HorizontalGroup>
+                  </Stack>
                 }
                 invalid={!!errors.title}
                 error={errors.title?.message}
@@ -138,15 +138,12 @@ export const SaveDashboardAsForm = ({
             render={({ field: { ref, ...field } }) => (
               <Field
                 label={
-                  <HorizontalGroup justify="space-between">
+                  <Stack justifyContent="space-between">
                     <Label htmlFor="description">Description</Label>
                     {config.featureToggles.dashgpt && isNew && (
-                      <GenAIDashDescriptionButton
-                        onGenerate={(description) => field.onChange(description)}
-                        dashboard={dashboard}
-                      />
+                      <GenAIDashDescriptionButton onGenerate={(description) => field.onChange(description)} />
                     )}
-                  </HorizontalGroup>
+                  </Stack>
                 }
                 invalid={!!errors.description}
                 error={errors.description?.message}
@@ -167,7 +164,7 @@ export const SaveDashboardAsForm = ({
               render={({ field: { ref, ...field } }) => (
                 <FolderPicker
                   {...field}
-                  onChange={(uid: string, title: string) => field.onChange({ uid, title })}
+                  onChange={(uid: string | undefined, title: string | undefined) => field.onChange({ uid, title })}
                   value={field.value?.uid}
                   // Old folder picker fields
                   initialTitle={dashboard.meta.folderTitle}
@@ -184,14 +181,14 @@ export const SaveDashboardAsForm = ({
               <Switch {...register('copyTags')} />
             </Field>
           )}
-          <HorizontalGroup>
+          <Stack>
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
             <Button disabled={isLoading} type="submit" aria-label="Save dashboard button">
               {isLoading ? 'Saving...' : 'Save'}
             </Button>
-          </HorizontalGroup>
+          </Stack>
         </>
       )}
     </Form>

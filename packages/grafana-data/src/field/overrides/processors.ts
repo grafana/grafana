@@ -8,7 +8,7 @@ import {
   ValueMapping,
 } from '../../types';
 
-export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
+export const identityOverrideProcessor = <T>(value: T) => {
   return value;
 };
 
@@ -33,7 +33,7 @@ export const numberOverrideProcessor = (
 };
 
 export const displayNameOverrideProcessor = (
-  value: any,
+  value: unknown,
   context: FieldOverrideContext,
   settings?: StringFieldConfigSettings
 ) => {
@@ -57,8 +57,8 @@ export const dataLinksOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
-) => {
-  return value as DataLink[];
+): DataLink[] => {
+  return value;
 };
 
 export interface ValueMappingFieldConfigSettings {}
@@ -67,8 +67,8 @@ export const valueMappingsOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: ValueMappingFieldConfigSettings
-) => {
-  return value as ValueMapping[]; // !!!! likely not !!!!
+): ValueMapping[] => {
+  return value; // !!!! likely not !!!!
 };
 
 export interface SelectFieldConfigSettings<T> {
@@ -100,14 +100,14 @@ export interface StringFieldConfigSettings {
 }
 
 export const stringOverrideProcessor = (
-  value: any,
+  value: unknown,
   context: FieldOverrideContext,
   settings?: StringFieldConfigSettings
 ) => {
   if (value === null || value === undefined) {
     return value;
   }
-  if (settings && settings.expandTemplateVars && context.replaceVariables) {
+  if (settings && settings.expandTemplateVars && context.replaceVariables && typeof value === 'string') {
     return context.replaceVariables(value, context.field!.state!.scopedVars);
   }
   return `${value}`;
@@ -121,8 +121,8 @@ export const thresholdsOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: ThresholdsFieldConfigSettings
-) => {
-  return value as ThresholdsConfig; // !!!! likely not !!!!
+): ThresholdsConfig => {
+  return value; // !!!! likely not !!!!
 };
 
 export interface UnitFieldConfigSettings {
@@ -174,6 +174,12 @@ export interface StatsPickerConfigSettings {
   defaultStat?: string;
 }
 
+export enum FieldNamePickerBaseNameMode {
+  IncludeAll = 'all',
+  ExcludeBaseNames = 'exclude',
+  OnlyBaseNames = 'only',
+}
+
 export interface FieldNamePickerConfigSettings {
   /**
    * Function is a predicate, to test each element of the array.
@@ -186,10 +192,15 @@ export interface FieldNamePickerConfigSettings {
    */
   noFieldsMessage?: string;
 
-  /**addFieldNamePicker
+  /**
    * Sets the width to a pixel value.
    */
   width?: number;
+
+  /**
+   * Exclude names that can match a collection of values
+   */
+  baseNameMode?: FieldNamePickerBaseNameMode;
 
   /**
    * Placeholder text to display when nothing is selected.

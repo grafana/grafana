@@ -7,13 +7,13 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -43,14 +43,12 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 		Title     string
 		AppTitle  string
 		AppSubUrl string
-		Theme     string
+		ThemeType string
 		ErrorMsg  error
 	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
+
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
-		if setting.Env != setting.Prod {
-			data.ErrorMsg = err
-		}
 	}
 
 	ctx.HTML(status, cfg.ErrTemplateName, data)
@@ -74,10 +72,6 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 			ctx.Logger.Error(message, "error", err, "traceID", traceID)
 		} else {
 			ctx.Logger.Warn(message, "error", err, "traceID", traceID)
-		}
-
-		if setting.Env != setting.Prod {
-			resp["error"] = err.Error()
 		}
 	}
 

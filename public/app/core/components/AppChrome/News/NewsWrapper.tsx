@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { News } from 'app/plugins/panel/news/component/News';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
@@ -19,25 +19,28 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
     getNews();
   }, [getNews]);
 
-  if (state.loading || state.error) {
-    return (
-      <div className={styles.innerWrapper}>
-        {state.loading && <LoadingPlaceholder text="Loading..." />}
-        {state.error && state.error.message}
-      </div>
-    );
-  }
-
-  if (!state.value) {
-    return null;
+  if (state.error) {
+    return <div className={styles.innerWrapper}>{state.error && state.error.message}</div>;
   }
 
   return (
     <div ref={widthRef}>
-      {widthMeasure.width > 0 &&
-        state.value.map((_, index) => (
-          <News key={index} index={index} showImage width={widthMeasure.width} data={state.value} />
-        ))}
+      {state.loading ? (
+        <>
+          <News.Skeleton showImage width={widthMeasure.width} />
+          <News.Skeleton showImage width={widthMeasure.width} />
+          <News.Skeleton showImage width={widthMeasure.width} />
+          <News.Skeleton showImage width={widthMeasure.width} />
+          <News.Skeleton showImage width={widthMeasure.width} />
+        </>
+      ) : (
+        <>
+          {widthMeasure.width > 0 &&
+            state.value?.map((_, index) => (
+              <News key={index} index={index} showImage width={widthMeasure.width} data={state.value} />
+            ))}
+        </>
+      )}
       <div className={styles.grot}>
         <a href="https://grafana.com/blog/" target="_blank" rel="noreferrer" title="Go to Grafana labs blog">
           <img src="public/img/grot-news.svg" alt="Grot reading news" />

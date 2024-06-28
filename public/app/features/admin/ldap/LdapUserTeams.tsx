@@ -1,59 +1,40 @@
-import React from 'react';
+import { useMemo } from 'react';
 
-import { Tooltip, Icon } from '@grafana/ui';
+import { Column, InteractiveTable, CellProps } from '@grafana/ui';
 import { LdapTeam } from 'app/types';
 
 interface Props {
   teams: LdapTeam[];
-  showAttributeMapping?: boolean;
 }
 
-export const LdapUserTeams = ({ teams, showAttributeMapping }: Props) => {
-  const items = showAttributeMapping ? teams : teams.filter((item) => item.teamName);
-
-  return (
-    <div className="gf-form-group">
-      <div className="gf-form">
-        <table className="filter-table form-inline">
-          <thead>
-            <tr>
-              {showAttributeMapping && <th>LDAP Group</th>}
-              <th>Organisation</th>
-              <th>Team</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((team, index) => {
-              return (
-                <tr key={`${team.teamName}-${index}`}>
-                  {showAttributeMapping && (
-                    <>
-                      <td>{team.groupDN}</td>
-                      {!team.orgName && (
-                        <>
-                          <td />
-                          <td>
-                            <span className="text-warning">No match</span>
-                            <Tooltip placement="top" content="No matching teams found" theme={'info'}>
-                              <Icon name="info-circle" />
-                            </Tooltip>
-                          </td>
-                        </>
-                      )}
-                    </>
-                  )}
-                  {team.orgName && (
-                    <>
-                      <td>{team.orgName}</td>
-                      <td>{team.teamName}</td>
-                    </>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+export const LdapUserTeams = ({ teams }: Props) => {
+  const columns = useMemo<Array<Column<LdapTeam>>>(
+    () => [
+      {
+        id: 'groupDN',
+        header: 'LDAP Group',
+      },
+      {
+        id: 'orgName',
+        header: 'Organization',
+        cell: ({
+          row: {
+            original: { orgName },
+          },
+        }: CellProps<LdapTeam, void>) => <>{orgName || 'No matching teams found'}</>,
+      },
+      {
+        id: 'teamName',
+        header: 'Team',
+        cell: ({
+          row: {
+            original: { teamName, orgName },
+          },
+        }: CellProps<LdapTeam, void>) => (teamName && orgName ? teamName : ''),
+      },
+    ],
+    []
   );
+
+  return <InteractiveTable data={teams} columns={columns} getRowId={(row) => row.teamName} />;
 };

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
@@ -30,7 +29,7 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
   );
 
   if (loading) {
-    return <Button disabled={true}>Create alert rule from this panel</Button>;
+    return <Button disabled={true}>New alert rule</Button>;
   }
 
   if (!formValues) {
@@ -54,7 +53,7 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
       className={className}
       data-testid="create-alert-rule-button"
     >
-      Create alert rule from this panel
+      New alert rule
     </LinkButton>
   );
 };

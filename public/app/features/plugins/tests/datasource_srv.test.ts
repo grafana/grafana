@@ -5,11 +5,12 @@ import {
   DataSourcePluginMeta,
   ScopedVars,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
 // Datasource variable $datasource with current value 'BBB'
-const templateSrv: any = {
+const templateSrv = {
   getVariables: () => [
     {
       type: 'datasource',
@@ -43,7 +44,7 @@ const templateSrv: any = {
     result = result.replace('${datasourceDefault}', 'default');
     return result;
   },
-};
+} as TemplateSrv;
 
 class TestDataSource {
   constructor(public instanceSettings: DataSourceInstanceSettings) {}
@@ -75,7 +76,7 @@ describe('datasource_srv', () => {
       type: 'test-db',
       name: 'mmm',
       uid: 'uid-code-mmm',
-      meta: { metrics: true, annotations: true } as any,
+      meta: { metrics: true, annotations: true },
     },
     '-- Grafana --': {
       type: 'grafana',
@@ -169,7 +170,7 @@ describe('datasource_srv', () => {
       });
 
       it('Can get by variable', async () => {
-        const ds = (await dataSourceSrv.get('${datasource}')) as any;
+        const ds = await dataSourceSrv.get('${datasource}');
         expect(ds.meta).toBe(dataSourceInit.BBB.meta);
 
         const ds2 = await dataSourceSrv.get('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });

@@ -14,6 +14,7 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { PropsWithChildren } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,7 +23,6 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
-import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
 import jsonMarkup from './jsonMarkup';
 
@@ -38,6 +38,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       max-height: 450px;
       overflow: auto;
     `,
+    table: css({
+      width: '100%',
+    }),
     body: css`
       label: body;
       vertical-align: baseline;
@@ -70,6 +73,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       vertical-align: middle;
       font-weight: bold;
     `,
+    jsonTable: css({
+      display: 'inline-block',
+    }),
   };
 };
 
@@ -87,21 +93,23 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
-export const LinkValue = (props: { href: string; title?: string; children: React.ReactNode }) => {
+interface LinkValueProps {
+  href: string;
+  title?: string;
+  children: React.ReactNode;
+}
+
+export const LinkValue = ({ href, title = '', children }: PropsWithChildren<LinkValueProps>) => {
   return (
-    <a href={props.href} title={props.title} target="_blank" rel="noopener noreferrer">
-      {props.children} <Icon name="external-link-alt" />
+    <a href={href} title={title} target="_blank" rel="noopener noreferrer">
+      {children} <Icon name="external-link-alt" />
     </a>
   );
 };
 
-LinkValue.defaultProps = {
-  title: '',
-};
-
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
@@ -109,13 +117,13 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
-      <table className={uWidth100}>
+      <table className={styles.table}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
             const markup = {
               __html: jsonMarkup(parseIfComplexJson(row.value)),
             };
-            const jsonTable = <div className={ubInlineBlock} dangerouslySetInnerHTML={markup} />;
+            const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={markup} />;
             const links = linksGetter ? linksGetter(data, i) : null;
             let valueMarkup;
             if (links && links.length) {

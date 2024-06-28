@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/store/entity/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -64,7 +63,7 @@ type StorageService interface {
 	RegisterHTTPRoutes(routing.RouteRegister)
 
 	// List folder contents
-	List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error)
+	List(ctx context.Context, user *user.SignedInUser, path string, maxFiles int) (*StorageListFrame, error)
 
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
@@ -104,10 +103,6 @@ func ProvideService(
 		grafanaStorageLogger.Warn("Error loading storage config", "error", err)
 	}
 
-	if err := migrations.MigrateEntityStore(sql, features); err != nil {
-		return nil, err
-	}
-
 	// always exists
 	globalRoots := []storageRuntime{
 		newDiskStorage(RootStorageMeta{
@@ -130,7 +125,7 @@ func ProvideService(
 	}
 
 	// Development dashboards
-	if settings.AddDevEnv && setting.Env != setting.Prod {
+	if settings.AddDevEnv && cfg.Env != setting.Prod {
 		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
 		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
 			s := newDiskStorage(RootStorageMeta{
@@ -340,9 +335,9 @@ func getOrgId(user *user.SignedInUser) int64 {
 	return user.OrgID
 }
 
-func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error) {
+func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string, maxFiles int) (*StorageListFrame, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
-	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
+	return s.tree.ListFolder(ctx, getOrgId(user), path, maxFiles, guardian.getPathFilter(ActionFilesRead))
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error) {
@@ -603,21 +598,7 @@ func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *u
 	}
 
 	meta := root.Meta()
-	if meta.Config.Type == rootStorageTypeGit && meta.Config.Git != nil {
-		cfg := meta.Config.Git
-		options.Workflows = append(options.Workflows, workflowInfo{
-			Type:        WriteValueWorkflow_PR,
-			Label:       "Create pull request",
-			Description: "Create a new upstream pull request",
-		})
-		if !cfg.RequirePullRequest {
-			options.Workflows = append(options.Workflows, workflowInfo{
-				Type:        WriteValueWorkflow_Push,
-				Label:       "Push to " + cfg.Branch,
-				Description: "Push commit to upstrem repository",
-			})
-		}
-	} else if meta.ReadOnly {
+	if meta.ReadOnly {
 		// nothing?
 	} else {
 		options.Workflows = append(options.Workflows, workflowInfo{

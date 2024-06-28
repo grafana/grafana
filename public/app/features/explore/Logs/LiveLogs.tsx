@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { LogRowModel, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
 import { Button, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from '../../logs/components/LogMessageAnsi';

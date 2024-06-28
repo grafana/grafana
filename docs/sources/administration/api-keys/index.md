@@ -17,6 +17,10 @@ weight: 700
 
 # API keys
 
+{{% admonition type="note" %}}
+Deprecated: [Service accounts]({{< relref "../service-accounts/" >}}) have replaced API keys as the primary way to authenticate applications that interact with Grafana.
+{{% /admonition %}}
+
 An API key is a randomly generated string that external systems use to interact with Grafana HTTP APIs.
 
 When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources.
@@ -45,10 +49,10 @@ To follow these instructions, you need at least one of the following:
 
 ### Steps
 
-To create an API, complete the following steps:
+To create an API key, complete the following steps:
 
 1. Sign in to Grafana.
-1. Click **Administration** in the left-side menu and select **API Keys**.
+1. Click **Administration** in the left-side menu, **Users and access**, and select **API Keys**.
 1. Click **Add API key**.
 1. Enter a unique name for the key.
 1. In the **Role** field, select one of the following access levels you want to assign to the key.
@@ -101,7 +105,7 @@ For more information about permissions, refer to [Roles and permissions]({{< rel
 
 To migrate all API keys to service accounts, complete the following steps:
 
-1. Sign in to Grafana, point to **Configuration** (the gear icon), and click **API Keys**.
+1. Sign in to Grafana, point to **Administration**, **Users and access**, and click **API Keys**.
 1. In the top of the page, find the section which says **Switch from API keys to service accounts**
 1. Click **Migrate to service accounts now**.
 1. A confirmation window will appear, asking to confirm the migration. Click **Yes, migrate now** if you are willing to continue.
@@ -110,7 +114,7 @@ To migrate all API keys to service accounts, complete the following steps:
 To migrate a single API key to a service account, complete the following steps:
 
 1. Sign in to Grafana.
-1. Click **Administration** in the left-side menu and select **API Keys**.
+1. Click **Administration** in the left-side menu, **Users and access**, and select **API Keys**.
 1. Find the API Key you want to migrate.
 1. Click **Migrate to service account**.
 
@@ -177,6 +181,25 @@ curl --request GET --url http://localhost:3000/api/folders --header 'Authorizati
 ```
 
 ### Migrate API keys to Grafana service accounts in Terraform
+
+{{< admonition type="note" >}}
+The terraform resource `api_key` is removed from the Grafana Terraform Provider in v3.0.0.
+Before you migrate and remove the use of the resource, you should pin your terraform version to a version less-than or equal-to v2.19.0.
+For more information, refer to the [Grafana Terraform Provider release notes](https://github.com/grafana/terraform-provider-grafana/releases/tag/v3.0.0).
+{{< /admonition >}}
+
+To pin the Grafana Terraform Provider to v2.19.0:
+
+```hcl
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = "2.19.0"
+    }
+  }
+}
+```
 
 This section shows you how to migrate your Terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
 

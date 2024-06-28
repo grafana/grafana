@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { ServiceAccountCreatePage, Props } from './ServiceAccountCreatePage';
@@ -17,6 +16,7 @@ jest.mock('@grafana/runtime', () => ({
     put: putMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     loginError: false,
     buildInfo: {
       version: 'v1.0',
@@ -39,6 +39,7 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,
     user: { orgId: 1 },
+    fetchUserPermissions: () => Promise.resolve(),
   },
 }));
 

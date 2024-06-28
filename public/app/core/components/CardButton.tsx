@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { HTMLAttributes } from 'react';
+import { HTMLAttributes } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, useStyles2 } from '@grafana/ui';
@@ -27,27 +28,26 @@ CardButton.displayName = 'CardButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    action: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+    action: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
 
-      justify-self: center;
-      cursor: pointer;
-      background: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.radius.default};
-      color: ${theme.colors.text.primary};
-      border: unset;
-      width: 100%;
-      display: flex;
+      justifySelf: 'center',
+      cursor: 'pointer',
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
+      border: 'unset',
+      width: '100%',
 
-      justify-content: center;
-      align-items: center;
-      text-align: center;
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center',
 
-      &:hover {
-        background: ${theme.colors.emphasize(theme.colors.background.secondary)};
-      }
-    `,
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary),
+      },
+    }),
   };
 };

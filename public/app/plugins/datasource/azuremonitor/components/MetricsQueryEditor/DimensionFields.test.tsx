@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { openMenu } from 'react-select-event';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+
+import { selectors } from '@grafana/e2e-selectors';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockPanelData from '../../__mocks__/panelData';
 import createMockQuery from '../../__mocks__/query';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import DimensionFields from './DimensionFields';
 import { appendDimensionFilter, setDimensionFilterValue } from './setQueryValue';
@@ -120,7 +121,7 @@ describe(`Azure Monitor QueryEditor`, () => {
     );
     const dimensionSelect = await screen.findByText('Field');
     await user.click(dimensionSelect);
-    const options = await screen.findAllByLabelText('Select option');
+    const options = await screen.findAllByTestId(selectors.components.Select.option);
     expect(options).toHaveLength(1);
     expect(options[0]).toHaveTextContent('Test Dimension 2');
   });
@@ -161,7 +162,7 @@ describe(`Azure Monitor QueryEditor`, () => {
     );
     const labelSelect = await screen.findByText('Select value(s)');
     await user.click(labelSelect);
-    const options = await screen.findAllByLabelText('Select option');
+    const options = await screen.findAllByTestId(selectors.components.Select.option);
     expect(options).toHaveLength(1);
     expect(options[0]).toHaveTextContent('testlabel');
   });
@@ -238,7 +239,7 @@ describe(`Azure Monitor QueryEditor`, () => {
     );
     const labelSelect = screen.getByLabelText('dimension-labels-select');
     await openMenu(labelSelect);
-    const options = await screen.findAllByLabelText('Select option');
+    const options = await screen.findAllByTestId(selectors.components.Select.option);
     expect(options).toHaveLength(2);
     expect(options[0]).toHaveTextContent('testlabel');
     expect(options[1]).toHaveTextContent('testlabel2');

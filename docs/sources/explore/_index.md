@@ -25,13 +25,21 @@ If you just want to explore your data and do not want to create a dashboard, the
 - [Query management in Explore]({{< relref "query-management/" >}})
 - [Logs integration in Explore]({{< relref "logs-integration/" >}})
 - [Trace integration in Explore]({{< relref "trace-integration/" >}})
+- [Explore metrics]({{< relref "explore-metrics/" >}})
+- [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
 - [Inspector in Explore]({{< relref "explore-inspector/" >}})
 
 ## Start exploring
 
+{{< youtube id="1q3YzX2DDM4" >}}
+
 > Refer to [Role-based access Control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
 
 In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
+
+{{% admonition type="note" %}}
+If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to enable the `viewers_can_edit` option
+{{% /admonition %}}
 
 To access Explore:
 
@@ -83,6 +91,10 @@ You can then click on any panel icon in the content outline to navigate to that 
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
 
+{{% admonition type="note" %}}
+Explore may generate relatively long URLs, some tools, like messaging or videoconferencing apps, may truncate messages to a fixed length. In such cases Explore will display a warning message and load a default state. If you encounter issues when sharing Explore links in such apps, you can generate shortened links. See [Share shortened link](#share-shortened-link) for more information.
+{{% /admonition %}}
+
 ### Generating Explore URLs from external tools
 
 Because Explore URLs have a defined structure, you can build a URL from external tools and open it in Grafana. The URL structure is:
@@ -125,4 +137,14 @@ The `from` and `to` also accept relative ranges defined in [Time units and relat
 Available in Grafana 7.3 and later versions.
 {{% /admonition %}}
 
-The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar. A shortened link that is never used will automatically get deleted after seven (7) days.
+The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar.
+
+A shortened link that is not accessed will automatically get deleted after a [configurable period](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#short_links) (defaulting to seven days). If a link is used at least once, it won't be deleted.
+
+### Sharing shortened links with absolute time
+
+{{% admonition type="note" %}}
+Available in Grafana 10.3 and later versions.
+{{% /admonition %}}
+
+Short links have two options - keeping relative time (for example, from two hours ago to now) or absolute time (for example, from 8am to 10am). Sharing a shortened link by default will copy the time range selected, relative or absolute. Clicking the dropdown button next to the share shortened link button and selecting one of the options under "Time-Sync URL Links" will allow you to create a short link with the absolute time - meaning anyone receiving the link will see the same data you are seeing, even if they open the link at another time. This will not affect your selected time range.

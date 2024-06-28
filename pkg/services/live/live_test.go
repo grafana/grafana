@@ -9,8 +9,38 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func Test_provideLiveService_RedisUnavailable(t *testing.T) {
+	cfg := setting.NewCfg()
+
+	cfg.LiveHAEngine = "testredisunavailable"
+
+	_, err := ProvideService(nil, cfg,
+		routing.NewRouteRegister(),
+		nil, nil, nil, nil,
+		db.InitTestDB(t),
+		nil,
+		&usagestats.UsageStatsMock{T: t},
+		nil,
+		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+
+	// Proceeds without live HA if redis is unavaialble
+	require.NoError(t, err)
+}
 
 func Test_runConcurrentlyIfNeeded_Concurrent(t *testing.T) {
 	doneCh := make(chan struct{})
