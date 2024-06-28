@@ -123,6 +123,10 @@ Set the position of the bar relative to a data point. In the examples below, **S
 - **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
   The bar is drawn after the point. The point is placed on the leading corner of the bar.
 
+### Bar width factor
+
+Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space.
+
 ### Line width
 
 Line width is a slider that controls the thickness for series lines or the outline for bars.
