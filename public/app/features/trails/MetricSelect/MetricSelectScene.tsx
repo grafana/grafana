@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { useReducer } from 'react';
 
-import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
+import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -420,6 +420,38 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     return children;
   }
 
+  private async populateNestedRowsLayout() {
+    const trail = getTrailFor(this);
+
+    // Get the current filters to determine the count of them
+    // Which is required for `getPreviewPanelFor`
+    const filters = getFilters(this);
+
+    if (!this.state.rootGroup?.groups) {
+      return;
+    }
+
+    for (const [groupKey, groupNode] of this.state.rootGroup?.groups) {
+      const children: SceneFlexItem[] = [];
+
+      for (const [_, value] of groupNode.groups) {
+        const panels = await this.populatePanels(trail, filters, value.values);
+        children.push(...panels);
+      }
+
+      const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
+      children.push(...morePanelsMaybe);
+      this.nestedSceneRec[groupKey].state.body.setState({ children });
+    }
+
+    // this.setState({
+    //   body: new SceneFlexLayout({
+    //     direction: 'column',
+    //     children,
+    //   }),
+    // });
+  }
+
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
     const currentFilterCount = filters?.length || 0;
 
@@ -473,45 +505,18 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     trail.setState({ metricSearch });
   };
 
+  public onDisplayTypeChanged = (val: SelectableValue) => {
+    this.setState({ displayAs: val.value });
+    this.buildLayout();
+  };
+
   public onTogglePreviews = () => {
     this.setState({ showPreviews: !this.state.showPreviews });
     this.buildLayout();
   };
 
-  private async populateNestedRowsLayout() {
-    const trail = getTrailFor(this);
-
-    // Get the current filters to determine the count of them
-    // Which is required for `getPreviewPanelFor`
-    const filters = getFilters(this);
-
-    if (!this.state.rootGroup?.groups) {
-      return;
-    }
-
-    for (const [groupKey, groupNode] of this.state.rootGroup?.groups) {
-      const children: SceneFlexItem[] = [];
-
-      for (const [_, value] of groupNode.groups) {
-        const panels = await this.populatePanels(trail, filters, value.values);
-        children.push(...panels);
-      }
-
-      const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
-      children.push(...morePanelsMaybe);
-      this.nestedSceneRec[groupKey].state.body.setState({ children });
-    }
-
-    // this.setState({
-    //   body: new SceneFlexLayout({
-    //     direction: 'column',
-    //     children,
-    //   }),
-    // });
-  }
-
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showPreviews, body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning } =
+    const { showPreviews, body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning, displayAs } =
       model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -560,11 +565,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           <Field label={'Select Display'} className={styles.displayOption}>
             <Select
               width={20}
-              onChange={(val) => {
-                console.log(val);
-              }}
+              value={displayAs}
+              onChange={model.onDisplayTypeChanged}
               options={metricSelectSceneDisplayOptions.map((o) => ({ label: o.label, value: o.value }))}
-              defaultValue={'all-metrics'}
             />
           </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
