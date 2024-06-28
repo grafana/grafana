@@ -135,6 +135,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       $variables: state.$variables,
       displayAs: bodyFormation.displayAs,
       body: state.body ?? bodyFormation.layout,
+      selectedTabGroupOption: 'all',
       ...state,
     });
 
@@ -251,30 +252,23 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           `Add search terms or label filters to narrow down the number of metric names returned.`
         : undefined;
 
-      switch (this.state.displayAs) {
-        case 'nested-rows':
-        case 'tabs':
-          const rootGroupNode = this.generateGroups(metricNames);
-          const nestedScenes = this.generateNestedScene(rootGroupNode);
-          this.setState({
-            metricNames,
-            rootGroup: rootGroupNode,
-            body: new SceneFlexLayout({ children: nestedScenes }),
-            metricNamesLoading: false,
-            metricNamesWarning,
-            metricNamesError: response.error,
-          });
-          break;
-        case 'all-metrics':
-        default:
-          this.setState({
-            metricNames,
-            metricNamesLoading: false,
-            metricNamesWarning,
-            metricNamesError: response.error,
-          });
-          break;
+      let bodyLayout = this.state.body;
+      const rootGroupNode = this.generateGroups(metricNames);
+
+      if (this.state.displayAs === 'nested-rows') {
+        const nestedScenes = this.generateNestedScene(rootGroupNode);
+        bodyLayout = new SceneFlexLayout({ children: nestedScenes });
       }
+
+      this.setState({
+        metricNames,
+        rootGroup: rootGroupNode,
+        body: bodyLayout,
+        metricNamesLoading: false,
+        metricNamesWarning,
+        metricNamesError: response.error,
+      });
+
     } catch (err: unknown) {
       let error = 'Unknown error';
       if (isFetchError(err)) {
@@ -302,7 +296,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     return rootGroupNode;
   }
 
-  private generateNestedScene(rootGroupNode: Node) {
+  private generateNestedScene(rootGroupNode: Node): NestedScene[] {
     const nestedScenes: NestedScene[] = [];
     rootGroupNode.groups.forEach((value, key) => {
       // Check if we have a scene for that key already
@@ -461,8 +455,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
 
-    const rootGroupNode = this.state.rootGroup ?? this.generateGroups(this.state.metricNames);
-    this.setState({ rootGroup: rootGroupNode });
+    let rootGroupNode = this.state.rootGroup;
+    if (!rootGroupNode) {
+      rootGroupNode = this.generateGroups(this.state.metricNames);
+      this.setState({ rootGroup: rootGroupNode });
+    }
     const nestedScenes = this.generateNestedScene(rootGroupNode);
     this.state.body.setState({ children: nestedScenes });
 
@@ -484,10 +481,30 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     // Get the current filters to determine the count of them
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
-    console.log(filters);
 
-    const rootGroupNode = this.state.rootGroup ?? this.generateGroups(this.state.metricNames);
-    this.setState({ rootGroup: rootGroupNode });
+    let rootGroupNode = this.state.rootGroup;
+    if (!rootGroupNode) {
+      rootGroupNode = this.generateGroups(this.state.metricNames);
+      this.setState({ rootGroup: rootGroupNode });
+    }
+
+    const children: SceneFlexItem[] = [];
+
+    for (const [groupKey, groupNode] of rootGroupNode.groups) {
+      if (this.state.selectedTabGroupOption !== 'all' && this.state.selectedTabGroupOption !== groupKey) {
+        continue;
+      }
+
+      for (const [_, value] of groupNode.groups) {
+        const panels = await this.populatePanels(trail, filters, value.values);
+        children.push(...panels);
+      }
+
+      const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
+      children.push(...morePanelsMaybe);
+    }
+
+    this.state.body.setState({ children });
   }
 
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
