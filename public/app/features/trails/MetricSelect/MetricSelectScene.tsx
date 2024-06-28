@@ -251,54 +251,28 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           `Add search terms or label filters to narrow down the number of metric names returned.`
         : undefined;
 
-      if (this.state.displayAs === 'all-metrics') {
-        this.setState({
-          metricNames,
-          metricNamesLoading: false,
-          metricNamesWarning,
-          metricNamesError: response.error,
-        });
-      } else {
-        const groopParser = new Parser();
-        groopParser.config = {
-          ...groopParser.config,
-          maxDepth: 2,
-          minGroupSize: 2,
-          miscGroupKey: 'misc',
-        };
-        const { root: rootGroupNode } = groopParser.parse(metricNames);
-
-        const nestedScenes: NestedScene[] = [];
-        rootGroupNode.groups.forEach((value, key) => {
-          // Check if we have a scene for that key already
-          // If we don't have, let's create one
-          if (!this.nestedSceneRec[key]) {
-            const newScene = new NestedScene({
-              title: key,
-              canCollapse: true,
-              isCollapsed: true,
-              body: new SceneCSSGridLayout({
-                children: [],
-                templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
-                autoRows: ROW_PREVIEW_HEIGHT,
-                isLazy: true,
-              }),
-            });
-
-            this.nestedSceneRec[key] = newScene;
-          }
-
-          nestedScenes.push(this.nestedSceneRec[key]);
-        });
-
-        this.setState({
-          metricNames,
-          rootGroup: rootGroupNode,
-          metricNamesLoading: false,
-          metricNamesWarning,
-          metricNamesError: response.error,
-        });
-        this.state.body.setState({ children: nestedScenes });
+      switch (this.state.displayAs) {
+        case 'nested-rows':
+          const rootGroupNode = this.generateGroups(metricNames);
+          const nestedScenes = this.generateNestedScene(rootGroupNode);
+          this.setState({
+            metricNames,
+            rootGroup: rootGroupNode,
+            body: new SceneFlexLayout({ children: nestedScenes }),
+            metricNamesLoading: false,
+            metricNamesWarning,
+            metricNamesError: response.error,
+          });
+          break;
+        case 'all-metrics':
+        default:
+          this.setState({
+            metricNames,
+            metricNamesLoading: false,
+            metricNamesWarning,
+            metricNamesError: response.error,
+          });
+          break;
       }
     } catch (err: unknown) {
       let error = 'Unknown error';
@@ -312,6 +286,41 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
       this.setState({ metricNames: undefined, metricNamesLoading: false, metricNamesError: error });
     }
+  }
+
+  private generateGroups(metricNames: string[] = []) {
+    const groopParser = new Parser();
+    groopParser.config = {
+      ...groopParser.config,
+      maxDepth: 2,
+      minGroupSize: 2,
+      miscGroupKey: 'misc',
+    };
+    const {root: rootGroupNode} = groopParser.parse(metricNames);
+    return rootGroupNode;
+  }
+
+  private generateNestedScene(rootGroupNode: Node) {
+    const nestedScenes: NestedScene[] = [];
+    rootGroupNode.groups.forEach((value, key) => {
+      // Check if we have a scene for that key already
+      // If we don't have, let's create one
+      if (!this.nestedSceneRec[key]) {
+        this.nestedSceneRec[key] = new NestedScene({
+          title: key,
+          canCollapse: true,
+          isCollapsed: true,
+          body: new SceneCSSGridLayout({
+            children: [],
+            templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
+            autoRows: ROW_PREVIEW_HEIGHT,
+            isLazy: true,
+          }),
+        });
+      }
+      nestedScenes.push(this.nestedSceneRec[key]);
+    });
+    return nestedScenes;
   }
 
   private sortedPreviewMetrics() {
