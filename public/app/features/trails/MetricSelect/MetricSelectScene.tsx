@@ -24,7 +24,7 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Alert, Field, Icon, InlineSwitch, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Field, Icon, InlineSwitch, Input, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import { Select } from '@grafana/ui/';
 
 import { DataTrail } from '../DataTrail';
@@ -62,6 +62,7 @@ interface MetricPanel {
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
+  selectedTabGroupOption?: string;
   showPreviews?: boolean;
   displayAs?: DisplayAs;
   metricNames?: string[];
@@ -252,6 +253,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
       switch (this.state.displayAs) {
         case 'nested-rows':
+        case 'tabs':
           const rootGroupNode = this.generateGroups(metricNames);
           const nestedScenes = this.generateNestedScene(rootGroupNode);
           this.setState({
@@ -295,7 +297,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       minGroupSize: 2,
       miscGroupKey: 'misc',
     };
-    const {root: rootGroupNode} = groopParser.parse(metricNames);
+    const { root: rootGroupNode } = groopParser.parse(metricNames);
+    console.log(rootGroupNode);
     return rootGroupNode;
   }
 
@@ -393,27 +396,28 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       this.ignoreNextUpdate = false;
       return;
     }
-
+    const trail = getTrailFor(this);
     let children: SceneFlexItem[] = [];
 
     switch (this.state.displayAs) {
       case 'all-metrics':
-        children = await this.populateAllMetricsLayout();
+        children = await this.populateAllMetricsLayout(trail);
         const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
         this.state.body.setState({ children, autoRows: rowTemplate });
         break;
       case 'nested-rows':
-        await this.populateNestedRowsLayout();
+        await this.populateNestedRowsLayout(trail);
+        break;
+      case 'tabs':
+        await this.populateTabsViewLayout(trail);
         break;
       default:
         console.error('Not implemented yet: ', this.state.displayAs);
     }
   }
 
-  private async populateAllMetricsLayout() {
+  private async populateAllMetricsLayout(trail: DataTrail) {
     const children: SceneFlexItem[] = [];
-    const trail = getTrailFor(this);
-
     const metricsList = this.sortedPreviewMetrics();
 
     // Get the current filters to determine the count of them
@@ -452,9 +456,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     return children;
   }
 
-  private async populateNestedRowsLayout() {
-    const trail = getTrailFor(this);
-
+  private async populateNestedRowsLayout(trail: DataTrail) {
     // Get the current filters to determine the count of them
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
@@ -476,6 +478,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       children.push(...morePanelsMaybe);
       this.nestedSceneRec[groupKey].state.body.setState({ children });
     }
+  }
+
+  private async populateTabsViewLayout(trail: DataTrail) {
+    // Get the current filters to determine the count of them
+    // Which is required for `getPreviewPanelFor`
+    const filters = getFilters(this);
+    console.log(filters);
+
+    const rootGroupNode = this.state.rootGroup ?? this.generateGroups(this.state.metricNames);
+    this.setState({ rootGroup: rootGroupNode });
   }
 
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
@@ -533,6 +545,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     trail.setState({ metricSearch });
   };
 
+  public onMetricRadioChange = (val: string) => {
+    console.log('show metrics for, ', val);
+  };
+
   public onDisplayTypeChanged = (val: SelectableValue) => {
     const bodyFormation = generateBodyFormation(val.value);
     if (val.value !== this.state.displayAs) {
@@ -547,8 +563,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showPreviews, body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning, displayAs } =
-      model.useState();
+    const {
+      showPreviews,
+      body,
+      metricNames,
+      metricNamesError,
+      metricNamesLoading,
+      metricNamesWarning,
+      displayAs,
+      rootGroup,
+      selectedTabGroupOption,
+    } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
     const styles = useStyles2(getStyles);
@@ -620,6 +645,20 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           </Alert>
         )}
         <StatusWrapper {...{ isLoading, blockingMessage }}>
+          {displayAs === 'tabs' && (
+            <RadioButtonGroup
+              className={styles.metricTabGroup}
+              options={[
+                {
+                  label: 'All',
+                  value: 'all',
+                },
+                ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: g, value: g })),
+              ]}
+              value={selectedTabGroupOption}
+              onChange={model.onMetricRadioChange}
+            />
+          )}
           {/*// FIXME remove ts-ignore*/}
           {/*// @ts-ignore*/}
           <body.Component model={body} />
@@ -657,6 +696,9 @@ function getStyles(theme: GrafanaTheme2) {
     searchField: css({
       flexGrow: 1,
       marginBottom: 0,
+    }),
+    metricTabGroup: css({
+      marginBottom: theme.spacing(2),
     }),
     displayOption: css({
       flexGrow: 0,
