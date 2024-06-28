@@ -459,8 +459,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
 
-    let rootGroupNode = this.state.rootGroup ?? this.generateGroups(this.state.metricNames);
+    const rootGroupNode = this.state.rootGroup ?? this.generateGroups(this.state.metricNames);
+    this.setState({ rootGroup: rootGroupNode });
     const nestedScenes = this.generateNestedScene(rootGroupNode);
+    this.state.body.setState({ children: nestedScenes });
 
     for (const [groupKey, groupNode] of rootGroupNode.groups) {
       const children: SceneFlexItem[] = [];
@@ -474,9 +476,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       children.push(...morePanelsMaybe);
       this.nestedSceneRec[groupKey].state.body.setState({ children });
     }
-
-    this.setState({ rootGroup: rootGroupNode });
-    this.state.body.setState({ children: nestedScenes });
   }
 
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
@@ -485,7 +484,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const kinder: SceneFlexItem[] = [];
     for (let index = 0; index < values.length; index++) {
       const metricName = values[index];
-      const metric = this.previewCache[metricName];
+      const metric = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
       const metadata = await trail.getMetricMetadata(metricName);
       const description = getMetricDescription(metadata);
 
