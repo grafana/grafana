@@ -459,11 +459,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
 
-    if (!this.state.rootGroup?.groups) {
-      return;
-    }
+    let rootGroupNode = this.state.rootGroup ?? this.generateGroups(this.state.metricNames);
+    const nestedScenes = this.generateNestedScene(rootGroupNode);
 
-    for (const [groupKey, groupNode] of this.state.rootGroup?.groups) {
+    for (const [groupKey, groupNode] of rootGroupNode.groups) {
       const children: SceneFlexItem[] = [];
 
       for (const [_, value] of groupNode.groups) {
@@ -476,12 +475,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       this.nestedSceneRec[groupKey].state.body.setState({ children });
     }
 
-    // this.setState({
-    //   body: new SceneFlexLayout({
-    //     direction: 'column',
-    //     children,
-    //   }),
-    // });
+    this.setState({ rootGroup: rootGroupNode });
+    this.state.body.setState({ children: nestedScenes });
   }
 
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
