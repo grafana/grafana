@@ -94,11 +94,10 @@ const ROW_CARD_HEIGHT = '64px';
 
 const MAX_METRIC_NAMES = 20000;
 
-function generateSceneBody(state: Partial<MetricSelectSceneState>): {
+function generateBodyFormation(displayAs: DisplayAs = 'all-metrics'): {
   layout: SceneCSSGridLayout | SceneFlexLayout;
   displayAs: DisplayAs;
 } {
-  const displayAs = state.displayAs ?? 'all-metrics';
   switch (displayAs) {
     case 'nested-rows':
       return {
@@ -129,7 +128,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
 
   constructor(state: Partial<MetricSelectSceneState>) {
-    const bodyFormation = generateSceneBody(state);
+    const bodyFormation = generateBodyFormation(state.displayAs);
     super({
       showPreviews: true,
       $variables: state.$variables,
@@ -539,7 +538,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public onDisplayTypeChanged = (val: SelectableValue) => {
-    this.setState({ displayAs: val.value });
+    const bodyFormation = generateBodyFormation(val.value);
+    if (val.value !== this.state.displayAs) {
+      this.setState({ body: bodyFormation.layout, displayAs: val.value });
+    }
     this.buildLayout();
   };
 
