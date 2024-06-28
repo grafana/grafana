@@ -1,4 +1,4 @@
-import { cloneDeep, merge } from 'lodash';
+import { cloneDeep, merge, isEqual } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
@@ -371,6 +371,7 @@ export class PanelQueryRunner {
           let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
           let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
           let sameState = last.state === next.state;
+          let sameErrors = compareArrayValues(last.errors ?? [], next.errors ?? [], (a, b) => isEqual(a, b));
 
           if (sameSeries) {
             next.series = last.series;
@@ -380,7 +381,7 @@ export class PanelQueryRunner {
             next.annotations = last.annotations;
           }
 
-          if (sameSeries && sameAnnotations && sameState) {
+          if (sameSeries && sameAnnotations && sameState && sameErrors) {
             return;
           }
         }
