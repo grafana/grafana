@@ -484,7 +484,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const kinder: SceneFlexItem[] = [];
     for (let index = 0; index < values.length; index++) {
       const metricName = values[index];
-      const metric = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
+      const metric: MetricPanel = { name: metricName, index, loaded: false };
       const metadata = await trail.getMetricMetadata(metricName);
       const description = getMetricDescription(metadata);
 
@@ -520,7 +520,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       metricPanel.isEmpty = isEmpty;
       metricPanel.loaded = isLoaded;
       this.previewCache[metric] = metricPanel;
-      this.buildLayout();
+      if (this.state.displayAs === 'all-metrics') {
+        this.buildLayout();
+      }
     }
   };
 
