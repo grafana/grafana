@@ -48,6 +48,8 @@ import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from './util';
 
+type DisplayAs = (typeof metricSelectSceneDisplayOptions)[number]['value'];
+
 interface MetricPanel {
   name: string;
   index: number;
@@ -61,7 +63,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
   showPreviews?: boolean;
-  displayAs?: (typeof metricSelectSceneDisplayOptions)[number]['value'];
+  displayAs?: DisplayAs;
   metricNames?: string[];
   metricNamesLoading?: boolean;
   metricNamesError?: string;
@@ -92,6 +94,34 @@ const ROW_CARD_HEIGHT = '64px';
 
 const MAX_METRIC_NAMES = 20000;
 
+function generateSceneBody(state: Partial<MetricSelectSceneState>): {
+  layout: SceneCSSGridLayout | SceneFlexLayout;
+  displayAs: DisplayAs;
+} {
+  const displayAs = state.displayAs ?? 'all-metrics';
+  switch (displayAs) {
+    case 'nested-rows':
+      return {
+        displayAs,
+        layout: new SceneFlexLayout({
+          direction: 'column',
+          children: [],
+        }),
+      };
+    case 'all-metrics':
+    default:
+      return {
+        displayAs,
+        layout: new SceneCSSGridLayout({
+          children: [],
+          templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
+          autoRows: ROW_PREVIEW_HEIGHT,
+          isLazy: true,
+        }),
+      };
+  }
+}
+
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
@@ -99,18 +129,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
 
   constructor(state: Partial<MetricSelectSceneState>) {
+    const bodyFormation = generateSceneBody(state);
     super({
-      $variables: state.$variables,
-      body:
-        state.body ??
-        new SceneCSSGridLayout({
-          children: [],
-          templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
-          autoRows: ROW_PREVIEW_HEIGHT,
-          isLazy: true,
-        }),
       showPreviews: true,
-      displayAs: 'all-metrics',
+      $variables: state.$variables,
+      displayAs: bodyFormation.displayAs,
+      body: state.body ?? bodyFormation.layout,
       ...state,
     });
 
