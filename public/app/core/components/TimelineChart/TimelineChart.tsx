@@ -27,9 +27,9 @@ const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'align
 
 export class TimelineChart extends React.Component<TimelineProps> {
   getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
-    const field = this.props.frames[frameIdx].fields[fieldIdx];
+    const field = this.props.frames[frameIdx]?.fields[fieldIdx];
 
-    if (field.display) {
+    if (field?.display) {
       const disp = field.display(value); // will apply color modes
       if (disp.color) {
         return disp.color;

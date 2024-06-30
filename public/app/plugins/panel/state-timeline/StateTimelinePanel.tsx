@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
+import { useMeasure } from 'react-use';
 
-import { DashboardCursorSync, PanelProps } from '@grafana/data';
+import { DashboardCursorSync, DataFrame, PanelProps } from '@grafana/data';
 import {
   EventBusPlugin,
   Pagination,
@@ -27,6 +29,71 @@ import { Options } from './panelcfg.gen';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
+const styles = {
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  paginationContainer: css({
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+  }),
+  paginationElement: css({
+    marginTop: '8px',
+  }),
+};
+
+function usePagination(frames?: DataFrame[], maxPageSize?: number) {
+  const [pageNumber, setPageNumber] = useState(1);
+
+  const { paginatedFrames, pageCount } = useMemo(() => {
+    if (frames === undefined || maxPageSize === undefined || maxPageSize <= 0) {
+      return { paginatedFrames: frames };
+    }
+
+    const normalizedFrames = prepareFieldsForPagination(frames);
+    const pageCount = Math.ceil(normalizedFrames.length / maxPageSize);
+    const pageOffset = (pageNumber - 1) * maxPageSize;
+    const paginatedFrames = normalizedFrames.slice(pageOffset, pageOffset + maxPageSize);
+
+    return { paginatedFrames, pageCount };
+  }, [frames, pageNumber, maxPageSize]);
+
+  // `paginationRev` needs to change value whenever any of the pagination settings changes.
+  // It's used in to trigger a reconfiguration of the underlying graphs (which is cached,
+  // hence an explicit nudge is required).
+  const paginationRev = `${pageNumber}/${maxPageSize}`;
+
+  const [paginationWrapperRef, { height: paginationWrapperHeight, width: paginationWrapperWidth }] =
+    useMeasure<HTMLDivElement>();
+
+  let paginationElement = undefined;
+  if (pageCount !== undefined) {
+    const showSmallVersion = paginationWrapperWidth < 550;
+    paginationElement = (
+      <div className={styles.paginationContainer} ref={paginationWrapperRef}>
+        <Pagination
+          className={styles.paginationElement}
+          currentPage={pageNumber}
+          numberOfPages={pageCount}
+          showSmallVersion={showSmallVersion}
+          onNavigate={setPageNumber}
+        />
+      </div>
+    );
+  }
+
+  let paginationHeight = paginationWrapperHeight;
+  if (paginationElement === undefined) {
+    // `paginationElement` might be unmounted if "max page size" panel options is changed,
+    // but `paginationWrapperHeight` won't reflect that, so an explicit handling is needed.
+    paginationHeight = 0;
+  }
+
+  return { paginatedFrames, paginationRev, paginationElement, paginationHeight };
+}
+
 /**
  * @alpha
  */
@@ -47,30 +114,24 @@ export const StateTimelinePanel = ({
   const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
-  const [pageNumber, setPageNumber] = useState(1);
+  const { frames, warn } = useMemo(
+    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
+    [data.series, options.mergeValues, timeRange, theme]
+  );
 
-  const { frames, warn, pageCount } = useMemo(() => {
-    const { frames, warn } = prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme);
-
-    if (frames === undefined || options.maxPageSize === undefined || options.maxPageSize <= 0) {
-      return { frames, warn, pageCount: undefined };
-    }
-
-    const normalizedFrames = prepareFieldsForPagination(frames);
-    const pageCount = Math.ceil(normalizedFrames.length / options.maxPageSize);
-    const pageOffset = (pageNumber - 1) * options.maxPageSize;
-    const paginatedFrames = normalizedFrames.slice(pageOffset, pageOffset + options.maxPageSize);
-    return { frames: paginatedFrames, warn, pageCount };
-  }, [data.series, options.mergeValues, timeRange, theme, pageNumber, options.maxPageSize]);
+  const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
+    frames,
+    options.maxPageSize
+  );
 
   const legendItems = useMemo(
-    () => prepareTimelineLegendItems(frames, options.legend, theme),
-    [frames, options.legend, theme]
+    () => prepareTimelineLegendItems(paginatedFrames, options.legend, theme),
+    [paginatedFrames, options.legend, theme]
   );
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
-  if (!frames || warn) {
+  if (!paginatedFrames || warn) {
     return (
       <div className="panel-empty">
         <p>{warn ?? 'No data found in response'}</p>
@@ -80,29 +141,17 @@ export const StateTimelinePanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
-  // TODO kputera: Change this to use emotion or whatever that is, rather than hardcoding the style
-  // TODO kputera: Don't hardcode pagination element height. Find a way to make it better.
   return (
-    <div
-      style={{
-        width,
-        height,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        overflow: 'auto',
-        justifyContent: 'space-around',
-      }}
-    >
+    <div className={styles.container}>
       <TimelineChart
         theme={theme}
-        frames={frames}
+        frames={paginatedFrames}
         structureRev={data.structureRev}
-        paginationRev={`${pageNumber}/${options.maxPageSize}`}
+        paginationRev={paginationRev}
         timeRange={timeRange}
         timeZone={timezones}
         width={width}
-        height={height - 40}
+        height={height - paginationHeight}
         legendItems={legendItems}
         {...options}
         mode={TimelineMode.Changes}
@@ -171,15 +220,7 @@ export const StateTimelinePanel = ({
           );
         }}
       </TimelineChart>
-      {pageCount && (
-        <Pagination
-          currentPage={pageNumber}
-          numberOfPages={pageCount}
-          // TODO kputera: Should we make [showSmallVersion] be dynamic?
-          showSmallVersion={false}
-          onNavigate={setPageNumber}
-        />
-      )}
+      {paginationElement}
     </div>
   );
 };
