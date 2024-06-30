@@ -16,6 +16,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   alignValue?: ui.TimelineValueAlignment;
   /**
+   * Configures max page size (and whether pagination is enabled)
+   */
+  maxPageSize?: number;
+  /**
    * Merge equal consecutive values
    */
   mergeValues?: boolean;

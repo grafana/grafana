@@ -19,9 +19,11 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   colWidth?: number;
   legendItems?: VizLegendItem[];
   tooltip?: VizTooltipOptions;
+  // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
+  paginationRev?: string;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
 
 export class TimelineChart extends Component<TimelineProps> {
   getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
