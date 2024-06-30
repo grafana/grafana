@@ -49,8 +49,8 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 		return nil, fmt.Errorf("error getting dial options: %w", err)
 	}
 
-	// grpc.Dial is deprecated in favor of grpc.NewClient, but grpc.NewClient chaged the default resolver to dns from passthrough.
-	// This is a problem because the getDialOpts function appends a custom dialer to the dial options to support Grafana Cloud PDC.
+	// grpc.Dial() is deprecated in favor of grpc.NewClient(), but grpc.NewClient() changed the default resolver to dns from passthrough.
+	// This is a problem because the getDialOpts() function appends a custom dialer to the dial options to support Grafana Cloud PDC.
 	//
 	// See the following quote from the grpc package documentation:
 	//     One subtle difference between NewClient and Dial and DialContext is that the
@@ -61,9 +61,9 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 	// https://github.com/grpc/grpc-go/blob/fa274d77904729c2893111ac292048d56dcf0bb1/clientconn.go#L209
 	//
 	// Unfortunately, the passthrough resolver isn't exported by the grpc package, so we can't use it.
-	// The options are to continue using grpc.Dial or implement a custom resolver.
-	// Since the grpc package maintainers intend to continue supporting grpc.Dial through the 1.x series,
-	// we'll continue using grpc.Dial until we have a compelling reason or bandwidth to implement the custom resolver.
+	// The options are to continue using grpc.Dial() or implement a custom resolver.
+	// Since the go-grpc package maintainers intend to continue supporting grpc.Dial() through the 1.x series,
+	// we'll continue using grpc.Dial() until we have a compelling reason or bandwidth to implement the custom resolver.
 	// Reference: https://github.com/grpc/grpc-go/blob/f199062ef31ddda54152e1ca5e3d15fb63903dc3/clientconn.go#L204
 	//
 	// See this issue for more information: https://github.com/grpc/grpc-go/issues/7091
