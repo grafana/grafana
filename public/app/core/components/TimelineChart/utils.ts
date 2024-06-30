@@ -289,9 +289,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
   };
 }
 
-// - Normalize the frames such that each one contains only a time field and a value field.
-//   To do this, we might break up bigger frames containing >1 value fields into multiple ones.
-// - Only return graphable fields/values.
+// This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
@@ -310,25 +308,22 @@ export function prepareTimelineFields(
   for (let frame of series) {
     let startFieldIdx = -1;
     let endFieldIdx = -1;
-    let timeFieldCount = 0;
+
     for (let i = 0; i < frame.fields.length; i++) {
       let f = frame.fields[i];
+
       if (f.type === FieldType.time) {
-        timeFieldCount += 1;
         if (startFieldIdx === -1) {
           startFieldIdx = i;
-        } else {
+        } else if (endFieldIdx === -1) {
           endFieldIdx = i;
+          break;
         }
       }
     }
 
-    if (timeFieldCount > 2) {
-      return { warn: 'Data has too many time fields, expected at most two' };
-    }
-
     let isTimeseries = startFieldIdx !== -1;
-    hasTimeseries = hasTimeseries || isTimeseries;
+    let changed = false;
     frame = maybeSortFrame(frame, startFieldIdx);
 
     // if we have a second time field, assume it is state end timestamps
@@ -360,6 +355,8 @@ export function prepareTimelineFields(
           }
         }
       });
+
+      changed = true;
     }
 
     let nulledFrame = applyNullInsertThreshold({
@@ -368,29 +365,37 @@ export function prepareTimelineFields(
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
 
+    if (nulledFrame !== frame) {
+      changed = true;
+    }
+
     frame = nullToValue(nulledFrame);
 
+    const fields: Field[] = [];
     for (let field of frame.fields) {
       if (field.config.custom?.hideFrom?.viz) {
         continue;
       }
       switch (field.type) {
+        case FieldType.time:
+          isTimeseries = true;
+          hasTimeseries = true;
+          fields.push(field);
+          break;
         case FieldType.enum:
         case FieldType.number:
           if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
             const f = mergeThresholdValues(field, theme);
             if (f) {
-              frames.push({
-                fields: [frame.fields[startFieldIdx], f],
-                length: frame.length,
-              });
+              fields.push(f);
+              changed = true;
               continue;
             }
           }
 
         case FieldType.boolean:
         case FieldType.string:
-          const f = {
+          field = {
             ...field,
             config: {
               ...field.config,
@@ -400,13 +405,22 @@ export function prepareTimelineFields(
               },
             },
           };
-          frames.push({
-            fields: [frame.fields[startFieldIdx], f],
-            length: frame.length,
-          });
+          changed = true;
+          fields.push(field);
           break;
         default:
-          break;
+          changed = true;
+      }
+    }
+    if (isTimeseries && fields.length > 1) {
+      hasTimeseries = true;
+      if (changed) {
+        frames.push({
+          ...frame,
+          fields,
+        });
+      } else {
+        frames.push(frame);
       }
     }
   }
@@ -419,6 +433,29 @@ export function prepareTimelineFields(
   }
 
   return { frames };
+}
+
+// Normalize input frames into many frames with a single time field and a single value field each.
+// Expected to be called right after `prepareTimelineFields`, see `StateTimelinePanel` for reference.
+export function prepareFieldsForPagination(inputFrames: DataFrame[]): DataFrame[] {
+  const frames: DataFrame[] = [];
+
+  for (let frame of inputFrames) {
+    // Assume there is at most one time field per frame. If there are >1 time fields,
+    // treat the first one (index ascending order) as the time field and drop the rest.
+    const timeField = frame.fields.find((field) => field.type === FieldType.time);
+    if (timeField === undefined) {
+      continue;
+    }
+    for (let field of frame.fields) {
+      if (field.type === FieldType.time) {
+        continue;
+      }
+      frames.push({ fields: [timeField, field], length: frame.length });
+    }
+  }
+
+  return frames;
 }
 
 export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {

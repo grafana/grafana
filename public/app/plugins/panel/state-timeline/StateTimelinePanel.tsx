@@ -12,6 +12,7 @@ import {
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
+  prepareFieldsForPagination,
   prepareTimelineFields,
   prepareTimelineLegendItems,
   TimelineMode,
@@ -50,13 +51,16 @@ export const StateTimelinePanel = ({
 
   const { frames, warn, pageCount } = useMemo(() => {
     const { frames, warn } = prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme);
-    if (frames !== undefined && options.maxPageSize !== undefined && options.maxPageSize > 0) {
-      const pageCount = Math.ceil(frames.length / options.maxPageSize);
-      const pageOffset = (pageNumber - 1) * options.maxPageSize;
-      const paginatedFrames = frames.slice(pageOffset, pageOffset + options.maxPageSize);
-      return { frames: paginatedFrames, warn, pageCount };
+
+    if (frames === undefined || options.maxPageSize === undefined || options.maxPageSize <= 0) {
+      return { frames, warn, pageCount: undefined };
     }
-    return { frames, warn, pageCount: undefined };
+
+    const normalizedFrames = prepareFieldsForPagination(frames);
+    const pageCount = Math.ceil(normalizedFrames.length / options.maxPageSize);
+    const pageOffset = (pageNumber - 1) * options.maxPageSize;
+    const paginatedFrames = normalizedFrames.slice(pageOffset, pageOffset + options.maxPageSize);
+    return { frames: paginatedFrames, warn, pageCount };
   }, [data.series, options.mergeValues, timeRange, theme, pageNumber, options.maxPageSize]);
 
   const legendItems = useMemo(

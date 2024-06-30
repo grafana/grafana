@@ -17,6 +17,7 @@ import {
   findNextStateIndex,
   fmtDuration,
   getThresholdItems,
+  prepareFieldsForPagination,
   prepareTimelineFields,
   prepareTimelineLegendItems,
 } from './utils';
@@ -32,7 +33,6 @@ describe('prepare timeline graph', () => {
       to: dateTime(3),
     },
   };
-
   it('errors with no time fields', () => {
     const frames = [
       toDataFrame({
@@ -46,21 +46,6 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
-  it('errors if more than 2 time fields', () => {
-    const frames = [
-      toDataFrame({
-        fields: [
-          { name: 'a', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'b', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'c', type: FieldType.time, values: [2, 4, 6] },
-          { name: 'd', type: FieldType.time, values: [3, 6, 9] },
-        ],
-      }),
-    ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(info.warn).toEqual('Data has too many time fields, expected at most two');
-  });
-
   it('requires a number, string, or boolean value', () => {
     const frames = [
       toDataFrame({
@@ -72,27 +57,6 @@ describe('prepare timeline graph', () => {
     ];
     const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('No graphable fields');
-  });
-
-  it('ignore any frame without any number, string, or boolean value', () => {
-    const frames = [
-      toDataFrame({
-        fields: [
-          { name: 'a', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'b', type: FieldType.other, values: [{}, {}, {}] },
-        ],
-      }),
-      toDataFrame({
-        fields: [
-          { name: 'c', type: FieldType.time, values: [4, 5, 6] },
-          { name: 'd', type: FieldType.string, values: ['a', 'b', 'c'] },
-        ],
-      }),
-    ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(info.warn).toBeUndefined();
-    expect(info.frames!.length).toEqual(1);
-    expect(info.frames![0].fields[0].name).toEqual('c');
   });
 
   it('will merge duplicate values', () => {
@@ -124,7 +88,6 @@ describe('prepare timeline graph', () => {
       ]
     `);
   });
-
   it('should try to sort time fields', () => {
     const frames = [
       toDataFrame({
@@ -304,8 +267,45 @@ describe('prepare timeline graph', () => {
       [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
     ]);
   });
+});
 
-  it('normalize frames correctly (break them up)', () => {
+describe('prepareFieldsForPagination', () => {
+  it('ignores frames without any time fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.string, values: ['a', 'b', 'c'] },
+        ],
+      }),
+    ];
+    const normalizedFrames = prepareFieldsForPagination(frames);
+    expect(normalizedFrames.length).toEqual(0);
+  });
+
+  it('ignores trailing time fields when there are more than one', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'ignoredtime', type: FieldType.time, values: [4, 5, 6] },
+        ],
+      }),
+    ];
+    const normalizedFrames = prepareFieldsForPagination(frames);
+    expect(normalizedFrames.length).toEqual(1);
+    expect(normalizedFrames).toMatchObject([
+      {
+        fields: [
+          { name: 'time', values: [1, 2, 3] },
+          { name: 'value', values: ['a', 'b', 'c'] },
+        ],
+      },
+    ]);
+  });
+
+  it('returns normalized frames, each with one time field and one value field', () => {
     const frames = [
       toDataFrame({
         fields: [
@@ -318,14 +318,12 @@ describe('prepare timeline graph', () => {
         fields: [
           { name: 'x', type: FieldType.time, values: [10, 20, 30] },
           { name: 'y', type: FieldType.string, values: ['e', 'f', 'g'] },
-          { name: 'z', type: FieldType.time, values: [15, 25, 35] },
         ],
       }),
     ];
-    const result = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(result.warn).toBeUndefined();
-    expect(result.frames!.length).toEqual(3);
-    expect(result.frames).toMatchObject([
+    const normalizedFrames = prepareFieldsForPagination(frames);
+    expect(normalizedFrames.length).toEqual(3);
+    expect(normalizedFrames).toMatchObject([
       {
         fields: [
           { name: 'a', values: [1, 2, 3] },
@@ -340,8 +338,8 @@ describe('prepare timeline graph', () => {
       },
       {
         fields: [
-          { name: 'x', values: [10, 15, 20, 25, 30, 35] },
-          { name: 'y', values: ['e', null, 'f', null, 'g', null] },
+          { name: 'x', values: [10, 20, 30] },
+          { name: 'y', values: ['e', 'f', 'g'] },
         ],
       },
     ]);
