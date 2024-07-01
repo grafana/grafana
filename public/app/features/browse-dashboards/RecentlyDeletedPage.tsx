@@ -1,11 +1,12 @@
 import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { FilterInput, EmptyState, Stack } from '@grafana/ui';
+import { FilterInput, Stack, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { t } from 'app/core/internationalization';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service';
+import { SearchState } from 'app/features/search/types';
 
 import { useDispatch } from '../../types';
 
@@ -35,23 +36,23 @@ const RecentlyDeletedPage = memo(() => {
     );
   }, [dispatch, stateManager]);
 
-  if (
-    searchState.loading === false &&
-    searchState.query.length === 0 &&
-    searchState.tag.length === 0 &&
-    searchState.result?.totalRows === 0
-  ) {
-    return (
-      <Page navId="dashboards/recently-deleted">
-        <Page.Contents>
-          <EmptyState
-            variant="completed"
-            message={t('recently-deleted.page.empty-state', "You haven't deleted any dashboards recently.")}
-          />
-        </Page.Contents>
-      </Page>
-    );
-  }
+  // if (
+  //   searchState.loading === false &&
+  //   searchState.query.length === 0 &&
+  //   searchState.tag.length === 0 &&
+  //   searchState.result?.totalRows === 0
+  // ) {
+  //   return (
+  //     <Page navId="dashboards/recently-deleted">
+  //       <Page.Contents>
+  //         <EmptyState
+  //           variant="completed"
+  //           message={t('recently-deleted.page.empty-state', "You haven't deleted any dashboards recently.")}
+  //         />
+  //       </Page.Contents>
+  //     </Page>
+  //   );
+  // }
 
   return (
     <Page navId="dashboards/recently-deleted">
@@ -87,6 +88,7 @@ const RecentlyDeletedPage = memo(() => {
                   height={height}
                   searchStateManager={stateManager}
                   searchState={searchState}
+                  emptyState={<RecentlyDeletedEmptyState searchState={searchState} />}
                 />
               )}
             </AutoSizer>
@@ -96,6 +98,21 @@ const RecentlyDeletedPage = memo(() => {
     </Page>
   );
 });
+
+interface RecentlyDeletedEmptyStateProps {
+  searchState: SearchState;
+}
+
+const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyStateProps) => {
+  const userIsSearching = Boolean(searchState.query || searchState.tag.length);
+  return (
+    <EmptyState
+      message={userIsSearching ? 'no search result' : 'You have not deleted any dashboards recently.'}
+      variant="not-found"
+      role="alert"
+    />
+  );
+};
 
 RecentlyDeletedPage.displayName = 'RecentlyDeletedPage';
 export default RecentlyDeletedPage;
