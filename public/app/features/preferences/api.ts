@@ -30,9 +30,6 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
   return backendSrvBaseQuery;
 }
 
-interface QueryArg {
-  resource: 'user' | 'org';
-}
 export interface UpdateRequestArg {
   body: {
     navbar: {
@@ -41,34 +38,34 @@ export interface UpdateRequestArg {
   };
 }
 
-interface UpdateQueryArg extends QueryArg, UpdateRequestArg {}
-
+const URL = 'user/preferences';
 export const preferencesAPI = createApi({
   reducerPath: 'preferencesAPI',
-  baseQuery: createBackendSrvBaseQuery({ baseURL: '/api/' }),
-  tagTypes: ['Preferences'],
+  baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
+  tagTypes: ['UserPreferences'],
   endpoints: (build) => ({
-    loadPreferences: build.query<Preferences, QueryArg>({
-      query: (queryArg) => ({ url: `${queryArg.resource}/preferences` }),
-      providesTags: ['Preferences'],
+    loadUserPreferences: build.query<Preferences, void>({
+      query: (queryArg) => ({ url: URL }),
+      providesTags: ['UserPreferences'],
     }),
-    updatePreferences: build.mutation<Preferences, UpdateQueryArg>({
-      query: ({ resource, body }) => ({
-        url: `${resource}/preferences`,
+    updateUserPreferences: build.mutation<Preferences, UpdateRequestArg>({
+      query: ({ body }) => ({
+        url: URL,
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['Preferences'],
+      invalidatesTags: ['UserPreferences'],
     }),
-    patchPreferences: build.mutation<Preferences, UpdateQueryArg>({
-      query: ({ resource, body }) => ({
-        url: `${resource}/preferences`,
+    patchUserPreferences: build.mutation<Preferences, UpdateRequestArg>({
+      query: ({ body }) => ({
+        url: URL,
         method: 'PATCH',
         body,
       }),
-      invalidatesTags: ['Preferences'],
+      invalidatesTags: ['UserPreferences'],
     }),
   }),
 });
 
-export const { useLoadPreferencesQuery, useUpdatePreferencesMutation, usePatchPreferencesMutation } = preferencesAPI;
+export const { useLoadUserPreferencesQuery, useUpdateUserPreferencesMutation, usePatchUserPreferencesMutation } =
+  preferencesAPI;

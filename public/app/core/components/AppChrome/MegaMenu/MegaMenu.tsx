@@ -9,7 +9,7 @@ import { PreferenceNavLink } from '@grafana/schema/dist/esm/raw/preferences/x/pr
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
-import { useLoadPreferencesQuery, usePatchPreferencesMutation } from 'app/features/preferences/api';
+import { useLoadUserPreferencesQuery, usePatchUserPreferencesMutation } from 'app/features/preferences/api';
 import { useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
@@ -28,9 +28,9 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const preferences = useLoadPreferencesQuery({ resource: 'user' });
+    const preferences = useLoadUserPreferencesQuery();
     const pinnedItems = preferences.data?.navbar?.savedItems;
-    const [setPinnedItems] = usePatchPreferencesMutation();
+    const [patchPreferences] = usePatchUserPreferencesMutation();
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -58,11 +58,10 @@ export const MegaMenu = memo(
       return pinnedItems?.map((item) => item.id).includes(link.id);
     };
 
-    const onPinItem = async (item: PreferenceNavLink) => {
+    const onPinItem = (item: PreferenceNavLink) => {
       if (!!pinnedItems?.length) {
         const newItems = isPinned(item) ? pinnedItems.filter((i) => i.id !== item.id) : [...pinnedItems, item];
-        setPinnedItems({
-          resource: 'user',
+        patchPreferences({
           body: {
             navbar: {
               savedItems: newItems,
