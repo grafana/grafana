@@ -28,19 +28,14 @@ type ZanzanaSynchroniser struct {
 	collectors []TupleCollector
 }
 
-func NewZanzanaSynchroniser(client zanzana.Client, store db.DB) *ZanzanaSynchroniser {
-	return &ZanzanaSynchroniser{
-		log: log.New("zanzana.sync"),
-		// We can initiate with collectors that are shared between oss and enterprise
-		collectors: []TupleCollector{
-			managedPermissionsCollector(store),
-		},
-	}
-}
+func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...TupleCollector) *ZanzanaSynchroniser {
+	// Append shared collectors that is used by both enterprise and oss
+	collectors = append(collectors, managedPermissionsCollector(store))
 
-// AddCollector adds a new collector that will be triggered once [ZanzanaSynchroniser.Sync] is called.
-func (z *ZanzanaSynchroniser) AddCollector(collector TupleCollector) {
-	z.collectors = append(z.collectors, collector)
+	return &ZanzanaSynchroniser{
+		log:        log.New("zanzana.sync"),
+		collectors: collectors,
+	}
 }
 
 // Sync runs all collectors and tries to write all collected tuples.
