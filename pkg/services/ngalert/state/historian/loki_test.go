@@ -856,7 +856,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 
 			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
 			assert.NoError(t, err)
-			assert.EqualValues(t, folders, result)
+			assert.ElementsMatch(t, folders, result)
 
 			assert.Len(t, ac.Calls, len(folders)+1)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
