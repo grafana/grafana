@@ -28,6 +28,7 @@ import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
+import { preferencesAPI } from '../../features/preferences/api';
 import { queryLibraryApi } from '../../features/query-library/api/factory';
 import { cleanUpAction } from '../actions/cleanUp';
 
@@ -59,6 +60,7 @@ const rootReducers = {
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
   [queryLibraryApi.reducerPath]: queryLibraryApi.reducer,
+  [preferencesAPI.reducerPath]: preferencesAPI.reducer,
 };
 
 const addedReducers = {};
