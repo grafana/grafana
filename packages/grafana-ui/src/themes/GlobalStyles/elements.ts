@@ -5,6 +5,9 @@ import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
+  // TODO can we get the feature toggle in a better way?
+  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
+
   return css({
     html: {
       MsOverflowStyle: 'scrollbar',
@@ -23,9 +26,20 @@ export function getElementStyles(theme: GrafanaTheme2) {
     body: {
       height: '100%',
       width: '100%',
-      position: 'absolute',
+      position: isBodyScrolling ? 'unset' : 'absolute',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
+      overflowY: isBodyScrolling ? 'scroll' : 'visible',
+      ...(isBodyScrolling && {
+        '@media print': {
+          overflow: 'visible',
+        },
+        '@page': {
+          margin: 0,
+          size: 'auto',
+          padding: 0,
+        },
+      }),
       ...getVariantStyles(theme.typography.body),
     },
 

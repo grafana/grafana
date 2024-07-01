@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useLayoutEffect } from 'react';
+import { Fragment, useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -37,6 +38,7 @@ export const Page: PageType = ({
   usePageTitle(navModel, pageNav);
 
   const pageHeaderNav = pageNav ?? navModel?.node;
+  const Scroller = config.featureToggles.bodyScrolling ? Fragment : NativeScrollbar;
 
   // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
   // This prevents flickering sectionNav when going from dashboard to settings for example
@@ -53,7 +55,7 @@ export const Page: PageType = ({
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <NativeScrollbar
+        <Scroller
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
           autoHeightMin={'100%'}
@@ -74,11 +76,11 @@ export const Page: PageType = ({
             {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
             <div className={styles.pageContent}>{children}</div>
           </div>
-        </NativeScrollbar>
+        </Scroller>
       )}
 
       {layout === PageLayoutType.Canvas && (
-        <NativeScrollbar
+        <Scroller
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
           autoHeightMin={'100%'}
@@ -86,7 +88,7 @@ export const Page: PageType = ({
           scrollRefCallback={scrollRef}
         >
           <div className={styles.canvasContent}>{children}</div>
-        </NativeScrollbar>
+        </Scroller>
       )}
 
       {layout === PageLayoutType.Custom && children}
@@ -98,14 +100,23 @@ Page.Contents = PageContents;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css({
-      label: 'page-wrapper',
-      height: '100%',
-      display: 'flex',
-      flex: '1 1 0',
-      flexDirection: 'column',
-      minHeight: 0,
-    }),
+    wrapper: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            label: 'page-wrapper',
+            display: 'flex',
+            flex: '1 1 0',
+            flexDirection: 'column',
+          }
+        : {
+            label: 'page-wrapper',
+            height: '100%',
+            display: 'flex',
+            flex: '1 1 0',
+            flexDirection: 'column',
+            minHeight: 0,
+          }
+    ),
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
