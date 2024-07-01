@@ -214,7 +214,7 @@ function NeedHelpInfoForContactpoint() {
           The waiting time before sending a notification about changes in the alert group after the first notification
           has been sent is 5 minutes.
           <br />
-          The waiting time before resending a notification that has already been sent successfully is 4 hours.
+          The wait time before resending a notification that has already been sent successfully is 4 hours.
           <br />
           Grouping and wait time values are defined in your default notification policy.
         </>
