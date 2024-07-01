@@ -27,6 +27,7 @@ import {
   setOperatorExpressionValue,
   setSql,
 } from './utils';
+import { config } from '@grafana/runtime';
 
 interface SQLFilterProps {
   query: CloudWatchMetricsQuery;
@@ -108,7 +109,12 @@ const FilterItem = (props: FilterItemProps) => {
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const dimensionKeys = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
+  const dimensionKeys = useDimensionKeys(datasource, {
+    region: query.region,
+    namespace,
+    metricName,
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying ? { accountId: query.accountId } : {}),
+  });
 
   const loadDimensionValues = async () => {
     if (!filter.property?.name || !namespace) {
@@ -116,7 +122,13 @@ const FilterItem = (props: FilterItemProps) => {
     }
 
     return datasource.resources
-      .getDimensionValues({ region: query.region, namespace, metricName, dimensionKey: filter.property.name })
+      .getDimensionValues({
+        region: query.region,
+        namespace,
+        metricName,
+        dimensionKey: filter.property.name,
+        ...(config.featureToggles.cloudWatchCrossAccountQuerying ? { accountId: query.accountId } : {}),
+      })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);
       });
