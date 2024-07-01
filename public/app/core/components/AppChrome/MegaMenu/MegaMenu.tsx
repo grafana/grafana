@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef } from 'react';
+import { memo, forwardRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -51,12 +51,15 @@ export const MegaMenu = memo(
       });
     };
 
-    const isPinned = (link: NavModelItem | PreferenceNavLink) => {
-      if (!link.id || !pinnedItems?.length) {
-        return false;
-      }
-      return pinnedItems?.map((item) => item.id).includes(link.id);
-    };
+    const isPinned = useMemo(
+      (link: NavModelItem | PreferenceNavLink) => {
+        if (!link.id || !pinnedItems?.length) {
+          return false;
+        }
+        return pinnedItems?.map((item) => item.id).includes(link.id);
+      },
+      [pinnedItems]
+    );
 
     const onPinItem = (item: PreferenceNavLink) => {
       if (!!pinnedItems?.length) {
