@@ -250,43 +250,49 @@ func GroupScopesByActionContext(ctx context.Context, permissions []Permission) m
 	))
 	defer span.End()
 
+	m := make(map[string][]string)
+	for i := range permissions {
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+	}
+	return m
+
 	// Use a map to deduplicate scopes.
 	// User can have the same permission from multiple sources (e.g. team, basic role, directly assigned etc).
 	// User will also have duplicate permissions if action sets are used, as we will be double writing permissions for a while.
-	m := make(map[string]map[string]struct{})
-	actionCount := 0
-	for i := range permissions {
-		if _, ok := m[permissions[i].Action]; !ok {
-			actionCount++
-			m[permissions[i].Action] = make(map[string]struct{}, len(permissions)/100)
-		}
-		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
-	}
+	//m := make(map[string]map[string]struct{})
+	//actionCount := 0
+	//for i := range permissions {
+	//    if _, ok := m[permissions[i].Action]; !ok {
+	//        actionCount++
+	//        m[permissions[i].Action] = make(map[string]struct{}, len(permissions)/100)
+	//    }
+	//    m[permissions[i].Action][permissions[i].Scope] = struct{}{}
+	//}
 
-	span.AddEvent("finished deduplicating permissions")
+	//span.AddEvent("finished deduplicating permissions")
 
-	res := make(map[string][]string, len(m))
-	scopeCount := 0
-	for action, scopes := range m {
-		scopeList := make([]string, len(scopes))
-		i := 0
-		for scope := range scopes {
-			scopeList[i] = scope
-			i++
-		}
-		res[action] = scopeList
-		scopeCount += len(scopeList)
-	}
+	//res := make(map[string][]string, len(m))
+	//scopeCount := 0
+	//for action, scopes := range m {
+	//    scopeList := make([]string, len(scopes))
+	//    i := 0
+	//    for scope := range scopes {
+	//        scopeList[i] = scope
+	//        i++
+	//    }
+	//    res[action] = scopeList
+	//    scopeCount += len(scopeList)
+	//}
 
-	span.AddEvent("finished mapping actions")
+	//span.AddEvent("finished mapping actions")
 
-	span.SetAttributes(
-		attribute.Int("deduplicated_scope_count", scopeCount),
-		attribute.Int("scope_reduction", len(permissions)-scopeCount),
-		attribute.Int("actions_count", len(res)),
-	)
+	//span.SetAttributes(
+	//    attribute.Int("deduplicated_scope_count", scopeCount),
+	//    attribute.Int("scope_reduction", len(permissions)-scopeCount),
+	//    attribute.Int("actions_count", len(res)),
+	//)
 
-	return res
+	//return res
 }
 
 // Reduce will reduce a list of permissions to its minimal form, grouping scopes by action
