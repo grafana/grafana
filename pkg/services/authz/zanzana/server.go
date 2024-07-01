@@ -45,10 +45,7 @@ func StartOpenFGAHttpSever(addr string, logger log.Logger) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	// timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	// defer cancel()
-
-	// conn, err := grpc.DialContext(timeoutCtx, addr, dialOpts...)
+	logger.Info("Connecting to the GRPC", "addr", addr)
 	conn, err := grpc.NewClient(addr, dialOpts...)
 	if err != nil {
 		logger.Error("Unable to Dial GRPC", zapcore.Field{Key: "err", Type: zapcore.ErrorType, Interface: err})

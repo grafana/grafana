@@ -132,17 +132,19 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
 	}
 
-	if z.cfg.Zanzana.ListenHTTP {
-		go func() {
-			z.logger.Info("Starting OpenFGA HTTP server")
-			zanzana.StartOpenFGAHttpSever(z.handle.GetAddress(), z.logger)
-		}()
-	}
-
 	return nil
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
+	// FIXME: openFGA http server should be started after GRPC server, otherwise
+	// there's no address to connect. This is a race condition right now.
+	go func() {
+		if z.cfg.Zanzana.ListenHTTP {
+			z.logger.Info("Starting OpenFGA HTTP server")
+			zanzana.StartOpenFGAHttpSever(z.handle.GetAddress(), z.logger)
+		}
+	}()
+
 	// Run is blocking so we can just run it here
 	return z.handle.Run(ctx)
 }
