@@ -9,6 +9,7 @@ import (
 
 const (
 	TypeUser string = "user"
+	TypeTeam string = "team"
 )
 
 func NewObject(typ, id string) string {
