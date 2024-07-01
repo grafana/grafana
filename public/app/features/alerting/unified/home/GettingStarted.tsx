@@ -35,22 +35,27 @@ export default function GettingStarted() {
       </ContentBox>
       <ContentBox>
         <Stack direction="column" gap={1}>
-            <Text element="h3">Get started</Text>
-            <ul className={styles.list}>
-              <li>
-                <Text weight="bold">Create alerts</Text> by querying a data source
-              </li>
-              <li>
-                <Text weight="bold">Route</Text> alert notifications to your Contact points
-              </li>
-              <li>
-                <Text weight="bold">Monitor</Text> your alerts in visualizations
-              </li>
-            </ul>
-            <TextLink href="https://grafana.com/tutorials/alerting-get-started/" icon="angle-right" inline={false} external>
-              Take our Get started with Grafana Alerting tutorial
-            </TextLink>
-          </Stack>
+          <Text element="h3">Get started</Text>
+          <ul className={styles.list}>
+            <li>
+              <Text weight="bold">Create alerts</Text> by querying a data source
+            </li>
+            <li>
+              <Text weight="bold">Route</Text> alert notifications to your Contact points
+            </li>
+            <li>
+              <Text weight="bold">Monitor</Text> your alerts in visualizations
+            </li>
+          </ul>
+          <TextLink
+            href="https://grafana.com/tutorials/alerting-get-started/"
+            icon="angle-right"
+            inline={false}
+            external
+          >
+            Take our Get started with Grafana Alerting tutorial
+          </TextLink>
+        </Stack>
       </ContentBox>
     </div>
   );
