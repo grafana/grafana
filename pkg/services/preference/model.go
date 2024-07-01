@@ -97,15 +97,8 @@ type QueryHistoryPreference struct {
 	HomeTab string `json:"homeTab"`
 }
 
-type PreferenceNavLink struct {
-	Id     string `json:"id,omitempty"`
-	Text   string `json:"text,omitempty"`
-	Url    string `json:"url,omitempty"`
-	Target string `json:"target,omitempty"`
-}
-
 type NavbarPreference struct {
-	SavedItems []PreferenceNavLink `json:"savedItems"`
+	SavedItemIds []string `json:"savedItemIds"`
 }
 
 func (j *PreferenceJSONData) FromDB(data []byte) error {

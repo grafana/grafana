@@ -22,19 +22,12 @@ export interface CookiePreferences {
 }
 
 export interface NavbarPreference {
-  savedItems: Array<PreferenceNavLink>;
+  savedItemIds: Array<string>;
 }
 
 export const defaultNavbarPreference: Partial<NavbarPreference> = {
-  savedItems: [],
+  savedItemIds: [],
 };
-
-export interface PreferenceNavLink {
-  id: string;
-  target: string;
-  text: string;
-  url: string;
-}
 
 /**
  * Spec defines user, team or org Grafana preferences

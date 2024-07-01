@@ -97,19 +97,8 @@ func GetPreferencesFor(ctx context.Context,
 			dto.Language = &preference.JSONData.Language
 		}
 
-		if preference.JSONData.Navbar.SavedItems != nil {
-			dto.Navbar = &preferences.NavbarPreference{
-				SavedItems: []preferences.PreferenceNavLink{},
-			}
-
-			for _, item := range preference.JSONData.Navbar.SavedItems {
-				dto.Navbar.SavedItems = append(dto.Navbar.SavedItems, preferences.PreferenceNavLink{
-					Id:     item.Id,
-					Target: item.Target,
-					Text:   item.Text,
-					Url:    item.Url,
-				})
-			}
+		if preference.JSONData.Navbar.SavedItemIds != nil {
+			dto.Navbar.SavedItemIds = preference.JSONData.Navbar.SavedItemIds
 		}
 
 		if preference.JSONData.QueryHistory.HomeTab != "" {

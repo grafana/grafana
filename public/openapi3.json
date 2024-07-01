@@ -7142,9 +7142,9 @@
       },
       "NavbarPreference": {
         "properties": {
-          "savedItems": {
+          "savedItemIds": {
             "items": {
-              "$ref": "#/components/schemas/PreferenceNavLink"
+              "type": "string"
             },
             "type": "array"
           }
@@ -8292,24 +8292,6 @@
             "type": "object"
           }
         },
-        "type": "object"
-      },
-      "PreferenceNavLink": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "target": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "title": "PreferenceNavLink defines model for PreferenceNavLink.",
         "type": "object"
       },
       "Preferences": {

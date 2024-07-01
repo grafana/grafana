@@ -18,15 +18,7 @@ type CookiePreferences struct {
 
 // NavbarPreference defines model for NavbarPreference.
 type NavbarPreference struct {
-	SavedItems []PreferenceNavLink `json:"savedItems"`
-}
-
-// PreferenceNavLink defines model for PreferenceNavLink.
-type PreferenceNavLink struct {
-	Id     string `json:"id"`
-	Target string `json:"target"`
-	Text   string `json:"text"`
-	Url    string `json:"url"`
+	SavedItemIds []string `json:"savedItemIds"`
 }
 
 // QueryHistoryPreference defines model for QueryHistoryPreference.

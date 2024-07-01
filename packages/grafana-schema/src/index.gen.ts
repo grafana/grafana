@@ -126,8 +126,7 @@ export type {
   Preferences,
   QueryHistoryPreference,
   CookiePreferences,
-  NavbarPreference,
-  PreferenceNavLink
+  NavbarPreference
 } from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated enums and default consts from preferences kind.

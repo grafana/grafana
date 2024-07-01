@@ -49,14 +49,7 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface")
 
 		#NavbarPreference: {
-			savedItems: [...#PreferenceNavLink]
-		} @cuetsy(kind="interface")
-
-		#PreferenceNavLink: {
-			id:     string
-			text:   string
-			url:    string
-			target: string
+			savedItemIds: [...string]
 		} @cuetsy(kind="interface")
 	}
 }]
