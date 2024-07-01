@@ -67,7 +67,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
       {overrideGrouping && (
         <Field
           label="Group by"
-          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty it will be inherited from the default notification policy."
+          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy."
           {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}
