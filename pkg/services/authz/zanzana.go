@@ -132,6 +132,11 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
 	}
 
+	go func() {
+		z.logger.Info("Starting OpenFGA HTTP server")
+		zanzana.StartOpenFGAHttpSever(z.handle.GetAddress(), z.logger)
+	}()
+
 	return nil
 }
 
