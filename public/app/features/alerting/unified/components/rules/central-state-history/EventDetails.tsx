@@ -32,7 +32,7 @@ export function EventDetails({ record, logRecords }: EventDetailsProps) {
   if (error) {
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.error">Error loading rule</Trans>
+        <Trans i18nKey="central-alert-history.details.error">Error loading rule for this event.</Trans>
       </Text>
     );
   }
@@ -45,10 +45,9 @@ export function EventDetails({ record, logRecords }: EventDetailsProps) {
   }
 
   if (!rule) {
-    // if we get here assume we can't find the rule
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.not-found">Rule not found</Trans>
+        <Trans i18nKey="central-alert-history.details.not-found">Rule not found for this event.</Trans>
       </Text>
     );
   }
@@ -159,7 +158,7 @@ const QueryVizualization = ({ ruleUID, rule, logRecords }: QueryVizualizationPro
  * @param ruleUID
  * @param logRecords
  * @param condition
- * @returns
+ * @returns PanelData
  */
 export function getPanelDataForRule(ruleUID: string, logRecords: LogRecord[], condition: string) {
   const ruleLogRecords = logRecords

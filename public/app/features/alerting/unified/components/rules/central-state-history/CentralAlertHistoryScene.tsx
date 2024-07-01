@@ -64,7 +64,8 @@ export const CentralAlertHistoryScene = () => {
       new SceneTimePicker({}),
       new SceneRefreshPicker({}),
     ],
-    // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events.
+    // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
+    // and using a wider time range might lead to showing gaps in the events list and the chart.
     $timeRange: new SceneTimeRange({
       from: 'now-1h',
       to: 'now',

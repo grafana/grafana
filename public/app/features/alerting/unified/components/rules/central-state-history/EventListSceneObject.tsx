@@ -30,8 +30,8 @@ import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 import { LABELS_FILTER } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
 
-export const LIMIT_EVENTS = 5000; //Limit is hard-capped at 5000.
-const DEFAULT_PAGE_SIZE = 100;
+export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
+const PAGE_SIZE = 100;
 
 /**
  *
@@ -90,7 +90,7 @@ interface HistoryLogEventsProps {
   logRecords: LogRecord[];
 }
 function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
-  const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, DEFAULT_PAGE_SIZE);
+  const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   return (
     <Stack direction="column" gap={0}>
       <ul>
@@ -104,6 +104,7 @@ function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
           );
         })}
       </ul>
+      {/* This paginations improves the performance considerably , making the page load faster */}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </Stack>
   );
