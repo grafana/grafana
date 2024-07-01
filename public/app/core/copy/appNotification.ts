@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo, ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -40,7 +40,7 @@ export const createErrorNotification = (
   title: string,
   text: string | Error = '',
   traceId?: string,
-  component?: React.ReactElement
+  component?: ReactElement
 ): AppNotification => {
   return {
     ...defaultErrorNotification,
