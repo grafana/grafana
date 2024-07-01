@@ -563,7 +563,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public onMetricRadioChange = (val: string) => {
-    console.log('show metrics for, ', val);
+    this.setState({ selectedTabGroupOption: val });
+    this.buildLayout();
   };
 
   public onDisplayTypeChanged = (val: SelectableValue) => {
