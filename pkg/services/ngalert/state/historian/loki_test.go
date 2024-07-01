@@ -743,7 +743,6 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 }
 
 func TestGetFolderUIDsForFilter(t *testing.T) {
-	t.Skip("TODO fix flaky tests")
 	orgID := int64(1)
 	rule := models.RuleGen.With(models.RuleMuts.WithNamespaceUID("folder-1")).GenerateRef()
 	folders := []string{
