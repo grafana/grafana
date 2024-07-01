@@ -158,11 +158,12 @@
   "central-alert-history": {
     "error": "Something went wrong loading the alert state history",
     "filter": {
-      "button": {
-        "clear": "Clear"
-      },
-      "label": "Filter events",
-      "placeholder": "Filter events in the list with labels"
+      "info": {
+        "label1": "Filter events using label querying without spaces, ex:",
+        "label2": "Invalid use of spaces:",
+        "label3": "Valid use of spaces:",
+        "label4": "Filter alerts using label querying without braces, ex:"
+      }
     }
   },
   "clipboard-button": {
@@ -683,6 +684,20 @@
       "split-title": "Split",
       "split-tooltip": "Split the pane",
       "split-widen": "Widen pane"
+    }
+  },
+  "export": {
+    "json": {
+      "cancel-button": "Cancel",
+      "copy-button": "Copy to clipboard",
+      "download-button": "Download file",
+      "export-externally-label": "Export the dashboard to use in another instance",
+      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
+      "title": "Save dashboard JSON"
+    },
+    "menu": {
+      "export-as-json-label": "Export",
+      "export-as-json-tooltip": "Export"
     }
   },
   "folder-picker": {
@@ -1625,6 +1640,11 @@
       "title": "Restore Dashboards"
     }
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Search for dashboards"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1723,6 +1743,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-description": "Advanced settings",
       "share-internally-title": "Share internally",
