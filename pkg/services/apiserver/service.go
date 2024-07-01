@@ -275,6 +275,23 @@ func (s *service) start(ctx context.Context) error {
 		store := resource.NewLocalResourceStoreClient(resourceServer)
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(store,
 			o.RecommendedOptions.Etcd.StorageConfig.Codec)
+	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+		}
+		// Create a connection to the gRPC server
+		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+
+		// TODO: determine when to close the connection, we cannot defer it here
+		// defer conn.Close()
+
+		// Create a client instance
+		store := resource.NewResourceStoreClientGRPC(conn)
+
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
