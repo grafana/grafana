@@ -8,7 +8,7 @@ import { EventBus } from '../events';
 import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { GrafanaTheme2 } from '../themes';
 import { PanelData } from '../types';
-import { PanelOptionsEditorBuilder } from '../utils';
+import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
 /**
