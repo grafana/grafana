@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Not for parallel tests.
@@ -149,12 +150,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		return ngmodels.CopyRule(baseRule, mutators...)
 	}
 
-	newEvaluation := func(evalTime time.Time, evalState eval.State) *Evaluation {
+	newEvaluationWithValues := func(evalTime time.Time, evalState eval.State, values map[string]float64) *Evaluation {
 		return &Evaluation{
 			EvaluationTime:  evalTime,
 			EvaluationState: evalState,
-			Values:          make(map[string]float64),
+			Values:          values,
 		}
+	}
+
+	newEvaluation := func(evalTime time.Time, evalState eval.State) *Evaluation {
+		return newEvaluationWithValues(evalTime, evalState, make(map[string]float64))
 	}
 
 	newResult := func(mutators ...eval.ResultMutator) eval.Result {
@@ -894,7 +899,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[1:normal] t2[NoData] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+						newResult(
+							eval.WithState(eval.Normal),
+							eval.WithLabels(labels1),
+							eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: util.Pointer(1.0)}}),
+						),
 					},
 					t2: {
 						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
@@ -913,6 +922,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									EndsAt:             t2.Add(ResendDelay * 4),
 									LastEvaluationTime: t2,
 									LastSentAt:         &t2,
+									Values:             map[string]float64{},
 								},
 							},
 						},
@@ -925,11 +935,12 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:             labels["system + rule + no-data"],
 									State:              eval.Alerting,
 									StateReason:        eval.NoData.String(),
-									LatestResult:       newEvaluation(t2, eval.NoData),
+									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{}),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
 									LastEvaluationTime: t2,
 									LastSentAt:         &t2,
+									Values:             map[string]float64{},
 								},
 							},
 						},
@@ -942,10 +953,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:             labels["system + rule + no-data"],
 									State:              eval.Normal,
 									StateReason:        eval.NoData.String(),
-									LatestResult:       newEvaluation(t2, eval.NoData),
+									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{}),
 									StartsAt:           t2,
 									EndsAt:             t2,
 									LastEvaluationTime: t2,
+									Values:             map[string]float64{},
 								},
 							},
 						},
@@ -976,11 +988,12 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:             labels["system + rule + labels1"],
 									State:              eval.Alerting,
 									StateReason:        eval.NoData.String(),
-									LatestResult:       newEvaluation(t2, eval.NoData),
+									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
 									LastEvaluationTime: t2,
 									LastSentAt:         &t2,
+									Values:             map[string]float64{"A": float64(-1)},
 								},
 							},
 						},
@@ -993,10 +1006,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:             labels["system + rule + labels1"],
 									State:              eval.Normal,
 									StateReason:        eval.NoData.String(),
-									LatestResult:       newEvaluation(t2, eval.NoData),
+									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t1,
 									EndsAt:             t1,
 									LastEvaluationTime: t2,
+									Values:             map[string]float64{"A": float64(-1)},
 								},
 							},
 						},
@@ -1009,10 +1023,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									Labels:             labels["system + rule + labels1"],
 									State:              eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-									LatestResult:       newEvaluation(t2, eval.NoData),
+									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t1,
 									EndsAt:             t1,
 									LastEvaluationTime: t2,
+									Values:             map[string]float64{"A": float64(-1)},
 								},
 							},
 						},

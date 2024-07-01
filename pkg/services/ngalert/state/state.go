@@ -163,6 +163,32 @@ func (a *State) AddErrorAnnotations(err error, rule *models.AlertRule) {
 	}
 }
 
+func (a *State) SetNextValues(result eval.Result) {
+	const sentinel = float64(-1)
+
+	// We try to provide a reasonable object for Values in the event of nodata/error.
+	// In order to not break templates that might refer to refIDs,
+	// we instead fill values with the latest known set of refIDs, but with a sentinel -1 to indicate that the value didn't exist.
+	if result.State == eval.NoData || result.State == eval.Error {
+		placeholder := make(map[string]float64, len(a.Values))
+		for refID := range a.Values {
+			placeholder[refID] = sentinel
+		}
+		a.Values = placeholder
+		return
+	}
+
+	newValues := make(map[string]float64, len(result.Values))
+	for k, v := range result.Values {
+		if v.Value != nil {
+			newValues[k] = *v.Value
+		} else {
+			newValues[k] = math.NaN()
+		}
+	}
+	a.Values = newValues
+}
+
 // IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
 func IsNormalStateWithNoReason(s *State) bool {
 	return s.State == eval.Normal && s.StateReason == ""

@@ -405,15 +405,14 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
-	values := NewEvaluationValues(result.Values)
+	currentState.SetNextValues(result)
 	currentState.LatestResult = &Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
-		Values:          values,
+		Values:          currentState.Values,
 		Condition:       alertRule.Condition,
 	}
 	currentState.LastEvaluationString = result.EvaluationString
-	currentState.Values = values
 	oldState := currentState.State
 	oldReason := currentState.StateReason
 
