@@ -5,7 +5,18 @@ import { useMeasure } from 'react-use';
 import { DataFrameJSON, GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, TextBoxVariable, VariableValue, sceneGraph } from '@grafana/scenes';
-import { Alert, Icon, IconButton, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
+import {
+  Alert,
+  Icon,
+  IconButton,
+  LoadingBar,
+  Pagination,
+  Stack,
+  Text,
+  Tooltip,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import {
@@ -44,11 +55,7 @@ interface HistoryEventsListProps {
   valueInfilterTextBox: VariableValue;
   addFilter: (key: string, value: string) => void;
 }
-export const HistoryEventsList = ({
-  timeRange,
-  valueInfilterTextBox,
-  addFilter,
-}: HistoryEventsListProps) => {
+export const HistoryEventsList = ({ timeRange, valueInfilterTextBox, addFilter }: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
@@ -90,7 +97,7 @@ const LoadingIndicator = ({ visible = false }) => {
 
 interface HistoryLogEventsProps {
   logRecords: LogRecord[];
-  addFilter: (key: string, value: string) => void
+  addFilter: (key: string, value: string) => void;
 }
 function HistoryLogEvents({ logRecords, addFilter }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
@@ -137,7 +144,7 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
 interface EventRowProps {
   record: LogRecord;
   logRecords: LogRecord[];
-  addFilter: (key: string, value: string) => void
+  addFilter: (key: string, value: string) => void;
 }
 function EventRow({ record, logRecords, addFilter }: EventRowProps) {
   const styles = useStyles2(getStyles);
@@ -166,10 +173,13 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
             <EventTransition previous={record.line.previous} current={record.line.current} />
           </div>
           <div className={styles.alertNameCol}>
-            {record.line.labels ? <AlertRuleName labels={record.line.labels}
-              ruleUID={record.line.ruleUID}
-              addFilterByName={(addFilterByName)}
-            /> : null}
+            {record.line.labels ? (
+              <AlertRuleName
+                labels={record.line.labels}
+                ruleUID={record.line.ruleUID}
+                addFilterByName={addFilterByName}
+              />
+            ) : null}
           </div>
           <div className={styles.labelsCol}>
             <AlertLabels labels={record.line.labels ?? {}} size="xs" onLabelClick={onLabelClick} />
@@ -188,7 +198,7 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
 interface AlertRuleNameProps {
   labels: Record<string, string>;
   ruleUID?: string;
-  addFilterByName: (alertRuleName: string) => void
+  addFilterByName: (alertRuleName: string) => void;
 }
 function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps) {
   const styles = useStyles2(getStyles);
@@ -216,7 +226,14 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
           </Trans>
         </a>
       </Tooltip>
-      <IconButton name="plus-circle" size="sm" onClick={() => addFilterByName(alertRuleName)} aria-label={ariaLabel} tooltip={ariaLabel} className={styles.colorIcon} />
+      <IconButton
+        name="plus-circle"
+        size="sm"
+        onClick={() => addFilterByName(alertRuleName)}
+        aria-label={ariaLabel}
+        tooltip={ariaLabel}
+        className={styles.colorIcon}
+      />
     </Stack>
   );
 }
@@ -242,13 +259,7 @@ interface StateIconProps {
   labelText: ReactElement;
   showLabel: boolean;
 }
-const StateIcon = ({
-  iconName,
-  iconColor,
-  tooltipContent,
-  labelText,
-  showLabel,
-}: StateIconProps) => (
+const StateIcon = ({ iconName, iconColor, tooltipContent, labelText, showLabel }: StateIconProps) => (
   <Tooltip content={tooltipContent}>
     <Stack gap={0.5} direction={'row'} alignItems="center">
       <Icon name={iconName} size="md" className={iconColor} />
@@ -444,7 +455,7 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
     const newFilterToAdd = `${key}=${value}`;
     const finalFilter = valueInfilterTextBox ? `${valueInfilterTextBox.toString()} ,${newFilterToAdd}` : newFilterToAdd;
     filtersVariable.setValue(finalFilter);
-  }
+  };
 
   const valueInfilterTextBox: VariableValue = filtersVariable.getValue();
 

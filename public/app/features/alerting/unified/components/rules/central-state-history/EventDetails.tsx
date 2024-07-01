@@ -99,15 +99,11 @@ const Annotations = ({ rule }: AnnotationsProps) => {
   return (
     <>
       <Text variant="body" color="secondary" weight="light">
-        <Trans i18nKey="central-alert-history.details.annotations">
-          Annotations
-        </Trans>
+        <Trans i18nKey="central-alert-history.details.annotations">Annotations</Trans>
       </Text>
       {Object.keys(annotations).length === 0 ? (
         <Text variant="body" weight="light" italic>
-          <Trans i18nKey="central-alert-history.details.no-annotations">
-            No annotations
-          </Trans>
+          <Trans i18nKey="central-alert-history.details.no-annotations">No annotations</Trans>
         </Text>
       ) : (
         <div className={styles.metadataWrapper}>

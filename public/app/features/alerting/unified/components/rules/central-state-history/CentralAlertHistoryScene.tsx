@@ -14,7 +14,7 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VariableValueSelectors,
-  useUrlSync
+  useUrlSync,
 } from '@grafana/scenes';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema/dist/esm/index';
 import {
@@ -28,7 +28,7 @@ import {
   Text,
   Tooltip,
   TooltipDisplayMode,
-  useStyles2
+  useStyles2,
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -193,7 +193,6 @@ function ClearFilterButton({ filterVariable }: { filterVariable: TextBoxVariable
             <Text>Clear labels filter</Text>
           </Trans>
         </Button>
-
       </div>
     </Tooltip>
   );
