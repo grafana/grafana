@@ -63,12 +63,10 @@ func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
 			})
 		}); err != nil {
 			if strings.Contains(err.Error(), "cannot write a tuple which already exists") {
-				z.log.Warn("Skipping already synced permissions", "sync_key", key)
+				z.log.Debug("Skipping already synced permissions", "sync_key", key)
 				continue
 			}
-
-			z.log.Warn("Failed to sync permissions to zanzana", "err", err, "sync_key", key)
-			return nil
+			return err
 		}
 	}
 

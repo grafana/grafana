@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -46,7 +47,11 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
-func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService, accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (*Service, error) {
+func ProvideService(
+	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client,
+) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
@@ -60,6 +65,14 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	// 2) have released enough versions not to support a version without split scopes
 	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
 		return nil, err
+	}
+
+	// FIXME(kalleep): Probably need to move sync if we start to depend on runtime information e.g. fixed roles.
+	if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		s := migrator.NewZanzanaSynchroniser(zclient, db)
+		if err := s.Sync(context.Background()); err != nil {
+			service.log.Error("Failed to synchronise permissions to zanzana ", "err", err)
+		}
 	}
 
 	return service, nil

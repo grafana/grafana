@@ -28,3 +28,7 @@ func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cf
 		client.WithLogger(log.New("zanzana-client")),
 	)
 }
+
+func NewNoopClient() *client.NoopClient {
+	return client.NewNoop()
+}
