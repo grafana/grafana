@@ -52,7 +52,7 @@ func ProvideService(
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client,
 ) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer)
+	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -67,14 +67,14 @@ func ProvideService(
 		return nil, err
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		service.sync = migrator.NewZanzanaSynchroniser(zclient, db)
-	}
-
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver, cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+func ProvideOSSService(
+	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
+	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+	zclient zanzana.Client, db db.DB,
+) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
 		cache:          cache,
@@ -84,6 +84,7 @@ func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, actionResolv
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
 		tracer:         tracer,
+		sync:           migrator.NewZanzanaSynchroniser(zclient, db),
 	}
 
 	return s

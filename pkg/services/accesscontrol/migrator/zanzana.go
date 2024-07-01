@@ -68,7 +68,7 @@ func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
 	return nil
 }
 
-// managedPermissionsCollector collectes managed permissions into provided tuple map.
+// managedPermissionsCollector collects managed permissions into provided tuple map.
 // It will only store actions that are supported by our schema. Managed permissions can
 // be directly mapped to user/team/role without having to write an intermediate role.
 func managedPermissionsCollector(store db.DB) TupleCollector {
