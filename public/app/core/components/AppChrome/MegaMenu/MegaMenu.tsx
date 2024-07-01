@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useEffect, useState } from 'react';
+import { memo, forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -9,9 +9,8 @@ import { PreferenceNavLink } from '@grafana/schema/dist/esm/raw/preferences/x/pr
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
+import { useLoadPreferencesQuery, usePatchPreferencesMutation } from 'app/features/preferences/api';
 import { useSelector } from 'app/types';
-
-import { PreferencesService } from '../../../services/PreferencesService';
 
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
@@ -22,7 +21,6 @@ export interface Props extends DOMAttributes {
   onClose: () => void;
 }
 
-const service = new PreferencesService('user');
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const navTree = useSelector((state) => state.navBarTree);
@@ -30,16 +28,10 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const [pinnedItems, setPinnedItems] = useState<PreferenceNavLink[]>([]);
+    const preferences = useLoadPreferencesQuery({ resource: 'user' });
+    const pinnedItems = preferences.data?.navbar?.savedItems;
+    const [setPinnedItems] = usePatchPreferencesMutation();
 
-    useEffect(() => {
-      const loadPreferences = async () => {
-        const preferences = await service.load();
-        setPinnedItems(preferences?.navbar?.savedItems || []);
-      };
-
-      loadPreferences();
-    }, []);
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
@@ -60,10 +52,24 @@ export const MegaMenu = memo(
     };
 
     const isPinned = (link: NavModelItem | PreferenceNavLink) => {
-      if (!link.id) {
+      if (!link.id || !pinnedItems?.length) {
         return false;
       }
       return pinnedItems?.map((item) => item.id).includes(link.id);
+    };
+
+    const onPinItem = async (item: PreferenceNavLink) => {
+      if (!!pinnedItems?.length) {
+        const newItems = isPinned(item) ? pinnedItems.filter((i) => i.id !== item.id) : [...pinnedItems, item];
+        setPinnedItems({
+          resource: 'user',
+          body: {
+            navbar: {
+              savedItems: newItems,
+            },
+          },
+        });
+      }
     };
 
     return (
@@ -102,13 +108,7 @@ export const MegaMenu = memo(
                     isPinned={isPinned}
                     onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
-                    onPin={async (item) => {
-                      const newItems = isPinned(item)
-                        ? pinnedItems.filter((i) => i.id !== item.id)
-                        : [...pinnedItems, item];
-                      setPinnedItems(newItems);
-                      await service.patch({ navbar: { savedItems: newItems } });
-                    }}
+                    onPin={onPinItem}
                   />
                 </Stack>
               ))}
