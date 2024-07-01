@@ -156,7 +156,31 @@
     }
   },
   "central-alert-history": {
+    "details": {
+      "alert-name": "{äľęřŧŖūľęŃämę}",
+      "annotations": "Åŉŉőŧäŧįőŉş",
+      "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
+      "loading": "Ŀőäđįŉģ...",
+      "no-annotations": "Ńő äŉŉőŧäŧįőŉş",
+      "no-values": "Ńő väľūęş",
+      "not-found": "Ŗūľę ŉőŧ ƒőūŉđ ƒőř ŧĥįş ęvęŉŧ.",
+      "not-grafana-rule": "Ŗūľę įş ŉőŧ ä Ğřäƒäŉä řūľę",
+      "number-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉş ƒőř şęľęčŧęđ pęřįőđ",
+      "state": {
+        "alerting": "Åľęřŧįŉģ",
+        "error": "Ēřřőř",
+        "no-data": "Ńő đäŧä",
+        "normal": "Ńőřmäľ",
+        "pending": "Pęŉđįŉģ"
+      },
+      "state-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉ",
+      "timestamp": "{ƒőřmäŧŧęđĐäŧę}",
+      "unknown-event-state": "Ůŉĸŉőŵŉ",
+      "unknown-rule": "Ůŉĸŉőŵŉ",
+      "value-in-transition": "Väľūę įŉ ŧřäŉşįŧįőŉ"
+    },
     "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
+    "error-message": "{ęřřőřŜŧř}",
     "filter": {
       "info": {
         "label1": "Fįľŧęř ęvęŉŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ şpäčęş, ęχ:",

@@ -43,10 +43,7 @@ interface HistoryEventsListProps {
   timeRange?: TimeRange;
   valueInfilterTextBox: VariableValue;
 }
-export const HistoryEventsList = ({
-  timeRange,
-  valueInfilterTextBox,
-}: HistoryEventsListProps) => {
+export const HistoryEventsList = ({ timeRange, valueInfilterTextBox }: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
@@ -222,13 +219,7 @@ interface StateIconProps {
   labelText: ReactElement;
   showLabel: boolean;
 }
-const StateIcon = ({
-  iconName,
-  iconColor,
-  tooltipContent,
-  labelText,
-  showLabel,
-}: StateIconProps) => (
+const StateIcon = ({ iconName, iconColor, tooltipContent, labelText, showLabel }: StateIconProps) => (
   <Tooltip content={tooltipContent}>
     <Stack gap={0.5} direction={'row'} alignItems="center">
       <Icon name={iconName} size="md" className={iconColor} />
