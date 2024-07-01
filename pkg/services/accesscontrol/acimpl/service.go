@@ -67,12 +67,8 @@ func ProvideService(
 		return nil, err
 	}
 
-	// FIXME(kalleep): Probably need to move sync if we start to depend on runtime information e.g. fixed roles.
 	if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		s := migrator.NewZanzanaSynchroniser(zclient, db)
-		if err := s.Sync(context.Background()); err != nil {
-			service.log.Error("Failed to synchronise permissions to zanzana ", "err", err)
-		}
+		service.sync = migrator.NewZanzanaSynchroniser(zclient, db)
 	}
 
 	return service, nil
@@ -104,6 +100,7 @@ type Service struct {
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
 	tracer         tracing.Tracer
+	sync           *migrator.ZanzanaSynchroniser
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -410,6 +407,13 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		}
 		return true
 	})
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if err := s.sync.Sync(context.Background()); err != nil {
+			s.log.Error("Failed to synchronise permissions to zanzana ", "err", err)
+		}
+	}
+
 	return nil
 }
 
