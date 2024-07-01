@@ -42,12 +42,12 @@ const PAGE_SIZE = 100;
 interface HistoryEventsListProps {
   timeRange?: TimeRange;
   valueInfilterTextBox: VariableValue;
-  addFilterByName: (alertRuleName: string) => void;
+  addFilter: (key: string, value: string) => void;
 }
 export const HistoryEventsList = ({
   timeRange,
   valueInfilterTextBox,
-  addFilterByName,
+  addFilter,
 }: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
@@ -77,7 +77,7 @@ export const HistoryEventsList = ({
   return (
     <>
       <LoadingIndicator visible={isLoading} />
-      <HistoryLogEvents logRecords={historyRecords} addFilterByName={addFilterByName} />
+      <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} />
     </>
   );
 };
@@ -90,9 +90,9 @@ const LoadingIndicator = ({ visible = false }) => {
 
 interface HistoryLogEventsProps {
   logRecords: LogRecord[];
-  addFilterByName: (alertRuleName: string) => void
+  addFilter: (key: string, value: string) => void
 }
-function HistoryLogEvents({ logRecords, addFilterByName }: HistoryLogEventsProps) {
+function HistoryLogEvents({ logRecords, addFilter }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   return (
     <Stack direction="column" gap={0}>
@@ -103,7 +103,7 @@ function HistoryLogEvents({ logRecords, addFilterByName }: HistoryLogEventsProps
               key={record.timestamp + (record.line.fingerprint ?? '')}
               record={record}
               logRecords={logRecords}
-              addFilterByName={addFilterByName}
+              addFilter={addFilter}
             />
           );
         })}
@@ -137,11 +137,18 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
 interface EventRowProps {
   record: LogRecord;
   logRecords: LogRecord[];
-  addFilterByName: (alertRuleName: string) => void
+  addFilter: (key: string, value: string) => void
 }
-function EventRow({ record, logRecords, addFilterByName }: EventRowProps) {
+function EventRow({ record, logRecords, addFilter }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
+  function onLabelClick(label: string, value: string) {
+    addFilter(label, value);
+  }
+  function addFilterByName(alertRuleName: string) {
+    addFilter('alertname', alertRuleName);
+  }
+
   return (
     <Stack direction="column" gap={0}>
       <div className={styles.header(isCollapsed)} data-testid="event-row-header">
@@ -161,11 +168,11 @@ function EventRow({ record, logRecords, addFilterByName }: EventRowProps) {
           <div className={styles.alertNameCol}>
             {record.line.labels ? <AlertRuleName labels={record.line.labels}
               ruleUID={record.line.ruleUID}
-              addFilterByName={addFilterByName}
+              addFilterByName={(addFilterByName)}
             /> : null}
           </div>
           <div className={styles.labelsCol}>
-            <AlertLabels labels={record.line.labels ?? {}} size="xs" />
+            <AlertLabels labels={record.line.labels ?? {}} size="xs" onLabelClick={onLabelClick} />
           </div>
         </Stack>
       </div>
@@ -209,7 +216,7 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
           </Trans>
         </a>
       </Tooltip>
-      <IconButton name="plus" size="sm" onClick={() => addFilterByName(alertRuleName)} aria-label={ariaLabel} tooltip={ariaLabel} />
+      <IconButton name="plus-circle" size="sm" onClick={() => addFilterByName(alertRuleName)} aria-label={ariaLabel} tooltip={ariaLabel} className={styles.colorIcon} />
     </Stack>
   );
 }
@@ -411,6 +418,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: theme.spacing(2),
       borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
+    colorIcon: css({
+      color: theme.colors.primary.text,
+    }),
   };
 };
 
@@ -430,15 +440,15 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
   // eslint-disable-next-line
   const filtersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
 
-  const addFilterByName = (alertRuleName: string) => {
-    const newFilterToAdd = `alertname=${alertRuleName}`;
+  const addFilter = (key: string, value: string) => {
+    const newFilterToAdd = `${key}=${value}`;
     const finalFilter = valueInfilterTextBox ? `${valueInfilterTextBox.toString()} ,${newFilterToAdd}` : newFilterToAdd;
     filtersVariable.setValue(finalFilter);
   }
 
   const valueInfilterTextBox: VariableValue = filtersVariable.getValue();
 
-  return <HistoryEventsList timeRange={timeRange} valueInfilterTextBox={valueInfilterTextBox} addFilterByName={addFilterByName} />;
+  return <HistoryEventsList timeRange={timeRange} valueInfilterTextBox={valueInfilterTextBox} addFilter={addFilter} />;
 }
 
 function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {

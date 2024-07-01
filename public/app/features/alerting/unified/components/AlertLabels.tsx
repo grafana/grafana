@@ -4,7 +4,7 @@ import pluralize from 'pluralize';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { isPrivateLabel } from '../utils/labels';
@@ -15,9 +15,10 @@ interface Props {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
+  onLabelClick?: (label: string, value: string) => void;
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
+export const AlertLabels = ({ labels, commonLabels = {}, size, onLabelClick }: Props) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
@@ -33,9 +34,20 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
 
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
-      {labelsToShow.map(([label, value]) => (
-        <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
-      ))}
+      {labelsToShow.map(([label, value]) => {
+        const ariaLabel = t('central-alert-history.details.add-label-to-filter', 'Add label to the filter');
+        const color = getLabelColor(label);
+        return (
+          onLabelClick ? (
+            <Stack key={label + value} gap={0.5} onClick={() => onLabelClick(label, value)} >
+              <Label size={size} label={label} value={value} color={color} />
+              <IconButton name="plus-circle" size="sm" onClick={() => onLabelClick(label, value)} aria-label={ariaLabel} tooltip={ariaLabel} className={styles.iconColor(color)} />
+            </Stack>
+          ) :
+            <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
+        )
+      }
+      )}
       {!showCommonLabels && hasCommonLabels && (
         <Button
           variant="secondary"
@@ -75,4 +87,11 @@ const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => ({
 
     gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
   }),
+  clickableLabel: css({
+    cursor: 'pointer',
+  }),
+  iconColor: (color: string) =>
+    css({
+      color: color,
+    }),
 });
