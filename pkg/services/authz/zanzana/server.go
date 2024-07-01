@@ -61,7 +61,6 @@ func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
 		return fmt.Errorf("failed to start HTTP server: GRPC server unavailable")
 	}
 
-	logger.Info("Connecting to the GRPC", "addr", addr)
 	conn, err := grpc.NewClient(addr, dialOpts...)
 	if err != nil {
 		return fmt.Errorf("Unable to dial GRPC: %w", err)
@@ -103,6 +102,6 @@ func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
 			logger.Error("failed to start http server", zapcore.Field{Key: "err", Type: zapcore.ErrorType, Interface: err})
 		}
 	}()
-	logger.Info(fmt.Sprintf("HTTP server listening on '%s'...", httpServer.Addr))
+	logger.Info(fmt.Sprintf("OpenFGA HTTP server listening on '%s'...", httpServer.Addr))
 	return nil
 }
