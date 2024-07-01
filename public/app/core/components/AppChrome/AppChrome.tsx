@@ -26,7 +26,7 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, searchBarHidden);
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
@@ -125,7 +125,7 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
   return {
     content: css({
       display: 'flex',
@@ -147,7 +147,7 @@ const getStyles = (theme: GrafanaTheme2) => {
             borderRight: `1px solid ${theme.colors.border.weak}`,
             display: 'none',
             position: 'fixed',
-            height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
             zIndex: theme.zIndex.navbarFixed,
 
             [theme.breakpoints.up('xl')]: {
