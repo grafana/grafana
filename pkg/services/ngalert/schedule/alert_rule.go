@@ -30,7 +30,7 @@ import (
 // Rule represents a single piece of work that is executed periodically by the ruler.
 type Rule interface {
 	// Run creates the resources that will perform the rule's work, and starts it. It blocks indefinitely, until Stop is called or another signal is sent.
-	Run(key ngmodels.AlertRuleKey) error
+	Run() error
 	// Stop shuts down the rule's execution with an optional reason. It has no effect if the rule has not yet been Run.
 	Stop(reason error)
 	// Eval sends a signal to execute the work represented by the rule, exactly one time.
@@ -67,6 +67,7 @@ func newRuleFactory(
 		if rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
+				rule.GetKey(),
 				maxAttempts,
 				clock,
 				evalFactory,
@@ -79,6 +80,7 @@ func newRuleFactory(
 		}
 		return newAlertRule(
 			ctx,
+			rule.GetKey(),
 			appURL,
 			disableGrafanaFolder,
 			maxAttempts,
@@ -104,6 +106,8 @@ type ruleProvider interface {
 }
 
 type alertRule struct {
+	key ngmodels.AlertRuleKey
+
 	evalCh   chan *Evaluation
 	updateCh chan RuleVersionAndPauseStatus
 	ctx      context.Context
@@ -130,6 +134,7 @@ type alertRule struct {
 
 func newAlertRule(
 	parent context.Context,
+	key ngmodels.AlertRuleKey,
 	appURL *url.URL,
 	disableGrafanaFolder bool,
 	maxAttempts int64,
@@ -146,6 +151,7 @@ func newAlertRule(
 ) *alertRule {
 	ctx, stop := util.WithCancelCause(parent)
 	return &alertRule{
+		key:                  key,
 		evalCh:               make(chan *Evaluation),
 		updateCh:             make(chan RuleVersionAndPauseStatus),
 		ctx:                  ctx,
@@ -214,13 +220,13 @@ func (a *alertRule) Stop(reason error) {
 	}
 }
 
-func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
-	grafanaCtx := ngmodels.WithRuleKey(a.ctx, key)
+func (a *alertRule) Run() error {
+	grafanaCtx := ngmodels.WithRuleKey(a.ctx, a.key)
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
 	var currentFingerprint fingerprint
-	defer a.stopApplied(key)
+	defer a.stopApplied(a.key)
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
@@ -232,7 +238,7 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 
 			logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
 			// clear the state. So the next evaluation will start from the scratch.
-			a.resetState(grafanaCtx, key, ctx.IsPaused)
+			a.resetState(grafanaCtx, a.key, ctx.IsPaused)
 			currentFingerprint = ctx.Fingerprint
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-a.evalCh:
@@ -242,7 +248,7 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 			}
 
 			func() {
-				orgID := fmt.Sprint(key.OrgID)
+				orgID := fmt.Sprint(a.key.OrgID)
 				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
 				evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
 
@@ -266,7 +272,7 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 					// lingers in DB and won't be cleaned up until next alert rule update.
 					needReset = needReset || (currentFingerprint == 0 && isPaused)
 					if needReset {
-						a.resetState(grafanaCtx, key, isPaused)
+						a.resetState(grafanaCtx, a.key, isPaused)
 					}
 					currentFingerprint = f
 					if isPaused {
@@ -298,7 +304,7 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 					}
 
 					retry := attempt < a.maxAttempts
-					err := a.evaluate(tracingCtx, key, f, attempt, ctx, span, retry)
+					err := a.evaluate(tracingCtx, a.key, f, attempt, ctx, span, retry)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
@@ -325,8 +331,8 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 				// cases.
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
-				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, key, states)
+				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key), a.key, ngmodels.StateReasonRuleDeleted)
+				a.expireAndSend(grafanaCtx, a.key, states)
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil

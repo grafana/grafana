@@ -8,6 +8,10 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -15,12 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type recordingRule struct {
+	key ngmodels.AlertRuleKey
+
 	ctx    context.Context
 	evalCh chan *Evaluation
 	stopFn util.CancelCauseFunc
@@ -41,9 +44,10 @@ type recordingRule struct {
 	writer RecordingWriter
 }
 
-func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter) *recordingRule {
+func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter) *recordingRule {
 	ctx, stop := util.WithCancelCause(parent)
 	return &recordingRule{
+		key:            key,
 		ctx:            ctx,
 		evalCh:         make(chan *Evaluation),
 		stopFn:         stop,
@@ -84,8 +88,8 @@ func (r *recordingRule) Stop(reason error) {
 	}
 }
 
-func (r *recordingRule) Run(key ngmodels.AlertRuleKey) error {
-	ctx := ngmodels.WithRuleKey(r.ctx, key)
+func (r *recordingRule) Run() error {
+	ctx := ngmodels.WithRuleKey(r.ctx, r.key)
 	logger := r.logger.FromContext(ctx)
 	logger.Debug("Recording rule routine started")
 

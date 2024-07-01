@@ -248,7 +248,7 @@ func TestAlertRule(t *testing.T) {
 		rule := blankRuleForTests(context.Background())
 		runResult := make(chan error)
 		go func() {
-			runResult <- rule.Run(models.AlertRuleKey{})
+			runResult <- rule.Run()
 		}()
 
 		rule.Stop(nil)
@@ -263,7 +263,7 @@ func TestAlertRule(t *testing.T) {
 }
 
 func blankRuleForTests(ctx context.Context) *alertRule {
-	return newAlertRule(context.Background(), nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
+	return newAlertRule(context.Background(), models.AlertRuleKey{}, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -301,7 +301,7 @@ func TestRuleRoutine(t *testing.T) {
 			t.Cleanup(cancel)
 			ruleInfo := factory.new(ctx, rule)
 			go func() {
-				_ = ruleInfo.Run(rule.GetKey())
+				_ = ruleInfo.Run()
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -464,7 +464,7 @@ func TestRuleRoutine(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			ruleInfo := factory.new(ctx, rule)
 			go func() {
-				err := ruleInfo.Run(models.AlertRuleKey{})
+				err := ruleInfo.Run()
 				stoppedChan <- err
 			}()
 
@@ -484,7 +484,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ruleInfo := factory.new(context.Background(), rule)
 			go func() {
-				err := ruleInfo.Run(rule.GetKey())
+				err := ruleInfo.Run()
 				stoppedChan <- err
 			}()
 
@@ -515,7 +515,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
-			_ = ruleInfo.Run(rule.GetKey())
+			_ = ruleInfo.Run()
 		}()
 
 		// init evaluation loop so it got the rule version
@@ -597,7 +597,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
-			_ = ruleInfo.Run(rule.GetKey())
+			_ = ruleInfo.Run()
 		}()
 
 		ruleInfo.Eval(&Evaluation{
@@ -716,7 +716,7 @@ func TestRuleRoutine(t *testing.T) {
 			ruleInfo := factory.new(ctx, rule)
 
 			go func() {
-				_ = ruleInfo.Run(rule.GetKey())
+				_ = ruleInfo.Run()
 			}()
 
 			ruleInfo.Eval(&Evaluation{
@@ -750,7 +750,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
-			_ = ruleInfo.Run(rule.GetKey())
+			_ = ruleInfo.Run()
 		}()
 
 		ruleInfo.Eval(&Evaluation{
@@ -787,7 +787,7 @@ func TestRuleRoutine(t *testing.T) {
 		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
-			_ = ruleInfo.Run(rule.GetKey())
+			_ = ruleInfo.Run()
 		}()
 
 		// Evaluate 10 times:
