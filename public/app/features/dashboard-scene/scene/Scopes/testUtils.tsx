@@ -314,11 +314,12 @@ export const getMock = jest
 
 const selectors = {
   tree: {
-    search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
-    select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
-    radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
-    expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
-    title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
+    search: 'scopes-tree-search',
+    headline: 'scopes-tree-headline',
+    select: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-checkbox`,
+    radio: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-radio`,
+    expand: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-expand`,
+    title: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-title`,
   },
   filters: {
     input: 'scopes-filters-input',
@@ -359,36 +360,50 @@ export const getNotFoundForScope = () => screen.getByTestId(selectors.dashboards
 export const getNotFoundForFilter = () => screen.getByTestId(selectors.dashboards.notFoundForFilter);
 export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dashboards.notFoundForFilterClear);
 
-export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
-export const getApplicationsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search('applications'));
-export const queryApplicationsSlothPictureFactoryTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory'));
-export const getApplicationsSlothPictureFactoryTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory'));
-export const getApplicationsSlothPictureFactorySelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory'));
-export const queryApplicationsSlothVoteTrackerTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker'));
-export const getApplicationsSlothVoteTrackerSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothVoteTracker'));
-export const queryApplicationsClustersTitle = () => screen.queryByTestId(selectors.tree.title('applications.clusters'));
-export const getApplicationsClustersSelect = () => screen.getByTestId(selectors.tree.select('applications.clusters'));
-export const getApplicationsClustersExpand = () => screen.getByTestId(selectors.tree.expand('applications.clusters'));
-export const queryApplicationsClustersSlothClusterNorthTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications.clusters-slothClusterNorth'));
-export const getApplicationsClustersSlothClusterNorthSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterNorth'));
-export const getApplicationsClustersSlothClusterSouthSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterSouth'));
+export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
+export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
+export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications', 'result'));
+export const queryResultApplicationsSlothPictureFactoryTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory', 'result'));
+export const getResultApplicationsSlothPictureFactoryTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory', 'result'));
+export const getResultApplicationsSlothPictureFactorySelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory', 'result'));
+export const queryPersistedApplicationsSlothPictureFactoryTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory', 'persisted'));
+export const getPersistedApplicationsSlothPictureFactoryTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory', 'persisted'));
+export const getPersistedApplicationsSlothPictureFactorySelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory', 'persisted'));
+export const queryResultApplicationsSlothVoteTrackerTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker', 'result'));
+export const getResultApplicationsSlothVoteTrackerTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'result'));
+export const getResultApplicationsSlothVoteTrackerSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-slothVoteTracker', 'result'));
+export const queryPersistedApplicationsSlothVoteTrackerTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
+export const getPersistedApplicationsSlothVoteTrackerTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
+export const queryResultApplicationsClustersTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications.clusters', 'result'));
+export const getResultApplicationsClustersSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters', 'result'));
+export const getResultApplicationsClustersExpand = () =>
+  screen.getByTestId(selectors.tree.expand('applications.clusters', 'result'));
+export const getResultApplicationsClustersSlothClusterNorthSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterNorth', 'result'));
+export const getResultApplicationsClustersSlothClusterSouthSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterSouth', 'result'));
 
-export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
-export const getClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters'));
-export const getClustersSlothClusterNorthRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth'));
-export const getClustersSlothClusterSouthRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth'));
-export const getClustersSlothClusterEastRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterEast'));
+export const getResultClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters', 'result'));
+export const getResultClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters', 'result'));
+export const getResultClustersSlothClusterNorthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth', 'result'));
+export const getResultClustersSlothClusterSouthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth', 'result'));
+export const getResultClustersSlothClusterEastRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterEast', 'result'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({
