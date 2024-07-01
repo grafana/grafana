@@ -627,6 +627,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
+          <Field label={'Select Display'} className={styles.displayOption}>
+            <Select
+              width={20}
+              value={displayAs}
+              onChange={model.onDisplayTypeChanged}
+              options={metricSelectSceneDisplayOptions.map((o) => ({ label: o.label, value: o.value }))}
+            />
+          </Field>
           <Field label={'Search metrics'} className={styles.searchField}>
             <Input
               placeholder="Search metrics"
@@ -634,14 +642,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               value={metricSearch}
               onChange={model.onSearchQueryChange}
               suffix={metricNamesWarningIcon}
-            />
-          </Field>
-          <Field label={'Select Display'} className={styles.displayOption}>
-            <Select
-              width={20}
-              value={displayAs}
-              onChange={model.onDisplayTypeChanged}
-              options={metricSelectSceneDisplayOptions.map((o) => ({ label: o.label, value: o.value }))}
             />
           </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
