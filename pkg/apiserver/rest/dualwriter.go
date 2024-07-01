@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -139,9 +138,14 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
+type NamespacedKVStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key, value string) error
+}
+
 func SetDualWritingMode(
 	ctx context.Context,
-	kvs *kvstore.NamespacedKVStore,
+	kvs NamespacedKVStore,
 	legacy LegacyStorage,
 	storage Storage,
 	entity string,

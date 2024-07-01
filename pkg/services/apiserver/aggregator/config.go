@@ -8,9 +8,9 @@ import (
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
 type RemoteService struct {

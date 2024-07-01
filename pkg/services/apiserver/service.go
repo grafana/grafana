@@ -20,7 +20,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -33,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
