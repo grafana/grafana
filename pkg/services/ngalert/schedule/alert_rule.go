@@ -248,8 +248,8 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 
 				evalStart := a.clock.Now()
 				defer func() {
-					a.evalApplied(key, ctx.scheduledAt)
 					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
+					a.evalApplied(key, ctx.scheduledAt)
 				}()
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
