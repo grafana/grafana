@@ -14,19 +14,21 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VariableValueSelectors,
-  useUrlSync,
+  useUrlSync
 } from '@grafana/scenes';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema/dist/esm/index';
 import {
+  Button,
   GraphGradientMode,
   Icon,
   LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
+  Text,
   Tooltip,
   TooltipDisplayMode,
-  useStyles2,
+  useStyles2
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -60,6 +62,12 @@ export const CentralAlertHistoryScene = () => {
         component: FilterInfo,
       }),
       new VariableValueSelectors({}),
+      new SceneReactObject({
+        component: ClearFilterButton,
+        props: {
+          filterVariable,
+        },
+      }),
       new SceneControlsSpacer(),
       new SceneTimePicker({}),
       new SceneRefreshPicker({}),
@@ -168,6 +176,29 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
   });
 }
 
+function ClearFilterButton({ filterVariable }: { filterVariable: TextBoxVariable }) {
+  const styles = useStyles2(getStyles);
+  const valueInFilter = filterVariable.getValue();
+  if (!valueInFilter) {
+    return null;
+  }
+  const onClearFilter = () => {
+    filterVariable.setValue('');
+  };
+  return (
+    <Tooltip content="Clear filter">
+      <div className={styles.clearFilter}>
+        <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
+          <Trans i18nKey="central-alert-history.filter.clear">
+            <Text>Clear labels filter</Text>
+          </Trans>
+        </Button>
+
+      </div>
+    </Tooltip>
+  );
+}
+
 export const FilterInfo = () => {
   const styles = useStyles2(getStyles);
   return (
@@ -201,5 +232,11 @@ const getStyles = () => ({
   container: css({
     padding: '0',
     alignSelf: 'center',
+  }),
+  clearFilter: css({
+    alignSelf: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
   }),
 });
