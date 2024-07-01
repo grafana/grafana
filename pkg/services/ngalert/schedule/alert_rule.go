@@ -149,7 +149,7 @@ func newAlertRule(
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
 ) *alertRule {
-	ctx, stop := util.WithCancelCause(parent)
+	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
 	return &alertRule{
 		key:                  key,
 		evalCh:               make(chan *Evaluation),
@@ -167,7 +167,7 @@ func newAlertRule(
 		evalAppliedHook:      evalAppliedHook,
 		stopAppliedHook:      stopAppliedHook,
 		metrics:              met,
-		logger:               logger,
+		logger:               logger.FromContext(ctx),
 		tracer:               tracer,
 	}
 }
@@ -221,8 +221,8 @@ func (a *alertRule) Stop(reason error) {
 }
 
 func (a *alertRule) Run() error {
-	grafanaCtx := ngmodels.WithRuleKey(a.ctx, a.key)
-	logger := a.logger.FromContext(grafanaCtx)
+	grafanaCtx := a.ctx
+	logger := a.logger
 	logger.Debug("Alert rule routine started")
 
 	var currentFingerprint fingerprint

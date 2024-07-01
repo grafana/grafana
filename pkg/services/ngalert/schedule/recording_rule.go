@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -45,7 +46,7 @@ type recordingRule struct {
 }
 
 func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter) *recordingRule {
-	ctx, stop := util.WithCancelCause(parent)
+	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
 	return &recordingRule{
 		key:            key,
 		ctx:            ctx,
@@ -55,7 +56,7 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAtte
 		evalFactory:    evalFactory,
 		featureToggles: ft,
 		maxAttempts:    maxAttempts,
-		logger:         logger,
+		logger:         logger.FromContext(ctx),
 		metrics:        metrics,
 		tracer:         tracer,
 		writer:         writer,
@@ -89,8 +90,7 @@ func (r *recordingRule) Stop(reason error) {
 }
 
 func (r *recordingRule) Run() error {
-	ctx := ngmodels.WithRuleKey(r.ctx, r.key)
-	logger := r.logger.FromContext(ctx)
+	ctx := r.ctx
 	logger.Debug("Recording rule routine started")
 
 	for {
