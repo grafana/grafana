@@ -565,6 +565,18 @@
     },
     {
       "metadata": {
+        "name": "cloudWatchRoundUpEndTime",
+        "resourceVersion": "1719324143210",
+        "creationTimestamp": "2024-06-25T14:02:23Z"
+      },
+      "spec": {
+        "description": "Round up end time for metric queries to the next minute to avoid missing data",
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-07-26T16:44:12Z"
@@ -2098,7 +2110,8 @@
       "metadata": {
         "name": "scenes",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-07-07T06:53:02Z"
+        "creationTimestamp": "2022-07-07T06:53:02Z",
+        "deletionTimestamp": "2024-06-26T11:58:18Z"
       },
       "spec": {
         "description": "Experimental framework to build interactive dashboards",
