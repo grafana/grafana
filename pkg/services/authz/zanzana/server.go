@@ -49,11 +49,12 @@ func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
 
 	addr := srv.GetAddress()
 	// Wait until GRPC server is initialized
-	ticker := time.Tick(100 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
 	maxRetries := 100
 	retries := 0
 	for addr == "" && retries < maxRetries {
-		<-ticker
+		<-ticker.C
 		addr = srv.GetAddress()
 		retries++
 	}
@@ -63,7 +64,7 @@ func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
 
 	conn, err := grpc.NewClient(addr, dialOpts...)
 	if err != nil {
-		return fmt.Errorf("Unable to dial GRPC: %w", err)
+		return fmt.Errorf("unable to dial GRPC: %w", err)
 	}
 
 	muxOpts := []runtime.ServeMuxOption{
@@ -95,6 +96,7 @@ func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
 			AllowedMethods: []string{http.MethodGet, http.MethodPost,
 				http.MethodHead, http.MethodPatch, http.MethodDelete, http.MethodPut},
 		}).Handler(mux),
+		ReadHeaderTimeout: 30 * time.Second,
 	}
 	go func() {
 		err = httpServer.ListenAndServe()
