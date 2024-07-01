@@ -24,7 +24,7 @@ import {
   mockDataSource,
   mockSilences,
 } from './mocks';
-import { grafanaRulerRule } from './mocks/alertRuleApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 

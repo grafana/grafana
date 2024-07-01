@@ -70,8 +70,16 @@ import { safeParsePrometheusDuration } from '../utils/time';
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
   const dataSources = (getState() as StoreState).unifiedAlerting.dataSources;
   const dsConfig = dataSources[rulesSourceName]?.result;
+  const dsError = dataSources[rulesSourceName]?.error;
+
+  // @TODO use aggregateError but add support for it in "stringifyErrorLike"
   if (!dsConfig) {
-    throw new Error(`Data source configuration is not available for "${rulesSourceName}" data source`);
+    const error = new Error(`Data source configuration is not available for "${rulesSourceName}" data source`);
+    if (dsError) {
+      error.cause = dsError;
+    }
+
+    throw error;
   }
 
   return dsConfig;

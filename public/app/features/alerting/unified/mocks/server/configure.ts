@@ -10,7 +10,7 @@ import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/han
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
-import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/alertRules';
+import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/grafanaRuler';
 
 export type HandlerOptions = {
   delay?: number;

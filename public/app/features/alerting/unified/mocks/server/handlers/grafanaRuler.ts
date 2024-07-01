@@ -8,7 +8,7 @@ import {
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
 import { AlertGroupUpdated } from '../../../api/alertRuleApi';
-import { grafanaRulerRule, namespaceByUid, namespaces } from '../../alertRuleApi';
+import { grafanaRulerRule, namespaceByUid, namespaces } from '../../grafanaRulerApi';
 import { HandlerOptions } from '../configure';
 
 export const rulerRulesHandler = () => {
