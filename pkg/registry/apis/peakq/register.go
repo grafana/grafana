@@ -16,8 +16,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 

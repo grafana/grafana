@@ -16,7 +16,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
