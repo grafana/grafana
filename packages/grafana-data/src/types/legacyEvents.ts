@@ -13,6 +13,7 @@ export const AppEvents = {
   alertSuccess: eventFactory<AlertPayload>('alert-success'),
   alertWarning: eventFactory<AlertPayload>('alert-warning'),
   alertError: eventFactory<AlertErrorPayload>('alert-error'),
+  alertInfo: eventFactory<AlertPayload>('alert-info'),
 };
 
 export const PanelEvents = {
