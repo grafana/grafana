@@ -36,6 +36,16 @@ export const createSuccessNotification = (title: string, text = '', traceId?: st
   showing: true,
 });
 
+export const createInfoNotification = (title: string, text = '', traceId?: string): AppNotification => ({
+  severity: AppNotificationSeverity.Info,
+  icon: 'info-circle',
+  title,
+  text,
+  id: uuidv4(),
+  timestamp: Date.now(),
+  showing: true,
+});
+
 export const createErrorNotification = (
   title: string,
   text: string | Error = '',
