@@ -150,6 +150,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
+		// Needed to add this empty initialization line or "queries: []" will just crash the service
+		qdr = &backend.QueryDataResponse{}
 		break // nothing to do
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
