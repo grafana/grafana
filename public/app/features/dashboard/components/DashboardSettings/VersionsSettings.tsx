@@ -4,11 +4,10 @@ import * as React from 'react';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import {
-  RevisionsModel,
   VersionHistoryHeader,
   VersionsHistoryButtons,
 } from 'app/features/dashboard-scene/settings/version-history';
-import { getHistorySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
+import { DecoratedRevisionModel, VersionModel, getHistorySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
 import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
@@ -26,11 +25,6 @@ type State = {
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;
-};
-
-export type DecoratedRevisionModel = RevisionsModel & {
-  createdDateString: string;
-  ageString: string;
 };
 
 export const VERSIONS_FETCH_LIMIT = 10;
@@ -100,7 +94,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     });
   };
 
-  decorateVersions = (versions: RevisionsModel[]) =>
+  decorateVersions = (versions: VersionModel[]) =>
     versions.map((version) => ({
       ...version,
       createdDateString: this.props.dashboard.formatDate(version.created),
@@ -115,7 +109,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
     this.setState({
       versions: this.state.versions.map((version) =>
-        version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
+        version.version === versionId ? { ...version, checked: ev.currentTarget.checked } : version
       ),
     });
   };

@@ -7,19 +7,28 @@ export interface HistoryListOpts {
   start: number;
 }
 
-// The raw version from
+// The raw version returned from api
 export interface VersionModel {
   uid: string;
-  version: number | string; // resourceVersion in k8s
+  version: number; // resourceVersion in k8s must be numeric
   created: string;
   createdBy: string;
   message: string;
 }
 
+// The version used in UI components
+export type DecoratedRevisionModel = VersionModel & {
+  checked: boolean;
+  createdDateString: string;
+  ageString: string;
+  data?: Dashboard
+};
+
+
 export interface HistorySrv {
   getHistoryList(dashboardUID: string, options: HistoryListOpts): Promise<VersionModel[]>;
   getDashboardVersion(dashboardUID: string, version: number | string): Promise<Dashboard | {}>; // Just the spec (for now)
-  restoreDashboard(dashboardUID: string, version: number | string): Promise<SaveDashboardResponseDTO | {}>;
+  restoreDashboard(dashboardUID: string, version: number | string): Promise<SaveDashboardResponseDTO>;
 }
 
 class LegacyHistorySrv implements HistorySrv {
@@ -40,9 +49,9 @@ class LegacyHistorySrv implements HistorySrv {
     return info.data; // the dashboard body
   }
 
-  restoreDashboard(dashboardUID: string, version: number): Promise<SaveDashboardResponseDTO | {}> {
+  restoreDashboard(dashboardUID: string, version: number): Promise<SaveDashboardResponseDTO> {
     if (typeof dashboardUID !== 'string') {
-      return Promise.resolve({});
+      return Promise.resolve({} as unknown as SaveDashboardResponseDTO);
     }
 
     const url = `api/dashboards/uid/${dashboardUID}/restore`;

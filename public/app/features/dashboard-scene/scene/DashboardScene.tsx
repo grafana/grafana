@@ -49,7 +49,7 @@ import {
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
-import { historySrv } from '../settings/version-history';
+import { getHistorySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { dashboardSceneGraph, getLibraryVizPanelFromVizPanel } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
@@ -355,19 +355,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
-
-    if (!Number.isInteger(versionRsp.version)) {
+    const versionRsp = await getHistorySrv().restoreDashboard(version.uid, version.version);
+  
+    const rev = (versionRsp as SaveDashboardResponseDTO).version;
+    if (!Number.isInteger(version)) {
       return false;
     }
 
     const dashboardDTO: DashboardDTO = {
-      dashboard: new DashboardModel(version.data),
+      dashboard: new DashboardModel(version.data!),
       meta: this.state.meta,
     };
     const dashScene = transformSaveModelToScene(dashboardDTO);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
-    newState.version = versionRsp.version;
+    newState.version = rev;
 
     this.setState(newState);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });

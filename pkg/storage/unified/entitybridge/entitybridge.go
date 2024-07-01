@@ -34,7 +34,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 	// Create a local blob filesystem blob store
 	if supportBlobs {
 		dir := filepath.Join(cfg.DataPath, "unistore", "blobs")
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
 			return nil, err
 		}
 
@@ -77,7 +77,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 		opts.Lifecycle = bridge
 	} else {
 		dir := filepath.Join(cfg.DataPath, "unistore", "resource")
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
 			return nil, err
 		}
 

@@ -16,15 +16,9 @@ import {
   VersionHistoryTable,
   VersionsHistoryButtons,
 } from './version-history';
-import { VersionModel, getHistorySrv } from './version-history/HistorySrv';
+import { DecoratedRevisionModel, VersionModel, getHistorySrv } from './version-history/HistorySrv';
 
 export const VERSIONS_FETCH_LIMIT = 10;
-
-export type DecoratedRevisionModel = VersionModel & {
-  checked: boolean;
-  createdDateString: string;
-  ageString: string;
-};
 
 export interface VersionsEditViewState extends DashboardEditViewState {
   versions?: DecoratedRevisionModel[];
