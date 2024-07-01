@@ -49,7 +49,7 @@ func (o *StorageOptions) Validate() []error {
 	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedNext, StorageTypeUnifiedNextGrpc:
 		// no-op
 	default:
-		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedNext, StorageTypeUnifiedNextGrpc))
+		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedNext, StorageTypeUnifiedNextGrpc))
 	}
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {

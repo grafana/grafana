@@ -7,7 +7,7 @@ export interface HistoryListOpts {
   start: number;
 }
 
-// The raw version from 
+// The raw version from
 export interface VersionModel {
   uid: string;
   version: number | string; // resourceVersion in k8s
@@ -33,7 +33,7 @@ class LegacyHistorySrv implements HistorySrv {
 
   async getDashboardVersion(dashboardUID: string, version: number): Promise<Dashboard | {}> {
     if (typeof dashboardUID !== 'string') {
-      return Promise.resolve({})
+      return Promise.resolve({});
     }
 
     const info = await getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions/${version}`);
@@ -42,7 +42,7 @@ class LegacyHistorySrv implements HistorySrv {
 
   restoreDashboard(dashboardUID: string, version: number): Promise<SaveDashboardResponseDTO | {}> {
     if (typeof dashboardUID !== 'string') {
-      return Promise.resolve({})
+      return Promise.resolve({});
     }
 
     const url = `api/dashboards/uid/${dashboardUID}/restore`;
@@ -51,12 +51,11 @@ class LegacyHistorySrv implements HistorySrv {
   }
 }
 
-
-let historySrv: HistorySrv|undefined = undefined;
+let historySrv: HistorySrv | undefined = undefined;
 
 export function getHistorySrv(): HistorySrv {
   if (!historySrv) {
-    historySrv = new LegacyHistorySrv()
+    historySrv = new LegacyHistorySrv();
   }
-  return historySrv
+  return historySrv;
 }

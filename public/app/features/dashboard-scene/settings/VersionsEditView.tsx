@@ -158,7 +158,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     });
   };
 
-  public onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number|string) => {
+  public onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number | string) => {
     this.setState({
       versions: this.versions.map((version) =>
         version.version === versionId ? { ...version, checked: ev.currentTarget.checked } : version

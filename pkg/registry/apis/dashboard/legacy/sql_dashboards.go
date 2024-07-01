@@ -115,7 +115,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		// }
 	}
 
-	sqlcmd := selector
+	var sqlcmd string
 	args := []any{query.OrgID}
 
 	limit := query.Limit

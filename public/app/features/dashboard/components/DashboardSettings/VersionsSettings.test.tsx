@@ -135,8 +135,8 @@ describe('VersionSettings', () => {
   });
 
   test('clicking show more appends results to the table', async () => {
-    getHistorySrv().getHistoryList
-      // @ts-ignore
+    getHistorySrv()
+      .getHistoryList// @ts-ignore
       .mockImplementationOnce(() => Promise.resolve(versions.slice(0, VERSIONS_FETCH_LIMIT)))
       .mockImplementationOnce(
         () => new Promise((resolve) => setTimeout(() => resolve(versions.slice(VERSIONS_FETCH_LIMIT)), 1000))
@@ -166,8 +166,8 @@ describe('VersionSettings', () => {
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
-    getHistorySrv().getDashboardVersion
-      // @ts-ignore
+    getHistorySrv()
+      .getDashboardVersion// @ts-ignore
       .mockImplementationOnce(() => Promise.resolve(diffs.lhs))
       .mockImplementationOnce(() => Promise.resolve(diffs.rhs));
 
