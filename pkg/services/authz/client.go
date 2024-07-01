@@ -8,7 +8,9 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
@@ -53,10 +55,11 @@ type Client interface {
 }
 
 type LegacyClient struct {
-	cfg      *setting.Cfg
-	clientV1 authzv1.AuthzServiceClient
-	logger   log.Logger
-	tracer   tracing.Tracer
+	authCfg     *Cfg
+	clientV1    authzv1.AuthzServiceClient
+	logger      log.Logger
+	tokenClient authnlib.TokenExchanger
+	tracer      tracing.Tracer
 }
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
@@ -76,16 +79,16 @@ func ProvideAuthZClient(
 	var client *LegacyClient
 
 	// Register the server
-	server, err := newLegacyServer(cfg, authCfg, acSvc, features, grpcServer, tracer)
+	server, err := newLegacyServer(authCfg, acSvc, features, grpcServer, tracer)
 	if err != nil {
 		return nil, err
 	}
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client = newInProcLegacyClient(cfg, tracer, server)
+		client = newInProcLegacyClient(authCfg, tracer, server)
 	case ModeGRPC:
-		client, err = newGrpcLegacyClient(cfg, tracer, authCfg.remoteAddress)
+		client, err = newGrpcLegacyClient(authCfg, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -108,10 +111,10 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newGrpcLegacyClient(cfg, tracer, authCfg.remoteAddress)
+	return newGrpcLegacyClient(authCfg, tracer)
 }
 
-func newInProcLegacyClient(cfg *setting.Cfg, tracer tracing.Tracer, server *legacyServer) *LegacyClient {
+func newInProcLegacyClient(authCfg *Cfg, tracer tracing.Tracer, server *legacyServer) *LegacyClient {
 	channel := &inprocgrpc.Channel{}
 
 	// In-process we don't have to authenticate the service making the request
@@ -133,27 +136,40 @@ func newInProcLegacyClient(cfg *setting.Cfg, tracer tracing.Tracer, server *lega
 	client := authzv1.NewAuthzServiceClient(conn)
 
 	return &LegacyClient{
-		cfg:      cfg,
+		authCfg:  authCfg,
 		clientV1: client,
 		logger:   log.New("authz.client"),
 		tracer:   tracer,
 	}
 }
 
-func newGrpcLegacyClient(cfg *setting.Cfg, tracer tracing.Tracer, address string) (*LegacyClient, error) {
+func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (*LegacyClient, error) {
 	// Create a connection to the gRPC server
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(authCfg.remoteAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
 
 	client := authzv1.NewAuthzServiceClient(conn)
 
+	var tokenClient authnlib.TokenExchanger
+	if authCfg.env != setting.Dev {
+		// Instantiate the token exchange client
+		tokenClient, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            authCfg.token,
+			TokenExchangeURL: authCfg.tokenExchangeUrl,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &LegacyClient{
-		cfg:      cfg,
-		clientV1: client,
-		logger:   log.New("authz.client"),
-		tracer:   tracer,
+		authCfg:     authCfg,
+		clientV1:    client,
+		logger:      log.New("authz.client"),
+		tokenClient: tokenClient,
+		tracer:      tracer,
 	}, nil
 }
 
@@ -190,7 +206,7 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 	}
 
 	// Impersonation => fetch the user permissions
-	if authCtx.AccessClaims == nil && c.cfg.Env != setting.Dev {
+	if authCtx.AccessClaims == nil && c.authCfg.env != setting.Dev {
 		ctxLogger.Error("access claims are required when running in production mode")
 		return false, tracing.Errorf(span, "missing access claims")
 	}
@@ -211,15 +227,29 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 		}
 	}
 
+	// Instantiate a new context for the request
+	outCtx := context.Background()
+
 	readReq := &authzv1.ReadRequest{
 		StackId: req.StackID,
 		Action:  action,
 		Subject: req.Subject,
 	}
 
-	// TODO (gamab) add access token and id token if we make the call for the user
+	// Exchange a token to query the authz service
+	if c.tokenClient != nil {
+		token, err := c.tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
+			Namespace: c.authCfg.tokenNamespace,
+			Audiences: c.authCfg.tokenAudience,
+		})
+		if err != nil {
+			return false, tracing.Errorf(span, "failed to exchange token: %w", err)
+		}
+		outCtx = metadata.NewOutgoingContext(outCtx, metadata.Pairs("x-access-token", token.Token))
+	}
 
-	resp, err := c.clientV1.Read(ctx, readReq)
+	// Query the authz service
+	resp, err := c.clientV1.Read(outCtx, readReq)
 	if err != nil {
 		return false, tracing.Errorf(span, "failed to check access: %w", err)
 	}

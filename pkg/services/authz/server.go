@@ -24,7 +24,7 @@ type legacyServer struct {
 }
 
 func newLegacyServer(
-	cfg *setting.Cfg, authCfg *Cfg,
+	authCfg *Cfg,
 	acSvc accesscontrol.Service, features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider, tracer tracing.Tracer,
 ) (*legacyServer, error) {
@@ -39,7 +39,7 @@ func newLegacyServer(
 	}
 
 	if authCfg.listen {
-		if cfg.Env == setting.Dev {
+		if authCfg.env == setting.Dev {
 			grpcServer.GetServer().RegisterService(&authzv1.AuthzService_ServiceDesc, s)
 		} else {
 			// FIXME: Once we have access-token support, we can enable this in production
