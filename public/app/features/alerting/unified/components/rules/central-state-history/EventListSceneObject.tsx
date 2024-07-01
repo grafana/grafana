@@ -258,7 +258,7 @@ export function EventState({ state, showLabel }: EventStateProps) {
     );
   }
   // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  // eslint-disable-next-line
   const baseState = mapStateWithReasonToBaseState(state) as GrafanaAlertState;
   const reason = mapStateWithReasonToReason(state);
   interface StateConfig {
