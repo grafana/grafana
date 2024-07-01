@@ -13,7 +13,7 @@ export const routeTimingsFields = {
   },
   repeatInterval: {
     label: 'Repeat interval',
-    description: 'The waiting time before resending a notification that has already been sent successfully.',
+    description: 'The wait time before resending a notification that has already been sent successfully.',
     ariaLabel: 'Repeat interval value',
   },
 };
