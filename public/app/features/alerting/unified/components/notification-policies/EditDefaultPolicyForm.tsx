@@ -133,7 +133,7 @@ export const AmRootRouteForm = ({
           </Field>
           <Field
             label="Group interval"
-            description="The waiting time before sending a notification about changes in the alert group after the first notification has been sent. Default 5 minutes."
+            description="The wait time before sending a notification about changes in the alert group after the first notification has been sent. Default is 5 minutes."
             invalid={!!errors.groupIntervalValue}
             error={errors.groupIntervalValue?.message}
             data-testid="am-group-interval"
