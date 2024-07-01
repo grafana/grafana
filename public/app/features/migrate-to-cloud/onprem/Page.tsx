@@ -48,7 +48,7 @@ function useGetLatestSession() {
 const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
   'INITIALIZING',
   'CREATING',
-  'PENDING_UPLOAD',
+  // 'PENDING_UPLOAD',
   'UPLOADING',
   'PENDING_PROCESSING',
   'PROCESSING',
@@ -62,21 +62,23 @@ function useGetLatestSnapshot(sessionUid?: string) {
 
   const getSnapshotQueryArgs = sessionUid && lastItem?.uid ? { uid: sessionUid, snapshotUid: lastItem.uid } : skipToken;
 
-  const snapshot = useGetSnapshotQuery(getSnapshotQueryArgs, {
+  const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
     pollingInterval: SHOULD_POLL_STATUSES.includes(lastItem?.status) ? STATUS_POLL_INTERVAL : undefined,
     skipPollingIfUnfocused: true,
   });
 
   return {
-    ...snapshot,
+    ...snapshotResult,
 
-    data: snapshot.data,
+    data: snapshotResult.data,
 
-    error: listResult.error || snapshot.error,
+    error: listResult.error || snapshotResult.error,
 
-    isError: listResult.isError || snapshot.isError,
-    isLoading: listResult.isLoading || snapshot.isLoading,
-    isFetching: listResult.isFetching || snapshot.isFetching,
+    // isSuccess and isUninitialised should always be from snapshotResult
+    // as only the 'final' values from those are important
+    isError: listResult.isError || snapshotResult.isError,
+    isLoading: listResult.isLoading || snapshotResult.isLoading,
+    isFetching: listResult.isFetching || snapshotResult.isFetching,
   };
 }
 
@@ -88,11 +90,10 @@ export const Page = () => {
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
 
-  console.log('session', session);
-  console.log('snapshot', snapshot);
-
   const sessionUid = session.data?.uid;
   const snapshotUid = snapshot.data?.uid;
+  const migrationMeta = session.data;
+  const isInitialLoading = session.isLoading;
 
   // isBusy is not a loading state, but indicates that the system is doing *something*
   // and all buttons should be disabled
@@ -120,9 +121,6 @@ export const Page = () => {
       performUploadSnapshot({ uid: sessionUid, snapshotUid: snapshotUid });
     }
   }, [performUploadSnapshot, sessionUid, snapshotUid]);
-
-  const migrationMeta = session.data;
-  const isInitialLoading = session.isLoading;
 
   if (isInitialLoading) {
     // TODO: better loading state
@@ -187,6 +185,8 @@ export const Page = () => {
               }
             />
 
+            <MigrationInfo title="Status" value={snapshot?.data?.status ?? 'no snapshot yet'} />
+
             <Button
               disabled={isBusy}
               onClick={handleCreateSnapshot}
@@ -200,7 +200,7 @@ export const Page = () => {
               onClick={handleUploadSnapshot}
               icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
             >
-              <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload snapshot</Trans>
+              <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload & migrate snapshot</Trans>
             </Button>
           </Box>
         )}
