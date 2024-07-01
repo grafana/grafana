@@ -147,7 +147,7 @@ export const AmRootRouteForm = ({
           </Field>
           <Field
             label="Repeat interval"
-            description="The waiting time before resending a notification that has already been sent successfully. Default 4 hours. Should be a multiple of Group interval."
+            description="The wait time before resending a notification that has already been sent successfully. Default is 4 hours. Should be a multiple of Group interval."
             invalid={!!errors.repeatIntervalValue}
             error={errors.repeatIntervalValue?.message}
             data-testid="am-repeat-interval"
