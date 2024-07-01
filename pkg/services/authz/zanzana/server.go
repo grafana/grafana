@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 )
 
 func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
@@ -40,15 +42,29 @@ func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Serve
 }
 
 // StartOpenFGAHttpSever starts HTTP server which allows to use fga cli.
-func StartOpenFGAHttpSever(addr string, logger log.Logger) {
+func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	}
+
+	addr := srv.GetAddress()
+	// Wait until GRPC server is initialized
+	ticker := time.Tick(100 * time.Millisecond)
+	maxRetries := 100
+	retries := 0
+	for addr == "" && retries < maxRetries {
+		<-ticker
+		addr = srv.GetAddress()
+		retries++
+	}
+	if addr == "" {
+		return fmt.Errorf("failed to start HTTP server: GRPC server unavailable")
 	}
 
 	logger.Info("Connecting to the GRPC", "addr", addr)
 	conn, err := grpc.NewClient(addr, dialOpts...)
 	if err != nil {
-		logger.Error("Unable to Dial GRPC", zapcore.Field{Key: "err", Type: zapcore.ErrorType, Interface: err})
+		return fmt.Errorf("Unable to dial GRPC: %w", err)
 	}
 
 	muxOpts := []runtime.ServeMuxOption{
@@ -68,8 +84,7 @@ func StartOpenFGAHttpSever(addr string, logger log.Logger) {
 	}
 	mux := runtime.NewServeMux(muxOpts...)
 	if err := openfgav1.RegisterOpenFGAServiceHandler(context.TODO(), mux, conn); err != nil {
-		logger.Error("failed to register gateway handler", zapcore.Field{Key: "err", Type: zapcore.ErrorType, Interface: err})
-		return
+		return fmt.Errorf("failed to register gateway handler: %w", err)
 	}
 
 	httpServer := &http.Server{
@@ -89,5 +104,5 @@ func StartOpenFGAHttpSever(addr string, logger log.Logger) {
 		}
 	}()
 	logger.Info(fmt.Sprintf("HTTP server listening on '%s'...", httpServer.Addr))
-	// s.fgaCfg.ApiUrl = fmt.Sprintf("http://%s", httpServer.Addr)
+	return nil
 }
