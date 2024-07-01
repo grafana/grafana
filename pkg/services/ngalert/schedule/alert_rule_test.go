@@ -39,7 +39,7 @@ func TestAlertRule(t *testing.T) {
 
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
 		t.Run("update should send to updateCh", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 			resultCh := make(chan bool)
 			go func() {
 				resultCh <- r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
@@ -52,7 +52,7 @@ func TestAlertRule(t *testing.T) {
 			}
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 			version1 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
 			version2 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
 
@@ -78,12 +78,13 @@ func TestAlertRule(t *testing.T) {
 			}
 		})
 		t.Run("eval should send to evalCh", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
 			expected := time.Now()
 			resultCh := make(chan evalResponse)
 			data := &Evaluation{
 				scheduledAt: expected,
-				rule:        gen.GenerateRef(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
 			go func() {
@@ -101,14 +102,15 @@ func TestAlertRule(t *testing.T) {
 			}
 		})
 		t.Run("eval should drop any concurrent sending to evalCh", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
 			time1 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			time2 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			resultCh1 := make(chan evalResponse)
 			resultCh2 := make(chan evalResponse)
 			data := &Evaluation{
 				scheduledAt: time1,
-				rule:        gen.GenerateRef(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
 			data2 := &Evaluation{
@@ -147,11 +149,12 @@ func TestAlertRule(t *testing.T) {
 			}
 		})
 		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
 			resultCh := make(chan evalResponse)
 			data := &Evaluation{
 				scheduledAt: time.Now(),
-				rule:        gen.GenerateRef(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
 			go func() {
@@ -171,17 +174,18 @@ func TestAlertRule(t *testing.T) {
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 			r.Stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
 			require.False(t, r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
 			r.Stop(nil)
 			data := &Evaluation{
 				scheduledAt: time.Now(),
-				rule:        gen.GenerateRef(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
 			success, dropped := r.Eval(data)
@@ -189,19 +193,19 @@ func TestAlertRule(t *testing.T) {
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
 		t.Run("calling stop multiple times should not panic", func(t *testing.T) {
-			r := blankRuleForTests(context.Background())
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 			r.Stop(nil)
 			r.Stop(nil)
 		})
 		t.Run("stop should not panic if parent context stopped", func(t *testing.T) {
 			ctx, cancelFn := context.WithCancel(context.Background())
-			r := blankRuleForTests(ctx)
+			r := blankRuleForTests(ctx, models.GenerateRuleKey(1))
 			cancelFn()
 			r.Stop(nil)
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
-		r := blankRuleForTests(context.Background())
+		r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 		wg := sync.WaitGroup{}
 		go func() {
 			for {
@@ -245,7 +249,7 @@ func TestAlertRule(t *testing.T) {
 	})
 
 	t.Run("Run should exit if idle when Stop is called", func(t *testing.T) {
-		rule := blankRuleForTests(context.Background())
+		rule := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 		runResult := make(chan error)
 		go func() {
 			runResult <- rule.Run()
@@ -262,8 +266,8 @@ func TestAlertRule(t *testing.T) {
 	})
 }
 
-func blankRuleForTests(ctx context.Context) *alertRule {
-	return newAlertRule(context.Background(), models.AlertRuleKey{}, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
+func blankRuleForTests(ctx context.Context, key models.AlertRuleKey) *alertRule {
+	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
