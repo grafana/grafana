@@ -225,7 +225,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
           }
     ),
     skipLink: css({
-      position: 'absolute',
+      position: 'fixed',
       top: -1000,
 
       ':focus': {
