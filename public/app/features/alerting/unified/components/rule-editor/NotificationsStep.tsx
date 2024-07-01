@@ -209,7 +209,7 @@ function NeedHelpInfoForContactpoint() {
           <br />
           Notifications for firing alert instances are grouped based on folder and alert rule name.
           <br />
-          The waiting time before sending the first notification for a new group of alerts is 30 seconds.
+          The wait time before sending the first notification for a new group of alerts is 30 seconds.
           <br />
           The waiting time before sending a notification about changes in the alert group after the first notification
           has been sent is 5 minutes.
