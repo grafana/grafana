@@ -180,6 +180,11 @@ func newAlertRule(
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
 func (a *alertRule) Eval(eval *Evaluation) (bool, *Evaluation) {
+	if a.key != eval.rule.GetKey() {
+		// Make sure that rule has the same key. This should not happen
+		a.logger.Error("Invalid rule sent for evaluating. Skipping", "ruleKeyToEvaluate", eval.rule.GetKey().String())
+		return false, eval
+	}
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *Evaluation
 	select {
@@ -226,7 +231,7 @@ func (a *alertRule) Run() error {
 	logger.Debug("Alert rule routine started")
 
 	var currentFingerprint fingerprint
-	defer a.stopApplied(a.key)
+	defer a.stopApplied()
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
@@ -238,7 +243,7 @@ func (a *alertRule) Run() error {
 
 			logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
 			// clear the state. So the next evaluation will start from the scratch.
-			a.resetState(grafanaCtx, a.key, ctx.IsPaused)
+			a.resetState(grafanaCtx, ctx.IsPaused)
 			currentFingerprint = ctx.Fingerprint
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-a.evalCh:
@@ -255,7 +260,7 @@ func (a *alertRule) Run() error {
 				evalStart := a.clock.Now()
 				defer func() {
 					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
-					a.evalApplied(key, ctx.scheduledAt)
+					a.evalApplied(ctx.scheduledAt)
 				}()
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
@@ -272,7 +277,7 @@ func (a *alertRule) Run() error {
 					// lingers in DB and won't be cleaned up until next alert rule update.
 					needReset = needReset || (currentFingerprint == 0 && isPaused)
 					if needReset {
-						a.resetState(grafanaCtx, a.key, isPaused)
+						a.resetState(grafanaCtx, isPaused)
 					}
 					currentFingerprint = f
 					if isPaused {
@@ -304,7 +309,7 @@ func (a *alertRule) Run() error {
 					}
 
 					retry := attempt < a.maxAttempts
-					err := a.evaluate(tracingCtx, a.key, f, attempt, ctx, span, retry)
+					err := a.evaluate(tracingCtx, f, attempt, ctx, span, retry)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
@@ -332,7 +337,7 @@ func (a *alertRule) Run() error {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
 				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key), a.key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, a.key, states)
+				a.expireAndSend(grafanaCtx, states)
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil
@@ -340,8 +345,8 @@ func (a *alertRule) Run() error {
 	}
 }
 
-func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
-	orgID := fmt.Sprint(key.OrgID)
+func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
+	orgID := fmt.Sprint(a.key.OrgID)
 	evalAttemptTotal := a.metrics.EvalAttemptTotal.WithLabelValues(orgID)
 	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
@@ -425,7 +430,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
 		func(ctx context.Context, statesToSend state.StateTransitions) {
 			start := a.clock.Now()
-			alerts := a.send(ctx, key, statesToSend)
+			alerts := a.send(ctx, statesToSend)
 			span.AddEvent("results sent", trace.WithAttributes(
 				attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
 			))
@@ -438,52 +443,52 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 }
 
 // send sends alerts for the given state transitions.
-func (a *alertRule) send(ctx context.Context, key ngmodels.AlertRuleKey, states state.StateTransitions) definitions.PostableAlerts {
+func (a *alertRule) send(ctx context.Context, states state.StateTransitions) definitions.PostableAlerts {
 	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
 	for _, alertState := range states {
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
 	}
 
 	if len(alerts.PostableAlerts) > 0 {
-		a.sender.Send(ctx, key, alerts)
+		a.sender.Send(ctx, a.key, alerts)
 	}
 	return alerts
 }
 
 // sendExpire sends alerts to expire all previously firing alerts in the provided state transitions.
-func (a *alertRule) expireAndSend(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
+func (a *alertRule) expireAndSend(ctx context.Context, states []state.StateTransition) {
 	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
-		a.sender.Send(ctx, key, expiredAlerts)
+		a.sender.Send(ctx, a.key, expiredAlerts)
 	}
 }
 
-func (a *alertRule) resetState(ctx context.Context, key ngmodels.AlertRuleKey, isPaused bool) {
-	rule := a.ruleProvider.get(key)
+func (a *alertRule) resetState(ctx context.Context, isPaused bool) {
+	rule := a.ruleProvider.get(a.key)
 	reason := ngmodels.StateReasonUpdated
 	if isPaused {
 		reason = ngmodels.StateReasonPaused
 	}
 	states := a.stateManager.ResetStateByRuleUID(ctx, rule, reason)
-	a.expireAndSend(ctx, key, states)
+	a.expireAndSend(ctx, states)
 }
 
 // evalApplied is only used on tests.
-func (a *alertRule) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.Time) {
+func (a *alertRule) evalApplied(now time.Time) {
 	if a.evalAppliedHook == nil {
 		return
 	}
 
-	a.evalAppliedHook(alertDefKey, now)
+	a.evalAppliedHook(a.key, now)
 }
 
 // stopApplied is only used on tests.
-func (a *alertRule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
+func (a *alertRule) stopApplied() {
 	if a.stopAppliedHook == nil {
 		return
 	}
 
-	a.stopAppliedHook(alertDefKey)
+	a.stopAppliedHook(a.key)
 }
 
 func SchedulerUserFor(orgID int64) *user.SignedInUser {

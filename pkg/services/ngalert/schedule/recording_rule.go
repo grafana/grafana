@@ -255,7 +255,7 @@ func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
 		return
 	}
 
-	r.evalAppliedHook(ev.rule.GetKey(), ev.scheduledAt)
+	r.evalAppliedHook(r.key, ev.scheduledAt)
 }
 
 func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) (data.Frames, error) {
