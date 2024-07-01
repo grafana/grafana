@@ -110,10 +110,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -150,10 +149,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -200,10 +198,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -491,10 +488,9 @@ func TestService_UpdateDataSource(t *testing.T) {
 		dsService.pluginStore = &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{
 				JSONData: plugins.JSONData{
-					ID:         "test",
-					Type:       plugins.TypeDataSource,
-					Name:       "test",
-					APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				},
 			}},
 		}
