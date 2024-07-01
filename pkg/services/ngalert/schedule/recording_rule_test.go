@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRecordingRule(t *testing.T) {
@@ -131,7 +132,7 @@ func TestRecordingRule(t *testing.T) {
 		rule := blankRecordingRuleForTests(context.Background())
 		runResult := make(chan error)
 		go func() {
-			runResult <- rule.Run(models.AlertRuleKey{})
+			runResult <- rule.Run()
 		}()
 
 		rule.Stop(nil)
@@ -147,7 +148,7 @@ func TestRecordingRule(t *testing.T) {
 
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	ft := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
-	return newRecordingRule(context.Background(), 0, nil, nil, ft, log.NewNopLogger(), nil, nil, writer.FakeWriter{})
+	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, ft, log.NewNopLogger(), nil, nil, writer.FakeWriter{})
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
@@ -168,7 +169,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 	now := time.Now()
 
 	go func() {
-		_ = process.Run(rule.GetKey())
+		_ = process.Run()
 	}()
 	process.Eval(&Evaluation{
 		scheduledAt: now,
