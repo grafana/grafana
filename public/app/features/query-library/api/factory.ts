@@ -1,8 +1,8 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, QueryTemplate } from '../types';
+import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, QueryTemplate, EditQueryTemplateCommand } from '../types';
 
-import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
+import { convertQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
 
 export const queryLibraryApi = createApi({
@@ -17,7 +17,7 @@ export const queryLibraryApi = createApi({
     addQueryTemplate: builder.mutation<QueryTemplate, AddQueryTemplateCommand>({
       query: (addQueryTemplateCommand) => ({
         method: 'POST',
-        data: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
+        data: convertQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),
@@ -25,6 +25,14 @@ export const queryLibraryApi = createApi({
       query: ({ uid }) => ({
         url: `${uid}`,
         method: 'DELETE',
+      }),
+      invalidatesTags: ['QueryTemplatesList'],
+    }),
+    editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
+      query: (editQueryTemplateCommand) => ({
+        url: `${editQueryTemplateCommand.uid}`,
+        method: 'POST',
+        data: convertQueryTemplateCommandToDataQuerySpec(editQueryTemplateCommand),
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),

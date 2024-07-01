@@ -13,6 +13,10 @@ export type AddQueryTemplateCommand = {
   targets: DataQuery[];
 };
 
+export interface EditQueryTemplateCommand extends AddQueryTemplateCommand {
+  uid: string;
+}
+
 export type DeleteQueryTemplateCommand = {
   uid: string;
 };
