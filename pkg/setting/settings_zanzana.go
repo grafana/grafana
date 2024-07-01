@@ -16,6 +16,8 @@ type ZanzanaSettings struct {
 	Addr string
 	// Mode can either be embedded or client
 	Mode ZanzanaMode
+	// ListenHTTP enables OpenFGA http server which allows to use fga cli
+	ListenHTTP bool
 }
 
 func (cfg *Cfg) readZanzanaSettings() {
@@ -32,6 +34,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	}
 
 	s.Addr = sec.Key("address").MustString("")
+	s.ListenHTTP = sec.Key("listen_http").MustBool(false)
 
 	cfg.Zanzana = s
 }
