@@ -8,7 +8,7 @@ export const routeTimingsFields = {
   groupInterval: {
     label: 'Group interval',
     description:
-      'The waiting time before sending a notification about changes in the alert group after the first notification has been sent. If empty it will be inherited from the parent policy.',
+      'The wait time before sending a notification about changes in the alert group after the first notification has been sent. If empty, it is inherited from the parent policy.',
     ariaLabel: 'Group interval value',
   },
   repeatInterval: {
