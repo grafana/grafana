@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 import { DataFrameJSON, GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, TextBoxVariable, VariableValue, sceneGraph } from '@grafana/scenes';
-import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Icon, IconButton, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import {
@@ -42,10 +42,12 @@ const PAGE_SIZE = 100;
 interface HistoryEventsListProps {
   timeRange?: TimeRange;
   valueInfilterTextBox: VariableValue;
+  addFilterByName: (alertRuleName: string) => void;
 }
 export const HistoryEventsList = ({
   timeRange,
   valueInfilterTextBox,
+  addFilterByName,
 }: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
@@ -75,7 +77,7 @@ export const HistoryEventsList = ({
   return (
     <>
       <LoadingIndicator visible={isLoading} />
-      <HistoryLogEvents logRecords={historyRecords} />
+      <HistoryLogEvents logRecords={historyRecords} addFilterByName={addFilterByName} />
     </>
   );
 };
@@ -88,8 +90,9 @@ const LoadingIndicator = ({ visible = false }) => {
 
 interface HistoryLogEventsProps {
   logRecords: LogRecord[];
+  addFilterByName: (alertRuleName: string) => void
 }
-function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
+function HistoryLogEvents({ logRecords, addFilterByName }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   return (
     <Stack direction="column" gap={0}>
@@ -100,6 +103,7 @@ function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
               key={record.timestamp + (record.line.fingerprint ?? '')}
               record={record}
               logRecords={logRecords}
+              addFilterByName={addFilterByName}
             />
           );
         })}
@@ -133,8 +137,9 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
 interface EventRowProps {
   record: LogRecord;
   logRecords: LogRecord[];
+  addFilterByName: (alertRuleName: string) => void
 }
-function EventRow({ record, logRecords }: EventRowProps) {
+function EventRow({ record, logRecords, addFilterByName }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
   return (
@@ -154,7 +159,10 @@ function EventRow({ record, logRecords }: EventRowProps) {
             <EventTransition previous={record.line.previous} current={record.line.current} />
           </div>
           <div className={styles.alertNameCol}>
-            {record.line.labels ? <AlertRuleName labels={record.line.labels} ruleUID={record.line.ruleUID} /> : null}
+            {record.line.labels ? <AlertRuleName labels={record.line.labels}
+              ruleUID={record.line.ruleUID}
+              addFilterByName={addFilterByName}
+            /> : null}
           </div>
           <div className={styles.labelsCol}>
             <AlertLabels labels={record.line.labels ?? {}} size="xs" />
@@ -173,8 +181,9 @@ function EventRow({ record, logRecords }: EventRowProps) {
 interface AlertRuleNameProps {
   labels: Record<string, string>;
   ruleUID?: string;
+  addFilterByName: (alertRuleName: string) => void
 }
-function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
+function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps) {
   const styles = useStyles2(getStyles);
   const alertRuleName = labels['alertname'];
   if (!ruleUID) {
@@ -187,17 +196,21 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
       </Text>
     );
   }
+  const ariaLabel = t('central-alert-history.details.add-filter', 'Add filter by alert name');
   return (
-    <Tooltip content={alertRuleName ?? ''}>
-      <a
-        href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
-        className={styles.alertName}
-      >
-        <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
-          {alertRuleName}
-        </Trans>
-      </a>
-    </Tooltip>
+    <Stack gap={1} direction={'row'} alignItems="center">
+      <Tooltip content={alertRuleName ?? ''}>
+        <a
+          href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
+          className={styles.alertName}
+        >
+          <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
+            {alertRuleName}
+          </Trans>
+        </a>
+      </Tooltip>
+      <IconButton name="plus" size="sm" onClick={() => addFilterByName(alertRuleName)} aria-label={ariaLabel} tooltip={ariaLabel} />
+    </Stack>
   );
 }
 
@@ -414,13 +427,18 @@ export class HistoryEventsListObject extends SceneObjectBase {
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
-  const filtersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)!;
+  // eslint-disable-next-line
+  const filtersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
 
-  const valueInfilterTextBox: VariableValue = !(filtersVariable instanceof TextBoxVariable)
-    ? ''
-    : filtersVariable.getValue();
+  const addFilterByName = (alertRuleName: string) => {
+    const newFilterToAdd = `alertname=${alertRuleName}`;
+    const finalFilter = valueInfilterTextBox ? `${valueInfilterTextBox.toString()} ,${newFilterToAdd}` : newFilterToAdd;
+    filtersVariable.setValue(finalFilter);
+  }
 
-  return <HistoryEventsList timeRange={timeRange} valueInfilterTextBox={valueInfilterTextBox} />;
+  const valueInfilterTextBox: VariableValue = filtersVariable.getValue();
+
+  return <HistoryEventsList timeRange={timeRange} valueInfilterTextBox={valueInfilterTextBox} addFilterByName={addFilterByName} />;
 }
 
 function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {

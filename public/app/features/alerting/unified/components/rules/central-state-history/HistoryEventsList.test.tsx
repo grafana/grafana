@@ -15,7 +15,7 @@ const ui = {
 };
 describe('HistoryEventsList', () => {
   it('should render the list correctly filtered by label in filter variable', async () => {
-    render(<HistoryEventsList valueInfilterTextBox={'alertname=alert1'} />);
+    render(<HistoryEventsList valueInfilterTextBox={'alertname=alert1'} addFilterByName={jest.fn()} />);
     await waitFor(() => {
       expect(byLabelText('Loading bar').query()).not.toBeInTheDocument();
     });
