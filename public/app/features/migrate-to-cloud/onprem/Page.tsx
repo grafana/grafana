@@ -76,7 +76,6 @@ function useGetLatestSnapshot(sessionUid?: string) {
   return {
     ...snapshotResult,
 
-    data: snapshotResult.data,
 
     error: listResult.error || snapshotResult.error,
 
