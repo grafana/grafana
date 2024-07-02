@@ -28,7 +28,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/dashboards/build-dashboards/create-dashboard/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/
 ---
 
 # Dashboard list
