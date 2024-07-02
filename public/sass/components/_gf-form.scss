@@ -1,6 +1,13 @@
 @use 'sass:list';
 $input-border: 1px solid $input-border-color;
 
+@mixin form-control-focus() {
+  &:focus {
+    border-color: $input-border-focus;
+    outline: none;
+  }
+}
+
 .gf-form {
   display: flex;
   flex-direction: row;
