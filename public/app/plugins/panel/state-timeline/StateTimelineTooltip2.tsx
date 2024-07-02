@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { FieldType, TimeRange } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';

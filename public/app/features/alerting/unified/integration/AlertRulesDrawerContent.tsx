@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { RulesTable } from '../components/rules/RulesTable';

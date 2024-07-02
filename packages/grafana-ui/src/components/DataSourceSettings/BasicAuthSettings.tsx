@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { InlineField } from '../../components/Forms/InlineField';
 import { FormField } from '../FormField/FormField';

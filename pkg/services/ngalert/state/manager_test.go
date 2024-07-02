@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"net/url"
 	"sort"
 	"strings"
 	"testing"
@@ -29,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -236,7 +236,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics)
+	ac := &acfakes.FakeRuleService{}
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics, ac)
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 		ExternalURL:   nil,
@@ -269,7 +270,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		},
 	}}, data.Labels{
 		"alertname": rule.Title,
-	})
+	}, nil)
 
 	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
@@ -1244,6 +1245,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(6).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(6),
 					LastSentAt:         util.Pointer(tn(6)), // After 30s resend delay, last sent at is t6.
+					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
 				},
 			},
 		},
@@ -1386,7 +1388,8 @@ func TestProcessEvalResults(t *testing.T) {
 			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
 			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m)
+			ac := &acfakes.FakeRuleService{}
+			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m, ac)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
 				Metrics:       stateMetrics,
@@ -1414,9 +1417,8 @@ func TestProcessEvalResults(t *testing.T) {
 					res[i].EvaluatedAt = evalTime
 				}
 				clk.Set(evalTime)
-				processedStates := st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels)
+				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
 				results += len(res)
-				_ = state.FromStateTransitionToPostableAlerts(evalTime, processedStates, st, &url.URL{}) // Set LastSentAt.
 			}
 
 			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
@@ -1505,8 +1507,7 @@ func TestProcessEvalResults(t *testing.T) {
 		rule := models.RuleGen.GenerateRef()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
-		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
-
+		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)
@@ -1667,7 +1668,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				"alertname":                    rule.Title,
 				"__alert_rule_namespace_uid__": rule.NamespaceUID,
 				"__alert_rule_uid__":           rule.UID,
-			})
+			}, nil)
 			for _, s := range tc.expectedStates {
 				setCacheID(s)
 				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheID)
@@ -1736,7 +1737,7 @@ func TestStaleResults(t *testing.T) {
 	rule := gen.With(gen.WithFor(0)).GenerateRef()
 
 	initResults := eval.Results{
-		eval.ResultGen(eval.WithEvaluatedAt(clk.Now()))(),
+		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
 		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
 		eval.ResultGen(eval.WithState(eval.Normal), eval.WithEvaluatedAt(clk.Now()))(),
 	}
@@ -1752,8 +1753,14 @@ func TestStaleResults(t *testing.T) {
 	}
 
 	// Init
-	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
+	var statesToSend state.StateTransitions
+	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil, func(_ context.Context, states state.StateTransitions) {
+		statesToSend = states
+	})
 	checkExpectedStateTransitions(t, processed, initStates)
+
+	// Check that it returns just those state transitions that needs to be sent.
+	checkExpectedStateTransitions(t, statesToSend, map[data.Fingerprint]struct{}{state1: {}, state2: {}}) // Does not contain the Normal state3.
 
 	currentStates := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 	statesMap := checkExpectedStates(t, currentStates, initStates)
@@ -1769,7 +1776,7 @@ func TestStaleResults(t *testing.T) {
 
 	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
-		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
+		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, nil)
 		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
 			if s.CacheID == state1 {

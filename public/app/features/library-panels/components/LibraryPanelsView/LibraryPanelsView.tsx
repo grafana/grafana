@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useReducer } from 'react';
+import { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';

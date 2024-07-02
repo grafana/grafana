@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,7 +22,7 @@ interface PanelEditorTabsProps {
   onChangeTab: (tab: PanelEditorTab) => void;
 }
 
-export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab }: PanelEditorTabsProps) => {
+export const PanelEditorTabs = memo(({ panel, dashboard, tabs, onChangeTab }: PanelEditorTabsProps) => {
   const forceUpdate = useForceUpdate();
   const styles = useStyles2(getStyles);
 
