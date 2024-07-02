@@ -1,15 +1,6 @@
 import { isNumber, isString } from 'lodash';
 
-import {
-  AppEvents,
-  Field,
-  FieldType,
-  getFieldDisplayName,
-  getLinksSupplier,
-  LinkModel,
-  PluginState,
-  SelectableValue,
-} from '@grafana/data';
+import { AppEvents, Field, FieldType, getLinksSupplier, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import {
@@ -115,30 +106,6 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
   }
 }
 
-/*
- * Provided a given field add any matching data links
- * Mutates the links object in place which is then returned by the `getDataLinks` function downstream
- */
-const addDataLinkForField = (
-  field: Field<unknown>,
-  data: string | undefined,
-  linkLookup: Set<string>,
-  links: Array<LinkModel<Field>>
-): void => {
-  if (field?.getLinks) {
-    const disp = field.display ? field.display(data) : { text: `${data}`, numeric: +data! };
-    // TODO add more control over which row index each element uses
-    const valueRowIndex = field.values.length - 1;
-    field.getLinks({ calculatedValue: disp, valueRowIndex }).forEach((link) => {
-      const key = `${link.title}/${link.href}`;
-      if (!linkLookup.has(key)) {
-        links.push(link);
-        linkLookup.add(key);
-      }
-    });
-  }
-};
-
 // TODO: This could be refactored a fair amount, ideally the element specific config code should be owned by each element and not in this shared util file
 export function getDataLinks(
   dimensionContext: DimensionContext,
@@ -150,8 +117,6 @@ export function getDataLinks(
 
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
-
-  const elementConfig = elementOptions.config;
 
   const defaultField = {
     name: 'New field',
@@ -176,128 +141,6 @@ export function getDataLinks(
 
   // sort element data links
   links.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
-
-  frames?.forEach((frame) => {
-    const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
-
-    // Text config
-    const isTextTiedToFieldData =
-      elementConfig?.text?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field);
-    const isTextColorTiedToFieldData =
-      elementConfig?.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field);
-
-    // General element config
-    const isElementBackgroundColorTiedToFieldData =
-      elementOptions?.background?.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field);
-    const isElementBackgroundImageTiedToFieldData =
-      elementOptions?.background?.image?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field);
-    const isElementBorderColorTiedToFieldData =
-      elementOptions?.border?.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field);
-
-    // Icon config
-    const isIconSVGTiedToFieldData =
-      elementConfig?.path?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field);
-    const isIconColorTiedToFieldData =
-      elementConfig?.fill?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field);
-
-    // Wind turbine config (maybe remove / not support this?)
-    const isWindTurbineRPMTiedToFieldData =
-      elementConfig?.rpm?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field);
-
-    // Server config
-    const isServerBlinkRateTiedToFieldData =
-      elementConfig?.blinkRate?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field);
-    const isServerStatusColorTiedToFieldData =
-      elementConfig?.statusColor?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field);
-    const isServerBulbColorTiedToFieldData =
-      elementConfig?.bulbColor?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field);
-
-    if (isTextTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isTextColorTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isElementBackgroundColorTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isElementBackgroundImageTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isElementBorderColorTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isIconSVGTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isIconColorTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isWindTurbineRPMTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field)[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isServerBlinkRateTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isServerStatusColorTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-
-    if (isServerBulbColorTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field
-      )[0];
-      addDataLinkForField(field, data, linkLookup, links);
-    }
-  });
 
   return links;
 }
