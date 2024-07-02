@@ -3,11 +3,12 @@ import * as React from 'react';
 
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { VersionHistoryHeader, VersionsHistoryButtons } from 'app/features/dashboard-scene/settings/version-history';
 import {
-  VersionHistoryHeader,
-  VersionsHistoryButtons,
-} from 'app/features/dashboard-scene/settings/version-history';
-import { DecoratedRevisionModel, VersionModel, getHistorySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
+  DecoratedRevisionModel,
+  VersionModel,
+  getHistorySrv,
+} from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
 import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';

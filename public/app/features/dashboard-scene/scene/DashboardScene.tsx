@@ -356,7 +356,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     const versionRsp = await getHistorySrv().restoreDashboard(version.uid, version.version);
-  
+
     const rev = (versionRsp as SaveDashboardResponseDTO).version;
     if (!Number.isInteger(version)) {
       return false;

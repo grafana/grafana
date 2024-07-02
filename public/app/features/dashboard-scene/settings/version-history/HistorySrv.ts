@@ -21,9 +21,8 @@ export type DecoratedRevisionModel = VersionModel & {
   checked: boolean;
   createdDateString: string;
   ageString: string;
-  data?: Dashboard
+  data?: Dashboard;
 };
-
 
 export interface HistorySrv {
   getHistoryList(dashboardUID: string, options: HistoryListOpts): Promise<VersionModel[]>;
