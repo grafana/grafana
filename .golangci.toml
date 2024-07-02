@@ -150,7 +150,6 @@ enable = [
   "revive",
   "staticcheck",
   "stylecheck",
-  "typecheck",
   "unconvert",
   "unused",
   "whitespace",
