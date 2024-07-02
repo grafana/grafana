@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import { reportInteraction, getAppEvents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import { IconButton, Modal } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -25,7 +24,6 @@ interface ActionsCellProps {
 function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCellProps) {
   const [deleteQueryTemplate] = useDeleteQueryTemplateMutation();
   const [editFormOpen, setEditFormOpen] = useState(false);
-  //const [editQueryTemplate] = useEditQueryTemplateMutation();
   const styles = useQueryLibraryListStyles();
 
   const onDeleteQuery = (queryUid: string) => {

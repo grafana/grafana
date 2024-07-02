@@ -31,7 +31,7 @@ export const queryLibraryApi = createApi({
     editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
       query: (editQueryTemplateCommand) => ({
         url: `${editQueryTemplateCommand.uid}`,
-        method: 'POST',
+        method: 'PUT',
         data: convertQueryTemplateCommandToDataQuerySpec(editQueryTemplateCommand),
       }),
       invalidatesTags: ['QueryTemplatesList'],
