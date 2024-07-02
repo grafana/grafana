@@ -78,7 +78,7 @@ import { ScopesScene } from './Scopes/ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -91,6 +91,8 @@ export interface DashboardSceneState extends SceneObjectState {
   links: DashboardLink[];
   /** Is editable */
   editable?: boolean;
+  /** Allows disabling grid lazy loading */
+  preload?: boolean;
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
