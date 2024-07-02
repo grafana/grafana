@@ -104,7 +104,7 @@ Labels prefixed with `grafana_` are reserved by Grafana for special use. To stop
 
 {{<admonition type="note">}}
 
-Two alert rules cannot produce alert instances with the same labels. If two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the generated alert instances will be discarded.
+Two alert rules cannot produce alert instances with the same labels. If two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the generated alert instances is discarded.
 
 Ensure the label set for an alert does not have two or more labels with the same name.
 
@@ -114,17 +114,17 @@ Ensure the label set for an alert does not have two or more labels with the same
 
 {{< collapse title="Label key format" >}}
 
-Grafana's built-in Alertmanager supports both Unicode label keys and values. If you are using an external Prometheus Alertmanager, label keys must be compatible with their [data model](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+Grafana has a built-in Alertmanager that supports both Unicode label keys and values. If you are using an external Prometheus Alertmanager, label keys must be compatible with their [data model](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 This means that label keys must only contain **ASCII letters**, **numbers**, as well as **underscores** and match the regex `[a-zA-Z_][a-zA-Z0-9_]*`.
-Any invalid characters will be removed or replaced by the Grafana alerting engine before being sent to the external Alertmanager according to the following rules:
+Any invalid characters are removed or replaced by the Grafana alerting engine before being sent to the external Alertmanager according to the following rules:
 
-- `Whitespace` will be removed.
-- `ASCII characters` will be replaced with `_`.
-- `All other characters` will be replaced with their lower-case hex representation. If this is the first character it will be prefixed with `_`.
+- `Whitespace` is removed.
+- `ASCII characters` is replaced with `_`.
+- `All other characters` is replaced with their lower-case hex representation. If this is the first character it is prefixed with `_`.
 
 Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514="🔥"`.
 
-If multiple label keys are sanitized to the same value, the duplicates will have a short hash of the original label appended as a suffix.
+If multiple label keys are sanitized to the same value, the duplicates have a short hash of the original label appended as a suffix.
 
 {{< /collapse >}}
 
@@ -132,7 +132,7 @@ If multiple label keys are sanitized to the same value, the duplicates will have
 
 The purpose of annotations is to add additional information to alert instances, such as extra details for notification messages.
 
-Grafana provides several optional annotations that you can edit for use in notification messages and within Grafana:
+Grafana provides several optional annotations that you can edit for use in notification messages and within Grafana.
 
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
