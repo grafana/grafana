@@ -23,9 +23,9 @@ jobs:
   setup:
     name: Post-release comms
     outputs:
-      version: ${{ steps.output.outputs.version }}
-      dry_run: ${{ steps.output.outputs.dry_run }}
-      latest: ${{ steps.output.outputs.latest }}
+      version: ${{ steps.outputs.outputs.version }}
+      dry_run: ${{ steps.outputs.outputs.dry_run }}
+      latest: ${{ steps.outputs.outputs.latest }}
     runs-on: ubuntu-latest
     steps:
     - if: github.event.workflow_dispatch
@@ -44,50 +44,50 @@ jobs:
         echo "latest=$LATEST" >> $GITHUB_OUTPUT
         echo "version=$VERSION" >> $GITHUB_OUTPUT
   mirror_branch:
-    name: Mirror 'release-${{ needs.setup.output.version }}"' branch
+    name: Mirror 'release-${{ needs.setup.outputs.version }}"' branch
     needs: setup
     uses: grafana/security-patch-actions/.github/workflows/mirror-branch.yml@main
     with:
-      ref: "release-${{ needs.setup.output.version }}"
+      ref: "release-${{ needs.setup.outputs.version }}"
       src_repo: grafana/grafana-security-mirror
       dest_repo: grafana/grafana
-      dry_run: ${{ needs.setup.output.dry_run }}
+      dry_run: ${{ needs.setup.outputs.dry_run }}
   mirror_tag:
     # Because the tag is almost always on the release-branch, we should make sure we mirror the release branch before
     # mirroring the tag
     needs: [setup, mirror_branch]
-    name: Mirror 'v${{ needs.setup.output.version }}"' tag
+    name: Mirror 'v${{ needs.setup.outputs.version }}"' tag
     uses: grafana/security-patch-actions/.github/workflows/mirror-tag.yml@main
     with:
-      tag: "v${{ needs.setup.output.version }}"
+      tag: "v${{ needs.setup.outputs.version }}"
       src_repo: grafana/grafana-security-mirror
       dest_repo: grafana/grafana
-      dry_run: ${{ needs.setup.output.dry_run }}
+      dry_run: ${{ needs.setup.outputs.dry_run }}
   post_changelog_on_forum:
     needs: setup
     runs-on: ubuntu-latest
     steps:
     - run: |
-        echo post changelog to forums for ${{ needs.setup.output.version }}
-        echo dry run: ${{ needs.setup.output.dry_run }})
+        echo post changelog to forums for ${{ needs.setup.outputs.version }}
+        echo dry run: ${{ needs.setup.outputs.dry_run }}
   create_github_release:
     # a github release requires a git tag
     needs: [setup, mirror_tag]
     uses: ./.github/workflows/github-release.yml
     with:
-      version: ${{ needs.setup.output.version }}
-      dry_run: ${{ needs.setup.output.dry_run }}
+      version: ${{ needs.setup.outputs.version }}
+      dry_run: ${{ needs.setup.outputs.dry_run }}
   publish_docs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
     - run: |
-        echo publish docs for ${{ needs.setup.output.version }}
-        echo dry run: ${{ needs.setup.output.dry_run }}
+        echo publish docs for ${{ needs.setup.outputs.version }}
+        echo dry run: ${{ needs.setup.outputs.dry_run }}
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest
     steps:
     - run: |
-        echo announce on slack that ${{ needs.setup.output.version }} has been released
-        echo dry run: ${{ needs.setup.output.dry_run }}
+        echo announce on slack that ${{ needs.setup.outputs.version }} has been released
+        echo dry run: ${{ needs.setup.outputs.dry_run }}
