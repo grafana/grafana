@@ -2,17 +2,24 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	cryptoRand "crypto/rand"
+	"fmt"
 	"time"
 
+	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
+	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
+	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
+	"golang.org/x/crypto/nacl/box"
 )
 
-func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequest, error) {
+func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	// Data sources
 	dataSources, err := s.getDataSources(ctx)
 	if err != nil {
@@ -28,7 +35,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 	}
 
 	// Folders
-	folders, err := s.getFolders(ctx)
+	folders, err := s.getFolders(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get folders", "err", err)
 		return nil, err
@@ -111,10 +118,9 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 	return result, err
 }
 
-func (s *Service) getFolders(ctx context.Context) ([]folder.Folder, error) {
-	reqCtx := contexthandler.FromContext(ctx)
+func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUser) ([]folder.Folder, error) {
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-		SignedInUser: reqCtx.SignedInUser,
+		SignedInUser: signedInUser,
 	})
 	if err != nil {
 		return nil, err
@@ -143,11 +149,10 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
-func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration.CloudMigrationSnapshot) {
+func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedInUser, maxItemsPerPartition uint32, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
 	// TODO -- make sure we can only build one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
-	s.buildSnapshotError = false
 
 	// update snapshot status to creating, add some retries since this is a background task
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
@@ -158,18 +163,60 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'creating'", "err", err)
-		s.buildSnapshotError = true
-		return
+		return fmt.Errorf("setting snapshot status to creating: snapshotUID=%s %w", snapshotMeta.UID, err)
 	}
 
-	// build snapshot
-	// just sleep for now to simulate snapshot creation happening
-	// need to do a couple of fancy things when we implement this:
-	//   - some sort of regular check-in so we know we haven't timed out
-	//   - a channel to listen for cancel events
-	//   - retries baked into the snapshot writing process?
-	s.log.Debug("snapshot meta", "snapshot", snapshotMeta)
-	time.Sleep(3 * time.Second)
+	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
+	if err != nil {
+		return fmt.Errorf("nacl: generating public and private key: %w", err)
+	}
+
+	// Use GMS public key + the grafana generated private private key to encrypt snapshot files.
+	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
+		Public:  []byte(snapshotMeta.EncryptionKey),
+		Private: privateKey[:],
+	},
+		crypto.NewNacl(),
+		snapshotMeta.LocalDir,
+	)
+	if err != nil {
+		return fmt.Errorf("instantiating snapshot writer: %w", err)
+	}
+
+	migrationData, err := s.getMigrationDataJSON(ctx, signedInUser)
+	if err != nil {
+		return fmt.Errorf("fetching migration data: %w", err)
+	}
+
+	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, 0)
+	for _, item := range migrationData.Items {
+		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], snapshot.MigrateDataRequestItemDTO{
+			Type:  snapshot.MigrateDataType(item.Type),
+			RefID: item.RefID,
+			Name:  item.Name,
+			Data:  item.Data,
+		})
+	}
+
+	for _, resourceType := range []cloudmigration.MigrateDataType{
+		cloudmigration.DatasourceDataType,
+		cloudmigration.FolderDataType,
+		cloudmigration.DashboardDataType,
+	} {
+		for _, chunk := range slicesext.Chunks(int(maxItemsPerPartition), resourcesGroupedByType[resourceType]) {
+			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
+				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
+			}
+		}
+	}
+
+	// Add the grafana generated public key to the index file so gms can use it to decrypt the snapshot files later.
+	// This works because the snapshot files are being encrypted with
+	// the grafana generated private key + the gms public key.
+	_, err = snapshotWriter.Finish(publicKey[:])
+	if err != nil {
+		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
+	}
 
 	// update snapshot status to pending upload with retry
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
@@ -180,8 +227,10 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
-		s.buildSnapshotError = true
+		return fmt.Errorf("setting snapshot status to pending upload: snapshotID=%s %w", snapshotMeta.UID, err)
 	}
+
+	return nil
 }
 
 // asynchronous process for and updating the snapshot status
@@ -189,7 +238,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 	// TODO -- make sure we can only upload one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
-	s.buildSnapshotError = false
 
 	// update snapshot status to uploading, add some retries since this is a background task
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
@@ -200,7 +248,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'creating'", "err", err)
-		s.buildSnapshotError = true
 		return
 	}
 
@@ -218,7 +265,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
-		s.buildSnapshotError = true
 	}
 
 	// simulate the rest
