@@ -26,8 +26,7 @@ jobs:
       version: ${{ steps.output.outputs.version }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
-    runs-on:
-      ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
     - if: github.event.workflow_dispatch
       run: |
@@ -66,7 +65,7 @@ jobs:
       dry_run: ${{ needs.setup.output.version }}"
   post_changelog_on_forum:
     needs: setup
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
     - run: "echo post changelog to forums for $VERSION (dry run: $DRY_RUN)"
   create_github_release:
@@ -78,11 +77,11 @@ jobs:
       dry_run: ${{ needs.setup.output.dry_run }}
   publish_docs:
     needs: setup
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
     - run: "echo publish docs for ${{ needs.setup.output.version }} (dry run: ${{ needs.setup.output.dry_run }})"
   post_on_slack:
     needs: setup
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
     - run: "announce on slack that ${{ needs.setup.output.version }} has been released (dry run: ${{ needs.setup.output.dry_run }})"
