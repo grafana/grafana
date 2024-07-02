@@ -15,37 +15,72 @@ on:
         default: false
   pull_request:
     types:
-      - closed
+    - closed
     branches:
-      - 'main'
-      - 'v*.*.*'
+    - 'main'
+    - 'v*.*.*'
 jobs:
-  post_release:
+  setup:
     name: Post-release comms
+    output:
+      version: ${{ steps.output.outputs.version }}
+      dry_run: ${{ steps.output.outputs.dry_run }}
+      latest: ${{ steps.output.outputs.latest }}
     steps:
-      - if: github.event.workflow_dispatch
-        run: |
-          echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-          echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
-          echo "LATEST=${{ inputs.latest }}" >> $GITHUB_ENV
-      - if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
-        run: |
-          echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\///g')" >> $GITHUB_ENV
-          echo "DRY_RUN=true" >> $GITHUB_ENV
-          echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') }}" >> $GITHUB_ENV
-      - uses: grafana/security-patch-actions/.github/workflows/mirror-branch.yml@main
-        with:
-          ref: "release-${{ .env.VERSION }}"
-          src_repo: grafana/grafana-security-mirror
-          dest_repo: grafana/grafana
-      - uses: grafana/security-patch-actions/.github/workflows/mirror-tag.yml@main
-        with:
-          ref: "v${{ .env.VERSION }}"
-          src_repo: grafana/grafana-security-mirror
-          dest_repo: grafana/grafana
-      - run: "echo post changelog to forums for $VERSION (dry run: $DRY_RUN)"
-      - uses: .github/workflows/github-release.yml
-        with:
-          version: ${{ .env.VERSION }}
-      - run: "echo publish docs for $VERSION (dry run: $DRY_RUN)"
-      - run: "announce on slack that $VERSION has been released (dry run: $DRY_RUN)"
+    - if: github.event.workflow_dispatch
+      run: |
+        echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+        echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
+        echo "LATEST=${{ inputs.latest }}" >> $GITHUB_ENV
+    - if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
+      run: |
+        echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\///g')" >> $GITHUB_ENV
+        echo "DRY_RUN=true" >> $GITHUB_ENV
+        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') }}" >> $GITHUB_ENV
+    - name: output
+      run: |
+        echo "dry_run=$DRY_RUN" >> $GITHUB_OUTPUT
+        echo "latest=$LATEST" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+  mirror_branch:
+    name: Mirror 'release-${{ needs.setup.output.version }}"' branch
+    needs: setup
+    uses: grafana/security-patch-actions/.github/workflows/mirror-branch.yml@main
+    with:
+      ref: "release-${{ needs.setup.output.version }}"
+      src_repo: grafana/grafana-security-mirror
+      dest_repo: grafana/grafana
+      dry_run: ${{ needs.setup.output.version }}"
+  mirror_tag:
+    # Because the tag is almost always on the release-branch, we should make sure we mirror the release branch before
+    # mirroring the tag
+    needs: [setup, mirror_branch]
+    name: Mirror 'v${{ needs.setup.output.version }}"' tag
+    uses: grafana/security-patch-actions/.github/workflows/mirror-tag.yml@main
+    with:
+      ref: "v${{ needs.setup.output.version }}"
+      src_repo: grafana/grafana-security-mirror
+      dest_repo: grafana/grafana
+      dry_run: ${{ needs.setup.output.version }}"
+  post_changelog_on_forum:
+    needs: setup
+    runs_on: ubuntu-latest
+    steps:
+    - run: "echo post changelog to forums for $VERSION (dry run: $DRY_RUN)"
+  create_github_release:
+    # a github release requires a git tag
+    needs: [setup, mirror_tag]
+    uses: .github/workflows/github-release.yml
+    with:
+      version: ${{ needs.setup.output.version }}
+      dry_run: ${{ needs.setup.output.dry_run }}
+  publish_docs:
+    needs: setup
+    runs_on: ubuntu-latest
+    steps:
+    - run: "echo publish docs for ${{ needs.setup.output.version }} (dry run: ${{ needs.setup.output.dry_run }})"
+  post_on_slack:
+    needs: setup
+    runs_on: ubuntu-latest
+    steps:
+    - run: "announce on slack that ${{ needs.setup.output.version }} has been released (dry run: ${{ needs.setup.output.dry_run }})"
