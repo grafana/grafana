@@ -151,7 +151,6 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	switch len(req.Requests) {
 	case 0:
 		qdr = &backend.QueryDataResponse{}
-		break // nothing to do
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
 	default:
