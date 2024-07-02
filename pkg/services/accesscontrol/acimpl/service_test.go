@@ -69,6 +69,8 @@ func TestUsageMetrics(t *testing.T) {
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
+				nil,
+				nil,
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
