@@ -1,6 +1,7 @@
 import { DataLink, DynamicConfigValue, FieldMatcherID, PanelModel } from '@grafana/data';
+import { CanvasElementOptions } from 'app/features/canvas/element';
 
-import { CanvasElementOptions, Options } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
   const pluginVersion = panel?.pluginVersion ?? '';
@@ -80,8 +81,8 @@ function addLinks(elements: CanvasElementOptions[], links: DataLink[], fieldName
 
       // todo: getFieldDisplayName?
       if (dim.field === fieldName) {
-        element.config.links ??= [];
-        element.config.links.push(...links);
+        element.links ??= [];
+        element.links.push(...links);
       }
     }
   });
