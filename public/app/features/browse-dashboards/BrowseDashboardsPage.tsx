@@ -3,13 +3,12 @@ import { memo, useEffect, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
-import { useGrafana } from '../../core/context/GrafanaContext';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
@@ -40,8 +39,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
-  const { location } = useGrafana();
-  const search = location.getSearch();
+  const search = locationService.getSearch();
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
