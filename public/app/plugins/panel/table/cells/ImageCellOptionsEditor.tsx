@@ -15,7 +15,7 @@ export const ImageCellOptionsEditor = ({
     };
 
     const onTitleChange = (e: FormEvent<HTMLInputElement>) => {
-        cellOptions.alt = e.currentTarget.value;
+        cellOptions.title = e.currentTarget.value;
         onChange(cellOptions);
     }
 
