@@ -229,7 +229,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			name:       "should return empty mapping when no org mapping settings are provided",
 			rawMapping: []string{},
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
+				orgMappings:       []OrgRoleMapping{},
 				strictRoleMapping: false,
 			},
 		},
@@ -238,7 +238,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			rawMapping: []string{"Second:1:SuperEditor"},
 			roleStrict: true,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
+				orgMappings:       []OrgRoleMapping{},
 				strictRoleMapping: true,
 			},
 		},
@@ -247,7 +247,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			rawMapping: []string{"Second:1:SuperEditor"},
 			roleStrict: false,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}},
+				orgMappings:       []OrgRoleMapping{{ExternalOrg: "Second", InternalOrgID: 1, Role: org.RoleViewer, MapToAllOrgs: false}},
 				strictRoleMapping: false,
 			},
 		},
@@ -256,7 +256,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			rawMapping: []string{"Second:1"},
 			roleStrict: true,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
+				orgMappings:       []OrgRoleMapping{},
 				strictRoleMapping: true,
 			},
 		},
@@ -264,7 +264,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			name:       "should return default mapping when org mapping doesn't contain any role and strict is disabled",
 			rawMapping: []string{"Second:1"},
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}},
+				orgMappings:       []OrgRoleMapping{{ExternalOrg: "Second", InternalOrgID: 1, Role: org.RoleViewer, MapToAllOrgs: false}},
 				strictRoleMapping: false,
 			},
 		},
@@ -272,7 +272,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			name:       "should return empty mapping when org mapping is nil",
 			rawMapping: nil,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
+				orgMappings:       []OrgRoleMapping{},
 				strictRoleMapping: false,
 			},
 		},
@@ -281,7 +281,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			rawMapping: []string{"External:Org1:First:Organization:Editor"},
 			roleStrict: true,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
+				orgMappings:       []OrgRoleMapping{},
 				strictRoleMapping: true,
 			},
 		},
@@ -290,7 +290,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			rawMapping: []string{"External:Org1:First:Organization:Editor", "Second:1:Editor"},
 			roleStrict: false,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleEditor}},
+				orgMappings:       []OrgRoleMapping{{ExternalOrg: "Second", InternalOrgID: 1, Role: org.RoleEditor, MapToAllOrgs: false}},
 				strictRoleMapping: false,
 			},
 		},
@@ -305,7 +305,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
 			},
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
+				orgMappings:       []OrgRoleMapping{},
 				strictRoleMapping: true,
 			},
 		},
@@ -320,7 +320,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
 			},
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"ExternalOrg1": {1: org.RoleEditor}},
+				orgMappings:       []OrgRoleMapping{{ExternalOrg: "ExternalOrg1", InternalOrgID: 1, Role: org.RoleEditor, MapToAllOrgs: false}},
 				strictRoleMapping: false,
 			},
 		},
