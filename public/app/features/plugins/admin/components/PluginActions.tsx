@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { HorizontalGroup, Icon, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import configCore from 'app/core/config';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
@@ -37,8 +37,8 @@ export const PluginActions = ({ plugin }: Props) => {
   const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
 
   return (
-    <VerticalGroup>
-      <HorizontalGroup>
+    <Stack direction="column">
+      <Stack alignItems="center">
         {!isInstallControlsDisabled && (
           <>
             {isExternallyManaged && !hasInstallWarning && !configCore.featureToggles.managedPluginsInstall ? (
@@ -59,14 +59,14 @@ export const PluginActions = ({ plugin }: Props) => {
           </>
         )}
         <GetStartedWithPlugin plugin={plugin} />
-      </HorizontalGroup>
+      </Stack>
       {needReload && (
-        <HorizontalGroup>
+        <Stack alignItems="center">
           <Icon name="exclamation-triangle" />
           <span className={styles.message}>Refresh the page to see the changes</span>
-        </HorizontalGroup>
+        </Stack>
       )}
-    </VerticalGroup>
+    </Stack>
   );
 };
 

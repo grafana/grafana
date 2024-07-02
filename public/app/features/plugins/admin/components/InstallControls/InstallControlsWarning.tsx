@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -33,7 +33,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
 
   if (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) {
     return (
-      <HorizontalGroup height="auto" align="center">
+      <Stack height="auto" alignItems="center">
         <span className={styles.message}>No valid Grafana Enterprise license detected.</span>
         <LinkButton
           href={`${getExternalManageLink(plugin.id)}?utm_source=grafana_catalog_learn_more`}
@@ -45,7 +45,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
         >
           Learn more
         </LinkButton>
-      </HorizontalGroup>
+      </Stack>
     );
   }
 

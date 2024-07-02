@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { HorizontalGroup, LinkButton } from '@grafana/ui';
+import { LinkButton, Stack } from '@grafana/ui';
 
 import { getExternalManageLink } from '../../helpers';
 import { PluginStatus } from '../../types';
@@ -15,14 +15,14 @@ export function ExternallyManagedButton({ pluginId, pluginStatus, angularDetecte
 
   if (pluginStatus === PluginStatus.UPDATE) {
     return (
-      <HorizontalGroup height="auto">
+      <Stack height="auto">
         <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
           Update via grafana.com
         </LinkButton>
         <LinkButton variant="destructive" href={externalManageLink} target="_blank" rel="noopener noreferrer">
           Uninstall via grafana.com
         </LinkButton>
-      </HorizontalGroup>
+      </Stack>
     );
   }
 
