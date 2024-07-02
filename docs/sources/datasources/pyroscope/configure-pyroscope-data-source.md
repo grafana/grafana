@@ -113,7 +113,7 @@ The **Querying** section is shown in number 3 in the screenshot.
 
 **Minimum step** is used for queries returning time-series data. The default value is 15 seconds.
 
-The Pyroscope backend, similar to Prometheus, scrapes profiles at certain intervals. To prevent querying at smaller interval, use Minimal step same or higher than your Pyroscope scrape interval. This prevents returning too many data points to the frontend.
+Adjusting this option can help prevent gaps when you zoom in to profiling data. 
 
 ### Private data source connect
 
