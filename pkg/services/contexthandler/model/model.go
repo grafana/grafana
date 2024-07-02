@@ -173,3 +173,11 @@ func (ctx *ReqContext) QueryBoolWithDefault(field string, d bool) bool {
 
 	return ctx.QueryBool(field)
 }
+
+const (
+	dsAuthorizationHeaderName = "X-Ds-Authorization"
+)
+
+func (ctx *ReqContext) GetDsAuthorization() (string, string) {
+	return dsAuthorizationHeaderName, ctx.Req.Header.Get(dsAuthorizationHeaderName)
+}
