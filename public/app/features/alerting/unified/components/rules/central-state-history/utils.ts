@@ -2,6 +2,7 @@ import { groupBy } from 'lodash';
 
 import { DataFrame, Field as DataFrameField, DataFrameJSON, Field, FieldType } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
+import { GrafanaAlertState, isGrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { LogRecord } from '../state-history/common';
@@ -18,7 +19,9 @@ const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables i
  * This allows us to be able to filter by labels in the groupDataFramesByTime function.
  */
 export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
-  const stateFilterValue = getStateFilterInQueryParams();
+  const stateInQueryParams = getStateFilterInQueryParams();
+  const stateFilterValue = stateInQueryParams === '' ? StateFilterValues.all : stateInQueryParams;
+
   const tsValues = data?.data?.values[0] ?? [];
   const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
   const lines = data?.data?.values[1] ?? [];
@@ -27,8 +30,16 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
     const line = lines[index];
     // values property can be undefined for some instance states (e.g. NoData)
     if (isLine(line)) {
+      if (!isGrafanaAlertState(line.current)) {
+        return acc;
+      }
+      // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
+      // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
+      // eslint-disable-next-line
+      const baseState = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
+      const stateMatch = stateFilterValue !== StateFilterValues.all ? stateFilterValue === baseState : true;
       // filter by state
-      if (stateFilterValue===StateFilterValues.all || line.current===stateFilterValue){
+      if (stateMatch) {
         acc.push({ timestamp, line });
       }
     }
