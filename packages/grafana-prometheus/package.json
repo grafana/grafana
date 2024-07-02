@@ -47,7 +47,7 @@
     "@leeoniya/ufuzzy": "1.0.14",
     "@lezer/common": "1.2.1",
     "@lezer/highlight": "1.2.0",
-    "@lezer/lr": "1.4.0",
+    "@lezer/lr": "1.4.1",
     "@prometheus-io/lezer-promql": "0.52.1",
     "@reduxjs/toolkit": "2.2.5",
     "d3": "7.9.0",
