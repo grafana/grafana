@@ -54,7 +54,7 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
 1. Click **Save contact point**.
 1. On the contact points list view page, you should see a link to Grafana OnCall.
 
-   If the integration is not yet being used anywhere in the notification policies tree, it will have **Unused** as its status in the **Health** column. It won’t receive any notifications because there are no notifications using that integration.
+   If the integration is not being used anywhere in the notification policies tree, it has **Unused** as its status in the **Health** column. It won’t receive any notifications, because there are no notifications using that integration.
 
 1. To see the integration details and test the integration, click the link to Grafana OnCall on the contact points list view page.
 1. Click **Send demo alert > Send alert**.
