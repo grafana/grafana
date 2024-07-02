@@ -25,7 +25,7 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
-import { historySrv } from '../settings/version-history/HistorySrv';
+import { getHistorySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { findVizPanelByKey } from '../utils/utils';
@@ -1137,7 +1137,7 @@ describe('DashboardScene', () => {
         version: 4,
       });
 
-      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      jest.mocked(getHistorySrv().restoreDashboard).mockResolvedValue({ version: newVersion });
       jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
 
       return scene.onRestore(getVersionMock()).then((res) => {
@@ -1150,7 +1150,7 @@ describe('DashboardScene', () => {
 
     it('should return early if historySrv does not return a valid version number', () => {
       jest
-        .mocked(historySrv.restoreDashboard)
+        .mocked(getHistorySrv().restoreDashboard)
         .mockResolvedValueOnce({ version: null })
         .mockResolvedValueOnce({ version: undefined })
         .mockResolvedValueOnce({ version: Infinity })
