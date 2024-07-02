@@ -24,12 +24,12 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Can be used to get the scroll container element to access scroll position
    * */
-  // Probably will deprecate this in the future in favor of just scrolling document.body directly
+  // TODO deprecate this when bodyScrolling is enabled by default
   scrollRef?: RefCallback<HTMLDivElement>;
   /**
    * Can be used to update the current scroll position
    * */
-  // Probably will deprecate this in the future in favor of just scrolling document.body directly
+  // TODO deprecate this when bodyScrolling is enabled by default
   scrollTop?: number;
 }
 

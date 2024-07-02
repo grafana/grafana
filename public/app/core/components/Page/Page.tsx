@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Fragment, useLayoutEffect } from 'react';
+import { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -38,7 +38,6 @@ export const Page: PageType = ({
   usePageTitle(navModel, pageNav);
 
   const pageHeaderNav = pageNav ?? navModel?.node;
-  const Scroller = config.featureToggles.bodyScrolling ? Fragment : NativeScrollbar;
 
   // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
   // This prevents flickering sectionNav when going from dashboard to settings for example
@@ -55,7 +54,7 @@ export const Page: PageType = ({
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <Scroller
+        <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
           autoHeightMin={'100%'}
@@ -76,11 +75,11 @@ export const Page: PageType = ({
             {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
             <div className={styles.pageContent}>{children}</div>
           </div>
-        </Scroller>
+        </NativeScrollbar>
       )}
 
       {layout === PageLayoutType.Canvas && (
-        <Scroller
+        <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
           autoHeightMin={'100%'}
@@ -88,7 +87,7 @@ export const Page: PageType = ({
           scrollRefCallback={scrollRef}
         >
           <div className={styles.canvasContent}>{children}</div>
-        </Scroller>
+        </NativeScrollbar>
       )}
 
       {layout === PageLayoutType.Custom && children}
