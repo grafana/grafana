@@ -59,7 +59,7 @@ jobs:
     name: Mirror 'v${{ needs.setup.output.version }}"' tag
     uses: grafana/security-patch-actions/.github/workflows/mirror-tag.yml@main
     with:
-      ref: "v${{ needs.setup.output.version }}"
+      tag: "v${{ needs.setup.output.version }}"
       src_repo: grafana/grafana-security-mirror
       dest_repo: grafana/grafana
       dry_run: ${{ needs.setup.output.version }}"
