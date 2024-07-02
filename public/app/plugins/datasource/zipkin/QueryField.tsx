@@ -17,8 +17,8 @@ import {
   QueryField,
   useStyles2,
   Modal,
-  HorizontalGroup,
   Button,
+  Stack,
 } from '@grafana/ui';
 
 import { apiPrefix } from './constants';
@@ -91,7 +91,7 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
       </Modal>
       <InlineFieldRow>
         <InlineField label="Query type" grow={true}>
-          <HorizontalGroup spacing={'sm'} align={'center'} justify={'space-between'}>
+          <Stack gap={1} alignItems={'center'} justifyContent={'space-between'}>
             <RadioButtonGroup<ZipkinQueryType>
               options={[{ value: 'traceID', label: 'TraceID' }]}
               value={query.queryType || 'traceID'}
@@ -112,7 +112,7 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
             >
               Import trace
             </Button>
-          </HorizontalGroup>
+          </Stack>
         </InlineField>
       </InlineFieldRow>
       {query.queryType === 'traceID' && (

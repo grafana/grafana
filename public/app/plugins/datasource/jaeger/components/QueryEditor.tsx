@@ -5,12 +5,12 @@ import { QueryEditorProps } from '@grafana/data';
 import {
   Button,
   FileDropzone,
-  HorizontalGroup,
   InlineField,
   InlineFieldRow,
   Modal,
   QueryField,
   RadioButtonGroup,
+  Stack,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
@@ -76,7 +76,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Query type" grow={true}>
-            <HorizontalGroup spacing={'sm'} align={'center'} justify={'space-between'}>
+            <Stack gap={1} alignItems={'center'} justifyContent={'space-between'}>
               <RadioButtonGroup<JaegerQueryType>
                 options={[
                   { value: 'search', label: 'Search' },
@@ -101,7 +101,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
               >
                 Import trace
               </Button>
-            </HorizontalGroup>
+            </Stack>
           </InlineField>
         </InlineFieldRow>
         {renderEditorBody()}

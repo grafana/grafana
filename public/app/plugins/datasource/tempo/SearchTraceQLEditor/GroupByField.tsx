@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
+import { Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -82,7 +82,7 @@ export const GroupByField = (props: Props) => {
             }));
           return (
             <div key={f.id}>
-              <HorizontalGroup spacing={'none'} width={'auto'}>
+              <Stack gap={0} width={'auto'}>
                 <Select
                   aria-label={`Select scope for filter ${i + 1}`}
                   onChange={(v) => {
@@ -126,7 +126,7 @@ export const GroupByField = (props: Props) => {
                     />
                   </span>
                 )}
-              </HorizontalGroup>
+              </Stack>
             </div>
           );
         })}
