@@ -86,7 +86,7 @@ These options only apply if the **Search** option is selected.
 
 ### Query
 
-Enter the query by which you want to search. Queries are case-insensitive and partial values are accepted.
+Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted. For example, if you have dashboards called "Indoor Temps" and "Outdoor temp", entering the word "temp" would return both results.
 
 ### Folder
 
@@ -94,6 +94,8 @@ Select the dashboard folders that you want to display.
 
 ### Tags
 
-Enter tags by which you want to search. Note that existing tags don't appear as you type, and they _are_ case sensitive.
+Enter tags by which you want to search. Note that existing tags don't appear as you type, and they _are_ case sensitive. Tag search uses an `OR` condition, so if a dashboard has one of the defined tags, it's included in the list.
 
-> **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
+{{< admonition type="note" >}}
+When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
+{{< /admonition >}}
