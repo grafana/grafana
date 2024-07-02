@@ -39,7 +39,7 @@ Grouping in Grafana Alerting allows you to batch relevant alerts together into a
 
 Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
 
-In the notification policy, you can configure how to group multiple alerts into a single notification:
+In the [notification policy](ref:notification-policies), you can configure how to group multiple alerts into a single notification:
 
 - The `Group by` option specifies the criteria for grouping incoming alerts within the policy. The default is by alert rule.
 - [Timing options](#timing-options) determine when and how often to send the notification.
