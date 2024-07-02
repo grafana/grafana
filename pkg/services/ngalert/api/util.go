@@ -111,6 +111,11 @@ func (p *AlertingProxy) withReq(
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+	for h, vs := range ctx.Req.Header {
+		for _, v := range vs {
+			req.Header.Add(h, v)
+		}
+	}
 	for h, v := range headers {
 		req.Header.Add(h, v)
 	}
