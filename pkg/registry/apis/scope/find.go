@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
@@ -17,6 +20,7 @@ import (
 
 type findREST struct {
 	scopeNodeStorage *storage
+	log              log.Logger
 }
 
 var (
@@ -70,6 +74,8 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		query := req.URL.Query().Get("query")
 		results := &scope.FindScopeNodeChildrenResults{}
 
+		r.log.Info("finding scope node children", "namespace", request.NamespaceValue(ctx), "parent", parent, "query", query)
+
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
 			Limit: 1000,
 		})
@@ -84,6 +90,8 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 			responder.Error(fmt.Errorf("expected ScopeNodeList"))
 			return
 		}
+
+		r.log.Info("scope node query result", "length", len(all.Items), "namespace", request.NamespaceValue(ctx), "parent", parent, "query", query)
 
 		for _, item := range all.Items {
 			filterAndAppendItem(item, parent, query, results)
