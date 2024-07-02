@@ -67,6 +67,8 @@ func RegisterAPIService(
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
+	// ATTENTION: Adding a datasource here requires the plugin to implement
+	// an AdmissionHandler to validate the datasource settings.
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
