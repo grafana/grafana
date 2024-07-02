@@ -70,7 +70,7 @@ jobs:
   create_github_release:
     # a github release requires a git tag
     needs: [setup, mirror_tag]
-    uses: .github/workflows/github-release.yml
+    uses: ./.github/workflows/github-release.yml
     with:
       version: ${{ needs.setup.output.version }}
       dry_run: ${{ needs.setup.output.dry_run }}
