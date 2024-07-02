@@ -13,6 +13,7 @@ const selector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton.Menu;
 describe('ExportMenu', () => {
   it('should render menu items', async () => {
     setup();
+    expect(await screen.findByTestId(selector.exportAsPdf)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.exportAsJson)).toBeInTheDocument();
   });
 });

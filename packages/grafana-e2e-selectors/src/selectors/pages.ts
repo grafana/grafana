@@ -75,6 +75,7 @@ export const Pages = {
         Menu: {
           container: 'data-testid new export button menu',
           exportAsJson: 'data-testid new export button export as json',
+          exportAsPdf: 'data-testid new export button export as pdf',
         },
       },
       playlistControls: {
@@ -303,6 +304,14 @@ export const Pages = {
       saveToFileButton: 'data-testid save to file button',
       copyToClipboardButton: 'data-testid copy to clipboard button',
       cancelButton: 'data-testid cancel button',
+    },
+    ExportAsPdf: {
+      container: 'data-testid export as pdf drawer container',
+      orientationButton: 'data-testid export as pdf orientation button',
+      layoutButton: 'data-testid export as pdf layout button',
+      previewImage: 'data-testid export as pdf preview image',
+      downloadButton: 'data-testid export as pdf download button',
+      cancelButton: 'data-testid export as pdf cancel button',
     },
   },
   PublicDashboard: {
