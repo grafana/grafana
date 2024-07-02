@@ -4,7 +4,6 @@ import { Box, Button, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useCreateCloudMigrationTokenMutation } from '../../api';
-import { InfoItem } from '../../shared/InfoItem';
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
 import { MigrationTokenModal } from './MigrationTokenModal';
@@ -28,14 +27,12 @@ export const MigrationTokenPane = () => {
 
   return (
     <>
-      <Box display="flex" alignItems="flex-start" padding={2} gap={2} direction="column" backgroundColor="secondary">
-        <InfoItem title={t('migrate-to-cloud.migration-token.title', 'Migration token')}>
-          <Trans i18nKey="migrate-to-cloud.migration-token.body">
-            Your self-managed Grafana instance will require a special authentication token to securely connect to this
-            cloud stack.
-          </Trans>
-        </InfoItem>
-
+      <Box display="flex" alignItems="flex-start" direction="column" gap={2}>
+        <Button disabled={isLoading || hasToken} onClick={handleGenerateToken}>
+          {createTokenResponse.isLoading
+            ? t('migrate-to-cloud.migration-token.generate-button-loading', 'Generating a migration token...')
+            : t('migrate-to-cloud.migration-token.generate-button', 'Generate a migration token')}
+        </Button>
         {createTokenResponse?.isError ? (
           <TokenErrorAlert />
         ) : (
@@ -45,12 +42,6 @@ export const MigrationTokenPane = () => {
             </Trans>
           </Text>
         )}
-
-        <Button disabled={isLoading || hasToken} onClick={handleGenerateToken}>
-          {createTokenResponse.isLoading
-            ? t('migrate-to-cloud.migration-token.generate-button-loading', 'Generating a migration token...')
-            : t('migrate-to-cloud.migration-token.generate-button', 'Generate a migration token')}
-        </Button>
       </Box>
 
       <MigrationTokenModal
