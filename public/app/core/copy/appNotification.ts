@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -40,7 +40,7 @@ export const createErrorNotification = (
   title: string,
   text: string | Error = '',
   traceId?: string,
-  component?: React.ReactElement
+  component?: ReactElement
 ): AppNotification => {
   return {
     ...defaultErrorNotification,
@@ -64,12 +64,23 @@ export const createWarningNotification = (title: string, text = '', traceId?: st
   showing: true,
 });
 
-/** Hook for showing toast notifications with varying severity (success, warning error).
+export const createInfoNotification = (title: string, text = '', traceId?: string): AppNotification => ({
+  severity: AppNotificationSeverity.Info,
+  icon: 'info-circle',
+  title,
+  text,
+  id: uuidv4(),
+  timestamp: Date.now(),
+  showing: true,
+});
+
+/** Hook for showing toast notifications with varying severity (success, warning, error, info).
  * @example
  * const notifyApp = useAppNotification();
  * notifyApp.success('Success!', 'Some additional text');
  * notifyApp.warning('Warning!');
  * notifyApp.error('Error!');
+ * notifyApp.info('Info text');
  */
 export function useAppNotification() {
   const dispatch = useDispatch();
@@ -83,6 +94,9 @@ export function useAppNotification() {
       },
       error: (title: string, text = '', traceId?: string) => {
         dispatch(notifyApp(createErrorNotification(title, text, traceId)));
+      },
+      info: (title: string, text = '') => {
+        dispatch(notifyApp(createInfoNotification(title, text)));
       },
     }),
     [dispatch]
