@@ -9,19 +9,21 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
-func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service) *OAuthTokenSync {
+func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service, tracer tracing.Tracer) *OAuthTokenSync {
 	return &OAuthTokenSync{
 		log.New("oauth_token.sync"),
 		service,
 		sessionService,
 		socialService,
 		new(singleflight.Group),
+		tracer,
 	}
 }
 
@@ -31,9 +33,13 @@ type OAuthTokenSync struct {
 	sessionService    auth.UserTokenService
 	socialService     social.Service
 	singleflightGroup *singleflight.Group
+	tracer            tracing.Tracer
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "oauth.sync.SyncOauthTokenHook")
+	defer span.End()
+
 	// only perform oauth token check if identity is a user
 	if !identity.ID.IsNamespace(authn.NamespaceUser) {
 		return nil

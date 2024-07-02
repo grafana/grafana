@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
@@ -426,7 +427,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService)
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest())
 			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)

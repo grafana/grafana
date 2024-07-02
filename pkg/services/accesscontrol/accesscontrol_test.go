@@ -1,8 +1,10 @@
 package accesscontrol
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	// this import is needed for github.com/grafana/grafana/pkg/web hack_wrap to work
@@ -123,5 +125,61 @@ func TestReduce(t *testing.T) {
 				require.ElementsMatch(t, scopes, want)
 			}
 		})
+	}
+}
+
+func TestGroupScopesByAction(t *testing.T) {
+	// test data = 3 actions with 2+i scopes each, including a duplicate
+	permissions := []Permission{}
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 2+i; j++ {
+			permissions = append(permissions, Permission{
+				Action: fmt.Sprintf("action:%d", i),
+				Scope:  fmt.Sprintf("scope:%d_%d", i, j),
+			})
+		}
+		// add a duplicate scope
+		permissions = append(permissions, Permission{
+			Action: fmt.Sprintf("action:%d", i),
+			Scope:  fmt.Sprintf("scope:%d_%d", i, 0),
+		})
+	}
+
+	expected := map[string][]string{}
+	for i := 0; i < 3; i++ {
+		action := fmt.Sprintf("action:%d", i)
+		scopes := []string{}
+		for j := 0; j < 2+i; j++ {
+			scopes = append(scopes, fmt.Sprintf("scope:%d_%d", i, j))
+		}
+		expected[action] = scopes
+	}
+
+	assert.EqualValues(t, expected, GroupScopesByAction(permissions))
+}
+
+func BenchmarkGroupScopesByAction(b *testing.B) {
+	// create a big list of permissions with a bunch of duplicates
+	permissions := []Permission{}
+	for i := 0; i < 100; i++ {
+		for j := 0; j < 500+i; j++ {
+			permissions = append(permissions, Permission{
+				Action: fmt.Sprintf("action:%d", i),
+				Scope:  fmt.Sprintf("scope:%d_%d", i, j),
+			})
+		}
+		// add duplicate scopes
+		for j := 0; j < 10; j++ {
+			permissions = append(permissions, Permission{
+				Action: fmt.Sprintf("action:%d", i),
+				Scope:  fmt.Sprintf("scope:%d_%d", i, 0),
+			})
+		}
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		GroupScopesByAction(permissions)
 	}
 }
