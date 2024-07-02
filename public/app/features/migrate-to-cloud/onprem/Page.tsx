@@ -68,10 +68,8 @@ function useGetLatestSnapshot(sessionUid?: string) {
   });
 
   useEffect(() => {
-    if (SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status)) {
-      setShouldPoll(true);
-    } else {
-      setShouldPoll(false);
+    const shouldPoll = SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status)
+    setShouldPoll(shouldPoll);
     }
   }, [snapshotResult?.data?.status]);
 
