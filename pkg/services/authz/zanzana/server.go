@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
@@ -42,7 +43,7 @@ func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Serve
 }
 
 // StartOpenFGAHttpSever starts HTTP server which allows to use fga cli.
-func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
+func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -88,7 +89,7 @@ func StartOpenFGAHttpSever(srv grpcserver.Provider, logger log.Logger) error {
 	}
 
 	httpServer := &http.Server{
-		Addr: "127.0.0.1:8080",
+		Addr: cfg.Zanzana.HttpAddr,
 		Handler: cors.New(cors.Options{
 			AllowedOrigins:   []string{"*"},
 			AllowCredentials: true,
