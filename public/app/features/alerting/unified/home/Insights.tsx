@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -100,12 +98,22 @@ const namespace = config.bootData.settings.namespace;
 
 export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
 
-export function getInsightsScenes() {
+const getInsightsDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
 
   [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
     ds.settings = dataSourceSrv.getInstanceSettings(ds.uid);
   });
+  return [ashDs, cloudUsageDs, grafanaCloudPromDs];
+};
+
+export const insightsIsAvailable = () => {
+  const [_, cloudUsageDs, __] = getInsightsDataSources();
+  return cloudUsageDs.settings;
+};
+
+export function getInsightsScenes() {
+  const [ashDs, cloudUsageDs, grafanaCloudPromDs] = getInsightsDataSources();
 
   const categories = [];
 

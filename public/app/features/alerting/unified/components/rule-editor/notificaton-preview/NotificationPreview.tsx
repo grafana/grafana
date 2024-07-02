@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';

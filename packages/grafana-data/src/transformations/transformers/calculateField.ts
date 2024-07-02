@@ -2,7 +2,7 @@ import { defaults } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../../field';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode } from '../../types';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { UnaryOperationID, unaryOperators } from '../../utils/unaryOperators';

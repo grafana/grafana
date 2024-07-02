@@ -1,4 +1,3 @@
-import React from 'react';
 import { Cell } from 'react-table';
 
 import { TimeRange, DataFrame } from '@grafana/data';

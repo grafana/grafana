@@ -21,6 +21,7 @@ load(
     "remote_alertmanager_integration_tests_steps",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
+    "verify_grafanacom_step",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -203,6 +204,7 @@ def publish_packages_pipeline():
         publish_linux_packages_step(package_manager = "deb"),
         publish_linux_packages_step(package_manager = "rpm"),
         publish_grafanacom_step(ver_mode = "release"),
+        verify_grafanacom_step(),
     ]
 
     deps = [
@@ -211,6 +213,16 @@ def publish_packages_pipeline():
     ]
 
     return [
+        pipeline(
+            name = "verify-grafanacom-artifacts",
+            trigger = {
+                "event": ["promote"],
+                "target": "verify-grafanacom-artifacts",
+            },
+            steps = [
+                verify_grafanacom_step(depends_on = []),
+            ],
+        ),
         pipeline(
             name = "publish-packages",
             trigger = trigger,

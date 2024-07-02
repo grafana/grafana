@@ -1,4 +1,4 @@
-import React, { ChangeEvent, MouseEvent } from 'react';
+import { ChangeEvent, MouseEvent } from 'react';
 
 import { Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
