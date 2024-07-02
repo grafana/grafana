@@ -30,11 +30,11 @@ export const DataLinksInlineEditor = ({
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
-  const [linksSafe, updateLinksSafe] = useState<DataLink[]>([]);
+  const [linksSafe, setLinksSafe] = useState<DataLink[]>([]);
   links?.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
 
   useEffect(() => {
-    updateLinksSafe(links ?? []);
+    setLinksSafe(links ?? []);
   }, [links]);
 
   const styles = useStyles2(getDataLinksInlineEditorStyles);
@@ -91,7 +91,8 @@ export const DataLinksInlineEditor = ({
     copy.splice(result.source.index, 1);
     copy.splice(result.destination.index, 0, link);
 
-    updateLinksSafe(copy);
+    setLinksSafe(copy);
+    onChange(linksSafe);
   };
 
   return (
