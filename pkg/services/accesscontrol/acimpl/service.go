@@ -48,7 +48,7 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(
-	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	cfg *setting.Cfg, db db.ReplDB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client,
 ) (*Service, error) {
@@ -73,7 +73,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB,
+	zclient zanzana.Client, db db.ReplDB,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
