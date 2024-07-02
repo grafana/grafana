@@ -46,7 +46,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with no value, it renders the evaluation string",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
-				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]*float64{}},
+				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]float64{}},
 			},
 			expected: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
 		},
@@ -54,7 +54,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with one value, it renders the single value",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
-				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]*float64{"A": &val1}},
+				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]float64{"A": val1}},
 			},
 			expected: "1.1e+00",
 		},
@@ -62,7 +62,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with two values, it renders the value based on their refID and position",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
-				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2}},
+				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]float64{"B0": val1, "B1": val2}},
 			},
 			expected: "B0: 1.1e+00, B1: 1.4e+00",
 		},
@@ -70,7 +70,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with a high number of values, it renders the value based on their refID and position using a natural order",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
-				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2, "B2": &val1, "B10": &val2, "B11": &val1}},
+				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]float64{"B0": val1, "B1": val2, "B2": val1, "B10": val2, "B11": val1}},
 			},
 			expected: "B0: 1.1e+00, B10: 1.4e+00, B11: 1.1e+00, B1: 1.4e+00, B2: 1.1e+00",
 		},
@@ -238,11 +238,10 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 func withAlertingState() forEachState {
 	return func(s *state.State) *state.State {
 		s.State = eval.Alerting
-		value := float64(1.1)
 		s.LatestResult = &state.Evaluation{
 			EvaluationState: eval.Alerting,
 			EvaluationTime:  timeNow(),
-			Values:          map[string]*float64{"B": &value},
+			Values:          map[string]float64{"B": float64(1.1)},
 			Condition:       "B",
 		}
 		return s
