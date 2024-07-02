@@ -151,7 +151,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 		return nil, err
 	}
 	if len(queries) > 1 {
-		h.log.FromContext(ctx).Info("Execute query in multiple batches", "batches", queries, "folders", len(uids), "maxQueryLimit", h.client.MaxQuerySize())
+		h.log.FromContext(ctx).Info("Execute query in multiple batches", "batchSize", len(queries), "folders", len(uids), "maxQueryLimit", h.client.MaxQuerySize())
 	}
 
 	now := time.Now().UTC()
