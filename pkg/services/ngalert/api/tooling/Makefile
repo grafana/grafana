@@ -61,8 +61,8 @@ fix:
 	goimports -w -v $(GENERATED_GO_MATCHERS)
 
 clean: clean-go
-	rm spec.json
-	rm spec-stable.json
+	rm -f spec.json
+	rm -f spec-stable.json
 
 clean-go:
 	rm -rf ./go
