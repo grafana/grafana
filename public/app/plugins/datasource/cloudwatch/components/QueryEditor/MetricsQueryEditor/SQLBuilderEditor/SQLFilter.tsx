@@ -4,6 +4,7 @@ import { useAsyncFn } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
@@ -27,7 +28,6 @@ import {
   setOperatorExpressionValue,
   setSql,
 } from './utils';
-import { config } from '@grafana/runtime';
 
 interface SQLFilterProps {
   query: CloudWatchMetricsQuery;
@@ -113,7 +113,10 @@ const FilterItem = (props: FilterItemProps) => {
     region: query.region,
     namespace,
     metricName,
-    ...(config.featureToggles.cloudWatchCrossAccountQuerying ? { accountId: query.accountId } : {}),
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
+    config.featureToggles.cloudwatchMetricInsightsCrossAccount
+      ? { accountId: query.accountId }
+      : {}),
   });
 
   const loadDimensionValues = async () => {
@@ -127,7 +130,10 @@ const FilterItem = (props: FilterItemProps) => {
         namespace,
         metricName,
         dimensionKey: filter.property.name,
-        ...(config.featureToggles.cloudWatchCrossAccountQuerying ? { accountId: query.accountId } : {}),
+        ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
+        config.featureToggles.cloudwatchMetricInsightsCrossAccount
+          ? { accountId: query.accountId }
+          : {}),
       })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);
