@@ -459,7 +459,7 @@ func GetActionFilter(options accesscontrol.SearchOptions) func(action string) bo
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
-	ctx, span := s.tracer.Start(ctx, "authz.SearchUserPermissions")
+	ctx, span := s.tracer.Start(ctx, "authz.SearchUsersPermissions")
 	defer span.End()
 
 	// Limit roles to available in OSS
