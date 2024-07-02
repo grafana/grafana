@@ -87,7 +87,7 @@ export interface CanvasConnection {
   target: ConnectionCoordinates;
   targetName?: string;
   targetOriginal?: ConnectionCoordinates;
-  vertices?: ConnectionCoordinates[];
+  vertices?: Array<ConnectionCoordinates>;
 }
 
 export const defaultCanvasConnection: Partial<CanvasConnection> = {
@@ -101,7 +101,7 @@ export interface CanvasElementOptions {
    * TODO: figure out how to define this (element config(s))
    */
   config?: unknown;
-  connections?: CanvasConnection[];
+  connections?: Array<CanvasConnection>;
   constraint?: Constraint;
   name: string;
   oneClickLinks?: boolean;
@@ -142,7 +142,7 @@ export interface Options {
     /**
      * The list of canvas elements attached to the root element
      */
-    elements: CanvasElementOptions[];
+    elements: Array<CanvasElementOptions>;
   };
   /**
    * Show all available element types
