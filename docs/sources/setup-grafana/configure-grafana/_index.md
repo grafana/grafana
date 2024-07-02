@@ -1488,6 +1488,10 @@ Turn on console instrumentation. Only affects Grafana Javascript Agent
 
 Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
 
+### instrumentations_tracing_enabled
+
+Turn on tracing instrumentation. Only affects Grafana Javascript Agent
+
 ### api_key
 
 If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.

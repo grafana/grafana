@@ -116,6 +116,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
+    tracingInstrumentalizationEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;

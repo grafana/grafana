@@ -10,6 +10,7 @@ import {
   FetchTransport,
   type Instrumentation,
 } from '@grafana/faro-web-sdk';
+import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
@@ -22,6 +23,7 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
 }
 
 export class GrafanaJavascriptAgentBackend
@@ -48,6 +50,9 @@ export class GrafanaJavascriptAgentBackend
     }
     if (options.webVitalsInstrumentalizationEnabled) {
       instrumentations.push(new WebVitalsInstrumentation());
+    }
+    if (options.tracingInstrumentalizationEnabled) {
+      instrumentations.push(new TracingInstrumentation());
     }
 
     // session instrumentation must be added!

@@ -60,6 +60,7 @@ export interface GrafanaJavascriptAgentConfig {
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
   apiKey: string;
 }
 
