@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "@grafana/sql",
-  "version": "11.0.1",
+  "version": "11.0.2",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
@@ -15,10 +15,10 @@
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
-    "@grafana/data": "11.0.1",
+    "@grafana/data": "11.0.2",
     "@grafana/experimental": "1.7.10",
-    "@grafana/runtime": "11.0.1",
-    "@grafana/ui": "11.0.1",
+    "@grafana/runtime": "11.0.2",
+    "@grafana/ui": "11.0.2",
     "@react-awesome-query-builder/ui": "6.4.2",
     "@types/lodash": "4.17.0",
     "@types/react-virtualized-auto-sizer": "1.0.4",
