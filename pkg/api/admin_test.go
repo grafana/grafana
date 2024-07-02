@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -83,9 +86,18 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			expectedIdentity := &authn.Identity{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					0: accesscontrol.GroupScopesByAction(tt.permissions),
+					1: accesscontrol.GroupScopesByAction(tt.permissions),
+				},
+			}
+
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = cfg
 				hs.SettingsProvider = setting.ProvideProvider(hs.Cfg)
+				hs.authnService = &authntest.FakeService{ExpectedIdentity: expectedIdentity}
 			})
 
 			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/admin/settings"), userWithPermissions(1, tt.permissions)))
@@ -156,17 +168,136 @@ func TestAdmin_AccessControl(t *testing.T) {
 			fakeStatsService.ExpectedAdminStats = &stats.AdminStats{}
 			fakeAnonService := anontest.NewFakeService()
 			fakeAnonService.ExpectedCountDevices = 0
+
+			expectedIdentity := &authn.Identity{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					0: accesscontrol.GroupScopesByAction(tt.permissions),
+					1: accesscontrol.GroupScopesByAction(tt.permissions),
+				},
+			}
+
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.SQLStore = dbtest.NewFakeDB()
 				hs.SettingsProvider = &setting.OSSImpl{Cfg: hs.Cfg}
 				hs.statsService = fakeStatsService
 				hs.anonService = fakeAnonService
+				hs.authnService = &authntest.FakeService{ExpectedIdentity: expectedIdentity}
 			})
 
 			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(tt.url), userWithPermissions(1, tt.permissions)))
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestAdminSettingsAPI_WithAdminUser(t *testing.T) {
+	type testCase struct {
+		desc         string
+		orgId        int64
+		role         org.RoleType
+		expectedCode int
+		expectedBody string
+		permissions  []accesscontrol.Permission
+	}
+	tests := []testCase{
+		{
+			desc:         "without any org should return all settings",
+			orgId:        accesscontrol.NoOrgID,
+			role:         org.RoleNone,
+			expectedCode: http.StatusOK,
+			expectedBody: `{"auth.proxy":{"enable_login_token":"false","enabled":"false"},"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  accesscontrol.ScopeSettingsAll,
+				},
+			},
+		},
+		{
+			desc:         "with org and role Viewer should return all settings",
+			orgId:        testOrgID,
+			role:         org.RoleViewer,
+			expectedCode: http.StatusOK,
+			expectedBody: `{"auth.proxy":{"enable_login_token":"false","enabled":"false"},"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  accesscontrol.ScopeSettingsAll,
+				},
+			},
+		},
+		{
+			desc:         "with org and role Editor should return all settings",
+			orgId:        testOrgID,
+			role:         org.RoleEditor,
+			expectedCode: http.StatusOK,
+			expectedBody: `{"auth.proxy":{"enable_login_token":"false","enabled":"false"},"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  accesscontrol.ScopeSettingsAll,
+				},
+			},
+		},
+		{
+			desc:         "with org and role Admin should return all settings",
+			orgId:        testOrgID,
+			role:         org.RoleEditor,
+			expectedCode: http.StatusOK,
+			expectedBody: `{"auth.proxy":{"enable_login_token":"false","enabled":"false"},"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  accesscontrol.ScopeSettingsAll,
+				},
+			},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	//seed sections and keys
+	cfg.Raw.DeleteSection("DEFAULT")
+	saml, err := cfg.Raw.NewSection("auth.saml")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("enabled", "true")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("allow_idp_initiated", "false")
+	assert.NoError(t, err)
+
+	proxy, err := cfg.Raw.NewSection("auth.proxy")
+	assert.NoError(t, err)
+	_, err = proxy.NewKey("enabled", "false")
+	assert.NoError(t, err)
+	_, err = proxy.NewKey("enable_login_token", "false")
+	assert.NoError(t, err)
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+
+			expectedIdentity := &authn.Identity{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					0: accesscontrol.GroupScopesByAction(tt.permissions),
+					1: accesscontrol.GroupScopesByAction(tt.permissions),
+				},
+			}
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = cfg
+				hs.SettingsProvider = setting.ProvideProvider(hs.Cfg)
+				hs.authnService = &authntest.FakeService{ExpectedIdentity: expectedIdentity}
+			})
+
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/admin/settings"), userAdminWithPermissions(tt.orgId, tt.role, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedBody, string(body))
 			require.NoError(t, res.Body.Close())
 		})
 	}
