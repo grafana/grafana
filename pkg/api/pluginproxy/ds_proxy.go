@@ -19,11 +19,11 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -40,6 +40,7 @@ type DataSourceProxy struct {
 	targetUrl          *url.URL
 	proxyPath          string
 	matchedRoute       *plugins.Route
+	pluginID           string
 	pluginRoutes       []*plugins.Route
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
@@ -57,7 +58,7 @@ type httpClient interface {
 func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*DataSourceProxy, error) {
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles, pluginID string) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
 		return nil, err
@@ -68,6 +69,7 @@ func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Rout
 		pluginRoutes:       pluginRoutes,
 		ctx:                ctx,
 		proxyPath:          proxyPath,
+		pluginID:           pluginID,
 		targetUrl:          targetURL,
 		cfg:                cfg,
 		clientProvider:     clientProvider,
@@ -341,7 +343,7 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
 	if useRBAC {
-		routeEval := accesscontrol.EvalPermission(route.ReqAction)
+		routeEval := pluginac.GetRouteEvaluator(proxy.pluginID, route.ReqAction)
 		ok := routeEval.Evaluate(proxy.ctx.GetPermissions())
 		if !ok {
 			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)

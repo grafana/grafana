@@ -75,3 +75,12 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 
 	return service.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
 }
+
+// GetRouteEvaluator returns an evaluator given the action that is protecting a plugin Include (navlink) or Route
+func GetRouteEvaluator(pluginID, action string) ac.Evaluator {
+	eval := ac.EvalPermission(action)
+	if action == ActionAppAccess {
+		eval = ac.EvalPermission(ActionAppAccess, ScopeProvider.GetResourceScope(pluginID))
+	}
+	return eval
+}

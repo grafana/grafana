@@ -10,7 +10,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -42,7 +42,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			continue
 		}
 
-		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
+		if !hasAccess(ac.EvalPermission(pluginac.ActionAppAccess, pluginac.ScopeProvider.GetResourceScope(plugin.ID))) {
 			continue
 		}
 
@@ -269,7 +269,9 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
 		useRBAC := s.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
-		if useRBAC && !hasAccess(ac.EvalPermission(include.Action)) {
+
+		eval := pluginac.GetRouteEvaluator(pluginID, include.Action)
+		if useRBAC && !hasAccess(eval) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)

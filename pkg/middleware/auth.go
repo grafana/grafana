@@ -17,7 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -94,7 +94,7 @@ func removeForceLoginParams(str string) string {
 func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		hasAccess := ac.HasAccess(accessControl, c)
-		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) && !hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+		if !pluginac.ReqCanAdminPlugins(cfg)(c) && !hasAccess(pluginac.AdminAccessEvaluator) {
 			accessForbidden(c)
 			return
 		}
@@ -127,7 +127,8 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, fea
 
 			if normalizeIncludePath(u.Path) == path {
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
-				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
+				eval := pluginac.GetRouteEvaluator(pluginID, i.Action)
+				if useRBAC && !hasAccess(eval) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
 					permitted = false
 					break
