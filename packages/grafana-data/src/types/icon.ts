@@ -177,6 +177,7 @@ export const availableIconsIndex = {
   'map-marker-plus': true,
   'map-marker-minus': true,
   message: true,
+  mattermost: true,
   minus: true,
   'minus-circle': true,
   'mobile-android': true,
