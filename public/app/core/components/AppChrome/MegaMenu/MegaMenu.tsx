@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef } from 'react';
+import { memo, forwardRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
+import { useLoadUserPreferencesQuery, usePatchUserPreferencesMutation } from 'app/features/preferences/api';
 import { useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
@@ -26,6 +27,9 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
+    const preferences = useLoadUserPreferencesQuery();
+    const pinnedItems = preferences.data?.navbar?.savedItemIds || [];
+    const [patchPreferences] = usePatchUserPreferencesMutation();
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -44,6 +48,29 @@ export const MegaMenu = memo(
       setTimeout(() => {
         document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
       });
+    };
+
+    const isPinned = useMemo(
+      (id?: string) => {
+        if (!id || !pinnedItems?.length) {
+          return false;
+        }
+        return pinnedItems?.includes(id);
+      },
+      [pinnedItems]
+    );
+
+    const onPinItem = (id?: string) => {
+      if (id) {
+        const newItems = isPinned(id) ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
+        patchPreferences({
+          body: {
+            navbar: {
+              savedItemIds: newItems,
+            },
+          },
+        });
+      }
     };
 
     return (
@@ -79,8 +106,10 @@ export const MegaMenu = memo(
                   )}
                   <MegaMenuItem
                     link={link}
+                    isPinned={isPinned}
                     onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
+                    onPin={onPinItem}
                   />
                 </Stack>
               ))}
