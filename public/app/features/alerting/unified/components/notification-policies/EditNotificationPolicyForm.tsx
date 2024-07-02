@@ -191,7 +191,7 @@ export const AmRoutesExpandedForm = ({
       {watch().overrideGrouping && (
         <Field
           label="Group by"
-          description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy."
         >
           <Controller
             rules={{
