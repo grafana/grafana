@@ -566,5 +566,3 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 func (ss *xormStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
 }
-
-
