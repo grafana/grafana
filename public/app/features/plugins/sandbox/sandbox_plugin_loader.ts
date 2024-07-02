@@ -162,7 +162,7 @@ async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<S
           }
 
           try {
-            const resolvedDeps = resolvePluginDependencies(dependencies, meta);
+            const resolvedDeps = await resolvePluginDependencies(dependencies, meta);
             // execute the plugin's code
             const pluginExportsRaw = factory.apply(null, resolvedDeps);
             // only after the plugin has been executed
@@ -220,7 +220,7 @@ async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<S
  * https://github.com/requirejs/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#magic
  *
  */
-function resolvePluginDependencies(deps: string[], pluginMeta: SandboxPluginMeta) {
+async function resolvePluginDependencies(deps: string[], pluginMeta: SandboxPluginMeta) {
   const pluginExports = {};
   const pluginModuleDep: ModuleMeta = {
     id: pluginMeta.id,
@@ -232,6 +232,10 @@ function resolvePluginDependencies(deps: string[], pluginMeta: SandboxPluginMeta
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
     let resolvedDep = sandboxPluginDependencies.get(dep);
+
+    if (typeof resolvedDep === 'function') {
+      resolvedDep = await resolvedDep();
+    }
     if (resolvedDep?.__useDefault) {
       resolvedDep = resolvedDep.default;
     }
