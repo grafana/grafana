@@ -55,6 +55,14 @@
     },
     "pause": "Pause evaluation"
   },
+  "alerting": {
+    "contact-points": {
+      "telegram": {
+        "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
+        "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
+      }
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -78,6 +86,7 @@
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. You can restore the dashboards anytime before the 30 days expires. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -149,11 +158,12 @@
   "central-alert-history": {
     "error": "Something went wrong loading the alert state history",
     "filter": {
-      "button": {
-        "clear": "Clear"
-      },
-      "label": "Filter events",
-      "placeholder": "Filter events in the list with labels"
+      "info": {
+        "label1": "Filter events using label querying without spaces, ex:",
+        "label2": "Invalid use of spaces:",
+        "label3": "Valid use of spaces:",
+        "label4": "Filter alerts using label querying without braces, ex:"
+      }
     }
   },
   "clipboard-button": {
@@ -531,6 +541,12 @@
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
     },
+    "query-library": {
+      "delete-query": "Delete query",
+      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
+      "delete-query-title": "Delete query",
+      "query-deleted": "Query deleted"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -670,6 +686,20 @@
       "split-widen": "Widen pane"
     }
   },
+  "export": {
+    "json": {
+      "cancel-button": "Cancel",
+      "copy-button": "Copy to clipboard",
+      "download-button": "Download file",
+      "export-externally-label": "Export the dashboard to use in another instance",
+      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
+      "title": "Save dashboard JSON"
+    },
+    "menu": {
+      "export-as-json-label": "Export",
+      "export-as-json-tooltip": "Export"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -788,6 +818,18 @@
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    }
+  },
+  "link": {
+    "share": {
+      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
+      "config-alert-title": "Link configuration",
+      "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
+      "copy-link-button": "Copy link",
+      "copy-to-clipboard": "Link copied to clipboard",
+      "short-url-label": "Shorten link",
+      "time-range-description": "Change the current relative time range to an absolute time range",
+      "time-range-label": "Lock time range"
     }
   },
   "login": {
@@ -1105,7 +1147,7 @@
       "title": "Home"
     },
     "incidents": {
-      "title": "Incidents"
+      "title": "Incident"
     },
     "infrastructure": {
       "subtitle": "Understand your infrastructure's health",
@@ -1184,7 +1226,7 @@
     "public": {
       "title": "Public dashboards"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
       "title": "Recently Deleted"
     },
@@ -1424,7 +1466,7 @@
     },
     "email-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll be prompted for payment whenever you add new users to your dashboard.",
+      "alert-text": "Sharing dashboards by email is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.",
       "bill-ack": "I understand that adding users requires payment.*",
       "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
@@ -1433,7 +1475,7 @@
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
       "learn-more-button": "Learn more",
-      "recipient-email-placeholder": "Type in the recipient email address and press Enter",
+      "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Invalid email",
       "recipient-invitation-button": "Invite",
       "recipient-invitation-description": "Invite someone by email",
@@ -1493,16 +1535,15 @@
       "success-delete-old": "Public dashboard deleted!"
     },
     "share-configuration": {
-      "access-label": "can access",
       "share-type-label": "Link access"
     },
     "share-externally": {
       "copy-link-button": "Copy external link",
-      "email-share-type-option-description": "Only people with access can open with the link",
+      "email-share-type-option-description": "Only people with the link can access dashboard",
       "email-share-type-option-label": "Only specific people",
       "pause-access-button": "Pause access",
       "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
-      "public-share-type-option-description": "Anyone with the link can access",
+      "public-share-type-option-description": "Anyone with the link can access dashboard",
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
       "revoke-access-button": "Revoke access",
@@ -1558,6 +1599,9 @@
       "role-label": "Role"
     }
   },
+  "query-library": {
+    "delete-query-button": "Delete query"
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -1574,7 +1618,19 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "Delete permanently",
       "restore": "Restore"
+    },
+    "page": {
+      "empty-state": "You haven't deleted any dashboards recently."
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "Delete",
+      "delete-button": "Delete",
+      "delete-loading": "Deleting...",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
+      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
+      "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
       "restore-button": "Restore",
@@ -1582,6 +1638,11 @@
       "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
+    }
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Search for dashboards"
     }
   },
   "refresh-picker": {
@@ -1624,6 +1685,10 @@
     },
     "suggestedDashboards": {
       "loading": "Loading dashboards",
+      "noResultsForFilter": "No results found for your query",
+      "noResultsForFilterClear": "Clear search",
+      "noResultsForScopes": "No dashboards found for the selected scopes",
+      "noResultsNoScopes": "No scopes selected",
       "search": "Search",
       "toggle": {
         "collapse": "Collapse scope filters",
@@ -1633,7 +1698,11 @@
     "tree": {
       "collapse": "Collapse",
       "expand": "Expand",
-      "headline": "Recommended",
+      "headline": {
+        "noResults": "No results found for your query",
+        "recommended": "Recommended",
+        "results": "Results"
+      },
       "search": "Search"
     }
   },
@@ -1654,6 +1723,8 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-less-than-1-min": "< 1 min",
+      "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
@@ -1673,6 +1744,17 @@
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
     }
+  },
+  "share-dashboard": {
+    "menu": {
+      "export-json-title": "Export as JSON",
+      "share-externally-title": "Share externally",
+      "share-internally-description": "Advanced settings",
+      "share-internally-title": "Share internally",
+      "share-snapshot-title": "Share snapshot"
+    },
+    "share-button": "Share",
+    "share-button-tooltip": "Copy shortened link"
   },
   "share-drawer": {
     "confirm-action": {
@@ -1824,6 +1906,23 @@
     },
     "external-badge": "External",
     "name-column-header": "Name",
+    "share": {
+      "cancel-button": "Cancel",
+      "copy-link-button": "Copy link",
+      "delete-button": "Delete snapshot",
+      "delete-description": "Are you sure you want to delete this snapshot?",
+      "delete-title": "Delete snapshot",
+      "deleted-alert": "Your snapshot has been deleted. It might take up to an hour before the snapshot is cleared from any CDN caches.",
+      "expiration-label": "Expires in",
+      "info-alert": "A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.",
+      "learn-more-button": "Learn more",
+      "local-button": "Publish snapshot",
+      "name-label": "Snapshot name*",
+      "new-snapshot-button": "New snapshot",
+      "success-creation": "Your snapshot has been created",
+      "success-delete": "Your snapshot has been deleted",
+      "view-all-button": "View all snapshots"
+    },
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },

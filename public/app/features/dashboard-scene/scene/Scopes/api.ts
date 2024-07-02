@@ -1,8 +1,9 @@
-import { Scope, ScopeSpec, ScopeNode, ScopeDashboardBinding } from '@grafana/data';
+import { Scope, ScopeDashboardBinding, ScopeNode, ScopeSpec } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 
-import { NodesMap, SelectedScope, SuggestedDashboard, TreeScope } from './types';
+import { NodeReason, NodesMap, SelectedScope, SuggestedDashboard, TreeScope } from './types';
+import { getBasicScope, mergeScopes } from './utils';
 
 const group = 'scope.grafana.app';
 const version = 'v0alpha1';
@@ -36,6 +37,7 @@ export async function fetchNodes(parent: string, query: string): Promise<NodesMa
       isSelectable: spec.linkType === 'scope',
       isExpanded: false,
       query: '',
+      reason: NodeReason.Result,
       nodes: {},
     };
     return acc;
@@ -48,31 +50,12 @@ export async function fetchScope(name: string): Promise<Scope> {
   }
 
   const response = new Promise<Scope>(async (resolve) => {
-    const basicScope: Scope = {
-      metadata: { name },
-      spec: {
-        filters: [],
-        title: name,
-        type: '',
-        category: '',
-        description: '',
-      },
-    };
+    const basicScope = getBasicScope(name);
 
     try {
       const serverScope = await scopesClient.get(name);
 
-      const scope = {
-        ...basicScope,
-        metadata: {
-          ...basicScope.metadata,
-          ...serverScope.metadata,
-        },
-        spec: {
-          ...basicScope.spec,
-          ...serverScope.spec,
-        },
-      };
+      const scope = mergeScopes(basicScope, serverScope);
 
       resolve(scope);
     } catch (err) {

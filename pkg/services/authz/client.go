@@ -20,8 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	grpcUtils "github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/setting"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 const (
@@ -228,6 +228,7 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 	}
 
 	// Instantiate a new context for the request
+	// TODO (drclau): should we copy the context and remove what we don't need.
 	outCtx := context.Background()
 
 	readReq := &authzv1.ReadRequest{

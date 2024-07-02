@@ -15,7 +15,6 @@ import (
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
-	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -78,9 +77,16 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 
 	DefaultConfig string
+
+	// ExternalURL is used in notifications sent by the remote Alertmanager.
+	ExternalURL string
+
 	// PromoteConfig is a flag that determines whether the configuration should be used in the remote Alertmanager.
 	// The same flag is used for promoting state.
 	PromoteConfig bool
+
+	// StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	StaticHeaders map[string]string
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
@@ -118,6 +124,8 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		TenantID:      cfg.TenantID,
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
+		ExternalURL:   cfg.ExternalURL,
+		StaticHeaders: cfg.StaticHeaders,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {
@@ -487,21 +495,7 @@ func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	params := amreceiver.NewGetReceiversParamsWithContext(ctx)
-	res, err := am.amClient.Receiver.GetReceivers(params)
-	if err != nil {
-		return []apimodels.Receiver{}, err
-	}
-
-	rcvs := make([]apimodels.Receiver, len(res.Payload))
-	for i, rcv := range res.Payload {
-		rcvs[i] = apimodels.Receiver{
-			Name:         *rcv.Name,
-			Integrations: []apimodels.Integration{},
-		}
-	}
-
-	return rcvs, nil
+	return am.mimirClient.GetReceivers(ctx)
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {

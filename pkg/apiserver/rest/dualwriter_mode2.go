@@ -4,16 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type DualWriterMode2 struct {
@@ -51,7 +50,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
-	if err := enrichLegacyObject(original, created, true); err != nil {
+	if err := enrichLegacyObject(original, created); err != nil {
 		return created, err
 	}
 
@@ -262,7 +261,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 	// if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
-		err = enrichLegacyObject(foundObj, obj, false)
+		err = enrichLegacyObject(foundObj, obj)
 		if err != nil {
 			return obj, false, err
 		}
@@ -307,43 +306,25 @@ func (d *DualWriterMode2) ConvertToTable(ctx context.Context, object runtime.Obj
 	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (d *DualWriterMode2) Compare(storageObj, legacyObj runtime.Object) bool {
-	return d.Storage.Compare(storageObj, legacyObj)
-}
-
 func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {
 	options := metainternalversion.ListOptions{}
 	originKeys := []string{}
 	indexMap := map[string]int{}
 
 	for i, obj := range legacyList {
-		metaAccessor, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return options, nil, err
-		}
-		originKeys = append(originKeys, metaAccessor.GetOriginKey())
-
-		accessor, err := meta.Accessor(obj)
+		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return options, nil, err
 		}
 		indexMap[accessor.GetName()] = i
 	}
-
 	if len(originKeys) == 0 {
 		return options, nil, nil
 	}
-
-	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
-	if err != nil {
-		return options, nil, err
-	}
-	options.LabelSelector = labels.NewSelector().Add(*r)
-
 	return options, indexMap, nil
 }
 
-func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) error {
+func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {
 	accessorReturned, err := meta.Accessor(returnedObj)
 	if err != nil {
 		return err
@@ -365,13 +346,6 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) e
 	}
 	accessorReturned.SetAnnotations(ac)
 
-	// if the object is created, we need to reset the resource version and UID
-	// create method expects an empty resource version
-	if created {
-		accessorReturned.SetResourceVersion("")
-		accessorReturned.SetUID("")
-		return nil
-	}
 	// otherwise, we propagate the original RV and UID
 	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	accessorReturned.SetUID(accessorOriginal.GetUID())

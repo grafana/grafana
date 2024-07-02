@@ -360,7 +360,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			"kind": "Playlist",
 			"metadata": {
 			  "annotations": {
-				"grafana.app/originKey": "${originKey}",
+				"grafana.app/originPath": "${originPath}",
 				"grafana.app/originName": "SQL",
 				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
 			  },

@@ -1,16 +1,14 @@
-import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor, userEvent } from 'test/test-utils';
 
 import {
-  EXTERNAL_VANILLA_ALERTMANAGER_UID,
+  PROVISIONED_MIMIR_ALERTMANAGER_UID,
+  mockDataSources,
   setupVanillaAlertmanagerServer,
 } from 'app/features/alerting/unified/components/settings/__mocks__/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import ContactPoints from './Receivers';
@@ -19,15 +17,15 @@ import 'core-js/stable/structured-clone';
 
 const server = setupMswServer();
 
-const mockDataSources = {
-  [EXTERNAL_VANILLA_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>({
-    uid: EXTERNAL_VANILLA_ALERTMANAGER_UID,
-    name: EXTERNAL_VANILLA_ALERTMANAGER_UID,
-    type: DataSourceType.Alertmanager,
-    jsonData: {
-      implementation: AlertManagerImplementation.prometheus,
-    },
-  }),
+const assertSaveWasSuccessful = async () => {
+  // TODO: Have a better way to assert that the contact point was saved. This is instead asserting on some
+  // text that's present on the list page, as there's a lot of overlap in text between the form and the list page
+  return waitFor(() => expect(screen.getByText(/search by name or type/i)).toBeInTheDocument(), { timeout: 2000 });
+};
+
+const saveContactPoint = async () => {
+  const user = userEvent.setup();
+  return user.click(await screen.findByRole('button', { name: /save contact point/i }));
 };
 
 beforeEach(() => {
@@ -37,17 +35,22 @@ beforeEach(() => {
     AccessControlAction.AlertingNotificationsExternalRead,
     AccessControlAction.AlertingNotificationsExternalWrite,
   ]);
+
+  setupVanillaAlertmanagerServer(server);
+  setupDataSources(mockDataSources[PROVISIONED_MIMIR_ALERTMANAGER_UID]);
 });
 
 it('can save a contact point with a select dropdown', async () => {
-  setupVanillaAlertmanagerServer(server);
-  setupDataSources(mockDataSources[EXTERNAL_VANILLA_ALERTMANAGER_UID]);
-
   const user = userEvent.setup();
 
   render(<ContactPoints />, {
     historyOptions: {
-      initialEntries: [`/alerting/notifications/receivers/new?alertmanager=${EXTERNAL_VANILLA_ALERTMANAGER_UID}`],
+      initialEntries: [
+        {
+          pathname: `/alerting/notifications/receivers/new`,
+          search: `?alertmanager=${PROVISIONED_MIMIR_ALERTMANAGER_UID}`,
+        },
+      ],
     },
   });
 
@@ -66,9 +69,28 @@ it('can save a contact point with a select dropdown', async () => {
   await user.type(botToken, 'sometoken');
   await user.type(chatId, '-123');
 
-  await user.click(await screen.findByRole('button', { name: /save contact point/i }));
+  await saveContactPoint();
 
-  // TODO: Have a better way to assert that the contact point was saved. This is instead asserting on some
-  // text that's present on the list page, as there's a lot of overlap in text between the form and the list page
-  await waitFor(() => expect(screen.getByText(/search by name or type/i)).toBeInTheDocument(), { timeout: 2000 });
+  await assertSaveWasSuccessful();
+});
+
+it('can save existing Telegram contact point', async () => {
+  render(<ContactPoints />, {
+    historyOptions: {
+      initialEntries: [
+        {
+          pathname: `/alerting/notifications/receivers/Telegram/edit`,
+          search: `?alertmanager=${PROVISIONED_MIMIR_ALERTMANAGER_UID}`,
+        },
+      ],
+    },
+  });
+
+  // Here, we're implicitly testing that our parsing of an existing Telegram integration works correctly
+  // Our mock server will reject a request if we've sent the Chat ID as `0`,
+  // so opening and trying to save an existing Telegram integration should
+  // trigger this error if it regresses
+  await saveContactPoint();
+
+  await assertSaveWasSuccessful();
 });

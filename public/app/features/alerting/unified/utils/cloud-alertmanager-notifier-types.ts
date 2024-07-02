@@ -410,7 +410,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
       option('chat_id', 'Chat ID', 'ID of the chat where to send the messages', {
         required: true,
-        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
+        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : value),
       }),
       option('message', 'Message', 'Message template', {
         placeholder: '{{ template "webex.default.message" .}}',
@@ -420,12 +420,16 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
       option('parse_mode', 'Parse mode', 'Parse mode for telegram message', {
         element: 'select',
-        defaultValue: { label: 'MarkdownV2', value: 'MarkdownV2' },
+        // If we've set '' on the API, then the Select won't populate with the correct value,
+        // so the easiest way to fix this is to set the default value to ''
+        defaultValue: { label: 'None', value: '' },
         selectOptions: [
+          // Note that the value for Cloud AM is '',
+          // and for Grafana AM it is 'None'
+          { label: 'None', value: '' },
           { label: 'MarkdownV2', value: 'MarkdownV2' },
           { label: 'Markdown', value: 'Markdown' },
           { label: 'HTML', value: 'HTML' },
-          { label: 'plain text', value: '' },
         ],
       }),
       httpConfigOption,

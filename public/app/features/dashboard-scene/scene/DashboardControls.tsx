@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -54,9 +53,14 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   updateFromUrl(values: SceneObjectUrlValues) {
     const update: Partial<DashboardControlsState> = {};
 
-    update.hideTimeControls = values['_dash.hideTimePicker'] === 'true' || values['_dash.hideTimePicker'] === '';
-    update.hideVariableControls = values['_dash.hideVariables'] === 'true' || values['_dash.hideVariables'] === '';
-    update.hideLinksControls = values['_dash.hideLinks'] === 'true' || values['_dash.hideLinks'] === '';
+    update.hideTimeControls =
+      values['_dash.hideTimePicker'] === 'true' || values['_dash.hideTimePicker'] === '' || this.state.hideTimeControls;
+    update.hideVariableControls =
+      values['_dash.hideVariables'] === 'true' ||
+      values['_dash.hideVariables'] === '' ||
+      this.state.hideVariableControls;
+    update.hideLinksControls =
+      values['_dash.hideLinks'] === 'true' || values['_dash.hideLinks'] === '' || this.state.hideLinksControls;
 
     if (Object.entries(update).some(([k, v]) => v !== this.state[k as keyof DashboardControlsState])) {
       this.setState(update);
