@@ -67,7 +67,9 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-    - run: "echo post changelog to forums for $VERSION (dry run: $DRY_RUN)"
+    - run: |
+        echo post changelog to forums for ${{ needs.setup.output.version }}
+        dry run: ${{ needs.setup.output.dry_run }})
   create_github_release:
     # a github release requires a git tag
     needs: [setup, mirror_tag]
@@ -79,9 +81,13 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-    - run: "echo publish docs for ${{ needs.setup.output.version }} (dry run: ${{ needs.setup.output.dry_run }})"
+    - run: |
+        echo publish docs for ${{ needs.setup.output.version }}
+        echo dry run: ${{ needs.setup.output.dry_run }}
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-    - run: "announce on slack that ${{ needs.setup.output.version }} has been released (dry run: ${{ needs.setup.output.dry_run }})"
+    - run: |
+        echo announce on slack that ${{ needs.setup.output.version }} has been released
+        echo dry run: ${{ needs.setup.output.dry_run }}
