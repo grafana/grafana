@@ -1,6 +1,6 @@
 import { RelativeTimeRange, TimeOption } from '@grafana/data';
 
-const regex = /^now$|^now\-(\d{1,10})([wdhms])$/;
+const regex = /^now$|^now(\-|\+)(\d{1,10})([wdhms])$/;
 
 export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRange | undefined => {
   return {
@@ -48,18 +48,19 @@ export const isRelativeFormat = (format: string): boolean => {
 const relativeToSeconds = (relative: string): number => {
   const match = regex.exec(relative);
 
-  if (!match || match.length !== 3) {
+  if (!match || match.length !== 4) {
     return 0;
   }
 
-  const [, value, unit] = match;
+  const [, sign, value, unit] = match;
   const parsed = parseInt(value, 10);
 
   if (isNaN(parsed)) {
     return 0;
   }
 
-  return parsed * units[unit];
+  const seconds = parsed * units[unit];
+  return sign === '+' ? seconds * -1 : seconds;
 };
 
 const units: Record<string, number> = {
@@ -71,25 +72,41 @@ const units: Record<string, number> = {
 };
 
 const secondsToRelativeFormat = (seconds: number): string => {
-  if (seconds <= 0) {
+  if (seconds === 0) {
     return 'now';
   }
 
-  if (seconds >= units.w && seconds % units.w === 0) {
-    return `now-${seconds / units.w}w`;
+  const absoluteSeconds = Math.abs(seconds);
+  if (seconds < 0) {
+    return `now+${formatDuration(absoluteSeconds)}`;
   }
 
-  if (seconds >= units.d && seconds % units.d === 0) {
-    return `now-${seconds / units.d}d`;
-  }
-
-  if (seconds >= units.h && seconds % units.h === 0) {
-    return `now-${seconds / units.h}h`;
-  }
-
-  if (seconds >= units.m && seconds % units.m === 0) {
-    return `now-${seconds / units.m}m`;
-  }
-
-  return `now-${seconds}s`;
+  return `now-${formatDuration(absoluteSeconds)}`;
 };
+
+/**
+ * Formats the given duration in seconds into a human-readable string representation.
+ *
+ * @param seconds - The duration in seconds.
+ * @returns The formatted duration string.
+ */
+function formatDuration(seconds: number): string {
+  const units = [
+    { unit: 'w', value: 7 * 24 * 60 * 60 },
+    { unit: 'd', value: 24 * 60 * 60 },
+    { unit: 'h', value: 60 * 60 },
+    { unit: 'm', value: 60 },
+    { unit: 's', value: 1 },
+  ];
+
+  for (const { unit, value } of units) {
+    if (seconds % value === 0) {
+      const quotient = seconds / value;
+      return `${quotient}${unit}`;
+    }
+  }
+
+  // If no perfect division, use the least significant unit
+  const leastSignificant = units[units.length - 1];
+  return `${seconds}${leastSignificant.unit}`;
+}

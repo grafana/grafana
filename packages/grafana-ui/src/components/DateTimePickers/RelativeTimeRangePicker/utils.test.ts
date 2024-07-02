@@ -40,6 +40,17 @@ describe('utils', () => {
         display: 'now-100m to now-5m',
       });
     });
+
+    it('should be able to work with future values', () => {
+      const relativeTimeRange = { from: 600, to: -600 };
+      const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
+
+      expect(timeOption).toEqual({
+        from: 'now-10m',
+        to: 'now+10m',
+        display: 'now-10m to now+10m',
+      });
+    });
   });
 
   describe('mapOptionToRelativeTimeRange', () => {
@@ -55,6 +66,13 @@ describe('utils', () => {
       const relativeTimeRange = mapOptionToRelativeTimeRange(timeOption);
 
       expect(relativeTimeRange).toEqual({ from: 86400, to: 43200 });
+    });
+
+    it('should map future dates', () => {
+      const timeOption = { from: 'now-10m', to: 'now+10m', display: 'asdfasdf' };
+      const relativeTimeRange = mapOptionToRelativeTimeRange(timeOption);
+
+      expect(relativeTimeRange).toEqual({ from: 600, to: -600 });
     });
   });
 
@@ -83,6 +101,10 @@ describe('utils', () => {
       expect(isRelativeFormat('now-53w')).toBe(true);
     });
 
+    it('should consider now+10m as a relative format', () => {
+      expect(isRelativeFormat('now+10m')).toBe(true);
+    });
+
     it('should consider 123123123 as a relative format', () => {
       expect(isRelativeFormat('123123123')).toBe(false);
     });
@@ -96,6 +118,11 @@ describe('utils', () => {
 
     it('should consider now-90d as a valid relative format', () => {
       const result = isRangeValid('now-90d');
+      expect(result.isValid).toBe(true);
+    });
+
+    it('should consider now+10m as a valid relative format', () => {
+      const result = isRangeValid('now+10m');
       expect(result.isValid).toBe(true);
     });
 
