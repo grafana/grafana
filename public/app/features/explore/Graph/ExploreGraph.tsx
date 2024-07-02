@@ -1,4 +1,4 @@
-import { identity } from 'lodash';
+import { identity, max, min } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
@@ -14,6 +14,7 @@ import {
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
+  getValueFormat,
   LoadingState,
   SplitOpen,
   ThresholdsConfig,
@@ -102,12 +103,17 @@ export function ExploreGraph({
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
     []
   );
+  const formatFunc = getValueFormat('short');
+  const minVal = min(data[0].fields.find((field) => field.name === 'Value')?.values);
+  const maxVal = max(data[0].fields.find((field) => field.name === 'Value')?.values);
+  const isShortFormatted = formatFunc(minVal).text !== (minVal || 0).toString();
+  const disableShort = Math.abs(maxVal - minVal) < 100 && isShortFormatted;
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource<GraphFieldConfig>>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
-      unit: 'short',
+      unit: disableShort ? 'none' : 'short',
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },
