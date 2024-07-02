@@ -643,7 +643,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 }
 
 func (s *Service) searchUserPermissionsFromCache(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
-	ctx, span := s.tracer.Start(ctx, "authz.searchUserPermissionsFromCache")
+	_, span := s.tracer.Start(ctx, "authz.searchUserPermissionsFromCache")
 	defer span.End()
 
 	userID, err := searchOptions.ComputeUserID()
@@ -719,7 +719,7 @@ func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontro
 }
 
 func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "authz.GetRoleByName")
+	_, span := s.tracer.Start(ctx, "authz.GetRoleByName")
 	defer span.End()
 
 	err := accesscontrol.ErrRoleNotFound

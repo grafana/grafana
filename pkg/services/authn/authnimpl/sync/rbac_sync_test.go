@@ -45,7 +45,7 @@ func TestRBACSync_SyncPermission(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, 1, len(tt.identity.Permissions))
-			assert.Equal(t, accesscontrol.GroupScopesByAction(tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
+			assert.Equal(t, accesscontrol.GroupScopesByActionContext(context.Background(), tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
 		})
 	}
 }
