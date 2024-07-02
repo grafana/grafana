@@ -27,7 +27,7 @@ export function EventDetails({ record, logRecords }: EventDetailsProps) {
   const identifier = useMemo(() => {
     return parse(ruleUID, true);
   }, [ruleUID]);
-  const { error, loading, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
+  const { error, loading, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts: 0 }); // we limit the alerts to 0 as we only need the rule
 
   if (error) {
     return (
