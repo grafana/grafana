@@ -70,7 +70,7 @@ func TestCallResource(t *testing.T) {
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
 		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test", strings.NewReader(`{"test": "true"}`))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByActionContext(context.Background(), context.Background(), []accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 			}),
 		}})
@@ -92,7 +92,7 @@ func TestCallResource(t *testing.T) {
 	t.Run("Test successful response is received for valid request with the colon character", func(t *testing.T) {
 		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test-*,*:test-*/_mapping", strings.NewReader(`{"test": "true"}`))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByActionContext(context.Background(), context.Background(), []accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 			}),
 		}})
