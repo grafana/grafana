@@ -1,33 +1,13 @@
-import { css } from '@emotion/css';
+import { Box } from '@grafana/ui';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Grid, useStyles2 } from '@grafana/ui';
-
-import { InfoPane } from './InfoPane';
-import { MigrationTokenPane } from './MigrationTokenPane/MigrationTokenPane';
+import { EmptyState } from './EmptyState/EmptyState';
 
 export const Page = () => {
-  const styles = useStyles2(getStyles);
-
   return (
-    <div className={styles.container}>
-      <Grid
-        alignItems="flex-start"
-        gap={1}
-        columns={{
-          xs: 1,
-          lg: 2,
-        }}
-      >
-        <InfoPane />
-        <MigrationTokenPane />
-      </Grid>
-    </div>
+    <Box backgroundColor="secondary" display="flex" alignItems="center" direction="column">
+      <Box maxWidth={180} paddingY={6} paddingX={2}>
+        <EmptyState />
+      </Box>
+    </Box>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    maxWidth: theme.breakpoints.values.xl,
-  }),
-});
