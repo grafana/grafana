@@ -51,7 +51,7 @@ jobs:
       ref: "release-${{ needs.setup.output.version }}"
       src_repo: grafana/grafana-security-mirror
       dest_repo: grafana/grafana
-      dry_run: ${{ needs.setup.output.version }}"
+      dry_run: ${{ needs.setup.output.dry_run }}
   mirror_tag:
     # Because the tag is almost always on the release-branch, we should make sure we mirror the release branch before
     # mirroring the tag
@@ -62,14 +62,14 @@ jobs:
       tag: "v${{ needs.setup.output.version }}"
       src_repo: grafana/grafana-security-mirror
       dest_repo: grafana/grafana
-      dry_run: ${{ needs.setup.output.version }}"
+      dry_run: ${{ needs.setup.output.dry_run }}
   post_changelog_on_forum:
     needs: setup
     runs-on: ubuntu-latest
     steps:
     - run: |
         echo post changelog to forums for ${{ needs.setup.output.version }}
-        dry run: ${{ needs.setup.output.dry_run }})
+        echo dry run: ${{ needs.setup.output.dry_run }})
   create_github_release:
     # a github release requires a git tag
     needs: [setup, mirror_tag]
