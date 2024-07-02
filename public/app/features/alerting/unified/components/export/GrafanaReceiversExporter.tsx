@@ -6,7 +6,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { ExportFormats, providersFor } from './providers';
 
 interface GrafanaReceiversExportPreviewProps {
   exportFormat: ExportFormats;
@@ -49,7 +49,7 @@ export const GrafanaReceiversExporter = ({ onClose, decrypt }: GrafanaReceiversE
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
+      formatProviders={providersFor('Receiver')}
     >
       <GrafanaReceiversExportPreview decrypt={decrypt} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>

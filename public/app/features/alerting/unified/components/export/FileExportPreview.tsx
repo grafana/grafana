@@ -43,7 +43,7 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
             <CodeEditor
               width="100%"
               height={height}
-              language={format}
+              language={provider.overrideLanguage ?? provider.exportFormat}
               value={formattedTextDefinition}
               monacoOptions={{
                 minimap: {
@@ -131,6 +131,17 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
             external
           >
+            Read more in the docs.
+          </TextLink>
+        </>
+      ),
+    },
+    operator: {
+      title: 'Grafana Operator Custom Resource',
+      component: (
+        <>
+          {name} format is only valid for use with the Grafana Operator.{' '}
+          <TextLink href="https://grafana.github.io/grafana-operator/docs/" external>
             Read more in the docs.
           </TextLink>
         </>

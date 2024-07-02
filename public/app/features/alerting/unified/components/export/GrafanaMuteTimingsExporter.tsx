@@ -6,7 +6,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { ExportFormats, providersFor } from './providers';
 interface MuteTimingsExporterPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
@@ -69,7 +69,7 @@ export const GrafanaMuteTimingsExporter = ({ onClose, muteTimingName }: GrafanaM
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
+      formatProviders={providersFor('MuteTiming')}
     >
       {muteTimingName ? (
         <GrafanaMuteTimingExporterPreview exportFormat={activeTab} onClose={onClose} muteTimingName={muteTimingName} />

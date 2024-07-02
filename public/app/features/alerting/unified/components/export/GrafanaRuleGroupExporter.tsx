@@ -6,7 +6,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { ExportFormats, providersFor } from './providers';
 
 interface GrafanaRuleGroupExporterProps {
   folderUid: string;
@@ -23,7 +23,7 @@ export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: Graf
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
+      formatProviders={providersFor('AlertRuleGroup')}
     >
       <GrafanaRuleGroupExportPreview
         folderUid={folderUid}
