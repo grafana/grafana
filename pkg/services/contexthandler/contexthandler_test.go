@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -44,20 +45,24 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should set identity on successful authentication", func(t *testing.T) {
-		identity := &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), OrgID: 1}
+		id := &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
-			&authntest.FakeService{ExpectedIdentity: identity},
+			&authntest.FakeService{ExpectedIdentity: id},
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
 		server.Mux.Use(handler.Middleware)
 		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
 			require.True(t, c.IsSignedIn)
-			require.EqualValues(t, identity.SignedInUser(), c.SignedInUser)
+			require.EqualValues(t, id.SignedInUser(), c.SignedInUser)
 			require.NoError(t, c.LookupTokenErr)
+
+			requester, err := identity.GetRequester(c.Req.Context())
+			require.NoError(t, err)
+			require.Equal(t, id, requester)
 		})
 
 		res, err := server.Send(server.NewGetRequest("/api/handler"))
