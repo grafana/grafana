@@ -771,6 +771,8 @@ export interface TableJsonViewCellOptions {
  * Json view cell options
  */
 export interface TableImageCellOptions {
+  alt?: string;
+  title?: string;
   type: TableCellDisplayMode.Image;
 }
 
