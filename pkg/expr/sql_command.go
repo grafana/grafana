@@ -20,15 +20,23 @@ type SQLCommand struct {
 	query       string
 	varsToQuery []string
 	refID       string
+	limit       int64
+	engine      sql.Engine
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
+func NewSQLCommand(refID, rawSQL string, engine ...sql.Engine) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, errutil.BadRequest("sql-missing-query",
 			errutil.WithPublicMessage("missing SQL query"))
 	}
-	tables, err := sql.TablesList(rawSQL)
+
+	eng := DefaultEngine()
+	if len(engine) > 0 {
+		eng = engine[0]
+	}
+
+	tables, err := sql.TablesList(rawSQL, eng)
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
 		return nil, errutil.BadRequest("sql-invalid-sql",
@@ -45,6 +53,7 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 		query:       rawSQL,
 		varsToQuery: tables,
 		refID:       refID,
+		engine:      eng,
 	}, nil
 }
 
@@ -82,23 +91,37 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	defer span.End()
 
 	allFrames := []*data.Frame{}
+	totalRows := 0
 	for _, ref := range gr.varsToQuery {
 		results, ok := vars[ref]
 		if !ok {
 			logger.Warn("no results found for", "ref", ref)
 			continue
 		}
+		if results.Values.Length() > int(gr.limit) {
+			logger.Error("SQL expression results exceeded limit", "limit", gr.limit, "results", results.Values.Length())
+			return mathexp.Results{}, fmt.Errorf("SQL expression results exceeded limit of %d", gr.limit)
+		}
 		frames := results.Values.AsDataFrames(ref)
+		exceeds, total := exceedsLimit(frames, gr.limit)
+		if exceeds {
+			logger.Error("SQL expression results exceeded limit", "limit", gr.limit)
+			return mathexp.Results{}, fmt.Errorf("SQL expression results exceeded limit of %d", gr.limit)
+		}
+		totalRows += total
 		allFrames = append(allFrames, frames...)
 	}
 
-	rsp := mathexp.Results{}
-
-	duckDB := duck.NewInMemoryDB()
-	var frame = &data.Frame{}
+	if totalRows > int(gr.limit) {
+		logger.Error("SQL expression results exceeded limit", "limit", totalRows, "results", gr.limit)
+		return mathexp.Results{}, fmt.Errorf("SQL expression - %d results exceeded limit of %d", totalRows, gr.limit)
+	}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
-	err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
+
+	rsp := mathexp.Results{}
+	var frame = &data.Frame{}
+	err := gr.engine.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
@@ -123,4 +146,22 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
+}
+
+func exceedsLimit(frames []*data.Frame, limit int64) (bool, int) {
+	total := 0
+	for _, frame := range frames {
+		if frame != nil {
+			if int64(frame.Rows()) > limit {
+				return true, frame.Rows()
+			}
+			total += frame.Rows()
+		}
+	}
+	return int64(total) > limit, total
+}
+
+func DefaultEngine() sql.Engine {
+	db := duck.NewInMemoryDB()
+	return &db
 }
