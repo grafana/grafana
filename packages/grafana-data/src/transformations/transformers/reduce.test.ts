@@ -1,6 +1,7 @@
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { Field, FieldType } from '../../types/dataFrame';
+import { DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { notTimeFieldMatcher } from '../matchers/predicates';

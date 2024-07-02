@@ -1,7 +1,9 @@
 import { Location } from 'history';
 
 import { textUtil } from '../text';
-import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
+import { ScopedVars } from '../types/ScopedVars';
+import { GrafanaConfig } from '../types/config';
+import { RawTimeRange } from '../types/time';
 
 import { UrlQueryMap, urlUtil } from './url';
 

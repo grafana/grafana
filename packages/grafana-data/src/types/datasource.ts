@@ -4,17 +4,18 @@ import { Observable } from 'rxjs';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 import { ScopedVars } from './ScopedVars';
+import { WithAccessControlMetadata } from './accesscontrol';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
 import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
-import { DataQuery } from './query';
+import { DataQuery, DataSourceRef } from './query';
+import { Scope } from './scopes';
+import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
-
-import { AdHocVariableFilter, DataSourceRef, Scope, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,

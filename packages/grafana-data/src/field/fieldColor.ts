@@ -5,7 +5,9 @@ import tinycolor from 'tinycolor2';
 import { colorManipulator } from '../themes';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
-import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
+import { Field } from '../types/dataFrame';
+import { FALLBACK_COLOR, FieldColorModeId } from '../types/fieldColor';
+import { Threshold } from '../types/thresholds';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 import { getScaleCalculator, ColorScaleValue } from './scale';

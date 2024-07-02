@@ -1,4 +1,5 @@
-import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta, Field } from '../types';
+import { Labels, QueryResultMeta } from '../types/data';
+import { FieldType, DataFrame, Field, FieldConfig } from '../types/dataFrame';
 
 import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 

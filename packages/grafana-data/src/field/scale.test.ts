@@ -1,5 +1,7 @@
 import { createTheme } from '../themes';
-import { ThresholdsMode, Field, FieldType, FieldColorModeId } from '../types';
+import { Field, FieldType } from '../types/dataFrame';
+import { FieldColorModeId } from '../types/fieldColor';
+import { ThresholdsMode } from '../types/thresholds';
 
 import { getScaleCalculator } from './scale';
 import { sortThresholds } from './thresholds';

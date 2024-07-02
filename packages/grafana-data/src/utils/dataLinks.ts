@@ -1,15 +1,10 @@
-import {
-  DataLink,
-  DataQuery,
-  ExplorePanelsState,
-  Field,
-  InternalDataLink,
-  InterpolateFunction,
-  LinkModel,
-  ScopedVars,
-  SplitOpen,
-  TimeRange,
-} from '../types';
+import { ScopedVars } from '../types/ScopedVars';
+import { Field } from '../types/dataFrame';
+import { DataLink, InternalDataLink, LinkModel } from '../types/dataLink';
+import { SplitOpen, ExplorePanelsState } from '../types/explore';
+import { InterpolateFunction } from '../types/panel';
+import { DataQuery } from '../types/query';
+import { TimeRange } from '../types/time';
 
 import { locationUtil } from './location';
 import { serializeStateToUrlParam, toURLRange } from './url';

@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType, DataFrame } from '../../types';
+import { DataFrame, FieldType } from '../../types/dataFrame';
 import { getFieldMatcher } from '../matchers';
 
 import { FieldMatcherID } from './ids';

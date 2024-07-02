@@ -3,21 +3,15 @@ import { ComponentType } from 'react';
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { StandardEditorContext, StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
 import { GrafanaTheme2 } from '../themes';
-import {
-  MatcherConfig,
-  FieldConfig,
-  Field,
-  DataFrame,
-  TimeZone,
-  ScopedVars,
-  ValueLinkConfig,
-  LinkModel,
-  DataLink,
-} from '../types';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
+import { ScopedVars } from './ScopedVars';
+import { DataFrame, Field, FieldConfig, ValueLinkConfig } from './dataFrame';
+import { DataLink, LinkModel } from './dataLink';
 import { OptionEditorConfig } from './options';
 import { InterpolateFunction } from './panel';
+import { TimeZone } from './time';
+import { MatcherConfig } from './transformations';
 
 export interface DynamicConfigValue {
   id: string;
