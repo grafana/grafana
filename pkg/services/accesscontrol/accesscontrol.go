@@ -245,7 +245,7 @@ func GroupScopesByAction(permissions []Permission) map[string][]string {
 
 // GroupScopesByAction will group scopes on action
 func GroupScopesByActionContext(ctx context.Context, permissions []Permission) map[string][]string {
-	ctx, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
+	_, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
 		attribute.Int("permissions_count", len(permissions)),
 	))
 	defer span.End()

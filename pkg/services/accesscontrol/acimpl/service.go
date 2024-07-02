@@ -403,7 +403,7 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 
 // RegisterFixedRoles registers all declared roles in RAM
 func (s *Service) RegisterFixedRoles(ctx context.Context) error {
-	ctx, span := s.tracer.Start(ctx, "authz.RegisterFixedRoles")
+	_, span := s.tracer.Start(ctx, "authz.RegisterFixedRoles")
 	defer span.End()
 
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
