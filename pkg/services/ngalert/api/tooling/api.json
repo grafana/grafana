@@ -4503,6 +4503,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -4738,31 +4739,6 @@
    },
    "type": "array"
   },
-  "gettableGrafanaSilence": {
-   "properties": {
-    "accessControl": {
-     "additionalProperties": {
-      "type": "boolean"
-     },
-     "example": {
-      "create": false,
-      "read": true,
-      "write": false
-     },
-     "type": "object"
-    },
-    "metadata": {
-     "$ref": "#/definitions/SilenceMetadata"
-    }
-   },
-   "type": "object"
-  },
-  "gettableGrafanaSilences": {
-   "items": {
-    "$ref": "#/definitions/gettableGrafanaSilence"
-   },
-   "type": "array"
-  },
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
    "properties": {
@@ -4813,6 +4789,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
