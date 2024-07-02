@@ -5,7 +5,7 @@ import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experiment
 import { Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
-import { useDimensionKeys, useMetrics, useNamespaces } from '../../../../hooks';
+import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../../../hooks';
 import { STATISTICS } from '../../../../language/cloudwatch-sql/language';
 import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
@@ -23,6 +23,8 @@ import {
   setWithSchema,
   stringArrayToDimensions,
 } from './utils';
+import { Account } from '../../../shared/Account';
+import { config } from '@grafana/runtime';
 
 interface SQLBuilderSelectRowProps {
   query: CloudWatchMetricsQuery;
@@ -48,13 +50,18 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
   const withSchemaEnabled = isUsingWithSchema(sql.from);
 
   const namespaceOptions = useNamespaces(datasource);
-  const metricOptions = useMetrics(datasource, { region: query.region, namespace });
+  const metricOptions = useMetrics(datasource, {
+    region: query.region,
+    namespace,
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying ? { accountId: query.accountId } : {}),
+  });
   const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
   const unusedDimensionKeys = useDimensionKeys(datasource, {
     region: query.region,
     namespace,
     metricName,
     dimensionFilters: existingFilters,
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying ? { accountId: query.accountId } : {}),
   });
   const dimensionKeys = useMemo(
     () => (schemaLabels?.length ? [...unusedDimensionKeys, ...schemaLabels.map(toOption)] : unusedDimensionKeys),
@@ -76,9 +83,22 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
     return { ...query, sql };
   };
 
+  const accountState = useAccountOptions(datasource.resources, query.region);
   return (
     <>
       <EditorFieldGroup>
+        {config.featureToggles.cloudWatchCrossAccountQuerying && (
+          <Account
+            accountId={query.accountId}
+            accountOptions={accountState.value || []}
+            onChange={(accountId) => {
+              onQueryChange({
+                ...query,
+                accountId,
+              });
+            }}
+          />
+        )}
         <EditorField label="Namespace" width={16}>
           <Select
             aria-label="Namespace"
