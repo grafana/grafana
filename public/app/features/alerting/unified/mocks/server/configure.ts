@@ -1,7 +1,7 @@
 import { HttpResponse } from 'msw';
 
-import server from 'app/features/alerting/unified/mockApi';
-import { mockFolder } from 'app/features/alerting/unified/mocks';
+import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/mockApi';
+import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   getGrafanaAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
@@ -10,6 +10,11 @@ import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/han
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
+import { setupDataSources } from '../../testSetup/datasources';
+import { buildInfoResponse } from '../../testSetup/featureDiscovery';
+import { DataSourceType } from '../../utils/datasource';
+
+import { MIMIR_DATASOURCE_UID } from './constnts';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/grafanaRuler';
 
 export type HandlerOptions = {
@@ -62,3 +67,23 @@ export const setRulerRuleGroupHandler = (options?: HandlerOptions) => {
 
   return handler;
 };
+
+export function mimirServer() {
+  const dataSource = mockDataSource(
+    {
+      type: DataSourceType.Prometheus,
+      name: MIMIR_DATASOURCE_UID,
+      uid: MIMIR_DATASOURCE_UID,
+      url: 'https://mimir.local:9000',
+      jsonData: {
+        manageAlerts: true,
+      },
+    },
+    { alerting: true }
+  );
+
+  setupDataSources(dataSource);
+  mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSource, buildInfoResponse.mimir);
+
+  return { dataSource };
+}

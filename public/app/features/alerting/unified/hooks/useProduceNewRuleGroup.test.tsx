@@ -1,4 +1,5 @@
 import { HttpResponse } from 'msw';
+import { AsyncState } from 'react-use/lib/useAsyncFn';
 import { render, userEvent } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
@@ -8,12 +9,11 @@ import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { mockFeatureDiscoveryApi, setupMswServer } from '../mockApi';
+import { setupMswServer } from '../mockApi';
 import {
   grantUserPermissions,
   mockCombinedRule,
   mockCombinedRuleGroup,
-  mockDataSource,
   mockGrafanaRulerRule,
   mockRulerAlertingRule,
   mockRulerRecordingRule,
@@ -21,13 +21,11 @@ import {
 } from '../mocks';
 import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/grafanaRulerApi';
 import { GROUP_1, NAMESPACE_1, NAMESPACE_2, namespace2 } from '../mocks/mimirRulerApi';
-import { setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import { mimirServer, setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import { MIMIR_DATASOURCE_UID } from '../mocks/server/constnts';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/grafanaRuler';
-import { MIMIR_DATASOURCE_UID } from '../mocks/server/handlers/mimirRuler';
-import { setupDataSources } from '../testSetup/datasources';
-import { buildInfoResponse } from '../testSetup/featureDiscovery';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
@@ -230,7 +228,7 @@ describe('useUpdateRuleGroupConfiguration', () => {
   });
 
   it('should be able to move a Data Source managed rule group', async () => {
-    configureMimirServer();
+    mimirServer();
     const capture = captureRequests();
 
     render(<MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={'a-new-group'} interval={'2m'} />);
@@ -243,7 +241,7 @@ describe('useUpdateRuleGroupConfiguration', () => {
   });
 
   it('should not move a Data Source managed rule group to namespace with existing target group name', async () => {
-    configureMimirServer();
+    mimirServer();
 
     render(
       <MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={namespace2[0].name} interval={'2m'} />
@@ -265,9 +263,7 @@ const UpdateRuleGroupComponent = () => {
   return (
     <>
       <button onClick={() => updateRuleGroup(ruleGroupID, '2m')} />
-      {requestState.loading && 'loading'}
-      {isSuccess(requestState) && 'success'}
-      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };
@@ -284,9 +280,7 @@ const RenameRuleGroupComponent = () => {
   return (
     <>
       <button onClick={() => renameRuleGroup(ruleGroupID, 'another-group-name', '2m')} />
-      {requestState.loading && 'loading'}
-      {isSuccess(requestState) && 'success'}
-      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };
@@ -303,12 +297,22 @@ const MoveGrafanaManagedRuleGroupComponent = () => {
   return (
     <>
       <button onClick={() => moveRuleGroup(ruleGroupID, 'another-namespace', 'another-group-name', '2m')} />
-      {requestState.loading && 'loading'}
-      {isSuccess(requestState) && 'success'}
-      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };
+
+function SerializeState({ state }: { state: AsyncState<unknown> }) {
+  return (
+    <>
+      {isUninitialized(state) && 'uninitialized'}
+      {state.loading && 'loading'}
+      {isSuccess(state) && 'success'}
+      {isSuccess(state) && `result: ${JSON.stringify(state.value, null, 2)}`}
+      {state.error && `error: ${stringifyErrorLike(state.error)}`}
+    </>
+  );
+}
 
 type MoveDataSourceManagedRuleGroupComponentProps = {
   namespace: string;
@@ -332,9 +336,7 @@ const MoveDataSourceManagedRuleGroupComponent = ({
   return (
     <>
       <button onClick={() => moveRuleGroup(ruleGroupID, namespace, group, interval)} />
-      {requestState.loading && 'loading'}
-      {isSuccess(requestState) && 'success'}
-      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };
@@ -358,11 +360,7 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   return (
     <>
       <button onClick={() => onClick()} />
-      {isUninitialized(requestState) && 'uninitialized'}
-      {requestState.loading && 'loading'}
-      {isSuccess(requestState) && 'success'}
-      {isSuccess(requestState) && `result: ${JSON.stringify(requestState.value, null, 2)}`}
-      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };
@@ -382,31 +380,7 @@ const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
   return (
     <>
       <button onClick={() => onClick()} />
-      {isUninitialized(requestState) && 'uninitialized'}
-      {requestState.loading && 'loading'}
-      {isSuccess(requestState) && 'success'}
-      {isSuccess(requestState) && `result: ${JSON.stringify(requestState.value, null, 2)}`}
-      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };
-
-function configureMimirServer() {
-  const dataSource = mockDataSource(
-    {
-      type: DataSourceType.Prometheus,
-      name: MIMIR_DATASOURCE_UID,
-      uid: MIMIR_DATASOURCE_UID,
-      url: 'https://mimir.local:9000',
-      jsonData: {
-        manageAlerts: true,
-      },
-    },
-    { alerting: true }
-  );
-
-  setupDataSources(dataSource);
-  mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSource, buildInfoResponse.mimir);
-
-  return { dataSource };
-}

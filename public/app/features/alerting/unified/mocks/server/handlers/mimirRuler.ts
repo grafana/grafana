@@ -1,14 +1,9 @@
 import { delay, http, HttpResponse } from 'msw';
 
-export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
-
 import { RulerRuleGroupDTO } from '../../../../../../types/unified-alerting-dto';
 import { namespaces } from '../../mimirRulerApi';
 import { HandlerOptions } from '../configure';
-
-export const MIMIR_DATASOURCE_UID = 'mimir';
-export const MIMIR_GROUP_NAME = 'group-1';
-export const MIMIR_NAMESPACE_NAME = 'namespace-1';
+import { MIMIR_DATASOURCE_UID } from '../constnts';
 
 export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) => {
   return http.post<{ namespaceName: string }>(
