@@ -40,19 +40,24 @@ type ResourceServer interface {
 	LifecycleHooks
 }
 
-// This store is not exposed directly to users, it is a helper to implement writing
-// resources as a stream of WriteEvents
-type AppendingStore interface {
+// The StorageBackend is an internal abstraction that supports interacting with
+// the underlying raw storage medium.  This interface is never exposed directly,
+// it is provided by concrete instances that actually write values.
+type StorageBackend interface {
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Read a value from storage
+	// Read a value from storage optionally at an explicit version
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 
-	// Implement List -- this expects the read after write semantics
-	List(context.Context, *ListRequest) (*ListResponse, error)
+	// When the ResourceServer executes a List request, it will first
+	// query the backend for potential results.  All results will be
+	// checked against the kubernetes requirements before finally returning
+	// results.  The list options can be used to improve performance
+	// but are the the final answer.
+	PrepareList(context.Context, *ListRequest) (*ListResponse, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -81,7 +86,7 @@ type ResourceServerOptions struct {
 	Tracer trace.Tracer
 
 	// Real storage backend
-	Store AppendingStore
+	Backend StorageBackend
 
 	// The blob storage engine
 	Blob BlobStore
@@ -108,8 +113,8 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
 
-	if opts.Store == nil {
-		return nil, fmt.Errorf("missing AppendingStore implementation")
+	if opts.Backend == nil {
+		return nil, fmt.Errorf("missing Backend implementation")
 	}
 	if opts.Search == nil {
 		opts.Search = &noopService{}
@@ -137,7 +142,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	return &server{
 		tracer:      opts.Tracer,
 		log:         slog.Default().With("logger", "resource-server"),
-		store:       opts.Store,
+		backend:     opts.Backend,
 		search:      opts.Search,
 		diagnostics: opts.Diagnostics,
 		access:      opts.WriteAccess,
@@ -153,7 +158,7 @@ var _ ResourceServer = &server{}
 type server struct {
 	tracer      trace.Tracer
 	log         *slog.Logger
-	store       AppendingStore
+	backend     StorageBackend
 	search      ResourceIndexServer
 	blob        BlobStore
 	diagnostics DiagnosticsServer
@@ -323,7 +328,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, err
 	}
 
-	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	if err == nil {
 		rsp.Value = event.Value // with mutated fields
 	} else {
@@ -370,7 +375,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return rsp, nil
 	}
 
-	latest, err := s.store.Read(ctx, &ReadRequest{
+	latest, err := s.backend.Read(ctx, &ReadRequest{
 		Key: req.Key,
 	})
 	if err != nil {
@@ -399,7 +404,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
-	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	rsp.Status, err = errToStatus(err)
 	if err == nil {
 		rsp.Value = event.Value // with mutated fields
@@ -422,7 +427,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
-	latest, err := s.store.Read(ctx, &ReadRequest{
+	latest, err := s.backend.Read(ctx, &ReadRequest{
 		Key: req.Key,
 	})
 	if err != nil {
@@ -468,7 +473,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 			fmt.Sprintf("unable creating deletion marker, %v", err))
 	}
 
-	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	rsp.Status, err = errToStatus(err)
 	return rsp, err
 }
@@ -487,7 +492,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		return &ReadResponse{Status: status}, nil
 	}
 
-	rsp, err := s.store.Read(ctx, req)
+	rsp, err := s.backend.Read(ctx, req)
 	if err != nil {
 		if rsp == nil {
 			rsp = &ReadResponse{}
@@ -502,7 +507,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		return nil, err
 	}
 
-	rsp, err := s.store.List(ctx, req)
+	rsp, err := s.backend.PrepareList(ctx, req)
 	// Status???
 	return rsp, err
 }
@@ -510,7 +515,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 func (s *server) initWatcher() error {
 	var err error
 	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
-		events, err := s.store.WatchWriteEvents(s.ctx)
+		events, err := s.backend.WatchWriteEvents(s.ctx)
 		if err != nil {
 			return err
 		}
@@ -595,7 +600,7 @@ func (s *server) PutBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResp
 }
 
 func (s *server) getPartialObject(ctx context.Context, key *ResourceKey, rv int64) (utils.GrafanaMetaAccessor, *StatusResult) {
-	rsp, err := s.store.Read(ctx, &ReadRequest{
+	rsp, err := s.backend.Read(ctx, &ReadRequest{
 		Key:             key,
 		ResourceVersion: rv,
 	})

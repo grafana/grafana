@@ -41,13 +41,13 @@ func TestSimpleServer(t *testing.T) {
 
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
-	store, err := NewCDKAppendingStore(ctx, CDKAppenderOptions{
+	store, err := NewCDKBackend(ctx, CDKBackendOptions{
 		Bucket: bucket,
 	})
 	require.NoError(t, err)
 
 	server, err := NewResourceServer(ResourceServerOptions{
-		Store: store,
+		Backend: store,
 	})
 	require.NoError(t, err)
 

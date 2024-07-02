@@ -24,9 +24,9 @@ type dashboardStorage struct {
 
 func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (grafanarest.LegacyStorage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Store:  s.access,
-		Search: s.access,
-		Blob:   s.access,
+		Backend: s.access,
+		Search:  s.access,
+		Blob:    s.access,
 		// WriteAccess: resource.WriteAccessHooks{
 		// 	Folder: func(ctx context.Context, user identity.Requester, uid string) bool {
 		// 		// ???

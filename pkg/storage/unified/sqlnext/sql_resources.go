@@ -43,7 +43,7 @@ func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (r
 
 	return resource.NewResourceServer(resource.ResourceServerOptions{
 		Tracer:      tracer,
-		Store:       store,
+		Backend:     store,
 		Diagnostics: store,
 		Lifecycle:   store,
 	})
@@ -152,7 +152,7 @@ func (s *sqlResourceStore) Read(ctx context.Context, req *resource.ReadRequest) 
 	return nil, ErrNotImplementedYet
 }
 
-func (s *sqlResourceStore) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (s *sqlResourceStore) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 

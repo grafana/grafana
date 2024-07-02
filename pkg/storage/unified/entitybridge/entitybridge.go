@@ -72,7 +72,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 			server: server,
 			client: client,
 		}
-		opts.Store = bridge
+		opts.Backend = bridge
 		opts.Diagnostics = bridge
 		opts.Lifecycle = bridge
 	} else {
@@ -88,7 +88,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 		if err != nil {
 			return nil, err
 		}
-		opts.Store, err = resource.NewCDKAppendingStore(context.Background(), resource.CDKAppenderOptions{
+		opts.Backend, err = resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 			Tracer: tracer,
 			Bucket: bucket,
 		})
@@ -262,7 +262,7 @@ func (b *entityBridge) Read(ctx context.Context, req *resource.ReadRequest) (*re
 }
 
 // List implements ResourceServer.
-func (b *entityBridge) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (b *entityBridge) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	key := req.Options.Key
 	query := &entity.EntityListRequest{
 		NextPageToken: req.NextPageToken,

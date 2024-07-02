@@ -40,7 +40,13 @@ type ResourceStoreClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	// The results *may* include values that should not be returned to the user
+	// This will perform best-effort filtering to increase performace.
+	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// The results *may* include values that should not be returned to the user
+	// This will perform best-effort filtering to increase performace.
+	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (ResourceStore_WatchClient, error)
 }
 
@@ -148,7 +154,13 @@ type ResourceStoreServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	// The results *may* include values that should not be returned to the user
+	// This will perform best-effort filtering to increase performace.
+	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	List(context.Context, *ListRequest) (*ListResponse, error)
+	// The results *may* include values that should not be returned to the user
+	// This will perform best-effort filtering to increase performace.
+	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(*WatchRequest, ResourceStore_WatchServer) error
 }
 

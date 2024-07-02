@@ -24,7 +24,7 @@ type DashboardQuery struct {
 }
 
 type DashboardAccess interface {
-	resource.AppendingStore
+	resource.StorageBackend
 	resource.BlobStore
 	resource.ResourceIndexServer
 

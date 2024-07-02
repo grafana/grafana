@@ -145,7 +145,7 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 }
 
 // List implements AppendingStore.
-func (a *dashboardSqlAccess) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	opts := req.Options
 	info, err := request.ParseNamespace(opts.Key.Namespace)
 	if err == nil {

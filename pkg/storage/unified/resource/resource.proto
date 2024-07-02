@@ -444,7 +444,15 @@ service ResourceStore {
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+  // The results *may* include values that should not be returned to the user
+  // This will perform best-effort filtering to increase performace. 
+  // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc List(ListRequest) returns (ListResponse);
+
+  // The results *may* include values that should not be returned to the user
+  // This will perform best-effort filtering to increase performace. 
+  // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
 }
 
