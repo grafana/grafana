@@ -98,6 +98,9 @@ func GetPreferencesFor(ctx context.Context,
 		}
 
 		if preference.JSONData.Navbar.SavedItemIds != nil {
+			dto.Navbar = &preferences.NavbarPreference{
+				SavedItemIds: []string{},
+			}
 			dto.Navbar.SavedItemIds = preference.JSONData.Navbar.SavedItemIds
 		}
 
