@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
@@ -11,7 +11,6 @@ import {
   useGetSessionListQuery,
   useGetShapshotListQuery,
   useGetSnapshotQuery,
-  useRunCloudMigrationMutation,
   useUploadSnapshotMutation,
 } from '../api';
 
@@ -48,7 +47,6 @@ function useGetLatestSession() {
 const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
   'INITIALIZING',
   'CREATING',
-  // 'PENDING_UPLOAD',
   'UPLOADING',
   'PENDING_PROCESSING',
   'PROCESSING',
@@ -57,15 +55,25 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
 const STATUS_POLL_INTERVAL = 5 * 1000;
 
 function useGetLatestSnapshot(sessionUid?: string) {
+  const [shouldPoll, setShouldPoll] = useState(false);
+
   const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
   const lastItem = listResult.data?.snapshots?.at(-1); // TODO: account for pagination and ensure we're truely getting the last one
 
   const getSnapshotQueryArgs = sessionUid && lastItem?.uid ? { uid: sessionUid, snapshotUid: lastItem.uid } : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
-    pollingInterval: SHOULD_POLL_STATUSES.includes(lastItem?.status) ? STATUS_POLL_INTERVAL : undefined,
+    pollingInterval: shouldPoll ? STATUS_POLL_INTERVAL : 0,
     skipPollingIfUnfocused: true,
   });
+
+  useEffect(() => {
+    if (SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status)) {
+      setShouldPoll(true);
+    } else {
+      setShouldPoll(false);
+    }
+  }, [snapshotResult?.data?.status]);
 
   return {
     ...snapshotResult,
@@ -100,15 +108,17 @@ export const Page = () => {
   const isBusy =
     createSnapshotResult.isLoading ||
     uploadSnapshotResult.isLoading ||
-    session.isFetching ||
-    snapshot.isFetching ||
+    session.isLoading ||
+    snapshot.isLoading ||
     disconnectResult.isLoading;
 
   const resources = snapshot.data?.results;
 
   const handleDisconnect = useCallback(async () => {
-    window.alert('TODO: Implement handleDisconnect');
-  }, []);
+    if (sessionUid) {
+      performDisconnect({ uid: sessionUid });
+    }
+  }, [performDisconnect, sessionUid]);
 
   const handleCreateSnapshot = useCallback(() => {
     if (sessionUid) {
@@ -188,7 +198,7 @@ export const Page = () => {
             <MigrationInfo title="Status" value={snapshot?.data?.status ?? 'no snapshot yet'} />
 
             <Button
-              disabled={isBusy}
+              disabled={isBusy || Boolean(snapshot.data)}
               onClick={handleCreateSnapshot}
               icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
             >
@@ -196,7 +206,7 @@ export const Page = () => {
             </Button>
 
             <Button
-              disabled={isBusy}
+              disabled={isBusy || !(snapshot.data?.status === 'PENDING_UPLOAD')}
               onClick={handleUploadSnapshot}
               icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
             >

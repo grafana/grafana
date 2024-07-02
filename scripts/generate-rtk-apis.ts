@@ -17,10 +17,6 @@ const config: ConfigFile = {
         'deleteSession',
         'createSession',
 
-        'getCloudMigrationRunList',
-        'getCloudMigrationRun',
-        'runCloudMigration',
-
         'getShapshotList',
         'getSnapshot',
         'uploadSnapshot',
