@@ -500,7 +500,6 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 
 	// start building the snapshot asynchronously while we return a success response to the client
 	go func() {
-
 		if err := s.buildSnapshot(context.Background(), signedInUser, initResp.MaxItemsPerPartition, snapshot); err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
 		}
