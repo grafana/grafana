@@ -51,6 +51,7 @@ export interface DataLink<T extends DataQuery = any> {
   internal?: InternalDataLink<T>;
 
   origin?: DataLinkConfigOrigin;
+  sortIndex?: number;
 }
 
 /**
@@ -98,6 +99,7 @@ export interface LinkModel<T = any> {
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
+  sortIndex?: number;
 }
 
 /**
