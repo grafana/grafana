@@ -291,7 +291,8 @@ lineage: schemas: [{
 		// `textbox`: Display a free text input field with an optional default value.
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
-		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
+			"system" | "snapshot" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 		// Continuous color interpolates a color using the percentage of a value relative to min and max.
@@ -591,7 +592,7 @@ lineage: schemas: [{
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 
-			// Sets panel queries cache timeout. 
+			// Sets panel queries cache timeout.
 			cacheTimeout?: string
 
 			// Overrides the data source configured time-to-live for a query cache item in milliseconds

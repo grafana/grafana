@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, DataFrameDTO, DataFrameJSON, MetricFindValue, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -59,6 +59,7 @@ import {
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -196,22 +197,44 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   let alertStatesLayer: AlertStatesDataLayer | undefined;
 
   if (oldModel.templating?.list?.length) {
-    const variableObjects = oldModel.templating.list
-      .map((v) => {
-        try {
-          return createSceneVariableFromVariableModel(v);
-        } catch (err) {
-          console.error(err);
-          return null;
-        }
-      })
-      // TODO: Remove filter
-      // Added temporarily to allow skipping non-compatible variables
-      .filter((v): v is SceneVariable => Boolean(v));
+    if (oldModel.meta.isSnapshot) {
+      //create the variable set only with custom variables
 
-    variables = new SceneVariableSet({
-      variables: variableObjects,
-    });
+      const variableObjects = oldModel.templating.list
+        .map((v) => {
+          try {
+            return createVariableForSnapshots(v);
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        })
+
+        // TODO: Remove filter
+        // Added temporarily to allow skipping non-compatible variables
+        .filter((v): v is SceneVariable => Boolean(v));
+
+      variables = new SceneVariableSet({
+        variables: variableObjects,
+      });
+    } else {
+      const variableObjects = oldModel.templating.list
+        .map((v) => {
+          try {
+            return createSceneVariableFromVariableModel(v);
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        })
+        // TODO: Remove filter
+        // Added temporarily to allow skipping non-compatible variables
+        .filter((v): v is SceneVariable => Boolean(v));
+
+      variables = new SceneVariableSet({
+        variables: variableObjects,
+      });
+    }
   } else {
     // Create empty variable set
     variables = new SceneVariableSet({
@@ -295,6 +318,62 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   });
 
   return dashboardScene;
+}
+
+export function createVariableForSnapshots(variable: TypedVariableModel): SceneVariable {
+  let snapshotVariable: SnapshotVariable;
+  let current: { value: string | string[]; text: string | string[] };
+  let filters: AdHocVariableFilter[];
+  let baseFilters: AdHocVariableFilter[];
+  let defaultKeys: MetricFindValue[];
+  if (variable.type === 'interval') {
+    const intervals = getIntervalsFromQueryString(variable.query);
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
+    snapshotVariable = new SnapshotVariable({
+      name: variable.name,
+      label: variable.label,
+      description: variable.description,
+      value: currentInterval,
+      text: currentInterval,
+      hide: variable.hide,
+    });
+    return snapshotVariable;
+  }
+
+  if (variable.type === 'adhoc' || variable.type === 'system' || variable.type === 'constant') {
+    current = {
+      value: '',
+      text: '',
+    };
+  } else {
+    current = {
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
+    };
+  }
+
+  if (variable.type === 'adhoc' && variable.filters) {
+    filters = variable.filters;
+    baseFilters = variable.baseFilters ?? [];
+    defaultKeys = variable.defaultKeys ?? [];
+  } else {
+    filters = [];
+    baseFilters = [];
+    defaultKeys = [];
+  }
+
+  snapshotVariable = new SnapshotVariable({
+    name: variable.name,
+    label: variable.label,
+    description: variable.description,
+    value: current?.value ?? '',
+    text: current?.text ?? '',
+    filters: filters,
+    hide: variable.hide,
+    baseFilters: baseFilters,
+    defaultKeys: defaultKeys,
+  });
+  return snapshotVariable;
 }
 
 export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {

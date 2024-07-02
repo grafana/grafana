@@ -50,6 +50,7 @@ import { getQueryRunnerFor } from '../utils/utils';
 
 import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
 import { GRAFANA_DATASOURCE_REF } from './const';
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import {
@@ -183,6 +184,110 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene(rsp);
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);
+    });
+  });
+
+  describe('When creating a snapshot dashboard scene', () => {
+    it('should initialize a dashboar scene with SnapshotVariables', () => {
+      const customVariable = {
+        current: {
+          selected: false,
+          text: 'a',
+          value: 'a',
+        },
+        hide: 0,
+        includeAll: false,
+        multi: false,
+        name: 'custom0',
+        options: [],
+        query: 'a,b,c,d',
+        skipUrlSync: false,
+        type: 'custom' as VariableType,
+        rootStateKey: 'N4XLmH5Vz',
+      };
+
+      const intervalVariable = {
+        current: {
+          selected: false,
+          text: '10s',
+          value: '10s',
+        },
+        hide: 0,
+        includeAll: false,
+        multi: false,
+        name: 'interval0',
+        options: [],
+        query: '10s,20s,30s',
+        skipUrlSync: false,
+        type: 'interval' as VariableType,
+        rootStateKey: 'N4XLmH5Vz',
+      };
+
+      const adHocVariable = {
+        global: false,
+        name: 'CoolFilters',
+        label: 'CoolFilters Label',
+        type: 'adhoc' as VariableType,
+        datasource: {
+          uid: 'gdev-prometheus',
+          type: 'prometheus',
+        },
+        filters: [
+          {
+            key: 'filterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        baseFilters: [
+          {
+            key: 'baseFilterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        hide: 0,
+        index: 0,
+      };
+
+      const snapshot = {
+        ...defaultDashboard,
+        time: { from: 'now-10h', to: 'now' },
+        weekStart: 'saturday',
+        fiscalYearStartMonth: 2,
+        timezone: 'America/New_York',
+        timepicker: {
+          ...defaultTimePickerConfig,
+          hidden: true,
+        },
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
+        templating: {
+          list: [customVariable, adHocVariable, intervalVariable],
+        },
+      };
+      const oldModel = new DashboardModel(snapshot, { isSnapshot: true });
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      // check variables were converted to snapshot variables
+      expect(scene.state.$variables?.state.variables).toHaveLength(3);
+      expect(scene.state.$variables?.getByName('custom0')).toBeInstanceOf(SnapshotVariable);
+      expect(scene.state.$variables?.getByName('CoolFilters')).toBeInstanceOf(SnapshotVariable);
+      expect(scene.state.$variables?.getByName('interval0')).toBeInstanceOf(SnapshotVariable);
+      // custom snapshot
+      const customSnapshot = scene.state.$variables?.getByName('custom0') as SnapshotVariable;
+      expect(customSnapshot.state.value).toBe('a');
+      expect(customSnapshot.state.text).toBe('a');
+      expect(customSnapshot.state.isReadOnly).toBe(true);
+      // adhoc snapshot
+      const adhocSnapshot = scene.state.$variables?.getByName('CoolFilters') as SnapshotVariable;
+      expect(adhocSnapshot.state.filters).toEqual(adHocVariable.filters);
+      expect(adhocSnapshot.state.isReadOnly).toBe(true);
+
+      // interval snapshot
+      const intervalSnapshot = scene.state.$variables?.getByName('interval0') as SnapshotVariable;
+      expect(intervalSnapshot.state.value).toBe('10s');
+      expect(intervalSnapshot.state.text).toBe('10s');
+      expect(intervalSnapshot.state.isReadOnly).toBe(true);
     });
   });
 

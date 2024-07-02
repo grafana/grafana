@@ -162,6 +162,7 @@ const (
 	VariableTypeGroupby    VariableType = "groupby"
 	VariableTypeInterval   VariableType = "interval"
 	VariableTypeQuery      VariableType = "query"
+	VariableTypeSnapshot   VariableType = "snapshot"
 	VariableTypeSystem     VariableType = "system"
 	VariableTypeTextbox    VariableType = "textbox"
 )
