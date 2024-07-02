@@ -57,7 +57,7 @@ COPY .bingo .bingo
 COPY pkg/util/xorm/go.* pkg/util/xorm/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
-COPY pkg/build/go.*  pkg/build/
+COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
 COPY pkg/promlib/go.* pkg/promlib/
 COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/

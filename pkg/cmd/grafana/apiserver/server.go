@@ -16,10 +16,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	standaloneoptions "github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
