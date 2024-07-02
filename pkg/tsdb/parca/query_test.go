@@ -294,7 +294,9 @@ func flamegraphResponse() *connect.Response[v1alpha1.QueryResponse] {
 	w := ipc.NewWriter(&buf,
 		ipc.WithSchema(record.Schema()),
 	)
-	defer w.Close()
+	defer func() {
+		_ = w.Close()
+	}()
 
 	if err := w.Write(record); err != nil {
 		return nil
