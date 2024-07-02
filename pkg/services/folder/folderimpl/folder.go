@@ -562,7 +562,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgID = cmd.OrgID
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+	if cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
