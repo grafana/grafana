@@ -9,6 +9,7 @@ jest.mock('@grafana/runtime', () => ({
     post: postMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     buildInfo: {
       version: 'v1.0',
       commit: '1',
