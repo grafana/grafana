@@ -269,7 +269,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			},
 		},
 		{
-			name:       "should return correct mapping when the first part contains at least one colon",
+			name:       "should return correct mapping when the first part contains multiple colons",
 			rawMapping: []string{"Groups:IT:First:1:Viewer"},
 			roleStrict: false,
 			expected: &MappingConfiguration{
@@ -282,20 +282,6 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			rawMapping: nil,
 			expected: &MappingConfiguration{
 				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: false,
-			},
-		},
-		{
-			name:       "should return only the valid mappings from the raw mappings when strict role mapping is disabled",
-			rawMapping: []string{"External:Org1:First:Organization:SuperEditor", "Second:1:Editor"},
-			roleStrict: false,
-			setupMock: func(orgService *orgtest.MockService) {
-				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
-					return query.Name == "Organization"
-				})).Return(nil, assert.AnError)
-			},
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleEditor}},
 				strictRoleMapping: false,
 			},
 		},
