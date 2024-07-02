@@ -157,7 +157,6 @@
   },
   "central-alert-history": {
     "details": {
-      "alert-name": "{äľęřŧŖūľęŃämę}",
       "annotations": "Åŉŉőŧäŧįőŉş",
       "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
       "loading": "Ŀőäđįŉģ...",
@@ -174,13 +173,11 @@
         "pending": "Pęŉđįŉģ"
       },
       "state-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉ",
-      "timestamp": "{ƒőřmäŧŧęđĐäŧę}",
       "unknown-event-state": "Ůŉĸŉőŵŉ",
       "unknown-rule": "Ůŉĸŉőŵŉ",
       "value-in-transition": "Väľūę įŉ ŧřäŉşįŧįőŉ"
     },
     "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
-    "error-message": "{ęřřőřŜŧř}",
     "filter": {
       "info": {
         "label1": "Fįľŧęř ęvęŉŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ şpäčęş, ęχ:",

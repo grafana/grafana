@@ -157,7 +157,6 @@
   },
   "central-alert-history": {
     "details": {
-      "alert-name": "{alertRuleName}",
       "annotations": "Annotations",
       "error": "Error loading rule for this event.",
       "loading": "Loading...",
@@ -174,13 +173,11 @@
         "pending": "Pending"
       },
       "state-transitions": "State transition",
-      "timestamp": "{formattedDate}",
       "unknown-event-state": "Unknown",
       "unknown-rule": "Unknown",
       "value-in-transition": "Value in transition"
     },
     "error": "Something went wrong loading the alert state history",
-    "error-message": "{errorStr}",
     "filter": {
       "info": {
         "label1": "Filter events using label querying without spaces, ex:",
