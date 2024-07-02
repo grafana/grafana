@@ -24,6 +24,7 @@ type FakeRuleService struct {
 	HasAccessInFolderFunc                     func(context.Context, identity.Requester, models.Namespaced) (bool, error)
 	AuthorizeAccessInFolderFunc               func(context.Context, identity.Requester, models.Namespaced) error
 	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *store.GroupDelta) error
+	CanReadAllRulesFunc                       func(context.Context, identity.Requester) (bool, error)
 
 	Calls []Call
 }
@@ -98,4 +99,12 @@ func (s *FakeRuleService) AuthorizeRuleChanges(ctx context.Context, user identit
 		return s.AuthorizeRuleChangesFunc(ctx, user, change)
 	}
 	return nil
+}
+
+func (s *FakeRuleService) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
+	s.Calls = append(s.Calls, Call{"CanReadAllRules", []interface{}{ctx, user}})
+	if s.CanReadAllRulesFunc != nil {
+		return s.CanReadAllRulesFunc(ctx, user)
+	}
+	return false, nil
 }

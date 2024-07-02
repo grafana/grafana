@@ -17,9 +17,9 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesInput } from './ScopesInput';
 import { ScopesScene } from './ScopesScene';
-import { ScopesTreeLevel } from './ScopesTreeLevel';
+import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
-import { NodesMap, SelectedScope, TreeScope } from './types';
+import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import { getBasicScope } from './utils';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
@@ -47,6 +47,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       nodes: {
         '': {
           name: '',
+          reason: NodeReason.Result,
           nodeType: 'container',
           title: '',
           isExpandable: true,
@@ -119,7 +120,19 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
           })
         )
         .subscribe((childNodes) => {
-          currentNode.nodes = childNodes;
+          const persistedNodes = this.state.treeScopes
+            .map(({ path }) => path[path.length - 1])
+            .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
+            .reduce<NodesMap>((acc, nodeName) => {
+              acc[nodeName] = {
+                ...currentNode.nodes[nodeName],
+                reason: NodeReason.Persisted,
+              };
+
+              return acc;
+            }, {});
+
+          currentNode.nodes = { ...persistedNodes, ...childNodes };
 
           this.setState({ nodes });
 
@@ -166,7 +179,19 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public open() {
     if (!this.scopesParent.state.isViewing) {
-      this.setState({ isOpened: true });
+      let nodes = { ...this.state.nodes };
+
+      // First close all nodes
+      nodes = this.closeNodes(nodes);
+
+      // Extract the path of a scope
+      let path = [...(this.state.scopes[0]?.path ?? ['', ''])];
+      path.splice(path.length - 1, 1);
+
+      // Expand the nodes to the selected scope
+      nodes = this.expandNodes(nodes, path);
+
+      this.setState({ isOpened: true, nodes });
     }
   }
 
@@ -207,6 +232,35 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.setState({ isOpened: false });
   }
 
+  private closeNodes(nodes: NodesMap): NodesMap {
+    return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
+      acc[id] = {
+        ...node,
+        isExpanded: false,
+        nodes: this.closeNodes(node.nodes),
+      };
+
+      return acc;
+    }, {});
+  }
+
+  private expandNodes(nodes: NodesMap, path: string[]): NodesMap {
+    nodes = { ...nodes };
+    let currentNodes = nodes;
+
+    for (let i = 0; i < path.length; i++) {
+      const nodeId = path[i];
+
+      currentNodes[nodeId] = {
+        ...currentNodes[nodeId],
+        isExpanded: true,
+      };
+      currentNodes = currentNodes[nodeId].nodes;
+    }
+
+    return nodes;
+  }
+
   private getTreeScopes(): TreeScope[] {
     return this.state.scopes.map(({ scope, path }) => ({
       scopeName: scope.metadata.name,
@@ -243,7 +297,7 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           {isLoadingScopes ? (
             <Spinner data-testid="scopes-filters-loading" />
           ) : (
-            <ScopesTreeLevel
+            <ScopesTree
               nodes={nodes}
               nodePath={['']}
               loadingNodeName={loadingNodeName}
