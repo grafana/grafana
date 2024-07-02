@@ -87,7 +87,6 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 			return objStorage, err
 		}
 		log.Info("object not found in storage, fetching from legacy")
-		d.recordReadLegacyCount(options.Kind, method)
 	}
 
 	startLegacy := time.Now()
@@ -107,6 +106,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 
 	// if there is no object in storage, we return the object from legacy
 	if objStorage == nil {
+		d.recordReadLegacyCount(options.Kind, method)
 		return objLegacy, nil
 	}
 	return objStorage, err
