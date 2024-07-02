@@ -8,9 +8,15 @@ import {
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
 import { AlertGroupUpdated } from '../../../api/alertRuleApi';
-import { grafanaRulerRule, namespaceByUid, namespaces } from '../../grafanaRulerApi';
+import {
+  getHistoryResponse,
+  grafanaRulerRule,
+  namespaceByUid,
+  namespaces,
+  time_0,
+  time_plus_30,
+} from '../../grafanaRulerApi';
 import { HandlerOptions } from '../configure';
-
 export const rulerRulesHandler = () => {
   return http.get(`/api/ruler/grafana/api/v1/rules`, () => {
     const response = Object.entries(namespaces).reduce<RulerRulesConfigDTO>((acc, [namespaceUid, groups]) => {
@@ -118,12 +124,19 @@ export const rulerRuleHandler = () => {
   });
 };
 
+export const historyHandler = () => {
+  return http.get('/api/v1/rules/history', () => {
+    return HttpResponse.json(getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]));
+  });
+};
+
 const handlers = [
   rulerRulesHandler(),
   getRulerRuleNamespaceHandler(),
-  updateRulerRuleNamespaceHandler(),
   rulerRuleGroupHandler(),
-  deleteRulerRuleGroupHandler(),
   rulerRuleHandler(),
+  historyHandler(),
+  updateRulerRuleNamespaceHandler(),
+  deleteRulerRuleGroupHandler(),
 ];
 export default handlers;
