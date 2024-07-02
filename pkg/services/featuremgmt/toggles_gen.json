@@ -592,6 +592,19 @@
     },
     {
       "metadata": {
+        "name": "cloudwatchMetricInsightsCrossAccount",
+        "resourceVersion": "1719497905377",
+        "creationTimestamp": "2024-06-27T14:18:25Z"
+      },
+      "spec": {
+        "description": "Enables cross account observability for Cloudwatch Metric Insights",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-07-26T16:44:12Z"

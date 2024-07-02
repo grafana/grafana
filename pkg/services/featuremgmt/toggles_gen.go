@@ -734,4 +734,8 @@ const (
 	// FlagBodyScrolling
 	// Adjusts Page to make body the scrollable element
 	FlagBodyScrolling = "bodyScrolling"
+
+	// FlagCloudwatchMetricInsightsCrossAccount
+	// Enables cross account observability for Cloudwatch Metric Insights
+	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 )
