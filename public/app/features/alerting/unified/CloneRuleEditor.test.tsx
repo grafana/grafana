@@ -29,8 +29,8 @@ import {
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
 } from './mocks';
-import { grafanaRulerRule } from './mocks/alertRuleApi';
 import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { setupDataSources } from './testSetup/datasources';

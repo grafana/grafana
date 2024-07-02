@@ -1,4 +1,4 @@
-import { createAction, createReducer } from '@reduxjs/toolkit';
+import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
 import { remove } from 'lodash';
 
 import { RuleIdentifier } from 'app/types/unified-alerting';
@@ -16,8 +16,12 @@ export const pauseRuleAction = createAction<{ uid: string; pause: boolean }>('ru
 export const deleteRuleAction = createAction<{ rule: RulerRuleDTO }>('ruleGroup/rules/delete');
 
 // group-scoped actions
-const reorderRulesActions = createAction('ruleGroup/rules/reorder');
-const updateGroup = createAction('ruleGroup/update');
+export const updateRuleGroupAction = createAction<{ interval?: string }>('ruleGroup/update');
+export const moveRuleGroupAction = createAction<{ namespaceName: string; groupName?: string; interval?: string }>(
+  'ruleGroup/move'
+);
+export const renameRuleGroupAction = createAction<{ groupName: string; interval?: string }>('ruleGroup/rename');
+export const reorderRulesInRuleGroupAction = createAction('ruleGroup/rules/reorder');
 
 const initialState: PostableRulerRuleGroupDTO = {
   name: 'initial',
@@ -64,11 +68,22 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
         throw new Error(`No rule with UID ${uid} found in group ${draft.name}`);
       }
     })
-    .addCase(reorderRulesActions, () => {
+    .addCase(reorderRulesInRuleGroupAction, () => {
       throw new Error('not yet implemented');
     })
-    .addCase(updateGroup, () => {
-      throw new Error('not yet implemented');
+    // rename and move should allow updating the group's name
+    .addMatcher(isAnyOf(renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
+      const { groupName } = payload;
+      if (groupName) {
+        draft.name = groupName;
+      }
+    })
+    // update, rename and move should all allow updating the interval of the group
+    .addMatcher(isAnyOf(updateRuleGroupAction, renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
+      const { interval } = payload;
+      if (interval) {
+        draft.interval = interval;
+      }
     })
     .addDefaultCase((_draft, action) => {
       throw new Error(`Unknown action for rule group reducer: ${action.type}`);

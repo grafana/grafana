@@ -10,6 +10,7 @@ import {
   makeFolderSettingsLink,
   makeDashboardLink,
   makePanelLink,
+  stringifyErrorLike,
 } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert } from 'app/types/unified-alerting';
@@ -136,5 +137,12 @@ describe('create links', () => {
   });
   it('should make panel link', () => {
     expect(makePanelLink('dashboard uid', '1')).toBe('/d/dashboard%20uid?viewPanel=1');
+  });
+});
+
+describe('stringifyErrorLike', () => {
+  it('should stringify error with cause', () => {
+    const error = new Error('Something went strong', { cause: new Error('database did not respond') });
+    expect(stringifyErrorLike(error)).toBe('Something went strong, cause: database did not respond');
   });
 });

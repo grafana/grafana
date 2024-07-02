@@ -1,14 +1,17 @@
 import { HttpResponse } from 'msw';
+import { AsyncState } from 'react-use/lib/useAsyncFn';
 import { render, userEvent } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { AccessControlAction } from 'app/types';
+import { CombinedRule, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import {
+  grantUserPermissions,
   mockCombinedRule,
   mockCombinedRuleGroup,
   mockGrafanaRulerRule,
@@ -16,19 +19,31 @@ import {
   mockRulerRecordingRule,
   mockRulerRuleGroup,
 } from '../mocks';
-import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/alertRuleApi';
-import { setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import { GROUP_1, NAMESPACE_1, NAMESPACE_2, namespace2 } from '../mocks/mimirRulerApi';
+import { mimirServer, setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import { MIMIR_DATASOURCE_UID } from '../mocks/server/constnts';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
-import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/alertRules';
+import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/grafanaRuler';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
-import { useDeleteRuleFromGroup, usePauseRuleInGroup } from './useProduceNewRuleGroup';
+import {
+  isSuccess,
+  isUninitialized,
+  useDeleteRuleFromGroup,
+  useMoveRuleGroup,
+  usePauseRuleInGroup,
+  useRenameRuleGroup,
+  useUpdateRuleGroupConfiguration,
+} from './useProduceNewRuleGroup';
 
 const server = setupMswServer();
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
+  grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleRead]);
 });
 
 describe('pause rule', () => {
@@ -181,6 +196,151 @@ describe('delete rule', () => {
   });
 });
 
+describe('useUpdateRuleGroupConfiguration', () => {
+  it('should update a rule group interval', async () => {
+    const capture = captureRequests();
+
+    render(<UpdateRuleGroupComponent />);
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
+  it('should rename a rule group', async () => {
+    const capture = captureRequests();
+
+    render(<RenameRuleGroupComponent />);
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
+  it('should not be able to move a Grafana managed rule group', async () => {
+    render(<MoveGrafanaManagedRuleGroupComponent />);
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/error:.+not supported.+/i).find()).toBeInTheDocument();
+  });
+
+  it('should be able to move a Data Source managed rule group', async () => {
+    mimirServer();
+    const capture = captureRequests();
+
+    render(<MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={'a-new-group'} interval={'2m'} />);
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
+  it('should not move a Data Source managed rule group to namespace with existing target group name', async () => {
+    mimirServer();
+
+    render(
+      <MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={namespace2[0].name} interval={'2m'} />
+    );
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/error:.+not supported.+/i).find()).toBeInTheDocument();
+  });
+});
+
+const UpdateRuleGroupComponent = () => {
+  const [updateRuleGroup, requestState] = useUpdateRuleGroupConfiguration();
+
+  const ruleGroupID: RuleGroupIdentifier = {
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+    groupName: grafanaRulerGroupName,
+    namespaceName: grafanaRulerNamespace.uid,
+  };
+
+  return (
+    <>
+      <button onClick={() => updateRuleGroup(ruleGroupID, '2m')} />
+      <SerializeState state={requestState} />
+    </>
+  );
+};
+
+const RenameRuleGroupComponent = () => {
+  const [renameRuleGroup, requestState] = useRenameRuleGroup();
+
+  const ruleGroupID: RuleGroupIdentifier = {
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+    groupName: grafanaRulerGroupName,
+    namespaceName: grafanaRulerNamespace.uid,
+  };
+
+  return (
+    <>
+      <button onClick={() => renameRuleGroup(ruleGroupID, 'another-group-name', '2m')} />
+      <SerializeState state={requestState} />
+    </>
+  );
+};
+
+const MoveGrafanaManagedRuleGroupComponent = () => {
+  const [moveRuleGroup, requestState] = useMoveRuleGroup();
+
+  const ruleGroupID: RuleGroupIdentifier = {
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+    groupName: grafanaRulerGroupName,
+    namespaceName: grafanaRulerNamespace.uid,
+  };
+
+  return (
+    <>
+      <button onClick={() => moveRuleGroup(ruleGroupID, 'another-namespace', 'another-group-name', '2m')} />
+      <SerializeState state={requestState} />
+    </>
+  );
+};
+
+function SerializeState({ state }: { state: AsyncState<unknown> }) {
+  return (
+    <>
+      {isUninitialized(state) && 'uninitialized'}
+      {state.loading && 'loading'}
+      {isSuccess(state) && 'success'}
+      {isSuccess(state) && `result: ${JSON.stringify(state.value, null, 2)}`}
+      {state.error && `error: ${stringifyErrorLike(state.error)}`}
+    </>
+  );
+}
+
+type MoveDataSourceManagedRuleGroupComponentProps = {
+  namespace: string;
+  group: string;
+  interval: string;
+};
+
+const MoveDataSourceManagedRuleGroupComponent = ({
+  namespace,
+  group,
+  interval,
+}: MoveDataSourceManagedRuleGroupComponentProps) => {
+  const [moveRuleGroup, requestState] = useMoveRuleGroup();
+
+  const ruleGroupID: RuleGroupIdentifier = {
+    dataSourceName: MIMIR_DATASOURCE_UID,
+    groupName: GROUP_1,
+    namespaceName: NAMESPACE_1,
+  };
+
+  return (
+    <>
+      <button onClick={() => moveRuleGroup(ruleGroupID, namespace, group, interval)} />
+      <SerializeState state={requestState} />
+    </>
+  );
+};
+
 // this test component will cycle through the loading states
 const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   const [pauseRule, requestState] = usePauseRuleInGroup();
@@ -200,11 +360,7 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   return (
     <>
       <button onClick={() => onClick()} />
-      {requestState.isUninitialized && 'uninitialized'}
-      {requestState.isLoading && 'loading'}
-      {requestState.isSuccess && 'success'}
-      {requestState.result && 'result'}
-      {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };
@@ -224,11 +380,7 @@ const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
   return (
     <>
       <button onClick={() => onClick()} />
-      {requestState.isUninitialized && 'uninitialized'}
-      {requestState.isLoading && 'loading'}
-      {requestState.isSuccess && 'success'}
-      {requestState.result && `result: ${JSON.stringify(requestState.result, null, 2)}`}
-      {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
+      <SerializeState state={requestState} />
     </>
   );
 };

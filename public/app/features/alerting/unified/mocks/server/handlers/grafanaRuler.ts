@@ -15,7 +15,7 @@ import {
   namespaces,
   time_0,
   time_plus_30,
-} from '../../alertRuleApi';
+} from '../../grafanaRulerApi';
 import { HandlerOptions } from '../configure';
 export const rulerRulesHandler = () => {
   return http.get(`/api/ruler/grafana/api/v1/rules`, () => {
