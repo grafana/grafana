@@ -3,10 +3,12 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -791,6 +793,10 @@ func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
 	return s.actionSetToActions[actionSet]
 }
 
+func (s *InMemoryActionSets) ResolvePluginActionSet(actionSet string) []string {
+	return s.actionSetToActions[actionSet]
+}
+
 func isFolderOrDashboardAction(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
 }
@@ -824,15 +830,6 @@ func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscont
 	return expandedPermissions
 }
 
-// GetActionSet returns the action set for the given action.
-func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
-	actionSet, ok := s.actionSetToActions[actionName]
-	if !ok {
-		return nil
-	}
-	return actionSet
-}
-
 func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
 	name := GetActionSetName(resource, permission)
 	actionSet := &ActionSet{
@@ -850,10 +847,66 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 	s.log.Debug("stored action set", "action set name", actionSet.Action)
 }
 
+// DeclareActionSets allow the caller to declare, to the service, actionsets
+// currently we only support actionsets for folders and dashboards
+// we only update core actionsets for plugins
+// we do not create new actionsets for plugins
+func (s *InMemoryActionSets) DeclareActionSets(ctx context.Context, ID, name string, regs []plugins.ActionSetRegistration) error {
+	// if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) && !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+	// 	return errors.New("action sets are not enabled, please enable the feature flag")
+	// }
+
+	asRegs := ToActionSets(ID, name, regs)
+	for _, r := range asRegs {
+		if err := ValidateActionSet(ID, r); err != nil {
+			return err
+		}
+		// register actionWithoutPluginPrefix set
+		// remove prefix from actionWithoutPluginPrefix
+		actionWithoutPluginPrefix := ""
+		if strings.Contains(r.Action, ID+":") {
+			actionWithoutPluginPrefix = strings.TrimPrefix(r.Action, ID+":")
+		} else {
+			actionWithoutPluginPrefix = strings.TrimPrefix(r.Action, ID+".")
+		}
+
+		// actionset - folders:edit
+
+		// check if actionset exists
+		// if it does, we should not overwrite it
+		// we should append the actions to the existing actionset
+		if _, ok := s.actionSetToActions[actionWithoutPluginPrefix]; ok {
+			// append actions to existing actionset
+			actions := s.actionSetToActions[actionWithoutPluginPrefix]
+			// diff actions
+			actionsToBeAdded := []string{}
+			for _, action := range r.Actions {
+				// check if action is already in the actionset
+				if !slices.Contains(actions, action) {
+					actionsToBeAdded = append(actionsToBeAdded, action)
+				}
+			}
+			actions = append(actions, actionsToBeAdded...)
+
+			// NOTE: overrides the existing actionset
+			s.StoreActionSet(actionWithoutPluginPrefix, "", actions)
+		}
+		// if actionset does not exist, create a new one
+		s.log.Debug("Registering plugin actionset", "action", r.Action)
+	}
+
+	return nil
+}
+
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.
 func GetActionSetName(resource, permission string) string {
 	// lower cased
 	resource = strings.ToLower(resource)
+	// in the of having a resource which is already defined from the actionset name
+	// such as "k6testid:k6-app:edit" we should not add the resource to the actionset name
+	if permission == "" {
+		return resource
+	}
 	permission = strings.ToLower(permission)
 	return fmt.Sprintf("%s:%s", resource, permission)
 }

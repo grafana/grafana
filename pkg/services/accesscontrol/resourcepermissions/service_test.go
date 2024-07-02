@@ -336,8 +336,9 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	features := featuremgmt.WithFeatures()
 	service, err := New(
-		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
+		cfg, ops, features, routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
 	)
 	require.NoError(t, err)

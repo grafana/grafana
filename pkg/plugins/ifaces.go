@@ -134,6 +134,11 @@ type RoleRegistry interface {
 	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
 }
 
+// ActionSetRegistry handles the plugin RBAC actionsets
+type ActionSetRegistry interface {
+	DeclareActionSets(ctx context.Context, ID, name string, registrations []ActionSetRegistration) error
+}
+
 // ClientMiddleware is an interface representing the ability to create a middleware
 // that implements the Client interface.
 type ClientMiddleware interface {

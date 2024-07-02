@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -20,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var _ plugins.ActionSetRegistry = (*InMemoryActionSets)(nil)
 
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
@@ -90,6 +93,7 @@ func New(cfg *setting.Cfg,
 		store:        NewStore(cfg, sqlStore, features),
 		options:      options,
 		license:      license,
+		log:          log.New("resourcepermissions"),
 		permissions:  permissions,
 		actions:      actions,
 		sqlStore:     sqlStore,
@@ -119,6 +123,7 @@ type Service struct {
 	api      *api
 	license  licensing.Licensing
 
+	log          log.Logger
 	options      Options
 	permissions  []string
 	actions      []string
@@ -428,6 +433,8 @@ type ActionSetService interface {
 	ResolveActionSet(actionSet string) []string
 
 	StoreActionSet(resource, permission string, actions []string)
+
+	plugins.ActionSetRegistry
 }
 
 // ActionSet is a struct that represents a set of actions that can be performed on a resource.

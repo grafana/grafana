@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -18,7 +17,10 @@ var (
 const (
 	ServiceAccountPrefix = "sa-"
 	ExtSvcPrefix         = "extsvc-"
-	ExtSvcLoginPrefix    = ServiceAccountPrefix + extsvcauth.TmpOrgIDStr + "-" + ExtSvcPrefix
+
+	// TmpOrgID is the orgID we use while global service accounts are not supported.
+	TmpOrgIDStr       string = "1"
+	ExtSvcLoginPrefix        = ServiceAccountPrefix + TmpOrgIDStr + "-" + ExtSvcPrefix
 )
 
 const (

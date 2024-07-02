@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -25,13 +26,14 @@ import (
 )
 
 type ExtSvcAccountsService struct {
-	acSvc    ac.Service
-	features featuremgmt.FeatureToggles
-	logger   log.Logger
-	metrics  *metrics
-	saSvc    sa.Service
-	skvStore kvstore.SecretsKVStore
-	tracer   tracing.Tracer
+	acSvc         ac.Service
+	features      featuremgmt.FeatureToggles
+	logger        log.Logger
+	metrics       *metrics
+	saSvc         sa.Service
+	skvStore      kvstore.SecretsKVStore
+	tracer        tracing.Tracer
+	actionSetsSvc *resourcepermissions.ActionSetService
 }
 
 func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
@@ -51,6 +53,13 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, featu
 
 		// Register a listener to enable/disable service accounts
 		bus.AddEventListener(esa.handlePluginStateChanged)
+	}
+
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+		// need to create a new instance to allocate a pointer for the service
+		svc := resourcepermissions.NewActionSetService()
+		// Register actionset service for the external service accounts
+		esa.actionSetsSvc = &svc
 	}
 
 	return esa
@@ -152,6 +161,22 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 
 	slug := slugify.Slugify(cmd.Name)
 
+	// update the service account's action sets
+	if esa.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && esa.actionSetsSvc != nil {
+		svc := *esa.actionSetsSvc
+		// Add the new action sets
+		if cmd.ActionSets != nil {
+			for _, actionSet := range cmd.ActionSets {
+				// TODO: need to know which resource, permissions and actions are needed
+				svc.StoreActionSet(slug, actionSet.Action, actionSet.Actions)
+				cmd.Self.Permissions = append(cmd.Self.Permissions, ac.Permission{
+					// prefix action with the slug
+					Action: slug + ":" + actionSet.Action,
+					Scope:  "*",
+				})
+			}
+		}
+	}
 	saID, err := esa.ManageExtSvcAccount(ctx, &sa.ManageExtSvcAccountCmd{
 		ExtSvcSlug:  slug,
 		Enabled:     cmd.Self.Enabled,
