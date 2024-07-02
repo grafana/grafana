@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { FALLBACK_COLOR, GrafanaTheme2 } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';

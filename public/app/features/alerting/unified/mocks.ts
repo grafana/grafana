@@ -45,6 +45,7 @@ import {
   RecordingRule,
   RuleGroup,
   RuleNamespace,
+  RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
   AlertQuery,
@@ -56,6 +57,7 @@ import {
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
+  RulerRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -213,7 +215,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
     annotations: {},
     labels: {},
     grafana_alert: {
-      uid: '',
+      uid: 'mock-rule-uid-123',
       title: 'my rule',
       namespace_uid: 'NAMESPACE_UID',
       rule_group: 'my-group',
@@ -637,6 +639,23 @@ export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule 
   filteredInstanceTotals: {},
   ...partial,
 });
+
+export const mockRuleWithLocation = (rule: RulerRuleDTO, partial?: Partial<RuleWithLocation>): RuleWithLocation => {
+  const ruleWithLocation: RuleWithLocation = {
+    rule,
+    ...{
+      ruleSourceName: 'grafana',
+      namespace: 'namespace-1',
+      group: mockRulerRuleGroup({
+        name: 'group-1',
+        rules: [rule],
+      }),
+    },
+    ...partial,
+  };
+
+  return ruleWithLocation;
+};
 
 export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
   return {

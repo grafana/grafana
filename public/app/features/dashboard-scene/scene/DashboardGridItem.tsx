@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';

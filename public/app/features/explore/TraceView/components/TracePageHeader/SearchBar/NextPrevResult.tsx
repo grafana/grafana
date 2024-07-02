@@ -14,7 +14,8 @@
 
 import { css, cx } from '@emotion/css';
 import { get, maxBy, values } from 'lodash';
-import React, { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
+import { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';

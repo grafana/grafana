@@ -1,5 +1,4 @@
 import { Global } from '@emotion/react';
-import React from 'react';
 
 import { useTheme2 } from '../ThemeContext';
 

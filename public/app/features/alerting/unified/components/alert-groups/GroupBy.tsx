@@ -1,5 +1,4 @@
 import { uniq } from 'lodash';
-import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Icon, Label, MultiSelect } from '@grafana/ui';

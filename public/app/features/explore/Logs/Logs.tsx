@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import * as React from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
 import {

@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationParamEditor.tsx
 import { css } from '@emotion/css';
-import React, { ComponentType } from 'react';
+import { ComponentType } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';

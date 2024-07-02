@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -44,7 +44,9 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   const dispatch = useDispatch();
   const location = useLocation();
   const style = useStyles2(getStyles);
-  const [deleteModal, showDeleteModal] = useDeleteModal();
+
+  const redirectToListView = compact ? false : true;
+  const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState<boolean>(false);
 

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -426,6 +424,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
+      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None,
     });
 
     builder.addNumberInput({

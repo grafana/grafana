@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -117,6 +117,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: theme.spacing(1),
-    marginBottom: theme.spacing(2),
+    margin: theme.spacing(2, 0),
+
+    [theme.breakpoints.up('md')]: {
+      marginTop: 0,
+    },
   }),
 });

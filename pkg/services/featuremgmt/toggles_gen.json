@@ -475,6 +475,21 @@
     },
     {
       "metadata": {
+        "name": "bodyScrolling",
+        "resourceVersion": "1719825052257",
+        "creationTimestamp": "2024-07-01T09:10:52Z"
+      },
+      "spec": {
+        "description": "Adjusts Page to make body the scrollable element",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-10-12T16:56:49Z"
@@ -565,6 +580,18 @@
     },
     {
       "metadata": {
+        "name": "cloudWatchRoundUpEndTime",
+        "resourceVersion": "1719324143210",
+        "creationTimestamp": "2024-06-25T14:02:23Z"
+      },
+      "spec": {
+        "description": "Round up end time for metric queries to the next minute to avoid missing data",
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-07-26T16:44:12Z"
@@ -593,14 +620,29 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-16T17:36:26Z"
+        "resourceVersion": "1719321877748",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-25 13:24:37.748284 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables deleted dashboard restore feature",
+        "description": "Enables deleted dashboard restore feature (backend only)",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardRestoreUI",
+        "resourceVersion": "1719321338253",
+        "creationTimestamp": "2024-06-25T13:15:38Z"
+      },
+      "spec": {
+        "description": "Enables the frontend to be able to restore a recently deleted dashboard",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
@@ -841,8 +883,9 @@
     {
       "metadata": {
         "name": "exploreContentOutline",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-13T16:57:13Z"
+        "resourceVersion": "1717578796182",
+        "creationTimestamp": "2023-10-13T16:57:13Z",
+        "deletionTimestamp": "2024-06-17T09:45:00Z"
       },
       "spec": {
         "description": "Content outline sidebar",
@@ -2082,7 +2125,8 @@
       "metadata": {
         "name": "scenes",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-07-07T06:53:02Z"
+        "creationTimestamp": "2022-07-07T06:53:02Z",
+        "deletionTimestamp": "2024-06-26T11:58:18Z"
       },
       "spec": {
         "description": "Experimental framework to build interactive dashboards",
