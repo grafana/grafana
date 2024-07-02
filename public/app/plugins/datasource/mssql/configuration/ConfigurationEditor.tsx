@@ -11,7 +11,9 @@ import {
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';
+import { NumberInput } from '@grafana/sql/src/components/configuration/NumberInput';
 import {
   Alert,
   FieldSet,
@@ -25,8 +27,6 @@ import {
   Field,
   Switch,
 } from '@grafana/ui';
-import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { config } from 'app/core/config';
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {
@@ -92,7 +92,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   };
 
   const onConnectionTimeoutChanged = (connectionTimeout?: number) => {
-    updateDatasourcePluginJsonDataOption(props, 'connectionTimeout', connectionTimeout ?? 0);
+    if (connectionTimeout && connectionTimeout < 0) {
+      connectionTimeout = 0;
+    }
+    updateDatasourcePluginJsonDataOption(props, 'connectionTimeout', connectionTimeout);
   };
 
   const buildAuthenticationOptions = (): Array<SelectableValue<MSSQLAuthenticationType>> => {
@@ -366,9 +369,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           >
             <NumberInput
               width={LONG_WIDTH}
-              placeholder="60"
-              min={0}
-              value={jsonData.connectionTimeout}
+              defaultValue={60}
+              value={jsonData.connectionTimeout || 0}
               onChange={onConnectionTimeoutChanged}
             />
           </Field>
