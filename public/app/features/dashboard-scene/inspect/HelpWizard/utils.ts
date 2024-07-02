@@ -81,7 +81,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
     for (const item of gridItems) {
       const vizPanel = item.state.body instanceof LibraryVizPanel ? item.state.body.state.panel! : item.state.body;
-      if (vizPanel === sourcePanel) {
+      if (vizPanel.state.key === sourcePanel.state.key && vizPanel instanceof VizPanel) {
         const gridItemClone = item.clone();
         scene.state.editPanel!.state.vizManager.commitChangesTo(vizPanel);
         saveModel = gridItemToPanel(gridItemClone);
