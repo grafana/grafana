@@ -269,28 +269,19 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			},
 		},
 		{
-			name:       "should return empty mapping when org mapping is nil",
-			rawMapping: nil,
+			name:       "should return correct mapping when the first part contains multiple colons",
+			rawMapping: []string{"Groups:IT:First:1:Viewer"},
+			roleStrict: false,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
+				orgMapping:        map[string]map[int64]org.RoleType{"Groups:IT:First": {1: org.RoleViewer}},
 				strictRoleMapping: false,
 			},
 		},
 		{
-			name:       "should return empty mapping when the org mapping format is invalid and strict role mapping is enabled",
-			rawMapping: []string{"External:Org1:First:Organization:Editor"},
-			roleStrict: true,
+			name:       "should return empty mapping when org mapping is nil",
+			rawMapping: nil,
 			expected: &MappingConfiguration{
 				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: true,
-			},
-		},
-		{
-			name:       "should return only the valid mappings from the raw mappings when strict role mapping is disabled",
-			rawMapping: []string{"External:Org1:First:Organization:Editor", "Second:1:Editor"},
-			roleStrict: false,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleEditor}},
 				strictRoleMapping: false,
 			},
 		},
