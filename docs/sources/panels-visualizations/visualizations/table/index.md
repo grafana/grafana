@@ -157,6 +157,12 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 
 Cells can be displayed as a graphical gauge, with several different presentation types.
 
+#### Image
+
+If you want to set the alternative text of an image, use the **Alt text** option to do so which will make alternative text avaiable for screen readers and cases when images can't be loaded.
+
+Additionally, if you'd like to set the title text, use the **Title text** option to do so which will make the title text display when the image is hovered with a cursor.
+
 ##### Basic
 
 The basic mode will show a simple gauge with the threshold levels defining the color of gauge.
