@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { chain } from 'lodash';
 import pluralize from 'pluralize';
 import { useState } from 'react';
-import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, IconButton, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { isPrivateLabel } from '../utils/labels';
@@ -36,7 +35,6 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onLabelClick }: P
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
       {labelsToShow.map(([label, value]) => {
-        const ariaLabel = t('central-alert-history.details.add-label-to-filter', 'Add label to the filter');
         const color = getLabelColor(label);
         return onLabelClick ? (
           <div
@@ -52,17 +50,9 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onLabelClick }: P
             }}
           >
             <Label size={size} label={label} value={value} color={color} />
-            <IconButton
-              name="plus-circle"
-              size="sm"
-              onClick={() => onLabelClick(label, value)}
-              aria-label={ariaLabel}
-              tooltip={ariaLabel}
-              className={styles.iconColor(color)}
-            />
           </div>
         ) : (
-          <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
+          <Label key={label + value} size={size} label={label} value={value} color={color} />
         );
       })}
       {!showCommonLabels && hasCommonLabels && (
@@ -111,25 +101,5 @@ const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => {
       gap: theme.spacing(0.5),
       cursor: 'pointer',
     }),
-    clickableLabel: css({
-      cursor: 'pointer',
-    }),
-    iconColor: (color: string) => {
-      const borderColor = theme.isDark
-        ? tinycolor2(color).lighten(5).toString()
-        : tinycolor2(color).darken(5).toString();
-
-      const valueBackgroundColor = theme.isDark
-        ? tinycolor2(color).darken(5).toString()
-        : tinycolor2(color).lighten(5).toString();
-
-      const fontColor = color ? tinycolor2.mostReadable(color, ['#000', '#fff']).toString() : theme.colors.text.primary;
-      return css({
-        backgroundColor: valueBackgroundColor,
-        color: fontColor,
-        borderColor,
-        borderRadius: theme.shape.radius.circle,
-      });
-    },
   };
 };
