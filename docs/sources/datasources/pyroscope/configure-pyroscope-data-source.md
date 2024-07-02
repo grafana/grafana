@@ -87,7 +87,7 @@ The Auth section is shown in number 2 in the screenshot.
 : Whether credentials, such as cookies or auth headers, should be sent with cross-site requests.
 
 **TLS Client Auth**
-: Toggle on to use client authentication. When enabled, it adds the `Server name`, `Client cert` and `Client key`. The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server. These details are encrypted and stored in the Grafana database.
+: Toggle on to use client authentication. When enabled, it adds the **Server name**, **Client cert**, and **Client key** fields. The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server. These details are encrypted and stored in the Grafana database.
 
 **With CA Cert**
 : Activate this option to verify self-signed TLS certificates.
@@ -119,8 +119,12 @@ The Pyroscope backend, similar to Prometheus, scrapes profiles at certain interv
 
 The **Private data source connect** section is shown in number 4 in the screenshot.
 
+This feature is only available in Grafana Cloud.
+
 This option lets you query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud.
 
 Use the drop-down box to select a configured private data sources.
 
 Select **Manage private data source connect** to configure and manage any private data sources you have configured.
+
+For more information, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
