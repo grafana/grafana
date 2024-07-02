@@ -413,6 +413,7 @@ var wireCLISet = wire.NewSet(
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
