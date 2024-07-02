@@ -14,6 +14,7 @@ import {
   sceneGraph,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  CancelActivationHandler,
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
@@ -73,6 +74,20 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
       ...state,
+    });
+
+    this.addActivationHandler(() => {
+      let refreshPickerUnsub: CancelActivationHandler | undefined;
+
+      if (this.state.hideTimeControls && this.state.refreshPicker.state.refresh) {
+        this.state.refreshPicker.activate();
+      }
+
+      return () => {
+        if (refreshPickerUnsub) {
+          refreshPickerUnsub();
+        }
+      };
     });
   }
 
