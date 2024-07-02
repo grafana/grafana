@@ -156,6 +156,27 @@
     }
   },
   "central-alert-history": {
+    "details": {
+      "annotations": "Annotations",
+      "error": "Error loading rule for this event.",
+      "loading": "Loading...",
+      "no-annotations": "No annotations",
+      "no-values": "No values",
+      "not-found": "Rule not found for this event.",
+      "not-grafana-rule": "Rule is not a Grafana rule",
+      "number-transitions": "State transitions for selected period",
+      "state": {
+        "alerting": "Alerting",
+        "error": "Error",
+        "no-data": "No data",
+        "normal": "Normal",
+        "pending": "Pending"
+      },
+      "state-transitions": "State transition",
+      "unknown-event-state": "Unknown",
+      "unknown-rule": "Unknown",
+      "value-in-transition": "Value in transition"
+    },
     "error": "Something went wrong loading the alert state history",
     "filter": {
       "info": {
