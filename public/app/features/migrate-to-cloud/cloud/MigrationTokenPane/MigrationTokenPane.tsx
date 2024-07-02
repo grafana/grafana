@@ -27,7 +27,7 @@ export const MigrationTokenPane = () => {
 
   return (
     <>
-      <Box display="flex" alignItems="flex-start" padding={2} gap={2} direction="column" backgroundColor="secondary">
+      <Box display="flex" alignItems="flex-start" paddingY={2} gap={2} direction="column" backgroundColor="secondary">
         <Button disabled={isLoading || hasToken} onClick={handleGenerateToken}>
           {createTokenResponse.isLoading
             ? t('migrate-to-cloud.migration-token.generate-button-loading', 'Generating a migration token...')
