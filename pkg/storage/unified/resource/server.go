@@ -37,6 +37,7 @@ var (
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
+	BlobStoreServer
 	DiagnosticsServer
 	LifecycleHooks
 }
