@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -39,6 +40,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
+  const location = useLocation();
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -51,6 +53,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       })
     );
   }, [dispatch, folderUID, stateManager]);
+
+  // Trigger search when "starred" query param changes
+  useEffect(() => {
+    stateManager.onSetStarred(location.search.includes('starred'));
+  }, [location.search, stateManager]);
 
   useEffect(() => {
     // Clear the search results when we leave SearchView to prevent old results flashing
