@@ -134,13 +134,16 @@ func StreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grp
 var _ grpc.StreamClientInterceptor = StreamClientInterceptor
 
 func wrapContext(ctx context.Context) (context.Context, error) {
+	// TODO (gamab) requester is not in the context when the request is service to service.
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return ctx, err
 	}
 
 	// set grpc metadata into the context to pass to the grpc server
-	return metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user)), nil
+	newCtx := metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user))
+
+	return wrapContextV2(newCtx)
 }
 
 func encodeIdentityInMetadata(user identity.Requester) metadata.MD {

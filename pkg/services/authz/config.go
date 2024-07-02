@@ -22,9 +22,14 @@ const (
 )
 
 type Cfg struct {
-	remoteAddress string
-	listen        bool
-	mode          Mode
+	env              string
+	listen           bool
+	mode             Mode
+	remoteAddress    string
+	token            string
+	tokenExchangeUrl string
+	tokenAudience    []string
+	tokenNamespace   string
 }
 
 func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
@@ -36,8 +41,13 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 	}
 
 	return &Cfg{
-		remoteAddress: section.Key("remote_address").MustString(""),
-		listen:        section.Key("listen").MustBool(false),
-		mode:          mode,
+		env:              cfg.Env,
+		listen:           section.Key("listen").MustBool(false),
+		mode:             mode,
+		remoteAddress:    section.Key("remote_address").MustString(""),
+		token:            section.Key("token").MustString(""),
+		tokenExchangeUrl: section.Key("token_exchange_url").MustString(""),
+		tokenAudience:    []string{"authZService"},
+		tokenNamespace:   "stack-" + cfg.StackID,
 	}, nil
 }

@@ -138,7 +138,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery,
 
 	rows, err := a.doQuery(ctx, sqlcmd, args...)
 	if err != nil {
-		if rows != nil {
+		if rows != nil && rows.rows != nil {
 			_ = rows.Close()
 		}
 		rows = nil

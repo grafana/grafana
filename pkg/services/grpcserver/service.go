@@ -73,15 +73,15 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
 	opts = append(opts, []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
-			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
+			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 			interceptors.TracingUnaryInterceptor(tracer),
 			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
-			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
+			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
 		),
 		grpc.ChainStreamInterceptor(
+			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 			interceptors.TracingStreamInterceptor(tracer),
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
-			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
 	}...)
 

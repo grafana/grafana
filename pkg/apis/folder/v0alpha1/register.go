@@ -8,10 +8,11 @@ import (
 )
 
 const (
-	GROUP      = "folder.grafana.app"
-	VERSION    = "v0alpha1"
-	RESOURCE   = "folders"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP         = "folder.grafana.app"
+	VERSION       = "v0alpha1"
+	RESOURCE      = "folders"
+	APIVERSION    = GROUP + "/" + VERSION
+	GROUPRESOURCE = GROUP + "/" + RESOURCE
 )
 
 var FolderResourceInfo = common.NewResourceInfo(GROUP, VERSION,

@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"strings"
@@ -41,9 +42,18 @@ var (
 )
 
 func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
+	client := http.DefaultClient
+	if cfg.Env == setting.Dev {
+		client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
+	}
+	// TODO (should we go through to the keyService instead on premise?)
 	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
-	})
+	}, authlib.WithHTTPClientKeyRetrieverOpt(client))
 
 	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
 		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},

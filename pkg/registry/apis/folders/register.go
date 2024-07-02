@@ -70,8 +70,12 @@ func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *FolderAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
+	m, ok := modeMap[v0alpha1.GROUPRESOURCE]
+	if !dualWrite || !ok {
+		return grafanarest.Mode0
+	}
+
+	return m
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -148,7 +152,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(desiredMode, legacyStore, store, reg)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
