@@ -80,6 +80,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   );
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
+  const showSmallRefreshPicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
   const showSmallDataSourcePicker = useSelector(
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
@@ -295,14 +296,14 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             onIntervalChanged={onChangeRefreshInterval}
             value={refreshInterval}
             isLoading={loading}
-            text={showSmallTimePicker ? undefined : refreshPickerLabel}
-            tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
+            text={showSmallRefreshPicker ? undefined : refreshPickerLabel}
+            tooltip={showSmallRefreshPicker ? refreshPickerLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}
             primary={true}
-            width={(showSmallTimePicker ? 35 : 108) + 'px'}
+            width={(showSmallRefreshPicker ? 35 : 108) + 'px'}
           />,
           datasourceInstance?.meta.streaming && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>
