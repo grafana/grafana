@@ -219,7 +219,6 @@ var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructured
 func Compare(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
-		return false
 	}
 	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
 }

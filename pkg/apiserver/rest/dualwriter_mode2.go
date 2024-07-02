@@ -87,6 +87,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 			return objStorage, err
 		}
 		log.Info("object not found in storage, fetching from legacy")
+		d.recordReadLegacyCount(options.Kind, method)
 	}
 
 	startLegacy := time.Now()
@@ -184,6 +185,7 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return sl, nil
 	}
 	log.Info("lists from legacy and storage are not the same size")
+	d.recordReadLegacyCount(options.Kind, method)
 	return ll, nil
 }
 
@@ -397,7 +399,6 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {
 	}
 	accessorReturned.SetAnnotations(ac)
 
-	// otherwise, we propagate the original RV and UID
 	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	accessorReturned.SetUID(accessorOriginal.GetUID())
 	return nil
