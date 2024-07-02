@@ -125,8 +125,11 @@ export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
 }
 
 export function parseMatchers(matcherQueryString: string): Matcher[] {
-  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=)(?:"([^"\n}]*)"|([^\s,]+))/g;
+  const matcherRegExpWhenNoSlashes = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,}]*)"?/g;
+  const matcherRegExpWhenSlashes = /\b([\w.-]+)(=~|!=|!~|=)(?:"([^"\n}]*)"|([^\s,]+))/g;
   const matchers: Matcher[] = [];
+
+  const matcherRegExp = matcherQueryString.includes('/') ? matcherRegExpWhenSlashes : matcherRegExpWhenNoSlashes;
 
   matcherQueryString.replace(matcherRegExp, (_, key, operator, quotedValue, unquotedValue) => {
     const value = quotedValue || unquotedValue; // Use quotedValue if available, otherwise use unquotedValue
