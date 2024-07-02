@@ -39,7 +39,7 @@ If you are using Grafana OSS, [install and enable the Grafana OnCall plugin](htt
 
 To set up the Grafana OnCall integration using the Grafana Alerting application, complete the following steps.
 
-1. Navigate to **Alerts & IRM -> Alerting -> Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
 1. From the **Integration** list, select **Grafana OnCall**.
@@ -57,7 +57,7 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
    If the integration is not being used anywhere in the notification policies tree, it has **Unused** as its status in the **Health** column. It won’t receive any notifications, because there are no notifications using that integration.
 
 1. To see the integration details and test the integration, click the link to Grafana OnCall on the contact points list view page.
-1. Click **Send demo alert > Send alert**.
+1. Click **Send demo alert** > **Send alert**.
 1. Go to Grafana OnCall **Alert Groups**. You should see the demo alert.
 
 ## Next steps
@@ -66,7 +66,7 @@ The OnCall contact point is ready to receive alert notifications.
 
 To add the contact point to your alert rule, complete the following next steps:
 
-1. In Grafana, navigate to **Alerting > Alert rules**.
+1. In Grafana, navigate to **Alerting** > **Alert rules**.
 1. Edit or create a new alert rule.
 1. Scroll down to the **Configure labels and notifications** section.
 1. Under **Notifications**, click **Select contact point**.
