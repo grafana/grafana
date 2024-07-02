@@ -158,11 +158,12 @@
   "central-alert-history": {
     "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
     "filter": {
-      "button": {
-        "clear": "Cľęäř"
-      },
-      "label": "Fįľŧęř ęvęŉŧş",
-      "placeholder": "Fįľŧęř ęvęŉŧş įŉ ŧĥę ľįşŧ ŵįŧĥ ľäþęľş"
+      "info": {
+        "label1": "Fįľŧęř ęvęŉŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ şpäčęş, ęχ:",
+        "label2": "Ĩŉväľįđ ūşę őƒ şpäčęş:",
+        "label3": "Väľįđ ūşę őƒ şpäčęş:",
+        "label4": "Fįľŧęř äľęřŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ þřäčęş, ęχ:"
+      }
     }
   },
   "clipboard-button": {
@@ -683,6 +684,20 @@
       "split-title": "Ŝpľįŧ",
       "split-tooltip": "Ŝpľįŧ ŧĥę päŉę",
       "split-widen": "Ŵįđęŉ päŉę"
+    }
+  },
+  "export": {
+    "json": {
+      "cancel-button": "Cäŉčęľ",
+      "copy-button": "Cőpy ŧő čľįpþőäřđ",
+      "download-button": "Đőŵŉľőäđ ƒįľę",
+      "export-externally-label": "Ēχpőřŧ ŧĥę đäşĥþőäřđ ŧő ūşę įŉ äŉőŧĥęř įŉşŧäŉčę",
+      "info-text": "Cőpy őř đőŵŉľőäđ ä ĴŜØŃ ƒįľę čőŉŧäįŉįŉģ ŧĥę ĴŜØŃ őƒ yőūř đäşĥþőäřđ",
+      "title": "Ŝävę đäşĥþőäřđ ĴŜØŃ"
+    },
+    "menu": {
+      "export-as-json-label": "Ēχpőřŧ",
+      "export-as-json-tooltip": "Ēχpőřŧ"
     }
   },
   "folder-picker": {
@@ -1625,6 +1640,11 @@
       "title": "Ŗęşŧőřę Đäşĥþőäřđş"
     }
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
@@ -1678,7 +1698,11 @@
     "tree": {
       "collapse": "Cőľľäpşę",
       "expand": "Ēχpäŉđ",
-      "headline": "Ŗęčőmmęŉđęđ",
+      "headline": {
+        "noResults": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy",
+        "recommended": "Ŗęčőmmęŉđęđ",
+        "results": "Ŗęşūľŧş"
+      },
       "search": "Ŝęäřčĥ"
     }
   },
@@ -1723,6 +1747,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-json-title": "Ēχpőřŧ äş ĴŜØŃ",
       "share-externally-title": "Ŝĥäřę ęχŧęřŉäľľy",
       "share-internally-description": "Åđväŉčęđ şęŧŧįŉģş",
       "share-internally-title": "Ŝĥäřę įŉŧęřŉäľľy",

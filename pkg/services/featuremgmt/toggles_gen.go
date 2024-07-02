@@ -726,4 +726,12 @@ const (
 	// FlagDashboardRestoreUI
 	// Enables the frontend to be able to restore a recently deleted dashboard
 	FlagDashboardRestoreUI = "dashboardRestoreUI"
+
+	// FlagCloudWatchRoundUpEndTime
+	// Round up end time for metric queries to the next minute to avoid missing data
+	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
+
+	// FlagBodyScrolling
+	// Adjusts Page to make body the scrollable element
+	FlagBodyScrolling = "bodyScrolling"
 )
