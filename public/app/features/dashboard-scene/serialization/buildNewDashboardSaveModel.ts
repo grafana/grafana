@@ -46,6 +46,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
       uid: '',
       title: 'New dashboard',
       panels: [],
+      timezone: config.bootData.user?.timezone || defaultDashboard.timezone,
     },
   };
 
