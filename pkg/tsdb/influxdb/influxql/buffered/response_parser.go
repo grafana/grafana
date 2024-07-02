@@ -24,7 +24,11 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	response, jsonErr := parseJSON(buf)
 
 	if statusCode/100 != 2 {
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
+		errorStr := response.Error
+		if errorStr == "" {
+			errorStr = response.Message
+		}
+		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", errorStr)}
 	}
 
 	if jsonErr != nil {
