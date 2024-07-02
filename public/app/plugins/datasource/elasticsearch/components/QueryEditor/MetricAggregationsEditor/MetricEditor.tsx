@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { satisfies, SemVer } from 'semver';
 
 import { SelectableValue } from '@grafana/data';

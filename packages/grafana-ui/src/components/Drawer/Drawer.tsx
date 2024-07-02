@@ -3,7 +3,8 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -53,6 +54,12 @@ export interface Props {
   onClose: () => void;
 }
 
+const drawerSizes = {
+  sm: { width: '25vw', minWidth: 384 },
+  md: { width: '50vw', minWidth: 568 },
+  lg: { width: '75vw', minWidth: 744 },
+};
+
 export function Drawer({
   children,
   onClose,
@@ -67,7 +74,7 @@ export function Drawer({
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
   const styles = useStyles2(getStyles);
-  const sizeStyles = useStyles2(getSizeStyles, size, drawerWidth ?? width);
+  const wrapperStyles = useStyles2(getWrapperStyles, size);
   const dragStyles = useStyles2(getDragStyles);
 
   const overlayRef = React.useRef(null);
@@ -84,8 +91,9 @@ export function Drawer({
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
 
-  const rootClass = cx(styles.drawer, sizeStyles);
   const content = <div className={styles.content}>{children}</div>;
+  const overrideWidth = drawerWidth ?? width ?? drawerSizes[size].width;
+  const minWidth = drawerSizes[size].minWidth;
 
   return (
     <RcDrawer
@@ -94,7 +102,16 @@ export function Drawer({
       placement="right"
       getContainer={'.main-view'}
       className={styles.drawerContent}
-      rootClassName={rootClass}
+      rootClassName={styles.drawer}
+      classNames={{
+        wrapper: wrapperStyles,
+      }}
+      styles={{
+        wrapper: {
+          width: overrideWidth,
+          minWidth,
+        },
+      }}
       width={''}
       motion={{
         motionAppear: true,
@@ -355,27 +372,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const drawerSizes = {
-  sm: { width: '25vw', minWidth: 384 },
-  md: { width: '50vw', minWidth: 568 },
-  lg: { width: '75vw', minWidth: 744 },
-};
-
-function getSizeStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg', overrideWidth: number | string | undefined) {
-  let width = overrideWidth ?? drawerSizes[size].width;
-  let minWidth = drawerSizes[size].minWidth;
-
+function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
   return css({
-    '.rc-drawer-content-wrapper': {
-      label: `drawer-content-wrapper-${size}`,
-      width: width,
-      minWidth: minWidth,
-      overflow: 'unset',
+    label: `drawer-content-wrapper-${size}`,
+    overflow: 'unset !important',
 
-      [theme.breakpoints.down('md')]: {
-        width: `calc(100% - ${theme.spacing(2)}) !important`,
-        minWidth: 0,
-      },
+    [theme.breakpoints.down('md')]: {
+      width: `calc(100% - ${theme.spacing(2)}) !important`,
+      minWidth: 0,
     },
   });
 }

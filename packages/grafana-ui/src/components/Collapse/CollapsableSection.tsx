@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

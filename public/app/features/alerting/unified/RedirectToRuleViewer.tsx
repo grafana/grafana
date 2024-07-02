@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Redirect } from 'react-router-dom';
 import { useLocation } from 'react-use';
 

@@ -1,5 +1,5 @@
 import { Decorator } from '@storybook/react';
-import React from 'react';
+import * as React from 'react';
 import { useDarkMode } from 'storybook-dark-mode';
 
 import { createTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';

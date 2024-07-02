@@ -43,7 +43,8 @@ func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstan
 		instance.LogsTimeout = Duration{30 * time.Minute}
 	}
 
-	instance.GrafanaSettings = *awsds.ReadAuthSettings(ctx)
+	authSettings, _ := awsds.ReadAuthSettingsFromContext(ctx)
+	instance.GrafanaSettings = *authSettings
 
 	return instance, nil
 }

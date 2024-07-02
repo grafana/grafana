@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';

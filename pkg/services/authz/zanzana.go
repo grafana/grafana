@@ -12,34 +12,56 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type ZanzanaClient interface{}
+// ProvideZanzana used to register ZanzanaClient.
+// It will also start an embedded ZanzanaSever if mode is set to "embedded".
+func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return client.NewNoop(), nil
+	}
 
-func ProvideZanzana(cfg *setting.Cfg) (ZanzanaClient, error) {
-	var client *zanzana.Client
+	logger := log.New("zanzana")
 
+	var client zanzana.Client
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
 		conn, err := grpc.NewClient(cfg.Zanzana.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
-		client = zanzana.NewClient(openfgav1.NewOpenFGAServiceClient(conn))
+
+		client, err = zanzana.NewClient(context.Background(), conn, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
+		}
 	case setting.ZanzanaModeEmbedded:
-		srv, err := zanzana.NewServer(zanzana.NewStore())
+		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
+
+		srv, err := zanzana.NewServer(store, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to start zanzana: %w", err)
+		}
+
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
-		client = zanzana.NewClient(openfgav1.NewOpenFGAServiceClient(channel))
+
+		client, err = zanzana.NewClient(context.Background(), channel, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
+		}
+
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.Zanzana.Mode)
 	}
@@ -77,7 +99,12 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	srv, err := zanzana.NewServer(zanzana.NewStore())
+	store, err := zanzana.NewStore(z.cfg, z.logger)
+	if err != nil {
+		return fmt.Errorf("failed to initilize zanana store: %w", err)
+	}
+
+	srv, err := zanzana.NewServer(store, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -109,6 +136,16 @@ func (z *Zanzana) start(ctx context.Context) error {
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
+	if z.cfg.Env == setting.Dev && z.cfg.Zanzana.ListenHTTP {
+		go func() {
+			z.logger.Info("Starting OpenFGA HTTP server")
+			err := zanzana.StartOpenFGAHttpSever(z.cfg, z.handle, z.logger)
+			if err != nil {
+				z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
+			}
+		}()
+	}
+
 	// Run is blocking so we can just run it here
 	return z.handle.Run(ctx)
 }
