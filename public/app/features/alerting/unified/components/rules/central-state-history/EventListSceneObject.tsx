@@ -118,13 +118,7 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
   const title = t('central-alert-history.error', 'Something went wrong loading the alert state history');
   const errorStr = stringifyErrorLike(error);
 
-  return (
-    <Alert title={title}>
-      <Trans i18nKey="central-alert-history.error-message" errorStr={errorStr}>
-        {errorStr}
-      </Trans>
-    </Alert>
-  );
+  return <Alert title={title}>{errorStr}</Alert>;
 }
 
 interface EventRowProps {
@@ -178,9 +172,7 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
     return (
       <Text>
         <Trans i18nKey="central-alert-history.details.unknown-rule">Unknown</Trans>
-        <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
-          {alertRuleName}
-        </Trans>
+        {alertRuleName}
       </Text>
     );
   }
@@ -190,9 +182,7 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
         href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
         className={styles.alertName}
       >
-        <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
-          {alertRuleName}
-        </Trans>
+        {alertRuleName}
       </a>
     </Tooltip>
   );
@@ -316,9 +306,7 @@ const Timestamp = ({ time }: TimestampProps) => {
 
   return (
     <Text variant="body" weight="light">
-      <Trans i18nKey="central-alert-history.details.timestamp" formattedDate={formattedDate}>
-        {formattedDate}
-      </Trans>
+      {formattedDate}
     </Text>
   );
 };
