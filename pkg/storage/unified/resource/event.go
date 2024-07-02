@@ -10,7 +10,6 @@ import (
 )
 
 type WriteEvent struct {
-	EventID    int64
 	Type       WatchEvent_Type // ADDED, MODIFIED, DELETED
 	Key        *ResourceKey    // the request key
 	PreviousRV int64           // only for Update+Delete
@@ -84,7 +83,6 @@ func newEventFromBytes(value, oldValue []byte) (*writeEventBuilder, error) {
 }
 
 func (b *writeEventBuilder) toEvent() (event WriteEvent, err error) {
-	event.EventID = b.EventID
 	event.Key = b.Key
 	event.Type = b.Type
 	event.ObjectOld = b.OldMeta

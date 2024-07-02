@@ -54,7 +54,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	case resource.WatchEvent_DELETED:
 		{
 			_, _, err = a.DeleteDashboard(ctx, info.OrgID, event.Key.Name)
-			rv = event.EventID
+			//rv = ???
 		}
 	// The difference depends on embedded internal ID
 	case resource.WatchEvent_ADDED, resource.WatchEvent_MODIFIED:

@@ -6,11 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand"
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -82,13 +80,6 @@ type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
 
-	// When running in a cluster, each node should have a different ID
-	// This is used for snowflake generation and log identification
-	NodeID int64
-
-	// Get the next EventID.  When not set, this will default to snowflake IDs
-	NextEventID func() int64
-
 	// Real storage backend
 	Store AppendingStore
 
@@ -115,20 +106,6 @@ type ResourceServerOptions struct {
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
-	}
-
-	if opts.NextEventID == nil {
-		if opts.NodeID == 0 {
-			opts.NodeID = rand.Int63n(1024)
-		}
-		eventNode, err := snowflake.NewNode(opts.NodeID)
-		if err != nil {
-			return nil, apierrors.NewInternalError(
-				fmt.Errorf("error initializing snowflake id generator :: %w", err))
-		}
-		opts.NextEventID = func() int64 {
-			return eventNode.Generate().Int64()
-		}
 	}
 
 	if opts.Store == nil {
@@ -160,7 +137,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	return &server{
 		tracer:      opts.Tracer,
 		log:         slog.Default().With("logger", "resource-server"),
-		nextEventID: opts.NextEventID,
 		store:       opts.Store,
 		search:      opts.Search,
 		diagnostics: opts.Diagnostics,
@@ -177,7 +153,6 @@ var _ ResourceServer = &server{}
 type server struct {
 	tracer      trace.Tracer
 	log         *slog.Logger
-	nextEventID func() int64
 	store       AppendingStore
 	search      ResourceIndexServer
 	blob        BlobStore
@@ -239,7 +214,6 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 	if err != nil {
 		return nil, err
 	}
-	event.EventID = s.nextEventID()
 	event.Key = key
 	event.Requester, err = identity.GetRequester(ctx)
 	if err != nil {
@@ -460,7 +434,6 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 
 	now := metav1.NewTime(time.UnixMilli(s.now()))
 	event := WriteEvent{
-		EventID:    s.nextEventID(),
 		Key:        req.Key,
 		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,

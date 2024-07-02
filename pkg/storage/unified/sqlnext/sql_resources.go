@@ -44,7 +44,6 @@ func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (r
 	return resource.NewResourceServer(resource.ResourceServerOptions{
 		Tracer:      tracer,
 		Store:       store,
-		NodeID:      234, // from config?  used for snowflake ID
 		Diagnostics: store,
 		Lifecycle:   store,
 	})

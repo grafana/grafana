@@ -5,14 +5,12 @@ import (
 	context "context"
 	"fmt"
 	"io"
-	"math/rand"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"gocloud.dev/blob"
@@ -28,12 +26,7 @@ type CDKAppenderOptions struct {
 	Bucket     *blob.Bucket
 	RootFolder string
 
-	// When running in a cluster, each node should have a different ID
-	// This is used for snowflake generation and log identification
-	NodeID int64
-
-	// Get the next ResourceVersion.  When not set, this will default to snowflake IDs
-	NextResourceVersion func() int64
+	NextResourceVersion NextResourceVersion
 }
 
 func NewCDKAppendingStore(ctx context.Context, opts CDKAppenderOptions) (AppendingStore, error) {
@@ -56,19 +49,9 @@ func NewCDKAppendingStore(ctx context.Context, opts CDKAppenderOptions) (Appendi
 		return nil, fmt.Errorf("the root folder does not exist")
 	}
 
-	// This is not totally safe when running in HA
+	// This is not safe when running in HA!
 	if opts.NextResourceVersion == nil {
-		if opts.NodeID == 0 {
-			opts.NodeID = rand.Int63n(1024)
-		}
-		eventNode, err := snowflake.NewNode(opts.NodeID)
-		if err != nil {
-			return nil, apierrors.NewInternalError(
-				fmt.Errorf("error initializing snowflake id generator :: %w", err))
-		}
-		opts.NextResourceVersion = func() int64 {
-			return eventNode.Generate().Int64()
-		}
+		opts.NextResourceVersion = newResourceVersionCounter(time.Now().UnixMilli())
 	}
 
 	return &cdkAppender{
@@ -83,7 +66,7 @@ type cdkAppender struct {
 	tracer trace.Tracer
 	bucket *blob.Bucket
 	root   string
-	nextRV func() int64
+	nextRV NextResourceVersion
 	mutex  sync.Mutex
 
 	// Typically one... the server wrapper
