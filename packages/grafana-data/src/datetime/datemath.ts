@@ -43,9 +43,11 @@ export function parse(
     if (isDateTime(text)) {
       return text;
     }
+
     if (isDate(text)) {
       return dateTime(text);
     }
+
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
     return undefined;
   } else {
