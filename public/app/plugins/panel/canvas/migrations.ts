@@ -1,6 +1,6 @@
-import { PanelModel } from '@grafana/data';
+import { DataLink, DynamicConfigValue, FieldMatcherID, PanelModel } from '@grafana/data';
 
-import { Options } from './panelcfg.gen';
+import { CanvasElementOptions, Options } from './panelcfg.gen';
 
 export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
   const pluginVersion = panel?.pluginVersion ?? '';
@@ -42,5 +42,47 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     }
   }
 
+  let defaultLinks = panel.fieldConfig.defaults.links;
+
+  if (defaultLinks != null) {
+    // copy to all elements that have any field-mapped dimension
+    addLinks(panel.options.root.elements, defaultLinks);
+    panel.fieldConfig.defaults.links = undefined;
+  }
+
+  for (const override of panel.fieldConfig.overrides) {
+    if (override.matcher.id === FieldMatcherID.byName) {
+      let props: DynamicConfigValue[] = [];
+
+      // append override links to elements with dimensiones mapped to same field name
+      // TODO: this isnt 100% correct, cause it will append to any already-added default field links, rather than override those
+      for (const prop of override.properties) {
+        if (prop.id === 'links') {
+          addLinks(panel.options.root.elements, prop.value, override.matcher.options);
+        } else {
+          props.push(prop);
+        }
+      }
+
+      override.properties = props;
+    }
+  }
+
   return panel.options;
 };
+
+function addLinks(elements: CanvasElementOptions[], links: DataLink[], fieldName?: string) {
+  elements.forEach((element) => {
+    let cfg = element.config as Record<string, any>;
+
+    for (let k in cfg) {
+      let dim = cfg[k];
+
+      // todo: getFieldDisplayName?
+      if (dim.field === fieldName) {
+        element.config.links ??= [];
+        element.config.links.push(...links);
+      }
+    }
+  });
+}
