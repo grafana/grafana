@@ -73,6 +73,7 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
         fixed: defaultBgColor,
       },
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes

@@ -101,6 +101,7 @@ export const triangleItem: CanvasElementItem = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes

@@ -149,6 +149,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
+    links: options?.links ?? [],
   }),
 
   prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TextConfig>) => {

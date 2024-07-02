@@ -81,6 +81,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       left: options?.placement?.left ?? 100,
       rotation: options?.placement?.rotation ?? 0,
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes

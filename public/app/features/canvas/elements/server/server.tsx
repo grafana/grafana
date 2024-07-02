@@ -84,6 +84,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
     config: {
       type: ServerType.Single,
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes

@@ -107,6 +107,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
+    links: options?.links ?? [],
   }),
 
   prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<CanvasElementConfig>) => {
