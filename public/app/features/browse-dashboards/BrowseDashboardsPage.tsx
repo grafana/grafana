@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,6 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
+import { useGrafana } from '../../core/context/GrafanaContext';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
@@ -40,7 +40,8 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
-  const location = useLocation();
+  const { location } = useGrafana();
+  const search = location.getSearch();
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -56,8 +57,8 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   // Trigger search when "starred" query param changes
   useEffect(() => {
-    stateManager.onSetStarred(location.search.includes('starred'));
-  }, [location.search, stateManager]);
+    stateManager.onSetStarred(search.has('starred'));
+  }, [search, stateManager]);
 
   useEffect(() => {
     // Clear the search results when we leave SearchView to prevent old results flashing
