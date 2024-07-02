@@ -57,7 +57,7 @@ func (f *findScopeDashboardsREST) NewConnectOptions() (runtime.Object, bool, str
 }
 
 func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// See: /pkg/apiserver/builder/helper.go#L34
+	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
 		return nil, errors.NewNotFound(schema.GroupResource{}, name)

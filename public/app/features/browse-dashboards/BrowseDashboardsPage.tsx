@@ -3,7 +3,7 @@ import { memo, useEffect, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -39,6 +39,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
+  const search = locationService.getSearch();
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -51,6 +52,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       })
     );
   }, [dispatch, folderUID, stateManager]);
+
+  // Trigger search when "starred" query param changes
+  useEffect(() => {
+    stateManager.onSetStarred(search.has('starred'));
+  }, [search, stateManager]);
 
   useEffect(() => {
     // Clear the search results when we leave SearchView to prevent old results flashing

@@ -475,6 +475,21 @@
     },
     {
       "metadata": {
+        "name": "bodyScrolling",
+        "resourceVersion": "1719825052257",
+        "creationTimestamp": "2024-07-01T09:10:52Z"
+      },
+      "spec": {
+        "description": "Adjusts Page to make body the scrollable element",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-10-12T16:56:49Z"
@@ -561,6 +576,31 @@
         "description": "Updates CloudWatch label parsing to be more accurate",
         "stage": "GA",
         "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "cloudWatchRoundUpEndTime",
+        "resourceVersion": "1719324143210",
+        "creationTimestamp": "2024-06-25T14:02:23Z"
+      },
+      "spec": {
+        "description": "Round up end time for metric queries to the next minute to avoid missing data",
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "cloudwatchMetricInsightsCrossAccount",
+        "resourceVersion": "1719497905377",
+        "creationTimestamp": "2024-06-27T14:18:25Z"
+      },
+      "spec": {
+        "description": "Enables cross account observability for Cloudwatch Metric Insights",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "frontend": true
       }
     },
     {
@@ -2098,7 +2138,8 @@
       "metadata": {
         "name": "scenes",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-07-07T06:53:02Z"
+        "creationTimestamp": "2022-07-07T06:53:02Z",
+        "deletionTimestamp": "2024-06-26T11:58:18Z"
       },
       "spec": {
         "description": "Experimental framework to build interactive dashboards",
