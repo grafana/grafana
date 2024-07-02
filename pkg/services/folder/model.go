@@ -169,6 +169,8 @@ type GetFoldersQuery struct {
 	// otherwise better to keep it false since ordering can have a performance impact
 	OrderByTitle bool
 	SignedInUser identity.Requester `json:"-"`
+	// AdditionalAction is an additional action to filter folders. This action must have folder scopes.
+	AdditionalAction string
 }
 
 // GetParentsQuery captures the information required by the folder service to
