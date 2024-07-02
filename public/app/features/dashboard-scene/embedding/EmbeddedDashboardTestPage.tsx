@@ -13,9 +13,9 @@ export function EmbeddedDashboardTestPage() {
     <Page
       navId="dashboards/browse"
       pageNav={{ text: 'Embedding dashboard', subTitle: 'Showing dashboard: Panel Tests - Pie chart' }}
-      layout={PageLayoutType.Canvas}
+      layout={PageLayoutType.Standard}
     >
-      <Box paddingY={2}>Internal url state: {state}</Box>
+      <Box paddingBottom={2}>Internal url state: {state}</Box>
       <EmbeddedDashboard uid="lVE-2YFMz" initialState={state} onStateChange={setState} />
     </Page>
   );
