@@ -11,18 +11,21 @@ const DATALINKS_HEIGHT_OFFSET = 10;
 export const ImageCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps } = props;
   const cellOptions = getCellOptions(field);
-  const { title, alt } = cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
+  const { title, alt } =
+    cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
   const displayValue = field.display!(cell.value);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   // The image element
-  const img = <img
-    style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
-    src={displayValue.text}
-    className={tableStyles.imageCell}
-    alt={alt}
-    title={title}
-  />
+  const img = (
+    <img
+      style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
+      src={displayValue.text}
+      className={tableStyles.imageCell}
+      alt={alt}
+      title={title}
+    />
+  );
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
