@@ -4,8 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
 
-import { DecoratedRevisionModel } from '../VersionsEditView';
-
+import { DecoratedRevisionModel } from './HistorySrv';
 import { RevertDashboardModal } from './RevertDashboardModal';
 
 type VersionsTableProps = {
