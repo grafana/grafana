@@ -35,7 +35,12 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     const shouldAddCrumb = !node.hideFromBreadcrumbs && !(shouldDedupe && isSamePathAsLastBreadcrumb);
 
     if (shouldAddCrumb) {
-      crumbs.unshift({ text: node.text, href: node.url ?? '' });
+      const activeChild = node.children?.find((child) => child.active);
+      if (activeChild) {
+        crumbs.unshift({ text: `${node.text} (${activeChild.text})`, href: activeChild.url ?? '' });
+      } else {
+        crumbs.unshift({ text: node.text, href: node.url ?? '' });
+      }
     }
 
     if (node.parentItem) {
