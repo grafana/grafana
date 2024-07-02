@@ -1,4 +1,4 @@
-import { AddQueryTemplateCommand, EditQueryTemplateCommand, QueryTemplate } from '../types';
+import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { API_VERSION, QueryTemplateKinds } from './query';
 import { CREATED_BY_KEY, DataQuerySpec, DataQuerySpecResponse, DataQueryTarget } from './types';
@@ -36,12 +36,13 @@ export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecRe
       targets: spec.spec.targets.map((target: DataQueryTarget) => target.properties),
       createdAtTimestamp: new Date(spec.metadata.creationTimestamp || '').getTime(),
       user: parseCreatedByValue(spec.metadata?.annotations?.[CREATED_BY_KEY]),
+      fullSpec: spec,
     };
   });
 };
 
-export const convertQueryTemplateCommandToDataQuerySpec = (
-  addQueryTemplateCommand: AddQueryTemplateCommand | EditQueryTemplateCommand
+export const convertAddQueryTemplateCommandToDataQuerySpec = (
+  addQueryTemplateCommand: AddQueryTemplateCommand
 ): DataQuerySpec => {
   const { title, targets } = addQueryTemplateCommand;
   return {

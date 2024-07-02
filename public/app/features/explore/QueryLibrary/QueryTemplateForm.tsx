@@ -10,7 +10,8 @@ import { Input } from '@grafana/ui/src/components/Input/Input';
 import { Trans, t } from 'app/core/internationalization';
 import { getQueryDisplayText } from 'app/core/utils/richHistory';
 import { useAddQueryTemplateMutation, useEditQueryTemplateMutation } from 'app/features/query-library';
-import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
+import { DataQuerySpec } from 'app/features/query-library/api/types';
+import { AddQueryTemplateCommand } from 'app/features/query-library/types';
 
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
@@ -76,7 +77,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
       });
   };
 
-  const handleEditQueryTemplate = async (EditQueryTemplateCommand: EditQueryTemplateCommand) => {
+  const handleEditQueryTemplate = async (EditQueryTemplateCommand: DataQuerySpec) => {
     return editQueryTemplate(EditQueryTemplateCommand)
       .unwrap()
       .then(() => {
@@ -104,12 +105,8 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     const temporaryDefaultTitle =
       data.description || t('explore.query-library.default-description', 'Public', { timestamp: timestamp });
 
-    if (templateData?.uid) {
-      handleEditQueryTemplate({
-        uid: templateData.uid,
-        title: temporaryDefaultTitle,
-        targets: [templateData.query!],
-      }).then((isSuccess) => {
+    if (templateData?.fullSpec) {
+      handleEditQueryTemplate(templateData.fullSpec).then((isSuccess) => {
         onSave(isSuccess);
       });
     } else if (queryToAdd) {
