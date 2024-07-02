@@ -519,6 +519,7 @@ WHERE
 | `text`    | Event description field.                                                                                                          |
 | `tags`    | Optional field name to use for event tags as a comma separated string.                                                            |
 
+
 ## Alerting
 
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
