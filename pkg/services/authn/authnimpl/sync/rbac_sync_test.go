@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -127,7 +128,8 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 						return nil
 					},
 				},
-				log: log.NewNopLogger(),
+				log:    log.NewNopLogger(),
+				tracer: tracing.InitializeTracerForTest(),
 			}
 
 			req := &authn.Request{}
@@ -149,8 +151,9 @@ func setupTestEnv() *RBACSync {
 		},
 	}
 	s := &RBACSync{
-		ac:  acMock,
-		log: log.NewNopLogger(),
+		ac:     acMock,
+		log:    log.NewNopLogger(),
+		tracer: tracing.InitializeTracerForTest(),
 	}
 	return s
 }
