@@ -13,13 +13,14 @@ import (
 )
 
 const (
-	mdToken   = "grafana-idtoken"
-	mdLogin   = "grafana-login"
-	mdUserID  = "grafana-user-id"
-	mdUserUID = "grafana-user-uid"
-	mdOrgName = "grafana-org-name"
-	mdOrgID   = "grafana-org-id"
-	mdOrgRole = "grafana-org-role"
+	mdAccessToken = "grafana-access-token"
+	mdToken       = "grafana-idtoken"
+	mdLogin       = "grafana-login"
+	mdUserID      = "grafana-user-id"
+	mdUserUID     = "grafana-user-uid"
+	mdOrgName     = "grafana-org-name"
+	mdOrgID       = "grafana-org-id"
+	mdOrgRole     = "grafana-org-role"
 )
 
 // This is in a package we can no import
@@ -134,16 +135,12 @@ func StreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grp
 var _ grpc.StreamClientInterceptor = StreamClientInterceptor
 
 func wrapContext(ctx context.Context) (context.Context, error) {
-	// TODO (gamab) requester is not in the context when the request is service to service.
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return ctx, err
 	}
 
-	// set grpc metadata into the context to pass to the grpc server
-	newCtx := metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user))
-
-	return wrapContextV2(newCtx)
+	return metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user)), nil
 }
 
 func encodeIdentityInMetadata(user identity.Requester) metadata.MD {

@@ -27,8 +27,12 @@ func GetRequester(ctx context.Context) (Requester, error) {
 type AuthCtx struct {
 	// OrgID is the organization ID of the request.
 	OrgID int64
+	// IDToken is the token used to authenticate the user.
+	IDToken string
 	// IDClaims identify the user for which the service is making the request.
 	IDClaims *authnlib.Claims[authnlib.IDTokenClaims]
+	// AccessToken is the token used to authenticate the service.
+	AccessToken string
 	// AccessClaims identify the service making the request.
 	AccessClaims *authnlib.Claims[authnlib.AccessTokenClaims]
 }

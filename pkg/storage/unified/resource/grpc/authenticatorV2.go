@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/go-jose/go-jose/v3"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -130,7 +131,7 @@ func (f *AuthenticatorV2) Authenticate(ctx context.Context) (context.Context, er
 	}
 
 	// TODO (gamab) add orgID to claims ?
-	grfOrgID, ok := getFirstMetadataValue(md, "grafana-orgid")
+	grfOrgID, ok := getFirstMetadataValue(md, mdOrgID)
 	if !ok {
 		// TODO (gamab) maybe use default org id?
 		return ctx, fmt.Errorf("no org id found")
@@ -159,7 +160,7 @@ func (f *AuthenticatorV2) inProcAuthentication(ctx context.Context, orgID int64,
 	ctxLogger := f.logger.FromContext(ctx)
 	ctxLogger.Debug("in-process authentication")
 
-	idToken, ok := getFirstMetadataValue(md, "x-grafana-id")
+	idToken, ok := getFirstMetadataValue(md, mdToken)
 	if !ok {
 		ctxLogger.Error("missing id token")
 		return ctx, ErrorMissingIDToken
@@ -186,7 +187,7 @@ func (f *AuthenticatorV2) remoteAuthentication(ctx context.Context, orgID int64,
 	ctxLogger := f.logger.FromContext(ctx)
 	ctxLogger.Debug("remote authentication")
 
-	accessToken, ok := getFirstMetadataValue(md, "x-access-token")
+	accessToken, ok := getFirstMetadataValue(md, mdAccessToken)
 	if !ok {
 		ctxLogger.Error("missing access token")
 		return ctx, ErrorMissingAccessToken
@@ -198,7 +199,7 @@ func (f *AuthenticatorV2) remoteAuthentication(ctx context.Context, orgID int64,
 		return ctx, ErrorInvalidAccessToken
 	}
 
-	idToken, ok := getFirstMetadataValue(md, "x-grafana-id")
+	idToken, ok := getFirstMetadataValue(md, mdToken)
 	if !ok {
 		// Service authentication
 		usr, err := f.authenticateService(orgID, atClaims)
@@ -346,17 +347,53 @@ func getFirstMetadataValue(md metadata.MD, key string) (string, bool) {
 
 var _ interceptors.Authenticator = (*AuthenticatorV2)(nil)
 
-func wrapContextV2(ctx context.Context) (context.Context, error) {
-	user, err := identity.GetRequester(ctx)
+func UnaryClientInterceptorV2(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	ctx, err := wrapContextV2(ctx)
 	if err != nil {
-		return ctx, err
+		return err
+	}
+	return invoker(ctx, method, req, reply, cc, opts...)
+}
+
+var _ grpc.UnaryClientInterceptor = UnaryClientInterceptorV2
+
+func StreamClientInterceptorV2(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	ctx, err := wrapContextV2(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return streamer(ctx, desc, cc, method, opts...)
+}
+
+var _ grpc.StreamClientInterceptor = StreamClientInterceptorV2
+
+func wrapContextV2(ctx context.Context) (context.Context, error) {
+	md := metadata.Pairs()
+
+	// Use auth context if available
+	if authCtx, err := identity.GetAuthCtx(ctx); err == nil {
+		if authCtx.IDClaims != nil {
+			md.Append(mdToken, authCtx.IDToken)
+		}
+		if authCtx.AccessClaims != nil {
+			md.Append(mdAccessToken, authCtx.AccessToken)
+		}
+		md.Append(mdOrgID, strconv.FormatInt(authCtx.OrgID, 10))
+
+		return metadata.NewOutgoingContext(ctx, md), nil
 	}
 
-	// set grpc metadata into the context to pass to the grpc server
-	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
-		"x-grafana-id", user.GetIDToken(),
-		// "grafana-userid", strconv.FormatInt(user.UserID, 10),
-		"grafana-orgid", strconv.FormatInt(user.GetOrgID(), 10),
-		// "grafana-login", user.Login,
-	)), nil
+	// Fallback to user
+	if user, err := identity.GetRequester(ctx); err == nil {
+		// set grpc metadata into the context to pass to the grpc server
+		return metadata.NewOutgoingContext(ctx, metadata.Pairs(
+			mdToken, user.GetIDToken(),
+			mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
+			// "grafana-userid", strconv.FormatInt(user.UserID, 10),
+			// "grafana-login", user.Login,
+		)), nil
+	}
+
+	// No auth context or user found
+	return ctx, fmt.Errorf("no auth context or user found")
 }

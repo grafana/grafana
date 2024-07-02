@@ -8,7 +8,6 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 const (
@@ -131,7 +129,15 @@ func newInProcLegacyClient(authCfg *Cfg, tracer tracing.Tracer, server *legacySe
 		server,
 	)
 
-	conn := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	pass := func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+
+	streamPass := func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		return streamer(ctx, desc, cc, method, opts...)
+	}
+
+	conn := grpchan.InterceptClientConn(channel, pass, streamPass)
 
 	client := authzv1.NewAuthzServiceClient(conn)
 
@@ -246,7 +252,10 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 		if err != nil {
 			return false, tracing.Errorf(span, "failed to exchange token: %w", err)
 		}
-		outCtx = metadata.NewOutgoingContext(outCtx, metadata.Pairs("x-access-token", token.Token))
+		outCtx = identity.WithAuthCtx(outCtx, &identity.AuthCtx{
+			AccessToken: token.Token,
+			OrgID:       req.StackID,
+		})
 	}
 
 	// Query the authz service

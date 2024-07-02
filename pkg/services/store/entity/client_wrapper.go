@@ -27,9 +27,9 @@ func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keySe
 		),
 		server,
 	)
-	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)), nil
+	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptorV2, grpcUtils.StreamClientInterceptorV2)), nil
 }
 
 func NewEntityStoreClientGRPC(channel *grpc.ClientConn) EntityStoreClient {
-	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
+	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptorV2, grpcUtils.StreamClientInterceptorV2))
 }
