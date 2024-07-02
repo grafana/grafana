@@ -38,24 +38,27 @@ export default function GettingStarted() {
           <Text element="h3">Get started</Text>
           <ul className={styles.list}>
             <li>
-              <Text weight="bold">Create an alert rule</Text> to query a data source and evaluate the condition defined in the alert rule
+              <Text weight="bold">Create an alert rule</Text> to query a data source and evaluate the condition defined
+              in the alert rule
             </li>
             <li>
-              <Text weight="bold">Route alert notifications</Text> either directly to a contact point or through notification policies for more flexibility
+              <Text weight="bold">Route alert notifications</Text> either directly to a contact point or through
+              notification policies for more flexibility
             </li>
             <li>
               <Text weight="bold">Monitor</Text> your alert rules using dashboards and visualizations
             </li>
           </ul>
-          <p>For a hands-on introduction, refer to our{' '}
-          <TextLink
-            href="https://grafana.com/tutorials/alerting-get-started/"
-            icon="angle-right"
-            inline={true}
-            external
-          >
-            tutorial to get started with Grafana Alerting
-          </TextLink>
+          <p>
+            For a hands-on introduction, refer to our{' '}
+            <TextLink
+              href="https://grafana.com/tutorials/alerting-get-started/"
+              icon="angle-right"
+              inline={true}
+              external
+            >
+              tutorial to get started with Grafana Alerting
+            </TextLink>
           </p>
         </Stack>
       </ContentBox>
