@@ -68,6 +68,7 @@ export type Props = Themeable2 &
 export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
+  editView: string | null;
   updateScrollTop?: number;
   rememberScrollTop?: number;
   showLoadingState: boolean;
@@ -87,6 +88,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   getCleanState(): State {
     return {
+      editView: null,
       editPanel: null,
       viewPanel: null,
       showLoadingState: false,
@@ -194,6 +196,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       this.props.notifyApp(createErrorNotification(`Panel not found`));
       locationService.partial({ editPanel: null, viewPanel: null });
     }
+
+    if (config.featureToggles.bodyScrolling) {
+      // Update window scroll position
+      if (this.state.updateScrollTop !== undefined && this.state.updateScrollTop !== prevState.updateScrollTop) {
+        window.scrollTo(0, this.state.updateScrollTop);
+      }
+    }
   }
 
   updateLiveTimer = () => {
@@ -209,6 +218,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const urlEditPanelId = queryParams.editPanel;
     const urlViewPanelId = queryParams.viewPanel;
+    const urlEditView = queryParams.editview;
 
     if (!dashboard) {
       return state;
@@ -216,13 +226,33 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const updatedState = { ...state };
 
+    if (config.featureToggles.bodyScrolling) {
+      // Entering settings view
+      if (!state.editView && urlEditView) {
+        updatedState.editView = urlEditView;
+        updatedState.rememberScrollTop = window.scrollY;
+        updatedState.updateScrollTop = 0;
+      }
+
+      // Leaving settings view
+      else if (state.editView && !urlEditView) {
+        updatedState.updateScrollTop = state.rememberScrollTop;
+        updatedState.editView = null;
+      }
+    }
+
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
       if (panel) {
         if (dashboard.canEditPanel(panel)) {
           updatedState.editPanel = panel;
-          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+          updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
+            ? window.scrollY
+            : state.scrollElement?.scrollTop;
+          if (config.featureToggles.bodyScrolling) {
+            updatedState.updateScrollTop = 0;
+          }
         } else {
           updatedState.editPanelAccessDenied = true;
         }
@@ -244,7 +274,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         // Should move this state out of dashboard in the future
         dashboard.initViewPanel(panel);
         updatedState.viewPanel = panel;
-        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
+          ? window.scrollY
+          : state.scrollElement?.scrollTop;
         updatedState.updateScrollTop = 0;
       } else {
         updatedState.panelNotFound = true;
