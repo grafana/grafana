@@ -10,7 +10,7 @@ export const MigrationStepsPane = () => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Box alignItems="flex-start" display="flex" padding={2} gap={2} direction="column" backgroundColor="secondary">
+    <Box alignItems="flex-start" display="flex" direction="column" gap={2}>
       <InfoItem
         title={t('migrate-to-cloud.get-started.title', 'Performing a migration')}
         linkTitle={t('migrate-to-cloud.get-started.link-title', 'Learn more about Private Data Source Connect')}
