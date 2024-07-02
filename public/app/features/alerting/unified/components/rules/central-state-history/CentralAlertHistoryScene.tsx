@@ -215,7 +215,7 @@ export const FilterInfo = () => {
             <Trans i18nKey="central-alert-history.filter.info.label3">Valid use of spaces:</Trans>
             <pre>{`{severity=" critical"}`}</pre>
             <Trans i18nKey="central-alert-history.filter.info.label4">
-              Filter alerts using label querying without braces, ex:
+              Filter events using label querying without braces, ex:
             </Trans>
             <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
           </div>
