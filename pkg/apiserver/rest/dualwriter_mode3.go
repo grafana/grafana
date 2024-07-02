@@ -155,3 +155,7 @@ func (d *DualWriterMode3) NewList() runtime.Object {
 func (d *DualWriterMode3) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }
+
+func (d *DualWriterMode3) Sync(ctx context.Context) error {
+	return nil
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -76,6 +77,7 @@ type DualWriter interface {
 	Storage
 	LegacyStorage
 	Mode() DualWriterMode
+	Sync(context.Context) error
 }
 
 type DualWriterMode int
@@ -97,7 +99,7 @@ const (
 
 // TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer) DualWriter {
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer, requestInfo *request.RequestInfo) DualWriter {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
 	switch mode {
@@ -108,7 +110,7 @@ func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, r
 		return newDualWriterMode1(legacy, storage, metrics)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage, metrics)
+		return newDualWriterMode2(legacy, storage, metrics, requestInfo)
 	case Mode3:
 		// write to both, read from storage only
 		return newDualWriterMode3(legacy, storage, metrics)
@@ -151,6 +153,7 @@ func SetDualWritingMode(
 	entity string,
 	desiredMode DualWriterMode,
 	reg prometheus.Registerer,
+	requestInfo *request.RequestInfo,
 ) (DualWriter, error) {
 	toMode := map[string]DualWriterMode{
 		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
@@ -208,8 +211,16 @@ func SetDualWritingMode(
 	}
 
 	// 	#TODO add support for other combinations of desired and current modes
+	dualWriter := NewDualWriter(currentMode, legacy, storage, reg, requestInfo)
 
-	return NewDualWriter(currentMode, legacy, storage, reg), nil
+	if currentMode == Mode2 {
+		err = dualWriter.Sync(ctx)
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
+	}
+
+	return dualWriter, nil
 }
 
 var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)

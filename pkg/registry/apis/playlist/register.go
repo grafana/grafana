@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -137,7 +138,14 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, legacyStore, store, playlist.GROUPRESOURCE, desiredMode, reg)
+		requestInfo := &k8srequest.RequestInfo{
+			APIGroup:  playlist.GROUP,
+			Resource:  playlist.RESOURCE,
+			Name:      "",
+			Namespace: b.namespacer(int64(1)),
+		}
+
+		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, legacyStore, store, playlist.GROUPRESOURCE, desiredMode, reg, requestInfo)
 		if err != nil {
 			return nil, err
 		}

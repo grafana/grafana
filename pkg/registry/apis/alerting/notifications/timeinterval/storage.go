@@ -5,6 +5,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -75,7 +76,15 @@ func NewStorage(
 		if err := s.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		return grafanarest.NewDualWriter(desiredMode, legacyStore, storage{Store: s}, reg), nil
+
+		requestInfo := &k8srequest.RequestInfo{
+			APIGroup:  model.GROUP,
+			Resource:  "timeintervals",
+			Name:      "",
+			Namespace: namespacer(int64(1)),
+		}
+
+		return grafanarest.NewDualWriter(desiredMode, legacyStore, storage{Store: s}, reg, requestInfo), nil
 	}
 	return legacyStore, nil
 }
