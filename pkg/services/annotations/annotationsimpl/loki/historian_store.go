@@ -99,13 +99,17 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		}
 	}
 
-	logQL, _, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
+	// No folders in the filter because it filter by Dashboard UID, and the request is already authorized.
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
 	if err != nil {
 		grafanaErr := errutil.Error{}
 		if errors.As(err, &grafanaErr) {
 			return make([]*annotations.ItemDTO, 0), err
 		}
 		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to build loki query: %w", err)
+	}
+	if len(logQL) > 1 {
+		r.log.FromContext(ctx).Info("Execute query in multiple batches", "batches", logQL, "maxQueryLimit", r.client.MaxQuerySize())
 	}
 
 	now := time.Now().UTC()
@@ -119,18 +123,17 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	// query.From and query.To are always in milliseconds, convert them to nanoseconds for loki
 	from := query.From * 1e6
 	to := query.To * 1e6
-
-	res, err := r.client.RangeQuery(ctx, logQL, from, to, query.Limit)
-	if err != nil {
-		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query loki: %w", err)
-	}
-
 	items := make([]*annotations.ItemDTO, 0)
-	for _, stream := range res.Data.Result {
-		items = append(items, r.annotationsFromStream(stream, *accessResources)...)
+	for _, q := range logQL {
+		res, err := r.client.RangeQuery(ctx, q, from, to, query.Limit)
+		if err != nil {
+			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query loki: %w", err)
+		}
+		for _, stream := range res.Data.Result {
+			items = append(items, r.annotationsFromStream(stream, *accessResources)...)
+		}
 	}
 	sort.Sort(annotations.SortedItems(items))
-
 	return items, err
 }
 
