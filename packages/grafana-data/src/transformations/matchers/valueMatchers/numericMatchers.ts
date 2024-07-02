@@ -20,7 +20,7 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is greater than: ${options.value}.`;
   },
-  isApplicable: (field) => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number || field.type === FieldType.time,
   getDefaultOptions: () => ({ value: 0 }),
 };
 
@@ -40,7 +40,7 @@ const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> =
   getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is greater than or equal to: ${options.value}.`;
   },
-  isApplicable: (field) => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number || field.type === FieldType.time,
   getDefaultOptions: () => ({ value: 0 }),
 };
 
@@ -60,7 +60,7 @@ const isLowerValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is lower than: ${options.value}.`;
   },
-  isApplicable: (field) => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number || field.type === FieldType.time,
   getDefaultOptions: () => ({ value: 0 }),
 };
 
@@ -80,7 +80,7 @@ const isLowerOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is lower or equal than: ${options.value}.`;
   },
-  isApplicable: (field) => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number || field.type === FieldType.time,
   getDefaultOptions: () => ({ value: 0 }),
 };
 
