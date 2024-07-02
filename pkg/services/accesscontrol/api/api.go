@@ -13,8 +13,7 @@ import (
 )
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
-	features featuremgmt.FeatureToggles,
-) *AccessControlAPI {
+	features featuremgmt.FeatureToggles) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
