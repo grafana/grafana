@@ -125,12 +125,17 @@ export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
 }
 
 export function parseMatchers(matcherQueryString: string): Matcher[] {
-  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,}]*)"?/g;
+  const matcherRegExpWhenNoSlashes = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,}]*)"?/g;
+  const matcherRegExpWhenSlashes = /\b([\w.-]+)(=~|!=|!~|=)(?:"([^"\n}]*)"|([^\s,]+))/g;
   const matchers: Matcher[] = [];
 
-  matcherQueryString.replace(matcherRegExp, (_, key, operator, value) => {
+  const matcherRegExp = matcherQueryString.includes('/') ? matcherRegExpWhenSlashes : matcherRegExpWhenNoSlashes;
+
+  matcherQueryString.replace(matcherRegExp, (_, key, operator, quotedValue, unquotedValue) => {
+    const value = quotedValue || unquotedValue; // Use quotedValue if available, otherwise use unquotedValue
     const isEqual = operator === MatcherOperator.equal || operator === MatcherOperator.regex;
     const isRegex = operator === MatcherOperator.regex || operator === MatcherOperator.notRegex;
+
     matchers.push({
       name: key,
       value: isRegex ? getValidRegexString(value.trim()) : value.trim(),
