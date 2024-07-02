@@ -104,7 +104,8 @@ type JSONData struct {
 	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Panel settings
-	SkipDataQuery bool `json:"skipDataQuery"`
+	SkipDataQuery   bool `json:"skipDataQuery"`
+	PreferredHeight uint `json:"preferredHeight"`
 
 	// App settings
 	AutoEnabled bool `json:"autoEnabled"`
