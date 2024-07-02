@@ -23,9 +23,9 @@ jobs:
   setup:
     name: Setup and establish latest
     outputs:
-      version: ${{ steps.outputs.outputs.version }}
-      dry_run: ${{ steps.outputs.outputs.dry_run }}
-      latest: ${{ steps.outputs.outputs.latest }}
+      version: ${{ steps.output.outputs.version }}
+      dry_run: ${{ steps.output.outputs.dry_run }}
+      latest: ${{ steps.output.outputs.latest }}
     runs-on: ubuntu-latest
     steps:
     - if: github.event.workflow_dispatch
