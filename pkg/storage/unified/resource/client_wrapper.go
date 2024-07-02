@@ -25,7 +25,7 @@ func NewLocalResourceStoreClient(server ResourceStoreServer) ResourceStoreClient
 	return NewResourceStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
 }
 
-func NewLocalResourceSearchClient(server ResourceStoreServer) ResourceSearchClient {
+func NewLocalResourceSearchClient(server ResourceStoreServer) ResourceIndexClient {
 	channel := &inprocgrpc.Channel{}
 
 	auth := &grpcUtils.Authenticator{}
@@ -38,7 +38,7 @@ func NewLocalResourceSearchClient(server ResourceStoreServer) ResourceSearchClie
 		),
 		server,
 	)
-	return NewResourceSearchClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
+	return NewResourceIndexClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
 }
 
 func NewResourceStoreClientGRPC(channel *grpc.ClientConn) ResourceStoreClient {

@@ -21,7 +21,7 @@ type HistoryConnector interface {
 	rest.StorageMetadata
 }
 
-func NewHistoryConnector(search resource.ResourceSearchServer, gr schema.GroupResource) HistoryConnector {
+func NewHistoryConnector(search resource.ResourceIndexServer, gr schema.GroupResource) HistoryConnector {
 	return &historyREST{
 		search: search,
 		gr:     gr,
@@ -29,7 +29,7 @@ func NewHistoryConnector(search resource.ResourceSearchServer, gr schema.GroupRe
 }
 
 type historyREST struct {
-	search resource.ResourceSearchServer // should be a client!
+	search resource.ResourceIndexServer // should be a client!
 	gr     schema.GroupResource
 }
 

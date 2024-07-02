@@ -36,7 +36,7 @@ var (
 // ResourceServer implements all services
 type ResourceServer interface {
 	ResourceStoreServer
-	ResourceSearchServer
+	ResourceIndexServer
 	DiagnosticsServer
 	LifecycleHooks
 }
@@ -95,7 +95,7 @@ type ResourceServerOptions struct {
 	Blob BlobStore
 
 	// Real storage backend
-	Search ResourceSearchServer
+	Search ResourceIndexServer
 
 	// Diagnostics
 	Diagnostics DiagnosticsServer
@@ -178,7 +178,7 @@ type server struct {
 	log         *slog.Logger
 	nextEventID func() int64
 	store       AppendingStore
-	search      ResourceSearchServer
+	search      ResourceIndexServer
 	blob        BlobStore
 	diagnostics DiagnosticsServer
 	access      WriteAccessHooks

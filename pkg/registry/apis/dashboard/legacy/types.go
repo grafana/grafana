@@ -26,7 +26,7 @@ type DashboardQuery struct {
 type DashboardAccess interface {
 	resource.AppendingStore
 	resource.BlobStore
-	resource.ResourceSearchServer
+	resource.ResourceIndexServer
 
 	GetDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, int64, error)
 	SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error)

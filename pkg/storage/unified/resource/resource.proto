@@ -458,9 +458,9 @@ service ResourceStore {
   // >> cleanup will be managed via garbage collection or direct access to the underlying storage
 }
 
-// Clients can use this service directly
-// NOTE: This is read only, and no read afer write guarantees
-service ResourceSearch {
+// Unlike the ResourceStore, this service can be exposed to clients directly
+// It should be implemented with efficient indexes and does not need read-after-write semantics
+service ResourceIndex {
   // TODO: rpc Search(...) ... eventually a typed response
 
   rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
