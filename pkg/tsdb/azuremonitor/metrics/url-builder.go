@@ -39,12 +39,23 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 	}
 
 	metricNamespaceArray := strings.Split(*metricNamespace, "/")
+
+	if len(metricNamespaceArray) == 0 {
+		return nil, fmt.Errorf("metricNamespace is empty")
+	}
+
 	var resourceNameArray []string
 	if params.ResourceName != nil && *params.ResourceName != "" {
 		resourceNameArray = strings.Split(*params.ResourceName, "/")
 	}
-	provider := metricNamespaceArray[0]
-	metricNamespaceArray = metricNamespaceArray[1:]
+
+	provider := ""
+	if len(metricNamespaceArray) > 0 {
+		provider = metricNamespaceArray[0]
+		metricNamespaceArray = metricNamespaceArray[1:]
+	} else {
+		return nil, fmt.Errorf("metricNamespace does not contain a provider")
+	}
 
 	if strings.HasPrefix(strings.ToLower(*metricNamespace), "microsoft.storage/storageaccounts/") &&
 		params.ResourceName != nil &&
