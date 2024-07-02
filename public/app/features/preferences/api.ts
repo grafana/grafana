@@ -38,7 +38,7 @@ export interface UpdateRequestArg {
   };
 }
 
-const URL = 'user/preferences';
+const URL = '/user/preferences';
 export const preferencesAPI = createApi({
   reducerPath: 'preferencesAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
