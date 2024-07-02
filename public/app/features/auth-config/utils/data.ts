@@ -51,6 +51,11 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
   if (Array.isArray(val)) {
     return val.map((v) => ({ label: v, value: v }));
   }
+  // Support parsing from JSON array format
+  if (val.startsWith('[') && val.endsWith(']')) {
+    return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+  }
+
   return val.split(/[\s,]/).map((s) => ({ label: s, value: s }));
 };
 
@@ -70,7 +75,11 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
 }
 
 const valuesToString = (values: Array<SelectableValue<string>>) => {
-  return values.map(({ value }) => value).join(',');
+  if (values.length <= 1) {
+    return values.map(({ value }) => value).join(',');
+  }
+  // Store as JSON array if there are multiple values
+  return JSON.stringify(values.map(({ value }) => value));
 };
 
 const getFieldsForProvider = (provider: string) => {

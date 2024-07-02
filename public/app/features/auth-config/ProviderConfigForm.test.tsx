@@ -57,6 +57,7 @@ const testConfig: SSOProvider = {
     allowedDomains: '',
     allowedGroups: '',
     scopes: '',
+    orgMapping: '',
   },
 };
 
@@ -120,6 +121,8 @@ describe('ProviderConfigForm', () => {
     await user.click(screen.getByText('User mapping'));
     await user.type(screen.getByRole('textbox', { name: /Role attribute path/i }), 'new-attribute-path');
     await user.click(screen.getByRole('checkbox', { name: /Role attribute strict mode/i }));
+    await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group A:1:Editor{enter}');
+    await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group B:2:Admin{enter}');
 
     await user.click(screen.getByText('Extra security measures'));
     await user.type(screen.getByRole('combobox', { name: /Allowed domains/i }), 'grafana.com{enter}');
@@ -143,6 +146,7 @@ describe('ProviderConfigForm', () => {
             clientSecret: 'test-client-secret',
             enabled: true,
             name: 'GitHub',
+            orgMapping: "[\"Group A:1:Editor\",\"Group B:2:Admin\"]",
             roleAttributePath: 'new-attribute-path',
             roleAttributeStrict: true,
             scopes: 'user:email',
