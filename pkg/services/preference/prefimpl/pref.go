@@ -174,13 +174,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
-	if cmd.Navbar != nil {
+	if cmd.Navbar != nil && cmd.Navbar.SavedItemIds != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
 		}
-		if cmd.Navbar.SavedItemIds != nil {
-			preference.JSONData.Navbar.SavedItemIds = cmd.Navbar.SavedItemIds
-		}
+		preference.JSONData.Navbar.SavedItemIds = cmd.Navbar.SavedItemIds
 	}
 
 	if cmd.QueryHistory != nil {
