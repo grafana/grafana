@@ -4,7 +4,14 @@ import { useMeasure } from 'react-use';
 
 import { DataFrameJSON, GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, TextBoxVariable, VariableValue, sceneGraph } from '@grafana/scenes';
+import {
+  CustomVariable,
+  SceneComponentProps,
+  SceneObjectBase,
+  TextBoxVariable,
+  VariableValue,
+  sceneGraph,
+} from '@grafana/scenes';
 import {
   Alert,
   Icon,
@@ -38,7 +45,7 @@ import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER, StateFilterValues } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
@@ -52,10 +59,16 @@ const PAGE_SIZE = 100;
  */
 interface HistoryEventsListProps {
   timeRange?: TimeRange;
-  valueInfilterTextBox: VariableValue;
-  addFilter: (key: string, value: string) => void;
+  valueInLabelFilter: VariableValue;
+  valueInStateFilter: VariableValue;
+  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
 }
-export const HistoryEventsList = ({ timeRange, valueInfilterTextBox, addFilter }: HistoryEventsListProps) => {
+export const HistoryEventsList = ({
+  timeRange,
+  valueInLabelFilter,
+  valueInStateFilter,
+  addFilter,
+}: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
@@ -71,8 +84,9 @@ export const HistoryEventsList = ({ timeRange, valueInfilterTextBox, addFilter }
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(
-    stateHistory,
-    valueInfilterTextBox.toString()
+    valueInLabelFilter.toString(),
+    valueInStateFilter.toString(),
+    stateHistory
   );
 
   const historyRecords = historyRecordsNotSorted.sort((a, b) => b.timestamp - a.timestamp);
@@ -97,7 +111,7 @@ const LoadingIndicator = ({ visible = false }) => {
 
 interface HistoryLogEventsProps {
   logRecords: LogRecord[];
-  addFilter: (key: string, value: string) => void;
+  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
 }
 function HistoryLogEvents({ logRecords, addFilter }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
@@ -144,16 +158,16 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
 interface EventRowProps {
   record: LogRecord;
   logRecords: LogRecord[];
-  addFilter: (key: string, value: string) => void;
+  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
 }
 function EventRow({ record, logRecords, addFilter }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
   function onLabelClick(label: string, value: string) {
-    addFilter(label, value);
+    addFilter(label, value, 'label');
   }
   function addFilterByName(alertRuleName: string) {
-    addFilter('alertname', alertRuleName);
+    addFilter('alertname', alertRuleName, 'label');
   }
 
   return (
@@ -170,7 +184,7 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
             <Timestamp time={record.timestamp} />
           </div>
           <div className={styles.transitionCol}>
-            <EventTransition previous={record.line.previous} current={record.line.current} />
+            <EventTransition previous={record.line.previous} current={record.line.current} addFilter={addFilter} />
           </div>
           <div className={styles.alertNameCol}>
             {record.line.labels ? (
@@ -188,7 +202,7 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
-          <EventDetails record={record} logRecords={logRecords} />
+          <EventDetails record={record} logRecords={logRecords} addFilter={addFilter} />
         </div>
       )}
     </Stack>
@@ -241,13 +255,14 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
 interface EventTransitionProps {
   previous: GrafanaAlertStateWithReason;
   current: GrafanaAlertStateWithReason;
+  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
 }
-function EventTransition({ previous, current }: EventTransitionProps) {
+function EventTransition({ previous, current, addFilter }: EventTransitionProps) {
   return (
     <Stack gap={0.5} direction={'row'}>
-      <EventState state={previous} />
+      <EventState state={previous} addFilter={addFilter} />
       <Icon name="arrow-right" size="lg" />
-      <EventState state={current} />
+      <EventState state={current} addFilter={addFilter} />
     </Stack>
   );
 }
@@ -275,8 +290,9 @@ const StateIcon = ({ iconName, iconColor, tooltipContent, labelText, showLabel }
 interface EventStateProps {
   state: GrafanaAlertStateWithReason;
   showLabel?: boolean;
+  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
 }
-export function EventState({ state, showLabel }: EventStateProps) {
+export function EventState({ state, showLabel, addFilter }: EventStateProps) {
   const styles = useStyles2(getStyles);
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
@@ -336,7 +352,21 @@ export function EventState({ state, showLabel }: EventStateProps) {
   };
 
   const config = stateConfig[baseState] || { iconName: 'exclamation-triangle', tooltipContent: 'Unknown State' };
-  return <StateIcon {...config} showLabel={Boolean(showLabel)} />;
+  return (
+    <div
+      onClick={() => addFilter('state', baseState, 'state')}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          addFilter('state', baseState, 'state');
+        }
+      }}
+      className={styles.state}
+      role="button"
+      tabIndex={0}
+    >
+      <StateIcon {...config} showLabel={Boolean(showLabel)} />
+    </div>
+  );
 }
 
 interface TimestampProps {
@@ -432,6 +462,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     colorIcon: css({
       color: theme.colors.primary.text,
     }),
+    state: css({
+      cursor: 'pointer',
+    }),
   };
 };
 
@@ -449,26 +482,42 @@ export class HistoryEventsListObject extends SceneObjectBase {
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
   // eslint-disable-next-line
-  const filtersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
+  const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
+  // eslint-disable-next-line
+  const stateFilterVariable = sceneGraph.lookupVariable(STATE_FILTER, model)! as CustomVariable;
 
-  const addFilter = (key: string, value: string) => {
+  const valueInfilterTextBox: VariableValue = labelsFiltersVariable.getValue();
+  const valueInStateFilter = stateFilterVariable.getValue();
+
+  const addFilter = (key: string, value: string, type: 'label' | 'state') => {
     const newFilterToAdd = `${key}=${value}`;
-    const finalFilter = valueInfilterTextBox ? `${valueInfilterTextBox.toString()} ,${newFilterToAdd}` : newFilterToAdd;
-    filtersVariable.setValue(finalFilter);
+    if (type === 'state') {
+      stateFilterVariable.changeValueTo(value);
+    } else {
+      const finalFilter = valueInfilterTextBox
+        ? `${valueInfilterTextBox.toString()} ,${newFilterToAdd}`
+        : newFilterToAdd;
+      labelsFiltersVariable.setValue(finalFilter);
+    }
   };
 
-  const valueInfilterTextBox: VariableValue = filtersVariable.getValue();
-
-  return <HistoryEventsList timeRange={timeRange} valueInfilterTextBox={valueInfilterTextBox} addFilter={addFilter} />;
+  return (
+    <HistoryEventsList
+      timeRange={timeRange}
+      valueInLabelFilter={valueInfilterTextBox}
+      addFilter={addFilter}
+      valueInStateFilter={valueInStateFilter}
+    />
+  );
 }
 
-function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
+function useRuleHistoryRecords(filterInLabel: string, filterInState: string, stateHistory?: DataFrameJSON) {
   return useMemo(() => {
     if (!stateHistory?.data) {
       return { historyRecords: [] };
     }
 
-    const filterMatchers = filter ? parseMatchers(filter) : [];
+    const filterMatchers = filterInLabel ? parseMatchers(filterInLabel) : [];
 
     const [tsValues, lines] = stateHistory.data.values;
     const timestamps = isNumbers(tsValues) ? tsValues : [];
@@ -479,10 +528,16 @@ function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
       if (!isLine(line)) {
         return acc;
       }
-
       // values property can be undefined for some instance states (e.g. NoData)
       const filterMatch = line.labels && labelsMatchMatchers(line.labels, filterMatchers);
-      if (filterMatch) {
+      if (!isGrafanaAlertState(line.current) || !isGrafanaAlertState(line.previous)) {
+        return acc;
+      }
+      // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
+      // eslint-disable-next-line
+      const baseState = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
+      const stateMatch = filterInState !== StateFilterValues.all ? filterInState === baseState : true;
+      if (filterMatch && stateMatch) {
         acc.push({ timestamp, line });
       }
 
@@ -492,5 +547,5 @@ function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
     return {
       historyRecords: logRecords,
     };
-  }, [stateHistory, filter]);
+  }, [stateHistory, filterInLabel, filterInState]);
 }

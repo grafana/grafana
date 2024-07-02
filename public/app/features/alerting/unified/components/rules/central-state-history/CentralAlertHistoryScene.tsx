@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 
+import { VariableHide } from '@grafana/data';
 import {
+  CustomVariable,
   EmbeddedScene,
   PanelBuilders,
   SceneControlsSpacer,
@@ -37,7 +39,8 @@ import { DataSourceInformation } from '../../../home/Insights';
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
 import { HistoryEventsListObject } from './EventListSceneObject';
 
-export const LABELS_FILTER = 'filter';
+export const LABELS_FILTER = 'labelsFilter';
+export const STATE_FILTER = 'stateFilter';
 /**
  *
  * This scene shows the history of the alert state changes.
@@ -48,10 +51,24 @@ export const LABELS_FILTER = 'filter';
  * Both share time range and filter variable from the parent scene.
  */
 
+export const StateFilterValues = {
+  all: 'all',
+  firing: 'Alerting',
+  normal: 'Normal',
+  pending: 'Pending',
+} as const;
+
 export const CentralAlertHistoryScene = () => {
-  const filterVariable = new TextBoxVariable({
+  const labelsFilterVariable = new TextBoxVariable({
     name: LABELS_FILTER,
     label: 'Filter by labels: ',
+  });
+  const transitionsFilterVariable = new CustomVariable({
+    name: STATE_FILTER,
+    value: 'all',
+    label: 'Filter by state:',
+    hide: VariableHide.dontHide,
+    query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
   });
 
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
@@ -65,7 +82,8 @@ export const CentralAlertHistoryScene = () => {
       new SceneReactObject({
         component: ClearFilterButton,
         props: {
-          filterVariable,
+          labelsFilterVariable: labelsFilterVariable,
+          transitionsFilterVariable: transitionsFilterVariable
         },
       }),
       new SceneControlsSpacer(),
@@ -79,7 +97,7 @@ export const CentralAlertHistoryScene = () => {
       to: 'now',
     }),
     $variables: new SceneVariableSet({
-      variables: [filterVariable],
+      variables: [labelsFilterVariable, transitionsFilterVariable],
     }),
     body: new SceneFlexLayout({
       direction: 'column',
@@ -176,21 +194,23 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
   });
 }
 
-function ClearFilterButton({ filterVariable }: { filterVariable: TextBoxVariable }) {
+function ClearFilterButton({ labelsFilterVariable, transitionsFilterVariable }: { labelsFilterVariable: TextBoxVariable, transitionsFilterVariable: CustomVariable }) {
   const styles = useStyles2(getStyles);
-  const valueInFilter = filterVariable.getValue();
-  if (!valueInFilter) {
+  const valueInLabelsFilter = labelsFilterVariable.getValue();
+  const valueInTransitionsFilter = transitionsFilterVariable.getValue();
+  if (!valueInLabelsFilter && valueInTransitionsFilter === StateFilterValues.all) {
     return null;
   }
   const onClearFilter = () => {
-    filterVariable.setValue('');
+    labelsFilterVariable.setValue('');
+    transitionsFilterVariable.changeValueTo(StateFilterValues.all);
   };
   return (
     <Tooltip content="Clear filter">
       <div className={styles.clearFilter}>
         <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
           <Trans i18nKey="central-alert-history.filter.clear">
-            <Text>Clear labels filter</Text>
+            <Text>Clear filters</Text>
           </Trans>
         </Button>
       </div>

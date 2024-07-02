@@ -20,8 +20,9 @@ import { EventState } from './EventListSceneObject';
 interface EventDetailsProps {
   record: LogRecord;
   logRecords: LogRecord[];
+  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
 }
-export function EventDetails({ record, logRecords }: EventDetailsProps) {
+export function EventDetails({ record, logRecords, addFilter }: EventDetailsProps) {
   // get the rule from the ruleUID
   const ruleUID = record.line?.ruleUID ?? '';
   const identifier = useMemo(() => {
@@ -59,7 +60,7 @@ export function EventDetails({ record, logRecords }: EventDetailsProps) {
   return (
     <Stack direction="column" gap={0.5}>
       <Stack direction={'row'} gap={6}>
-        <StateTransition record={record} />
+        <StateTransition record={record} addFilter={addFilter} />
         <ValueInTransition record={record} />
         <NumberTransitions transitions={ruleUID ? getTransitionsCountByRuleUID(ruleUID) : 0} />
       </Stack>
@@ -71,17 +72,18 @@ export function EventDetails({ record, logRecords }: EventDetailsProps) {
 
 interface StateTransitionProps {
   record: LogRecord;
+  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
 }
-function StateTransition({ record }: StateTransitionProps) {
+function StateTransition({ record, addFilter }: StateTransitionProps) {
   return (
     <Stack gap={0.5} direction={'column'}>
       <Text variant="body" weight="light" color="secondary">
         <Trans i18nKey="central-alert-history.details.state-transitions">State transition</Trans>
       </Text>
       <Stack gap={0.5} direction={'row'} alignItems="center">
-        <EventState state={record.line.previous} showLabel />
+        <EventState state={record.line.previous} showLabel addFilter={addFilter} />
         <Icon name="arrow-right" size="lg" />
-        <EventState state={record.line.current} showLabel />
+        <EventState state={record.line.current} showLabel addFilter={addFilter} />
       </Stack>
     </Stack>
   );

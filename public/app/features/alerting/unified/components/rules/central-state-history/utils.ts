@@ -7,7 +7,7 @@ import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager'
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER, StateFilterValues } from './CentralAlertHistoryScene';
 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
@@ -18,6 +18,7 @@ const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables i
  * This allows us to be able to filter by labels in the groupDataFramesByTime function.
  */
 export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
+  const stateFilterValue = getStateFilterInQueryParams();
   const tsValues = data?.data?.values[0] ?? [];
   const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
   const lines = data?.data?.values[1] ?? [];
@@ -26,7 +27,10 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
     const line = lines[index];
     // values property can be undefined for some instance states (e.g. NoData)
     if (isLine(line)) {
-      acc.push({ timestamp, line });
+      // filter by state
+      if (stateFilterValue===StateFilterValues.all || line.current===stateFilterValue){
+        acc.push({ timestamp, line });
+      }
     }
     return acc;
   }, []);
@@ -47,21 +51,24 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
 }
 
 // Scenes sync variables in the URL adding a prefix to the variable name.
-function getFilterInQueryParams() {
+function getLabelsFilterInQueryParams() {
   const queryParams = new URLSearchParams(window.location.search);
   return queryParams.get(`${QUERY_PARAM_PREFIX}${LABELS_FILTER}`) ?? '';
 }
-
+function getStateFilterInQueryParams() {
+  const queryParams = new URLSearchParams(window.location.search);
+  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER}`) ?? '';
+}
 /*
  * This function groups the data frames by time and filters them by labels.
  * The interval is set to 10 seconds.
  * */
 function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[]): DataFrame[] {
   // Filter data frames by labels. This is used to filter out the data frames that do not match the query.
-  const filterValue = getFilterInQueryParams();
+  const labelsFilterValue = getLabelsFilterInQueryParams();
   const dataframesFiltered = dataFrames.filter((frame) => {
     const labels = JSON.parse(frame.name ?? ''); // in name we store the labels stringified
-    const matchers = Boolean(filterValue) ? parseMatchers(filterValue) : [];
+    const matchers = Boolean(labelsFilterValue) ? parseMatchers(labelsFilterValue) : [];
     return labelsMatchMatchers(labels, matchers);
   });
   // Extract time fields from filtered data frames

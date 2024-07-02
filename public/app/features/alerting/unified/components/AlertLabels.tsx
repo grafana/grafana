@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { chain } from 'lodash';
 import pluralize from 'pluralize';
 import { useState } from 'react';
+import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, IconButton, getTagColorsFromName, useStyles2 } from '@grafana/ui';
@@ -95,25 +96,40 @@ function getLabelColor(input: string): string {
   return getTagColorsFromName(input).color;
 }
 
-const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => ({
-  wrapper: css({
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => {
+  return {
+    wrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
 
-    gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
-  }),
-  labelContainer: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    cursor: 'pointer',
-  }),
-  clickableLabel: css({
-    cursor: 'pointer',
-  }),
-  iconColor: (color: string) =>
-    css({
-      color: color,
+      gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
     }),
-});
+    labelContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      cursor: 'pointer',
+    }),
+    clickableLabel: css({
+      cursor: 'pointer',
+    }),
+    iconColor: (color: string) => {
+      const borderColor = theme.isDark
+        ? tinycolor2(color).lighten(5).toString()
+        : tinycolor2(color).darken(5).toString();
+
+      const valueBackgroundColor = theme.isDark
+        ? tinycolor2(color).darken(5).toString()
+        : tinycolor2(color).lighten(5).toString();
+
+      const fontColor = color ? tinycolor2.mostReadable(color, ['#000', '#fff']).toString() : theme.colors.text.primary;
+      return css({
+        backgroundColor: valueBackgroundColor,
+        color: fontColor,
+        borderColor,
+        borderRadius: theme.shape.radius.circle,
+      });
+    },
+  };
+};
