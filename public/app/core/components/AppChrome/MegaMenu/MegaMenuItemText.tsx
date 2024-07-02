@@ -3,7 +3,6 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PreferenceNavLink } from '@grafana/schema';
 import { Icon, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -13,7 +12,7 @@ export interface Props {
   target?: HTMLAnchorElement['target'];
   url: string;
   id?: string;
-  onPin?: (item: PreferenceNavLink) => void;
+  onPin: (id?: string) => void;
   isPinned?: boolean;
 }
 
@@ -36,9 +35,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (id && onPin) {
-            onPin({ id, target: target || '', text: '', url });
-          }
+          onPin(id);
         }}
       />
     </div>

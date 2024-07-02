@@ -2,7 +2,7 @@ import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { PreferenceNavLink, Preferences } from '@grafana/schema';
+import { Preferences } from '@grafana/schema';
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
@@ -31,11 +31,7 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 }
 
 export interface UpdateRequestArg {
-  body: {
-    navbar: {
-      savedItems: PreferenceNavLink[];
-    };
-  };
+  body: Preferences;
 }
 
 const URL = '/user/preferences';
