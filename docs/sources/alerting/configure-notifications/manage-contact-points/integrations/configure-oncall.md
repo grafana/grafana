@@ -64,7 +64,7 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
 
 The OnCall contact point is ready to receive alert notifications.
 
-To add this contact point to your alert, complete the following next steps:
+To add the contact point to your alert rule, complete the following next steps:
 
 1. In Grafana, navigate to **Alerting > Alert rules**.
 1. Edit or create a new alert rule.
