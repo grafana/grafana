@@ -102,129 +102,6 @@ The following video guides you through the creation steps and common customizati
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Graph styles
-
-Use this option to define how to display your time series data. You can use overrides to combine multiple styles in the same graph.
-
-- Lines
-- Bars
-- Points
-
-![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
-
-### Bar alignment
-
-Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
-
-- **Before** ![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-before.png)
-  The bar is drawn before the point. The point is placed on the trailing corner of the bar.
-- **Center** ![Bar alignment center icon](/static/img/docs/time-series-panel/bar-alignment-center.png)
-  The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
-- **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
-  The bar is drawn after the point. The point is placed on the leading corner of the bar.
-
-### Bar width factor
-
-Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space.
-
-### Line width
-
-Line width is a slider that controls the thickness for series lines or the outline for bars.
-
-![Line thickness 5 example](/static/img/docs/time-series-panel/line-width-5.png)
-
-### Fill opacity
-
-Use opacity to specify the series area fill color.
-
-![Fill opacity examples](/static/img/docs/time-series-panel/fill-opacity.png)
-
-### Gradient mode
-
-Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
-
-- **None:** No gradient fill. This is the default setting.
-- **Opacity:** An opacity gradient where the opacity of the fill increases as y-axis values increase.
-- **Hue:** A subtle gradient that is based on the hue of the series color.
-- **Scheme:** A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
-
-Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
-
-![Gradient mode examples](/static/img/docs/time-series-panel/gradient-modes-v9.png)
-
-### Show points
-
-You can configure your visualization to add points to lines or bars.
-
-- **Auto:** Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
-- **Always:** Show the points regardless of how dense the data set is.
-- **Never:** Do not show points.
-
-### Point size
-
-Set the size of the points, from 1 to 40 pixels in diameter.
-
-### Line interpolation
-
-This option controls how the graph interpolates the series line.
-
-![Line interpolation option](/static/img/docs/time-series-panel/line-interpolation-option.png)
-
-- **Linear:** Points are joined by straight lines.
-- **Smooth:** Points are joined by curved lines that smooths transitions between points.
-- **Step before:** The line is displayed as steps between points. Points are rendered at the end of the step.
-- **Step after:** The line is displayed as steps between points. Points are rendered at the beginning of the step.
-
-### Line style
-
-Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
-
-![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
-
-- **Solid:** Display a solid line. This is the default setting.
-- **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
-- **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
-
-![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
-
-{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Stack series
-
-_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
-
-![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
-
-- **Off:** Turns off series stacking. When **Off**, all series share the same space in the visualization.
-- **Normal:** Stacks series on top of each other.
-- **100%:** Stack by percentage where all series add up to 100%.
-
-#### Stack series in groups
-
-The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides](ref:configure-field-overrides).
-
-1. Edit the panel and click **Overrides**.
-1. Create a field override for the **Stack series** option.
-1. In stacking mode, click **Normal**.
-1. Name the stacking group in which you want the series to appear.
-
-   The stacking group name option is only available when you create an override.
-
-### Fill below to
-
-The **Fill below to** option fills the area between two series. This option is only available as a series/field override.
-
-1. Edit the panel and click **Overrides**.
-1. Select the fields to fill below.
-1. In **Add override property**, select **Fill below to**.
-1. Select the series for which you want the fill to stop.
-
-The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
-
-{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
-
 ## Axis options
 
 Options under the axis category change how the x- and y-axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
@@ -308,46 +185,144 @@ The transform option is only available as an override.
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
-## Color options
+## Graph styles options
 
-By default, the graph uses the standard [Color scheme](ref:color-scheme) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
-color this way automatically creates an override rule that set's a specific color for a specific series.
+Use this option to define how to display your time series data. You can use overrides to combine multiple styles in the same graph.
 
-### Classic palette
+- Lines
+- Bars
+- Points
 
-The most common setup is to use the **Classic palette** for graphs. This scheme automatically assigns a color for each field or series based on its order. If the order of a field changes in your query, the color also changes. You can manually configure a color for a specific field using an override rule.
+![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
 
-### Single color
+### Bar alignment
 
-Use this mode to specify a color. You can also click the colored line icon next to each series in the Legend to open the color picker. This automatically creates a new override that sets the color scheme to single color and the selected color.
+Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
 
-### By value color schemes
+- **Before** ![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-before.png)
+  The bar is drawn before the point. The point is placed on the trailing corner of the bar.
+- **Center** ![Bar alignment center icon](/static/img/docs/time-series-panel/bar-alignment-center.png)
+  The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
+- **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
+  The bar is drawn after the point. The point is placed on the leading corner of the bar.
 
-If you select a by value color scheme like **From thresholds (by value)** or **Green-Yellow-Red (by value)**, the **Color series by** option appears. This option controls which value (Last, Min, Max) to use to assign the series its color.
+### Bar width factor
 
-### Scheme gradient mode
+Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space.
+
+### Line width
+
+Line width is a slider that controls the thickness for series lines or the outline for bars.
+
+![Line thickness 5 example](/static/img/docs/time-series-panel/line-width-5.png)
+
+### Fill opacity
+
+Use opacity to specify the series area fill color.
+
+![Fill opacity examples](/static/img/docs/time-series-panel/fill-opacity.png)
+
+### Gradient mode
+
+Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
+
+- **None:** No gradient fill. This is the default setting.
+- **Opacity:** An opacity gradient where the opacity of the fill increases as y-axis values increase.
+- **Hue:** A subtle gradient that is based on the hue of the series color.
+- **Scheme:** A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
+
+Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
+
+![Gradient mode examples](/static/img/docs/time-series-panel/gradient-modes-v9.png)
+
+#### Scheme gradient mode
 
 The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the line or bar receives a gradient color defined from the selected **Color scheme**.
 
-#### From thresholds
+##### From thresholds
 
 If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as they cross the defined thresholds.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
 
-The following image shows bars mode enabled.
-
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
-
-#### Gradient color schemes
+##### Gradient color schemes
 
 The following image shows a line chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
+### Show points
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+You can configure your visualization to add points to lines or bars.
+
+- **Auto:** Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
+- **Always:** Show the points regardless of how dense the data set is.
+- **Never:** Do not show points.
+
+### Point size
+
+Set the size of the points, from 1 to 40 pixels in diameter.
+
+### Line interpolation
+
+This option controls how the graph interpolates the series line.
+
+![Line interpolation option](/static/img/docs/time-series-panel/line-interpolation-option.png)
+
+- **Linear:** Points are joined by straight lines.
+- **Smooth:** Points are joined by curved lines that smooths transitions between points.
+- **Step before:** The line is displayed as steps between points. Points are rendered at the end of the step.
+- **Step after:** The line is displayed as steps between points. Points are rendered at the beginning of the step.
+
+### Line style
+
+Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
+
+![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
+
+- **Solid:** Display a solid line. This is the default setting.
+- **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
+- **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
+
+![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
+
+{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Stack series
+
+_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
+
+![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
+
+- **Off:** Turns off series stacking. When **Off**, all series share the same space in the visualization.
+- **Normal:** Stacks series on top of each other.
+- **100%:** Stack by percentage where all series add up to 100%.
+
+#### Stack series in groups
+
+The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides](ref:configure-field-overrides).
+
+1. Edit the panel and click **Overrides**.
+1. Create a field override for the **Stack series** option.
+1. In stacking mode, click **Normal**.
+1. Name the stacking group in which you want the series to appear.
+
+   The stacking group name option is only available when you create an override.
+
+### Fill below to
+
+The **Fill below to** option fills the area between two series. This option is only available as a series/field override.
+
+1. Edit the panel and click **Overrides**.
+1. Select the fields to fill below.
+1. In **Add override property**, select **Fill below to**.
+1. Select the series for which you want the fill to stop.
+
+The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
+
+{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
 
 ## Standard options
 
