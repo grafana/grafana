@@ -534,5 +534,6 @@ func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query mo
 	if len(uids) == 0 {
 		return nil, accesscontrol.NewAuthorizationErrorGeneric("read rules in any folder")
 	}
+	sort.Strings(uids)
 	return uids, nil
 }
