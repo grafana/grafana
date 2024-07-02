@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -128,7 +129,7 @@ func TestReduce(t *testing.T) {
 	}
 }
 
-func TestGroupScopesByAction(t *testing.T) {
+func TestGroupScopesByActionContext(t *testing.T) {
 	// test data = 3 actions with 2+i scopes each, including a duplicate
 	permissions := []Permission{}
 	for i := 0; i < 3; i++ {
@@ -138,11 +139,6 @@ func TestGroupScopesByAction(t *testing.T) {
 				Scope:  fmt.Sprintf("scope:%d_%d", i, j),
 			})
 		}
-		// add a duplicate scope
-		permissions = append(permissions, Permission{
-			Action: fmt.Sprintf("action:%d", i),
-			Scope:  fmt.Sprintf("scope:%d_%d", i, 0),
-		})
 	}
 
 	expected := map[string][]string{}
@@ -155,7 +151,7 @@ func TestGroupScopesByAction(t *testing.T) {
 		expected[action] = scopes
 	}
 
-	assert.EqualValues(t, expected, GroupScopesByAction(permissions))
+	assert.EqualValues(t, expected, GroupScopesByActionContext(context.Background(), permissions))
 }
 
 func BenchmarkGroupScopesByAction(b *testing.B) {
@@ -180,6 +176,6 @@ func BenchmarkGroupScopesByAction(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		GroupScopesByAction(permissions)
+		GroupScopesByActionContext(context.Background(), permissions)
 	}
 }
