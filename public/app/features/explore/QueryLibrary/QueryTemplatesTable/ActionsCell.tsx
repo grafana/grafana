@@ -67,8 +67,8 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
         className={styles.actionButton}
         size="lg"
         name="comment-alt"
-        title={t('explore.query-library.delete-query', 'Add/edit description')}
-        tooltip={t('explore.query-library.delete-query', 'Add/edit description')}
+        title={t('explore.query-library.add-edit-description', 'Add/edit description')}
+        tooltip={t('explore.query-library.add-edit-description', 'Add/edit description')}
         onClick={() => {
           setEditFormOpen(true);
         }}

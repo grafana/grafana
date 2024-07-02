@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useAsync } from 'react-use';
 
 import { AppEvents, dateTime } from '@grafana/data';
 import { DataSourcePicker, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
@@ -48,8 +48,6 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
   const [editQueryTemplate] = useEditQueryTemplateMutation();
 
   const datasource = useDatasource(queryToAdd?.datasource);
-
-  const [queryStrings, setQueryStrings] = useState<string[]>([]);
 
   // this is an array to support multi query templates sometime in the future
   const queries =
@@ -121,24 +119,23 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     }
   };
 
-  const generateQueryText = (queries: DataQuery[]) => {
+  const { value: queryText } = useAsync(async () => {
     const promises = queries.map(async (query, i) => {
       const datasource = await getDataSourceSrv().get(query.datasource);
       return datasource?.getQueryDisplayText?.(query) || getQueryDisplayText(query);
     });
-    Promise.all(promises).then((qStrings) => setQueryStrings(qStrings));
-  };
-
-  generateQueryText(queries);
+    return Promise.all(promises);
+  });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <p>{info}</p>
-      {queryStrings.map((queryString, i) => (
-        <Field key={`query-${i}`} label={t('explore.add-to-library-modal.query', 'Query')}>
-          <TextArea readOnly={true} value={queryString}></TextArea>
-        </Field>
-      ))}
+      {queryText &&
+        queryText.map((queryString, i) => (
+          <Field key={`query-${i}`} label={t('explore.add-to-library-modal.query', 'Query')}>
+            <TextArea readOnly={true} value={queryString}></TextArea>
+          </Field>
+        ))}
       {queryToAdd && (
         <>
           <Field label={t('explore.add-to-library-modal.data-source-name', 'Data source name')}>

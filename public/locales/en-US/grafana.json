@@ -545,7 +545,8 @@
       "delete-query": "Delete query",
       "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
       "delete-query-title": "Delete query",
-      "query-deleted": "Query deleted"
+      "query-deleted": "Query deleted",
+      "add-edit-description": "Add/edit description"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
