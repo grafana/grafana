@@ -21,6 +21,12 @@ Explore is your starting point for analyzing, querying and aggregating data in G
 Explore consists of a toolbar, a query editor, the ability to add multiple queries, a query history and a query inspector that provides detailed statistics about your query.
 
 - **Toolbar** - Provides an Outline and quick access to frequently used tools and settings.
+  - **Outline** - Keeps track of the queries and visualization panels created in Explore. Refer to 
+  - **Data source option dropdown** - 
+  - **Split** - 
+  - **Add** - 
+  - **Time picker** - 
+  - **Run query** - Click to run your query.
 
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
 
