@@ -132,7 +132,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 	res := map[string]map[int64]org.RoleType{}
 
 	for _, v := range mappings {
-		kv := strings.Split(v, ":")
+		kv := splitOrgMapping(v)
 		if !isValidOrgMappingFormat(kv) {
 			m.logger.Error("Skipping org mapping due to invalid format.", "mapping", fmt.Sprintf("%v", v))
 			if roleStrict {
@@ -201,6 +201,18 @@ func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
 		allOrgIDs[org.ID] = true
 	}
 	return allOrgIDs, nil
+}
+
+func splitOrgMapping(mapping string) []string {
+	splitted := strings.Split(mapping, ":")
+	if len(splitted) <= 3 {
+		return splitted
+	}
+	result := make([]string, 3)
+	result[2] = splitted[len(splitted)-1]
+	result[1] = splitted[len(splitted)-2]
+	result[0] = strings.Join(splitted[:len(splitted)-2], ":")
+	return result
 }
 
 func getRoleForInternalOrgMapping(kv []string) org.RoleType {
