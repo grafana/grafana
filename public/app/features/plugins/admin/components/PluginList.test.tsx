@@ -47,6 +47,7 @@ const getMockPlugin = (id: string): CatalogPlugin => {
     isDisabled: false,
     isDeprecated: false,
     isPublished: true,
+    isManaged: false,
   };
 };
 
