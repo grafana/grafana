@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -389,7 +390,7 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	}
 
 	// Get migration data JSON
-	request, err := s.getMigrationDataJSON(ctx)
+	request, err := s.getMigrationDataJSON(ctx, &user.SignedInUser{})
 	if err != nil {
 		s.log.Error("error getting the json request body for migration run", "err", err.Error())
 		return nil, fmt.Errorf("migration data get error: %w", err)
@@ -457,7 +458,7 @@ func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigratio
 	return c, nil
 }
 
-func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSnapshot", trace.WithAttributes(
 		attribute.String("sessionUid", sessionUid),
 	))
@@ -499,7 +500,8 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 
 	// start building the snapshot asynchronously while we return a success response to the client
 	go func() {
-		if err := s.buildSnapshot(context.Background(), initResp.MaxItemsPerPartition, snapshot); err != nil {
+
+		if err := s.buildSnapshot(context.Background(), signedInUser, initResp.MaxItemsPerPartition, snapshot); err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
 		}
 	}()

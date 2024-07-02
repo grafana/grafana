@@ -2,19 +2,24 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	cryptoRand "crypto/rand"
 	"fmt"
 	"time"
 
+	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
+	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
+	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
+	"golang.org/x/crypto/nacl/box"
 )
 
-func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequest, error) {
+func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	// Data sources
 	dataSources, err := s.getDataSources(ctx)
 	if err != nil {
@@ -30,7 +35,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 	}
 
 	// Folders
-	folders, err := s.getFolders(ctx)
+	folders, err := s.getFolders(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get folders", "err", err)
 		return nil, err
@@ -113,10 +118,9 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 	return result, err
 }
 
-func (s *Service) getFolders(ctx context.Context) ([]folder.Folder, error) {
-	reqCtx := contexthandler.FromContext(ctx)
+func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUser) ([]folder.Folder, error) {
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-		SignedInUser: reqCtx.SignedInUser,
+		SignedInUser: signedInUser,
 	})
 	if err != nil {
 		return nil, err
@@ -145,7 +149,7 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
-func (s *Service) buildSnapshot(ctx context.Context, maxItemsPerPartition uint32, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
+func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedInUser, maxItemsPerPartition uint32, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
 	// TODO -- make sure we can only build one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
@@ -162,19 +166,36 @@ func (s *Service) buildSnapshot(ctx context.Context, maxItemsPerPartition uint32
 		return fmt.Errorf("setting snapshot status to creating: snapshotUID=%s %w", snapshotMeta.UID, err)
 	}
 
-	snapshot, err := NewSnapshotWriter(snapshotMeta.LocalDir)
+	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
+	if err != nil {
+		return fmt.Errorf("nacl: generating public and private key: %w", err)
+	}
+
+	// Use GMS public key + the grafana generated private private key to encrypt snapshot files.
+	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
+		Public:  []byte(snapshotMeta.EncryptionKey),
+		Private: privateKey[:],
+	},
+		crypto.NewNacl(),
+		snapshotMeta.LocalDir,
+	)
 	if err != nil {
 		return fmt.Errorf("instantiating snapshot writer: %w", err)
 	}
 
-	migrationData, err := s.getMigrationDataJSON(ctx)
+	migrationData, err := s.getMigrationDataJSON(ctx, signedInUser)
 	if err != nil {
 		return fmt.Errorf("fetching migration data: %w", err)
 	}
 
-	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]cloudmigration.MigrateDataRequestItem, 0)
+	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, 0)
 	for _, item := range migrationData.Items {
-		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], item)
+		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], snapshot.MigrateDataRequestItemDTO{
+			Type:  snapshot.MigrateDataType(item.Type),
+			RefID: item.RefID,
+			Name:  item.Name,
+			Data:  item.Data,
+		})
 	}
 
 	for _, resourceType := range []cloudmigration.MigrateDataType{
@@ -183,13 +204,16 @@ func (s *Service) buildSnapshot(ctx context.Context, maxItemsPerPartition uint32
 		cloudmigration.DashboardDataType,
 	} {
 		for _, chunk := range slicesext.Chunks(int(maxItemsPerPartition), resourcesGroupedByType[resourceType]) {
-			if err := snapshot.Write(string(resourceType), chunk); err != nil {
+			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
 				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
 			}
 		}
 	}
 
-	_, err = snapshot.Finish()
+	// Add the grafana generated public key to the index file so gms can use it to decrypt the snapshot files later.
+	// This works because the snapshot files are being encrypted with
+	// the grafana generated private key + the gms public key.
+	_, err = snapshotWriter.Finish(publicKey[:])
 	if err != nil {
 		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
 	}
