@@ -109,8 +109,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         });
       }
 
-      optionBuilder.addDataLinks(builder, ctx);
-
       const shouldAddBackgroundEditor = opts.element.item.standardEditorConfig?.background ?? true;
       if (shouldAddBackgroundEditor) {
         optionBuilder.addBackground(builder, ctx);
@@ -120,6 +118,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       if (shouldAddBorderEditor) {
         optionBuilder.addBorder(builder, ctx);
       }
+
+      optionBuilder.addDataLinks(builder, ctx);
     },
   };
 }
