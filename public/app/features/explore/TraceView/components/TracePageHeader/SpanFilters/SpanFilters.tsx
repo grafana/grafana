@@ -15,13 +15,21 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { uniq } from 'lodash';
-import { useState, useEffect, memo, useCallback } from 'react';
-import * as React from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
-import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Collapse,
+  HorizontalGroup,
+  Icon,
+  InlineField,
+  InlineFieldRow, Input,
+  Select,
+  Tooltip,
+  useStyles2
+} from '@grafana/ui';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import SearchBarInput from '../../common/SearchBarInput';
@@ -419,10 +427,11 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                           }),
                         });
                       }}
-                      options={[toOption('='), toOption('!=')]}
+                      options={[toOption('='), toOption('!='), toOption('=~'), toOption('!~')]}
                       value={tag.operator}
                     />
                     <span className={styles.tagValues}>
+                      {(tag.operator === '=' || tag.operator === '!=') && (
                       <Select
                         aria-label="Select tag value"
                         isClearable
@@ -436,9 +445,24 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                           });
                         }}
                         options={tagValues[tag.id] ? tagValues[tag.id] : []}
-                        placeholder="Select value"
+                        placeholder="Select tag value"
                         value={tag.value}
-                      />
+                      />)}
+                      {(tag.operator === '=~' || tag.operator === '!~') && (
+                        <Input
+                          aria-label="Select tag value"
+                          onChange={(val) => {
+                            setSpanFiltersSearch({
+                              ...search,
+                              tags: search.tags?.map((x) => {
+                                return x.id === tag.id ? { ...x, value: val?.currentTarget?.value || '' } : x;
+                              }),
+                            });
+                          }}
+                          placeholder="Select tag value"
+                          width={18}
+                          value={tag.value || ''}
+                        />)}
                     </span>
                     {(tag.key || tag.value || search.tags.length > 1) && (
                       <AccessoryButton

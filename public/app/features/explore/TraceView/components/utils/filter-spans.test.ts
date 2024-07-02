@@ -199,6 +199,7 @@ describe('filterSpans', () => {
         spans
       )
     ).toEqual(new Set([spanID2]));
+
     expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message' }] }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
@@ -331,6 +332,18 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '!=' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '=~', value: 'tagValue' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!~', value: 'tagValue1' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
