@@ -44,6 +44,10 @@ Learn more about the table panel in our [table panel documentation](https://graf
 
 {{< youtube id="wBLxYp2BLAU" >}}
 
+{{< admonition type="note" >}}
+Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default. We’d love hear from you about how this new feature is working. To provide feedback, you can open an issue in the [Grafana GitHub repository](https://github.com/grafana/grafana).
+{{< /admonition >}}
+
 #### Stat visualization percent change color mode options
 
 _Generally available in all editions of Grafana_
