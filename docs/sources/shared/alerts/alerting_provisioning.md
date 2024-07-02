@@ -1740,10 +1740,10 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name        | Type                      | Go type  | Required | Default | Description | Example                |
-| ----------- | ------------------------- | -------  | :------: | ------- | ----------- | -----------------------|
-| end_time    | string                    | `string` |          |         |             |`"end_time": "24:00"`   |
-| start_time  | string                    | `string` |          |         |             |`"start_time": "18:00"` |
+| Name       | Type   | Go type  | Required | Default | Description | Example                 |
+| ---------- | ------ | -------- | :------: | ------- | ----------- | ----------------------- |
+| end_time   | string | `string` |          |         |             | `"end_time": "24:00"`   |
+| start_time | string | `string` |          |         |             | `"start_time": "18:00"` |
 
 {{% /responsive-table %}}
 
