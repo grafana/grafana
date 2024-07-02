@@ -22,7 +22,7 @@ on:
 jobs:
   setup:
     name: Post-release comms
-    output:
+    outputs:
       version: ${{ steps.output.outputs.version }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
