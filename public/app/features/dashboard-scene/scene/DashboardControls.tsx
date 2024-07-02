@@ -79,8 +79,8 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     this.addActivationHandler(() => {
       let refreshPickerUnsub: CancelActivationHandler | undefined;
 
-      if (this.state.hideTimeControls && this.state.refreshPicker.state.refresh) {
-        this.state.refreshPicker.activate();
+      if (this.state.hideTimeControls) {
+        refreshPickerUnsub = this.state.refreshPicker.activate();
       }
 
       return () => {
