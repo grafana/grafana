@@ -119,6 +119,7 @@ func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Histor
 }
 
 func (c *HttpLokiClient) Ping(ctx context.Context) error {
+	log := c.log.FromContext(ctx)
 	uri := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/labels")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
 	if err != nil {
@@ -131,7 +132,7 @@ func (c *HttpLokiClient) Ping(ctx context.Context) error {
 	if res != nil {
 		defer func() {
 			if err := res.Body.Close(); err != nil {
-				c.log.Warn("Failed to close response body", "err", err)
+				log.Warn("Failed to close response body", "err", err)
 			}
 		}()
 	}
@@ -142,7 +143,7 @@ func (c *HttpLokiClient) Ping(ctx context.Context) error {
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return fmt.Errorf("ping request to loki endpoint returned a non-200 status code: %d", res.StatusCode)
 	}
-	c.log.Debug("Ping request to Loki endpoint succeeded", "status", res.StatusCode)
+	log.Debug("Ping request to Loki endpoint succeeded", "status", res.StatusCode)
 	return nil
 }
 
@@ -180,6 +181,7 @@ func (r *Sample) UnmarshalJSON(b []byte) error {
 }
 
 func (c *HttpLokiClient) Push(ctx context.Context, s []Stream) error {
+	log := c.log.FromContext(ctx)
 	enc, err := c.encoder.encode(s)
 	if err != nil {
 		return err
@@ -204,11 +206,11 @@ func (c *HttpLokiClient) Push(ctx context.Context, s []Stream) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			c.log.Warn("Failed to close response body", "err", err)
+			log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	_, err = c.handleLokiResponse(resp)
+	_, err = c.handleLokiResponse(log, resp)
 	if err != nil {
 		return err
 	}
@@ -227,6 +229,7 @@ func (c *HttpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 }
 
 func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error) {
+	log := c.log.FromContext(ctx)
 	// Run the pre-flight checks for the query.
 	if start > end {
 		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
@@ -248,7 +251,7 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 	values.Set("limit", fmt.Sprintf("%d", limit))
 
 	queryURL.RawQuery = values.Encode()
-
+	log.Debug("Sending query request", "query", logQL, "start", start, "end", end, "limit", limit)
 	req, err := http.NewRequest(http.MethodGet,
 		queryURL.String(), nil)
 	if err != nil {
@@ -264,11 +267,11 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			c.log.Warn("Failed to close response body", "err", err)
+			log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	data, err := c.handleLokiResponse(res)
+	data, err := c.handleLokiResponse(log, res)
 	if err != nil {
 		return QueryRes{}, err
 	}
@@ -295,7 +298,7 @@ type QueryData struct {
 	Result []Stream `json:"result"`
 }
 
-func (c *HttpLokiClient) handleLokiResponse(res *http.Response) ([]byte, error) {
+func (c *HttpLokiClient) handleLokiResponse(log log.Logger, res *http.Response) ([]byte, error) {
 	if res == nil {
 		return nil, fmt.Errorf("response is nil")
 	}
@@ -307,9 +310,9 @@ func (c *HttpLokiClient) handleLokiResponse(res *http.Response) ([]byte, error) 
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		if len(data) > 0 {
-			c.log.Error("Error response from Loki", "response", string(data), "status", res.StatusCode)
+			log.Error("Error response from Loki", "response", string(data), "status", res.StatusCode)
 		} else {
-			c.log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
+			log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
 		}
 		return nil, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
 	}
