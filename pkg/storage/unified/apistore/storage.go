@@ -13,7 +13,6 @@ import (
 	"io"
 	"reflect"
 	"strconv"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -21,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -32,8 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
-
-const SortByKey = "grafana.app/sortBy"
 
 var _ storage.Interface = (*Storage)(nil)
 
@@ -305,28 +301,6 @@ func toListRequest(key string, opts storage.ListOptions) (*resource.ListRequest,
 
 		for _, r := range requirements {
 			v := r.Key()
-
-			// TODO?? sorting in list not supported
-			if v == SortByKey {
-				if r.Operator() != selection.Equals {
-					return nil, predicate, apierrors.NewBadRequest("invalid sort operation // " + r.String())
-				}
-				parts := strings.Split(v, " ")
-				if len(parts) != 2 {
-					return nil, predicate, apierrors.NewBadRequest("invalid sort operation // " + r.String())
-				}
-				sort := &resource.Sort{Field: parts[0]}
-				switch parts[1] {
-				case "ASC":
-					sort.Order = resource.Sort_ASC
-				case "DESC":
-					sort.Order = resource.Sort_DESC
-				default:
-					return nil, predicate, apierrors.NewBadRequest("invalid sort order // " + r.String())
-				}
-				// TODO! Must update the predicate!
-				continue
-			}
 
 			req.Options.Labels = append(req.Options.Labels, &resource.Requirement{
 				Key:      v,
