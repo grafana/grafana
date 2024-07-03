@@ -6,8 +6,6 @@
 
 export * from './text';
 export * from './events';
-export * from './geo/layer';
-export * from './query';
 export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
 
 // DataFrames
@@ -74,6 +72,18 @@ export {
   dataFrameToJSON,
 } from './dataframe/DataFrameJSON';
 export { compareDataFrameStructures, compareArrayValues, shallowCompare } from './dataframe/frameComparisons';
+
+// Query
+export { getNextRefId } from './query/refId';
+
+// Geo
+export {
+  FrameGeometrySourceMode,
+  type FrameGeometrySource,
+  type MapLayerOptions,
+  type MapLayerHandler,
+  type MapLayerRegistryItem,
+} from './geo/layer';
 
 // Field
 export {
