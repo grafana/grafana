@@ -9,14 +9,11 @@ import {
 } from '@grafana/scenes';
 import { Stack, Text, TextLink } from '@grafana/ui';
 
-import { ALL_VARIABLE_VALUE } from '../../variables/constants';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
-
-import { getLabelOptions } from './utils';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
   metadata?: PromMetricsMetadataItem;
@@ -67,8 +64,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
     const { metadata, metadataLoading } = model.useState();
     const variable = model.getVariable();
-    const { loading: labelsLoading } = variable.useState();
-    const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
+    const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
     return (
       <StatusWrapper isLoading={labelsLoading || metadataLoading}>
