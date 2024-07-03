@@ -11,7 +11,7 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardGridItem } from '../../scene/DashboardGridItem';
@@ -77,16 +77,14 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     // If panel edit mode is open when the user chooses the "get help" panel menu option
     // we want the debug dashboard to include the panel with any changes that were made while
     // in panel edit mode.
-    const gridItems = (scene.state.body as SceneGridLayout).state.children as DashboardGridItem[];
     const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
-    for (const item of gridItems) {
-      const vizPanel = item.state.body instanceof LibraryVizPanel ? item.state.body.state.panel! : item.state.body;
-      if (vizPanel.state.key === sourcePanel.state.key && vizPanel instanceof VizPanel) {
-        const gridItemClone = item.clone();
-        scene.state.editPanel!.state.vizManager.commitChangesTo(vizPanel);
-        saveModel = gridItemToPanel(gridItemClone);
-        break;
-      }
+    const parentItem = sourcePanel.parent as DashboardGridItem | LibraryVizPanel;
+    const dashGridItem = parentItem instanceof DashboardGridItem ? parentItem : parentItem.parent;
+    if (dashGridItem instanceof DashboardGridItem) {
+      saveModel = {
+        ...gridItemToPanel(dashGridItem),
+        ...vizPanelToPanel(scene.state.editPanel.state.vizManager.state.panel.clone()),
+      };
     }
   } else {
     saveModel = gridItemToPanel(gridItem);
