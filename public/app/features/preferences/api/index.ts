@@ -3,7 +3,7 @@ export * from './user/endpoints.gen';
 import { generatedAPI } from './user/endpoints.gen';
 
 export const userPreferencesAPI = generatedAPI.enhanceEndpoints({
-  addTagTypes: ['UserPreferences', 'OrgPreferences'],
+  addTagTypes: ['UserPreferences'],
   endpoints: {
     getUserPreferences: {
       providesTags: ['UserPreferences'],
