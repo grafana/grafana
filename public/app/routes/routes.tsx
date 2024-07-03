@@ -363,56 +363,57 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     // LOGIN / SIGNUP
-    {
-      path: '/login',
-      component: LoginPage,
-      pageClass: 'login-page',
-      chromeless: true,
-    },
-    {
-      path: '/invite/:code',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
-      ),
-      chromeless: true,
-    },
-    {
-      path: '/verify',
-      component: !config.verifyEmailEnabled
-        ? () => <Redirect to="/signup" />
-        : SafeDynamicImport(
-            () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
-          ),
-      pageClass: 'login-page',
-      chromeless: true,
-    },
-    {
-      path: '/signup',
-      component: config.disableUserSignUp
-        ? () => <Redirect to="/login" />
-        : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
-      pageClass: 'login-page',
-      chromeless: true,
-    },
-    {
-      path: '/user/password/send-reset-email',
-      chromeless: true,
-      component: SafeDynamicImport(
-        () =>
-          import(/* webpackChunkName: "SendResetMailPage" */ 'app/core/components/ForgottenPassword/SendResetMailPage')
-      ),
-    },
-    {
-      path: '/user/password/reset',
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "ChangePasswordPage" */ 'app/core/components/ForgottenPassword/ChangePasswordPage'
-          )
-      ),
-      pageClass: 'login-page',
-      chromeless: true,
-    },
+    // LOGZ.IO GRAFANA CHANGE::DEV-00000 deactivate all login/signup related pages
+    // {
+    //   path: '/login',
+    //   component: LoginPage,
+    //   pageClass: 'login-page',
+    //   chromeless: true,
+    // },
+    // {
+    //   path: '/invite/:code',
+    //   component: SafeDynamicImport(
+    //     () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
+    //   ),
+    //   chromeless: true,
+    // },
+    // {
+    //   path: '/verify',
+    //   component: !config.verifyEmailEnabled
+    //     ? () => <Redirect to="/signup" />
+    //     : SafeDynamicImport(
+    //         () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
+    //       ),
+    //   pageClass: 'login-page',
+    //   chromeless: true,
+    // },
+    // {
+    //   path: '/signup',
+    //   component: config.disableUserSignUp
+    //     ? () => <Redirect to="/login" />
+    //     : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
+    //   pageClass: 'login-page',
+    //   chromeless: true,
+    // },
+    // {
+    //   path: '/user/password/send-reset-email',
+    //   chromeless: true,
+    //   component: SafeDynamicImport(
+    //     () =>
+    //       import(/* webpackChunkName: "SendResetMailPage" */ 'app/core/components/ForgottenPassword/SendResetMailPage')
+    //   ),
+    // },
+    // {
+    //   path: '/user/password/reset',
+    //   component: SafeDynamicImport(
+    //     () =>
+    //       import(
+    //         /* webpackChunkName: "ChangePasswordPage" */ 'app/core/components/ForgottenPassword/ChangePasswordPage'
+    //       )
+    //   ),
+    //   pageClass: 'login-page',
+    //   chromeless: true,
+    // },
     {
       path: '/dashboard/snapshots',
       component: SafeDynamicImport(

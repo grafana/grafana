@@ -23,10 +23,10 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
         <a href="/" className="external-link">
           home
         </a>{' '}
-        or seeking help on the{' '}
+        {/* or seeking help on the{' '} LOGZ.IO GRAFANA CHANGE::DEV-00000 hide grafana links
         <a href="https://community.grafana.com" target="_blank" rel="noreferrer" className="external-link">
           community site.
-        </a>
+        </a> */}
       </div>
       <div className={styles.grot}>
         <img src={`public/img/grot-404-${theme.isDark ? 'dark' : 'light'}.svg`} width="100%" alt="grot" />

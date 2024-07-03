@@ -114,6 +114,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       // LOGZ.IO GRAFANA CHANGE :: DEV-20896 Change snapshot url to logzio
       const logzioUrl = await logzioServices?.shareUrlService?.getLogzioGrafanaUrl({
         productUrl: window.location.origin,
+        hash: '/dashboard/grafana-snapshot',
       });
 
       this.setState({
