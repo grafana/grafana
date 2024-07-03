@@ -1,6 +1,6 @@
 # Instrumenting Grafana
 
-This guide provides conventions and best practices for instrumenting Grafana using logs, metrics and traces.
+This guide provides conventions and best practices for instrumenting Grafana using logs, metrics, and traces.
 
 ## Logs
 
