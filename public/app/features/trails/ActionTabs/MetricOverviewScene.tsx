@@ -1,3 +1,5 @@
+import { Trans } from 'react-i18next';
+
 import { PromMetricsMetadataItem } from '@grafana/prometheus';
 import {
   QueryVariable,
@@ -66,28 +68,52 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const variable = model.getVariable();
     const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
-    const help = metadata?.help;
-    const type = metadata?.type;
-    const unit = metadata?.unit;
-
     return (
       <StatusWrapper isLoading={labelsLoading || metadataLoading}>
         <Stack gap={6}>
           <>
             <Stack direction="column" gap={0.5}>
-              <Text weight={textWeight(help)}>Description</Text>
-              <div style={{ maxWidth: 360 }}>{help}</div>
+              <Text weight={'medium'}>
+                <Trans>Description</Trans>
+              </Text>
+              <div style={{ maxWidth: 360 }}>
+                {metadata?.help ? (
+                  <div>{metadata?.help}</div>
+                ) : (
+                  <i>
+                    <Trans>No description available</Trans>
+                  </i>
+                )}
+              </div>
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={textWeight(type)}>Type</Text>
-              {type}
+              <Text weight={'medium'}>
+                <Trans>Type</Trans>
+              </Text>
+              {metadata?.type ? (
+                <div>{metadata?.type}</div>
+              ) : (
+                <i>
+                  <Trans>Unknown</Trans>
+                </i>
+              )}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={textWeight(unit)}>Unit</Text>
-              {unit}
+              <Text weight={'medium'}>
+                <Trans>Unit</Trans>
+              </Text>
+              {metadata?.unit ? (
+                <div>{metadata?.unit}</div>
+              ) : (
+                <i>
+                  <Trans>Unknown</Trans>
+                </i>
+              )}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Labels</Text>
+              <Text weight={'medium'}>
+                <Trans>Labels</Trans>
+              </Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (
                 <TextLink
@@ -119,8 +145,4 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 
 export function buildMetricOverviewScene() {
   return new MetricOverviewScene({});
-}
-
-function textWeight(data: string | undefined) {
-  return data ? 'medium' : 'light';
 }
