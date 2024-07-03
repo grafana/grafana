@@ -115,7 +115,8 @@ Ensure the label set for an alert does not have two or more labels with the same
 {{< collapse title="Label key format" >}}
 
 Grafana has a built-in Alertmanager that supports both Unicode label keys and values. If you are using an external Prometheus Alertmanager, label keys must be compatible with their [data model](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
-This means that label keys must only contain **ASCII letters**, **numbers**, as well as **underscores** and match the regex `[a-zA-Z_][a-zA-Z0-9_]*`.
+This means that label keys must only contain _ASCII letters_, _numbers_, and _underscores_.
+Label keys must also be matched by the regular expression `[a-zA-Z_][a-zA-Z0-9_]*`.
 Any invalid characters are removed or replaced by the Grafana alerting engine before being sent to the external Alertmanager according to the following rules:
 
 - Whitespace is removed.
