@@ -2,7 +2,6 @@ import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { Preferences } from '@grafana/schema';
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
@@ -30,38 +29,8 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
   return backendSrvBaseQuery;
 }
 
-export interface UpdateRequestArg {
-  body: Preferences;
-}
-
-const URL = '/user/preferences';
-export const preferencesAPI = createApi({
-  reducerPath: 'preferencesAPI',
+export const baseAPI = createApi({
+  reducerPath: 'userPreferencesAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
-  tagTypes: ['UserPreferences'],
-  endpoints: (build) => ({
-    loadUserPreferences: build.query<Preferences, void>({
-      query: (queryArg) => ({ url: URL }),
-      providesTags: ['UserPreferences'],
-    }),
-    updateUserPreferences: build.mutation<Preferences, UpdateRequestArg>({
-      query: ({ body }) => ({
-        url: URL,
-        method: 'PUT',
-        body,
-      }),
-      invalidatesTags: ['UserPreferences'],
-    }),
-    patchUserPreferences: build.mutation<Preferences, UpdateRequestArg>({
-      query: ({ body }) => ({
-        url: URL,
-        method: 'PATCH',
-        body,
-      }),
-      invalidatesTags: ['UserPreferences'],
-    }),
-  }),
+  endpoints: () => ({}),
 });
-
-export const { useLoadUserPreferencesQuery, useUpdateUserPreferencesMutation, usePatchUserPreferencesMutation } =
-  preferencesAPI;

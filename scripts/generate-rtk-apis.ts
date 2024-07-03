@@ -23,17 +23,10 @@ const config: ConfigFile = {
         'getDashboardByUid',
       ],
     },
-    '../public/app/features/preferences/api/endpoints.gen.ts': {
-      apiFile: '../public/app/features/preferences/api/baseAPI.ts',
+    '../public/app/features/preferences/api/user/endpoints.gen.ts': {
+      apiFile: '../public/app/features/preferences/api/user/baseAPI.ts',
       apiImport: 'baseAPI',
-      filterEndpoints: [
-        'getUserPreferences',
-        'updateUserPreferences',
-        'patchUserPreferences',
-        'getOrgPreferences',
-        'updateOrgPreferences',
-        'patchOrgPreferences',
-      ],
+      filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
   },
 };

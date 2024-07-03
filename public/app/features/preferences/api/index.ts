@@ -1,8 +1,8 @@
-export * from './endpoints.gen';
+export * from './user/endpoints.gen';
 
-import { generatedAPI } from './endpoints.gen';
+import { generatedAPI } from './user/endpoints.gen';
 
-export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
+export const userPreferencesAPI = generatedAPI.enhanceEndpoints({
   addTagTypes: ['UserPreferences', 'OrgPreferences'],
   endpoints: {
     getUserPreferences: {
@@ -13,15 +13,6 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
     patchUserPreferences: {
       invalidatesTags: ['UserPreferences'],
-    },
-    getOrgPreferences: {
-      providesTags: ['OrgPreferences'],
-    },
-    updateOrgPreferences: {
-      invalidatesTags: ['OrgPreferences'],
-    },
-    patchOrgPreferences: {
-      invalidatesTags: ['OrgPreferences'],
     },
   },
 });

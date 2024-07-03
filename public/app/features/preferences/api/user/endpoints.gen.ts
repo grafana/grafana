@@ -1,51 +1,30 @@
 import { baseAPI as api } from './baseAPI';
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
-    getOrgPreferences: build.query<GetOrgPreferencesApiResponse, GetOrgPreferencesApiArg>({
-      query: () => ({ url: `/org/preferences` }),
-    }),
-    patchOrgPreferences: build.mutation<PatchOrgPreferencesApiResponse, PatchOrgPreferencesApiArg>({
-      query: (queryArg) => ({ url: `/org/preferences`, method: 'PATCH', body: queryArg.preferencesDto }),
-    }),
-    updateOrgPreferences: build.mutation<UpdateOrgPreferencesApiResponse, UpdateOrgPreferencesApiArg>({
-      query: (queryArg) => ({ url: `/org/preferences`, method: 'PUT', body: queryArg.preferencesDto }),
-    }),
     getUserPreferences: build.query<GetUserPreferencesApiResponse, GetUserPreferencesApiArg>({
       query: () => ({ url: `/user/preferences` }),
     }),
     patchUserPreferences: build.mutation<PatchUserPreferencesApiResponse, PatchUserPreferencesApiArg>({
-      query: (queryArg) => ({ url: `/user/preferences`, method: 'PATCH', body: queryArg.preferencesDto }),
+      query: (queryArg) => ({ url: `/user/preferences`, method: 'PATCH', body: queryArg.patchPrefsCmd }),
     }),
     updateUserPreferences: build.mutation<UpdateUserPreferencesApiResponse, UpdateUserPreferencesApiArg>({
-      query: (queryArg) => ({ url: `/user/preferences`, method: 'PUT', body: queryArg.preferencesDto }),
+      query: (queryArg) => ({ url: `/user/preferences`, method: 'PUT', body: queryArg.updatePrefsCmd }),
     }),
   }),
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type GetOrgPreferencesApiResponse = /** status 200 (empty) */ Preferences;
-export type GetOrgPreferencesApiArg = void;
-export type PatchOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type PatchOrgPreferencesApiArg = {
-  preferencesDto: PatchPreferencesDto;
-};
-export type UpdateOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateOrgPreferencesApiArg = {
-  preferencesDto: UpdatePreferencesDto;
-};
 export type GetUserPreferencesApiResponse = /** status 200 (empty) */ Preferences;
 export type GetUserPreferencesApiArg = void;
 export type PatchUserPreferencesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type PatchUserPreferencesApiArg = {
-  preferencesDto: PatchPreferencesDto;
+  patchPrefsCmd: PatchPrefsCmd;
 };
 export type UpdateUserPreferencesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type UpdateUserPreferencesApiArg = {
-  preferencesDto: UpdatePreferencesDto;
+  updatePrefsCmd: UpdatePrefsCmd;
 };
 export type CookiePreferencesDefinesModelForCookiePreferences = {
   analytics?: {
@@ -84,7 +63,7 @@ export type Preferences = {
 export type ErrorResponseBody = {
   /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
   error?: string;
-  /** a human-readable version of the error */
+  /** a human readable version of the error */
   message: string;
   /** Status An optional status to denote the cause of the error.
 
@@ -95,7 +74,7 @@ export type SuccessResponseBody = {
   message?: string;
 };
 export type CookieType = string;
-export type PatchPreferencesDto = {
+export type PatchPrefsCmd = {
   cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
@@ -107,7 +86,7 @@ export type PatchPreferencesDto = {
   timezone?: 'utc' | 'browser';
   weekStart?: string;
 };
-export type UpdatePreferencesDto = {
+export type UpdatePrefsCmd = {
   cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
@@ -119,11 +98,5 @@ export type UpdatePreferencesDto = {
   timezone?: 'utc' | 'browser';
   weekStart?: string;
 };
-export const {
-  useGetOrgPreferencesQuery,
-  usePatchOrgPreferencesMutation,
-  useUpdateOrgPreferencesMutation,
-  useGetUserPreferencesQuery,
-  usePatchUserPreferencesMutation,
-  useUpdateUserPreferencesMutation,
-} = injectedRtkApi;
+export const { useGetUserPreferencesQuery, usePatchUserPreferencesMutation, useUpdateUserPreferencesMutation } =
+  injectedRtkApi;
