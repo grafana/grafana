@@ -169,8 +169,13 @@ fix-cue: $(CUE)
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
+.PHONY: update-workspace
+update-workspace:
+	@echo "updating workspace"
+	$(GO) mod download
+
 .PHONY: build-go
-build-go: gen-go ## Build all Go binaries.
+build-go: update-workspace gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
