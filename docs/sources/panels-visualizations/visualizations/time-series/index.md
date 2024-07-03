@@ -76,11 +76,6 @@ Time series visualizations are the default and primary way to visualize time ser
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
 {{% admonition type="note" %}}
-You can [link alert rules](ref:link-alert) to time series visualization to observe when alerts fire and are resolved in the form of annotations. In addition, you can create alert rules from the Alert tab within the panel options.
-At the moment, alerts are only supported in the time series and [alert list](ref:alert-list) visualizations.
-{{% /admonition %}}
-
-{{% admonition type="note" %}}
 You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{% /admonition %}}
 
@@ -95,6 +90,10 @@ The following video guides you through the creation steps and common customizati
 ## Supported data formats
 
 Time series visualizations require time series data; that is a sequence of measurements, ordered in time, where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+
+## Alert rules
+
+You can [link alert rules](ref:link-alert) to time series visualizations to observe when alerts fire and are resolved in the form of annotations. In addition, you can create alert rules from the **Alert** tab within the panel editor.
 
 ## Panel options
 
@@ -177,19 +176,6 @@ Set a **Soft min** or **soft max** option for better control of y-axis limits. B
 To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
-
-### Transform
-
-Use this option to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
-
-- **Negative Y transform:** Flip the results to negative values on the Y axis.
-- **Constant:** Show the first value as a constant line.
-
-{{% admonition type="note" %}}
-The transform option is only available as an override.
-{{% /admonition %}}
-
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
 ## Graph styles options
 
@@ -351,3 +337,16 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Transform override property
+
+Use the **Transform** override property to transform series values without affecting the values shown in the tooltip, context menu, or legend.
+
+<!-- add more information about how to access this property -->
+
+- **Negative Y transform:** Flip the results to negative values on the Y axis.
+- **Constant:** Show the first value as a constant line.
+
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
+
+<!-- update shared filed above to add actual steps for adding this override -->
