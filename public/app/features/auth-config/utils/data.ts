@@ -51,7 +51,7 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
   if (Array.isArray(val)) {
     return val.map((v) => ({ label: v, value: v }));
   }
-  // Support parsing from JSON array format
+  // Stored as JSON Array
   if (val.startsWith('[') && val.endsWith(']')) {
     return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
   }
