@@ -193,6 +193,8 @@ The transform option is only available as an override.
 
 ## Graph styles options
 
+### Style
+
 Use this option to define how to display your time series data. You can use overrides to combine multiple styles in the same graph.
 
 - Lines
@@ -201,20 +203,16 @@ Use this option to define how to display your time series data. You can use over
 
 ![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
 
-### Bar alignment
+### Line interpolation
 
-Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
+This option controls how the graph interpolates the series line.
 
-- **Before** ![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-before.png)
-  The bar is drawn before the point. The point is placed on the trailing corner of the bar.
-- **Center** ![Bar alignment center icon](/static/img/docs/time-series-panel/bar-alignment-center.png)
-  The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
-- **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
-  The bar is drawn after the point. The point is placed on the leading corner of the bar.
+![Line interpolation option](/static/img/docs/time-series-panel/line-interpolation-option.png)
 
-### Bar width factor
-
-Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space.
+- **Linear:** Points are joined by straight lines.
+- **Smooth:** Points are joined by curved lines that smooths transitions between points.
+- **Step before:** The line is displayed as steps between points. Points are rendered at the end of the step.
+- **Step after:** The line is displayed as steps between points. Points are rendered at the beginning of the step.
 
 ### Line width
 
@@ -257,29 +255,6 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-### Show points
-
-You can configure your visualization to add points to lines or bars.
-
-- **Auto:** Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
-- **Always:** Show the points regardless of how dense the data set is.
-- **Never:** Do not show points.
-
-### Point size
-
-Set the size of the points, from 1 to 40 pixels in diameter.
-
-### Line interpolation
-
-This option controls how the graph interpolates the series line.
-
-![Line interpolation option](/static/img/docs/time-series-panel/line-interpolation-option.png)
-
-- **Linear:** Points are joined by straight lines.
-- **Smooth:** Points are joined by curved lines that smooths transitions between points.
-- **Step before:** The line is displayed as steps between points. Points are rendered at the end of the step.
-- **Step after:** The line is displayed as steps between points. Points are rendered at the beginning of the step.
-
 ### Line style
 
 Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
@@ -295,6 +270,18 @@ Set the style of the line. To change the color, use the standard [color scheme](
 {{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Show points
+
+You can configure your visualization to add points to lines or bars.
+
+- **Auto:** Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
+- **Always:** Show the points regardless of how dense the data set is.
+- **Never:** Do not show points.
+
+### Point size
+
+Set the size of the points, from 1 to 40 pixels in diameter.
 
 ### Stack series
 
@@ -316,6 +303,21 @@ The stacking group option is only available as an override. For more information
 1. Name the stacking group in which you want the series to appear.
 
    The stacking group name option is only available when you create an override.
+
+### Bar alignment
+
+Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
+
+- **Before** ![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-before.png)
+  The bar is drawn before the point. The point is placed on the trailing corner of the bar.
+- **Center** ![Bar alignment center icon](/static/img/docs/time-series-panel/bar-alignment-center.png)
+  The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
+- **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
+  The bar is drawn after the point. The point is placed on the leading corner of the bar.
+
+### Bar width factor
+
+Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space.
 
 ### Fill below to
 
