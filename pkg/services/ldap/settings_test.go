@@ -40,7 +40,7 @@ func TestReadingLDAPSettingsUsingCache(t *testing.T) {
 	// cache has been initialized
 	assert.NotNil(t, config)
 	assert.EqualValues(t, *firstActualConfig, *config)
-	assert.Nil(t, err, "No error when reading ldap config")
+	assert.Nil(t, err)
 	assert.EqualValues(t, "127.0.0.1", config.Servers[0].Host)
 
 	// make sure the cached config is returned on subsequent calls
@@ -48,4 +48,5 @@ func TestReadingLDAPSettingsUsingCache(t *testing.T) {
 	secondActualConfig, err := GetConfig(cfg)
 
 	assert.Equal(t, cachedConfig, secondActualConfig)
+	assert.Nil(t, err)
 }
