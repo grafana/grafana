@@ -40,7 +40,8 @@ import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from
 import { HistoryEventsListObject } from './EventListSceneObject';
 
 export const LABELS_FILTER = 'labelsFilter';
-export const STATE_FILTER = 'stateFilter';
+export const STATE_FILTER_TO = 'stateFilterTo';
+export const STATE_FILTER_FROM = 'stateFilterFrom';
 /**
  *
  * This scene shows the history of the alert state changes.
@@ -51,7 +52,14 @@ export const STATE_FILTER = 'stateFilter';
  * Both share time range and filter variable from the parent scene.
  */
 
-export const StateFilterValues = {
+export const StateToFilterValues = {
+  all: 'all',
+  firing: 'Alerting',
+  normal: 'Normal',
+  pending: 'Pending',
+} as const;
+
+export const StateFromFilterValues = {
   all: 'all',
   firing: 'Alerting',
   normal: 'Normal',
@@ -63,14 +71,20 @@ export const CentralAlertHistoryScene = () => {
     name: LABELS_FILTER,
     label: 'Filter by labels: ',
   });
-  const transitionsFilterVariable = new CustomVariable({
-    name: STATE_FILTER,
+  const transitionsToFilterVariable = new CustomVariable({
+    name: STATE_FILTER_TO,
     value: 'all',
-    label: 'Filter by state:',
+    label: 'Filter by current state:',
     hide: VariableHide.dontHide,
-    query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
+    query: `All : ${StateToFilterValues.all}, To Firing : ${StateToFilterValues.firing},To Normal : ${StateToFilterValues.normal},To Pending : ${StateToFilterValues.pending}`,
   });
-
+  const transitionsFromFilterVariable = new CustomVariable({
+    name: STATE_FILTER_FROM,
+    value: 'all',
+    label: 'Filter by previous state:',
+    hide: VariableHide.dontHide,
+    query: `All : ${StateToFilterValues.all}, From Firing : ${StateToFilterValues.firing},From Normal : ${StateToFilterValues.normal},From Pending : ${StateToFilterValues.pending}`,
+  });
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
   const scene = new EmbeddedScene({
@@ -82,8 +96,9 @@ export const CentralAlertHistoryScene = () => {
       new SceneReactObject({
         component: ClearFilterButton,
         props: {
-          labelsFilterVariable: labelsFilterVariable,
-          transitionsFilterVariable: transitionsFilterVariable
+          labelsFilterVariable,
+          transitionsToFilterVariable,
+          transitionsFromFilterVariable,
         },
       }),
       new SceneControlsSpacer(),
@@ -97,7 +112,7 @@ export const CentralAlertHistoryScene = () => {
       to: 'now',
     }),
     $variables: new SceneVariableSet({
-      variables: [labelsFilterVariable, transitionsFilterVariable],
+      variables: [labelsFilterVariable, transitionsFromFilterVariable, transitionsToFilterVariable],
     }),
     body: new SceneFlexLayout({
       direction: 'column',
@@ -194,16 +209,30 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
   });
 }
 
-function ClearFilterButton({ labelsFilterVariable, transitionsFilterVariable }: { labelsFilterVariable: TextBoxVariable, transitionsFilterVariable: CustomVariable }) {
+function ClearFilterButton({
+  labelsFilterVariable,
+  transitionsToFilterVariable,
+  transitionsFromFilterVariable,
+}: {
+  labelsFilterVariable: TextBoxVariable;
+  transitionsToFilterVariable: CustomVariable;
+  transitionsFromFilterVariable: CustomVariable;
+}) {
   const styles = useStyles2(getStyles);
   const valueInLabelsFilter = labelsFilterVariable.getValue();
-  const valueInTransitionsFilter = transitionsFilterVariable.getValue();
-  if (!valueInLabelsFilter && valueInTransitionsFilter === StateFilterValues.all) {
+  const valueInTransitionsFilter = transitionsToFilterVariable.getValue();
+  const valueInTransitionsFromFilter = transitionsFromFilterVariable.getValue();
+  if (
+    !valueInLabelsFilter &&
+    valueInTransitionsFilter === StateToFilterValues.all &&
+    valueInTransitionsFromFilter === StateFromFilterValues.all
+  ) {
     return null;
   }
   const onClearFilter = () => {
     labelsFilterVariable.setValue('');
-    transitionsFilterVariable.changeValueTo(StateFilterValues.all);
+    transitionsToFilterVariable.changeValueTo(StateToFilterValues.all);
+    transitionsFromFilterVariable.changeValueTo(StateFromFilterValues.all);
   };
   return (
     <Tooltip content="Clear filter">

@@ -15,12 +15,12 @@ import { VizWrapper } from '../../rule-editor/VizWrapper';
 import { AnnotationValue } from '../../rule-viewer/tabs/Details';
 import { LogRecord } from '../state-history/common';
 
-import { EventState } from './EventListSceneObject';
+import { EventState, FilterType } from './EventListSceneObject';
 
 interface EventDetailsProps {
   record: LogRecord;
   logRecords: LogRecord[];
-  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
+  addFilter: (key: string, value: string, type: FilterType) => void;
 }
 export function EventDetails({ record, logRecords, addFilter }: EventDetailsProps) {
   // get the rule from the ruleUID
@@ -72,7 +72,7 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
 
 interface StateTransitionProps {
   record: LogRecord;
-  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
+  addFilter: (key: string, value: string, type: FilterType) => void;
 }
 function StateTransition({ record, addFilter }: StateTransitionProps) {
   return (
@@ -81,9 +81,9 @@ function StateTransition({ record, addFilter }: StateTransitionProps) {
         <Trans i18nKey="central-alert-history.details.state-transitions">State transition</Trans>
       </Text>
       <Stack gap={0.5} direction={'row'} alignItems="center">
-        <EventState state={record.line.previous} showLabel addFilter={addFilter} />
+        <EventState state={record.line.previous} showLabel addFilter={addFilter} type="from" />
         <Icon name="arrow-right" size="lg" />
-        <EventState state={record.line.current} showLabel addFilter={addFilter} />
+        <EventState state={record.line.current} showLabel addFilter={addFilter} type="to" />
       </Stack>
     </Stack>
   );

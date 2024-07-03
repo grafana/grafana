@@ -3,7 +3,7 @@ import { byLabelText, byTestId } from 'testing-library-selector';
 
 import { setupMswServer } from '../../../mockApi';
 
-import { StateFilterValues } from './CentralAlertHistoryScene';
+import { StateToFilterValues } from './CentralAlertHistoryScene';
 import { HistoryEventsList } from './EventListSceneObject';
 
 setupMswServer();
@@ -16,7 +16,7 @@ const ui = {
 };
 describe('HistoryEventsList', () => {
   it('should render the list correctly filtered by label in filter variable', async () => {
-    render(<HistoryEventsList valueInLabelFilter={'alertname=alert1'} valueInStateFilter={StateFilterValues.all} addFilter={jest.fn()} />);
+    render(<HistoryEventsList valueInLabelFilter={'alertname=alert1'} valueInStateToFilter={StateToFilterValues.all} valueInStateFromFilter addFilter={jest.fn()} />);
     await waitFor(() => {
       expect(byLabelText('Loading bar').query()).not.toBeInTheDocument();
     });

@@ -45,7 +45,7 @@ import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER, STATE_FILTER, StateFilterValues } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateToFilterValues } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
@@ -60,13 +60,15 @@ const PAGE_SIZE = 100;
 interface HistoryEventsListProps {
   timeRange?: TimeRange;
   valueInLabelFilter: VariableValue;
-  valueInStateFilter: VariableValue;
-  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
+  valueInStateToFilter: VariableValue;
+  valueInStateFromFilter: VariableValue;
+  addFilter: (key: string, value: string, type: FilterType) => void;
 }
 export const HistoryEventsList = ({
   timeRange,
   valueInLabelFilter,
-  valueInStateFilter,
+  valueInStateToFilter,
+  valueInStateFromFilter,
   addFilter,
 }: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
@@ -85,7 +87,8 @@ export const HistoryEventsList = ({
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(
     valueInLabelFilter.toString(),
-    valueInStateFilter.toString(),
+    valueInStateToFilter.toString(),
+    valueInStateFromFilter.toString(),
     stateHistory
   );
 
@@ -111,7 +114,7 @@ const LoadingIndicator = ({ visible = false }) => {
 
 interface HistoryLogEventsProps {
   logRecords: LogRecord[];
-  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
+  addFilter: (key: string, value: string, type: FilterType) => void;
 }
 function HistoryLogEvents({ logRecords, addFilter }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
@@ -158,7 +161,7 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
 interface EventRowProps {
   record: LogRecord;
   logRecords: LogRecord[];
-  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
+  addFilter: (key: string, value: string, type: FilterType) => void;
 }
 function EventRow({ record, logRecords, addFilter }: EventRowProps) {
   const styles = useStyles2(getStyles);
@@ -255,14 +258,14 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
 interface EventTransitionProps {
   previous: GrafanaAlertStateWithReason;
   current: GrafanaAlertStateWithReason;
-  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
+  addFilter: (key: string, value: string, type: FilterType) => void;
 }
 function EventTransition({ previous, current, addFilter }: EventTransitionProps) {
   return (
     <Stack gap={0.5} direction={'row'}>
-      <EventState state={previous} addFilter={addFilter} />
+      <EventState state={previous} addFilter={addFilter} type="from" />
       <Icon name="arrow-right" size="lg" />
-      <EventState state={current} addFilter={addFilter} />
+      <EventState state={current} addFilter={addFilter} type="to" />
     </Stack>
   );
 }
@@ -290,9 +293,10 @@ const StateIcon = ({ iconName, iconColor, tooltipContent, labelText, showLabel }
 interface EventStateProps {
   state: GrafanaAlertStateWithReason;
   showLabel?: boolean;
-  addFilter: (key: string, value: string, type: 'label' | 'state') => void;
+  addFilter: (key: string, value: string, type: FilterType) => void;
+  type: 'from' | 'to';
 }
-export function EventState({ state, showLabel, addFilter }: EventStateProps) {
+export function EventState({ state, showLabel, addFilter, type }: EventStateProps) {
   const styles = useStyles2(getStyles);
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
@@ -351,13 +355,17 @@ export function EventState({ state, showLabel, addFilter }: EventStateProps) {
     },
   };
 
+  function onStateClick() {
+    addFilter('state', baseState, type === 'from' ? 'stateFrom' : 'stateTo');
+  }
+
   const config = stateConfig[baseState] || { iconName: 'exclamation-triangle', tooltipContent: 'Unknown State' };
   return (
     <div
-      onClick={() => addFilter('state', baseState, 'state')}
+      onClick={onStateClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          addFilter('state', baseState, 'state');
+          onStateClick();
         }
       }}
       className={styles.state}
@@ -479,21 +487,30 @@ export class HistoryEventsListObject extends SceneObjectBase {
   }
 }
 
+export type FilterType = 'label' | 'stateFrom' | 'stateTo';
+
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
   // eslint-disable-next-line
   const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
   // eslint-disable-next-line
-  const stateFilterVariable = sceneGraph.lookupVariable(STATE_FILTER, model)! as CustomVariable;
+  const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model)! as CustomVariable;
+  // eslint-disable-next-line
+  const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model)! as CustomVariable;
 
   const valueInfilterTextBox: VariableValue = labelsFiltersVariable.getValue();
-  const valueInStateFilter = stateFilterVariable.getValue();
+  const valueInStateToFilter = stateToFilterVariable.getValue();
+  const valueInStateFromFilter = stateFromFilterVariable.getValue();
 
-  const addFilter = (key: string, value: string, type: 'label' | 'state') => {
+  const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
-    if (type === 'state') {
-      stateFilterVariable.changeValueTo(value);
-    } else {
+    if (type === 'stateTo') {
+      stateToFilterVariable.changeValueTo(value);
+    }
+    if (type === 'stateFrom') {
+      stateFromFilterVariable.changeValueTo(value);
+    }
+    if (type === 'label') {
       const finalFilter = valueInfilterTextBox
         ? `${valueInfilterTextBox.toString()} ,${newFilterToAdd}`
         : newFilterToAdd;
@@ -506,12 +523,18 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
       timeRange={timeRange}
       valueInLabelFilter={valueInfilterTextBox}
       addFilter={addFilter}
-      valueInStateFilter={valueInStateFilter}
+      valueInStateToFilter={valueInStateToFilter}
+      valueInStateFromFilter={valueInStateFromFilter}
     />
   );
 }
 
-function useRuleHistoryRecords(filterInLabel: string, filterInState: string, stateHistory?: DataFrameJSON) {
+function useRuleHistoryRecords(
+  filterInLabel: string,
+  filterInStateTo: string,
+  filterInStateFrom: string,
+  stateHistory?: DataFrameJSON
+) {
   return useMemo(() => {
     if (!stateHistory?.data) {
       return { historyRecords: [] };
@@ -535,9 +558,11 @@ function useRuleHistoryRecords(filterInLabel: string, filterInState: string, sta
       }
       // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
       // eslint-disable-next-line
-      const baseState = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
-      const stateMatch = filterInState !== StateFilterValues.all ? filterInState === baseState : true;
-      if (filterMatch && stateMatch) {
+      const baseStateTo = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
+      const baseStateFrom = mapStateWithReasonToBaseState(line.previous) as GrafanaAlertState;
+      const stateToMatch = filterInStateTo !== StateToFilterValues.all ? filterInStateTo === baseStateTo : true;
+      const stateFromMatch = filterInStateFrom !== StateToFilterValues.all ? filterInStateFrom === baseStateFrom : true;
+      if (filterMatch && stateToMatch && stateFromMatch) {
         acc.push({ timestamp, line });
       }
 
@@ -547,5 +572,5 @@ function useRuleHistoryRecords(filterInLabel: string, filterInState: string, sta
     return {
       historyRecords: logRecords,
     };
-  }, [stateHistory, filterInLabel, filterInState]);
+  }, [stateHistory, filterInLabel, filterInStateTo, filterInStateFrom]);
 }

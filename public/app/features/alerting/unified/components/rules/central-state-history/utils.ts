@@ -8,7 +8,7 @@ import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager'
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER, STATE_FILTER, StateFilterValues } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateToFilterValues } from './CentralAlertHistoryScene';
 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
@@ -19,8 +19,10 @@ const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables i
  * This allows us to be able to filter by labels in the groupDataFramesByTime function.
  */
 export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
-  const stateInQueryParams = getStateFilterInQueryParams();
-  const stateFilterValue = stateInQueryParams === '' ? StateFilterValues.all : stateInQueryParams;
+  const stateToInQueryParams = getStateFilterToInQueryParams();
+  const stateFromInQueryParams = getStateFilterFromInQueryParams();
+  const stateToFilterValue = stateToInQueryParams === '' ? StateToFilterValues.all : stateToInQueryParams;
+  const stateFromFilterValue = stateFromInQueryParams === '' ? StateToFilterValues.all : stateFromInQueryParams;
 
   const tsValues = data?.data?.values[0] ?? [];
   const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
@@ -36,10 +38,13 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
       // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
       // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
       // eslint-disable-next-line
-      const baseState = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
-      const stateMatch = stateFilterValue !== StateFilterValues.all ? stateFilterValue === baseState : true;
+      const baseStateTo = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
+      const baseStateFrom = mapStateWithReasonToBaseState(line.previous) as GrafanaAlertState;
+      const stateToMatch = stateToFilterValue !== StateToFilterValues.all ? stateToFilterValue === baseStateTo : true;
+      const stateFromMatch =
+        stateFromFilterValue !== StateToFilterValues.all ? stateFromFilterValue === baseStateFrom : true;
       // filter by state
-      if (stateMatch) {
+      if (stateToMatch && stateFromMatch) {
         acc.push({ timestamp, line });
       }
     }
@@ -66,9 +71,14 @@ function getLabelsFilterInQueryParams() {
   const queryParams = new URLSearchParams(window.location.search);
   return queryParams.get(`${QUERY_PARAM_PREFIX}${LABELS_FILTER}`) ?? '';
 }
-function getStateFilterInQueryParams() {
+function getStateFilterToInQueryParams() {
   const queryParams = new URLSearchParams(window.location.search);
-  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER}`) ?? '';
+  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER_TO}`) ?? '';
+}
+
+function getStateFilterFromInQueryParams() {
+  const queryParams = new URLSearchParams(window.location.search);
+  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER_FROM}`) ?? '';
 }
 /*
  * This function groups the data frames by time and filters them by labels.
