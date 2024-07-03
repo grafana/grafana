@@ -4,7 +4,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Field, Input, Select } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { FolderAndGroup } from 'app/features/alerting/unified/components/rule-editor/FolderAndGroup';
-import { fetchExternalAlertmanagersConfigAction } from 'app/features/alerting/unified/state/actions';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { durationValidationPattern, parseDurationToMilliseconds } from 'app/features/alerting/unified/utils/time';
 import {
@@ -87,7 +86,8 @@ export const TemplateForm: FC = () => {
 
   useEffect(() => {
     const getData = async () => {
-      await dispatch(fetchExternalAlertmanagersConfigAction());
+      // @PERCONA_TODO
+      // await dispatch(fetchExternalAlertmanagersConfigAction());
       const { templates } = await dispatch(fetchTemplatesAction()).unwrap();
 
       if (selectedTemplate) {
