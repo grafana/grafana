@@ -6,6 +6,14 @@ export type DataQueryTarget = {
 };
 
 export type DataQuerySpec = {
+  title: string;
+  vars: object[]; // TODO: Detect variables in #86838
+  targets: DataQueryTarget[];
+};
+
+// TODO : change put in API to PATCH and use DataQuerySpec instead of the full spec to try to not have shenanigans
+
+export type DataQueryFullSpec = {
   apiVersion: string;
   kind: string;
   metadata: {
@@ -14,16 +22,14 @@ export type DataQuerySpec = {
     creationTimestamp?: string;
     annotations?: { [key: string]: string };
   };
-  spec: {
-    title: string;
-    vars: object[]; // TODO: Detect variables in #86838
-    targets: DataQueryTarget[];
-  };
+  spec: DataQuerySpec;
 };
+
+export type DataQueryPartialSpec = Partial<DataQuerySpec>;
 
 export type DataQuerySpecResponse = {
   apiVersion: string;
-  items: DataQuerySpec[];
+  items: DataQueryFullSpec[];
 };
 
 export const CREATED_BY_KEY = 'grafana.app/createdBy';

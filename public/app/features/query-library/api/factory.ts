@@ -1,10 +1,10 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, QueryTemplate } from '../types';
+import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, EditQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
-import { DataQuerySpec } from './types';
+import { DataQueryFullSpec, DataQueryPartialSpec } from './types';
 
 export const queryLibraryApi = createApi({
   baseQuery,
@@ -29,11 +29,11 @@ export const queryLibraryApi = createApi({
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),
-    editQueryTemplate: builder.mutation<void, DataQuerySpec>({
+    editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
       query: (editQueryTemplateCommand) => ({
-        url: `${editQueryTemplateCommand.metadata.name}`,
-        method: 'PUT',
-        data: editQueryTemplateCommand,
+        url: `${editQueryTemplateCommand.uid}`,
+        method: 'PATCH',
+        data: [{ op: 'replace', path: '/spec/title', value: editQueryTemplateCommand.partialSpec.title }],
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),

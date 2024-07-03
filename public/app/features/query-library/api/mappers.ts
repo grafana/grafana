@@ -1,7 +1,7 @@
 import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { API_VERSION, QueryTemplateKinds } from './query';
-import { CREATED_BY_KEY, DataQuerySpec, DataQuerySpecResponse, DataQueryTarget } from './types';
+import { CREATED_BY_KEY, DataQueryFullSpec, DataQuerySpecResponse, DataQueryTarget } from './types';
 
 export const parseCreatedByValue = (value?: string) => {
   // https://github.com/grafana/grafana/blob/main/pkg/services/user/identity.go#L194
@@ -43,7 +43,7 @@ export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecRe
 
 export const convertAddQueryTemplateCommandToDataQuerySpec = (
   addQueryTemplateCommand: AddQueryTemplateCommand
-): DataQuerySpec => {
+): DataQueryFullSpec => {
   const { title, targets } = addQueryTemplateCommand;
   return {
     apiVersion: API_VERSION,
