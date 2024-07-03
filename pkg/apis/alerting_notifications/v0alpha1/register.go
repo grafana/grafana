@@ -20,7 +20,7 @@ const (
 
 var (
 	TimeIntervalResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-		"timeintervals", "timeinterval", "TimeIntervals",
+		"timeintervals", "timeinterval", "TimeInterval",
 		func() runtime.Object { return &TimeInterval{} },
 		func() runtime.Object { return &TimeIntervalList{} },
 	)
