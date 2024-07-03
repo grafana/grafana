@@ -6,6 +6,7 @@ import (
 	"hash/fnv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
@@ -19,7 +20,7 @@ func getIntervalUID(t definitions.MuteTimeInterval) string {
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper) (*model.TimeIntervalList, error) {
+func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
 	data, err := json.Marshal(intervals)
 	if err != nil {
 		return nil, err
@@ -35,6 +36,9 @@ func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 		interval := intervals[idx]
 		spec := specs[idx]
 		item := buildTimeInterval(orgID, interval, spec, namespacer)
+		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableTimeIntervalsFields(&item)) {
+			continue
+		}
 		result.Items = append(result.Items, item)
 	}
 	return result, nil

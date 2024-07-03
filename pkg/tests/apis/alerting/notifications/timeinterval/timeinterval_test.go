@@ -537,3 +537,91 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 		current = result
 	})
 }
+
+func TestIntegrationTimeIntervalListSelector(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	interval1 := &v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "test1",
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}
+	interval1, err = adminClient.Create(ctx, interval1, v1.CreateOptions{})
+	require.NoError(t, err)
+
+	interval2 := &v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "test2",
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}
+	interval2, err = adminClient.Create(ctx, interval2, v1.CreateOptions{})
+	require.NoError(t, err)
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
+		MuteTimeInterval: config.MuteTimeInterval{
+			Name: interval2.Spec.Name,
+		},
+	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
+	interval2, err = adminClient.Get(ctx, interval2.Name, v1.GetOptions{})
+
+	require.NoError(t, err)
+
+	intervals, err := adminClient.List(ctx, v1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, intervals.Items, 2)
+
+	t.Run("should filter by interval name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.name=" + interval1.Spec.Name,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, interval1.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by interval metadata name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "metadata.name=" + interval2.Name,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, interval2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by multiple filters", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", interval2.Name, "API"),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, interval2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should be empty when filter does not match", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", interval2.Name, "unknown"),
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+}
