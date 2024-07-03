@@ -3,7 +3,8 @@ import { merge } from 'lodash';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes';
 import { ReducerID } from '../transformations/fieldReducer';
-import { FieldConfigPropertyItem, MappingType, SpecialValueMatch, ValueMapping } from '../types';
+import { FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { MappingType, SpecialValueMatch, ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { fixCellTemplateExpressions, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';

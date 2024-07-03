@@ -1,12 +1,14 @@
-import { SystemDateFormatSettings } from '../datetime';
+import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
 import { GrafanaTheme2 } from '../themes';
 
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
+import { IconName } from './icon';
+import { NavLinkDTO } from './navModel';
+import { OrgRole } from './orgs';
 import { PanelPluginMeta } from './panel';
-
-import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
+import { GrafanaTheme } from './theme';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.

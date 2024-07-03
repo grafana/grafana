@@ -1,6 +1,6 @@
 import { includes, isDate } from 'lodash';
 
-import { TimeZone } from '../types/index';
+import { TimeZone } from '../types/time';
 
 import { DateTime, dateTime, dateTimeForTimeZone, DurationUnit, isDateTime, ISO_8601 } from './moment_wrapper';
 

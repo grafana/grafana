@@ -1,7 +1,9 @@
 import { ComponentType } from 'react';
 
 import { EventBus } from '../events';
-import { DataFrame, InterpolateFunction, VariableSuggestionsScope, VariableSuggestion } from '../types';
+import { DataFrame } from '../types/dataFrame';
+import { VariableSuggestionsScope, VariableSuggestion } from '../types/dataLink';
+import { InterpolateFunction } from '../types/panel';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';

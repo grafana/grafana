@@ -1,5 +1,5 @@
 import { createDataFrame } from '../../../dataframe/processDataFrame';
-import { FieldType } from '../../../types';
+import { FieldType } from '../../../types/dataFrame';
 
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 

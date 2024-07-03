@@ -1,5 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataTransformerConfig, FieldType, MatcherConfig } from '../../types';
+import { FieldType } from '../../types/dataFrame';
+import { DataTransformerConfig, MatcherConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ValueMatcherID } from '../matchers/ids';
 import { BasicValueMatcherOptions } from '../matchers/valueMatchers/types';

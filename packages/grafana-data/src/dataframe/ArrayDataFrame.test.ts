@@ -1,4 +1,4 @@
-import { DataFrame } from '../types';
+import { DataFrame } from '../types/dataFrame';
 
 import { ArrayDataFrame, arrayToDataFrame } from './ArrayDataFrame';
 import { toDataFrameDTO } from './processDataFrame';

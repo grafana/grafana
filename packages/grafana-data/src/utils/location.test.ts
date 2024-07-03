@@ -1,6 +1,6 @@
 import { Location } from 'history';
 
-import { GrafanaConfig } from '../types';
+import { GrafanaConfig } from '../types/config';
 
 import { locationUtil } from './location';
 

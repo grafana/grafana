@@ -1,17 +1,16 @@
 import { Observable } from 'rxjs';
 
 import {
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginMeta,
-  PluginMetaInfo,
-  PluginType,
   TestDataSourceResponse,
-} from '../../types';
+} from '../../types/datasource';
+import { PluginMetaInfo, PluginType } from '../../types/plugin';
+import { DataQuery } from '../../types/query';
 
 export interface TestQuery extends DataQuery {
   query: string;
