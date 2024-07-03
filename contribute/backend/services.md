@@ -135,4 +135,4 @@ To extend an OSS background service, create a specific background interface for 
 
 ## Methods
 
-Any public method of a service should take `context.Context` as its first argument. If the method calls the bus, propagate other services or the database context, if possible.
+Any public method of a service should take `context.Context` as its first argument. If the method calls the bus, it will propagate other services or the database context, if possible.
