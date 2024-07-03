@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -113,7 +114,8 @@ type service struct {
 	tracing *tracing.TracingService
 	metrics prometheus.Registerer
 
-	authorizer *authorizer.GrafanaAuthorizer
+	authorizer        *authorizer.GrafanaAuthorizer
+	serverLockService builder.ServerLockService
 }
 
 func ProvideService(
@@ -122,6 +124,7 @@ func ProvideService(
 	rr routing.RouteRegister,
 	orgService org.Service,
 	tracing *tracing.TracingService,
+	serverLockService *serverlock.ServerLockService,
 	db db.DB,
 ) (*service, error) {
 	s := &service{
@@ -323,7 +326,10 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions, s.metrics)
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+		// Required for the dual writer initialization
+		s.metrics, s.serverLockService,
+	)
 	if err != nil {
 		return err
 	}

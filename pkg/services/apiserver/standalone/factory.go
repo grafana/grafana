@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -22,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -86,13 +84,6 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 			prometheus.NewRegistry(), // ???
 			tracer,
 		)
-
-	case "featuretoggle.grafana.app":
-		return featuretoggle.NewFeatureFlagAPIBuilder(
-			featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
-			&actest.FakeAccessControl{ExpectedEvaluate: false},
-			&setting.Cfg{},
-		), nil
 
 	case "testdata.datasource.grafana.app":
 		return datasource.NewDataSourceAPIBuilder(

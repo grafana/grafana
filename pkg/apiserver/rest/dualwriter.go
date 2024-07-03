@@ -24,6 +24,9 @@ var (
 	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
+// Function that will create a dual writer
+type DualWriteBuilder func(legacy LegacyStorage, storage Storage) (DualWriter, error)
+
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
 	rest.Storage
