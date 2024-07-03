@@ -76,15 +76,15 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
           <>
             <Stack direction="column" gap={0.5}>
               <Text weight={textWeight(help)}>Description</Text>
-              <div style={{ maxWidth: 360 }}>{help ? help : '&nbsp;'}</div>
+              <div style={{ maxWidth: 360 }}>{help}</div>
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={textWeight(type)}>Type</Text>
-              {type ? type : '&nbsp;'}
+              {type}
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={textWeight(unit)}>Unit</Text>
-              {unit ? unit : '&nbsp;'}
+              {unit}
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
