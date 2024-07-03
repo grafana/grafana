@@ -21,7 +21,11 @@ import {
 } from '../mocks';
 import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/grafanaRulerApi';
 import { GROUP_1, NAMESPACE_1, NAMESPACE_2, namespace2 } from '../mocks/mimirRulerApi';
-import { mimirServer, setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import {
+  mimirDataSource,
+  setRulerRuleGroupHandler,
+  setUpdateRulerRuleNamespaceHandler,
+} from '../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../mocks/server/constnts';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/grafanaRuler';
@@ -228,7 +232,7 @@ describe('useUpdateRuleGroupConfiguration', () => {
   });
 
   it('should be able to move a Data Source managed rule group', async () => {
-    mimirServer();
+    mimirDataSource();
     const capture = captureRequests();
 
     render(<MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={'a-new-group'} interval={'2m'} />);
@@ -241,7 +245,7 @@ describe('useUpdateRuleGroupConfiguration', () => {
   });
 
   it('should not move a Data Source managed rule group to namespace with existing target group name', async () => {
-    mimirServer();
+    mimirDataSource();
 
     render(
       <MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={namespace2[0].name} interval={'2m'} />

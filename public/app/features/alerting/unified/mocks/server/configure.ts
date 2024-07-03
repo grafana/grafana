@@ -68,7 +68,7 @@ export const setRulerRuleGroupHandler = (options?: HandlerOptions) => {
   return handler;
 };
 
-export function mimirServer() {
+export function mimirDataSource() {
   const dataSource = mockDataSource(
     {
       type: DataSourceType.Prometheus,
