@@ -114,7 +114,7 @@ There are many possible types of metrics that can be tracked. One popular method
 
 ### Naming conventions
 
-Use the namespace `grafana` as this prefixes any defined metric names with `grafana_`. This prefix makes it clear for operators that any metric named `grafana_*` belongs to Grafana.
+Use the namespace `grafana` to prefix any defined metric names with `grafana_`. This prefix makes it clear for operators that any metric named `grafana_*` belongs to Grafana.
 
 Use snake_case style when naming metrics; for example, `http_request_duration_seconds` instead of `httpRequestDurationSeconds`.
 
