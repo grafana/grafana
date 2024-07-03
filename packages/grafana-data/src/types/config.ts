@@ -1,6 +1,6 @@
 import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
-import { GrafanaTheme2 } from '../themes';
+import { GrafanaTheme2 } from '../themes/types';
 
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
