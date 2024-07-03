@@ -7140,6 +7140,18 @@
         },
         "type": "object"
       },
+      "NavbarPreference": {
+        "properties": {
+          "savedItemIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "title": "NavbarPreference defines model for NavbarPreference.",
+        "type": "object"
+      },
       "NewApiKeyResult": {
         "properties": {
           "id": {
@@ -7701,6 +7713,9 @@
           },
           "language": {
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -8292,6 +8307,9 @@
           "language": {
             "description": "Selected language (beta)",
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -11542,6 +11560,9 @@
           },
           "language": {
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
