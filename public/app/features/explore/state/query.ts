@@ -570,7 +570,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }));
 
     if (datasourceInstance != null) {
-      handleHistory(dispatch, getState().explore, datasourceInstance, queries);
+      await handleHistory(dispatch, getState().explore, datasourceInstance, queries);
     }
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);
