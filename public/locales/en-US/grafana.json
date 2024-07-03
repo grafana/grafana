@@ -686,6 +686,20 @@
       "split-widen": "Widen pane"
     }
   },
+  "export": {
+    "json": {
+      "cancel-button": "Cancel",
+      "copy-button": "Copy to clipboard",
+      "download-button": "Download file",
+      "export-externally-label": "Export the dashboard to use in another instance",
+      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
+      "title": "Save dashboard JSON"
+    },
+    "menu": {
+      "export-as-json-label": "Export",
+      "export-as-json-tooltip": "Export"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -954,8 +968,9 @@
       "disconnect-error-title": "There was an error disconnecting",
       "run-migration-error-description": "See the Grafana server logs for more details",
       "run-migration-error-title": "There was an error migrating your resources",
-      "start-migration": "Upload everything",
-      "target-stack-title": "Uploading to"
+      "start-migration": "Build snapshot",
+      "target-stack-title": "Uploading to",
+      "upload-migration": "Upload & migrate snapshot"
     },
     "token-status": {
       "active": "Token created and active",
@@ -1684,7 +1699,11 @@
     "tree": {
       "collapse": "Collapse",
       "expand": "Expand",
-      "headline": "Recommended",
+      "headline": {
+        "noResults": "No results found for your query",
+        "recommended": "Recommended",
+        "results": "Results"
+      },
       "search": "Search"
     }
   },
@@ -1729,6 +1748,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-description": "Advanced settings",
       "share-internally-title": "Share internally",

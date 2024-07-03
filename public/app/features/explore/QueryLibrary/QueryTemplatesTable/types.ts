@@ -7,5 +7,6 @@ export type QueryTemplateRow = {
   datasourceRef?: DataSourceRef | null;
   datasourceType?: string;
   createdAtTimestamp?: number;
+  user?: string;
   uid?: string;
 };
