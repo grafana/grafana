@@ -524,16 +524,17 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		},
 	})
 	if err == nil {
-		// A/ Fetch the blob. This should be highly cachable
-		// (option 1 is to wait for the parquet file to reach a specific RV)
+		// A/ Fetch the blob. This should be cached locally for most scenarios.
 
-		// B/ Query the parquet file. By then, we have a first list of items to return
+		// B/ Query the parquet file to get the keys that should be included in the result.
 
-		// C/ (option 2) List all the with RV > index.status.lastGeneratedRV
-		// we should process those events on the fly to compute the final list
+		// C/ Fetch all the events that are not included in the parquet files (RV > index.status.lastGeneratedRV)
+		// something like s.backend.ListEvents(since=index.status.lastGeneratedRV, until=req.rv)
 
-		// Call the list enpoint with the final list
-		// s.backend.PrepareList(ctx, ListOptions{<list the keys that should be returned here>})
+		// D/ filter additional events to figure out if additional keys should be added/removed from the result
+
+		// Fetch and return the final list (paginated)
+		// return s.backend.BacthGet(ctx, ListOptions{<list the keys that should be returned here>})
 	}
 
 	rsp, err := s.backend.PrepareList(ctx, req)

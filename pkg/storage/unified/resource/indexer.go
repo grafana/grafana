@@ -47,6 +47,8 @@ func (i *indexer) Run(ctx context.Context) error {
 			if event.Key.Resource == "parquetfile" {
 				continue // skip to avoid loop
 			}
+
+			// processing every single event. But we should do this in small batch instead.
 			err = i.processEvent(ctx, event)
 			if err != nil {
 				i.log.Error("error processing event", "error", err)
