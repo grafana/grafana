@@ -91,7 +91,6 @@ const ExportDataset: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
       serviceList = [];
     }
 
-    console.log(data);
     await dispatch(
       triggerDumpAction({
         serviceNames: serviceList,
@@ -145,7 +144,7 @@ const ExportDataset: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                         <DateTimePicker
                           label={Messages.date}
                           date={startDate}
-                          onChange={(e) => handleStartDate(e)}
+                          onChange={(e) => handleStartDate(e!)}
                           maxDate={new Date()}
                           timepickerProps={{
                             showSecond: false,
@@ -161,7 +160,7 @@ const ExportDataset: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                           label={Messages.date}
                           date={endDate}
                           maxDate={new Date()}
-                          onChange={setEndDate}
+                          onChange={(date) => setEndDate(date!)}
                           timepickerProps={{
                             showSecond: false,
                             hideDisabledOptions: true,
