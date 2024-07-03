@@ -17,6 +17,20 @@ func AllowAssignGrafanaAdminValidator(info *social.OAuthInfo, requester identity
 	return nil
 }
 
+func OrgMappingValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	if len(info.OrgMapping) > 0 && !requester.GetIsGrafanaAdmin() {
+		return ssosettings.ErrInvalidOAuthConfig("Organization mapping can only be updated by Grafana Server Admins.")
+	}
+	return nil
+}
+
+func OrgAttributePathValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.OrgAttributePath != "" && !requester.GetIsGrafanaAdmin() {
+		return ssosettings.ErrInvalidOAuthConfig("Organization attribute path can only be updated by Grafana Server Admins.")
+	}
+	return nil
+}
+
 func SkipOrgRoleSyncAllowAssignGrafanaAdminValidator(info *social.OAuthInfo, requester identity.Requester) error {
 	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
 		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")

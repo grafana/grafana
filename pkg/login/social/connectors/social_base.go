@@ -263,5 +263,7 @@ func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
 	return validation.Validate(info, requester,
 		validation.RequiredValidator(info.ClientId, "Client Id"),
 		validation.AllowAssignGrafanaAdminValidator,
-		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
+		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
+		validation.OrgAttributePathValidator,
+		validation.OrgMappingValidator)
 }

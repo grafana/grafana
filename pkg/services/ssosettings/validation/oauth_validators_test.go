@@ -153,3 +153,75 @@ func TestSkipOrgRoleSyncAllowAssignGrafanaAdminValidator(t *testing.T) {
 		})
 	}
 }
+
+func TestOrgMappingValidator(t *testing.T) {
+	tc := []testCase{
+		{
+			name: "passes when user is grafana admin and org mapping is set",
+			input: &social.OAuthInfo{
+				OrgMapping: []string{"group1:1:Viewer"},
+			},
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fails when user is not grafana admin and org mapping is set",
+			input: &social.OAuthInfo{
+				OrgMapping: []string{"group1:1:Viewer"},
+			},
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Organization mapping can only be updated by Grafana Server Admins."),
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			err := OrgMappingValidator(tt.input, tt.requester)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestOrgAttributePathValidator(t *testing.T) {
+	tc := []testCase{
+		{
+			name: "passes when user is grafana admin and org attribute path is set",
+			input: &social.OAuthInfo{
+				OrgAttributePath: "path",
+			},
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fails when user is not grafana admin and org attribute path is set",
+			input: &social.OAuthInfo{
+				OrgAttributePath: "path",
+			},
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig("Organization attribute path can only be updated by Grafana Server Admins."),
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			err := OrgAttributePathValidator(tt.input, tt.requester)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

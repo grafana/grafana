@@ -461,6 +461,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Organization mapping',
       description: orgMappingDescription(provider),
       type: 'select',
+      hidden: !contextSrv.isGrafanaAdmin,
       multi: true,
       allowCustomValue: true,
       options: [],
@@ -470,6 +471,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Organization attribute path',
       description: 'JMESPath expression to use for organization lookup.',
       type: 'text',
+      hidden: !['generic_oauth', 'okta'].includes(provider),
     },
     defineAllowedGroups: {
       label: 'Define allowed groups',
@@ -641,4 +643,3 @@ function orgMappingDescription(provider: string): string {
       return 'List of "<ExternalName>:<OrgIdOrName>:<Role>" mappings.';
   }
 }
-
