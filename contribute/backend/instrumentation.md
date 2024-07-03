@@ -132,7 +132,7 @@ Be careful with what label values you accept or add. Using or allowing too many 
 
 If label values originate from user input they should be validated. Use `metricutil.SanitizeLabelName(<label value>)` from the `pkg/infra/metrics/metricutil` package to sanitize label names. 
 
-> **Important:** Only allow a pre-defined set of labels to minimize the risk of high cardinality problems. Be careful to not expose any sensitive information in label values; for example, secrets, credentials, and so on.
+> **Important:** Only allow a pre-defined set of labels to minimize the risk of high cardinality problems. Be careful not to expose any sensitive information in label values such as secrets and credentials. 
 
 ### Guarantee the existence of metrics
 
