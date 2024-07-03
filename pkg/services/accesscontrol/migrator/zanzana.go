@@ -31,7 +31,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.ReplDB, collectors .
 	// Append shared collectors that is used by both enterprise and oss
 	collectors = append(
 		collectors,
-		teamMembershipCollector(store.DB()),
+		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
 	)
 
@@ -134,7 +134,7 @@ func managedPermissionsCollector(store db.ReplDB) TupleCollector {
 	}
 }
 
-func teamMembershipCollector(store db.DB) TupleCollector {
+func teamMembershipCollector(store db.ReplDB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "team_membership"
 		const query = `
@@ -151,7 +151,7 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 		}
 
 		var memberships []membership
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+		err := store.DB().WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query).Find(&memberships)
 		})
 
