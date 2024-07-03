@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useMemo } from 'react';
+import { memo, forwardRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -28,8 +28,8 @@ export const MegaMenu = memo(
     const { chrome } = useGrafana();
     const state = chrome.useState();
     const preferences = useLoadUserPreferencesQuery();
-    const pinnedItems = preferences.data?.navbar?.savedItemIds || [];
     const [patchPreferences] = usePatchUserPreferencesMutation();
+    const pinnedItems = useMemo(() => preferences.data?.navbar?.savedItemIds || [], [preferences]);
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -50,7 +50,7 @@ export const MegaMenu = memo(
       });
     };
 
-    const isPinned = useMemo(
+    const isPinned = useCallback(
       (id?: string) => {
         if (!id || !pinnedItems?.length) {
           return false;
