@@ -131,7 +131,7 @@ func (f DashboardFilter) Where() (string, []any) {
 type K6FolderFilter struct{}
 
 func (f K6FolderFilter) Where() (string, []any) {
-	filter := fmt.Sprintf("dashboard.uid != ? AND (dashboard.folder_uid != ? OR dashboard.folder_uid IS NULL)")
+	filter := "dashboard.uid != ? AND (dashboard.folder_uid != ? OR dashboard.folder_uid IS NULL)"
 	params := []any{accesscontrol.K6FolderUID, accesscontrol.K6FolderUID}
 	return filter, params
 }

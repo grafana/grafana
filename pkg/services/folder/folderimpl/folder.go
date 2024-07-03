@@ -180,12 +180,7 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		}
 	}
 
-	result := make([]*folder.Folder, 0, len(dashFolders))
-	for _, folder := range dashFolders {
-		result = append(result, folder)
-	}
-
-	return result, nil
+	return dashFolders, nil
 }
 
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
