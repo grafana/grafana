@@ -67,6 +67,8 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 	// Reference: https://github.com/grpc/grpc-go/blob/f199062ef31ddda54152e1ca5e3d15fb63903dc3/clientconn.go#L204
 	//
 	// See this issue for more information: https://github.com/grpc/grpc-go/issues/7091
+	// Ignore the lint check as this fails the build and for the reasons above.
+	// nolint:staticcheck
 	clientConn, err := grpc.Dial(onlyHost, dialOpts...)
 	if err != nil {
 		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
