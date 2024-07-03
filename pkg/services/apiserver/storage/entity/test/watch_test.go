@@ -9,7 +9,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/apitesting"
@@ -25,7 +24,9 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -144,7 +145,15 @@ func testSetup(t *testing.T, opts ...setupOption) (context.Context, storage.Inte
 		return nil, nil, nil, err
 	}
 
-	ctx := context.Background()
+	// Test with an admin identity
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Namespace:      identity.NamespaceUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true, // can do anything
+	})
 
 	return ctx, store, destroyFunc, nil
 }
