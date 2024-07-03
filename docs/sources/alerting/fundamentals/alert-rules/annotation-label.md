@@ -118,9 +118,10 @@ Grafana has a built-in Alertmanager that supports both Unicode label keys and va
 This means that label keys must only contain **ASCII letters**, **numbers**, as well as **underscores** and match the regex `[a-zA-Z_][a-zA-Z0-9_]*`.
 Any invalid characters are removed or replaced by the Grafana alerting engine before being sent to the external Alertmanager according to the following rules:
 
-- `Whitespace` is removed.
-- `ASCII characters` is replaced with `_`.
-- `All other characters` is replaced with their lower-case hex representation. If this is the first character it is prefixed with `_`.
+- Whitespace is removed.
+- ASCII characters are replaced with `_`.
+- All other characters are replaced with their lower-case hex representation.
+  If this is the first character it's prefixed with `_`.
 
 Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514="🔥"`.
 
