@@ -330,4 +330,25 @@ describe('QueryEditor should render right editor', () => {
       expect(screen.queryByText('Are you sure?')).toBeNull();
     });
   });
+
+  describe('metric insights in builder mode', () => {
+    let originalValueCloudWatchCrossAccountQuerying: boolean | undefined;
+    let originalValueCloudwatchMetricInsightsCrossAccount: boolean | undefined;
+    beforeEach(() => {
+      originalValueCloudWatchCrossAccountQuerying = config.featureToggles.cloudWatchCrossAccountQuerying;
+      originalValueCloudwatchMetricInsightsCrossAccount = config.featureToggles.cloudwatchMetricInsightsCrossAccount;
+    });
+    afterEach(() => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = originalValueCloudWatchCrossAccountQuerying;
+      config.featureToggles.cloudwatchMetricInsightsCrossAccount = originalValueCloudwatchMetricInsightsCrossAccount;
+    });
+    it('should have an account selector when the feature is enabled', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
+      config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
+      props.datasource.resources.getAccounts = jest.fn().mockResolvedValue(['account123']);
+      render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
+      await screen.findByText('Metric Query');
+      expect(await screen.findByText('Account')).toBeInTheDocument();
+    });
+  });
 });
