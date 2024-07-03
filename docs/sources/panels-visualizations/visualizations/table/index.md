@@ -157,12 +157,6 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 
 Cells can be displayed as a graphical gauge, with several different presentation types.
 
-#### Image
-
-If you want to set the alternative text of an image, use the **Alt text** option to do so which will make alternative text avaiable for screen readers and cases when images can't be loaded.
-
-Additionally, if you'd like to set the title text, use the **Title text** option to do so which will make the title text display when the image is hovered with a cursor.
-
 ##### Basic
 
 The basic mode will show a simple gauge with the threshold levels defining the color of gauge.
@@ -214,6 +208,10 @@ Shows value formatted as code. If a value is an object the JSON view allowing br
 If you have a field value that is an image URL or a base64 encoded image you can configure the table to display it as an image.
 
 {{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
+
+Use the **Alt text** option to set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded.
+
+Use the **Title text** option to set the text that's displayed when the image is hovered over with a cursor.
 
 #### Sparkline
 
