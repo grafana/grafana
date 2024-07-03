@@ -183,7 +183,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		}
 	}
 	if len(dupes) > 0 {
-		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+		log.Debug("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
 	for key, val := range resultLabels {
@@ -196,7 +196,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		}
 	}
 	if len(dupes) > 0 {
-		log.Warn("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+		log.Debug("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
 
 	cacheID := lbs.Fingerprint()
