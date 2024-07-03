@@ -105,7 +105,7 @@ describe('Policy', () => {
 
     // for timing options
     expect(within(defaultPolicy).getByTestId('timing-options')).toHaveTextContent(
-      'Wait 30s to group instances, 5m before sending updates, repeated every 4h'
+      'Wait 30s to group instances · Wait 5m before sending updates · Repeated every 4h'
     );
 
     // should have custom policies
@@ -505,7 +505,7 @@ describe('TimingOptionsMeta', () => {
       first(
         screen.getAllByText(
           (_, element) =>
-            element?.textContent === 'Wait 30s to group instances, 5m before sending updates, repeated every 4h',
+            element?.textContent === 'Wait 30s to group instances · Wait 5m before sending updates · Repeated every 4h',
           { collapseWhitespace: false, trim: false, exact: true }
         )
       )
