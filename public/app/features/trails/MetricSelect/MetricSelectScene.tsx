@@ -291,7 +291,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       miscGroupKey: 'misc',
     };
     const { root: rootGroupNode } = groopParser.parse(metricNames);
-    console.log(rootGroupNode);
     return rootGroupNode;
   }
 
@@ -574,8 +573,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
   public onDisplayTypeChanged = (val: SelectableValue) => {
     const bodyFormation = generateBodyFormation(val.value);
-    if (val.value !== this.state.displayAs) {
+    if (val.value !== this.state.displayAs && (val.value === 'nested-rows' || this.state.displayAs === 'nested-rows')) {
       this.setState({ body: bodyFormation.layout, displayAs: val.value });
+    } else {
+      this.setState({ displayAs: val.value });
     }
     this.buildLayout();
   };
