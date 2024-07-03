@@ -139,6 +139,7 @@ export const DateTimePicker = ({
         ref={refs.setReference}
         showSeconds={showSeconds}
         clearable={clearable}
+        timeZone={timeZone}
       />
       {isOpen ? (
         isFullscreen ? (
@@ -214,14 +215,17 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : !clearable ? dateTimeFormat(dateTime()) : '', invalid: false };
+      return {
+        value: date ? dateTimeFormat(date, { timeZone }) : !clearable ? dateTimeFormat(dateTime(), { timeZone }) : '',
+        invalid: false,
+      };
     });
 
     useEffect(() => {
       if (date) {
         setInternalDate({
-          invalid: !isValid(dateTimeFormat(date, { format })),
-          value: isDateTime(date) ? dateTimeFormat(date, { format }) : date,
+          invalid: !isValid(dateTimeFormat(date, { format, timeZone })),
+          value: isDateTime(date) ? dateTimeFormat(date, { format, timeZone }) : date,
         });
       }
     }, [date, format]);

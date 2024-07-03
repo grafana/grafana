@@ -14,7 +14,7 @@ afterAll(() => {
   return setTimeZoneResolver(() => defaultTimeZone);
 });
 
-const renderDatetimePicker = (props?: Props) => {
+const renderDatetimePicker = (props?: Partial<Props>) => {
   const combinedProps = Object.assign(
     {
       date: dateTimeForTimeZone(getTimeZone(), '2021-05-05 12:00:00'),
@@ -234,4 +234,14 @@ describe('Date time picker', () => {
       ).not.toBeInTheDocument();
     }
   );
+
+  it('should be able to use a custom timeZone', async () => {
+    renderDatetimePicker({
+      timeZone: 'America/New_York',
+      date: dateTimeForTimeZone(getTimeZone({ timeZone: 'utc' }), '2024-07-01 12:00:00'),
+    });
+
+    const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
+    expect(dateTimeInput).toHaveDisplayValue('2024-07-01 08:00:00');
+  });
 });
