@@ -4,8 +4,6 @@
  * @packageDocumentation
  */
 
-export * from './text';
-export * from './events';
 export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
 
 // DataFrames
@@ -84,6 +82,53 @@ export {
   type MapLayerHandler,
   type MapLayerRegistryItem,
 } from './geo/layer';
+
+// Text
+export {
+  escapeStringForRegex,
+  unEscapeStringFromRegex,
+  stringStartsAsRegEx,
+  stringToJsRegex,
+  stringToMs,
+  toNumberString,
+  toIntegerOrUndefined,
+  toFloatOrUndefined,
+  toPascalCase,
+  escapeRegex,
+} from './text/string';
+export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
+export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
+export { textUtil } from './text/sanitize';
+
+// Events
+export { eventFactory } from './events/eventFactory';
+export {
+  BusEventBase,
+  BusEventWithPayload,
+  type BusEvent,
+  type BusEventType,
+  type BusEventHandler,
+  type EventFilterOptions,
+  type EventBus,
+  type AppEvent,
+  type LegacyEmitter,
+  type LegacyEventHandler,
+  type EventBusExtended,
+} from './events/types';
+export { EventBusSrv } from './events/EventBus';
+export {
+  type DataHoverPayload,
+  DataHoverEvent,
+  DataHoverClearEvent,
+  DataSelectEvent,
+  AnnotationChangeEvent,
+  type DashboardLoadedEventPayload,
+  DashboardLoadedEvent,
+  DataSourceUpdatedSuccessfully,
+  DataSourceTestSucceeded,
+  DataSourceTestFailed,
+  SetPanelAttentionEvent,
+} from './events/common';
 
 // Field
 export {
