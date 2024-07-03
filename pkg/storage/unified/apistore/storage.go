@@ -310,6 +310,17 @@ func toListRequest(key string, opts storage.ListOptions) (*resource.ListRequest,
 		}
 	}
 
+	if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
+		requirements := opts.Predicate.Field.Requirements()
+		for _, r := range requirements {
+			requirement := &resource.Requirement{Key: r.Field, Operator: string(r.Operator)}
+			if r.Value != "" {
+				requirement.Values = append(requirement.Values, r.Value)
+			}
+			req.Options.Labels = append(req.Options.Labels, requirement)
+		}
+	}
+
 	if opts.ResourceVersion != "" {
 		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
 		if err != nil {
