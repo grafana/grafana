@@ -1,4 +1,4 @@
-import { groupBy, startCase } from 'lodash';
+import { groupBy } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
@@ -738,17 +738,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   getQueryDisplayText(query: TempoQuery) {
-    if (query.queryType !== 'nativeSearch') {
+    if (query.queryType === 'traceql' || query.queryType === 'traceId') {
       return query.query ?? '';
     }
 
-    const keys: Array<
-      keyof Pick<TempoQuery, 'serviceName' | 'spanName' | 'search' | 'minDuration' | 'maxDuration' | 'limit'>
-    > = ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'];
-    return keys
-      .filter((key) => query[key])
-      .map((key) => `${startCase(key)}: ${query[key]}`)
-      .join(', ');
+    const appliedQuery = this.applyVariables(query, {});
+    return generateQueryFromFilters(appliedQuery.filters);
   }
 }
 
