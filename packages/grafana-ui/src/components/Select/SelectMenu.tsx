@@ -12,7 +12,6 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../Icon/Icon';
 
-import { SelectVirtualizedSeparator } from './SelectVirtualizedSeparator';
 import { getSelectStyles } from './getSelectStyles';
 
 interface SelectMenuProps {
@@ -93,7 +92,7 @@ export const VirtualizedSelectMenu = ({
       return [
         childWithoutChildren,
         ...child.props.children,
-        <SelectVirtualizedSeparator key={`${DIVIDER_KEY}-${flattenedOptions[index].label}`} />,
+        <div key={`${DIVIDER_KEY}-${flattenedOptions[index].label}`} className={styles.virtualizedSeparator} />,
       ];
     }
     return [child];
