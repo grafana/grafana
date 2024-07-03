@@ -1,3 +1,5 @@
+import { Operation, ReplaceOperation } from 'fast-json-patch';
+
 import { DataQuery } from '@grafana/schema';
 
 import { DataQueryFullSpec, DataQueryPartialSpec } from './api/types';
@@ -18,7 +20,7 @@ export type AddQueryTemplateCommand = {
 
 export type EditQueryTemplateCommand = {
   uid: string;
-  partialSpec: DataQueryPartialSpec;
+  jsonPatch: Operation[];
 };
 
 export type DeleteQueryTemplateCommand = {

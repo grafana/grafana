@@ -74,7 +74,10 @@ export const isContentTypeApplicationJson = (headers: Headers) => {
   }
 
   const contentType = headers.get('content-type');
-  if (contentType && contentType.toLowerCase() === 'application/json') {
+  if (
+    contentType &&
+    (contentType.toLowerCase() === 'application/json' || contentType.toLowerCase() === 'application/json-patch+json')
+  ) {
     return true;
   }
 

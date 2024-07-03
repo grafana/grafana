@@ -1,3 +1,4 @@
+import { Observer, deepClone, generate, observe } from 'fast-json-patch';
 import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
@@ -103,8 +104,12 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     const temporaryDefaultTitle =
       data.description || t('explore.query-library.default-description', 'Public', { timestamp: timestamp });
 
-    if (templateData?.uid) {
-      handleEditQueryTemplate({ uid: templateData.uid, partialSpec: { title: data.description } }).then((isSuccess) => {
+    if (templateData?.fullSpec && templateData.uid) {
+      const docCopy: DataQueryFullSpec = deepClone(templateData.fullSpec);
+      const observer: Observer<DataQueryFullSpec> = observe(docCopy);
+      docCopy.spec.title = data.description;
+      const patch = generate(observer);
+      handleEditQueryTemplate({ uid: templateData.uid, jsonPatch: patch }).then((isSuccess) => {
         onSave(isSuccess);
       });
     } else if (queryToAdd) {
