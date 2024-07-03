@@ -44,6 +44,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -199,6 +202,7 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+// nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	defer close(s.startedCh)
 
@@ -257,6 +261,36 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.RecommendedOptions.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
+
+	case grafanaapiserveroptions.StorageTypeUnifiedNext:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+		}
+
+		server, err := entitybridge.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
+		if err != nil {
+			return err
+		}
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
+			o.RecommendedOptions.Etcd.StorageConfig.Codec)
+
+	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+		}
+		// Create a connection to the gRPC server
+		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+
+		// TODO: determine when to close the connection, we cannot defer it here
+		// defer conn.Close()
+
+		// Create a client instance
+		client := resource.NewResourceStoreClientGRPC(conn)
+
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
