@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"knative.dev/pkg/client/injection/kube/informers/core/v1/event"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -150,6 +151,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		now:         opts.Now,
 		ctx:         ctx,
 		cancel:      cancel,
+		indexer:     NewIndexer(opts.Backend, opts.Blob),
 	}, nil
 }
 
@@ -163,8 +165,10 @@ type server struct {
 	blob        BlobStore
 	diagnostics DiagnosticsServer
 	access      WriteAccessHooks
-	lifecycle   LifecycleHooks
-	now         func() int64
+	indexer     *indexer
+
+	lifecycle LifecycleHooks
+	now       func() int64
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -195,6 +199,9 @@ func (s *server) Init() error {
 		if s.initErr != nil {
 			s.log.Error("error initializing resource server", "error", s.initErr)
 		}
+
+		// Start the indexer
+		go s.indexer.Run(context.TODO())
 	})
 	return s.initErr
 }
@@ -505,6 +512,28 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
+	}
+
+	// Fetch the latest parquet index matching the current query
+	_, err := s.backend.Read(ctx, &ReadRequest{
+		Key: &ResourceKey{
+			Namespace: event.Key.Namespace,
+			Group:     "grafana.app",
+			Resource:  "parquetfile",
+			Name:      "latest",
+		},
+	})
+	if err == nil {
+		// A/ Fetch the blob. This should be highly cachable
+		// (option 1 is to wait for the parquet file to reach a specific RV)
+
+		// B/ Query the parquet file. By then, we have a first list of items to return
+
+		// C/ (option 2) List all the with RV > index.status.lastGeneratedRV
+		// we should process those events on the fly to compute the final list
+
+		// Call the list enpoint with the final list
+		// s.backend.PrepareList(ctx, ListOptions{<list the keys that should be returned here>})
 	}
 
 	rsp, err := s.backend.PrepareList(ctx, req)

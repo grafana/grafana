@@ -29,7 +29,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 	}
 
 	supportBlobs := true
-	useEntitySQL := true // save in SQL (but watch not working)
+	useEntitySQL := false // save in SQL (but watch not working)
 
 	// Create a local blob filesystem blob store
 	if supportBlobs {
