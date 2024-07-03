@@ -1,4 +1,4 @@
-import { QueryResultMeta } from '../types';
+import { QueryResultMeta } from '../types/data';
 import { Field, FieldType, DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
 import { guessFieldTypeForField } from './processDataFrame';

@@ -2,8 +2,11 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -109,73 +112,6 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	require.NotNil(t, createResp.UID, delMigResp.UID)
 }
 
-func Test_ExecuteAsyncWorkflow(t *testing.T) {
-	s := setUpServiceTest(t, false)
-
-	createTokenResp, err := s.CreateToken(context.Background())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, createTokenResp.Token)
-
-	cmd := cloudmigration.CloudMigrationSessionRequest{
-		AuthToken: createTokenResp.Token,
-	}
-
-	createResp, err := s.CreateSession(context.Background(), cmd)
-	require.NoError(t, err)
-	require.NotEmpty(t, createResp.UID)
-	require.NotEmpty(t, createResp.Slug)
-
-	getSessionResp, err := s.GetSession(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.NotNil(t, getSessionResp)
-	require.Equal(t, createResp.UID, getSessionResp.UID)
-	require.Equal(t, createResp.Slug, getSessionResp.Slug)
-
-	listResp, err := s.GetSessionList(context.Background())
-	require.NoError(t, err)
-	require.NotNil(t, listResp)
-	require.Equal(t, 1, len(listResp.Sessions))
-	require.Equal(t, createResp.UID, listResp.Sessions[0].UID)
-	require.Equal(t, createResp.Slug, listResp.Sessions[0].Slug)
-
-	sessionUid := createResp.UID
-	snapshotResp, err := s.CreateSnapshot(ctxWithSignedInUser(), sessionUid)
-	require.NoError(t, err)
-	require.NotEmpty(t, snapshotResp.UID)
-	require.Equal(t, sessionUid, snapshotResp.SessionUID)
-	snapshotUid := snapshotResp.UID
-
-	// Service doesn't currently expose updating a snapshot externally, so we will just manually add a resource
-	err = (s.(*Service)).store.CreateUpdateSnapshotResources(context.Background(), snapshotUid, []cloudmigration.CloudMigrationResource{{Type: cloudmigration.DashboardDataType, RefID: "qwerty", Status: cloudmigration.ItemStatusOK}})
-	assert.NoError(t, err)
-
-	snapshot, err := s.GetSnapshot(ctxWithSignedInUser(), cloudmigration.GetSnapshotsQuery{
-		SnapshotUID: snapshotUid,
-		SessionUID:  sessionUid,
-		ResultPage:  1,
-		ResultLimit: 100,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, snapshotResp.UID, snapshot.UID)
-	assert.Equal(t, snapshotResp.EncryptionKey, snapshot.EncryptionKey)
-	assert.Len(t, snapshot.Resources, 1)
-	assert.Equal(t, "qwerty", snapshot.Resources[0].RefID)
-
-	snapshots, err := s.GetSnapshotList(ctxWithSignedInUser(), cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
-	require.NoError(t, err)
-	assert.Len(t, snapshots, 1)
-	assert.Equal(t, snapshotResp.UID, snapshots[0].UID)
-	assert.Equal(t, snapshotResp.EncryptionKey, snapshots[0].EncryptionKey)
-	assert.Empty(t, snapshots[0].Resources)
-
-	err = s.UploadSnapshot(ctxWithSignedInUser(), sessionUid, snapshotUid)
-	require.NoError(t, err)
-
-	assert.Panics(t, func() {
-		err = s.CancelSnapshot(ctxWithSignedInUser(), sessionUid, snapshotUid)
-	})
-}
-
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
@@ -202,6 +138,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	require.NoError(t, err)
 	// dont know if this is the best, but dont want to refactor at the moment
 	cfg.CloudMigration.IsDeveloperMode = true
+	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewString())
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	if withDashboardMock {

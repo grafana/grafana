@@ -61,6 +61,24 @@
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       }
+    },
+    "policies": {
+      "metadata": {
+        "timingOptions": {
+          "groupInterval": {
+            "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
+            "label": "Wait <1></1> before sending updates"
+          },
+          "groupWait": {
+            "description": "How long to initially wait to send a notification for a group of alert instances.",
+            "label": "Wait <1></1> to group instances"
+          },
+          "repeatInterval": {
+            "description": "How often notifications are sent if the group of alerts has not changed since the last notification.",
+            "label": "Repeated every <1></1>"
+          }
+        }
+      }
     }
   },
   "annotations": {
@@ -446,6 +464,8 @@
       "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
       "panel-options-graph-tooltip-label": "Graph tooltip",
       "panel-options-label": "Panel options",
+      "panels-preload-description": "When enabled all panels will start loading as soon as the dashboard has been loaded.",
+      "panels-preload-label": "Preload panels",
       "tags-label": "Tags",
       "title": "General",
       "title-label": "Title"
@@ -968,8 +988,9 @@
       "disconnect-error-title": "There was an error disconnecting",
       "run-migration-error-description": "See the Grafana server logs for more details",
       "run-migration-error-title": "There was an error migrating your resources",
-      "start-migration": "Upload everything",
-      "target-stack-title": "Uploading to"
+      "start-migration": "Build snapshot",
+      "target-stack-title": "Uploading to",
+      "upload-migration": "Upload & migrate snapshot"
     },
     "token-status": {
       "active": "Token created and active",
@@ -1635,7 +1656,7 @@
     "restore-modal": {
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
