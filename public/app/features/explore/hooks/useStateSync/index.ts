@@ -39,11 +39,7 @@ export function useStateSync(params: ExploreQueryParams) {
     const unsubscribe = dispatch(
       addListener({
         predicate: (action) => syncToURLPredicate(paused, action),
-        effect: async (_, { cancelActiveListeners, delay, getState }) => {
-          // The following 2 lines will debounce updates to avoid creating history entries when rapid changes
-          // are committed to the store.
-          cancelActiveListeners();
-          await delay(200);
+        effect: async (_, { getState }) => {
           syncToURL(getState().explore, prevParams, initState, location);
         },
       })
