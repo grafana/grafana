@@ -132,6 +132,16 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, found.Status)
 		require.Equal(t, int32(404), found.Status.Code)
+
+		// And the deleted value should not be in the results
+		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
+			Key: &ResourceKey{
+				Group:    key.Group,
+				Resource: key.Resource,
+			},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 0) // empty
 	})
 }
 

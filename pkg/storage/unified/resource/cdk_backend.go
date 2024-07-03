@@ -167,21 +167,28 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	}
 
 	raw, err := s.bucket.ReadAll(ctx, path)
-	if err == nil && bytes.Contains(raw, []byte(`"DeletedMarker"`)) {
-		tmp := &unstructured.Unstructured{}
-		err = tmp.UnmarshalJSON(raw)
-		if err == nil && tmp.GetKind() == "DeletedMarker" {
-			return nil, apierrors.NewNotFound(schema.GroupResource{
-				Group:    req.Key.Group,
-				Resource: req.Key.Resource,
-			}, req.Key.Name)
-		}
+	if err == nil && isDeletedMarker(raw) {
+		return nil, apierrors.NewNotFound(schema.GroupResource{
+			Group:    req.Key.Group,
+			Resource: req.Key.Resource,
+		}, req.Key.Name)
 	}
 
 	return &ReadResponse{
 		ResourceVersion: rv,
 		Value:           raw,
 	}, err
+}
+
+func isDeletedMarker(raw []byte) bool {
+	if bytes.Contains(raw, []byte(`"DeletedMarker"`)) {
+		tmp := &unstructured.Unstructured{}
+		err := tmp.UnmarshalJSON(raw)
+		if err == nil && tmp.GetKind() == "DeletedMarker" {
+			return true
+		}
+	}
+	return false
 }
 
 // List implements AppendingStore.
@@ -198,10 +205,12 @@ func (s *cdkBackend) PrepareList(ctx context.Context, req *ListRequest) (*ListRe
 		if err != nil {
 			return nil, err
 		}
-		rsp.Items = append(rsp.Items, &ResourceWrapper{
-			ResourceVersion: latest.rv,
-			Value:           raw,
-		})
+		if !isDeletedMarker(raw) {
+			rsp.Items = append(rsp.Items, &ResourceWrapper{
+				ResourceVersion: latest.rv,
+				Value:           raw,
+			})
+		}
 	}
 	return rsp, nil
 }
