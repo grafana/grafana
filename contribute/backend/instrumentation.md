@@ -130,7 +130,7 @@ If a metric type is a gauge, name it to denote that it's a value that can increa
 
 Be careful with what label values you accept or add. Using or allowing too many label values could result in [high cardinality problems](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/).
 
-If label values originates from user input they should be validated. Use `metricutil.SanitizeLabelName(<label value>)` from the `pkg/infra/metrics/metricutil` package to sanitize label names. 
+If label values originate from user input they should be validated. Use `metricutil.SanitizeLabelName(<label value>)` from the `pkg/infra/metrics/metricutil` package to sanitize label names. 
 
 > **Important:** Only allow a pre-defined set of labels to minimize the risk of high cardinality problems. Be careful to not expose any sensitive information in label values; for example, secrets, credentials, and so on.
 
