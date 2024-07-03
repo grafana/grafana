@@ -1,6 +1,53 @@
-import { CoreApp, DataQueryRequest, dateTime, rangeUtil, TimeRange } from '@grafana/data';
+import { merge } from 'lodash';
 
-import { PromQuery } from '../types';
+import {
+  CoreApp,
+  DataQueryRequest,
+  DataSourceJsonData,
+  DataSourceSettings,
+  dateTime,
+  rangeUtil,
+  TimeRange,
+} from '@grafana/data';
+
+import { PromOptions, PromQuery } from '../../types';
+
+export const getMockDataSource = <T extends DataSourceJsonData>(
+  overrides?: Partial<DataSourceSettings<T>>
+): DataSourceSettings<T> =>
+  merge(
+    {
+      access: '',
+      basicAuth: false,
+      basicAuthUser: '',
+      withCredentials: false,
+      database: '',
+      id: 13,
+      uid: 'x',
+      isDefault: false,
+      jsonData: { authType: 'credentials', defaultRegion: 'eu-west-2' },
+      name: 'gdev-prometheus',
+      typeName: 'Prometheus',
+      orgId: 1,
+      readOnly: false,
+      type: 'prometheus',
+      typeLogoUrl: 'packages/grafana-prometheus/src/img/prometheus_logo.svg',
+      url: '',
+      user: '',
+      secureJsonFields: {},
+    },
+    overrides
+  );
+
+export function createDefaultConfigOptions(): DataSourceSettings<PromOptions> {
+  return getMockDataSource<PromOptions>({
+    jsonData: {
+      timeInterval: '1m',
+      queryTimeout: '1m',
+      httpMethod: 'GET',
+    },
+  });
+}
 
 export function createDataRequest(
   targets: PromQuery[],
