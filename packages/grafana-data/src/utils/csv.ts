@@ -5,9 +5,9 @@ import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 // Types
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../field';
+import { getFieldDisplayName } from '../field/fieldState';
 import { DataFrame, Field, FieldConfig, FieldType } from '../types';
-import { formattedValueToString } from '../valueFormats';
+import { formattedValueToString } from '../valueFormats/valueFormats';
 
 export enum CSVHeaderStyle {
   full,

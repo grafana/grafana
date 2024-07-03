@@ -892,6 +892,12 @@ The duration in time a verification email, used to update the email address of a
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is 1h (1 hour).
 
+### last_seen_update_interval
+
+The frequency of updating a user's last seen time.
+This setting should be expressed as a duration. Examples: 1h (hour), 15m (minutes)
+Default is `15m` (15 minutes). The minimum supported duration is `5m` (5 minutes). The maximum supported duration is `1h` (1 hour).
+
 ### hidden_users
 
 This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
@@ -1547,6 +1553,10 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 ### global_correlations
 
 Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
+
+### alerting_rule_evaluation_results
+
+Limit the number of query evaluation results per alert rule. If the condition query of an alert rule produces more results than this limit, the evaluation results in an error. Default is -1 (unlimited).
 
 <hr>
 

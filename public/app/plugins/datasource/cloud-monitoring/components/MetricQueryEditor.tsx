@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import * as React from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 import { EditorRows, Stack } from '@grafana/experimental';

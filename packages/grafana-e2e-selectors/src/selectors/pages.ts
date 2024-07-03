@@ -66,6 +66,15 @@ export const Pages = {
           container: 'data-testid new share button menu',
           shareInternally: 'data-testid new share button share internally',
           shareExternally: 'data-testid new share button share externally',
+          shareSnapshot: 'data-testid new share button share snapshot',
+        },
+      },
+      NewExportButton: {
+        container: 'data-testid new export button',
+        arrowMenu: 'data-testid new export button arrow menu',
+        Menu: {
+          container: 'data-testid new export button menu',
+          exportAsJson: 'data-testid new export button export as json',
         },
       },
       playlistControls: {
@@ -103,7 +112,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Tab General',
+        title: 'General',
       },
       Annotations: {
         List: {
@@ -245,7 +254,6 @@ export const Pages = {
   },
   ShareDashboardModal: {
     PublicDashboard: {
-      Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
@@ -270,12 +278,8 @@ export const Pages = {
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
     },
-    PublicDashboardScene: {
-      Tab: 'Tab Public Dashboard',
-    },
     SnapshotScene: {
       url: (key: string) => `/dashboard/snapshot/${key}`,
-      Tab: 'Tab Snapshot',
       PublishSnapshot: 'data-testid publish snapshot button',
       CopyUrlButton: 'data-testid snapshot copy url button',
       CopyUrlInput: 'data-testid snapshot copy url input',
@@ -286,6 +290,19 @@ export const Pages = {
       container: 'data-testid share externally drawer container',
       copyUrlButton: 'data-testid share externally copy url button',
       shareTypeSelect: 'data-testid share externally share type select',
+    },
+    ShareSnapshot: {
+      container: 'data-testid share snapshot drawer container',
+    },
+  },
+  ExportDashboardDrawer: {
+    ExportAsJson: {
+      container: 'data-testid export as Json drawer container',
+      codeEditor: 'data-testid export as Json code editor',
+      exportExternallyToggle: 'data-testid export externally toggle type select',
+      saveToFileButton: 'data-testid save to file button',
+      copyToClipboardButton: 'data-testid copy to clipboard button',
+      cancelButton: 'data-testid cancel button',
     },
   },
   PublicDashboard: {

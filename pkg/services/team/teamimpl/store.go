@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -365,7 +364,7 @@ func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (t
 func (ss *xormStore) IsMember(orgId int64, teamId int64, userId int64) (bool, error) {
 	var isMember bool
 
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+	err := ss.db.WithDbSession(context.Background(), func(sess *db.Session) error {
 		var err error
 		isMember, err = isTeamMember(sess, orgId, teamId, userId)
 		return err
@@ -566,26 +565,4 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 // RegisterDelete registers a delete query to be executed when the transaction is committed
 func (ss *xormStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
-}
-
-// This is just to ensure that all teams have a valid uid.
-// To protect against upgrade / downgrade we need to run this for a couple of releases.
-// FIXME: Remove this migration and make uid field required https://github.com/grafana/identity-access-team/issues/552
-func (ss *xormStore) uidMigration() error {
-	return ss.db.WithDbSession(context.Background(), func(sess *db.Session) error {
-		switch ss.db.GetDBType() {
-		case migrator.SQLite:
-			_, err := sess.Exec("UPDATE team SET uid=printf('t%09d',id) WHERE uid IS NULL;")
-			return err
-		case migrator.Postgres:
-			_, err := sess.Exec("UPDATE team SET uid='t' || lpad('' || id::text,9,'0') WHERE uid IS NULL;")
-			return err
-		case migrator.MySQL:
-			_, err := sess.Exec("UPDATE team SET uid=concat('t',lpad(id,9,'0')) WHERE uid IS NULL;")
-			return err
-		default:
-			// this branch should be unreachable
-			return nil
-		}
-	})
 }

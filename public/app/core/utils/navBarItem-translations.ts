@@ -40,8 +40,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
       return t('nav.public.title', 'Public dashboards');
-    case 'dashboards/recentlyDeleted':
-      return t('nav.recentlyDeleted.title', 'Recently Deleted');
+    case 'dashboards/recently-deleted':
+      return t('nav.recently-deleted.title', 'Recently Deleted');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
@@ -137,7 +137,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'testing-and-synthetics':
       return t('nav.testing-and-synthetics.title', 'Testing & synthetics');
     case 'plugin-page-grafana-incident-app':
-      return t('nav.incidents.title', 'Incidents');
+      return t('nav.incidents.title', 'Incident');
     case 'plugin-page-grafana-ml-app':
       return t('nav.machine-learning.title', 'Machine learning');
     case 'plugin-page-grafana-slo-app':
@@ -208,9 +208,9 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
-    case 'dashboards/recentlyDeleted':
+    case 'dashboards/recently-deleted':
       return t(
-        'nav.recentlyDeleted.subtitle',
+        'nav.recently-deleted.subtitle',
         'Any items listed here for more than 30 days will be automatically deleted.'
       );
     case 'alerting':

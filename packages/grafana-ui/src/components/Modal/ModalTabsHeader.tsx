@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { NavModelItem } from '@grafana/data';
 
 import { IconName } from '../../types';

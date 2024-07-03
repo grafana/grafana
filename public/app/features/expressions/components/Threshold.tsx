@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { AnyAction } from '@reduxjs/toolkit';
-import React, { FormEvent, useEffect, useReducer } from 'react';
+import { FormEvent, useEffect, useReducer } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';

@@ -1,5 +1,4 @@
 import { cloneDeep } from 'lodash';
-import React from 'react';
 
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';

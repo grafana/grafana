@@ -200,7 +200,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SnapshotListDTO"
+              "$ref": "#/components/schemas/CloudMigrationRunListDTO"
             }
           }
         },
@@ -419,6 +419,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ServiceAccountDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "createSnapshotResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateSnapshotResponseDTO"
             }
           }
         },
@@ -1251,6 +1261,16 @@
         },
         "description": "(empty)"
       },
+      "getSnapshotResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetSnapshotResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getStatusResponse": {
         "description": "(empty)"
       },
@@ -1549,6 +1569,16 @@
                 },
                 "type": "array"
               },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "noContentResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
               "type": "object"
             }
           }
@@ -1897,6 +1927,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/RoleAssignmentsDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "snapshotListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SnapshotListResponseDTO"
             }
           }
         },
@@ -3673,6 +3713,17 @@
         },
         "type": "object"
       },
+      "CloudMigrationRunListDTO": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "CloudMigrationSessionListResponseDTO": {
         "properties": {
           "sessions": {
@@ -4209,6 +4260,14 @@
               "Admin"
             ],
             "example": "Admin",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateSnapshotResponseDTO": {
+        "properties": {
+          "uid": {
             "type": "string"
           }
         },
@@ -5607,6 +5666,45 @@
         ],
         "title": "Get home dashboard response."
       },
+      "GetSnapshotResponseDTO": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "finished": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
+            },
+            "type": "array"
+          },
+          "sessionUid": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "INITIALIZING",
+              "CREATING",
+              "PENDING_UPLOAD",
+              "UPLOADING",
+              "PENDING_PROCESSING",
+              "PROCESSING",
+              "FINISHED",
+              "ERROR",
+              "UNKNOWN"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "GettableAlertmanagers": {
         "properties": {
           "data": {
@@ -6194,10 +6292,14 @@
             "format": "int64",
             "type": "integer"
           },
+          "isDeleted": {
+            "type": "boolean"
+          },
           "isStarred": {
             "type": "boolean"
           },
-          "remainingTrashAtAge": {
+          "permanentlyDeleteDate": {
+            "format": "date-time",
             "type": "string"
           },
           "slug": {
@@ -6907,7 +7009,9 @@
           "status": {
             "enum": [
               "OK",
-              "ERROR"
+              "ERROR",
+              "PENDING",
+              "UNKNOWN"
             ],
             "type": "string"
           },
@@ -10317,11 +10421,45 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
-      "SnapshotListDTO": {
+      "SnapshotDTO": {
+        "description": "Base snapshot without results",
         "properties": {
-          "runs": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "finished": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sessionUid": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "INITIALIZING",
+              "CREATING",
+              "PENDING_UPLOAD",
+              "UPLOADING",
+              "PENDING_PROCESSING",
+              "PROCESSING",
+              "FINISHED",
+              "ERROR",
+              "UNKNOWN"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotListResponseDTO": {
+        "properties": {
+          "snapshots": {
             "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
+              "$ref": "#/components/schemas/SnapshotDTO"
             },
             "type": "array"
           }
@@ -15151,6 +15289,9 @@
           "200": {
             "$ref": "#/components/responses/cloudMigrationSessionResponse"
           },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15185,6 +15326,9 @@
           "200": {
             "$ref": "#/components/responses/cloudMigrationRunResponse"
           },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15216,6 +15360,9 @@
           }
         ],
         "responses": {
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15247,6 +15394,9 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationSessionResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15282,6 +15432,9 @@
           "200": {
             "$ref": "#/components/responses/cloudMigrationRunListResponse"
           },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15315,6 +15468,9 @@
           "200": {
             "$ref": "#/components/responses/cloudMigrationRunResponse"
           },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15326,6 +15482,260 @@
           }
         },
         "summary": "Trigger the run of a migration to the Grafana Cloud.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot": {
+      "post": {
+        "description": "If the snapshot initialization is successful, the snapshot uid is returned.",
+        "operationId": "createSnapshot",
+        "parameters": [
+          {
+            "description": "UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Trigger the creation of an instance snapshot associated with the provided session.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}": {
+      "get": {
+        "operationId": "getSnapshot",
+        "parameters": [
+          {
+            "description": "ResultPage is used for pagination with ResultLimit",
+            "in": "query",
+            "name": "resultPage",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max limit for snapshot results returned.",
+            "in": "query",
+            "name": "resultLimit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of a snapshot",
+            "in": "path",
+            "name": "snapshotUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get metadata about a snapshot, including where it is in its processing and final results.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/cancel": {
+      "post": {
+        "description": "TODO: Implement",
+        "operationId": "cancelSnapshot",
+        "parameters": [
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of a snapshot",
+            "in": "path",
+            "name": "snapshotUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Cancel a snapshot, wherever it is in its processing chain.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/upload": {
+      "post": {
+        "operationId": "uploadSnapshot",
+        "parameters": [
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of a snapshot",
+            "in": "path",
+            "name": "snapshotUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Upload a snapshot to the Grafana Migration Service for processing.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshots": {
+      "get": {
+        "operationId": "getShapshotList",
+        "parameters": [
+          {
+            "description": "Page is used for pagination with limit",
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max limit for results returned.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/snapshotListResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of snapshots for a session.",
         "tags": [
           "migrations"
         ]
@@ -15395,6 +15805,9 @@
         "responses": {
           "204": {
             "$ref": "#/components/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -21027,6 +21440,50 @@
         ]
       }
     },
+    "/reports/render/csvs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "operationId": "renderReportCSVs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dashboards",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          },
+          "204": {
+            "$ref": "#/components/responses/noContentResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Download a CSV report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -21034,7 +21491,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "dashboardID",
+            "name": "dashboards",
             "schema": {
               "type": "string"
             }

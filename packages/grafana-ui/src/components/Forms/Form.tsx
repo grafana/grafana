@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { HTMLProps, useEffect } from 'react';
+import { HTMLProps, useEffect } from 'react';
+import * as React from 'react';
 import { useForm, Mode, DefaultValues, SubmitHandler, FieldValues } from 'react-hook-form';
 
 import { FormAPI } from '../../types';

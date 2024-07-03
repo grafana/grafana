@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode } from 'react';
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {

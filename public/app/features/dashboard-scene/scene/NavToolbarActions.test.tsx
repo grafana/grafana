@@ -1,6 +1,5 @@
 import { screen, render, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -8,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { DashboardMeta } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
@@ -153,6 +153,8 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Share')).toBeInTheDocument();
       const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).not.toBeInTheDocument();
+      const newExportButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).not.toBeInTheDocument();
     });
     it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
@@ -162,10 +164,34 @@ describe('NavToolbarActions', () => {
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
     });
+    it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
+      setup();
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).toBeInTheDocument();
+    });
+  });
+
+  describe('Snapshot', () => {
+    it('should show link button when is a snapshot', () => {
+      setup({
+        isSnapshot: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+    it('should not show link button when is not found dashboard', () => {
+      setup({
+        isSnapshot: true,
+        dashboardNotFound: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).not.toBeInTheDocument();
+    });
   });
 });
 
-function setup() {
+function setup(meta?: DashboardMeta) {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     meta: {
@@ -177,6 +203,7 @@ function setup() {
       canStar: true,
       canAdmin: true,
       canDelete: true,
+      ...meta,
     },
     title: 'hello',
     uid: 'dash-1',

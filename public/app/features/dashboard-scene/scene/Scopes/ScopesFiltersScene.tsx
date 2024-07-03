@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React from 'react';
 import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -13,19 +12,21 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
-import { Button, Drawer, IconButton, Input, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Spinner, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
+import { ScopesInput } from './ScopesInput';
 import { ScopesScene } from './ScopesScene';
-import { ScopesTreeLevel } from './ScopesTreeLevel';
-import { fetchNodes, fetchScope, fetchScopes } from './api';
-import { NodesMap } from './types';
+import { ScopesTree } from './ScopesTree';
+import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
+import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
+import { getBasicScope } from './utils';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
   nodes: NodesMap;
   loadingNodeName: string | undefined;
-  scopes: Scope[];
-  dirtyScopeNames: string[];
+  scopes: SelectedScope[];
+  treeScopes: TreeScope[];
   isLoadingScopes: boolean;
   isOpened: boolean;
 }
@@ -46,6 +47,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       nodes: {
         '': {
           name: '',
+          reason: NodeReason.Result,
           nodeType: 'container',
           title: '',
           isExpandable: true,
@@ -57,7 +59,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       },
       loadingNodeName: undefined,
       scopes: [],
-      dirtyScopeNames: [],
+      treeScopes: [],
       isLoadingScopes: false,
       isOpened: false,
     });
@@ -72,14 +74,16 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public getUrlState() {
-    return { scopes: this.getScopeNames() };
+    return {
+      scopes: this.state.scopes.map(({ scope }) => scope.metadata.name),
+    };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    let dirtyScopeNames = values.scopes ?? [];
-    dirtyScopeNames = Array.isArray(dirtyScopeNames) ? dirtyScopeNames : [dirtyScopeNames];
+    let scopeNames = values.scopes ?? [];
+    scopeNames = Array.isArray(scopeNames) ? scopeNames : [scopeNames];
 
-    this.updateScopes(dirtyScopeNames);
+    this.updateScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
   }
 
   public fetchBaseNodes() {
@@ -116,7 +120,19 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
           })
         )
         .subscribe((childNodes) => {
-          currentNode.nodes = childNodes;
+          const persistedNodes = this.state.treeScopes
+            .map(({ path }) => path[path.length - 1])
+            .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
+            .reduce<NodesMap>((acc, nodeName) => {
+              acc[nodeName] = {
+                ...currentNode.nodes[nodeName],
+                reason: NodeReason.Persisted,
+              };
+
+              return acc;
+            }, {});
+
+          currentNode.nodes = { ...persistedNodes, ...childNodes };
 
           this.setState({ nodes });
 
@@ -126,36 +142,56 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public toggleNodeSelect(path: string[]) {
-    let dirtyScopeNames = [...this.state.dirtyScopeNames];
+    let treeScopes = [...this.state.treeScopes];
 
-    let siblings = this.state.nodes;
+    let parentNode = this.state.nodes[''];
 
-    for (let idx = 0; idx < path.length - 1; idx++) {
-      siblings = siblings[path[idx]].nodes;
+    for (let idx = 1; idx < path.length - 1; idx++) {
+      parentNode = parentNode.nodes[path[idx]];
     }
 
-    const name = path[path.length - 1];
-    const { linkId } = siblings[name];
+    const nodeName = path[path.length - 1];
+    const { linkId } = parentNode.nodes[nodeName];
 
-    const selectedIdx = dirtyScopeNames.findIndex((scopeName) => scopeName === linkId);
+    const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
 
     if (selectedIdx === -1) {
       fetchScope(linkId!);
 
       const selectedFromSameNode =
-        dirtyScopeNames.length === 0 || Object.values(siblings).some(({ linkId }) => linkId === dirtyScopeNames[0]);
+        treeScopes.length === 0 ||
+        Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
 
-      this.setState({ dirtyScopeNames: !selectedFromSameNode ? [linkId!] : [...dirtyScopeNames, linkId!] });
+      const treeScope = {
+        scopeName: linkId!,
+        path,
+      };
+
+      this.setState({
+        treeScopes: parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope],
+      });
     } else {
-      dirtyScopeNames.splice(selectedIdx, 1);
+      treeScopes.splice(selectedIdx, 1);
 
-      this.setState({ dirtyScopeNames });
+      this.setState({ treeScopes });
     }
   }
 
   public open() {
     if (!this.scopesParent.state.isViewing) {
-      this.setState({ isOpened: true });
+      let nodes = { ...this.state.nodes };
+
+      // First close all nodes
+      nodes = this.closeNodes(nodes);
+
+      // Extract the path of a scope
+      let path = [...(this.state.scopes[0]?.path ?? ['', ''])];
+      path.splice(path.length - 1, 1);
+
+      // Expand the nodes to the selected scope
+      nodes = this.expandNodes(nodes, path);
+
+      this.setState({ isOpened: true, nodes });
     }
   }
 
@@ -164,62 +200,89 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public getSelectedScopes(): Scope[] {
-    return this.state.scopes;
+    return this.state.scopes.map(({ scope }) => scope);
   }
 
-  public async updateScopes(dirtyScopeNames = this.state.dirtyScopeNames) {
-    if (isEqual(dirtyScopeNames, this.getScopeNames())) {
+  public async updateScopes(treeScopes = this.state.treeScopes) {
+    if (isEqual(treeScopes, this.getTreeScopes())) {
       return;
     }
 
-    this.setState({ dirtyScopeNames, isLoadingScopes: true });
+    this.setState({
+      // Update the scopes with the basic scopes otherwise they'd be lost between URL syncs
+      scopes: treeScopes.map(({ scopeName, path }) => ({ scope: getBasicScope(scopeName), path })),
+      treeScopes,
+      isLoadingScopes: true,
+    });
 
-    this.setState({ scopes: await fetchScopes(dirtyScopeNames), isLoadingScopes: false });
+    const scopes = await fetchSelectedScopes(treeScopes);
+
+    this.setState({ scopes, isLoadingScopes: false });
   }
 
   public resetDirtyScopeNames() {
-    this.setState({ dirtyScopeNames: this.getScopeNames() });
+    this.setState({ treeScopes: this.getTreeScopes() });
   }
 
   public removeAllScopes() {
-    this.setState({ scopes: [], dirtyScopeNames: [], isLoadingScopes: false });
+    this.setState({ scopes: [], treeScopes: [], isLoadingScopes: false });
   }
 
   public enterViewMode() {
     this.setState({ isOpened: false });
   }
 
-  private getScopeNames(): string[] {
-    return this.state.scopes.map(({ metadata: { name } }) => name);
+  private closeNodes(nodes: NodesMap): NodesMap {
+    return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
+      acc[id] = {
+        ...node,
+        isExpanded: false,
+        nodes: this.closeNodes(node.nodes),
+      };
+
+      return acc;
+    }, {});
+  }
+
+  private expandNodes(nodes: NodesMap, path: string[]): NodesMap {
+    nodes = { ...nodes };
+    let currentNodes = nodes;
+
+    for (let i = 0; i < path.length; i++) {
+      const nodeId = path[i];
+
+      currentNodes[nodeId] = {
+        ...currentNodes[nodeId],
+        isExpanded: true,
+      };
+      currentNodes = currentNodes[nodeId].nodes;
+    }
+
+    return nodes;
+  }
+
+  private getTreeScopes(): TreeScope[] {
+    return this.state.scopes.map(({ scope, path }) => ({
+      scopeName: scope.metadata.name,
+      path,
+    }));
   }
 }
 
 export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
-  const { nodes, loadingNodeName, dirtyScopeNames, isLoadingScopes, isOpened, scopes } = model.useState();
+  const { nodes, loadingNodeName, treeScopes, isLoadingScopes, isOpened, scopes } = model.useState();
   const { isViewing } = model.scopesParent.useState();
-
-  const scopesTitles = scopes.map(({ spec: { title } }) => title).join(', ');
 
   return (
     <>
-      <Input
-        readOnly
-        placeholder={t('scopes.filters.input.placeholder', 'Select scopes...')}
-        loading={isLoadingScopes}
-        value={scopesTitles}
-        aria-label={t('scopes.filters.input.placeholder', 'Select scopes...')}
-        data-testid="scopes-filters-input"
-        suffix={
-          scopes.length > 0 && !isViewing ? (
-            <IconButton
-              aria-label={t('scopes.filters.input.removeAll', 'Remove all scopes')}
-              name="times"
-              onClick={() => model.removeAllScopes()}
-            />
-          ) : undefined
-        }
-        onClick={() => model.open()}
+      <ScopesInput
+        nodes={nodes}
+        scopes={scopes}
+        isDisabled={isViewing}
+        isLoading={isLoadingScopes}
+        onInputClick={() => model.open()}
+        onRemoveAllClick={() => model.removeAllScopes()}
       />
 
       {isOpened && (
@@ -234,11 +297,11 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           {isLoadingScopes ? (
             <Spinner data-testid="scopes-filters-loading" />
           ) : (
-            <ScopesTreeLevel
+            <ScopesTree
               nodes={nodes}
               nodePath={['']}
               loadingNodeName={loadingNodeName}
-              scopeNames={dirtyScopeNames}
+              scopes={treeScopes}
               onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
               onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
             />

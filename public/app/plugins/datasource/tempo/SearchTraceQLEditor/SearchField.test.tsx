@@ -1,6 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { LanguageProvider } from '@grafana/data';
 
@@ -86,20 +85,30 @@ describe('SearchField', () => {
     if (select) {
       // Add first value
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const driverVal = await screen.findByText('driver');
-      await user.click(driverVal);
+
+      await act(async () => {
+        await user.click(driverVal);
+      });
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver'] });
 
       // Add a second value
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const customerVal = await screen.findByText('customer');
+
       await user.click(customerVal);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver', 'customer'] });
 
       // Remove the first value
       const firstValRemove = await screen.findAllByLabelText('Remove');
+
       await user.click(firstValRemove[0]);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['customer'] });
     }

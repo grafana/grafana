@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
