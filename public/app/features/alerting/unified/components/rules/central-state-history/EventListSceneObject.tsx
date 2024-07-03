@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { ReactElement, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -9,7 +9,6 @@ import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, 
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import {
-  GrafanaAlertState,
   GrafanaAlertStateWithReason,
   isAlertStateWithReason,
   isGrafanaAlertState,
@@ -115,7 +114,7 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
   if (isFetchError(error) && error.status === 404) {
     return <EntityNotFound entity="History" />;
   }
-  const title = t('central-alert-history.error', 'Something went wrong loading the alert state history');
+  const title = t('alerting.central-alert-history.error', 'Something went wrong loading the alert state history');
   const errorStr = stringifyErrorLike(error);
 
   return <Alert title={title}>{errorStr}</Alert>;
@@ -130,7 +129,10 @@ function EventRow({ record, logRecords }: EventRowProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   return (
     <Stack direction="column" gap={0}>
-      <div className={styles.header(isCollapsed)} data-testid="event-row-header">
+      <div
+        className={cx(styles.header, isCollapsed ? styles.collapsedHeader : styles.notCollapsedHeader)}
+        data-testid="event-row-header"
+      >
         <CollapseToggle
           size="sm"
           className={styles.collapseToggle}
@@ -171,7 +173,7 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
   if (!ruleUID) {
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.unknown-rule">Unknown</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.unknown-rule">Unknown</Trans>
         {alertRuleName}
       </Text>
     );
@@ -226,22 +228,20 @@ interface EventStateProps {
   state: GrafanaAlertStateWithReason;
   showLabel?: boolean;
 }
-export function EventState({ state, showLabel }: EventStateProps) {
+export function EventState({ state, showLabel = false }: EventStateProps) {
   const styles = useStyles2(getStyles);
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
       <StateIcon
         iconName="exclamation-triangle"
         tooltipContent="No recognized state"
-        labelText={<Trans i18nKey="central-alert-history.details.unknown-event-state">Unknown</Trans>}
+        labelText={<Trans i18nKey="alerting.central-alert-history.details.unknown-event-state">Unknown</Trans>}
         showLabel={Boolean(showLabel)}
         iconColor={styles.warningColor}
       />
     );
   }
-  // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
-  // eslint-disable-next-line
-  const baseState = mapStateWithReasonToBaseState(state) as GrafanaAlertState;
+  const baseState = mapStateWithReasonToBaseState(state);
   const reason = mapStateWithReasonToReason(state);
   interface StateConfig {
     iconName: IconName;
@@ -257,36 +257,36 @@ export function EventState({ state, showLabel }: EventStateProps) {
       iconName: 'check-circle',
       iconColor: Boolean(reason) ? styles.warningColor : styles.normalColor,
       tooltipContent: Boolean(reason) ? `Normal (${reason})` : 'Normal',
-      labelText: <Trans i18nKey="central-alert-history.details.state.normal">Normal</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.normal">Normal</Trans>,
     },
     Alerting: {
       iconName: 'exclamation-circle',
       iconColor: styles.alertingColor,
       tooltipContent: 'Alerting',
-      labelText: <Trans i18nKey="central-alert-history.details.state.alerting">Alerting</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.alerting">Alerting</Trans>,
     },
     NoData: {
       iconName: 'exclamation-triangle',
       iconColor: styles.warningColor,
       tooltipContent: 'Insufficient data',
-      labelText: <Trans i18nKey="central-alert-history.details.state.no-data">No data</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.no-data">No data</Trans>,
     },
     Error: {
       iconName: 'exclamation-circle',
       tooltipContent: 'Error',
       iconColor: styles.warningColor,
-      labelText: <Trans i18nKey="central-alert-history.details.state.error">Error</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.error">Error</Trans>,
     },
     Pending: {
       iconName: 'circle',
       iconColor: styles.warningColor,
       tooltipContent: Boolean(reason) ? `Pending (${reason})` : 'Pending',
-      labelText: <Trans i18nKey="central-alert-history.details.state.pending">Pending</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.pending">Pending</Trans>,
     },
   };
 
   const config = stateConfig[baseState] || { iconName: 'exclamation-triangle', tooltipContent: 'Unknown State' };
-  return <StateIcon {...config} showLabel={Boolean(showLabel)} />;
+  return <StateIcon {...config} showLabel={showLabel} />;
 }
 
 interface TimestampProps {
@@ -315,19 +315,22 @@ export default withErrorBoundary(HistoryEventsList, { style: 'page' });
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    header: (isCollapsed: boolean) =>
-      css({
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
-        flexWrap: 'nowrap',
-        borderBottom: isCollapsed ? `1px solid ${theme.colors.border.weak}` : 'none',
-
-        '&:hover': {
-          backgroundColor: theme.components.table.rowHoverBackground,
-        },
-      }),
+    header: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+      flexWrap: 'nowrap',
+      '&:hover': {
+        backgroundColor: theme.components.table.rowHoverBackground,
+      },
+    }),
+    collapsedHeader: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    notCollapsedHeader: css({
+      borderBottom: 'none',
+    }),
 
     collapseToggle: css({
       background: 'none',

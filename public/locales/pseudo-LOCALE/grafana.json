@@ -56,10 +56,46 @@
     "pause": "Päūşę ęväľūäŧįőŉ"
   },
   "alerting": {
+    "central-alert-history": {
+      "details": {
+        "annotations": "Åŉŉőŧäŧįőŉş",
+        "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
+        "loading": "Ŀőäđįŉģ...",
+        "no-annotations": "Ńő äŉŉőŧäŧįőŉş",
+        "no-values": "Ńő väľūęş",
+        "not-found": "Ŗūľę ŉőŧ ƒőūŉđ ƒőř ŧĥįş ęvęŉŧ.",
+        "not-grafana-rule": "Ŗūľę įş ŉőŧ ä Ğřäƒäŉä řūľę",
+        "number-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉş ƒőř şęľęčŧęđ pęřįőđ",
+        "state": {
+          "alerting": "Åľęřŧįŉģ",
+          "error": "Ēřřőř",
+          "no-data": "Ńő đäŧä",
+          "normal": "Ńőřmäľ",
+          "pending": "Pęŉđįŉģ"
+        },
+        "state-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉ",
+        "unknown-event-state": "Ůŉĸŉőŵŉ",
+        "unknown-rule": "Ůŉĸŉőŵŉ"
+      },
+      "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
+      "filter": {
+        "info": {
+          "label1": "Fįľŧęř ęvęŉŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ şpäčęş, ęχ:",
+          "label2": "Ĩŉväľįđ ūşę őƒ şpäčęş:",
+          "label3": "Väľįđ ūşę őƒ şpäčęş:",
+          "label4": "Fįľŧęř äľęřŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ þřäčęş, ęχ:"
+        }
+      }
+    },
     "contact-points": {
       "telegram": {
         "parse-mode-warning-body": "Ĩƒ yőū ūşę ä <1>päřşę_mőđę</1> őpŧįőŉ őŧĥęř ŧĥäŉ <3>Ńőŉę</3>, ŧřūŉčäŧįőŉ mäy řęşūľŧ įŉ äŉ įŉväľįđ męşşäģę, čäūşįŉģ ŧĥę ŉőŧįƒįčäŧįőŉ ŧő ƒäįľ. Főř ľőŉģęř męşşäģęş, ŵę řęčőmmęŉđ ūşįŉģ äŉ äľŧęřŉäŧįvę čőŉŧäčŧ męŧĥőđ.",
         "parse-mode-warning-title": "Ŧęľęģřäm męşşäģęş äřę ľįmįŧęđ ŧő 4096 ŮŦF-8 čĥäřäčŧęřş."
+      }
+    },
+    "entral-alert-history": {
+      "details": {
+        "value-in-transition": "Väľūę įŉ ŧřäŉşįŧįőŉ"
       }
     }
   },
@@ -153,38 +189,6 @@
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
-    }
-  },
-  "central-alert-history": {
-    "details": {
-      "annotations": "Åŉŉőŧäŧįőŉş",
-      "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
-      "loading": "Ŀőäđįŉģ...",
-      "no-annotations": "Ńő äŉŉőŧäŧįőŉş",
-      "no-values": "Ńő väľūęş",
-      "not-found": "Ŗūľę ŉőŧ ƒőūŉđ ƒőř ŧĥįş ęvęŉŧ.",
-      "not-grafana-rule": "Ŗūľę įş ŉőŧ ä Ğřäƒäŉä řūľę",
-      "number-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉş ƒőř şęľęčŧęđ pęřįőđ",
-      "state": {
-        "alerting": "Åľęřŧįŉģ",
-        "error": "Ēřřőř",
-        "no-data": "Ńő đäŧä",
-        "normal": "Ńőřmäľ",
-        "pending": "Pęŉđįŉģ"
-      },
-      "state-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉ",
-      "unknown-event-state": "Ůŉĸŉőŵŉ",
-      "unknown-rule": "Ůŉĸŉőŵŉ",
-      "value-in-transition": "Väľūę įŉ ŧřäŉşįŧįőŉ"
-    },
-    "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
-    "filter": {
-      "info": {
-        "label1": "Fįľŧęř ęvęŉŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ şpäčęş, ęχ:",
-        "label2": "Ĩŉväľįđ ūşę őƒ şpäčęş:",
-        "label3": "Väľįđ ūşę őƒ şpäčęş:",
-        "label4": "Fįľŧęř äľęřŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ þřäčęş, ęχ:"
-      }
     }
   },
   "clipboard-button": {
