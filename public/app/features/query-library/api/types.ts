@@ -11,8 +11,6 @@ export type DataQuerySpec = {
   targets: DataQueryTarget[];
 };
 
-// TODO : change put in API to PATCH and use DataQuerySpec instead of the full spec to try to not have shenanigans
-
 export type DataQueryFullSpec = {
   apiVersion: string;
   kind: string;
@@ -24,8 +22,6 @@ export type DataQueryFullSpec = {
   };
   spec: DataQuerySpec;
 };
-
-export type DataQueryPartialSpec = Partial<DataQuerySpec>;
 
 export type DataQuerySpecResponse = {
   apiVersion: string;

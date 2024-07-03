@@ -71,7 +71,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
         getAppEvents().publish({
           type: AppEvents.alertError.name,
           payload: [
-            t('explore.query-library.query-template-error', 'Error attempting to add this query to the library'),
+            t('explore.query-library.query-template-add-error', 'Error attempting to add this query to the library'),
           ],
         });
         return false;
@@ -91,9 +91,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
       .catch(() => {
         getAppEvents().publish({
           type: AppEvents.alertError.name,
-          payload: [
-            t('explore.query-library.query-template-error', 'Error attempting to add this query to the library'),
-          ],
+          payload: [t('explore.query-library.query-template-edit-error', 'Error attempting to edit this query')],
         });
         return false;
       });
