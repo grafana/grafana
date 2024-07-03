@@ -31,6 +31,7 @@ labels:
     - oss
 description: Configure options for Grafana's time series visualization
 title: Time series v3
+menuTitle: Time series v3
 weight: 10
 refs:
   configure-standard-options:
