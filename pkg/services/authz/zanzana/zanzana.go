@@ -14,7 +14,7 @@ const (
 
 const (
 	RelationTeamMember string = "member"
-	RelationTeamAdmin  string = "member"
+	RelationTeamAdmin  string = "admin"
 )
 
 func NewObject(typ, id string) string {
