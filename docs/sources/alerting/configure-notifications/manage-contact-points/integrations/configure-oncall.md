@@ -19,25 +19,6 @@ labels:
 menuTitle: Grafana OnCall
 title: Configure Grafana OnCall for Alerting
 weight: 300
-<<<<<<< HEAD
-refs:
-  oncall-integration:
-    - pattern: /docs/grafana/
-      destination: /docs/oncall/latest/integrations/grafana-alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/oncall/integrations/grafana-alerting/
-  escalation-chain:
-    - pattern: /docs/grafana/
-      destination: /docs/oncall/latest/configure/escalation-chains-and-routes/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/oncall/configure/escalation-chains-and-routes/
-  create-notification-policy:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
-=======
->>>>>>> 9740ce3f58f (alerting:docs>oncall (#89780))
 ---
 
 # Configure Grafana OnCall for Alerting
@@ -63,15 +44,9 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
 1. Enter a contact point name.
 1. From the **Integration** list, select **Grafana OnCall**.
 
-<<<<<<< HEAD
-   **Note:**
-
-   The Grafana OnCall integration is only available for Grafana Alertmanager.
-=======
    {{< admonition type="note" >}}
    The Grafana OnCall integration is only available for Grafana Alertmanager.
    {{< /admonition >}}
->>>>>>> 9740ce3f58f (alerting:docs>oncall (#89780))
 
 1. Choose whether to add a new OnCall integration or add an existing one.
    - If you add a new one, enter an Integration name.
