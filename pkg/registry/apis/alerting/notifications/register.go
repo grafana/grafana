@@ -16,11 +16,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	receiver "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
 	timeInterval "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
