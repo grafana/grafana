@@ -5,6 +5,7 @@ import (
 	"maps"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -12,6 +13,15 @@ import (
 type OAuthStrategy struct {
 	cfg                *setting.Cfg
 	settingsByProvider map[string]map[string]any
+}
+
+var extraKeysByProvider = map[string]map[string]connectors.ExtraKeyInfo{
+	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
+	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
+	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
+	social.GoogleProviderName:       connectors.ExtraGoogleSettingKeys,
+	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
+	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
@@ -42,17 +52,24 @@ func (s *OAuthStrategy) loadAllSettings() {
 	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
 	for _, provider := range allProviders {
 		settings := s.loadSettingsForProvider(provider)
-		if provider == social.GrafanaNetProviderName {
+		// This is required to support the legacy settings for the provider (auth.grafananet section)
+		// It will use the settings (and overwrite the current grafana_com settings) from auth.grafananet if
+		// the auth.grafananet section is enabled and the auth.grafana_com section is disabled.
+		if provider == social.GrafanaNetProviderName && s.shouldUseGrafanaNetSettings() && settings["enabled"] == true {
 			provider = social.GrafanaComProviderName
 		}
 		s.settingsByProvider[provider] = settings
 	}
 }
 
+func (s *OAuthStrategy) shouldUseGrafanaNetSettings() bool {
+	return s.settingsByProvider[social.GrafanaComProviderName]["enabled"] == false
+}
+
 func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any {
 	section := s.cfg.Raw.Section("auth." + provider)
 
-	return map[string]any{
+	result := map[string]any{
 		"client_id":                  section.Key("client_id").Value(),
 		"client_secret":              section.Key("client_secret").Value(),
 		"scopes":                     section.Key("scopes").Value(),
@@ -85,10 +102,23 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"auto_login":                 section.Key("auto_login").MustBool(false),
 		"allowed_groups":             section.Key("allowed_groups").Value(),
 		"signout_redirect_url":       section.Key("signout_redirect_url").Value(),
-		"allowed_organizations":      section.Key("allowed_organizations").Value(),
-		"id_token_attribute_name":    section.Key("id_token_attribute_name").Value(),
-		"login_attribute_path":       section.Key("login_attribute_path").Value(),
-		"name_attribute_path":        section.Key("name_attribute_path").Value(),
-		"team_ids":                   section.Key("team_ids").Value(),
+		"org_mapping":                section.Key("org_mapping").Value(),
+		"org_attribute_path":         section.Key("org_attribute_path").Value(),
 	}
+
+	extraKeys := extraKeysByProvider[provider]
+	for key, keyInfo := range extraKeys {
+		switch keyInfo.Type {
+		case connectors.Bool:
+			result[key] = section.Key(key).MustBool(keyInfo.DefaultValue.(bool))
+		default:
+			if _, ok := keyInfo.DefaultValue.(string); !ok {
+				result[key] = section.Key(key).Value()
+			} else {
+				result[key] = section.Key(key).MustString(keyInfo.DefaultValue.(string))
+			}
+		}
+	}
+
+	return result
 }

@@ -137,8 +137,8 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 
 		namespace, id := query.SignedInUser.GetNamespacedID()
 		var userID int64
-		switch namespace {
-		case identity.NamespaceServiceAccount, identity.NamespaceUser:
+
+		if namespace == identity.NamespaceServiceAccount || namespace == identity.NamespaceUser {
 			var err error
 			userID, err = identity.IntIdentifier(namespace, id)
 			if err != nil {

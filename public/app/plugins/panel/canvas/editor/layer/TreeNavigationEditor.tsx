@@ -5,7 +5,7 @@ import React, { Key, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
@@ -20,7 +20,7 @@ import { getTreeData, onNodeDrop, TreeElement } from './tree';
 
 let allowSelection = true;
 
-export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeViewEditorProps, Options>) => {
+export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, TreeViewEditorProps, Options>) => {
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
@@ -147,7 +147,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         multiple={true}
       />
 
-      <HorizontalGroup justify="space-between">
+      <Stack justifyContent="space-between" direction="row">
         <div className={styles.addLayerButton}>
           <AddLayerButton onChange={(sel) => onAddItem(sel, layer)} options={typeOptions} label={'Add item'} />
         </div>
@@ -161,7 +161,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
             Frame selection
           </Button>
         )}
-      </HorizontalGroup>
+      </Stack>
     </>
   );
 };

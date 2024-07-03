@@ -17,6 +17,12 @@ menuTitle: Manage library panels
 title: Manage library panels
 description: Create reusable library panels that you can use in any dashboard
 weight: 300
+refs:
+  rbac:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
 ---
 
 # Manage library panels
@@ -27,7 +33,7 @@ You can save a library panel in a folder alongside saved dashboards.
 
 ## Role-based access control
 
-You can control permissions for library panels using [role-based access control (RBAC)][rbac]. RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
+You can control permissions for library panels using [role-based access control (RBAC)](ref:rbac). RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
 
 ## Create a library panel
 
@@ -95,8 +101,3 @@ Delete a library panel when you no longer need it.
 1. Click **Dashboards** in the left-side menu.
 1. Click **Library panels**.
 1. Click the delete icon next to the library panel name.
-
-{{% docs/reference %}}
-[rbac]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control"
-[rbac]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control"
-{{% /docs/reference %}}

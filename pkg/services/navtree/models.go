@@ -19,6 +19,7 @@ const (
 	WeightAlertsAndIncidents
 	WeightTestingAndSynthetics
 	WeightMonitoring
+	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
@@ -39,7 +40,6 @@ const (
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
 	NavIDAlerting             = "alerting"
-	NavIDAlertingLegacy       = "alerting-legacy"
 	NavIDMonitoring           = "monitoring"
 	NavIDInfrastructure       = "infrastructure"
 	NavIDFrontend             = "frontend"
@@ -128,6 +128,14 @@ func Sort(nodes []*NavLink) {
 	}
 }
 
+func (root *NavTreeRoot) ApplyHelpVersion(version string) {
+	helpNode := root.FindById("help")
+
+	if helpNode != nil {
+		helpNode.SubTitle = version
+	}
+}
+
 func (root *NavTreeRoot) ApplyAdminIA() {
 	orgAdminNode := root.FindById(NavIDCfg)
 
@@ -142,6 +150,8 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("feature-toggles"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("storage"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("migrate-to-cloud"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("banner-settings"))
 
 		generalNode := &NavLink{
 			Text:     "General",
@@ -213,6 +223,12 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 
 		if costManagementMetricsNode != nil && adaptiveMetricsNode != nil {
 			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
+		}
+
+		attributionsNode := root.FindById("plugin-page-grafana-attributions-app")
+
+		if costManagementMetricsNode != nil && attributionsNode != nil {
+			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsNode)
 		}
 
 		costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")

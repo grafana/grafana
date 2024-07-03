@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Placement } from '@floating-ui/react';
 
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { TooltipPlacement } from '../components/Tooltip';
 
@@ -37,35 +37,15 @@ export function buildTooltipTheme(
       color: tooltipText,
       fontSize: theme.typography.bodySmall.fontSize,
       padding: theme.spacing(tooltipPadding.topBottom, tooltipPadding.rightLeft),
-      transition: 'opacity 0.3s',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.3s',
+      },
       zIndex: theme.zIndex.tooltip,
       maxWidth: '400px',
       overflowWrap: 'break-word',
 
       "&[data-popper-interactive='false']": {
         pointerEvents: 'none',
-      },
-
-      code: {
-        border: 'none',
-        display: 'inline',
-        background: colorManipulator.darken(tooltipBg, 0.1),
-        color: tooltipText,
-        whiteSpace: 'normal',
-      },
-
-      pre: {
-        background: colorManipulator.darken(tooltipBg, 0.1),
-        color: tooltipText,
-      },
-
-      a: {
-        color: tooltipText,
-        textDecoration: 'underline',
-      },
-
-      'a:hover': {
-        textDecoration: 'none',
       },
     }),
     headerClose: css({

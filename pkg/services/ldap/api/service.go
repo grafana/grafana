@@ -197,10 +197,10 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 	authModuleQuery := &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: login.LDAPAuthModule}
 	if _, err := s.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
 
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
 	userInfo, _, err := ldapClient.User(usr.Login)
@@ -212,7 +212,8 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 				return response.Error(http.StatusBadRequest, errMsg, err)
 			}
 
-			if err := s.userService.Disable(c.Req.Context(), &user.DisableUserCommand{IsDisabled: true, UserID: usr.ID}); err != nil {
+			isDisabled := true
+			if err := s.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: usr.ID, IsDisabled: &isDisabled}); err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
 
@@ -331,9 +332,6 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 			EnableUser:   true,
 			SyncOrgRoles: !s.cfg.LDAPSkipOrgRoleSync,
 			AllowSignUp:  s.cfg.LDAPAllowSignup,
-			LookUpParams: login.UserLookupParams{
-				UserID: &user.UserId,
-			},
 		},
 	}
 }

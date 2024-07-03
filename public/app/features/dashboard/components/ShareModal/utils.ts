@@ -1,5 +1,6 @@
 import { dateTime, locationUtil, TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -121,7 +122,12 @@ export function buildImageUrl(
   let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-  imageUrl += '&width=1000&height=500' + getLocalTimeZone();
+  imageUrl +=
+    `&width=${config.rendererDefaultImageWidth}` +
+    `&height=${config.rendererDefaultImageHeight}` +
+    `&scale=${config.rendererDefaultImageScale}` +
+    getLocalTimeZone();
+
   return imageUrl;
 }
 
@@ -156,6 +162,12 @@ export function getLocalTimeZone() {
 
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
+
+export const getTrackingSource = (
+  panel?: PanelModel | SceneObjectRef<VizPanel> | { timeFrom?: string; id: number }
+) => {
+  return panel ? 'panel' : 'dashboard';
+};
 
 export const shareDashboardType: {
   [key: string]: string;

@@ -64,7 +64,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 /**
  * @internal only exported for testing
  */
-export function reduceSeriesToRows(
+function reduceSeriesToRows(
   data: DataFrame[],
   matcher: FieldMatcher,
   reducerId: ReducerID[],
@@ -122,7 +122,7 @@ export function reduceSeriesToRows(
       if (labelsToFields) {
         names[i] = field.name;
         if (field.labels) {
-          for (const key of Object.keys(field.labels)) {
+          for (const key in field.labels) {
             labels[key][i] = field.labels[key];
           }
         }
@@ -156,7 +156,7 @@ export function reduceSeriesToRows(
   return mergeResults(processed);
 }
 
-export function getDistinctLabelKeys(frames: DataFrame[]): string[] {
+function getDistinctLabelKeys(frames: DataFrame[]): string[] {
   const keys = new Set<string>();
   for (const frame of frames) {
     for (const field of frame.fields) {
@@ -173,7 +173,7 @@ export function getDistinctLabelKeys(frames: DataFrame[]): string[] {
 /**
  * @internal only exported for testing
  */
-export function mergeResults(data: DataFrame[]): DataFrame | undefined {
+function mergeResults(data: DataFrame[]): DataFrame | undefined {
   if (!data?.length) {
     return undefined;
   }

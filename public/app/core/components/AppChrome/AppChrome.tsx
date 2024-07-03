@@ -3,9 +3,8 @@ import classNames from 'classnames';
 import React, { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
-import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
@@ -55,8 +54,7 @@ export function AppChrome({ children }: Props) {
 
   const { pathname, search } = locationService.getLocation();
   const url = pathname + search;
-  const shouldShowReturnToPrevious =
-    config.featureToggles.returnToPrevious && state.returnToPrevious && url !== state.returnToPrevious.href;
+  const shouldShowReturnToPrevious = state.returnToPrevious && url !== state.returnToPrevious.href;
 
   // Clear returnToPrevious when the page is manually navigated to
   useEffect(() => {
@@ -66,6 +64,12 @@ export function AppChrome({ children }: Props) {
     // We only want to pay attention when the location changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chrome, url]);
+
+  // Sync updates from kiosk mode query string back into app chrome
+  useEffect(() => {
+    const queryParams = locationSearchToObject(search);
+    chrome.setKioskModeFromUrl(queryParams.kiosk);
+  }, [chrome, search]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
@@ -82,7 +86,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <div className={cx(styles.topNav)}>
+          <header className={cx(styles.topNav)}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
               searchBarHidden={searchBarHidden}
@@ -93,19 +97,19 @@ export function AppChrome({ children }: Props) {
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
-          </div>
+          </header>
         </>
       )}
-      <main className={contentClass}>
+      <div className={contentClass}>
         <div className={styles.panes}>
           {!state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          <div className={styles.pageContainer} id="pageContent">
+          <main className={styles.pageContainer} id="pageContent">
             {children}
-          </div>
+          </main>
         </div>
-      </main>
+      </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
@@ -163,6 +167,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     pageContainer: css({
       label: 'page-container',
+      display: 'flex',
+      flexDirection: 'column',
       flexGrow: 1,
       minHeight: 0,
       minWidth: 0,

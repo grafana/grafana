@@ -19,6 +19,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,11 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	grafanaresponsewriter "github.com/grafana/grafana/pkg/services/apiserver/endpoints/responsewriter"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
-	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -98,6 +99,7 @@ type service struct {
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
 
+	startedCh chan struct{}
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -123,6 +125,7 @@ func ProvideService(
 		cfg:        cfg,
 		features:   features,
 		rr:         rr,
+		startedCh:  make(chan struct{}),
 		stopCh:     make(chan struct{}),
 		builders:   []builder.APIGroupBuilder{},
 		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
@@ -138,6 +141,7 @@ func ProvideService(
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
+			<-s.startedCh
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
 				_, _ = c.Resp.Write([]byte("Not found"))
@@ -161,6 +165,7 @@ func ProvideService(
 	s.rr.Group("/readyz", proxyHandler)
 	s.rr.Group("/healthz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
+	s.rr.Group("/version", proxyHandler)
 
 	return s, nil
 }
@@ -186,11 +191,14 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 }
 
 func (s *service) start(ctx context.Context) error {
+	defer close(s.startedCh)
+
 	// Get the list of groups the server will support
 	builders := s.builders
 
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 	// Install schemas
+	initialSize := len(aggregator.APIVersionPriorities)
 	for i, b := range builders {
 		groupVersions = append(groupVersions, b.GetGroupVersion())
 		if err := b.InstallSchema(Scheme); err != nil {
@@ -199,7 +207,7 @@ func (s *service) start(ctx context.Context) error {
 
 		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 			// set the priority for the group+version
-			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + 1)}
+			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
 		}
 
 		auth := b.GetAuthorizer()
@@ -209,7 +217,10 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
-	applyGrafanaConfig(s.cfg, s.features, o)
+	err := applyGrafanaConfig(s.cfg, s.features, o)
+	if err != nil {
+		return err
+	}
 
 	if errs := o.Validate(); len(errs) != 0 {
 		// TODO: handle multiple errors
@@ -240,15 +251,15 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag (and app_mode = development)")
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features)
+		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
 
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB)
+		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
 		if err != nil {
 			return err
 		}
@@ -259,8 +270,7 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
-		// TODO: support configuring the gRPC server address
-		conn, err := grpc.Dial("localhost:10000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
@@ -276,11 +286,23 @@ func (s *service) start(ctx context.Context) error {
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		if err != nil {
+			return err
+		}
+		serverConfig.RESTOptionsGetter = restOptionsGetter
 	}
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(Scheme, serverConfig, builders)
+	err = builder.SetupConfig(
+		Scheme,
+		serverConfig,
+		builders,
+		s.cfg.BuildStamp,
+		s.cfg.BuildVersion,
+		s.cfg.BuildCommit,
+		s.cfg.BuildBranch,
+	)
 	if err != nil {
 		return err
 	}
@@ -291,13 +313,8 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// dual writing is only enabled when the storage type is not legacy.
-	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
-	// support the legacy storage type.
-	dualWriteEnabled := o.StorageOptions.StorageType != grafanaapiserveroptions.StorageTypeLegacy
-
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, dualWriteEnabled)
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions)
 	if err != nil {
 		return err
 	}
@@ -358,12 +375,14 @@ func (s *service) startAggregator(
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
-	aggregatorConfig, aggregatorInformers, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig)
+	namespaceMapper := request.GetNamespaceMapper(s.cfg)
+
+	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, aggregatorInformers, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server)
 	if err != nil {
 		return nil, err
 	}
@@ -391,6 +410,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
+				<-s.startedCh
 				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
@@ -400,6 +420,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+	<-s.startedCh
 	s.handler.ServeHTTP(w, r)
 }
 

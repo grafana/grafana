@@ -58,6 +58,10 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
         left: ${theme.spacing(0.5)};
       }
     `,
+    // Compared to logsRowLevel we need to make error logs wider to accommodate the icon
+    logsRowWithError: css({
+      maxWidth: `${theme.spacing(1.5)}`,
+    }),
     logsRowMatchHighLight: css`
       label: logs-row__match-highlight;
       background: inherit;

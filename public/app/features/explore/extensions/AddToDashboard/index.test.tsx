@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React, { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setEchoSrv } from '@grafana/runtime';
 import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -54,6 +55,18 @@ const openModal = async (nameOverride?: string) => {
 describe('AddToDashboardButton', () => {
   beforeAll(() => {
     setEchoSrv(new Echo());
+  });
+
+  /* The Add to dashboard form brings in the DashboardPicker, which will call backendSrv.search as part of its instantiation
+  If we do not need a list of dashboards for the test, return an empty array. */
+  beforeEach(() => {
+    // Mock the search response so we don't get any refused connection errors
+    // from this test (as the fetch polyfill means this logic would actually try and call the API)
+    jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('Is disabled if explore pane has no queries', async () => {
@@ -225,9 +238,9 @@ describe('AddToDashboardButton', () => {
           await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
 
           await waitFor(async () => {
-            await screen.findByLabelText('Select option');
+            await screen.findByTestId(selectors.components.Select.option);
           });
-          await userEvent.click(screen.getByLabelText('Select option'));
+          await userEvent.click(screen.getByTestId(selectors.components.Select.option));
 
           await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
@@ -266,9 +279,9 @@ describe('AddToDashboardButton', () => {
           await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
 
           await waitFor(async () => {
-            await screen.findByLabelText('Select option');
+            await screen.findByTestId(selectors.components.Select.option);
           });
-          await userEvent.click(screen.getByLabelText('Select option'));
+          await userEvent.click(screen.getByTestId(selectors.components.Select.option));
 
           await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
@@ -382,9 +395,9 @@ describe('AddToDashboardButton', () => {
       await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
 
       await waitFor(async () => {
-        await screen.findByLabelText('Select option');
+        await screen.findByTestId(selectors.components.Select.option);
       });
-      await userEvent.click(screen.getByLabelText('Select option'));
+      await userEvent.click(screen.getByTestId(selectors.components.Select.option));
 
       await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 

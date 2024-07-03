@@ -41,6 +41,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
       href={urlWithVariables}
       target={target}
       onClick={onClick}
+      {...(isActive && { 'aria-current': 'page' })}
     >
       {linkContent}
     </LinkComponent>

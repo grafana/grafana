@@ -2,11 +2,11 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -28,7 +29,7 @@ import (
 	"github.com/go-kit/log/level"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -46,21 +47,11 @@ const (
 )
 
 type TracingService struct {
-	enabled       string
-	Address       string
-	Propagation   string
-	customAttribs []attribute.KeyValue
-
-	Sampler          string
-	SamplerParam     float64
-	SamplerRemoteURL string
-
+	cfg *TracingConfig
 	log log.Logger
 
 	tracerProvider tracerProvider
 	trace.Tracer
-
-	Cfg *setting.Cfg
 }
 
 type tracerProvider interface {
@@ -84,10 +75,9 @@ type Tracer interface {
 	Inject(context.Context, http.Header, trace.Span)
 }
 
-func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
-	ots, err := ParseSettings(cfg)
-	if err != nil {
-		return nil, err
+func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
+	if tracingCfg == nil {
+		return nil, fmt.Errorf("tracingCfg cannot be nil")
 	}
 
 	log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
@@ -97,19 +87,16 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 
 		return nil, false
 	})
+
+	ots := &TracingService{
+		cfg: tracingCfg,
+		log: log.New("tracing"),
+	}
+
 	if err := ots.initOpentelemetryTracer(); err != nil {
 		return nil, err
 	}
 	return ots, nil
-}
-
-func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
-	ots := &TracingService{
-		Cfg: cfg,
-		log: log.New("tracing"),
-	}
-	err := ots.parseSettings()
-	return ots, err
 }
 
 func (ots *TracingService) GetTracerProvider() tracerProvider {
@@ -125,6 +112,25 @@ func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	return spanCtx.TraceID().String()
 }
 
+// Error sets the status to error and record the error as an exception in the provided span.
+func Error(span trace.Span, err error) error {
+	attr := []attribute.KeyValue{}
+	grafanaErr := errutil.Error{}
+	if errors.As(err, &grafanaErr) {
+		attr = append(attr, attribute.String("message_id", grafanaErr.MessageID))
+	}
+
+	span.SetStatus(codes.Error, err.Error())
+	span.RecordError(err, trace.WithAttributes(attr...))
+	return err
+}
+
+// Errorf wraps fmt.Errorf and also sets the status to error and record the error as an exception in the provided span.
+func Errorf(span trace.Span, format string, args ...any) error {
+	err := fmt.Errorf(format, args...)
+	return Error(span, err)
+}
+
 type noopTracerProvider struct {
 	trace.TracerProvider
 }
@@ -133,96 +139,17 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (ots *TracingService) parseSettings() error {
-	legacyAddress, legacyTags := "", ""
-	if section, err := ots.Cfg.Raw.GetSection("tracing.jaeger"); err == nil {
-		legacyAddress = section.Key("address").MustString("")
-		if legacyAddress == "" {
-			host, port := os.Getenv(envJaegerAgentHost), os.Getenv(envJaegerAgentPort)
-			if host != "" || port != "" {
-				legacyAddress = fmt.Sprintf("%s:%s", host, port)
-			}
-		}
-		legacyTags = section.Key("always_included_tag").MustString("")
-		ots.Sampler = section.Key("sampler_type").MustString("")
-		ots.SamplerParam = section.Key("sampler_param").MustFloat64(1)
-		ots.SamplerRemoteURL = section.Key("sampling_server_url").MustString("")
-	}
-	section := ots.Cfg.Raw.Section("tracing.opentelemetry")
-	var err error
-	// we default to legacy tag set (attributes) if the new config format is absent
-	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(legacyTags))
-	if err != nil {
-		return err
-	}
-
-	// if sampler_type is set in tracing.opentelemetry, we ignore the config in tracing.jaeger
-	sampler := section.Key("sampler_type").MustString("")
-	if sampler != "" {
-		ots.Sampler = sampler
-	}
-
-	samplerParam := section.Key("sampler_param").MustFloat64(0)
-	if samplerParam != 0 {
-		ots.SamplerParam = samplerParam
-	}
-
-	samplerRemoteURL := section.Key("sampling_server_url").MustString("")
-	if samplerRemoteURL != "" {
-		ots.SamplerRemoteURL = samplerRemoteURL
-	}
-
-	section = ots.Cfg.Raw.Section("tracing.opentelemetry.jaeger")
-	ots.enabled = noopExporter
-
-	// we default to legacy Jaeger agent address if the new config value is empty
-	ots.Address = section.Key("address").MustString(legacyAddress)
-	ots.Propagation = section.Key("propagation").MustString("")
-	if ots.Address != "" {
-		ots.enabled = jaegerExporter
-		return nil
-	}
-
-	section = ots.Cfg.Raw.Section("tracing.opentelemetry.otlp")
-	ots.Address = section.Key("address").MustString("")
-	if ots.Address != "" {
-		ots.enabled = otlpExporter
-	}
-	ots.Propagation = section.Key("propagation").MustString("")
-	return nil
-}
-
-func (ots *TracingService) OTelExporterEnabled() bool {
-	return ots.enabled == otlpExporter
-}
-
-func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
-	res := []attribute.KeyValue{}
-
-	attribs := strings.Split(s, ",")
-	for _, v := range attribs {
-		parts := strings.SplitN(v, ":", 2)
-		if len(parts) > 1 {
-			res = append(res, attribute.String(parts[0], parts[1]))
-		} else if v != "" {
-			return nil, fmt.Errorf("custom attribute malformed - must be in 'key:value' form: %q", v)
-		}
-	}
-
-	return res, nil
-}
-
 func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	var ep jaeger.EndpointOption
 	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
-	if strings.HasPrefix(ots.Address, "http://") || strings.HasPrefix(ots.Address, "https://") {
-		ots.log.Debug("using jaeger collector", "address", ots.Address)
-		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address))
-	} else if host, port, err := net.SplitHostPort(ots.Address); err == nil {
+	if strings.HasPrefix(ots.cfg.Address, "http://") || strings.HasPrefix(ots.cfg.Address, "https://") {
+		ots.log.Debug("using jaeger collector", "address", ots.cfg.Address)
+		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.cfg.Address))
+	} else if host, port, err := net.SplitHostPort(ots.cfg.Address); err == nil {
 		ots.log.Debug("using jaeger agent", "host", host, "port", port)
 		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
 	} else {
-		return nil, fmt.Errorf("invalid tracer address: %s", ots.Address)
+		return nil, fmt.Errorf("invalid tracer address: %s", ots.cfg.Address)
 	}
 	exp, err := jaeger.New(ep)
 	if err != nil {
@@ -234,10 +161,10 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 		resource.WithAttributes(
 			// TODO: why are these attributes different from ones added to the
 			// OTLP provider?
-			semconv.ServiceNameKey.String("grafana"),
+			semconv.ServiceNameKey.String(ots.cfg.ServiceName),
 			attribute.String("environment", "production"),
 		),
-		resource.WithAttributes(ots.customAttribs...),
+		resource.WithAttributes(ots.cfg.CustomAttribs...),
 	)
 	if err != nil {
 		return nil, err
@@ -258,7 +185,7 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 }
 
 func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
-	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.Address), otlptracegrpc.WithInsecure())
+	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.cfg.Address), otlptracegrpc.WithInsecure())
 	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		return nil, err
@@ -269,41 +196,42 @@ func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, e
 		return nil, err
 	}
 
-	return initTracerProvider(exp, ots.Cfg.BuildVersion, sampler, ots.customAttribs...)
+	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
 }
 
 func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
-	switch ots.Sampler {
+	switch ots.cfg.Sampler {
 	case "const", "":
-		if ots.SamplerParam >= 1 {
+		if ots.cfg.SamplerParam >= 1 {
 			return tracesdk.AlwaysSample(), nil
-		} else if ots.SamplerParam <= 0 {
+		} else if ots.cfg.SamplerParam <= 0 {
 			return tracesdk.NeverSample(), nil
 		}
 
-		return nil, fmt.Errorf("invalid param for const sampler - must be 0 or 1: %f", ots.SamplerParam)
+		return nil, fmt.Errorf("invalid param for const sampler - must be 0 or 1: %f", ots.cfg.SamplerParam)
 	case "probabilistic":
-		return tracesdk.TraceIDRatioBased(ots.SamplerParam), nil
+		return tracesdk.TraceIDRatioBased(ots.cfg.SamplerParam), nil
 	case "rateLimiting":
-		return newRateLimiter(ots.SamplerParam), nil
+		return newRateLimiter(ots.cfg.SamplerParam), nil
 	case "remote":
 		return jaegerremote.New("grafana",
-			jaegerremote.WithSamplingServerURL(ots.SamplerRemoteURL),
-			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.SamplerParam)),
+			jaegerremote.WithSamplingServerURL(ots.cfg.SamplerRemoteURL),
+			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.cfg.SamplerParam)),
 		), nil
 	default:
-		return nil, fmt.Errorf("invalid sampler type: %s", ots.Sampler)
+		return nil, fmt.Errorf("invalid sampler type: %s", ots.cfg.Sampler)
 	}
 }
 
-func initTracerProvider(exp tracesdk.SpanExporter, version string, sampler tracesdk.Sampler, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
+func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVersion string, sampler tracesdk.Sampler, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String("grafana"),
-			semconv.ServiceVersionKey.String(version),
+			semconv.ServiceNameKey.String(serviceName),
+			semconv.ServiceVersionKey.String(serviceVersion),
 		),
 		resource.WithAttributes(customAttribs...),
+		resource.WithFromEnv(),
 		resource.WithProcessRuntimeDescription(),
 		resource.WithTelemetrySDK(),
 	)
@@ -326,7 +254,7 @@ func (ots *TracingService) initNoopTracerProvider() (tracerProvider, error) {
 func (ots *TracingService) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
-	switch ots.enabled {
+	switch ots.cfg.enabled {
 	case jaegerExporter:
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
@@ -344,15 +272,17 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 		}
 	}
 
+	tp = NewProfilingTracerProvider(tp)
+
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
-	if ots.enabled != "" {
+	if ots.cfg.enabled != "" {
 		otel.SetTracerProvider(tp)
 	}
 
 	propagators := []propagation.TextMapPropagator{}
-	for _, p := range strings.Split(ots.Propagation, ",") {
+	for _, p := range strings.Split(ots.cfg.Propagation, ",") {
 		switch p {
 		case w3cPropagator:
 			propagators = append(propagators, propagation.TraceContext{}, propagation.Baggage{})

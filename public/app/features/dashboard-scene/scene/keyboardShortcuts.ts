@@ -1,5 +1,7 @@
+import { SetPanelAttentionEvent } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
+import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareModal } from '../sharing/ShareModal';
@@ -8,10 +10,27 @@ import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPan
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { removePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
+  let vizPanelKey: string | null = null;
+
+  const panelAttentionSubscription = appEvents.subscribe(SetPanelAttentionEvent, (event) => {
+    if (typeof event.payload.panelId === 'string') {
+      vizPanelKey = event.payload.panelId;
+    }
+  });
+
+  function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
+    return () => {
+      const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === vizPanelKey);
+      if (vizPanel && vizPanel instanceof VizPanel) {
+        fn(vizPanel);
+        return;
+      }
+    };
+  }
 
   // View panel
   keybindings.addBinding({
@@ -120,7 +139,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p r',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      removePanel(scene, vizPanel, true);
+      if (scene.state.isEditing) {
+        onRemovePanel(scene, vizPanel);
+      }
     }),
   });
 
@@ -128,7 +149,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p d',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      scene.duplicatePanel(vizPanel);
+      if (scene.state.isEditing) {
+        scene.duplicatePanel(vizPanel);
+      }
     }),
   });
 
@@ -136,26 +159,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // collapse all rows (TODO)
   // expand all rows (TODO)
 
-  return () => keybindings.removeAll;
-}
-
-export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
   return () => {
-    const elements = document.querySelectorAll(':hover');
-
-    for (let i = elements.length - 1; i > 0; i--) {
-      const element = elements[i];
-
-      if (element instanceof HTMLElement && element.dataset?.vizPanelKey) {
-        const panelKey = element.dataset?.vizPanelKey;
-        const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === panelKey);
-
-        if (vizPanel && vizPanel instanceof VizPanel) {
-          fn(vizPanel);
-          return;
-        }
-      }
-    }
+    keybindings.removeAll();
+    panelAttentionSubscription.unsubscribe();
   };
 }
 

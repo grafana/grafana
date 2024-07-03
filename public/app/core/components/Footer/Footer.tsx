@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { LinkTarget } from '@grafana/data';
+import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Icon, IconName } from '@grafana/ui';
+import { Icon, IconName, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 export interface FooterLink {
@@ -86,7 +87,7 @@ export function getVersionLinks(hideEdition?: boolean): FooterLink[] {
   links.push({
     target: '_blank',
     id: 'version',
-    text: `v${buildInfo.version} (${buildInfo.commit})`,
+    text: buildInfo.versionString,
     url: hasReleaseNotes ? `https://github.com/grafana/grafana/blob/main/CHANGELOG.md` : undefined,
   });
 
@@ -117,13 +118,14 @@ export const Footer = React.memo(({ customLinks }: Props) => {
   // @PERCONA
   // remove version links
   const links = customLinks || getFooterLinks();
+  const styles = useStyles2(getStyles);
 
   return (
-    <footer className="footer">
+    <footer className={styles.footer}>
       <div className="text-center">
-        <ul>
-          {links.map((link) => (
-            <li key={link.text}>
+        <ul className={styles.list}>
+          {links.map((link, index) => (
+            <li className={styles.listItem} key={index}>
               <FooterItem item={link} />
             </li>
           ))}
@@ -150,3 +152,37 @@ function FooterItem({ item }: { item: FooterLink }) {
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  footer: css({
+    ...theme.typography.bodySmall,
+    color: theme.colors.text.primary,
+    display: 'block',
+    padding: theme.spacing(2, 0),
+    position: 'relative',
+    width: '98%',
+
+    'a:hover': {
+      color: theme.colors.text.maxContrast,
+      textDecoration: 'underline',
+    },
+
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
+  }),
+  list: css({
+    listStyle: 'none',
+  }),
+  listItem: css({
+    display: 'inline-block',
+    '&:after': {
+      content: "' | '",
+      padding: theme.spacing(0, 1),
+    },
+    '&:last-child:after': {
+      content: "''",
+      paddingLeft: 0,
+    },
+  }),
+});

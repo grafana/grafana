@@ -31,6 +31,13 @@ Team LBAC is available on Cloud for data sources created with basic authenticati
 1. Define Label Selector for the Rule
    - Add a label selector to the rule. Refer to Loki query documentation for guidance on the types of log selections you can specify.
 
+### LBAC rule
+
+A LBAC rule is a `logql` query that runs as a query to the loki instance for your logs. Each rule is it's own filtering operating independently from the other rules within a team. For example, you can create a label policy that includes all log lines with the label.
+
+One rule `{namespace="dev", cluster="us-west-0"}` created with multiple namespaces will be seen as `namespace="dev"` **AND** `cluster="us-west-0"`.
+Two rules `{namespace="dev"}`, `{cluster="us-west-0"}` created for a team will be seen as `namespace="dev"` **OR** `cluster="us-west-0"`.
+
 #### Best practices
 
 We recommend you only add `query` permissions for teams that should use the data source and only `Admin` have `Admin` permissions.
@@ -116,3 +123,14 @@ A user that is part of Team A will have access to logs that match `namespace="de
 A user that is part of Team A and part of Team B will have access to logs that match `namespace="dev"`.
 
 A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
+
+### Task 6: User A is Admin and part of Team B
+
+We have team B, user A is part of Team B and has an `Admin` basic role.
+
+- Team B has no roles assigned
+- Team B has Query permissions to data source Loki
+
+- Team B has a rule `{ project_id="project-dev" }`
+
+User A may only access logs for data source Loki that match `{ project_id="project-dev" }` and no other logs on the data source.

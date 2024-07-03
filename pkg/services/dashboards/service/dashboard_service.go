@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -42,6 +42,8 @@ var (
 	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
 	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
 	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
+
+	daysInTrash = 24 * 30 * time.Hour
 )
 
 type DashboardServiceImpl struct {
@@ -50,7 +52,6 @@ type DashboardServiceImpl struct {
 	dashboardStore       dashboards.Store
 	folderStore          folder.FolderStore
 	folderService        folder.Service
-	dashAlertExtractor   alerting.DashAlertExtractor
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
@@ -60,7 +61,7 @@ type DashboardServiceImpl struct {
 
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
-	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
+	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service, r prometheus.Registerer,
@@ -69,7 +70,6 @@ func ProvideDashboardServiceImpl(
 		cfg:                  cfg,
 		log:                  log.New("dashboard-service"),
 		dashboardStore:       dashboardStore,
-		dashAlertExtractor:   dashAlertExtractor,
 		features:             features,
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
@@ -102,7 +102,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx co
 }
 
 //nolint:gocyclo
-func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO, shouldValidateAlerts bool,
+func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO,
 	validateProvisionedDashboard bool) (*dashboards.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
@@ -133,13 +133,6 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	if err := validateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dash); err != nil {
 		return nil, err
-	}
-
-	if shouldValidateAlerts {
-		dashAlertInfo := alerting.DashAlertInfo{Dash: dash, User: dto.User, OrgID: dash.OrgID}
-		if err := dr.dashAlertExtractor.ValidateAlerts(ctx, dashAlertInfo); err != nil {
-			return nil, err
-		}
 	}
 
 	// Validate folder
@@ -246,13 +239,14 @@ func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	namespaceID, identifier := user.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
 		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
+	} else {
+		var err error
+		userID, err = identity.IntIdentifier(namespaceID, identifier)
+		if err != nil {
+			log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
+		}
 	}
 
-	userID, err := identity.IntIdentifier(namespaceID, identifier)
-
-	if err != nil {
-		log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
-	}
 	return userID, nil
 }
 
@@ -288,7 +282,7 @@ func validateDashboardRefreshInterval(minRefreshInterval string, dash *dashboard
 	}
 
 	refresh := dash.Data.Get("refresh").MustString("")
-	if refresh == "" {
+	if refresh == "" || refresh == "auto" {
 		// since no refresh is set it is a valid refresh rate
 		return nil
 	}
@@ -319,7 +313,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), false)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false)
 	if err != nil {
 		return nil, err
 	}
@@ -328,26 +322,6 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	dash, err := dr.dashboardStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
 	if err != nil {
 		return nil, err
-	}
-
-	// alerts
-	dashAlertInfo := alerting.DashAlertInfo{
-		User:  dto.User,
-		Dash:  dash,
-		OrgID: dto.OrgID,
-	}
-
-	// extract/save legacy alerts only if legacy alerting is enabled
-	if dr.cfg.IsLegacyAlertingEnabled() {
-		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		err = dr.dashboardStore.SaveAlerts(ctx, dash.ID, alerts)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if dto.Dashboard.ID == 0 {
@@ -359,7 +333,6 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand) (*folder.Folder, error) {
 	dto.SignedInUser = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
-
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
 		dr.log.Error("failed to create folder for provisioned dashboards", "folder", dto.Title, "org", dto.OrgID, "err", err)
@@ -379,7 +352,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), !allowUiUpdate)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -389,31 +362,67 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		return nil, fmt.Errorf("saving dashboard failed: %w", err)
 	}
 
-	dashAlertInfo := alerting.DashAlertInfo{
-		User:  dto.User,
-		Dash:  dash,
-		OrgID: dto.OrgID,
-	}
-
-	// extract/save legacy alerts only if legacy alerting is enabled
-	if dr.cfg.IsLegacyAlertingEnabled() {
-		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		err = dr.dashboardStore.SaveAlerts(ctx, dash.ID, alerts)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	// new dashboard created
 	if dto.Dashboard.ID == 0 {
 		dr.setDefaultPermissions(ctx, dto, dash, false)
 	}
 
 	return dash, nil
+}
+func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, orgID, uid)
+}
+
+func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboard *dashboards.Dashboard, user identity.Requester, optionalFolderUID string) error {
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
+	}
+
+	// if the optionalFolder is provided we need to check if the folder exists and user has access to it
+	if optionalFolderUID != "" {
+		restoringFolder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+			UID:          &optionalFolderUID,
+			OrgID:        dashboard.OrgID,
+			SignedInUser: user,
+		})
+		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return dashboards.ErrFolderRestoreNotFound
+			}
+			return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
+		}
+
+		return dr.dashboardStore.RestoreDashboard(ctx, dashboard.OrgID, dashboard.UID, restoringFolder)
+	}
+
+	// if the optionalFolder is not provided we need to restore the dashboard to the original folder
+	// we check for permissions and the folder existence before restoring
+	restoringFolder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+		UID:          &dashboard.FolderUID,
+		OrgID:        dashboard.OrgID,
+		SignedInUser: user,
+	})
+	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return dashboards.ErrFolderRestoreNotFound
+		}
+		return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
+	}
+
+	return dr.dashboardStore.RestoreDashboard(ctx, dashboard.OrgID, dashboard.UID, restoringFolder)
+}
+
+func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	if !dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
+	}
+
+	provisionedData, _ := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
+	if provisionedData != nil && provisionedData.ID != 0 {
+		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+	}
+
+	return dr.dashboardStore.SoftDeleteDashboard(ctx, orgID, dashboardUID)
 }
 
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
@@ -455,7 +464,7 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, true)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, true)
 	if err != nil {
 		return nil, err
 	}
@@ -602,6 +611,7 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 	userDashFolders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:         folderUIDs,
 		OrgID:        user.GetOrgID(),
+		OrderByTitle: true,
 		SignedInUser: user,
 	})
 	if err != nil {
@@ -671,6 +681,10 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	return hits, nil
 }
 
+func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetAllDashboards(ctx)
+}
+
 func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 	var hitType model.HitType
 	if item.IsFolder {
@@ -719,6 +733,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
+		if item.Deleted != nil {
+			hit.RemainingTrashAtAge = util.RemainingDaysUntil((*item.Deleted).Add(daysInTrash))
+		}
 	}
 	return hitList
 }
@@ -732,7 +749,29 @@ func (dr DashboardServiceImpl) CountInFolders(ctx context.Context, orgID int64, 
 }
 
 func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) error {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		return dr.dashboardStore.SoftDeleteDashboardsInFolders(ctx, orgID, folderUIDs)
+	}
+
 	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
+
+func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (int64, error) {
+	var deletedDashboardsCount int64
+	deletedDashboards, err := dr.dashboardStore.GetSoftDeletedExpiredDashboards(ctx, daysInTrash)
+	if err != nil {
+		return 0, err
+	}
+	for _, dashboard := range deletedDashboards {
+		err = dr.DeleteDashboard(ctx, dashboard.ID, dashboard.OrgID)
+		if err != nil {
+			dr.log.Warn("Failed to cleanup deleted dashboard", "dashboardUid", dashboard.UID, "error", err)
+			break
+		}
+		deletedDashboardsCount++
+	}
+
+	return deletedDashboardsCount, nil
+}

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -24,6 +24,8 @@ type AccessControl interface {
 
 type Service interface {
 	registry.ProvidesUsageStats
+	// GetRoleByName returns a role by name
+	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
 	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
@@ -35,6 +37,9 @@ type Service interface {
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	// DeleteTeamPermissions removes all role assignments and permissions granted to a team
+	// and removes permissions scoped to the team.
+	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
 	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(registrations ...RoleRegistration) error
@@ -44,6 +49,19 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
+}
+
+//go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
+type Store interface {
+	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	GetBasicRolesPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	GetTeamsPermissions(ctx context.Context, query GetUserPermissionsQuery) (map[int64][]Permission, error)
+	SearchUsersPermissions(ctx context.Context, orgID int64, options SearchOptions) (map[int64][]Permission, error)
+	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
+	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
+	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 }
 
 type RoleRegistry interface {
@@ -61,6 +79,7 @@ type SearchOptions struct {
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
+	RolePrefixes []string
 }
 
 // Wildcards computes the wildcard scopes that include the scope
@@ -82,22 +101,18 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 	if s.NamespacedID == "" {
 		return 0, errors.New("namespacedID must be set")
 	}
-	// Split namespaceID into namespace and ID
-	parts := strings.Split(s.NamespacedID, ":")
-	// Validate namespace ID format
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
-	}
-	// Validate namespace type is user or service account
-	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", parts[0])
-	}
-	// Validate namespace ID is a number
-	id, err := strconv.ParseInt(parts[1], 10, 64)
+
+	id, err := identity.ParseNamespaceID(s.NamespacedID)
 	if err != nil {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
+		return 0, err
 	}
-	return id, nil
+
+	// Validate namespace type is user or service account
+	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
+		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	}
+
+	return id.ParseInt()
 }
 
 type SyncUserRolesCommand struct {
@@ -111,6 +126,7 @@ type SyncUserRolesCommand struct {
 type TeamPermissionsService interface {
 	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 }
 
 type FolderPermissionsService interface {
@@ -152,22 +168,28 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
 		var targetOrgID int64 = GlobalOrgID
-		tmpUser, err := makeTmpUser(c.Req.Context(), service, nil, nil, c.SignedInUser, targetOrgID)
+		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
 		if err != nil {
-			deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+			// This will be an common error for entities that can't authenticate in global scope
+			c.Logger.Debug("Failed to authenticate user in global scope", "error", err)
+			return false
 		}
 
-		hasAccess, err := ac.Evaluate(c.Req.Context(), tmpUser, evaluator)
+		hasAccess, err := ac.Evaluate(c.Req.Context(), orgUser, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
 
+		// guard against nil map
+		if c.SignedInUser.Permissions == nil {
+			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		}
 		// set on user so we don't fetch global permissions every time this is called
-		c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
+		c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 
 		return hasAccess
 	}
@@ -210,11 +232,29 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
-	m := make(map[string][]string)
+	// Use a map to deduplicate scopes.
+	// User can have the same permission from multiple sources (e.g. team, basic role, directly assigned etc).
+	// User will also have duplicate permissions if action sets are used, as we will be double writing permissions for a while.
+	m := make(map[string]map[string]struct{})
 	for i := range permissions {
-		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+		if _, ok := m[permissions[i].Action]; !ok {
+			m[permissions[i].Action] = make(map[string]struct{})
+		}
+		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
 	}
-	return m
+
+	res := make(map[string][]string, len(m))
+	for action, scopes := range m {
+		scopeList := make([]string, len(scopes))
+		i := 0
+		for scope := range scopes {
+			scopeList[i] = scope
+			i++
+		}
+		res[action] = scopeList
+	}
+
+	return res
 }
 
 // Reduce will reduce a list of permissions to its minimal form, grouping scopes by action
@@ -280,110 +320,6 @@ func Reduce(ps []Permission) map[string][]string {
 	}
 
 	return reduced
-}
-
-// intersectScopes computes the minimal list of scopes common to two slices.
-func intersectScopes(s1, s2 []string) []string {
-	if len(s1) == 0 || len(s2) == 0 {
-		return []string{}
-	}
-
-	// helpers
-	splitScopes := func(s []string) (map[string]bool, map[string]bool) {
-		scopes := make(map[string]bool)
-		wildcards := make(map[string]bool)
-		for _, s := range s {
-			if isWildcard(s) {
-				wildcards[s] = true
-			} else {
-				scopes[s] = true
-			}
-		}
-		return scopes, wildcards
-	}
-	includes := func(wildcardsSet map[string]bool, scope string) bool {
-		for wildcard := range wildcardsSet {
-			if wildcard == "*" || strings.HasPrefix(scope, wildcard[:len(wildcard)-1]) {
-				return true
-			}
-		}
-		return false
-	}
-
-	res := make([]string, 0)
-
-	// split input into scopes and wildcards
-	s1Scopes, s1Wildcards := splitScopes(s1)
-	s2Scopes, s2Wildcards := splitScopes(s2)
-
-	// intersect wildcards
-	wildcards := make(map[string]bool)
-	for s := range s1Wildcards {
-		// if s1 wildcard is included in s2 wildcards
-		// then it is included in the intersection
-		if includes(s2Wildcards, s) {
-			wildcards[s] = true
-			continue
-		}
-	}
-	for s := range s2Wildcards {
-		// if s2 wildcard is included in s1 wildcards
-		// then it is included in the intersection
-		if includes(s1Wildcards, s) {
-			wildcards[s] = true
-		}
-	}
-
-	// intersect scopes
-	scopes := make(map[string]bool)
-	for s := range s1Scopes {
-		// if s1 scope is included in s2 wilcards or s2 scopes
-		// then it is included in the intersection
-		if includes(s2Wildcards, s) || s2Scopes[s] {
-			scopes[s] = true
-		}
-	}
-	for s := range s2Scopes {
-		// if s2 scope is included in s1 wilcards
-		// then it is included in the intersection
-		if includes(s1Wildcards, s) {
-			scopes[s] = true
-		}
-	}
-
-	// merge wildcards and scopes
-	for w := range wildcards {
-		res = append(res, w)
-	}
-	for s := range scopes {
-		res = append(res, s)
-	}
-
-	return res
-}
-
-// Intersect returns the intersection of two slices of permissions, grouping scopes by action.
-func Intersect(p1, p2 []Permission) map[string][]string {
-	if len(p1) == 0 || len(p2) == 0 {
-		return map[string][]string{}
-	}
-
-	res := make(map[string][]string)
-	p1m := Reduce(p1)
-	p2m := Reduce(p2)
-
-	// Loop over the smallest map
-	if len(p1m) > len(p2m) {
-		p1m, p2m = p2m, p1m
-	}
-
-	for a1, s1 := range p1m {
-		if s2, ok := p2m[a1]; ok {
-			res[a1] = intersectScopes(s1, s2)
-		}
-	}
-
-	return res
 }
 
 func ValidateScope(scope string) bool {

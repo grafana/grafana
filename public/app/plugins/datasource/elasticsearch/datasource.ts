@@ -43,7 +43,6 @@ import {
 import {
   DataSourceWithBackend,
   getDataSourceSrv,
-  config,
   BackendSrvRequest,
   TemplateSrv,
   getTemplateSrv,
@@ -51,7 +50,6 @@ import {
 
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
-import { LegacyQueryRunner } from './LegacyQueryRunner';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
@@ -80,6 +78,9 @@ import {
   Interval,
   ElasticsearchAnnotationQuery,
   RangeMap,
+  isElasticsearchResponseWithAggregations,
+  isElasticsearchResponseWithHits,
+  ElasticsearchHits,
 } from './types';
 import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
 
@@ -115,7 +116,6 @@ export class ElasticDatasource
   name: string;
   index: string;
   timeField: string;
-  xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
@@ -128,7 +128,6 @@ export class ElasticDatasource
   includeFrozen: boolean;
   isProxyAccess: boolean;
   databaseVersion: SemVer | null;
-  legacyQueryRunner: LegacyQueryRunner;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -144,7 +143,6 @@ export class ElasticDatasource
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
-    this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.intervalPattern = settingsData.interval;
     this.interval = settingsData.timeInterval;
@@ -169,7 +167,6 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
-    this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
   }
 
   getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
@@ -223,11 +220,7 @@ export class ElasticDatasource
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
         const path = indexUrlList[listLen - index - 1];
-        const requestObservable = config.featureToggles.enableElasticsearchBackendQuerying
-          ? from(this.getResource(path))
-          : this.legacyQueryRunner.request('GET', path);
-
-        return requestObservable.pipe(catchError((err) => of({ err })));
+        return from(this.getResource(path)).pipe(catchError((err) => of({ err })));
       }),
       skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -245,17 +238,17 @@ export class ElasticDatasource
   annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const payload = this.prepareAnnotationRequest(options);
     trackAnnotationQuery(options.annotation);
-    const annotationObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? // TODO: We should migrate this to use query and not resource call
-        // The plan is to look at this when we start to work on raw query editor for ES
-        // as we will have to explore how to handle any query
-        from(this.postResourceRequest('_msearch', payload))
-      : this.legacyQueryRunner.request('POST', '_msearch', payload);
-
+    // TODO: We should migrate this to use query and not resource call
+    // The plan is to look at this when we start to work on raw query editor for ES
+    // as we will have to explore how to handle any query
+    const annotationObservable = from(this.postResourceRequest('_msearch', payload));
     return lastValueFrom(
       annotationObservable.pipe(
-        map((res) => {
-          const hits = res.responses[0].hits.hits;
+        map((res: unknown) => {
+          if (!isElasticsearchResponseWithHits(res)) {
+            return [];
+          }
+          const hits = res?.responses[0].hits?.hits ?? [];
           return this.processHitsToAnnotationEvents(options.annotation, hits);
         })
       )
@@ -355,10 +348,7 @@ export class ElasticDatasource
     return payload;
   }
 
-  private processHitsToAnnotationEvents(
-    annotation: ElasticsearchAnnotationQuery,
-    hits: Array<Record<string, string | number | Record<string | number, string | number>>>
-  ) {
+  private processHitsToAnnotationEvents(annotation: ElasticsearchAnnotationQuery, hits: ElasticsearchHits) {
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
     const textField = annotation.textField || 'tags';
@@ -528,25 +518,19 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const { enableElasticsearchBackendQuerying } = config.featureToggles;
-    if (enableElasticsearchBackendQuerying) {
-      const contextRequest = this.makeLogContextDataRequest(row, options);
-
-      return lastValueFrom(
-        this.query(contextRequest).pipe(
-          catchError((err) => {
-            const error: DataQueryError = {
-              message: 'Error during context query. Please check JS console logs.',
-              status: err.status,
-              statusText: err.statusText,
-            };
-            throw error;
-          })
-        )
-      );
-    } else {
-      return this.legacyQueryRunner.logContextQuery(row, options);
-    }
+    const contextRequest = this.makeLogContextDataRequest(row, options);
+    return lastValueFrom(
+      this.query(contextRequest).pipe(
+        catchError((err) => {
+          const error: DataQueryError = {
+            message: 'Error during context query. Please check JS console logs.',
+            status: err.status,
+            statusText: err.statusText,
+          };
+          throw error;
+        })
+      )
+    );
   };
 
   /**
@@ -676,20 +660,16 @@ export class ElasticDatasource
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
-    const { enableElasticsearchBackendQuerying } = config.featureToggles;
-    if (enableElasticsearchBackendQuerying) {
-      const start = new Date();
-      return super.query(request).pipe(
-        tap((response) => trackQuery(response, request, start)),
-        map((response) => {
-          response.data.forEach((dataFrame) => {
-            enhanceDataFrameWithDataLinks(dataFrame, this.dataLinks);
-          });
-          return response;
-        })
-      );
-    }
-    return this.legacyQueryRunner.query(request);
+    const start = new Date();
+    return super.query(request).pipe(
+      tap((response) => trackQuery(response, request, start)),
+      map((response) => {
+        response.data.forEach((dataFrame) => {
+          enhanceDataFrameWithDataLinks(dataFrame, this.dataLinks);
+        });
+        return response;
+      })
+    );
   }
 
   filterQuery(query: ElasticsearchQuery): boolean {
@@ -798,14 +778,12 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
-    const termsObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? // TODO: This is run through resource call, but maybe should run through query
-        from(this.postResourceRequest(url, esQuery))
-      : this.legacyQueryRunner.request('POST', url, esQuery);
-
-    return termsObservable.pipe(
-      map((res) => {
-        if (!res.responses[0].aggregations) {
+    return from(this.postResourceRequest(url, esQuery)).pipe(
+      map((res: unknown) => {
+        if (!isElasticsearchResponseWithAggregations(res)) {
+          return [];
+        }
+        if (!res || !res.responses[0].aggregations) {
           return [];
         }
 
@@ -827,7 +805,7 @@ export class ElasticDatasource
       searchParams.append('max_concurrent_shard_requests', `${this.maxConcurrentShardRequests}`);
     }
 
-    if (this.xpack && this.includeFrozen) {
+    if (this.includeFrozen) {
       searchParams.append('ignore_throttled', 'false');
     }
 
@@ -857,7 +835,7 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
     return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 
@@ -905,7 +883,7 @@ export class ElasticDatasource
       return false;
     }
 
-    for (const key of Object.keys(obj)) {
+    for (const key in obj) {
       if (Array.isArray(obj[key])) {
         for (const item of obj[key]) {
           if (this.objectContainsTemplate(item)) {
@@ -1030,10 +1008,7 @@ export class ElasticDatasource
 
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
-    const getDbVersionObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? from(this.getResourceRequest(''))
-      : this.legacyQueryRunner.request('GET', '/');
-
+    const getDbVersionObservable = from(this.getResourceRequest(''));
     return lastValueFrom(getDbVersionObservable).then(
       (data) => {
         const versionNumber = data?.version?.number;

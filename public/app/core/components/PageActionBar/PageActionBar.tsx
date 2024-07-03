@@ -28,7 +28,7 @@ export default class PageActionBar extends PureComponent<Props> {
       placeholder = 'Search by name or type',
       sortPicker,
     } = this.props;
-    const linkProps: typeof LinkButton.defaultProps = { href: linkButton?.href, disabled: linkButton?.disabled };
+    const linkProps: Parameters<typeof LinkButton>[0] = { href: linkButton?.href, disabled: linkButton?.disabled };
 
     if (target) {
       linkProps.target = target;

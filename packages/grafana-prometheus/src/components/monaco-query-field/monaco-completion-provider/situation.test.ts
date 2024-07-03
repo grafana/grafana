@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/situation.test.ts
 import { getSituation, Situation } from './situation';
 
 // we use the `^` character as the cursor-marker in the string.
@@ -179,6 +180,19 @@ describe('situation', () => {
         { name: 'two', value: 'val2', op: '!=' },
         { name: 'four', value: 'val4', op: '=~' },
         { name: 'five', value: 'val5', op: '!~' },
+      ],
+    });
+  });
+
+  it('identifies all labels from queries when cursor is in middle', () => {
+    // Note the extra whitespace, if the cursor is after whitespace, the situation will fail to resolve
+    assertSituation('{one="val1", ^,two!="val2",three=~"val3",four!~"val4"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
       ],
     });
   });

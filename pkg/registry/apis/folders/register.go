@@ -13,13 +13,14 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,14 +35,14 @@ var resourceInfo = v0alpha1.FolderResourceInfo
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
 	gv            schema.GroupVersion
-	features      *featuremgmt.FeatureManager
+	features      featuremgmt.FeatureToggles
 	namespacer    request.NamespaceMapper
 	folderSvc     folder.Service
 	accessControl accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 	accessControl accesscontrol.AccessControl,
@@ -63,6 +64,11 @@ func RegisterAPIService(cfg *setting.Cfg,
 
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
+}
+
+func (b *FolderAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -98,7 +104,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	dualWrite bool,
+	desiredMode grafanarest.DualWriterMode,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -133,12 +139,12 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
 	// enable dual writes if a RESTOptionsGetter is provided
-	if dualWrite && optsGetter != nil {
+	if optsGetter != nil && desiredMode != grafanarest.Mode0 {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
@@ -151,6 +157,25 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Grafana folders"
+
+	// The root api URL
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+
+	// Hide the ability to list or watch across all tenants
+	delete(oas.Paths.Paths, root+v0alpha1.FolderResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.FolderResourceInfo.GroupResource().Resource)
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {

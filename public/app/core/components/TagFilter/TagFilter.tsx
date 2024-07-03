@@ -1,22 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { components } from 'react-select';
+import { components, MultiValueRemoveProps } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { TagBadge } from './TagBadge';
-import { TagOption } from './TagOption';
+import { TagOption, TagSelectOption } from './TagOption';
 
 export interface TermCount {
   term: string;
-  count: number;
-}
-
-interface TagSelectOption {
-  value: string;
-  label: string;
   count: number;
 }
 
@@ -146,7 +140,7 @@ export const TagFilter = ({
       MultiValueLabel: () => {
         return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
-      MultiValueRemove(props: any) {
+      MultiValueRemove(props: MultiValueRemoveProps<TagSelectOption>) {
         const { data } = props;
 
         return (

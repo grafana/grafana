@@ -1,15 +1,8 @@
-import {
-  behaviors,
-  SceneGridLayout,
-  SceneGridItem,
-  SceneRefreshPicker,
-  SceneTimeRange,
-  SceneTimePicker,
-} from '@grafana/scenes';
+import { behaviors, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
+import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -38,18 +31,8 @@ describe('GeneralSettingsEditView', () => {
       expect(settings.getTimeRange()).toBe(dashboard.state.$timeRange);
     });
 
-    it('should return the dashboard refresh picker', () => {
-      expect(settings.getRefreshPicker()).toBe(
-        (dashboard.state?.controls?.[0] as DashboardControls)?.state?.timeControls?.[1]
-      );
-    });
-
     it('should return the cursor sync', () => {
       expect(settings.getCursorSync()).toBe(dashboard.state.$behaviors?.[0]);
-    });
-
-    it('should return the dashboard controls', () => {
-      expect(settings.getDashboardControls()).toBe(dashboard.state.controls?.[0]);
     });
   });
 
@@ -107,11 +90,14 @@ describe('GeneralSettingsEditView', () => {
       expect(settings.getRefreshPicker()?.state?.intervals).toEqual(['5s']);
     });
 
-    it('A change to folder updates the dashboard state', () => {
-      settings.onFolderChange('folder-2', 'folder 2');
+    it('A change to folder updates the dashboard state', async () => {
+      const updateNavModel = jest.spyOn(utils, 'updateNavModel').mockImplementation(jest.fn());
+
+      await settings.onFolderChange('folder-2', 'folder 2');
 
       expect(dashboard.state.meta.folderUid).toBe('folder-2');
       expect(dashboard.state.meta.folderTitle).toBe('folder 2');
+      expect(updateNavModel).toHaveBeenCalledWith('folder-2');
     });
 
     it('A change to tooltip settings updates the dashboard state', () => {
@@ -133,34 +119,14 @@ async function buildTestScene() {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
     $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-      }),
-    ],
+    controls: new DashboardControls({}),
     title: 'hello',
     uid: 'dash-1',
     meta: {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: undefined,
-        }),
-      ],
+      children: [],
     }),
     editview: settings,
   });

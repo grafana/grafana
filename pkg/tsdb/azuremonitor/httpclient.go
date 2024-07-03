@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azhttpclient"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -38,6 +38,9 @@ func newHTTPClient(ctx context.Context, route types.AzRoute, model types.Datasou
 		}
 
 		authOpts := azhttpclient.NewAuthOptions(azureSettings)
+		authOpts.AllowUserIdentity()
+		// Allows requests from the same identity but different Grafana users to be identified as such by the server
+		authOpts.AddRateLimitSession(true)
 		authOpts.Scopes(route.Scopes)
 		azhttpclient.AddAzureAuthentication(&clientOpts, authOpts, model.Credentials)
 	}

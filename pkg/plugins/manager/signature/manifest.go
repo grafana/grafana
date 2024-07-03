@@ -59,17 +59,17 @@ func (m *PluginManifest) isV2() bool {
 
 type Signature struct {
 	kr  plugins.KeyRetriever
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 	log log.Logger
 }
 
 var _ plugins.SignatureCalculator = &Signature{}
 
-func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+func ProvideService(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Signature {
 	return NewCalculator(cfg, kr)
 }
 
-func NewCalculator(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+func NewCalculator(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Signature {
 	return &Signature{
 		kr:  kr,
 		cfg: cfg,
@@ -77,7 +77,7 @@ func NewCalculator(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
 	}
 }
 
-func DefaultCalculator(cfg *config.Cfg) *Signature {
+func DefaultCalculator(cfg *config.PluginManagementCfg) *Signature {
 	return &Signature{
 		kr:  statickey.New(),
 		cfg: cfg,
@@ -169,6 +169,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.JSONData.ID || manifest.Version != plugin.JSONData.Info.Version {
+		s.log.Debug("Plugin signature invalid because ID or Version mismatch", "pluginId", plugin.JSONData.ID, "manifestPluginId", manifest.Plugin, "pluginVersion", plugin.JSONData.Info.Version, "manifestPluginVersion", manifest.Version)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusModified,
 		}, nil
@@ -194,6 +195,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	for p, hash := range manifest.Files {
 		err = verifyHash(s.log, plugin, p, hash)
 		if err != nil {
+			s.log.Debug("Plugin signature invalid", "pluginId", plugin.JSONData.ID, "error", err)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusModified,
 			}, nil
@@ -259,7 +261,7 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return errors.New("could not calculate plugin file checksum")
+		return fmt.Errorf("could not calculate plugin file checksum. Path: %s. Error: %w", path, err)
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != hash {

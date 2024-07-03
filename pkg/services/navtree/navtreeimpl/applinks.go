@@ -173,13 +173,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	if alertingNode != nil {
 		alertingNodes = append(alertingNodes, alertingNode)
 	}
-	if len(alertingNodes) == 0 || s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) {
-		// If FlagAlertingPreviewUpgrade is enabled, we want to add both the legacy and new alerting nodes.
-		alertingNode := treeRoot.FindById(navtree.NavIDAlertingLegacy)
-		if alertingNode != nil {
-			alertingNodes = append(alertingNodes, alertingNode)
-		}
-	}
 	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
@@ -294,6 +287,8 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-aws-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 2},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Profiles"},
+		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Logs"},
+		"grafana-exploretraces-app":        {SectionID: navtree.NavIDExplore, SortWeight: 3, Text: "Traces"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
@@ -303,10 +298,12 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDCfg, Text: "Adaptive Metrics"},
+		"grafana-attributions-app":         {SectionID: navtree.NavIDCfg, Text: "Attributions"},
 		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAsserts, Icon: "asserts"},
+		"grafana-csp-app":                  {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCloudServiceProviders, Icon: "cloud"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

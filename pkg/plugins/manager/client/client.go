@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -29,13 +28,11 @@ var (
 
 type Service struct {
 	pluginRegistry registry.Service
-	cfg            *config.Cfg
 }
 
-func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg) *Service {
+func ProvideService(pluginRegistry registry.Service) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
-		cfg:            cfg,
 	}
 }
 
@@ -218,6 +215,48 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	}
 
 	return plugin.RunStream(ctx, req, sender)
+}
+
+// ConvertObject implements plugins.Client.
+func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.ConvertObject(ctx, req)
+}
+
+// MutateAdmission implements plugins.Client.
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.MutateAdmission(ctx, req)
+}
+
+// ValidateAdmission implements plugins.Client.
+func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.ValidateAdmission(ctx, req)
 }
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned

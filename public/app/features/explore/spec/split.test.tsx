@@ -44,6 +44,10 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: () => testEventBus,
 }));
 
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
+}));
+
 describe('Handles open/close splits and related events in UI and URL', () => {
   afterEach(() => {
     tearDown();

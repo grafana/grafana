@@ -7,9 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -28,6 +31,7 @@ type Service struct {
 	teamService  team.Service
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
+	tracer       tracing.Tracer
 }
 
 func ProvideService(
@@ -35,9 +39,8 @@ func ProvideService(
 	orgService org.Service,
 	cfg *setting.Cfg,
 	teamService team.Service,
-	cacheService *localcache.CacheService,
-	quotaService quota.Service,
-	bundleRegistry supportbundles.Service,
+	cacheService *localcache.CacheService, tracer tracing.Tracer,
+	quotaService quota.Service, bundleRegistry supportbundles.Service,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
 	s := &Service{
@@ -46,6 +49,7 @@ func ProvideService(
 		cfg:          cfg,
 		teamService:  teamService,
 		cacheService: cacheService,
+		tracer:       tracer,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -56,7 +60,7 @@ func ProvideService(
 	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
 		TargetSrv:     quota.TargetSrv(user.QuotaTargetSrv),
 		DefaultLimits: defaultLimits,
-		Reporter:      s.Usage,
+		Reporter:      s.usage,
 	}); err != nil {
 		return s, err
 	}
@@ -71,16 +75,11 @@ func ProvideService(
 
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 	stats := map[string]any{}
-	caseInsensitiveLoginVal := 0
 	basicAuthStrongPasswordPolicyVal := 0
-	if s.cfg.CaseInsensitiveLogin {
-		caseInsensitiveLoginVal = 1
-	}
 	if s.cfg.BasicAuthStrongPasswordPolicy {
 		basicAuthStrongPasswordPolicyVal = 1
 	}
 
-	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
 	stats["stats.password_policy.count"] = basicAuthStrongPasswordPolicyVal
 
 	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
@@ -93,21 +92,10 @@ func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 	return stats
 }
 
-func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
-	u := &quota.Map{}
-	if used, err := s.store.Count(ctx); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, used)
-	}
-	return u, nil
-}
-
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Create")
+	defer span.End()
+
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 	}
@@ -132,17 +120,16 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		cmd.Email = cmd.Login
 	}
 
-	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
-	if err != nil {
+	if err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email); err != nil {
 		return nil, user.ErrUserAlreadyExists
 	}
 
 	// create user
 	usr := &user.User{
 		UID:              cmd.UID,
-		Email:            cmd.Email,
+		Email:            strings.ToLower(cmd.Email),
 		Name:             cmd.Name,
-		Login:            cmd.Login,
+		Login:            strings.ToLower(cmd.Login),
 		Company:          cmd.Company,
 		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
@@ -166,11 +153,14 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(string(cmd.Password), usr.Salt)
+		if err := cmd.Password.Validate(s.cfg); err != nil {
+			return nil, err
+		}
+
+		usr.Password, err = cmd.Password.Hash(usr.Salt)
 		if err != nil {
 			return nil, err
 		}
-		usr.Password = user.Password(encodedPassword)
 	}
 
 	_, err = s.store.Insert(ctx, usr)
@@ -205,50 +195,104 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
-	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
+	ctx, span := s.tracer.Start(ctx, "user.Delete", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	_, err := s.store.GetByID(ctx, cmd.UserID)
 	if err != nil {
 		return err
 	}
-	// delete from all the stores
+
 	return s.store.Delete(ctx, cmd.UserID)
 }
 
 func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
-	user, err := s.store.GetByID(ctx, query.ID)
-	if err != nil {
-		return nil, err
-	}
-	if s.cfg.CaseInsensitiveLogin {
-		if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
-			return nil, err
-		}
-	}
-	return user, nil
+	ctx, span := s.tracer.Start(ctx, "user.GetByID", trace.WithAttributes(
+		attribute.Int64("userID", query.ID),
+	))
+	defer span.End()
+
+	return s.store.GetByID(ctx, query.ID)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetByLogin")
+	defer span.End()
+
 	return s.store.GetByLogin(ctx, query)
 }
 
 func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetByEmail")
+	defer span.End()
+
 	return s.store.GetByEmail(ctx, query)
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	if s.cfg.CaseInsensitiveLogin {
-		cmd.Login = strings.ToLower(cmd.Login)
-		cmd.Email = strings.ToLower(cmd.Email)
+	ctx, span := s.tracer.Start(ctx, "user.Update", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	usr, err := s.store.GetByID(ctx, cmd.UserID)
+	if err != nil {
+		return err
+	}
+
+	if cmd.OldPassword != nil {
+		old, err := cmd.OldPassword.Hash(usr.Salt)
+		if err != nil {
+			return err
+		}
+
+		if old != usr.Password {
+			return user.ErrPasswordMissmatch.Errorf("old password does not match stored password")
+		}
+	}
+
+	if cmd.Password != nil {
+		if err := cmd.Password.Validate(s.cfg); err != nil {
+			return err
+		}
+
+		hashed, err := cmd.Password.Hash(usr.Salt)
+		if err != nil {
+			return err
+		}
+		cmd.Password = &hashed
+	}
+
+	if cmd.OrgID != nil {
+		orgs, err := s.orgService.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: cmd.UserID})
+		if err != nil {
+			return err
+		}
+
+		valid := false
+		for _, org := range orgs {
+			if org.OrgID == *cmd.OrgID {
+				valid = true
+			}
+		}
+
+		if !valid {
+			return fmt.Errorf("user does not belong to org")
+		}
 	}
 
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return s.store.ChangePassword(ctx, cmd)
-}
-
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	u, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	ctx, span := s.tracer.Start(ctx, "user.UpdateLastSeen", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	u, err := s.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
 		UserID: cmd.UserID,
 		OrgID:  cmd.OrgID,
 	})
@@ -265,51 +309,40 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 }
 
 func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
+	return time.Since(t) > time.Minute*15
 }
 
-func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	getOrgsForUserCmd := &org.GetUserOrgListQuery{UserID: cmd.UserID}
-	orgsForUser, err := s.orgService.GetUserOrgList(ctx, getOrgsForUserCmd)
-	if err != nil {
-		return err
-	}
+func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
+		attribute.Int64("userID", query.UserID),
+		attribute.Int64("orgID", query.OrgID),
+	))
+	defer span.End()
 
-	valid := false
-	for _, other := range orgsForUser {
-		if other.OrgID == cmd.OrgID {
-			valid = true
-		}
-	}
-	if !valid {
-		return fmt.Errorf("user does not belong to org")
-	}
-	return s.store.UpdateUser(ctx, &user.User{
-		ID:    cmd.UserID,
-		OrgID: cmd.OrgID,
-	})
-}
-
-func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	var signedInUser *user.SignedInUser
 
 	// only check cache if we have a user ID and an org ID in query
-	if query.OrgID > 0 && query.UserID > 0 {
-		cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
-		if cached, found := s.cacheService.Get(cacheKey); found {
-			cachedUser := cached.(user.SignedInUser)
-			signedInUser = &cachedUser
-			return signedInUser, nil
+	if s.cacheService != nil {
+		if query.OrgID > 0 && query.UserID > 0 {
+			cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+			if cached, found := s.cacheService.Get(cacheKey); found {
+				cachedUser := cached.(user.SignedInUser)
+				signedInUser = &cachedUser
+				return signedInUser, nil
+			}
 		}
 	}
 
-	result, err := s.GetSignedInUser(ctx, query)
+	result, err := s.getSignedInUser(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
-	s.cacheService.Set(cacheKey, *result, time.Second*5)
+	if s.cacheService != nil {
+		cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
+		s.cacheService.Set(cacheKey, *result, time.Second*5)
+	}
+
 	return result, nil
 }
 
@@ -317,94 +350,65 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
-func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	signedInUser, err := s.store.GetSignedInUser(ctx, query)
+func (s *Service) getSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.getSignedInUser", trace.WithAttributes(
+		attribute.Int64("userID", query.UserID),
+		attribute.Int64("orgID", query.OrgID),
+	))
+	defer span.End()
+
+	usr, err := s.store.GetSignedInUser(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	getTeamsByUserQuery := &team.GetTeamIDsByUserQuery{
-		OrgID:  signedInUser.OrgID,
-		UserID: signedInUser.UserID,
-	}
-	signedInUser.Teams, err = s.teamService.GetTeamIDsByUser(ctx, getTeamsByUserQuery)
+	usr.Teams, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
+		OrgID:  usr.OrgID,
+		UserID: usr.UserID,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return signedInUser, err
-}
-
-func (s *Service) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
-	if !s.cfg.AnonymousEnabled {
-		return nil, fmt.Errorf("anonymous access is disabled")
-	}
-
-	usr := &user.SignedInUser{
-		IsAnonymous: true,
-		OrgRole:     roletype.RoleType(s.cfg.AnonymousOrgRole),
-	}
-
-	if s.cfg.AnonymousOrgName == "" {
-		return usr, nil
-	}
-
-	getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
-	anonymousOrg, err := s.orgService.GetByName(ctx, &getOrg)
-	if err != nil {
-		return nil, err
-	}
-
-	usr.OrgID = anonymousOrg.ID
-	usr.OrgName = anonymousOrg.Name
-	return usr, nil
+	return usr, err
 }
 
 func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Search", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+	))
+	defer span.End()
+
 	return s.store.Search(ctx, query)
 }
 
-func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	return s.store.Disable(ctx, cmd)
-}
-
 func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	ctx, span := s.tracer.Start(ctx, "user.BatchDisableUsers", trace.WithAttributes(
+		attribute.Int64Slice("userIDs", cmd.UserIDs),
+	))
+	defer span.End()
+
 	return s.store.BatchDisableUsers(ctx, cmd)
 }
 
-func (s *Service) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return s.store.UpdatePermissions(ctx, userID, isAdmin)
-}
-
-func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return s.store.SetHelpFlag(ctx, cmd)
-}
-
 func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
-	result, err := s.store.GetProfile(ctx, query)
-	return result, err
-}
+	ctx, span := s.tracer.Start(ctx, "user.GetProfile", trace.WithAttributes(
+		attribute.Int64("userID", query.UserID),
+	))
+	defer span.End()
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
-	if err != nil {
-		return limits, err
-	}
-
-	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
-	return limits, nil
+	return s.store.GetProfile(ctx, query)
 }
 
 // CreateServiceAccount creates a service account in the user table and adds service account to an organisation in the org_user table
 func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.CreateServiceAccount", trace.WithAttributes(
+		attribute.Int64("orgID", cmd.OrgID),
+	))
+	defer span.End()
+
 	cmd.Email = cmd.Login
-	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email)
 	if err != nil {
 		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
@@ -494,6 +498,36 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Default:           false,
 		Fn:                collectorFn,
 	}
+}
+
+func (s *Service) usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	if used, err := s.store.Count(ctx); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, used)
+	}
+	return u, nil
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
+	return limits, nil
 }
 
 // This is just to ensure that all users have a valid uid.

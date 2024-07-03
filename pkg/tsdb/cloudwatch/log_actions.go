@@ -57,14 +57,10 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, logsQuery, query, req.PluginContext)
 			if err != nil {
-				var AWSError *AWSError
-				if errors.As(err, &AWSError) {
-					resultChan <- backend.Responses{
-						query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: AWSError},
-					}
-					return nil
+				resultChan <- backend.Responses{
+					query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: err},
 				}
-				return err
+				return nil
 			}
 
 			groupedFrames, err := groupResponseFrame(dataframe, logsQuery.StatsGroups)
@@ -102,8 +98,8 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logsQuery mod
 	}
 
 	region := instance.Settings.Region
-	if logsQuery.Region != "" {
-		region = logsQuery.Region
+	if logsQuery.Region != nil {
+		region = *logsQuery.Region
 	}
 
 	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
@@ -248,8 +244,8 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	dataFrame.RefID = refID
 
 	region := "default"
-	if logsQuery.Region != "" {
-		region = logsQuery.Region
+	if logsQuery.Region != nil {
+		region = *logsQuery.Region
 	}
 
 	dataFrame.Meta = &data.FrameMeta{

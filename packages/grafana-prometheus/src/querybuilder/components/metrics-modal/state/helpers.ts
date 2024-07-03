@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/state/helpers.ts
 import { AnyAction } from '@reduxjs/toolkit';
 
 import { reportInteraction } from '@grafana/runtime';
@@ -72,6 +73,12 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
       type += ` (${t})`;
     }
   });
+
+  const oldHistogramMatch = metric.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
+
+  if (type === 'histogram' && !oldHistogramMatch) {
+    type = 'native histogram';
+  }
 
   const metricData: MetricData = {
     value: metric,
@@ -235,6 +242,11 @@ export const promTypes: PromFilterOption[] = [
     value: 'histogram',
     description:
       'A histogram samples observations (usually things like request durations or response sizes) and counts them in configurable buckets.',
+  },
+  {
+    value: 'native histogram',
+    description:
+      'Native histograms are different from classic Prometheus histograms in a number of ways: Native histogram bucket boundaries are calculated by a formula that depends on the scale (resolution) of the native histogram, and are not user defined.',
   },
   {
     value: 'summary',

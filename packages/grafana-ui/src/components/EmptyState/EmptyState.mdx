@@ -1,0 +1,108 @@
+import { ArgTypes } from '@storybook/blocks';
+import { EmptyState } from './EmptyState';
+
+# EmptyState
+
+The EmptyState component consists of a message and optionally an image, button, and additional information.
+
+## When to use
+
+Use an empty state to communicate to the user that there is no data to display and provide instructions for what to do next.
+Example use cases:
+
+- When a user has not created a particular resource yet
+- When a filter or search query returns no results
+- When a user completes all actions, such as clearing their inbox or notifications
+
+There are different variants to handle the most common empty state use cases. These variants provide a specific default message and image.
+
+## Usage
+
+### `variant="call-to-action"`
+
+Use when there is no data to display and you want to encourage the user to take an action. Usually either to complete some initial configuration, or to create an item.
+
+```jsx
+import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
+
+<EmptyState
+  variant="call-to-action"
+  message="You haven't created any playlists yet"
+  button={
+    <LinkButton icon="plus" href="playlists/new" size="lg">
+      Create playlist
+    </LinkButton>
+  }
+>
+  You can use playlists to cycle dashboards on TVs without user control.{' '}
+  <TextLink external href="<externalDocsLink>">
+    Learn more.
+  </TextLink>
+</EmptyState>;
+```
+
+For scenarios where there is no single button that can be clicked to create the item, you can omit the `button` prop. Instead, provide additional information to help the user understand how to create the specific resource.
+
+```jsx
+import { EmptyState, TextLink } from '@grafana/ui';
+
+<EmptyState variant="call-to-action" message="You haven't created any library panels yet">
+  Create a library panel from any existing dashboard panel through the panel context menu.{' '}
+  <TextLink external href="<externalDocsLink>">
+    Learn more.
+  </TextLink>
+</EmptyState>;
+```
+
+### `variant="not-found"`
+
+Use in place of content when a search query or filter returns no results.
+
+There are sensible defaults for the image, so in most cases all you need to provide is a message.
+
+```jsx
+import { EmptyState } from '@grafana/ui';
+
+<EmptyState variant="not-found" message="No playlists found" />;
+```
+
+If the empty state is rendered as you are typing in a search box, use the `role="alert"` prop to announce the empty state to screen readers. Verify that the use case makes sense, as this approach may be very disruptive if used the wrong way.
+
+### `variant="completed"`
+
+For when a user has completed all tasks on a page, such as reading all their notifications.
+
+```jsx
+import { EmptyState } from '@grafana/ui';
+
+<EmptyState variant="completed" message="You're all caught up" />;
+```
+
+## Customization
+
+For all variants you can:
+
+- provide a custom image or hide the image entirely
+- provide a button (e.g. to provide a call to action or clear the search query)
+- provide additional information via React children
+
+```jsx
+import { Button, EmptyState, TextLink } from '@grafana/ui';
+
+<EmptyState
+  variant="not-found"
+  button={<Button variant="secondary" onClick={clearSearchQuery} />}
+  image={<AnyReactNode />}
+  message="No playlists found"
+  variant="not-found"
+>
+  Optionally provide some additional information here. Maybe even a link to{' '}
+  <TextLink href="<externalDocsLink>" external>
+    documentation.
+  </TextLink>
+</EmptyState>;
+```
+
+## Props
+
+<ArgTypes of={EmptyState} />

@@ -3,7 +3,8 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
+import { selectors } from '@grafana/e2e-selectors';
+import { SceneComponentProps } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -14,14 +15,15 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
+  const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
-  const showDebugger = location.search.includes('scene-debugger');
+  const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
 
   if (editview) {
     return (
@@ -32,39 +34,48 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
-  const emptyState = (
-    <>
-      <div className={styles.controls}>{showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}</div>
-      <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />
-    </>
-  );
+  const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
-    <>
-      {controls && (
-        <div className={styles.controls}>
-          {controls.map((control) => (
-            <control.Component key={control.state.key} model={control} />
-          ))}
-          {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
-        </div>
-      )}
-      <div className={cx(styles.body)}>
-        <bodyToRender.Component model={bodyToRender} />
-      </div>
-    </>
+    <div className={cx(styles.body)}>
+      <bodyToRender.Component model={bodyToRender} />
+    </div>
   );
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <CustomScrollbar autoHeightMin={'100%'}>
-          <div className={styles.canvasContent}>
-            <NavToolbarActions dashboard={model} />
-            {model.isEmpty() ? emptyState : withPanels}
-          </div>
-        </CustomScrollbar>
+        <div
+          className={cx(
+            styles.pageContainer,
+            controls && !scopes && styles.pageContainerWithControls,
+            scopes && styles.pageContainerWithScopes,
+            scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
+          )}
+        >
+          {scopes && <scopes.Component model={scopes} />}
+          <NavToolbarActions dashboard={model} />
+          {!isHomePage && controls && (
+            <div
+              className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
+            >
+              <controls.Component model={controls} />
+            </div>
+          )}
+          <CustomScrollbar
+            // This id is used by the image renderer to scroll through the dashboard
+            divId="page-scrollbar"
+            autoHeightMin={'100%'}
+            className={styles.scrollbarContainer}
+            testId={selectors.pages.Dashboard.DashNav.scrollContainer}
+          >
+            <div className={cx(styles.canvasContent, isHomePage && styles.homePagePadding)}>
+              <>{isEmpty && emptyState}</>
+              {withPanels}
+            </div>
+          </CustomScrollbar>
+        </div>
       )}
       {overlay && <overlay.Component model={overlay} />}
     </Page>
@@ -73,6 +84,48 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    pageContainer: css({
+      display: 'grid',
+      gridTemplateAreas: `
+        "panels"`,
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
+      height: '100%',
+    }),
+    pageContainerWithControls: css({
+      gridTemplateAreas: `
+        "controls"
+        "panels"`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    pageContainerWithScopes: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    pageContainerWithScopesExpanded: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "scopes panels"`,
+    }),
+    scrollbarContainer: css({
+      gridArea: 'panels',
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      gridArea: 'controls',
+      padding: theme.spacing(2),
+    }),
+    controlsWrapperWithScopes: css({
+      padding: theme.spacing(2, 2, 2, 0),
+    }),
+    homePagePadding: css({
+      padding: theme.spacing(2, 2),
+    }),
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',
@@ -87,19 +140,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: '8px',
       marginBottom: theme.spacing(2),
-    }),
-
-    controls: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      position: 'sticky',
-      top: 0,
-      background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.activePanel,
-      padding: theme.spacing(2, 0),
-      marginLeft: 'auto',
     }),
   };
 }

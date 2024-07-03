@@ -8,6 +8,18 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID} ruler RouteGetRuleByUID
+//
+// Get rule by UID
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: GettableExtendedRuleNode
+//       403: ForbiddenError
+//       404: description: Not found.
+
 // swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
@@ -24,9 +36,12 @@ import (
 //
 // List rules in provisioning format
 //
-//     Consumes:
+//     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -64,7 +79,13 @@ import (
 //
 //     Consumes:
 //     - application/json
+//
+//     Produces:
+//     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -195,6 +216,12 @@ type PathGetRulesParams struct {
 	DashboardUID string
 	// in: query
 	PanelID int64
+}
+
+// swagger:parameters RouteGetRuleByUID
+type PathGetRuleByUIDParams struct {
+	// in: path
+	RuleUID string
 }
 
 // swagger:model
@@ -406,7 +433,7 @@ const (
 	ErrorErrState    ExecutionErrorState = "Error"
 )
 
-// swagger: model
+// swagger:model
 type AlertRuleNotificationSettings struct {
 	// Name of the receiver to send notifications to.
 	// required: true
@@ -451,6 +478,18 @@ type AlertRuleNotificationSettings struct {
 }
 
 // swagger:model
+type Record struct {
+	// Name of the recorded metric.
+	// required: true
+	// example: grafana_alerts_ratio
+	Metric string `json:"metric" yaml:"metric"`
+	// Which expression node should be used as the input for the recorded metric.
+	// required: true
+	// example: A
+	From string `json:"from" yaml:"from"`
+}
+
+// swagger:model
 type PostableGrafanaRule struct {
 	Title                string                         `json:"title" yaml:"title"`
 	Condition            string                         `json:"condition" yaml:"condition"`
@@ -460,6 +499,7 @@ type PostableGrafanaRule struct {
 	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
 	IsPaused             *bool                          `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
+	Record               *Record                        `json:"record" yaml:"record"`
 }
 
 // swagger:model
@@ -480,6 +520,7 @@ type GettableGrafanaRule struct {
 	Provenance           Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
+	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

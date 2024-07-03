@@ -1,4 +1,4 @@
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { useDelayedSwitch } from './useDelayedSwitch';
@@ -7,7 +7,7 @@ export default {
   title: 'useDelayedSwitch',
 };
 
-export const Basic: Story = ({ value, delay, duration }) => {
+export const Basic: StoryFn = ({ value, delay, duration }) => {
   const valueDelayed = useDelayedSwitch(value, { delay, duration });
   return <div>{valueDelayed ? 'ON' : 'OFF'}</div>;
 };

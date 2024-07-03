@@ -125,8 +125,10 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
 
 const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const commonTransition = {
-    transitionDuration: `${animationDuration}ms`,
-    transitionTimingFunction: theme.transitions.easing.easeInOut,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transitionDuration: `${animationDuration}ms`,
+      transitionTimingFunction: theme.transitions.easing.easeInOut,
+    },
     [theme.breakpoints.down('md')]: {
       overflow: 'hidden',
     },

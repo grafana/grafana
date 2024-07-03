@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -44,12 +44,12 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
-	SignatureOrg   string
-	Parent         *Plugin
-	Children       []*Plugin
-	SignatureError *SignatureError
+	Signature     SignatureStatus
+	SignatureType SignatureType
+	SignatureOrg  string
+	Parent        *Plugin
+	Children      []*Plugin
+	Error         *Error
 
 	// SystemJS fields
 	Module  string
@@ -68,6 +68,15 @@ type Plugin struct {
 
 	mu sync.Mutex
 }
+
+var (
+	_ = backend.CollectMetricsHandler(&Plugin{})
+	_ = backend.CheckHealthHandler(&Plugin{})
+	_ = backend.QueryDataHandler(&Plugin{})
+	_ = backend.CallResourceHandler(&Plugin{})
+	_ = backend.StreamHandler(&Plugin{})
+	_ = backend.AdmissionHandler(&Plugin{})
+)
 
 type AngularMeta struct {
 	Detected        bool `json:"detected"`
@@ -118,7 +127,10 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// App Service Auth Registration
-	IAM *plugindef.IAM `json:"iam,omitempty"`
+	IAM *pfs.IAM `json:"iam,omitempty"`
+
+	// API Version: Temporary field while plugins don't expose a OpenAPI schema
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -202,10 +214,6 @@ type Route struct {
 	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
 	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
 	Body         json.RawMessage `json:"body"`
-}
-
-func (r *Route) RequiresRBACAction() bool {
-	return r.ReqAction != ""
 }
 
 // Header describes an HTTP header that is forwarded with
@@ -361,6 +369,33 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+// ValidateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObject(ctx, req)
+}
+
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
@@ -419,6 +454,7 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.AdmissionHandler
 	backend.StreamHandler
 }
 

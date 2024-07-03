@@ -21,6 +21,22 @@ menuTitle: Manage dashboards
 title: Manage dashboards
 description: Learn about dashboard management and generative AI features for dashboards
 weight: 8
+refs:
+  build-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
+  dashboard-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#dashboard-permissions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#dashboard-permissions
+  grafana-llm-plugin-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
 ---
 
 # Manage dashboards
@@ -31,7 +47,7 @@ On the **Dashboards** page, you can perform dashboard management tasks such as:
 - [Managing folder permissions](#folder-permissions)
 - [Adding generative AI features to dashboards](#set-up-generative-ai-features-for-dashboards)
 
-For more information about creating dashboards, refer to [Build dashboards][].
+For more information about creating dashboards, refer to [Build dashboards](ref:build-dashboards).
 
 ## Browse dashboards
 
@@ -41,7 +57,7 @@ On the **Dashboards** page, you can browse and manage folders and dashboards. Th
 - Move dashboards between folders.
 - Delete multiple dashboards and folders.
 - Navigate to a folder.
-- Manage folder permissions. For more information, refer to [Dashboard permissions][].
+- Manage folder permissions. For more information, refer to [Dashboard permissions](ref:dashboard-permissions).
 
 The page lists all the dashboards to which you have access, grouped into folders. Dashboards without a folder are displayed at the top level alongside folders.
 
@@ -55,7 +71,7 @@ If you have permission to view all folders, you won't see a **Shared with me**.
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
 
-> **Before you begin:** Ensure you have Editor permissions or greater to create folders. For more information about dashboard permissions, refer to [Dashboard permissions][].
+> **Before you begin:** Ensure you have Editor permissions or greater to create folders. For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
 
 **To create a dashboard folder:**
 
@@ -96,28 +112,15 @@ You can assign permissions to a folder. Dashboards in the folder inherit any per
 
 Changes are saved automatically.
 
-For more information about dashboard permissions, refer to [Dashboard permissions][].
+For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
 
 ## Set up generative AI features for dashboards
-
-{{< docs/public-preview product="Generative AI in dashboards" featureFlag="`dashgpt`" >}}
 
 You can use generative AI to help you with the following tasks:
 
 - **Generate panel and dashboard titles and descriptions**: Generate a title and description based on the data you’ve added for your panel or dashboard. This is useful when you want to visualize your data quickly and don’t want to spend time coming up with a title or description.
 - **Generate dashboard save changes summary**: Generate a summary of the changes you’ve made to a dashboard when you save it. This is great for easily tracking the history of a dashboard.
 
-To access these features, enable the `dashgpt` feature toggle. Then install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation][].
+To access these features, install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation](ref:grafana-llm-plugin-documentation).
 
 When enabled, the **✨ Auto generate** option displays next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
-
-{{% docs/reference %}}
-[Dashboard permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
-[Dashboard permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
-
-[Grafana LLM plugin documentation]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
-[Grafana LLM plugin documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
-
-[Build dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-[Build dashboards]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards"
-{{% /docs/reference %}}

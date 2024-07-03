@@ -16,10 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-
-	_ "github.com/lib/pq"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
 var updateGoldenFiles = false
@@ -101,8 +98,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 					JSON:  queryBytes,
 					RefID: "A",
 					TimeRange: backend.TimeRange{
-						From: time.Date(2023, 12, 24, 14, 15, 0, 0, time.UTC),
-						To:   time.Date(2023, 12, 24, 14, 45, 0, 0, time.UTC),
+						From: time.Date(2023, 12, 24, 14, 15, 22, 123456, time.UTC),
+						To:   time.Date(2023, 12, 24, 14, 45, 13, 876543, time.UTC),
 					},
 				},
 			},
@@ -114,13 +111,19 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		format string
 	}{
 		{format: "time_series", name: "simple"},
+		{format: "time_series", name: "no_rows_long"},
+		{format: "time_series", name: "no_rows_wide"},
 		{format: "time_series", name: "7x_compat_metric_label"},
 		{format: "time_series", name: "convert_to_float64"},
 		{format: "time_series", name: "convert_to_float64_not"},
 		{format: "time_series", name: "fill_null"},
 		{format: "time_series", name: "fill_previous"},
 		{format: "time_series", name: "fill_value"},
+		{format: "time_series", name: "fill_value_wide"},
 		{format: "table", name: "simple"},
+		{format: "table", name: "multi_stat1"},
+		{format: "table", name: "multi_stat2"},
+		{format: "table", name: "no_rows"},
 		{format: "table", name: "types_numeric"},
 		{format: "table", name: "types_char"},
 		{format: "table", name: "types_datetime"},
@@ -129,6 +132,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "table", name: "timestamp_convert_integer"},
 		{format: "table", name: "timestamp_convert_real"},
 		{format: "table", name: "timestamp_convert_double"},
+		{format: "table", name: "time_group_compat_case1"},
+		{format: "table", name: "time_group_compat_case2"},
 	}
 
 	for _, test := range tt {
@@ -142,10 +147,6 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
 				return sql
 			}
-
-			cfg := setting.NewCfg()
-			cfg.DataPath = t.TempDir()
-			cfg.DataProxyRowLimit = 10000
 
 			jsonData := sqleng.JsonData{
 				MaxOpenConns:        0,
@@ -164,7 +165,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			cnnstr := getCnnStr()
 
-			db, handler, err := newPostgres(context.Background(), cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			t.Cleanup((func() {
 				_, err := db.Exec("DROP TABLE tbl")

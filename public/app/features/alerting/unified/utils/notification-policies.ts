@@ -127,7 +127,7 @@ export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
 export function unquoteRouteMatchers(route: RouteWithID): RouteWithID {
   function unquoteRoute(route: RouteWithID) {
     route.object_matchers = route.object_matchers?.map(([name, operator, value]) => {
-      return [name, operator, unquoteWithUnescape(value)];
+      return [unquoteWithUnescape(name), operator, unquoteWithUnescape(value)];
     });
     route.routes?.forEach(unquoteRoute);
   }
@@ -232,8 +232,17 @@ type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
   [MatcherOperator.equal]: (lv, mv) => lv === mv,
   [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  [MatcherOperator.regex]: (lv, mv) => new RegExp(mv).test(lv),
-  [MatcherOperator.notRegex]: (lv, mv) => !new RegExp(mv).test(lv),
+  // At the time of writing, Alertmanager compiles to another (anchored) Regular Expression,
+  // so we should also anchor our UI matches for consistency with this behaviour
+  // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
+  [MatcherOperator.regex]: (lv, mv) => {
+    const re = new RegExp(`^(?:${mv})$`);
+    return re.test(lv);
+  },
+  [MatcherOperator.notRegex]: (lv, mv) => {
+    const re = new RegExp(`^(?:${mv})$`);
+    return !re.test(lv);
+  },
 };
 
 function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {

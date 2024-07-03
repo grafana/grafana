@@ -42,7 +42,7 @@ type RenderingService struct {
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
-	features                    *featuremgmt.FeatureManager
+	features                    featuremgmt.FeatureToggles
 	RemoteCacheService          *remotecache.RemoteCache
 	RendererPluginManager       PluginManager
 }
@@ -57,7 +57,7 @@ type Plugin interface {
 	Version() string
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
 	folders := []string{
 		cfg.ImagesDir,
 		cfg.CSVsDir,
@@ -125,8 +125,12 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 				semverConstraint: ">= 3.4.0",
 			},
 			{
-				name:             SvgSanitization,
+				name:             SVGSanitization,
 				semverConstraint: ">= 3.5.0",
+			},
+			{
+				name:             PDFRendering,
+				semverConstraint: ">= 3.10.0",
 			},
 		},
 		Cfg:                   cfg,
@@ -250,6 +254,7 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 	}
 }
 
+// Render calls the grafana image renderer and returns Grafana resource as PNG or PDF
 func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error) {
 	startTime := time.Now()
 
@@ -260,7 +265,7 @@ func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, o
 	result, err := rs.render(ctx, renderType, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
-	saveMetrics(elapsedTime, err, RenderPNG)
+	saveMetrics(elapsedTime, err, renderType)
 
 	return result, err
 }
@@ -292,7 +297,17 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		return rs.renderUnavailableImage(), nil
 	}
 
-	rs.log.Info("Rendering", "path", opts.Path)
+	if renderType == RenderPDF {
+		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
+			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
+		}
+
+		if err := rs.IsCapabilitySupported(ctx, PDFRendering); err != nil {
+			return nil, err
+		}
+	}
+
+	rs.log.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID)
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
@@ -327,7 +342,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 }
 
 func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	capability, err := rs.HasCapability(ctx, SvgSanitization)
+	capability, err := rs.HasCapability(ctx, SVGSanitization)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +407,8 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))
 }
 
-func (rs *RenderingService) getURL(path string) string {
+// getGrafanaCallbackURL creates a URL to send to the image rendering as callback for rendering a Grafana resource
+func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 	if rs.Cfg.RendererUrl != "" {
 		// The backend rendering service can potentially be remote.
 		// So we need to use the root_url to ensure the rendering service

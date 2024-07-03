@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
 
@@ -32,7 +32,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { DataQuery, DataTopic, TimeZone } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -40,19 +40,22 @@ import {
   InlineSwitch,
   PanelChrome,
   RadioButtonGroup,
+  SeriesVisibilityChangeMode,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
-import { getLogLevelFromKey } from 'app/features/logs/utils';
+import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
-import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
+import { dedupLogRows, filterLogLevels, LogLevelColor } from '../../logs/logsModel';
+import { ContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
@@ -144,6 +147,12 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   if (visualisationType === 'table') {
     return 'table';
   }
+  if (visualisationType === 'logs') {
+    return 'logs';
+  }
+  if (config.featureToggles.logsExploreTableDefaultVisualization) {
+    return 'table';
+  }
   return 'logs';
 };
 
@@ -152,6 +161,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
+  static contextType = ContentOutlineContext;
+  declare context: React.ContextType<typeof ContentOutlineContext>;
+  // @ts-ignore
+  private toggleLegendRef: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> =
+    React.createRef();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -174,6 +188,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+  }
+
+  componentDidMount(): void {
+    this.registerLogLevelsWithContentOutline();
   }
 
   componentWillUnmount() {
@@ -203,6 +221,54 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
+  registerLogLevelsWithContentOutline = () => {
+    const levelsArr = Object.keys(LogLevelColor);
+    const logVolumeDataFrames = new Set(this.props.logsVolumeData?.data);
+    // TODO remove this once filtering multiple log volumes is supported
+    const numberOfLogVolumes = this.getNumberOfLogVolumes();
+
+    // clean up all current log levels
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    if (logsParent) {
+      this.context?.unregisterAllChildren(logsParent.id, 'filter');
+    }
+
+    // check if we have dataFrames that return the same level
+    const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
+    logVolumeDataFrames.forEach((dataFrame) => {
+      const { level } = getLogLevelInfo(dataFrame);
+      logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
+    });
+
+    const sortedLLArray = logLevelsArray.sort(
+      (a: { levelStr: string; logLevel: LogLevel }, b: { levelStr: string; logLevel: LogLevel }) => {
+        return levelsArr.indexOf(a.logLevel.toString()) > levelsArr.indexOf(b.logLevel.toString()) ? 1 : -1;
+      }
+    );
+
+    const logLevels = new Set(sortedLLArray);
+
+    if (logLevels.size > 1 && this.props.logsVolumeEnabled && numberOfLogVolumes === 1) {
+      logLevels.forEach((level) => {
+        const allLevelsSelected = this.state.hiddenLogLevels.length === 0;
+        const currentLevelSelected = !this.state.hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level.levelStr);
+        this.context?.register({
+          title: level.levelStr,
+          icon: 'gf-logs',
+          panelId: 'Logs',
+          level: 'child',
+          type: 'filter',
+          highlight: currentLevelSelected && !allLevelsSelected,
+          onClick: (e: React.MouseEvent) => {
+            this.toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
+          },
+          ref: null,
+          color: LogLevelColor[level.logLevel],
+        });
+      });
+    }
+  };
+
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
@@ -218,7 +284,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  componentDidUpdate(prevProps: Readonly<Props>): void {
+  getNumberOfLogVolumes() {
+    const data = this.props.logsVolumeData?.data.filter(
+      (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
+    );
+    const grouped = groupBy(data, 'meta.custom.datasourceName');
+    const numberOfLogVolumes = Object.keys(grouped).length;
+    return numberOfLogVolumes;
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
@@ -236,6 +311,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
         visualisationType: visualisationType,
       });
       store.set(visualisationTypeKey, visualisationType);
+    }
+
+    if (
+      prevProps.logsVolumeData?.data !== this.props.logsVolumeData?.data ||
+      prevState.hiddenLogLevels !== this.state.hiddenLogLevels
+    ) {
+      this.registerLogLevelsWithContentOutline();
     }
   }
 
@@ -290,6 +372,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     reportInteraction('grafana_explore_logs_visualisation_changed', {
       newVisualizationType: visualisation,
       datasourceType: this.props.datasourceType ?? 'unknown',
+      defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
     });
   };
 
@@ -437,6 +520,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
     };
   };
 
+  getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel | null {
+    for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
+      if (allLogs[i].timeEpochMs > row.timeEpochMs) {
+        return allLogs[i];
+      }
+    }
+
+    return null;
+  }
+
   getPermalinkRange(row: LogRowModel) {
     const range = {
       from: new Date(this.props.absoluteRange.from).toISOString(),
@@ -449,7 +542,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
     // Look for the previous sibling log, and use its timestamp
     const allLogs = this.props.logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
-    const prevLog = allLogs[allLogs.indexOf(row) - 1];
+    const prevLog = this.getPreviousLog(row, allLogs);
 
     if (row.timeEpochMs > this.props.absoluteRange.to && !prevLog) {
       // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
@@ -637,6 +730,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
         >
           {logsVolumeEnabled && (
             <LogsVolumePanelList
+              toggleLegendRef={this.toggleLegendRef}
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}

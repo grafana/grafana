@@ -94,13 +94,16 @@ export type AccordianKeyValuesProps = {
   interactive?: boolean;
   isOpen: boolean;
   label: string;
-  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   onToggle?: null | (() => void);
 };
 
+interface KeyValuesSummaryProps {
+  data?: TraceKeyValuePair[] | null;
+}
+
 // export for tests
-export function KeyValuesSummary(props: { data?: TraceKeyValuePair[] }) {
-  const { data } = props;
+export function KeyValuesSummary({ data = null }: KeyValuesSummaryProps) {
   const styles = useStyles2(getStyles);
 
   if (!Array.isArray(data) || !data.length) {
@@ -121,12 +124,16 @@ export function KeyValuesSummary(props: { data?: TraceKeyValuePair[] }) {
   );
 }
 
-KeyValuesSummary.defaultProps = {
-  data: null,
-};
-
-export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
-  const { className, data, highContrast, interactive, isOpen, label, linksGetter, onToggle } = props;
+export default function AccordianKeyValues({
+  className = null,
+  data,
+  highContrast = false,
+  interactive = true,
+  isOpen,
+  label,
+  linksGetter,
+  onToggle = null,
+}: AccordianKeyValuesProps) {
   const isEmpty = !Array.isArray(data) || !data.length;
   const styles = useStyles2(getStyles);
   const iconCls = cx(alignIcon, { [styles.emptyIcon]: isEmpty });
@@ -166,10 +173,3 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
     </div>
   );
 }
-
-AccordianKeyValues.defaultProps = {
-  className: null,
-  highContrast: false,
-  interactive: true,
-  onToggle: null,
-};

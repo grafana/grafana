@@ -1,5 +1,5 @@
 import configureMockStore, { MockStore } from 'redux-mock-store';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 import { Subject } from 'rxjs';
 
 import { BackendSrv, FetchError, locationService, setEchoSrv } from '@grafana/runtime';

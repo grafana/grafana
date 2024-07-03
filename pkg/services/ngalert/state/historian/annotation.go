@@ -41,8 +41,7 @@ type AnnotationStore interface {
 	Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error
 }
 
-func NewAnnotationBackend(annotations AnnotationStore, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
-	logger := log.New("ngalert.state.historian", "backend", "annotations")
+func NewAnnotationBackend(logger log.Logger, annotations AnnotationStore, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
 	return &AnnotationBackend{
 		store:   annotations,
 		rules:   rules,

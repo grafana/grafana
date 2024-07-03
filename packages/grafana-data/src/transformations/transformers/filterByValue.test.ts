@@ -26,6 +26,25 @@ const seriesAWithSingleField = toDataFrame({
   ],
 });
 
+const multiSeriesWithSingleField = [
+  toDataFrame({
+    name: 'A',
+    length: 3,
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+      { name: 'value', type: FieldType.number, values: [1, 0, 1] },
+    ],
+  }),
+  toDataFrame({
+    name: 'B',
+    length: 3,
+    fields: [
+      { name: 'time', type: FieldType.time, values: [5000, 6000, 7000] },
+      { name: 'value', type: FieldType.number, values: [0, 1, 1] },
+    ],
+  }),
+];
+
 describe('FilterByValue transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([filterByValueTransformer]);
@@ -66,6 +85,68 @@ describe('FilterByValue transformer', () => {
           name: 'numbers',
           type: FieldType.number,
           values: [6, 7],
+          state: {},
+        },
+      ]);
+    });
+  });
+
+  it('should not cross frame boundaries', async () => {
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.exclude,
+        match: FilterByValueMatch.any,
+        filters: [
+          {
+            fieldName: 'A value',
+            config: {
+              id: ValueMatcherID.equal,
+              options: { value: 0 },
+            },
+          },
+          {
+            fieldName: 'B value',
+            config: {
+              id: ValueMatcherID.equal,
+              options: { value: 0 },
+            },
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], multiSeriesWithSingleField)).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(2);
+
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1000, 3000],
+          state: {},
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [1, 1],
+          state: {},
+        },
+      ]);
+
+      expect(processed[1].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [6000, 7000],
+          state: {},
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [1, 1],
           state: {},
         },
       ]);

@@ -11,4 +11,5 @@ export const GRAFANA_APP_RECEIVERS_SOURCE_IMAGE: Record<SupportedPlugin, string>
 
   [SupportedPlugin.Incident]: '',
   [SupportedPlugin.MachineLearning]: '',
+  [SupportedPlugin.Labels]: '',
 };

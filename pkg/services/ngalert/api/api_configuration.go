@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -24,6 +25,7 @@ type ConfigSrv struct {
 	alertmanagerProvider ExternalAlertmanagerProvider
 	store                store.AdminConfigurationStore
 	log                  log.Logger
+	featureManager       featuremgmt.FeatureToggles
 }
 
 func (srv ConfigSrv) RouteGetAlertmanagers(c *contextmodel.ReqContext) response.Response {
@@ -72,16 +74,21 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 
 	sendAlertsTo, err := ngmodels.StringToAlertmanagersChoice(string(body.AlertmanagersChoice))
 	if err != nil {
-		return response.Error(400, "Invalid alertmanager choice specified", err)
+		return response.Error(http.StatusBadRequest, "Invalid alertmanager choice specified", err)
+	}
+
+	disableExternal := srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingDisableSendAlertsExternal)
+	if disableExternal && sendAlertsTo != ngmodels.InternalAlertmanager {
+		return response.Error(http.StatusBadRequest, "Sending alerts to external alertmanagers is disallowed on this instance", err)
 	}
 
 	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
+		return response.Error(http.StatusInternalServerError, "Couldn't fetch the external Alertmanagers from datasources", err)
 	}
 
 	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(externalAlertmanagers) < 1 {
-		return response.Error(400, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
+		return response.Error(http.StatusBadRequest, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
 	}
 
 	cfg := &ngmodels.AdminConfiguration{

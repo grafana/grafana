@@ -263,7 +263,7 @@ export class PanelPlugin<
    * @internal
    */
   getPanelOptionsSupplier(): PanelOptionsSupplier<TOptions> {
-    return this.optionsSupplier ?? ((() => {}) as PanelOptionsSupplier<TOptions>);
+    return this.optionsSupplier ?? (() => {});
   }
 
   /**

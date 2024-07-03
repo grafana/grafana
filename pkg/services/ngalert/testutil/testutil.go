@@ -19,17 +19,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features, nil)
+	return folderimpl.ProvideService(ac, bus, dashboardStore, folderStore, db, features, supportbundlestest.NewFakeBundleService(), nil)
 }
 
-func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
+func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
 	tb.Helper()
 
 	origNewGuardian := guardian.New
@@ -50,11 +50,11 @@ func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folde
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(tb, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, fs, nil,
+		cfg, dashboardStore, fs,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 		nil,

@@ -147,10 +147,18 @@ describe('Loki Query Editor', () => {
     cy.contains('Code').click({ force: true });
 
     // Wait for lazy loading
-    const monacoLoadingText = 'Loading...';
+    // const monacoLoadingText = 'Loading...';
 
-    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
-    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
+    // e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
+    e2e.components.QueryField.container()
+      .find('.view-overlays[role="presentation"]')
+      .get('.cdr')
+      .then(($el) => {
+        const win = $el[0].ownerDocument.defaultView;
+        const after = win.getComputedStyle($el[0], '::after');
+        const content = after.getPropertyValue('content');
+        expect(content).to.eq('"Enter a Loki query (run with Shift+Enter)"');
+      });
 
     // Write a simple query
     e2e.components.QueryField.container().type('query').type('{instance="instance1"');
@@ -185,6 +193,10 @@ describe('Loki Query Editor', () => {
     exploreCells.should('have.length', 3);
     // And a value of "targetLabelValue"
     exploreCells.should('contain', 'targetLabelValue');
+
+    const addToButton = cy.get('[aria-label="Add"]');
+    addToButton.should('be.visible');
+    addToButton.click();
 
     const addToDashboardButton = cy.get('[aria-label="Add to dashboard"]');
 

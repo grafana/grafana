@@ -6,12 +6,9 @@ import (
 	"strings"
 
 	copenapi "cuelang.org/go/encoding/openapi"
-	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
-	corecodegen "github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/codegen/generators"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
-	"github.com/grafana/thema/encoding/gocode"
-	"github.com/grafana/thema/encoding/openapi"
 )
 
 // TODO this is duplicative of other Go type jennies. Remove it in favor of a better-abstracted version in thema itself
@@ -30,22 +27,22 @@ func (j *pgoJenny) JennyName() string {
 }
 
 func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
-	b := decl.PluginMeta.Backend
-	if b == nil || !*b || !decl.HasSchema() {
+	hasBackend := decl.PluginMeta.Backend
+	// We skip elasticsearch since we have problems with the generated file.
+	// This is temporal until we migrate to the new system.
+	if hasBackend == nil || !*hasBackend || decl.PluginMeta.Id == "elasticsearch" {
 		return nil, nil
 	}
 
-	slotname := strings.ToLower(decl.SchemaInterface.Name())
-	byt, err := gocode.GenerateTypesOpenAPI(decl.Lineage.Latest(), &gocode.TypeConfigOpenAPI{
-		Config: &openapi.Config{
-			Group: decl.SchemaInterface.IsGroup(),
+	slotname := strings.ToLower(decl.SchemaInterface.Name)
+	byt, err := generators.GenerateTypesGo(decl.CueFile, &generators.GoConfig{
+		Config: &generators.OpenApiConfig{
 			Config: &copenapi.Config{
 				MaxCycleDepth: 10,
 			},
-			SplitSchema: true,
+			IsGroup: decl.SchemaInterface.IsGroup,
 		},
 		PackageName: slotname,
-		ApplyFuncs:  []dstutil.ApplyFunc{corecodegen.PrefixDropper(decl.Lineage.Name())},
 	})
 	if err != nil {
 		return nil, err

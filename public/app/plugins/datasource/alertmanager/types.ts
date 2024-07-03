@@ -1,6 +1,5 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
-
-import { DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
@@ -157,6 +156,7 @@ export type AlertmanagerConfig = {
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
   mute_time_intervals?: MuteTimeInterval[];
+  time_intervals?: MuteTimeInterval[];
   /** { [name]: provenance } */
   muteTimeProvenances?: Record<string, string>;
   last_applied?: boolean;
@@ -188,7 +188,7 @@ export enum MatcherOperator {
   notRegex = '!~',
 }
 
-export type Silence = {
+export interface Silence extends WithAccessControlMetadata {
   id: string;
   matchers?: Matcher[];
   startsAt: string;
@@ -199,7 +199,12 @@ export type Silence = {
   status: {
     state: SilenceState;
   };
-};
+  metadata?: {
+    rule_uid?: string;
+    rule_title?: string;
+    folder_uid?: string;
+  };
+}
 
 export type SilenceCreatePayload = {
   id?: string;
@@ -217,11 +222,7 @@ export type AlertmanagerAlert = {
   generatorURL?: string;
   labels: { [key: string]: string };
   annotations: { [key: string]: string };
-  receivers: [
-    {
-      name: string;
-    },
-  ];
+  receivers: Array<{ name: string }>;
   fingerprint: string;
   status: {
     state: AlertState;
@@ -254,7 +255,12 @@ export interface AlertmanagerStatus {
 }
 
 export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
-export type TestTemplateAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels' | 'startsAt' | 'endsAt'>;
+export type TestTemplateAlert = Pick<
+  AlertmanagerAlert,
+  'annotations' | 'labels' | 'startsAt' | 'endsAt' | 'generatorURL' | 'fingerprint'
+> & {
+  status: 'firing' | 'resolved';
+};
 
 export interface TestReceiversPayload {
   receivers?: Receiver[];
@@ -277,7 +283,7 @@ export interface TestReceiversResult {
   receivers: TestReceiversResultReceiver[];
 }
 
-export interface ExternalAlertmanagers {
+export interface ExternalAlertmanagersConnectionStatus {
   activeAlertManagers: AlertmanagerUrl[];
   droppedAlertManagers: AlertmanagerUrl[];
 }
@@ -286,8 +292,8 @@ export interface AlertmanagerUrl {
   url: string;
 }
 
-export interface ExternalAlertmanagersResponse {
-  data: ExternalAlertmanagers;
+export interface ExternalAlertmanagersStatusResponse {
+  data: ExternalAlertmanagersConnectionStatus;
 }
 
 export enum AlertmanagerChoice {
@@ -296,7 +302,7 @@ export enum AlertmanagerChoice {
   All = 'all',
 }
 
-export interface ExternalAlertmanagerConfig {
+export interface GrafanaAlertingConfiguration {
   alertmanagersChoice: AlertmanagerChoice;
 }
 

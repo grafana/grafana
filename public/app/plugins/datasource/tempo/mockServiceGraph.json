@@ -48,7 +48,7 @@
               "title": "View traces",
               "internal": {
                 "query": {
-                  "queryType": "nativeSearch",
+                  "queryType": "traceqlSearch",
                   "serviceName": "${__data.fields[0]}"
                 },
                 "datasourceUid": "TNS Tempo",

@@ -11,6 +11,8 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -23,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
-	"xorm.io/xorm"
 )
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
@@ -33,8 +34,7 @@ const AlertRuleMaxTitleLength = 190
 const AlertRuleMaxRuleGroupNameLength = 190
 
 var (
-	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
-	ErrOptimisticLock         = errors.New("version conflict while updating a record in the database with optimistic locking")
+	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
 )
 
 func getAlertRuleByUID(sess *db.Session, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -161,6 +161,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 				For:                  r.For,
 				Annotations:          r.Annotations,
 				Labels:               r.Labels,
+				Record:               r.Record,
 				NotificationSettings: r.NotificationSettings,
 			})
 		}
@@ -170,7 +171,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ngmodels.ErrAlertRuleConflict(newRules[i], ngmodels.ErrAlertRuleUniqueConstraintViolation)
+						return ruleConstraintViolationToErr(newRules[i], err)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -199,7 +200,10 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 		}
 
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
-		for _, r := range rules {
+		for i := range rules {
+			// We do indexed access way to avoid "G601: Implicit memory aliasing in for loop."
+			// Doing this will be unnecessary with go 1.22 https://stackoverflow.com/a/68247837/767660
+			r := rules[i]
 			var parentVersion int64
 			r.New.ID = r.Existing.ID
 			r.New.Version = r.Existing.Version // xorm will take care of increasing it (see https://xorm.io/docs/chapter-06/1.lock/)
@@ -213,7 +217,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ngmodels.ErrAlertRuleConflict(r.New, ngmodels.ErrAlertRuleUniqueConstraintViolation)
+						return ruleConstraintViolationToErr(r.New, err)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -235,6 +239,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 				IntervalSeconds:      r.New.IntervalSeconds,
 				NoDataState:          r.New.NoDataState,
 				ExecErrState:         r.New.ExecErrState,
+				Record:               r.New.Record,
 				For:                  r.New.For,
 				Annotations:          r.New.Annotations,
 				Labels:               r.New.Labels,
@@ -358,17 +363,18 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		if len(query.NamespaceUIDs) > 0 {
-			args := make([]any, 0, len(query.NamespaceUIDs))
-			in := make([]string, 0, len(query.NamespaceUIDs))
-			for _, namespaceUID := range query.NamespaceUIDs {
-				args = append(args, namespaceUID)
-				in = append(in, "?")
-			}
+			args, in := getINSubQueryArgs(query.NamespaceUIDs)
 			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
-		if query.RuleGroup != "" {
-			q = q.Where("rule_group = ?", query.RuleGroup)
+		if len(query.RuleUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.RuleUIDs)
+			q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		if len(query.RuleGroups) > 0 {
+			args, in := getINSubQueryArgs(query.RuleGroups)
+			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
 		}
 
 		if query.ReceiverName != "" {
@@ -446,7 +452,7 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 			ngmodels.AlertRule{OrgID: orgID, RuleGroup: ruleGroup, NamespaceUID: namespaceUID},
 		)
 		if len(ruleGroups) == 0 {
-			return ErrAlertRuleGroupNotFound
+			return ngmodels.ErrAlertRuleGroupNotFound.Errorf("")
 		}
 		interval = ruleGroups[0].IntervalSeconds
 		return err
@@ -755,4 +761,43 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 		})
 	}
 	return len(updates), st.UpdateAlertRules(ctx, updates)
+}
+
+func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
+	msg := err.Error()
+	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {
+		return ngmodels.ErrAlertRuleConflict(rule, ngmodels.ErrAlertRuleUniqueConstraintViolation)
+	} else if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
+		return ngmodels.ErrAlertRuleConflict(rule, errors.New("rule UID under the same organisation should be unique"))
+	} else {
+		return ngmodels.ErrAlertRuleConflict(rule, err)
+	}
+}
+
+// GetNamespacesByRuleUID returns a map of rule UIDs to their namespace UID.
+func (st DBstore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error) {
+	result := make(map[string]string)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var rules []ngmodels.AlertRule
+		err := sess.Table(ngmodels.AlertRule{}).Select("uid, namespace_uid").Where("org_id = ?", orgID).In("uid", uids).Find(&rules)
+		if err != nil {
+			return err
+		}
+		for _, rule := range rules {
+			result[rule.UID] = rule.NamespaceUID
+		}
+		return nil
+	})
+	return result, err
+}
+
+func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
+	args := make([]any, 0, len(inputSlice))
+	in := make([]string, 0, len(inputSlice))
+	for _, t := range inputSlice {
+		args = append(args, t)
+		in = append(in, "?")
+	}
+
+	return args, in
 }

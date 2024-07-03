@@ -31,25 +31,6 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
     updateMoveable(scale);
   };
 
-  const onPanning = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
-    if (scene.shouldInfinitePan && event instanceof MouseEvent) {
-      // Get deltaX and deltaY from pan event and add it to current canvas dimensions
-      let deltaX = event.movementX;
-      let deltaY = event.movementY;
-      if (deltaX > 0) {
-        deltaX = 0;
-      }
-      if (deltaY > 0) {
-        deltaY = 0;
-      }
-
-      // TODO: Consider bounding to the scene elements instead of allowing "infinite" panning
-      // TODO: Consider making scene grow in all directions vs just down to the right / bottom
-      scene.updateSize(scene.width - deltaX, scene.height - deltaY);
-      scene.panel.forceUpdate();
-    }
-  };
-
   const onTransformed = (
     _: ReactZoomPanPinchRef,
     state: {
@@ -71,6 +52,25 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       } else {
         scene.moveable.snappable = false;
       }
+    }
+  };
+
+  const onPanning = (_: ReactZoomPanPinchRef, event: MouseEvent | TouchEvent) => {
+    if (scene.shouldInfinitePan && event instanceof MouseEvent) {
+      // Get deltaX and deltaY from pan event and add it to current canvas dimensions
+      let deltaX = event.movementX;
+      let deltaY = event.movementY;
+      if (deltaX > 0) {
+        deltaX = 0;
+      }
+      if (deltaY > 0) {
+        deltaY = 0;
+      }
+
+      // TODO: Consider bounding to the scene elements instead of allowing "infinite" panning
+      // TODO: Consider making scene grow in all directions vs just down to the right / bottom
+      scene.updateSize(scene.width - deltaX, scene.height - deltaY);
+      scene.panel.forceUpdate();
     }
   };
 

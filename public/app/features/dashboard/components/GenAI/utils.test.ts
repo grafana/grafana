@@ -16,6 +16,16 @@ jest.mock('@grafana/experimental', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    apps: {
+      'grafana-llm-app': true,
+    },
+  },
+}));
+
 describe('getDashboardChanges', () => {
   it('should correctly split user changes and migration changes', () => {
     // Mock data for testing
@@ -88,15 +98,6 @@ describe('getDashboardChanges', () => {
 });
 
 describe('isLLMPluginEnabled', () => {
-  it('should return true if LLM plugin is enabled', async () => {
-    // Mock llms.openai.health to return true
-    jest.mocked(llms.openai.health).mockResolvedValue({ ok: true, configured: false });
-
-    const enabled = await isLLMPluginEnabled();
-
-    expect(enabled).toBe(true);
-  });
-
   it('should return false if LLM plugin is not enabled', async () => {
     // Mock llms.openai.health to return false
     jest.mocked(llms.openai.health).mockResolvedValue({ ok: false, configured: false });
@@ -104,6 +105,15 @@ describe('isLLMPluginEnabled', () => {
     const enabled = await isLLMPluginEnabled();
 
     expect(enabled).toBe(false);
+  });
+
+  it('should return true if LLM plugin is enabled', async () => {
+    // Mock llms.openai.health to return true
+    jest.mocked(llms.openai.health).mockResolvedValue({ ok: true, configured: false });
+
+    const enabled = await isLLMPluginEnabled();
+
+    expect(enabled).toBe(true);
   });
 });
 

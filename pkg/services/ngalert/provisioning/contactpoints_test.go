@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -51,6 +51,15 @@ func TestContactPointService(t *testing.T) {
 
 		require.Len(t, cps, 1)
 		require.Equal(t, "slack receiver", cps[0].Name)
+	})
+
+	t.Run("service filters contact points by name, returns empty when no match", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "unknown"), nil)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 0)
 	})
 
 	t.Run("service stitches contact point into org's AM config", func(t *testing.T) {
@@ -252,7 +261,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	receiverServiceWithAC := func(ecp *ContactPointService) *notifier.ReceiverService {
 		return notifier.NewReceiverService(
-			acimpl.ProvideAccessControl(setting.NewCfg()),
+			acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 			// Get won't use the sut's config store, so we can use a different one here.
 			fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService)),
 			ecp.provenanceStore,

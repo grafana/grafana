@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { cx } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
@@ -237,7 +238,7 @@ class PromQueryFieldClass extends React.PureComponent<PromQueryFieldProps, PromQ
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
                 </button>
 
-                <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
+                <div className="flex-grow-1 min-width-15">
                   <MonacoQueryFieldWrapper
                     languageProvider={languageProvider}
                     history={history}

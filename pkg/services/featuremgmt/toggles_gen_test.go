@@ -25,46 +25,8 @@ import (
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
-	legacyNames := map[string]bool{
-		"live-service-web-worker": true,
-	}
-
 	t.Run("check registry constraints", func(t *testing.T) {
-		invalidNames := make([]string, 0)
-
-		// Check that all flags set in code are valid
-		for _, flag := range standardFeatureFlags {
-			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
-				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
-			}
-			if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
-				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
-			}
-			if flag.Stage == FeatureStageUnknown {
-				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
-			}
-			if flag.Description != strings.TrimSpace(flag.Description) {
-				t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
-			}
-			if flag.Name != strings.TrimSpace(flag.Name) {
-				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
-			}
-			if flag.AllowSelfServe && flag.Stage != FeatureStageGeneralAvailability {
-				t.Errorf("only allow self-serving GA toggles")
-			}
-			if flag.Owner == "" {
-				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
-			}
-			// Check camel case names
-			if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
-				invalidNames = append(invalidNames, flag.Name)
-			}
-		}
-
-		// Make sure the names are valid
-		require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
-		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
-
+		verifyFlagsConfiguration(t)
 		// Now that we know they are valid, update the json database
 		t.Run("update k8s resource list", func(t *testing.T) {
 			created := v1.NewTime(time.Now().UTC())
@@ -126,7 +88,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 						item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
 						item.Spec = v // the current value
 					}
-				} else {
+				} else if item.DeletionTimestamp == nil {
 					item.DeletionTimestamp = &created
 					fmt.Printf("mark feature as deleted")
 				}
@@ -178,6 +140,53 @@ func TestFeatureToggleFiles(t *testing.T) {
 			generateCSV(),
 		)
 	})
+}
+
+// Check if all flags are configured properly
+func verifyFlagsConfiguration(t *testing.T) {
+	legacyNames := map[string]bool{
+		"live-service-web-worker": true,
+	}
+	invalidNames := make([]string, 0)
+
+	// Check that all flags set in code are valid
+	for _, flag := range standardFeatureFlags {
+		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
+			t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
+		}
+		if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
+			t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
+		}
+		if flag.Stage == FeatureStageUnknown {
+			t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
+		}
+		if flag.Description != strings.TrimSpace(flag.Description) {
+			t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
+		}
+		if flag.Name != strings.TrimSpace(flag.Name) {
+			t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
+		}
+		if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
+			t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
+		}
+		if flag.Owner == "" {
+			t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
+		}
+		if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
+			t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
+		}
+		if !(flag.Expression == "" || flag.Expression == "true" || flag.Expression == "false") {
+			t.Errorf("the `Expression` property for %s is incorrect. valid values are: `true`, `false` or empty string for default", flag.Name)
+		}
+		// Check camel case names
+		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
+			invalidNames = append(invalidNames, flag.Name)
+		}
+	}
+
+	// Make sure the names are valid
+	require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
+	// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 }
 
 func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
@@ -329,7 +338,7 @@ weight: 150
 ---
 
 <!-- DO NOT EDIT THIS PAGE, it is machine generated by running the test in -->
-<!-- https://github.com/grafana/grafana/blob/main/pkg/services/featuremgmt/toggles_gen_test.go#L19 -->
+<!-- https://github.com/grafana/grafana/blob/main/pkg/services/featuremgmt/toggles_gen_test.go#L27 -->
 
 # Configure feature toggles
 
@@ -337,16 +346,20 @@ You use feature toggles, also known as feature flags, to enable or disable featu
 
 This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
 
-## Feature toggles
+For more information about feature release stages, refer to [Release life cycle for Grafana Labs](https://grafana.com/docs/release-life-cycle/) and [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/#manage-feature-toggles).
 
-Some features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
+## General availability feature toggles
+
+Most [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.Stage == FeatureStageGeneralAvailability
 	}, true)
 
 	buf += `
-## Preview feature toggles
+## Public preview feature toggles
+
+[Public preview](https://grafana.com/docs/release-life-cycle/#public-preview) features are supported by our Support teams, but might be limited to enablement, configuration, and some troubleshooting.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.Stage == FeatureStagePublicPreview
@@ -366,7 +379,7 @@ When features are slated for removal, they will be marked as Deprecated first.
 	buf += `
 ## Experimental feature toggles
 
-These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
+[Experimental](https://grafana.com/docs/release-life-cycle/#experimental) features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
 Experimental features might be changed or removed without prior notice.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {

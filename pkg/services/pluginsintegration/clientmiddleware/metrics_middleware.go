@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
@@ -25,17 +24,13 @@ type pluginMetrics struct {
 // MetricsMiddleware is a middleware that instruments plugin requests.
 // It tracks requests count, duration and size as prometheus metrics.
 type MetricsMiddleware struct {
+	baseMiddleware
 	pluginMetrics
 	pluginRegistry registry.Service
-	features       featuremgmt.FeatureToggles
-	next           plugins.Client
 }
 
-func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) *MetricsMiddleware {
-	var additionalLabels []string
-	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		additionalLabels = []string{"status_source"}
-	}
+func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) *MetricsMiddleware {
+	additionalLabels := []string{"status_source"}
 	pluginRequestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
@@ -75,15 +70,16 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 			pluginRequestDurationSeconds: pluginRequestDurationSeconds,
 		},
 		pluginRegistry: pluginRegistry,
-		features:       features,
 	}
 }
 
 // NewMetricsMiddleware returns a new MetricsMiddleware.
-func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
-	imw := newMetricsMiddleware(promRegisterer, pluginRegistry, features)
+func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) plugins.ClientMiddleware {
+	imw := newMetricsMiddleware(promRegisterer, pluginRegistry)
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		imw.next = next
+		imw.baseMiddleware = baseMiddleware{
+			next: next,
+		}
 		return imw
 	})
 }
@@ -119,19 +115,11 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	status, err := fn(ctx)
 	elapsed := time.Since(start)
 
-	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
-	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status.String(), target}
-	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target}
-	if m.features.IsEnabled(ctx, featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
-		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSource))
-		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSource))
-		pluginRequestDurationSecondsLabels = append(pluginRequestDurationSecondsLabels, string(statusSource))
-	}
+	statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
 
-	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginRequestCounterLabels...)
-	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues(pluginRequestDurationSecondsLabels...)
+	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, target, string(statusSource))
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource))
+	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
@@ -198,14 +186,32 @@ func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.Col
 	return result, err
 }
 
-func (m *MetricsMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
+func (m *MetricsMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	var result *backend.ValidationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.ValidateAdmission(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
 }
 
-func (m *MetricsMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
+func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	var result *backend.MutationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.MutateAdmission(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
 }
 
-func (m *MetricsMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
+func (m *MetricsMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	var result *backend.ConversionResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.ConvertObject(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
 }

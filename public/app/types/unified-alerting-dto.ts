@@ -65,6 +65,8 @@ export enum PromApplication {
   Thanos = 'Thanos',
 }
 
+export type RulesSourceApplication = PromApplication | 'loki' | 'grafana';
+
 export interface PromBuildInfoResponse {
   data: {
     application?: string;
@@ -219,6 +221,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
   namespace_uid: string;
+  rule_group: string;
   provenance?: string;
 }
 

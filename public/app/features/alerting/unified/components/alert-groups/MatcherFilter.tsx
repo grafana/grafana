@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
-import React, { FormEvent, useEffect, useMemo } from 'react';
+import React from 'react';
+import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -16,17 +16,16 @@ interface Props {
 export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const onSearchInputChanged = useMemo(
-    () =>
-      debounce((e: FormEvent<HTMLInputElement>) => {
-        logInfo(LogMessages.filterByLabel);
-        const target = e.target as HTMLInputElement;
-        onFilterChange(target.value);
-      }, 600),
-    [onFilterChange]
-  );
+  const [filterQuery, setFilterQuery] = React.useState<string>(defaultQueryString ?? '');
 
-  useEffect(() => onSearchInputChanged.cancel(), [onSearchInputChanged]);
+  useDebounce(
+    () => {
+      logInfo(LogMessages.filterByLabel);
+      onFilterChange(filterQuery);
+    },
+    600,
+    [filterQuery]
+  );
 
   const searchIcon = <Icon name={'search'} />;
   const inputInvalid = defaultQueryString ? parseMatchers(defaultQueryString).length === 0 : false;
@@ -38,7 +37,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
       error={inputInvalid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
       label={
         <Label>
-          <Stack gap={0.5}>
+          <Stack gap={0.5} alignItems="center">
             <span>Search by label</span>
             <Tooltip
               content={
@@ -63,8 +62,8 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
     >
       <Input
         placeholder="Search"
-        defaultValue={defaultQueryString ?? ''}
-        onChange={onSearchInputChanged}
+        value={filterQuery}
+        onChange={(e) => setFilterQuery(e.currentTarget.value)}
         data-testid="search-query-input"
         prefix={searchIcon}
         className={styles.inputWidth}

@@ -1,7 +1,7 @@
 import { difference } from 'lodash';
 
 import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
-import { Field, FieldType, NullValueMode, Vector } from '../types/index';
+import { Field, FieldType, NullValueMode } from '../types/index';
 
 import { fieldReducers, ReducerID, reduceField, defaultCalcs } from './fieldReducer';
 
@@ -65,7 +65,7 @@ describe('Stats Calculators', () => {
 
   it('should handle undefined field data without crashing', () => {
     const stats = reduceField({
-      field: { name: 'a', values: undefined as unknown as Vector, config: {}, type: FieldType.number },
+      field: { name: 'a', values: undefined as unknown as unknown[], config: {}, type: FieldType.number },
       reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count],
     });
 
@@ -250,5 +250,21 @@ describe('Stats Calculators', () => {
     someNulls.config.nullValueMode = NullValueMode.Null;
 
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
+  });
+
+  it('can reduce to percentiles', () => {
+    // This `Array.from` will build an array of elements from 1 to 99
+    const percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)];
+    percentiles.forEach((percentile) => {
+      const preciseStats = reduceField({
+        field: createField(
+          'x',
+          Array.from({ length: 101 }, (_, index) => index)
+        ),
+        reducers: [(ReducerID as Record<string, ReducerID>)[`p${percentile}`]],
+      });
+
+      expect(preciseStats[`p${percentile}`]).toEqual(percentile);
+    });
   });
 });

@@ -7,7 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { getFocusStyles } from '../../../themes/mixins';
 import { t, Trans } from '../../../utils/i18n';
-import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 
@@ -88,12 +87,12 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
-            <CustomScrollbar>
+            <div className={styles.scrollContent}>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
               {!hideQuickRanges && (
                 <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
               )}
-            </CustomScrollbar>
+            </div>
           </div>
         )}
         {isFullscreen && (
@@ -280,6 +279,8 @@ const getStyles = (
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     [`${isReversed ? 'left' : 'right'}`]: 0,
+    display: 'flex',
+    flexDirection: 'column',
   }),
   body: css({
     display: 'flex',
@@ -292,7 +293,8 @@ const getStyles = (
     flexDirection: 'column',
     borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
     width: `${!hideQuickRanges ? '60%' : '100%'}`,
-    overflow: 'hidden',
+    overflow: 'auto',
+    scrollbarWidth: 'thin',
     order: isReversed ? 1 : 0,
   }),
   rightSide: css({
@@ -306,6 +308,10 @@ const getStyles = (
   }),
   spacing: css({
     marginTop: '16px',
+  }),
+  scrollContent: css({
+    overflowY: 'auto',
+    scrollbarWidth: 'thin',
   }),
 });
 

@@ -27,9 +27,9 @@ func TestIntegrationAuthorize(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql := db.InitTestDB(t)
+	sql, cfg := db.InitTestDBWithCfg(t)
 
-	dash1 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dash1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -37,7 +37,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 		}),
 	})
 
-	dash2 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dash2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{

@@ -37,7 +37,7 @@ import (
 type ContextSessionKey struct{}
 
 type SQLStore struct {
-	Cfg         *setting.Cfg
+	cfg         *setting.Cfg
 	features    featuremgmt.FeatureToggles
 	sqlxsession *session.SessionDB
 
@@ -45,7 +45,7 @@ type SQLStore struct {
 	dbCfg                        *DatabaseConfig
 	engine                       *xorm.Engine
 	log                          log.Logger
-	Dialect                      migrator.Dialect
+	dialect                      migrator.Dialect
 	skipEnsureDefaultOrgAndUser  bool
 	migrations                   registry.DatabaseMigrator
 	tracer                       tracing.Tracer
@@ -67,7 +67,7 @@ func ProvideService(cfg *setting.Cfg,
 	}
 	s.features = features
 
-	if err := s.Migrate(features.IsEnabledGlobally(featuremgmt.FlagMigrationLocking)); err != nil {
+	if err := s.Migrate(s.dbCfg.MigrationLock); err != nil {
 		return nil, err
 	}
 
@@ -114,7 +114,7 @@ func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
-		Cfg:                         cfg,
+		cfg:                         cfg,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
 		migrations:                  migrations,
@@ -131,7 +131,7 @@ func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
 
-	ss.Dialect = migrator.NewDialect(ss.engine.DriverName())
+	ss.dialect = migrator.NewDialect(ss.engine.DriverName())
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -151,11 +151,11 @@ func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 // Has to be done in a second phase (after initialization), since other services can register migrations during
 // the initialization phase.
 func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
-	if ss.dbCfg.SkipMigrations {
+	if ss.dbCfg.SkipMigrations || ss.migrations == nil {
 		return nil
 	}
 
-	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+	migrator := migrator.NewMigrator(ss.engine, ss.cfg)
 	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
@@ -178,7 +178,7 @@ func (ss *SQLStore) Quote(value string) string {
 
 // GetDialect return the dialect
 func (ss *SQLStore) GetDialect() migrator.Dialect {
-	return ss.Dialect
+	return ss.dialect
 }
 
 func (ss *SQLStore) GetDBType() core.DbType {
@@ -210,7 +210,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 			var stats stats.SystemUserCountStats
 			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
 			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.Dialect.Quote("user")
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.dialect.Quote("user")
 			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
 				return fmt.Errorf("could not determine if admin user exists: %w", err)
 			}
@@ -220,19 +220,19 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 		}
 
 		// ensure admin user
-		if !ss.Cfg.DisableInitAdminCreation {
+		if !ss.cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
 
 			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
-				Login:    ss.Cfg.AdminUser,
-				Email:    ss.Cfg.AdminEmail,
-				Password: user.Password(ss.Cfg.AdminPassword),
+				Login:    ss.cfg.AdminUser,
+				Email:    ss.cfg.AdminEmail,
+				Password: user.Password(ss.cfg.AdminPassword),
 				IsAdmin:  true,
 			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}
 
-			ss.log.Info("Created default admin", "user", ss.Cfg.AdminUser)
+			ss.log.Info("Created default admin", "user", ss.cfg.AdminUser)
 		}
 
 		ss.log.Debug("Creating default org", "name", mainOrgName)
@@ -254,14 +254,14 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return nil
 	}
 
-	dbCfg, err := NewDatabaseConfig(ss.Cfg, ss.features)
+	dbCfg, err := NewDatabaseConfig(ss.cfg, ss.features)
 	if err != nil {
 		return err
 	}
 
 	ss.dbCfg = dbCfg
 
-	if ss.Cfg.DatabaseInstrumentQueries {
+	if ss.cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -316,7 +316,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
 
 	// configure sql logging
-	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
+	debugSQL := ss.cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 	if !debugSQL {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
@@ -382,7 +382,7 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 		}); err != nil {
 			var driverErr *mysql.MySQLError
 			if errors.As(err, &driverErr) {
-				if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
+				if driverErr.Number == mysqlerr.ER_PARSE_ERROR || driverErr.Number == mysqlerr.ER_NOT_SUPPORTED_YET {
 					return false, nil
 				}
 			}
@@ -409,13 +409,15 @@ type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
 	FeatureFlags            []string
+	Cfg                     *setting.Cfg
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
-	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
+	cfg := getCfgForTesting(opts...)
+	store, err := initTestDB(t, cfg, features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -423,15 +425,16 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 }
 
 // InitTestDB initializes the test DB.
-func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
+func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
+	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
-	return store
+	return store, store.cfg
 }
 
 func SetupTestDB() {
@@ -463,6 +466,16 @@ func CleanupTestDB() {
 		testSQLStoreCleanup = []func(){}
 		testSQLStore = nil
 	}
+}
+
+func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
+	cfg := setting.NewCfg()
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			cfg = opt.Cfg
+		}
+	}
+	return cfg
 }
 
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
@@ -592,9 +605,9 @@ func TestMain(m *testing.M) {
 	}
 
 	// nolint:staticcheck
-	testSQLStore.Cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
+	testSQLStore.cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
-	if err := testSQLStore.Dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
+	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {

@@ -80,14 +80,24 @@ export const RolePicker = ({
     }
     const { bottom, top, left, right } = dimensions;
     let horizontal = left;
-    let vertical = bottom + 10; // Add extra 10px to offset to account for border and outline
     let menuToLeft = false;
 
     const distance = window.innerHeight - bottom;
+    let vertical = bottom + 5;
+    let ToTheSide = false;
     if (distance < MENU_MAX_HEIGHT + 20) {
-      // Off set to display the role picker menu at the bottom of the screen
-      // without resorting to scroll the page
+      // move the menu above the input if there is not enough space below
       vertical = top - MENU_MAX_HEIGHT - 50;
+    }
+
+    // check if there is enough space above the input field
+    if (top < MENU_MAX_HEIGHT + 50) {
+      // if not, reset the vertical position
+      vertical = top;
+      // move the menu to the right edge of the input field
+      horizontal = right + 5;
+      // flag to align the menu to the right or left edge of the input field
+      ToTheSide = true;
     }
 
     /*
@@ -97,8 +107,8 @@ export const RolePicker = ({
      * both (the role picker menu and its sub menu) aligned to the left edge of the input.
      * Otherwise, it aligns the role picker menu to the right.
      */
-    if (left + ROLE_PICKER_MAX_MENU_WIDTH > window.innerWidth) {
-      horizontal = window.innerWidth - right;
+    if (horizontal + ROLE_PICKER_MAX_MENU_WIDTH > window.innerWidth) {
+      horizontal = window.innerWidth - (ToTheSide ? left : right);
       menuToLeft = true;
     }
 

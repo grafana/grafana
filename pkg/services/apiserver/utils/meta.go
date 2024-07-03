@@ -57,6 +57,7 @@ type GrafanaResourceMetaAccessor interface {
 	SetFolder(uid string)
 	GetSlug() string
 	SetSlug(v string)
+
 	GetOriginInfo() (*ResourceOriginInfo, error)
 	SetOriginInfo(info *ResourceOriginInfo)
 	GetOriginName() string
@@ -120,6 +121,7 @@ func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) 
 	if err != nil {
 		return nil, fmt.Errorf("invalid updated timestamp: %s", err.Error())
 	}
+	t = t.UTC()
 	return &t, nil
 }
 
@@ -194,7 +196,7 @@ func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 			anno[AnnoKeyOriginKey] = info.Key
 		}
 		if info.Timestamp != nil {
-			anno[AnnoKeyOriginTimestamp] = info.Timestamp.Format(time.RFC3339)
+			anno[AnnoKeyOriginTimestamp] = info.Timestamp.UTC().Format(time.RFC3339)
 		}
 	}
 	m.obj.SetAnnotations(anno)

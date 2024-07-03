@@ -29,29 +29,29 @@ export const DetailsField = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  fieldHorizontal: css`
-    flex-direction: row;
-    ${theme.breakpoints.down('md')} {
-      flex-direction: column;
-    }
-  `,
-  fieldVertical: css`
-    flex-direction: column;
-  `,
-  field: css`
-    display: flex;
-    margin: ${theme.spacing(2)} 0;
+  fieldHorizontal: css({
+    flexDirection: 'row',
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
+  }),
+  fieldVertical: css({
+    flexDirection: 'column',
+  }),
+  field: css({
+    display: 'flex',
+    margin: `${theme.spacing(2)} 0`,
 
-    & > div:first-child {
-      width: 110px;
-      padding-right: ${theme.spacing(1)};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightBold};
-      line-height: 1.8;
-    }
-    & > div:nth-child(2) {
-      flex: 1;
-      color: ${theme.colors.text.secondary};
-    }
-  `,
+    '& > div:first-child': {
+      width: '110px',
+      paddingRight: theme.spacing(1),
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightBold,
+      lineHeight: 1.8,
+    },
+    '& > div:nth-child(2)': {
+      flex: 1,
+      color: theme.colors.text.secondary,
+    },
+  }),
 });

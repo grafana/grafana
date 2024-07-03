@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
@@ -30,7 +30,21 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
 
+  const supportedListModes = useMemo(
+    () =>
+      new Set([
+        VisualizationSelectPaneTab.Widgets,
+        VisualizationSelectPaneTab.Visualizations,
+        VisualizationSelectPaneTab.Suggestions,
+      ]),
+    []
+  );
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
+  useEffect(() => {
+    if (listMode && !supportedListModes.has(listMode)) {
+      setListMode(defaultTab);
+    }
+  }, [defaultTab, listMode, setListMode, supportedListModes]);
 
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
     { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
@@ -59,7 +73,7 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
       <Field className={styles.customFieldMargin}>
         <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
       </Field>
-      <CustomScrollbar autoHeightMin="100%">
+      <CustomScrollbar>
         {listMode === VisualizationSelectPaneTab.Visualizations && (
           <VizTypePicker pluginId={panel.state.pluginId} searchQuery={searchQuery} onChange={onVizTypeChange} />
         )}

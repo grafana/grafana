@@ -55,8 +55,7 @@ type RemoteLokiBackend struct {
 	log            log.Logger
 }
 
-func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
-	logger := log.New("ngalert.state.historian", "backend", "loki")
+func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
 		client:         NewLokiClient(cfg, req, metrics, logger),
 		externalLabels: cfg.ExternalLabels,

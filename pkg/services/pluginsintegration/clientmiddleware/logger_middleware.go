@@ -10,30 +10,24 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests.
-func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
+func NewLoggerMiddleware(logger plog.Logger) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		if !cfg.PluginLogBackendRequests {
-			return next
-		}
-
 		return &LoggerMiddleware{
-			next:     next,
-			logger:   logger,
-			features: features,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
+			logger: logger,
 		}
 	})
 }
 
 type LoggerMiddleware struct {
-	next     plugins.Client
-	logger   plog.Logger
-	features featuremgmt.FeatureToggles
+	baseMiddleware
+	logger plog.Logger
 }
 
 func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) (requestStatus, error)) error {
@@ -50,9 +44,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 	if err != nil {
 		logParams = append(logParams, "error", err)
 	}
-	if m.features.IsEnabled(ctx, featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		logParams = append(logParams, "statusSource", pluginrequestmeta.StatusSourceFromContext(ctx))
-	}
+	logParams = append(logParams, "statusSource", pluginrequestmeta.StatusSourceFromContext(ctx))
 
 	ctxLogger := m.logger.FromContext(ctx)
 	logFunc := ctxLogger.Info
@@ -81,9 +73,11 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 		ctxLogger := m.logger.FromContext(ctx)
 		for refID, dr := range resp.Responses {
 			if dr.Error != nil {
-				logParams := []any{"refID", refID, "status", int(dr.Status), "error", dr.Error}
-				if m.features.IsEnabled(ctx, featuremgmt.FlagPluginsInstrumentationStatusSource) {
-					logParams = append(logParams, "statusSource", pluginrequestmeta.StatusSourceFromPluginErrorSource(dr.ErrorSource))
+				logParams := []any{
+					"refID", refID,
+					"status", int(dr.Status),
+					"error", dr.Error,
+					"statusSource", pluginrequestmeta.StatusSourceFromPluginErrorSource(dr.ErrorSource),
 				}
 				ctxLogger.Error("Partial data response error", logParams...)
 			}
@@ -134,16 +128,4 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	})
 
 	return resp, err
-}
-
-func (m *LoggerMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *LoggerMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *LoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

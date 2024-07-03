@@ -20,12 +20,12 @@ export function setFormatAs(query: AzureMonitorQuery, formatAs: ResultFormat): A
   };
 }
 
-export function setDashboardTime(query: AzureMonitorQuery, dashboardTime: boolean): AzureMonitorQuery {
+export function setDashboardTime(query: AzureMonitorQuery, dashboardTime: string): AzureMonitorQuery {
   return {
     ...query,
     azureLogAnalytics: {
       ...query.azureLogAnalytics,
-      dashboardTime,
+      dashboardTime: dashboardTime === 'dashboard' ? true : false,
     },
   };
 }
@@ -36,6 +36,16 @@ export function setTimeColumn(query: AzureMonitorQuery, timeColumn: string): Azu
     azureLogAnalytics: {
       ...query.azureLogAnalytics,
       timeColumn,
+    },
+  };
+}
+
+export function setBasicLogsQuery(query: AzureMonitorQuery, basicLogsQuery: boolean): AzureMonitorQuery {
+  return {
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      basicLogsQuery,
     },
   };
 }

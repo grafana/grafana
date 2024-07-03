@@ -1,9 +1,6 @@
 [run]
 timeout = "10m"
-
-[linters-settings.goconst]
-min-len = 5
-min-occurrences = 5
+concurrency = 10
 
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
@@ -21,6 +18,7 @@ deny = [
   { pkg = "github.com/pkg/errors", desc = "Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library." },
   { pkg = "github.com/xorcare/pointer", desc = "Use pkg/util.Pointer instead, which is a generic one-liner alternative" },
   { pkg = "github.com/gofrs/uuid", desc = "Use github.com/google/uuid instead, which we already depend on." },
+  { pkg = "github.com/bmizerany/assert", desc = "Use github.com/stretchr/testify/assert instead, which we already depend on." },
 ]
 
 [linters-settings.depguard.rules.coreplugins]
@@ -63,16 +61,68 @@ files = [
   "**/pkg/tsdb/azuremonitor/**/*",
   "**/pkg/tsdb/cloud-monitoring/*",
   "**/pkg/tsdb/cloud-monitoring/**/*",
+  "**/pkg/tsdb/mysql/*",
+  "**/pkg/tsdb/mysql/**/*",
   "**/pkg/tsdb/parca/*",
   "**/pkg/tsdb/parca/**/*",
   "**/pkg/tsdb/tempo/*",
   "**/pkg/tsdb/tempo/**/*",
+  "**/pkg/tsdb/cloudwatch/*",
+  "**/pkg/tsdb/cloudwatch/**/*",
+]
+
+[linters-settings.depguard.rules.apiserver]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+  "github.com/grafana/grafana/pkg/apiserver",
+  "github.com/grafana/grafana/pkg/services/apiserver/utils",
+  "github.com/grafana/grafana/pkg/services/featuremgmt",
+  "github.com/grafana/grafana/pkg/infra/kvstore",
+  "github.com/grafana/grafana/pkg/services/apiserver/options",
+  "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apiserver is not allowed to import grafana core" }
+]
+files = [
+  "**/pkg/apiserver/*",
+  "**/pkg/apiserver/**/*"
+]
+
+[linters-settings.depguard.rules.apimachinery]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apimachinery is not allowed to import grafana core" }
+]
+files = [
+  "**/pkg/apimachinery/*",
+  "**/pkg/apimachinery/**/*"
+]
+
+[linters-settings.depguard.rules.promlib]
+list-mode = "lax" # allow unless explicitely denied
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "promlib is not allowed to import grafana core" }
+]
+allow = [
+  "github.com/grafana/grafana/pkg/promlib"
+]
+files = [
+  "**/pkg/promlib/*",
+  "**/pkg/promlib/**/*"
 ]
 
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
 rules = "pkg/ruleguard.rules.go"
+
+[linters-settings.misspell]
+ignore-words = ["Unknwon", "Creater"]
 
 [linters-settings.nakedret]
 max-func-lines = 60
@@ -85,7 +135,7 @@ enable = [
   "dogsled",
   "errcheck",
   # "gochecknoinits",
-  "goconst",
+  # "goconst",
   # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
   "goimports",
   "goprintffuncname",
@@ -116,6 +166,7 @@ enable = [
 
 [issues]
 exclude-use-default = false
+max-same-issues = 0
 
 # Enable when appropriate
 # Poorly chosen identifier
@@ -140,6 +191,13 @@ text = "SA1019: http.CloseNotifier"
 [[issues.exclude-rules]]
 linters = ["staticcheck"]
 text = "SA1019: strings.Title"
+
+# go.opentelemetry.io/otel/exporters/jaeger" is deprecated: This module is no longer supported. OpenTelemetry dropped support for Jaeger exporter in July 2023.
+# Jaeger officially accepts and recommends using OTLP.
+# Use [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp] or [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc] instead.
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019: \"go.opentelemetry.io/otel/exporters/jaeger\""
 
 [[issues.exclude-rules]]
 linters = ["staticcheck"]
@@ -182,10 +240,6 @@ linters = ["gosec"]
 text = "404"
 
 [[issues.exclude-rules]]
-linters = ["misspell"]
-text = "Unknwon` is a misspelling of `Unknown"
-
-[[issues.exclude-rules]]
 linters = ["errorlint"]
 text = "non-wrapping format verb for fmt.Errorf"
 
@@ -203,3 +257,10 @@ text = "ST1020"
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1021"
+
+# Remove this when we have go v1.22 in place
+# https://stackoverflow.com/a/68247837/767660
+[[issues.exclude-rules]]
+linters = ["gosec"]
+path = '(.+)_test\.go'
+text = "G601"

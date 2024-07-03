@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -58,9 +59,10 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	}
 
 	hs := &HTTPServer{
-		Cfg:      cfg,
-		Features: features,
-		License:  &licensing.OSSLicensingService{Cfg: cfg},
+		authnService: &authntest.FakeService{},
+		Cfg:          cfg,
+		Features:     features,
+		License:      &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererPluginManager{},
@@ -71,12 +73,12 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New(),
 		PluginSettings:       pluginsSettings,
-		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+		pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
 		namespacer:    request.GetNamespaceMapper(cfg),
-		SocialService: socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), &ssosettingstests.MockService{}),
+		SocialService: socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
 	}
 
 	m := web.New()

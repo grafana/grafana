@@ -1,5 +1,5 @@
 {
-  "_comment": "Ce fichier est la source de vérité pour les chaînes anglaises. Modifiez-le dans la base de code pour adapter les pluriels et les autres phrases pour l'interface utilisateur.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rôle",
@@ -25,13 +25,48 @@
       "user": "Utilisateur"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Chargement"
   },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Annuler",
-      "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
+      "cannot-move-folders": "",
       "delete-button": "Supprimer",
       "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
       "delete-modal-invalid-title": "Impossible de supprimer le dossier",
@@ -67,6 +102,12 @@
       "select-checkbox": "Sélectionner",
       "tags-column": "Étiquettes"
     },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
+    },
     "folder-actions-button": {
       "delete": "Supprimer",
       "folder-actions": "Actions sur le dossier",
@@ -94,7 +135,7 @@
     },
     "no-results": {
       "clear": "Effacer la recherche et les filtres",
-      "text": "Aucun résultat trouvé pour votre requête."
+      "text": ""
     }
   },
   "clipboard-button": {
@@ -109,7 +150,7 @@
       "light-theme": "Clair"
     },
     "empty-state": {
-      "title": "Aucun résultat trouvé"
+      "message": ""
     },
     "search-box": {
       "placeholder": "Rechercher ou aller à..."
@@ -131,7 +172,8 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Sources de données"
+      "category-header-label": "Sources de données",
+      "empty-message": ""
     },
     "search": {
       "placeholder": "Rechercher tout"
@@ -152,6 +194,11 @@
       "label-required": "Ce champ est obligatoire.",
       "sub-text": "<0>Définissez le texte qui décrira la corrélation.</0>",
       "title": "Définir l'étiquette de corrélation (Étape 1 sur 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "supprimer la corrélation",
@@ -244,14 +291,14 @@
     "empty": {
       "add-library-panel-body": "Ajoutez des visualisations partagées avec d'autres tableaux de bord.",
       "add-library-panel-button": "Ajouter un panneau Bibliothèque",
-      "add-library-panel-header": "Ajouter un panneau Bibliothèque",
+      "add-library-panel-header": "",
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
       "add-widget-body": "Créez des listes, des markdowns et d'autres widgets",
       "add-widget-button": "Ajouter un widget",
       "add-widget-header": "Ajouter un widget",
-      "import-a-dashboard-body": "Importer un tableau de bord depuis un fichier ou <1>grafana.com</1>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord"
     },
@@ -349,13 +396,20 @@
       "validation-required": "Nécessite un modèle JSON de tableau de bord"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
     },
-    "dashboard-delete-button": "Supprimer le tableau de bord",
+    "dashboard-delete-button": "",
     "general": {
-      "auto-refresh-description": "Définir les intervalles de mise à jour automatique qui seront disponibles dans la liste de mise à jour automatique.",
+      "auto-refresh-description": "",
       "auto-refresh-label": "Actualisation automatique",
       "description-label": "Description",
       "editable-description": "Définissez en lecture seule pour désactiver toutes les modifications. Les modifications seront appliquées au prochain chargement du tableau de bord",
@@ -369,7 +423,6 @@
       "title-label": "Titre"
     },
     "json-editor": {
-      "apply-button": "Appliquer les modifications",
       "save-button": "Enregistrer les modifications",
       "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Il inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc.",
       "title": "Modèle JSON"
@@ -400,6 +453,13 @@
       "title": "Versions"
     }
   },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
   "data-source-picker": {
     "add-new-data-source": "Configurer une nouvelle source de données",
     "built-in-list": {
@@ -420,10 +480,23 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Ajouter une nouvelle source de données"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Fermer l'historique des requêtes",
       "datasource-a-z": "Source de données A-Z",
@@ -431,12 +504,14 @@
       "newest-first": "Plus récent en premier",
       "oldest-first": "Plus ancien en premier",
       "query-history": "Historique des requêtes",
+      "query-library": "",
       "settings": "Paramètres",
       "starred": "Favoris"
     },
     "rich-history-card": {
       "add-comment-form": "Ajouter un formulaire de commentaire",
       "add-comment-tooltip": "Ajouter un commentaire",
+      "add-to-library": "",
       "cancel": "Annuler",
       "confirm-delete": "Supprimer",
       "copy-query-tooltip": "Copier la requête dans le presse-papiers",
@@ -449,14 +524,12 @@
       "delete-query-tooltip": "Supprimer la requête",
       "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
-      "loading-text": "chargement...",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
+      "query-template-added": "",
       "query-text-label": "Texte de la requête",
-      "run-query-button": "Exécuter la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
-      "switch-datasource-button": "Changer de source de données et exécuter la requête",
       "unstar-query-tooltip": "Retirer la requête des favoris",
       "update-comment-form": "Modifier le formulaire de commentaire"
     },
@@ -525,6 +598,12 @@
       "saving-failed": "L'enregistrement de l'historique riche a échoué",
       "update-failed": "La mise à jour de l'historique riche a échoué"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "Ajouter une requête",
       "query-add-button-aria-label": "Ajouter une requête",
@@ -541,15 +620,15 @@
     "toolbar": {
       "aria-label": "Explorer la barre d'outils",
       "copy-link": "Copier l'URL",
-      "copy-link-abs-time": "Copier l'URL absolue",
+      "copy-link-abs-time": "",
       "copy-links-absolute-category": "Liens URL de synchronisation temporelle (partager avec intervalle de temps intact)",
       "copy-links-normal-category": "Liens URL normaux",
       "copy-shortened-link": "Copier l'URL abrégée",
-      "copy-shortened-link-abs-time": "Copier l'URL abrégée absolue",
-      "copy-shortened-link-menu": "Ouvrir le lien de menu raccourci",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Annuler",
       "refresh-picker-run": "Exécuter la requête",
-      "split-close": "Fermer",
+      "split-close": "",
       "split-close-tooltip": "Fermer le panneau scindé",
       "split-narrow": "Panneau étroit",
       "split-title": "Scinder",
@@ -575,6 +654,9 @@
     "select": {
       "no-options-label": "Aucune option trouvée",
       "placeholder": "Choisir"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -588,9 +670,9 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Tableau de bord",
-      "focused-panel": "Panneau ciblé",
+      "focused-panel": "",
       "global": "Global",
-      "time-range": "Période"
+      "time-range": ""
     },
     "shortcuts-description": {
       "change-theme": "Modifier le thème",
@@ -648,11 +730,18 @@
     },
     "add-widget": {
       "title": "Ajouter un panneau depuis la bibliothèque de panneau"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
     "modal": {
-      "button-cancel": "<0>Annuler</0>",
+      "button-cancel": "",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
       "button-view-panel2": "Voir le panneau dans le tableau de bord...",
       "panel-not-linked": "Le panneau n'est pas lié à un tableau de bord. Ajoutez le panneau à un tableau de bord et réessayez.",
@@ -674,21 +763,151 @@
       "title": "Échec de la connexion",
       "unknown": "Une erreur inconnue est survenue"
     },
-    "forgot-password": "",
+    "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
-      "password-label": "",
-      "password-required": "",
-      "submit-label": "",
-      "submit-loading-label": "",
-      "username-label": "",
-      "username-required": ""
+      "password-label": "Mot de passe",
+      "password-placeholder": "",
+      "password-required": "Vous devez renseigner le mot de passe",
+      "submit-label": "Connexion",
+      "submit-loading-label": "Connexion…",
+      "username-label": "E-mail ou nom d'utilisateur",
+      "username-placeholder": "",
+      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
     },
     "services": {
-      "sing-in-with-prefix": ""
+      "sing-in-with-prefix": "Se connecter avec {{serviceName}}"
     },
     "signup": {
-      "button-label": "",
-      "new-to-question": ""
+      "button-label": "Inscription",
+      "new-to-question": "Nouveau sur Grafana ?"
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "Une fois que vous aurez connecté cette installation à une pile cloud, vous pourrez importer les sources de données et les tableaux de bord.",
+      "link-title": "En savoir plus sur la migration des autres paramètres",
+      "title": "Puis-je déplacer cette installation vers Grafana Cloud ?"
+    },
+    "connect-modal": {
+      "body-cloud-stack": "Vous aurez également besoin d'une pile cloud. Si vous venez de vous inscrire, nous créerons automatiquement votre première pile. Si vous avez déjà un compte, vous devez sélectionner ou créer une pile.",
+      "body-get-started": "Pour commencer, vous aurez besoin d'un compte Grafana.com.",
+      "body-sign-up": "Créez un compte Grafana.com",
+      "body-token": "Votre installation Grafana autogérée a besoin d'un accès spécial pour migrer du contenu de manière sécurisée. Vous devrez créer un jeton de migration sur la pile cloud que vous avez choisie.",
+      "body-token-field": "Jeton de migration",
+      "body-token-field-placeholder": "Coller le jeton ici",
+      "body-token-instructions": "Connectez-vous à votre pile cloud et accédez à Administration > Général > Migrer vers Grafana Cloud. Créez un jeton de migration sur cet écran et collez-le ici.",
+      "body-view-stacks": "Voir mes piles cloud",
+      "cancel": "Annuler",
+      "connect": "Se connecter à cette pile",
+      "connecting": "Connexion à cette pile…",
+      "title": "Se connecter à une pile cloud",
+      "token-error-description": "",
+      "token-error-title": "",
+      "token-required-error": "Vous devez renseigner le jeton de migration"
+    },
+    "cta": {
+      "button": "Migrer cette instance vers le cloud",
+      "header": "Laissez-nous gérer votre pile Grafana"
+    },
+    "disconnect-modal": {
+      "body": "Cette action supprimera le jeton de migration de cette installation. Si vous souhaitez importer plus de ressources dans le futur, vous devrez entrer un nouveau jeton de migration.",
+      "cancel": "Annuler",
+      "disconnect": "Déconnecter",
+      "disconnecting": "Déconnexion…",
+      "error": "La déconnexion a échoué",
+      "title": "Se déconnecter de la pile cloud"
+    },
+    "get-started": {
+      "body": "Le processus de migration doit être démarré à partir de votre instance Grafana autogérée.",
+      "configure-pdc-link": "Configurer la PDC pour cette pile",
+      "link-title": "En savoir plus sur la connexion privée aux sources de données",
+      "step-1": "Connectez-vous à votre instance autogérée et accédez à Administration > Général > Migrer vers Grafana Cloud.",
+      "step-2": "Sélectionnez Migrer cette instance vers le cloud.",
+      "step-3": "Le système vous demandera un jeton de migration. Générez-en un à partir de cet écran.",
+      "step-4": "Dans votre instance autogérée, sélectionnez Importer tout pour importer les sources de données et les tableaux de bord vers cette pile cloud.",
+      "step-5": "Si certaines de vos sources de données ne fonctionnent pas sur le réseau Internet public, vous devez installer une connexion privée aux sources de données dans votre environnement autogéré.",
+      "title": "Comment commencer"
+    },
+    "is-it-secure": {
+      "body": "Grafana Labs s'engage à appliquer les normes les plus strictes en matière de confidentialité et de sécurité des données. En utilisant des technologies et des procédures de sécurité conformes aux normes du secteur, nous contribuons à protéger les données de nos clients contre l'accès, l'utilisation ou la divulgation non autorisés.",
+      "link-title": "Centre de confiance Grafana Labs",
+      "title": "La solution est-elle sécurisée ?"
+    },
+    "migrate-to-this-stack": {
+      "body": "Certaines configurations de votre instance Grafana autogérée peuvent être copiées automatiquement dans cette pile cloud.",
+      "link-title": "Voir le guide de migration complet",
+      "title": "Migrer la configuration vers cette pile"
+    },
+    "migration-token": {
+      "body": "Votre instance Grafana autogérée aura besoin d'un jeton d'authentification spécial pour se connecter de manière sécurisée à cette pile cloud.",
+      "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
+      "delete-modal-cancel": "Annuler",
+      "delete-modal-confirm": "Supprimer",
+      "delete-modal-deleting": "Suppression...",
+      "delete-modal-title": "Supprimer le jeton de migration",
+      "error-body": "",
+      "error-title": "",
+      "generate-button": "Générer un jeton de migration",
+      "generate-button-loading": "Génération d'un jeton de migration…",
+      "modal-close": "Fermer",
+      "modal-copy-and-close": "Copier dans le presse-papiers et fermer",
+      "modal-copy-button": "Copier dans le presse-papiers",
+      "modal-field-description": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
+      "modal-field-label": "Jeton",
+      "modal-title": "Jeton de migration créé",
+      "status": "",
+      "title": "Jeton de migration"
+    },
+    "pdc": {
+      "body": "L'exposition de vos sources de données sur Internet peut compromettre la sécurité. La connexion privée aux sources de données (PDC) permet à Grafana Cloud d'accéder à vos sources de données existantes en passant par un tunnel réseau sécurisé.",
+      "link-title": "En savoir plus sur la PDC",
+      "title": "Toutes mes sources de données ne sont pas sur le réseau Internet public"
+    },
+    "pricing": {
+      "body": "Grafana Cloud propose une formule gratuite généreuse et un essai illimité de 14 jours. Après votre période d'essai, nous vous facturerons en fonction de votre utilisation dépassant les limites de la formule gratuite.",
+      "link-title": "Tarifs de Grafana Cloud",
+      "title": "Combien ça coûte ?"
+    },
+    "resource-status": {
+      "error-details-button": "Détails",
+      "failed": "Erreur",
+      "migrated": "Importé dans le cloud",
+      "migrating": "Importation…",
+      "not-migrated": "Pas encore importé",
+      "unknown": "Inconnu"
+    },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
+    "resource-type": {
+      "dashboard": "Tableau de bord",
+      "datasource": "Source de données",
+      "folder": "",
+      "unknown": "Inconnu"
+    },
+    "summary": {
+      "disconnect": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
+      "start-migration": "",
+      "target-stack-title": ""
+    },
+    "token-status": {
+      "active": "Jeton créé et actif",
+      "no-active": "Aucun jeton actif"
+    },
+    "what-is-cloud": {
+      "body": "Grafana cloud est une plateforme d'observabilité hébergée dans le cloud et entièrement gérée. Elle est idéale pour les environnements natifs du cloud. Elle offre tout ce que vous aimez dans Grafana sans les frais d'entretien, de mise à niveau et de support qu'implique une installation.",
+      "link-title": "En savoir plus sur les fonctionnalités cloud",
+      "title": "Qu'est-ce que Grafana Cloud ?"
+    },
+    "why-host": {
+      "body": "En plus de la commodité de l'hébergement géré, Grafana Cloud comprend de nombreuses fonctionnalités exclusives au cloud comme les SLO, la gestion des incidents, l'apprentissage automatique et de puissantes intégrations d'observabilité.",
+      "link-title": "Vous avez d'autres questions ? Posez-les à un expert",
+      "title": "Pourquoi héberger avec Grafana ?"
     }
   },
   "nav": {
@@ -707,7 +926,8 @@
       "title": "Alertes"
     },
     "alerting-admin": {
-      "title": "Administrateur"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",
@@ -793,7 +1013,7 @@
       "title": "Créer"
     },
     "create-alert": {
-      "title": "Créer une règle d’alerte"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Tableau de bord"
@@ -876,8 +1096,12 @@
     "manage-folder": {
       "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"
     },
+    "migrate-to-cloud": {
+      "subtitle": "Copier la configuration de votre installation autogérée vers une pile cloud",
+      "title": "Migrer vers Grafana Cloud"
+    },
     "monitoring": {
-      "subtitle": "Applications de suivi et d'infrastructure",
+      "subtitle": "",
       "title": "Observabilité"
     },
     "new": {
@@ -925,6 +1149,10 @@
     },
     "public": {
       "title": "Tableaux de bord publics"
+    },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
     },
     "recorded-queries": {
       "title": "Requêtes enregistrées"
@@ -1019,6 +1247,10 @@
     "title": "Dernières nouvelles sur le blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "Tableau de bord favori",
     "unstarred-dashboard": "Tableau de bord non favori"
   },
@@ -1038,6 +1270,7 @@
       "new-alert-rule": "Nouvelle règle d'alerte",
       "query": "Requête",
       "remove": "Supprimer",
+      "replace-library-panel": "",
       "share": "Partager",
       "show-legend": "Afficher la légende",
       "unlink-library-panel": "Dissocier le panneau Bibliothèque",
@@ -1082,10 +1315,19 @@
       "confirm-text": "Supprimer"
     },
     "empty": {
-      "button": "Créer une playlist",
-      "pro-tip": "Vous pouvez utiliser des playlists pour faire défiler des tableaux de bord sur des téléviseurs sans contrôle utilisateur",
-      "pro-tip-link-title": "En savoir plus",
+      "button": "",
+      "pro-tip": "",
       "title": "Il n'y a aucune playlist créée"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": ""
+    }
+  },
+  "plugins": {
+    "empty-state": {
+      "message": ""
     }
   },
   "profile": {
@@ -1101,7 +1343,8 @@
       "new-password-same-as-old": "Le nouveau mot de passe ne peut pas être le même que l'ancien.",
       "old-password-label": "Ancien mot de passe",
       "old-password-required": "Vous devez saisir l'ancien mot de passe",
-      "passwords-must-match": "Les mots de passe doivent être identiques"
+      "passwords-must-match": "Les mots de passe doivent être identiques",
+      "strong-password-validation-register": "Selon notre politique, votre mot de passe n'est pas suffisamment sécurisé"
     }
   },
   "public-dashboard": {
@@ -1187,6 +1430,10 @@
       "orphaned-title": "<0>Tableau de bord public orphelin</0>",
       "orphaned-tooltip": "Le tableau de bord lié a déjà été supprimé"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Suspendre le partage"
     }
@@ -1222,14 +1469,20 @@
     "header": {
       "collapse-row": "Réduire la ligne de requête",
       "datasource-help": "Afficher l'aide de la source de données",
-      "disable-query": "Désactiver la requête",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
+      "hide-response": "",
       "remove-query": "Supprimer la requête",
+      "show-response": "",
       "toggle-edit-mode": "Activer/désactiver le mode édition de texte"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
   },
   "refresh-picker": {
     "aria-label": {
@@ -1258,6 +1511,31 @@
       "label": "Retour à {{title}}"
     },
     "dismissable-button": "Fermer"
+  },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
   },
   "search": {
     "actions": {
@@ -1288,6 +1566,14 @@
       "placeholder": "Rechercher des tableaux de bord"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Partager"
@@ -1316,7 +1602,7 @@
       "info-text": "Créez un lien direct vers ce tableau de bord ou ce panneau, personnalisé avec les options ci-dessous.",
       "link-url": "Lien URL",
       "render-alert": "Plug-in de rendu d'image non installé",
-      "render-instructions": "Pour améliorer le rendu d'une image de panneau, vous devez installer le <1>plug-in de rendu d'image Grafana</1>. Veuillez contacter votre administrateur Grafana pour installer le plug-in.",
+      "render-instructions": "",
       "rendered-image": "Lien direct vers l'image dont il faut améliorer le rendu",
       "save-alert": "Le tableau de bord n'est pas enregistré",
       "save-dashboard": "Pour améliorer le rendu d'une image de panneau, vous devez d'abord enregistrer le tableau de bord.",
@@ -1336,10 +1622,10 @@
       "expire-day": "1 jour",
       "expire-hour": "1 heure",
       "expire-never": "Jamais",
-      "expire-week": "7 jours",
+      "expire-week": "1 semaine",
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
-      "local-button": "Instantané local",
+      "local-button": "Publier un instantané",
       "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
@@ -1352,7 +1638,7 @@
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
       "panel-embed": "Intégrer",
-      "public-dashboard": "Tableau de bord public",
+      "public-dashboard": "",
       "public-dashboard-title": "Tableau de bord public",
       "snapshot": "Instantané"
     },
@@ -1405,7 +1691,32 @@
     },
     "title": "Préférences"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "Externe",
     "name-column-header": "Nom",
     "url-column-header": "URL de l'instantané",
@@ -1415,6 +1726,14 @@
     "loading": "Chargement en cours...",
     "no-tags": "Aucune étiquette trouvée",
     "placeholder": "Filtrer par étiquette"
+  },
+  "teams": {
+    "empty-state": {
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
+    }
   },
   "time-picker": {
     "absolute": {
@@ -1509,6 +1828,11 @@
   "user-sessions": {
     "loading": "Chargement des sessions..."
   },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "users-access-list": {
     "tabs": {
       "public-dashboard-users-tab-title": "Utilisateurs du tableau de bord public"
@@ -1529,6 +1853,14 @@
     },
     "textbox": {
       "placeholder": "Entrer la valeur de la variable"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }

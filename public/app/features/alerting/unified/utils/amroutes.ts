@@ -8,9 +8,9 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { normalizeMatchers, parseMatcher, quoteWithEscape, unquoteWithUnescape } from './matchers';
+import { normalizeMatchers, parseMatcherToArray, quoteWithEscape, unquoteWithUnescape } from './matchers';
 import { findExistingRoute } from './routeTree';
-import { isValidPrometheusDuration, safeParseDurationstr } from './time';
+import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -95,11 +95,15 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
 
   const objectMatchers =
     route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
+
   const matchers =
     route.matchers
-      ?.map((matcher) => matcherToMatcherField(parseMatcher(matcher)))
+      ?.flatMap((matcher) => {
+        // parse the matcher to an array of matchers, PromQL-style matchers can contain more than one matcher (in a matcher, yes it's confusing)
+        return parseMatcherToArray(matcher).flatMap(matcherToMatcherField);
+      })
       .map(({ name, operator, value }) => ({
-        name,
+        name: unquoteWithUnescape(name),
         operator,
         value: unquoteWithUnescape(value),
       })) ?? [];
@@ -187,7 +191,7 @@ export const formAmRouteToAmRoute = (
   // does not exist in upstream AlertManager
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     amRoute.matchers = formAmRoute.object_matchers?.map(
-      ({ name, operator, value }) => `${name}${operator}${quoteWithEscape(value)}`
+      ({ name, operator, value }) => `${quoteWithEscape(name)}${operator}${quoteWithEscape(value)}`
     );
     amRoute.object_matchers = undefined;
   } else {
@@ -265,8 +269,8 @@ export const repeatIntervalValidator = (repeatInterval: string, groupInterval = 
     return validGroupInterval;
   }
 
-  const repeatDuration = safeParseDurationstr(repeatInterval);
-  const groupDuration = safeParseDurationstr(groupInterval);
+  const repeatDuration = safeParsePrometheusDuration(repeatInterval);
+  const groupDuration = safeParsePrometheusDuration(groupInterval);
 
   const isRepeatLowerThanGroupDuration = groupDuration !== 0 && repeatDuration < groupDuration;
 

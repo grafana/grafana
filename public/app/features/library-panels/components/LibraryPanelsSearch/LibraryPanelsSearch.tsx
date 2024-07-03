@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -57,7 +57,11 @@ export const LibraryPanelsSearch = ({
   return (
     <div className={styles.container}>
       <VerticalGroup spacing={verticalGroupSpacing}>
-        <div className={styles.gridContainer}>
+        <div
+          className={cx(styles.gridContainer, {
+            [styles.tightLayout]: variant === LibraryPanelsSearchVariant.Tight,
+          })}
+        >
           <div className={styles.filterInputWrapper}>
             <FilterInput
               value={searchQuery}
@@ -99,31 +103,30 @@ export const LibraryPanelsSearch = ({
 };
 
 function getStyles(theme: GrafanaTheme2, variant: LibraryPanelsSearchVariant) {
-  const tightLayout = css`
-    flex-direction: row;
-    row-gap: ${theme.spacing(1)};
-  `;
   return {
-    filterInputWrapper: css`
-      flex-grow: ${variant === LibraryPanelsSearchVariant.Tight ? 1 : 'initial'};
-    `,
-    container: css`
-      width: 100%;
-      overflow-y: auto;
-      padding: ${theme.spacing(1)};
-    `,
-    libraryPanelsView: css`
-      width: 100%;
-    `,
-    gridContainer: css`
-      ${variant === LibraryPanelsSearchVariant.Tight ? tightLayout : ''};
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      column-gap: ${theme.spacing(1)};
-      row-gap: ${theme.spacing(1)};
-      padding-bottom: ${theme.spacing(2)};
-    `,
+    filterInputWrapper: css({
+      flexGrow: variant === LibraryPanelsSearchVariant.Tight ? 1 : 'initial',
+    }),
+    container: css({
+      width: '100%',
+      overflowY: 'auto',
+      padding: theme.spacing(1),
+    }),
+    libraryPanelsView: css({
+      width: '100%',
+    }),
+    gridContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      columnGap: theme.spacing(1),
+      rowGap: theme.spacing(1),
+      paddingBottom: theme.spacing(2),
+    }),
+    tightLayout: css({
+      flexDirection: 'row',
+      rowGap: theme.spacing(1),
+    }),
   };
 }
 
@@ -149,7 +152,7 @@ const SearchControls = React.memo(
     onFolderFilterChange,
     onPanelFilterChange,
   }: SearchControlsProps) => {
-    const styles = useStyles2(getRowStyles, variant);
+    const styles = useStyles2(getRowStyles);
     const panelFilterChanged = useCallback(
       (plugins: PanelPluginMeta[]) => onPanelFilterChange(plugins.map((p) => p.id)),
       [onPanelFilterChange]
@@ -160,10 +163,18 @@ const SearchControls = React.memo(
     );
 
     return (
-      <div className={styles.container}>
+      <div
+        className={cx(styles.container, {
+          [styles.containerTight]: variant === LibraryPanelsSearchVariant.Tight,
+        })}
+      >
         {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />}
         {(showFolderFilter || showPanelFilter) && (
-          <div className={styles.filterContainer}>
+          <div
+            className={cx(styles.filterContainer, {
+              [styles.filterContainerTight]: variant === LibraryPanelsSearchVariant.Tight,
+            })}
+          >
             {showFolderFilter && <FolderFilter onChange={folderFilterChanged} />}
             {showPanelFilter && <PanelTypeFilter onChange={panelFilterChanged} />}
           </div>
@@ -174,42 +185,29 @@ const SearchControls = React.memo(
 );
 SearchControls.displayName = 'SearchControls';
 
-function getRowStyles(theme: GrafanaTheme2, variant = LibraryPanelsSearchVariant.Spacious) {
-  const searchRowContainer = css`
-    display: flex;
-    gap: ${theme.spacing(1)};
-    flex-grow: 1;
-    flex-direction: row;
-    justify-content: end;
-  `;
-  const searchRowContainerTight = css`
-    ${searchRowContainer};
-    flex-grow: initial;
-    flex-direction: column;
-    justify-content: normal;
-  `;
-  const filterContainer = css`
-    display: flex;
-    flex-direction: row;
-    margin-left: auto;
-    gap: 4px;
-  `;
-  const filterContainerTight = css`
-    ${filterContainer};
-    flex-direction: column;
-    margin-left: initial;
-  `;
-
-  switch (variant) {
-    case LibraryPanelsSearchVariant.Spacious:
-      return {
-        container: searchRowContainer,
-        filterContainer: filterContainer,
-      };
-    case LibraryPanelsSearchVariant.Tight:
-      return {
-        container: searchRowContainerTight,
-        filterContainer: filterContainerTight,
-      };
-  }
+function getRowStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      flexGrow: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+    }),
+    containerTight: css({
+      flexGrow: 'initial',
+      flexDirection: 'column',
+      justifyContent: 'normal',
+    }),
+    filterContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(1),
+    }),
+    filterContainerTight: css({
+      flexDirection: 'column',
+      marginLeft: 'initial',
+    }),
+  };
 }

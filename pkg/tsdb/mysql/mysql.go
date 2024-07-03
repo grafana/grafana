@@ -22,9 +22,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
 )
 
 const (
@@ -33,35 +31,26 @@ const (
 	dateTimeFormat2 = "2006-01-02T15:04:05Z"
 )
 
-type Service struct {
-	Cfg    *setting.Cfg
-	im     instancemgmt.InstanceManager
-	logger log.Logger
-}
-
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
-	logger := backend.NewLoggerWith("logger", "tsdb.mysql")
-	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
-		logger: logger,
-	}
-}
-
-func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		cfg := backend.GrafanaConfigFromContext(ctx)
+		sqlCfg, err := cfg.SQL()
+		if err != nil {
+			return nil, err
+		}
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime:         cfg.SqlDatasourceMaxConnLifetimeDefault,
+			MaxOpenConns:            sqlCfg.DefaultMaxOpenConns,
+			MaxIdleConns:            sqlCfg.DefaultMaxIdleConns,
+			ConnMaxLifetime:         sqlCfg.DefaultMaxConnLifetimeSeconds,
 			SecureDSProxy:           false,
 			AllowCleartextPasswords: false,
 		}
 
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		err = json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -144,11 +133,16 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
 			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
-			RowLimit:          cfg.DataProxyRowLimit,
+			RowLimit:          sqlCfg.RowLimit,
+		}
+
+		userFacingDefaultError, err := cfg.UserFacingDefaultError()
+		if err != nil {
+			return nil, err
 		}
 
 		rowTransformer := mysqlQueryResultTransformer{
-			userError: cfg.UserFacingDefaultError,
+			userError: userFacingDefaultError,
 		}
 
 		db, err := sql.Open("mysql", cnnstr)
@@ -160,44 +154,8 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-		return sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
+		return sqleng.NewQueryDataHandler(userFacingDefaultError, db, config, &rowTransformer, newMysqlMacroEngine(logger, userFacingDefaultError), logger)
 	}
-}
-
-func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-	instance := i.(*sqleng.DataSourceHandler)
-	return instance, nil
-}
-
-// CheckHealth pings the connected SQL database
-func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-
-	err = dsHandler.Ping()
-
-	if err != nil {
-		var driverErr *mysql.MySQLError
-		if errors.As(err, &driverErr) {
-			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, driverErr).Error()}, nil
-		}
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
-	}
-	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
-}
-
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-	return dsHandler.QueryData(ctx, req)
 }
 
 type mysqlQueryResultTransformer struct {

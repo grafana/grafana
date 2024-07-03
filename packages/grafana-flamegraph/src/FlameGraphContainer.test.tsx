@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
 
@@ -29,7 +29,8 @@ describe('FlameGraphContainer', () => {
       },
     };
 
-    return <FlameGraphContainer data={flameGraphData} getTheme={() => createTheme({ colors: { mode: 'dark' } })} />;
+    const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
+    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} />;
   };
 
   it('should render without error', async () => {

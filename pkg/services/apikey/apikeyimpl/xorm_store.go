@@ -144,6 +144,7 @@ func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuer
 		if err != nil {
 			return err
 		} else if !has {
+			// @PERCONA
 			return apikey.ErrInvalidAuth
 		}
 
@@ -161,6 +162,7 @@ func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByName
 		if err != nil {
 			return err
 		} else if !has {
+			// @PERCONA
 			return apikey.ErrInvalidAuth
 		}
 
@@ -177,6 +179,7 @@ func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.A
 		if err != nil {
 			return err
 		} else if !has {
+			// @PERCONA
 			return apikey.ErrInvalidAuth
 		}
 		return nil

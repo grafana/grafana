@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, ScopedVars } from '@grafana/data';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -19,6 +19,7 @@ interface Props {
   link: DashboardLink;
   linkInfo: { title: string; href: string };
   dashboardUID: string;
+  scopedVars?: ScopedVars;
 }
 
 interface DashboardLinksMenuProps {

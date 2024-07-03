@@ -16,10 +16,12 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
 import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { makeLogs } from '../__mocks__/makeLogs';
@@ -63,6 +65,9 @@ const datasources: DataSourceApi[] = [
     uid: 'ds1',
     getRef: () => {
       return { type: 'postgres', uid: 'ds1' };
+    },
+    filterQuery: (query: DataQuery) => {
+      return query.key === 'true';
     },
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
   {
@@ -155,6 +160,11 @@ describe('runQueries', () => {
     } as unknown as Partial<StoreState>);
   };
 
+  beforeEach(() => {
+    config.queryHistoryEnabled = false;
+    jest.clearAllMocks();
+  });
+
   it('should pass dataFrames to state even if there is error in response', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
@@ -201,6 +211,74 @@ describe('runQueries', () => {
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
+  });
+
+  it('should add history items to both local and remote storage with the flag enabled', async () => {
+    config.queryHistoryEnabled = true;
+    const { dispatch } = setupTests();
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(2);
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[1][0].localOverride).toBeFalsy();
+  });
+
+  it('should add history items to local storage only with the flag disabled', async () => {
+    const { dispatch } = setupTests();
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(1);
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
+  });
+
+  /* the next two tests are for ensuring the query datasource's filterQuery function stops queries
+    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0]) 
+    to filter queries off their key value
+
+    datasources[1] does not have filterQuery defined
+  */
+  it('with filterQuery defined, should not save filtered out queries to history', async () => {
+    const { dispatch } = configureStore({
+      ...defaultInitialState,
+      explore: {
+        panes: {
+          left: {
+            ...defaultInitialState.explore.panes.left,
+            datasourceInstance: datasources[0],
+            queries: [
+              { refId: 'A', key: 'false' },
+              { refId: 'B', key: 'true' },
+            ],
+          },
+        },
+      },
+    } as unknown as Partial<StoreState>);
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    const calls = (richHistory.addToRichHistory as jest.Mock).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0].queries).toHaveLength(1);
+    expect(calls[0][0].queries[0].refId).toEqual('B');
+  });
+
+  it('with filterQuery not defined, all queries are saved', async () => {
+    const { dispatch } = configureStore({
+      ...defaultInitialState,
+      explore: {
+        panes: {
+          left: {
+            ...defaultInitialState.explore.panes.left,
+            datasourceInstance: datasources[1],
+            queries: [{ refId: 'A' }, { refId: 'B' }],
+          },
+        },
+      },
+    } as unknown as Partial<StoreState>);
+    jest.spyOn(richHistory, 'addToRichHistory');
+    await dispatch(runQueries({ exploreId: 'left' }));
+    const calls = (richHistory.addToRichHistory as jest.Mock).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0].queries).toHaveLength(2);
   });
 });
 

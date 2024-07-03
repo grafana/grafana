@@ -12,7 +12,8 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -43,6 +44,18 @@ func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return service.SchemeGroupVersion
 }
 
+func (b *ServiceAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
+}
+
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
+		&service.ExternalName{},
+		&service.ExternalNameList{},
+	)
+}
+
 func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := service.SchemeGroupVersion
 	err := service.AddToScheme(scheme)
@@ -53,10 +66,10 @@ func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	// addKnownTypes(scheme, schema.GroupVersion{
-	// 	Group:   service.GROUP,
-	// 	Version: runtime.APIVersionInternal,
-	// })
+	addKnownTypes(scheme, schema.GroupVersion{
+		Group:   service.GROUP,
+		Version: runtime.APIVersionInternal,
+	})
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
 }
@@ -65,7 +78,7 @@ func (b *ServiceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	_ bool,
+	_ grafanarest.DualWriterMode,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(service.GROUP, scheme, metav1.ParameterCodec, codecs)
 

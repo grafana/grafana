@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"golang.org/x/sync/singleflight"
@@ -33,19 +34,23 @@ type OAuthTokenSync struct {
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	namespace, _ := identity.GetNamespacedID()
 	// only perform oauth token check if identity is a user
-	if namespace != authn.NamespaceUser {
+	if !identity.ID.IsNamespace(authn.NamespaceUser) {
 		return nil
 	}
 
-	// not authenticated through session tokens, so we can skip this hook
+	// Not authenticated through session tokens, so we can skip this hook.
 	if identity.SessionToken == nil {
 		return nil
 	}
 
-	_, err, _ := s.singleflightGroup.Do(identity.ID, func() (interface{}, error) {
-		s.log.Debug("Singleflight request for OAuth token sync", "key", identity.ID)
+	// Not authenticated with a oauth provider, so we can skip this hook.
+	if !strings.HasPrefix(identity.GetAuthenticatedBy(), "oauth") {
+		return nil
+	}
+
+	_, err, _ := s.singleflightGroup.Do(identity.ID.String(), func() (interface{}, error) {
+		s.log.Debug("Singleflight request for OAuth token sync", "key", identity.ID.String())
 
 		// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
 		updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)

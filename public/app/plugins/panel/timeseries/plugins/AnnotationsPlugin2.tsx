@@ -4,9 +4,9 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, GrafanaTheme2 } from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 
@@ -64,6 +64,8 @@ export const AnnotationsPlugin2 = ({
   canvasRegionRendering = true,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
+
+  const [portalRoot] = useState(() => getPortalContainer());
 
   const styles = useStyles2(getStyles);
   const getColorByName = useTheme2().visualization.getColorByName;
@@ -123,38 +125,70 @@ export const AnnotationsPlugin2 = ({
 
       const ctx = u.ctx;
 
-      let y0 = u.bbox.top;
-      let y1 = y0 + u.bbox.height;
-
       ctx.save();
 
       ctx.beginPath();
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-
       annos.forEach((frame) => {
         let vals = getVals(frame);
 
-        for (let i = 0; i < vals.time.length; i++) {
-          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+        if (frame.name === 'xymark') {
+          // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
 
-          let x0 = u.valToPos(vals.time[i], 'x', true);
+          let xKey = config.scales[0].props.scaleKey;
+          let yKey = config.scales[1].props.scaleKey;
 
-          if (!vals.isRegion?.[i]) {
-            renderLine(ctx, y0, y1, x0, color);
-            // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
-          } else if (canvasRegionRendering) {
-            renderLine(ctx, y0, y1, x0, color);
+          for (let i = 0; i < frame.length; i++) {
+            let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-            let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+            let x0 = u.valToPos(vals.xMin[i], xKey, true);
+            let x1 = u.valToPos(vals.xMax[i], xKey, true);
+            let y0 = u.valToPos(vals.yMax[i], yKey, true);
+            let y1 = u.valToPos(vals.yMin[i], yKey, true);
 
-            renderLine(ctx, y0, y1, x1, color);
+            ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
+            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 
-            ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-            ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+            ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
+
+            if (vals.lineStyle[i] === 'dash') {
+              // maybe extract this to vals.lineDash[i] in future?
+              ctx.setLineDash([5, 5]);
+            } else {
+              // solid
+              ctx.setLineDash([]);
+            }
+
+            ctx.strokeStyle = color;
+            ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          }
+        } else {
+          let y0 = u.bbox.top;
+          let y1 = y0 + u.bbox.height;
+
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+
+          for (let i = 0; i < vals.time.length; i++) {
+            let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+
+            let x0 = u.valToPos(vals.time[i], 'x', true);
+
+            if (!vals.isRegion?.[i]) {
+              renderLine(ctx, y0, y1, x0, color);
+              // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
+            } else if (canvasRegionRendering) {
+              renderLine(ctx, y0, y1, x0, color);
+
+              let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+
+              renderLine(ctx, y0, y1, x1, color);
+
+              ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+              ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+            }
           }
         }
       });
@@ -185,13 +219,13 @@ export const AnnotationsPlugin2 = ({
 
       for (let i = 0; i < vals.time.length; i++) {
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-        let left = plot.valToPos(vals.time[i], 'x');
+        let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
         let style: React.CSSProperties | null = null;
         let className = '';
         let isVisible = true;
 
         if (vals.isRegion?.[i]) {
-          let right = plot.valToPos(vals.timeEnd?.[i], 'x');
+          let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
 
           isVisible = left < plot.rect.width && right > 0;
 
@@ -203,7 +237,7 @@ export const AnnotationsPlugin2 = ({
             className = styles.annoRegion;
           }
         } else {
-          isVisible = left > 0 && left <= plot.rect.width;
+          isVisible = left >= 0 && left <= plot.rect.width;
 
           if (isVisible) {
             style = { left, borderBottomColor: color };
@@ -221,9 +255,10 @@ export const AnnotationsPlugin2 = ({
               annoVals={vals}
               className={className}
               style={style}
-              timezone={timeZone}
+              timeZone={timeZone}
               key={`${frameIdx}:${i}`}
               exitWipEdit={isWip ? exitWipEdit : null}
+              portalRoot={portalRoot}
             />
           );
         }
@@ -238,14 +273,14 @@ export const AnnotationsPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   annoMarker: css({
     position: 'absolute',
     width: 0,
     height: 0,
-    borderLeft: '6px solid transparent',
-    borderRight: '6px solid transparent',
-    borderBottomWidth: '6px',
+    borderLeft: '5px solid transparent',
+    borderRight: '5px solid transparent',
+    borderBottomWidth: '5px',
     borderBottomStyle: 'solid',
     transform: 'translateX(-50%)',
     cursor: 'pointer',

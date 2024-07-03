@@ -4,17 +4,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
-	GROUP      = "playlist.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP         = "playlist.grafana.app"
+	VERSION       = "v0alpha1"
+	APIVERSION    = GROUP + "/" + VERSION
+	RESOURCE      = "playlists"
+	GROUPRESOURCE = GROUP + "/" + RESOURCE
 )
 
 var PlaylistResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"playlists", "playlist", "Playlist",
+	RESOURCE, "playlist", "Playlist",
 	func() runtime.Object { return &Playlist{} },
 	func() runtime.Object { return &PlaylistList{} },
 )

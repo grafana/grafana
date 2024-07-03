@@ -7,51 +7,97 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
+	"io"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
-	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 )
 
-// Make sure we implement both store + admin
+const entityTable = "entity"
+const entityHistoryTable = "entity_history"
+
+// Package-level errors.
+var (
+	ErrNotFound                  = errors.New("entity not found")
+	ErrOptimisticLockingFailed   = errors.New("optimistic locking failed")
+	ErrUserNotFoundInContext     = errors.New("user not found in context")
+	ErrNextPageTokenNotSupported = errors.New("nextPageToken not yet supported")
+	ErrLimitNotSupported         = errors.New("limit not yet supported")
+)
+
+// Make sure we implement correct interfaces
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
-	snode, err := snowflake.NewNode(rand.Int63n(1024))
-	if err != nil {
-		return nil, err
-	}
+func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 
 	entityServer := &sqlEntityServer{
-		db:        db,
-		log:       log.New("sql-entity-server"),
-		snowflake: snode,
+		db:     db,
+		log:    log.New("sql-entity-server"),
+		ctx:    ctx,
+		cancel: cancel,
+		tracer: tracer,
+	}
+
+	if err := prometheus.Register(NewStorageMetrics()); err != nil {
+		entityServer.log.Warn("error registering storage server metrics", "error", err)
 	}
 
 	return entityServer, nil
 }
 
+type SqlEntityServer interface {
+	entity.EntityStoreServer
+
+	Init() error
+	Stop()
+}
+
 type sqlEntityServer struct {
-	log       log.Logger
-	db        db.EntityDBInterface // needed to keep xorm engine in scope
-	sess      *session.SessionDB
-	dialect   migrator.Dialect
-	snowflake *snowflake.Node
+	log         log.Logger
+	db          db.EntityDBInterface // needed to keep xorm engine in scope
+	sess        *session.SessionDB
+	dialect     migrator.Dialect
+	broadcaster Broadcaster[*entity.EntityWatchResponse]
+	ctx         context.Context // TODO: remove
+	cancel      context.CancelFunc
+	stream      chan *entity.EntityWatchResponse
+	tracer      trace.Tracer
+
+	once    sync.Once
+	initErr error
+
+	sqlDB      db.DB
+	sqlDialect sqltemplate.Dialect
 }
 
 func (s *sqlEntityServer) Init() error {
+	s.once.Do(func() {
+		s.initErr = s.init()
+	})
+
+	if s.initErr != nil {
+		return fmt.Errorf("initialize Entity Server: %w", s.initErr)
+	}
+
+	return s.initErr
+}
+
+func (s *sqlEntityServer) init() error {
 	if s.sess != nil {
 		return nil
 	}
@@ -60,9 +106,23 @@ func (s *sqlEntityServer) Init() error {
 		return errors.New("missing db")
 	}
 
-	err := s.db.Init()
+	sqlDB, err := s.db.GetDB()
 	if err != nil {
 		return err
+	}
+	s.sqlDB = sqlDB
+
+	driverName := sqlDB.DriverName()
+	driverName = strings.TrimSuffix(driverName, "WithHooks")
+	switch driverName {
+	case db.DriverMySQL:
+		s.sqlDialect = sqltemplate.MySQL
+	case db.DriverPostgres:
+		s.sqlDialect = sqltemplate.PostgreSQL
+	case db.DriverSQLite, db.DriverSQLite3:
+		s.sqlDialect = sqltemplate.SQLite
+	default:
+		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
 	sess, err := s.db.GetSession()
@@ -77,10 +137,48 @@ func (s *sqlEntityServer) Init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
+
+	// set up the broadcaster
+	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan *entity.EntityWatchResponse) error {
+		s.stream = stream
+
+		// start the poller
+		go s.poller(stream)
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
+func (s *sqlEntityServer) IsHealthy(ctx context.Context, r *entity.HealthCheckRequest) (*entity.HealthCheckResponse, error) {
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
+	if err := s.Init(); err != nil {
+		ctxLogger.Error("init error", "error", err)
+		return nil, err
+	}
+
+	if err := s.sqlDB.PingContext(ctx); err != nil {
+		return nil, err
+	}
+	// TODO: check the status of the watcher implementation as well
+
+	return &entity.HealthCheckResponse{Status: entity.HealthCheckResponse_SERVING}, nil
+}
+
+func (s *sqlEntityServer) Stop() {
+	s.cancel()
+}
+
+type FieldSelectRequest interface {
+	GetWithBody() bool
+	GetWithStatus() bool
+}
+
+func (s *sqlEntityServer) getReadFields(r FieldSelectRequest) []string {
 	fields := []string{
 		"guid",
 		"key",
@@ -92,19 +190,20 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 		"meta",
 		"title", "slug", "description", "labels", "fields",
 		"message",
+		"action",
 	}
 
-	if r.WithBody {
+	if r.GetWithBody() {
 		fields = append(fields, `body`)
 	}
-	if r.WithStatus {
+	if r.GetWithStatus() {
 		fields = append(fields, "status")
 	}
 
 	return fields
 }
 
-func (s *sqlEntityServer) getReadSelect(r *entity.ReadEntityRequest) (string, error) {
+func (s *sqlEntityServer) getReadSelect(r FieldSelectRequest) (string, error) {
 	if err := s.Init(); err != nil {
 		return "", err
 	}
@@ -118,7 +217,7 @@ func (s *sqlEntityServer) getReadSelect(r *entity.ReadEntityRequest) (string, er
 	return "SELECT " + strings.Join(quotedFields, ","), nil
 }
 
-func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+func oldReadEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error) {
 	raw := &entity.Entity{
 		Origin: &entity.EntityOriginInfo{},
 	}
@@ -138,11 +237,12 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 		&raw.Meta,
 		&raw.Title, &raw.Slug, &raw.Description, &labels, &fields,
 		&raw.Message,
+		&raw.Action,
 	}
-	if r.WithBody {
+	if r.GetWithBody() {
 		args = append(args, &raw.Body)
 	}
-	if r.WithStatus {
+	if r.GetWithStatus() {
 		args = append(args, &raw.Status)
 	}
 
@@ -173,15 +273,27 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 }
 
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.Read")
+	defer span.End()
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "read"}))
+
 	if err := s.Init(); err != nil {
+		ctxLogger.Error("init error", "error", err)
 		return nil, err
 	}
 
-	return s.read(ctx, s.sess, r)
+	res, err := s.read(ctx, s.sess, r)
+	if err != nil {
+		ctxLogger.Error("read error", "error", err)
+	}
+	return res, err
 }
 
 func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r *entity.ReadEntityRequest) (*entity.Entity, error) {
-	table := "entity"
+	ctx, span := s.tracer.Start(ctx, "storage_server.read")
+	defer span.End()
+
+	table := entityTable
 	where := []string{}
 	args := []any{}
 
@@ -198,8 +310,8 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
 
 	if r.ResourceVersion != 0 {
-		table = "entity_history"
-		where = append(where, s.dialect.Quote("resource_version")+"=?")
+		table = entityHistoryTable
+		where = append(where, s.dialect.Quote("resource_version")+">=?")
 		args = append(args, r.ResourceVersion)
 	}
 
@@ -215,6 +327,11 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 	query += " FROM " + table +
 		" WHERE " + strings.Join(where, " AND ")
 
+	if r.ResourceVersion != 0 {
+		query += " ORDER BY resource_version DESC"
+	}
+	query += " LIMIT 1"
+
 	s.log.Debug("read", "query", query, "args", args)
 
 	rows, err := tx.Query(ctx, query, args...)
@@ -227,656 +344,108 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return &entity.Entity{}, nil
 	}
 
-	return s.rowToEntity(ctx, rows, r)
-}
-
-func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
-	if len(b.Batch) < 1 {
-		return nil, fmt.Errorf("missing querires")
-	}
-
-	first := b.Batch[0]
-	args := []any{}
-	constraints := []string{}
-
-	for _, r := range b.Batch {
-		if r.WithBody != first.WithBody || r.WithStatus != first.WithStatus {
-			return nil, fmt.Errorf("requests must want the same things")
-		}
-
-		if r.Key == "" {
-			return nil, fmt.Errorf("missing key")
-		}
-
-		constraints = append(constraints, s.dialect.Quote("key")+"=?")
-		args = append(args, r.Key)
-
-		if r.ResourceVersion != 0 {
-			return nil, fmt.Errorf("version not supported for batch read (yet?)")
-		}
-	}
-
-	req := b.Batch[0]
-	query, err := s.getReadSelect(req)
-	if err != nil {
-		return nil, err
-	}
-
-	query += " FROM entity" +
-		" WHERE (" + strings.Join(constraints, " OR ") + ")"
-	rows, err := s.sess.Query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-
-	// TODO? make sure the results are in order?
-	rsp := &entity.BatchReadEntityResponse{}
-	for rows.Next() {
-		r, err := s.rowToEntity(ctx, rows, req)
-		if err != nil {
-			return nil, err
-		}
-		rsp.Results = append(rsp.Results, r)
-	}
-	return rsp, nil
-}
-
-//nolint:gocyclo
-func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
-	createdAt := r.Entity.CreatedAt
-	if createdAt < 1000 {
-		createdAt = time.Now().UnixMilli()
-	}
-
-	createdBy := r.Entity.CreatedBy
-	if createdBy == "" {
-		modifier, err := appcontext.User(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if modifier == nil {
-			return nil, fmt.Errorf("can not find user in context")
-		}
-		createdBy = store.GetUserIDString(modifier)
-	}
-
-	updatedAt := r.Entity.UpdatedAt
-	updatedBy := r.Entity.UpdatedBy
-
-	rsp := &entity.CreateEntityResponse{
-		Entity: &entity.Entity{},
-		Status: entity.CreateEntityResponse_CREATED, // Will be changed if not true
-	}
-
-	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
-			Key:        r.Entity.Key,
-			WithBody:   true,
-			WithStatus: true,
-		})
-		if err != nil {
-			return err
-		}
-
-		// if we found an existing entity
-		if current.Guid != "" {
-			return fmt.Errorf("entity already exists")
-		}
-
-		// generate guid for new entity
-		current.Guid = uuid.New().String()
-
-		// set created at/by
-		current.CreatedAt = createdAt
-		current.CreatedBy = createdBy
-
-		// parse provided key
-		key, err := entity.ParseKey(r.Entity.Key)
-		if err != nil {
-			return err
-		}
-
-		current.Key = r.Entity.Key
-		current.Namespace = key.Namespace
-		current.Group = key.Group
-		current.GroupVersion = r.Entity.GroupVersion
-		current.Resource = key.Resource
-		current.Name = key.Name
-
-		if r.Entity.Folder != "" {
-			current.Folder = r.Entity.Folder
-		}
-		if r.Entity.Slug != "" {
-			current.Slug = r.Entity.Slug
-		}
-
-		if r.Entity.Body != nil {
-			current.Body = r.Entity.Body
-			current.Size = int64(len(current.Body))
-		}
-
-		if r.Entity.Meta != nil {
-			current.Meta = r.Entity.Meta
-		}
-
-		if r.Entity.Status != nil {
-			current.Status = r.Entity.Status
-		}
-
-		etag := createContentsHash(current.Body, current.Meta, current.Status)
-		current.ETag = etag
-
-		current.UpdatedAt = updatedAt
-		current.UpdatedBy = updatedBy
-
-		if r.Entity.Title != "" {
-			current.Title = r.Entity.Title
-		}
-		if r.Entity.Description != "" {
-			current.Description = r.Entity.Description
-		}
-
-		labels, err := json.Marshal(r.Entity.Labels)
-		if err != nil {
-			s.log.Error("error marshalling labels", "msg", err.Error())
-			return err
-		}
-		current.Labels = r.Entity.Labels
-
-		fields, err := json.Marshal(r.Entity.Fields)
-		if err != nil {
-			s.log.Error("error marshalling fields", "msg", err.Error())
-			return err
-		}
-		current.Fields = r.Entity.Fields
-
-		errors, err := json.Marshal(r.Entity.Errors)
-		if err != nil {
-			s.log.Error("error marshalling errors", "msg", err.Error())
-			return err
-		}
-		current.Errors = r.Entity.Errors
-
-		if current.Origin == nil {
-			current.Origin = &entity.EntityOriginInfo{}
-		}
-
-		if r.Entity.Origin != nil {
-			if r.Entity.Origin.Source != "" {
-				current.Origin.Source = r.Entity.Origin.Source
-			}
-			if r.Entity.Origin.Key != "" {
-				current.Origin.Key = r.Entity.Origin.Key
-			}
-			if r.Entity.Origin.Time > 0 {
-				current.Origin.Time = r.Entity.Origin.Time
-			}
-		}
-
-		// Set the comment on this write
-		if r.Entity.Message != "" {
-			current.Message = r.Entity.Message
-		}
-
-		// Update version
-		current.ResourceVersion = s.snowflake.Generate().Int64()
-
-		values := map[string]any{
-			"guid":             current.Guid,
-			"key":              current.Key,
-			"namespace":        current.Namespace,
-			"group":            current.Group,
-			"resource":         current.Resource,
-			"name":             current.Name,
-			"created_at":       current.CreatedAt,
-			"created_by":       current.CreatedBy,
-			"group_version":    current.GroupVersion,
-			"folder":           current.Folder,
-			"slug":             current.Slug,
-			"updated_at":       current.UpdatedAt,
-			"updated_by":       current.UpdatedBy,
-			"body":             current.Body,
-			"meta":             current.Meta,
-			"status":           current.Status,
-			"size":             current.Size,
-			"etag":             current.ETag,
-			"resource_version": current.ResourceVersion,
-			"title":            current.Title,
-			"description":      current.Description,
-			"labels":           labels,
-			"fields":           fields,
-			"errors":           errors,
-			"origin":           current.Origin.Source,
-			"origin_key":       current.Origin.Key,
-			"origin_ts":        current.Origin.Time,
-			"message":          current.Message,
-		}
-
-		// 1. Add row to the `entity_history` values
-		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
-			s.log.Error("error inserting entity history", "msg", err.Error())
-			return err
-		}
-
-		// 2. Add row to the main `entity` table
-		if err := s.dialect.Insert(ctx, tx, "entity", values); err != nil {
-			s.log.Error("error inserting entity", "msg", err.Error())
-			return err
-		}
-
-		switch current.Group {
-		case folder.GROUP:
-			switch current.Resource {
-			case folder.RESOURCE:
-				err = s.updateFolderTree(ctx, tx, current.Namespace)
-				if err != nil {
-					s.log.Error("error updating folder tree", "msg", err.Error())
-					return err
-				}
-			}
-		}
-
-		rsp.Entity = current
-
-		return s.setLabels(ctx, tx, current.Guid, current.Labels)
-	})
-	if err != nil {
-		s.log.Error("error creating entity", "msg", err.Error())
-		rsp.Status = entity.CreateEntityResponse_ERROR
-	}
-
-	return rsp, err
-}
-
-//nolint:gocyclo
-func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
-	updatedAt := r.Entity.UpdatedAt
-	if updatedAt < 1000 {
-		updatedAt = time.Now().UnixMilli()
-	}
-
-	updatedBy := r.Entity.UpdatedBy
-	if updatedBy == "" {
-		modifier, err := appcontext.User(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if modifier == nil {
-			return nil, fmt.Errorf("can not find user in context")
-		}
-		updatedBy = store.GetUserIDString(modifier)
-	}
-
-	rsp := &entity.UpdateEntityResponse{
-		Entity: &entity.Entity{},
-		Status: entity.UpdateEntityResponse_UPDATED, // Will be changed if not true
-	}
-
-	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
-			Key:        r.Entity.Key,
-			WithBody:   true,
-			WithStatus: true,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Optimistic locking
-		if r.PreviousVersion > 0 && r.PreviousVersion != current.ResourceVersion {
-			return fmt.Errorf("optimistic lock failed")
-		}
-
-		// if we didn't find an existing entity
-		if current.Guid == "" {
-			return fmt.Errorf("entity not found")
-		}
-
-		rsp.Entity.Guid = current.Guid
-
-		// Clear the refs
-		if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", rsp.Entity.Guid); err != nil {
-			return err
-		}
-
-		if r.Entity.GroupVersion != "" {
-			current.GroupVersion = r.Entity.GroupVersion
-		}
-
-		if r.Entity.Folder != "" {
-			current.Folder = r.Entity.Folder
-		}
-		if r.Entity.Slug != "" {
-			current.Slug = r.Entity.Slug
-		}
-
-		if r.Entity.Body != nil {
-			current.Body = r.Entity.Body
-			current.Size = int64(len(current.Body))
-		}
-
-		if r.Entity.Meta != nil {
-			current.Meta = r.Entity.Meta
-		}
-
-		if r.Entity.Status != nil {
-			current.Status = r.Entity.Status
-		}
-
-		etag := createContentsHash(current.Body, current.Meta, current.Status)
-		current.ETag = etag
-
-		current.UpdatedAt = updatedAt
-		current.UpdatedBy = updatedBy
-
-		if r.Entity.Title != "" {
-			current.Title = r.Entity.Title
-		}
-		if r.Entity.Description != "" {
-			current.Description = r.Entity.Description
-		}
-
-		labels, err := json.Marshal(r.Entity.Labels)
-		if err != nil {
-			s.log.Error("error marshalling labels", "msg", err.Error())
-			return err
-		}
-		current.Labels = r.Entity.Labels
-
-		fields, err := json.Marshal(r.Entity.Fields)
-		if err != nil {
-			s.log.Error("error marshalling fields", "msg", err.Error())
-			return err
-		}
-		current.Fields = r.Entity.Fields
-
-		errors, err := json.Marshal(r.Entity.Errors)
-		if err != nil {
-			s.log.Error("error marshalling errors", "msg", err.Error())
-			return err
-		}
-		current.Errors = r.Entity.Errors
-
-		if current.Origin == nil {
-			current.Origin = &entity.EntityOriginInfo{}
-		}
-
-		if r.Entity.Origin != nil {
-			if r.Entity.Origin.Source != "" {
-				current.Origin.Source = r.Entity.Origin.Source
-			}
-			if r.Entity.Origin.Key != "" {
-				current.Origin.Key = r.Entity.Origin.Key
-			}
-			if r.Entity.Origin.Time > 0 {
-				current.Origin.Time = r.Entity.Origin.Time
-			}
-		}
-
-		// Set the comment on this write
-		if r.Entity.Message != "" {
-			current.Message = r.Entity.Message
-		}
-
-		// Update version
-		current.ResourceVersion = s.snowflake.Generate().Int64()
-
-		values := map[string]any{
-			// below are only set in history table
-			"guid":       current.Guid,
-			"key":        current.Key,
-			"namespace":  current.Namespace,
-			"group":      current.Group,
-			"resource":   current.Resource,
-			"name":       current.Name,
-			"created_at": current.CreatedAt,
-			"created_by": current.CreatedBy,
-			// below are updated
-			"group_version":    current.GroupVersion,
-			"folder":           current.Folder,
-			"slug":             current.Slug,
-			"updated_at":       current.UpdatedAt,
-			"updated_by":       current.UpdatedBy,
-			"body":             current.Body,
-			"meta":             current.Meta,
-			"status":           current.Status,
-			"size":             current.Size,
-			"etag":             current.ETag,
-			"resource_version": current.ResourceVersion,
-			"title":            current.Title,
-			"description":      current.Description,
-			"labels":           labels,
-			"fields":           fields,
-			"errors":           errors,
-			"origin":           current.Origin.Source,
-			"origin_key":       current.Origin.Key,
-			"origin_ts":        current.Origin.Time,
-			"message":          current.Message,
-		}
-
-		// 1. Add the `entity_history` values
-		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
-			s.log.Error("error inserting entity history", "msg", err.Error())
-			return err
-		}
-
-		// 2. update the main `entity` table
-
-		// remove values that are only set at insert
-		delete(values, "guid")
-		delete(values, "key")
-		delete(values, "namespace")
-		delete(values, "group")
-		delete(values, "resource")
-		delete(values, "name")
-		delete(values, "created_at")
-		delete(values, "created_by")
-
-		err = s.dialect.Update(
-			ctx,
-			tx,
-			"entity",
-			values,
-			map[string]any{
-				"guid": current.Guid,
-			},
-		)
-		if err != nil {
-			s.log.Error("error updating entity", "msg", err.Error())
-			return err
-		}
-
-		switch current.Group {
-		case folder.GROUP:
-			switch current.Resource {
-			case folder.RESOURCE:
-				err = s.updateFolderTree(ctx, tx, current.Namespace)
-				if err != nil {
-					s.log.Error("error updating folder tree", "msg", err.Error())
-					return err
-				}
-			}
-		}
-
-		rsp.Entity = current
-
-		return s.setLabels(ctx, tx, current.Guid, current.Labels)
-	})
-	if err != nil {
-		s.log.Error("error updating entity", "msg", err.Error())
-		rsp.Status = entity.UpdateEntityResponse_ERROR
-	}
-
-	return rsp, err
-}
-
-func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, guid string, labels map[string]string) error {
-	s.log.Debug("setLabels", "guid", guid, "labels", labels)
-
-	// Clear the old labels
-	if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", guid); err != nil {
-		return err
-	}
-
-	// Add the new labels
-	for k, v := range labels {
-		query, args, err := s.dialect.InsertQuery(
-			"entity_labels",
-			map[string]any{
-				"guid":  guid,
-				"label": k,
-				"value": v,
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.Exec(ctx, query, args...)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
-	rsp := &entity.DeleteEntityResponse{}
-
-	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		var err error
-		rsp.Entity, err = s.Read(ctx, &entity.ReadEntityRequest{
-			Key:        r.Key,
-			WithBody:   true,
-			WithStatus: true,
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				rsp.Status = entity.DeleteEntityResponse_NOTFOUND
-			} else {
-				rsp.Status = entity.DeleteEntityResponse_ERROR
-			}
-			return err
-		}
-
-		if r.PreviousVersion > 0 && r.PreviousVersion != rsp.Entity.ResourceVersion {
-			rsp.Status = entity.DeleteEntityResponse_ERROR
-			return fmt.Errorf("optimistic lock failed")
-		}
-
-		err = s.doDelete(ctx, tx, rsp.Entity)
-		if err != nil {
-			rsp.Status = entity.DeleteEntityResponse_ERROR
-			return err
-		}
-
-		rsp.Status = entity.DeleteEntityResponse_DELETED
-		return nil
-	})
-
-	return rsp, err
-}
-
-func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) error {
-	_, err := tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
-	if err != nil {
-		return err
-	}
-
-	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, err = tx.Exec(ctx, "DELETE FROM entity_history WHERE guid=?", ent.Guid)
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", ent.Guid)
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", ent.Guid)
-	if err != nil {
-		return err
-	}
-
-	switch ent.Group {
-	case folder.GROUP:
-		switch ent.Resource {
-		case folder.RESOURCE:
-			err = s.updateFolderTree(ctx, tx, ent.Namespace)
-			if err != nil {
-				s.log.Error("error updating folder tree", "msg", err.Error())
-				return err
-			}
-		}
-	}
-
-	return nil
+	return oldReadEntity(rows, r)
 }
 
 func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.History")
+	defer span.End()
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "history"}))
+
 	if err := s.Init(); err != nil {
+		ctxLogger.Error("init error", "error", err)
 		return nil, err
 	}
+
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		ctxLogger.Error("error getting user from ctx", "error", err)
+		return nil, err
+	}
+	if user == nil {
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return nil, ErrUserNotFoundInContext
+	}
+
+	res, err := s.history(ctx, r)
+	if err != nil {
+		ctxLogger.Error("history error", "error", err)
+	}
+	return res, err
+}
+
+func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.history")
+	defer span.End()
 
 	var limit int64 = 100
 	if r.Limit > 0 && r.Limit < 100 {
 		limit = r.Limit
 	}
 
-	rr := &entity.ReadEntityRequest{
-		Key:        r.Key,
-		WithBody:   true,
-		WithStatus: true,
+	entityQuery := selectQuery{
+		dialect:  s.dialect,
+		from:     entityHistoryTable, // the table
+		limit:    r.Limit,
+		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 
-	query, err := s.getReadSelect(rr)
-	if err != nil {
-		return nil, err
-	}
+	fields := s.getReadFields(r)
+	entityQuery.AddFields(fields...)
 
-	if r.Key == "" {
-		return nil, fmt.Errorf("missing key")
-	}
-
-	key, err := entity.ParseKey(r.Key)
-	if err != nil {
-		return nil, err
-	}
-
-	where := []string{}
-	args := []any{}
-
-	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("name")+"=?")
-	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
-
-	if r.NextPageToken != "" {
-		if true {
-			return nil, fmt.Errorf("tokens not yet supported")
+	if r.Key != "" {
+		key, err := entity.ParseKey(r.Key)
+		if err != nil {
+			return nil, err
 		}
-		where = append(where, "version <= ?")
-		args = append(args, r.NextPageToken)
+
+		if key.Name == "" {
+			return nil, fmt.Errorf("missing name")
+		}
+
+		args := []any{key.Group, key.Resource}
+		whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+		if key.Namespace != "" {
+			args = append(args, key.Namespace)
+			whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
+		}
+		args = append(args, key.Name)
+		whereclause += " AND " + s.dialect.Quote("name") + "=?)"
+
+		entityQuery.AddWhere(whereclause, args...)
+	} else if r.Guid != "" {
+		entityQuery.AddWhere(s.dialect.Quote("guid")+"=?", r.Guid)
+	} else {
+		return nil, fmt.Errorf("no key or guid specified")
 	}
 
-	query += " FROM entity_history" +
-		" WHERE " + strings.Join(where, " AND ") +
-		" ORDER BY resource_version DESC" +
-		// select 1 more than we need to see if there is a next page
-		" LIMIT " + fmt.Sprint(limit+1)
+	if r.Before > 0 {
+		entityQuery.AddWhere(s.dialect.Quote("resource_version")+"<?", r.Before)
+	}
 
-	rows, err := s.sess.Query(ctx, query, args...)
+	// if we have a page token, use that to specify the first record
+	continueToken, err := GetContinueToken(r)
+	if err != nil {
+		return nil, err
+	}
+	if continueToken != nil {
+		entityQuery.offset = continueToken.StartOffset
+	}
+
+	for _, sort := range r.Sort {
+		sortBy, err := ParseSortBy(sort)
+		if err != nil {
+			return nil, err
+		}
+		entityQuery.AddOrderBy(sortBy.Field, sortBy.Direction)
+	}
+	entityQuery.AddOrderBy("resource_version", Ascending)
+
+	query, args := entityQuery.ToQuery()
+
+	s.log.Debug("history", "query", query, "args", args)
+
+	rows, err := s.query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -886,25 +455,46 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		Key: r.Key,
 	}
 	for rows.Next() {
-		v, err := s.rowToEntity(ctx, rows, rr)
+		v, err := oldReadEntity(rows, r)
 		if err != nil {
 			return nil, err
 		}
 
+		if rsp.ResourceVersion == 0 {
+			rsp.ResourceVersion, err = s.getLatestVersion(ctx, v.Group, v.Resource)
+			if err != nil {
+				return nil, fmt.Errorf("get latest version for group %q and"+
+					" resource %q: %w", v.Group, v.Resource, err)
+			}
+		}
+
 		// found more than requested
 		if int64(len(rsp.Versions)) >= limit {
-			rsp.NextPageToken = fmt.Sprintf("rv:%d", v.ResourceVersion)
+			continueToken := &ContinueToken{
+				Sort:            r.Sort,
+				StartOffset:     entityQuery.offset + entityQuery.limit,
+				ResourceVersion: rsp.ResourceVersion,
+			}
+			rsp.NextPageToken = continueToken.String()
 			break
 		}
 
 		rsp.Versions = append(rsp.Versions, v)
 	}
+
 	return rsp, err
 }
 
+type ContinueRequest interface {
+	GetNextPageToken() string
+	GetSort() []string
+}
+
 type ContinueToken struct {
-	Sort        []string `json:"s"`
-	StartOffset int64    `json:"o"`
+	Sort            []string `json:"s"`
+	StartOffset     int64    `json:"o"`
+	ResourceVersion int64    `json:"v"`
+	RecordCnt       int64    `json:"c"`
 }
 
 func (c *ContinueToken) String() string {
@@ -912,12 +502,12 @@ func (c *ContinueToken) String() string {
 	return base64.StdEncoding.EncodeToString(b)
 }
 
-func GetContinueToken(r *entity.EntityListRequest) (*ContinueToken, error) {
-	if r.NextPageToken == "" {
+func GetContinueToken(r ContinueRequest) (*ContinueToken, error) {
+	if r.GetNextPageToken() == "" {
 		return nil, nil
 	}
 
-	continueVal, err := base64.StdEncoding.DecodeString(r.NextPageToken)
+	continueVal, err := base64.StdEncoding.DecodeString(r.GetNextPageToken())
 	if err != nil {
 		return nil, fmt.Errorf("error decoding continue token")
 	}
@@ -928,7 +518,7 @@ func GetContinueToken(r *entity.EntityListRequest) (*ContinueToken, error) {
 		return nil, err
 	}
 
-	if !slices.Equal(t.Sort, r.Sort) {
+	if !slices.Equal(t.Sort, r.GetSort()) {
 		return nil, fmt.Errorf("sort order changed")
 	}
 
@@ -951,8 +541,8 @@ type SortBy struct {
 	Direction Direction
 }
 
-func ParseSortBy(sort string) (*SortBy, error) {
-	sortBy := &SortBy{
+func ParseSortBy(sort string) (SortBy, error) {
+	sortBy := SortBy{
 		Field:     "guid",
 		Direction: Ascending,
 	}
@@ -965,51 +555,73 @@ func ParseSortBy(sort string) (*SortBy, error) {
 	}
 
 	if !slices.Contains(sortByFields, sortBy.Field) {
-		return nil, fmt.Errorf("invalid sort field '%s', valid fields: %v", sortBy.Field, sortByFields)
+		return sortBy, fmt.Errorf("invalid sort field %q, valid fields: %v", sortBy.Field, sortByFields)
 	}
 
 	return sortBy, nil
 }
 
+//nolint:gocyclo
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	defer span.End()
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "list"}))
+
 	if err := s.Init(); err != nil {
+		ctxLogger.Error("init error", "error", err)
 		return nil, err
 	}
 
 	user, err := appcontext.User(ctx)
 	if err != nil {
+		ctxLogger.Error("error getting user from ctx", "error", err)
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("missing user in context")
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return nil, ErrUserNotFoundInContext
 	}
 
-	rr := &entity.ReadEntityRequest{
-		WithBody:   r.WithBody,
-		WithStatus: r.WithStatus,
-	}
+	fields := s.getReadFields(r)
 
-	fields := s.getReadFields(rr)
+	// main query we will use to retrieve entities
+	entityQuery := NewSelectQuery(s.dialect, entityTable)
+	entityQuery.AddFields(fields...)
+	entityQuery.SetLimit(r.Limit)
+	entityQuery.SetOneExtra()
 
-	entityQuery := selectQuery{
-		dialect:  s.dialect,
-		fields:   fields,
-		from:     "entity", // the table
-		args:     []any{},
-		limit:    r.Limit,
-		offset:   0,
-		oneExtra: true, // request one more than the limit (and show next token if it exists)
+	// query to retrieve the max resource version and entity count
+	rvMaxQuery := NewSelectQuery(s.dialect, entityTable)
+	rvMaxQuery.AddRawFields("coalesce(max(resource_version),0) as rv", "count(guid) as cnt")
+
+	// subquery to get latest resource version for each entity
+	// when we need to query from entity_history
+	rvSubQuery := NewSelectQuery(s.dialect, entityHistoryTable)
+	rvSubQuery.AddFields("guid")
+	rvSubQuery.AddRawFields("max(resource_version) as max_rv")
+
+	// if we are looking for deleted entities, we list "deleted" entries from the entity_history table
+	if r.Deleted {
+		entityQuery.from = entityHistoryTable
+		entityQuery.AddWhere("action", entity.Entity_DELETED)
+
+		rvMaxQuery.from = entityHistoryTable
+		rvMaxQuery.AddWhere("action", entity.Entity_DELETED)
 	}
 
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
 
 	if len(r.Group) > 0 {
-		entityQuery.addWhereIn("group", r.Group)
+		entityQuery.AddWhereIn("group", ToAnyList(r.Group))
+		rvMaxQuery.AddWhereIn("group", ToAnyList(r.Group))
+		rvSubQuery.AddWhereIn("group", ToAnyList(r.Group))
 	}
 
 	if len(r.Resource) > 0 {
-		entityQuery.addWhereIn("resource", r.Resource)
+		entityQuery.AddWhereIn("resource", ToAnyList(r.Resource))
+		rvMaxQuery.AddWhereIn("resource", ToAnyList(r.Resource))
+		rvSubQuery.AddWhereIn("resource", ToAnyList(r.Resource))
 	}
 
 	if len(r.Key) > 0 {
@@ -1021,8 +633,252 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 				return nil, err
 			}
 
-			args = append(args, key.Namespace, key.Group, key.Resource)
-			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			args = append(args, key.Group, key.Resource)
+			whereclause := "(t." + s.dialect.Quote("group") + "=? AND t." + s.dialect.Quote("resource") + "=?"
+			if key.Namespace != "" {
+				args = append(args, key.Namespace)
+				whereclause += " AND t." + s.dialect.Quote("namespace") + "=?"
+			}
+			if key.Name != "" {
+				args = append(args, key.Name)
+				whereclause += " AND t." + s.dialect.Quote("name") + "=?"
+			}
+			whereclause += ")"
+
+			where = append(where, whereclause)
+		}
+
+		entityQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
+		rvMaxQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
+		rvSubQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
+	}
+
+	if len(r.OriginKeys) > 0 {
+		entityQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
+		rvMaxQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
+		rvSubQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
+	}
+
+	// get the maximum resource version and count of entities
+	type RVMaxRow struct {
+		Rv  int64 `db:"rv"`
+		Cnt int64 `db:"cnt"`
+	}
+	rvMaxRow := &RVMaxRow{}
+	query, args := rvMaxQuery.ToQuery()
+
+	err = s.sess.Get(ctx, rvMaxRow, query, args...)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			ctxLogger.Error("error running rvMaxQuery", "error", err)
+			return nil, err
+		}
+	}
+
+	ctxLogger.Debug("getting max rv", "maxRv", rvMaxRow.Rv, "cnt", rvMaxRow.Cnt, "query", query, "args", args)
+
+	// if we have a page token, use that to specify the first record
+	continueToken, err := GetContinueToken(r)
+	if err != nil {
+		ctxLogger.Error("error getting continue token", "error", err)
+		return nil, err
+	}
+	if continueToken != nil {
+		entityQuery.offset = continueToken.StartOffset
+		if continueToken.ResourceVersion > 0 {
+			if r.Deleted {
+				// if we're continuing, we need to list only revisions that are older than the given resource version
+				entityQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
+			} else {
+				// cap versions considered by the per resource max version subquery
+				rvSubQuery.AddWhere("resource_version <= ?", continueToken.ResourceVersion)
+			}
+		}
+
+		if (continueToken.ResourceVersion > 0 && continueToken.ResourceVersion != rvMaxRow.Rv) || (continueToken.RecordCnt > 0 && continueToken.RecordCnt != rvMaxRow.Cnt) {
+			entityQuery.From(entityHistoryTable)
+			entityQuery.AddWhere("t.action != ?", entity.Entity_DELETED)
+
+			rvSubQuery.AddGroupBy("guid")
+			query, args = rvSubQuery.ToQuery()
+			entityQuery.AddJoin("INNER JOIN ("+query+") rv ON rv.guid = t.guid AND rv.max_rv = t.resource_version", args...)
+		}
+	} else {
+		continueToken = &ContinueToken{
+			Sort:            r.Sort,
+			StartOffset:     0,
+			ResourceVersion: rvMaxRow.Rv,
+			RecordCnt:       rvMaxRow.Cnt,
+		}
+	}
+
+	// initialize the result
+	rsp := new(entity.EntityListResponse)
+
+	// Folder guid
+	if r.Folder != "" {
+		entityQuery.AddWhere("folder", r.Folder)
+	}
+
+	if len(r.Labels) > 0 {
+		// if we are looking for deleted entities, we need to use the labels column
+		if entityQuery.from == entityHistoryTable {
+			for labelKey, labelValue := range r.Labels {
+				entityQuery.AddWhereJsonContainsKV("labels", labelKey, labelValue)
+			}
+			// for active entities, we can use the entity_labels table
+		} else {
+			var args []any
+			var conditions []string
+			for labelKey, labelValue := range r.Labels {
+				args = append(args, labelKey)
+				args = append(args, labelValue)
+				conditions = append(conditions, "(label = ? AND value = ?)")
+			}
+			query := "SELECT guid FROM entity_labels" +
+				" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+				" GROUP BY guid" +
+				" HAVING COUNT(label) = ?"
+			args = append(args, len(r.Labels))
+
+			entityQuery.AddWhereInSubquery("guid", query, args)
+		}
+	}
+
+	for _, sort := range r.Sort {
+		sortBy, err := ParseSortBy(sort)
+		if err != nil {
+			return nil, err
+		}
+		entityQuery.AddOrderBy(sortBy.Field, sortBy.Direction)
+	}
+	entityQuery.AddOrderBy("guid", Ascending)
+
+	query, args = entityQuery.ToQuery()
+
+	ctxLogger.Debug("listing", "query", query, "args", args)
+
+	rows, err := s.query(ctx, query, args...)
+	if err != nil {
+		ctxLogger.Error("error running list query", "error", err)
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	for rows.Next() {
+		result, err := oldReadEntity(rows, r)
+		if err != nil {
+			ctxLogger.Error("error reading rows to entity", "error", err)
+			return rsp, err
+		}
+
+		if continueToken.ResourceVersion == 0 {
+			continueToken.ResourceVersion, err = s.getLatestVersion(ctx, result.Group, result.Resource)
+			if err != nil {
+				return nil, fmt.Errorf("get latest version for group %q and"+
+					" resource %q: %w", result.Group, result.Resource, err)
+			}
+			rsp.ResourceVersion = continueToken.ResourceVersion
+		}
+
+		// found more than requested
+		if entityQuery.limit > 0 && int64(len(rsp.Results)) >= entityQuery.limit {
+			continueToken.StartOffset = entityQuery.offset + entityQuery.limit
+			rsp.NextPageToken = continueToken.String()
+			break
+		}
+
+		rsp.Results = append(rsp.Results, result)
+	}
+	span.AddEvent("processed rows", trace.WithAttributes(attribute.Int("row_count", len(rsp.Results))))
+
+	return rsp, err
+}
+
+func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(w.Context(), []any{"method", "watch"}))
+
+	if err := s.Init(); err != nil {
+		ctxLogger.Error("init error", "error", err)
+		return err
+	}
+
+	user, err := appcontext.User(w.Context())
+	if err != nil {
+		ctxLogger.Error("error getting user from ctx", "error", err)
+		return err
+	}
+	if user == nil {
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return ErrUserNotFoundInContext
+	}
+
+	r, err := w.Recv()
+	if err != nil {
+		ctxLogger.Error("recv error", "error", err)
+		return err
+	}
+
+	// collect and send any historical events
+	if r.SendInitialEvents {
+		r.Since, err = s.watchInit(w.Context(), r, w)
+		if err != nil {
+			ctxLogger.Error("watch init error", "err", err)
+			return err
+		}
+	}
+
+	// subscribe to new events
+	err = s.watch(r, w)
+	if err != nil {
+		ctxLogger.Error("watch error", "err", err)
+		return err
+	}
+
+	return nil
+}
+
+// watchInit is a helper function to send the initial set of entities to the client
+func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) (int64, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.watchInit")
+	defer span.End()
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "watchInit"}))
+
+	lastRv := r.Since
+
+	fields := s.getReadFields(r)
+
+	entityQuery := selectQuery{
+		dialect:  s.dialect,
+		from:     entityTable, // the table
+		limit:    1000,        // r.Limit,
+		oneExtra: true,        // request one more than the limit (and show next token if it exists)
+	}
+
+	entityQuery.AddFields(fields...)
+
+	// TODO fix this
+	// entityQuery.addWhere("namespace", user.OrgID)
+
+	if len(r.Resource) > 0 {
+		entityQuery.AddWhereIn("resource", ToAnyList(r.Resource))
+	}
+
+	if len(r.Key) > 0 {
+		where := []string{}
+		args := []any{}
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				ctxLogger.Error("error parsing key", "error", err, "key", k)
+				return lastRv, err
+			}
+
+			args = append(args, key.Group, key.Resource)
+			whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			if key.Namespace != "" {
+				args = append(args, key.Namespace)
+				whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
+			}
 			if key.Name != "" {
 				args = append(args, key.Name)
 				whereclause += " AND " + s.dialect.Quote("name") + "=?"
@@ -1032,103 +888,416 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 			where = append(where, whereclause)
 		}
 
-		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
+		entityQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
 	}
 
 	// Folder guid
 	if r.Folder != "" {
-		entityQuery.addWhere("folder", r.Folder)
-	}
-
-	// if we have a page token, use that to specify the first record
-	continueToken, err := GetContinueToken(r)
-	if err != nil {
-		return nil, err
-	}
-	if continueToken != nil {
-		entityQuery.offset = continueToken.StartOffset
+		entityQuery.AddWhere("folder", r.Folder)
 	}
 
 	if len(r.Labels) > 0 {
-		var args []any
-		var conditions []string
-		for labelKey, labelValue := range r.Labels {
-			args = append(args, labelKey)
-			args = append(args, labelValue)
-			conditions = append(conditions, "(label = ? AND value = ?)")
-		}
-		query := "SELECT guid FROM entity_labels" +
-			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
-			" GROUP BY guid" +
-			" HAVING COUNT(label) = ?"
-		args = append(args, len(r.Labels))
-
-		entityQuery.addWhereInSubquery("guid", query, args)
-	}
-	for _, sort := range r.Sort {
-		sortBy, err := ParseSortBy(sort)
-		if err != nil {
-			return nil, err
-		}
-		entityQuery.addOrderBy(sortBy.Field, sortBy.Direction)
-	}
-	entityQuery.addOrderBy("guid", Ascending)
-
-	query, args := entityQuery.toQuery()
-
-	s.log.Debug("listing", "query", query, "args", args)
-
-	rows, err := s.sess.Query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-	rsp := &entity.EntityListResponse{}
-	for rows.Next() {
-		result, err := s.rowToEntity(ctx, rows, rr)
-		if err != nil {
-			return rsp, err
-		}
-
-		// found more than requested
-		if int64(len(rsp.Results)) >= entityQuery.limit {
-			continueToken := &ContinueToken{
-				Sort:        r.Sort,
-				StartOffset: entityQuery.offset + entityQuery.limit,
+		if entityQuery.from != entityTable {
+			for labelKey, labelValue := range r.Labels {
+				entityQuery.AddWhereJsonContainsKV("labels", labelKey, labelValue)
 			}
-			rsp.NextPageToken = continueToken.String()
-			break
-		}
+		} else {
+			var args []any
+			var conditions []string
+			for labelKey, labelValue := range r.Labels {
+				args = append(args, labelKey)
+				args = append(args, labelValue)
+				conditions = append(conditions, "(label = ? AND value = ?)")
+			}
+			query := "SELECT guid FROM entity_labels" +
+				" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+				" GROUP BY guid" +
+				" HAVING COUNT(label) = ?"
+			args = append(args, len(r.Labels))
 
-		rsp.Results = append(rsp.Results, result)
+			entityQuery.AddWhereInSubquery("guid", query, args)
+		}
 	}
 
-	return rsp, err
+	entityQuery.AddOrderBy("resource_version", Ascending)
+
+	var err error
+
+	for hasmore := true; hasmore; {
+		err = func() error {
+			query, args := entityQuery.ToQuery()
+
+			ctxLogger.Debug("watch init", "query", query, "args", args)
+
+			rows, err := s.query(ctx, query, args...)
+			if err != nil {
+				return err
+			}
+			defer func() { _ = rows.Close() }()
+
+			found := int64(0)
+
+			for rows.Next() {
+				found++
+				if found > entityQuery.limit {
+					entityQuery.offset += entityQuery.limit
+					return nil
+				}
+
+				result, err := oldReadEntity(rows, r)
+				if err != nil {
+					return err
+				}
+
+				if result.ResourceVersion > lastRv {
+					lastRv = result.ResourceVersion
+				}
+
+				resp := &entity.EntityWatchResponse{
+					Timestamp: time.Now().UnixMilli(),
+					Entity:    result,
+				}
+
+				ctxLogger.Debug("sending init event", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+
+				err = w.Send(resp)
+				if err != nil {
+					return err
+				}
+			}
+
+			hasmore = false
+			return nil
+		}()
+		if err != nil {
+			ctxLogger.Error("watchInit error", "error", err)
+			return lastRv, err
+		}
+	}
+
+	// send a bookmark event
+	if r.AllowWatchBookmarks {
+		resp := &entity.EntityWatchResponse{
+			Timestamp: time.Now().UnixMilli(),
+			Entity: &entity.Entity{
+				Action:          entity.Entity_BOOKMARK,
+				ResourceVersion: lastRv,
+			},
+		}
+		err = w.Send(resp)
+		if err != nil {
+			ctxLogger.Error("error sending bookmark event", "error", err)
+			return lastRv, err
+		}
+	}
+
+	return lastRv, nil
 }
 
-func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
-	if err := s.Init(); err != nil {
+func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
+	var err error
+
+	since := int64(0)
+	interval := 1 * time.Second
+
+	t := time.NewTicker(interval)
+	defer t.Stop()
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-t.C:
+			since, err = s.poll(since, stream)
+			if err != nil {
+				s.log.Error("watch error", "err", err)
+			}
+			t.Reset(interval)
+		}
+	}
+}
+
+func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse) (int64, error) {
+	ctx, span := s.tracer.Start(s.ctx, "storage_server.poll")
+	defer span.End()
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "poll"}))
+
+	rr := &entity.ReadEntityRequest{
+		WithBody:   true,
+		WithStatus: true,
+	}
+
+	fields := s.getReadFields(rr)
+
+	for hasmore := true; hasmore; {
+		err := func() error {
+			entityQuery := selectQuery{
+				dialect: s.dialect,
+				from:    entityHistoryTable, // the table
+				limit:   100,                // r.Limit,
+				// offset:   0,
+				oneExtra: true, // request one more than the limit (and show next token if it exists)
+				orderBy:  []string{"resource_version"},
+			}
+
+			entityQuery.AddFields(fields...)
+			entityQuery.AddWhere("resource_version > ?", since)
+
+			query, args := entityQuery.ToQuery()
+			query += ";"
+
+			rows, err := s.query(ctx, query, args...)
+			if err != nil {
+				return err
+			}
+			defer func() { _ = rows.Close() }()
+
+			found := int64(0)
+			for rows.Next() {
+				// check if the context is done
+				if ctx.Err() != nil {
+					hasmore = false
+					return nil
+				}
+
+				found++
+				if found > entityQuery.limit {
+					return nil
+				}
+
+				updated, err := oldReadEntity(rows, rr)
+				if err != nil {
+					ctxLogger.Error("poll error readEntity", "error", err)
+					return err
+				}
+
+				if updated.ResourceVersion > since {
+					since = updated.ResourceVersion
+				}
+
+				result := &entity.EntityWatchResponse{
+					Timestamp: time.Now().UnixMilli(),
+					Entity:    updated,
+				}
+
+				if updated.Action == entity.Entity_UPDATED || updated.Action == entity.Entity_DELETED {
+					rr := &entity.EntityHistoryRequest{
+						Guid:       updated.Guid,
+						Before:     updated.ResourceVersion,
+						Limit:      1,
+						Sort:       []string{"resource_version_desc"},
+						WithBody:   rr.WithBody,
+						WithStatus: rr.WithStatus,
+					}
+					history, err := s.history(ctx, rr)
+					if err != nil {
+						ctxLogger.Error("error reading previous entity", "guid", updated.Guid, "err", err)
+						return err
+					}
+
+					if len(history.Versions) == 0 {
+						ctxLogger.Error("error reading previous entity", "guid", updated.Guid, "err", "no previous version found")
+						return errors.New("no previous version found")
+					}
+
+					result.Previous = history.Versions[0]
+				}
+
+				ctxLogger.Debug("sending poll result", "guid", updated.Guid, "action", updated.Action, "rv", updated.ResourceVersion)
+				out <- result
+			}
+
+			hasmore = false
+			return nil
+		}()
+		if err != nil {
+			ctxLogger.Error("poll error", "error", err)
+			return since, err
+		}
+	}
+
+	return since, nil
+}
+
+func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
+	if result == nil {
+		return false
+	}
+
+	// Folder guid
+	if r.Folder != "" && r.Folder != result.Folder {
+		return false
+	}
+
+	// must match at least one resource if specified
+	if len(r.Resource) > 0 {
+		matched := false
+		for _, res := range r.Resource {
+			if res == result.Resource {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// must match at least one key if specified
+	if len(r.Key) > 0 {
+		matched := false
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return false
+			}
+
+			if key.Group == result.Group && key.Resource == result.Resource && (key.Namespace == "" || key.Namespace == result.Namespace) && (key.Name == "" || key.Name == result.Name) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// must match all specified label/value pairs
+	if len(r.Labels) > 0 {
+		for labelKey, labelValue := range r.Labels {
+			if result.Labels[labelKey] != labelValue {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// watch is a helper to get the next set of entities and send them to the client
+func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	s.log.Debug("watch started", "since", r.Since)
+
+	evts, err := s.broadcaster.Subscribe(w.Context())
+	if err != nil {
 		return err
 	}
 
-	return fmt.Errorf("unimplemented")
+	stop := make(chan struct{})
+	since := r.Since
+
+	go func() {
+		for {
+			r, err := w.Recv()
+			if errors.Is(err, io.EOF) {
+				s.log.Debug("watch client closed stream")
+				stop <- struct{}{}
+				return
+			}
+			if err != nil {
+				s.log.Error("error receiving message", "err", err)
+				stop <- struct{}{}
+				return
+			}
+			if r.Action == entity.EntityWatchRequest_STOP {
+				s.log.Debug("watch stop requested")
+				stop <- struct{}{}
+				return
+			}
+			// handle any other message types
+			s.log.Debug("watch received unexpected message", "action", r.Action)
+		}
+	}()
+
+	for {
+		select {
+		// stop signal
+		case <-stop:
+			s.log.Debug("watch stopped")
+			return nil
+		// context canceled
+		case <-w.Context().Done():
+			s.log.Debug("watch context done")
+			return nil
+		// got a raw result from the broadcaster
+		case result, ok := <-evts:
+			if !ok {
+				s.log.Debug("watch events closed")
+				return nil
+			}
+
+			// Invalid result or resource version too old
+			if result == nil || result.Entity == nil || result.Entity.ResourceVersion <= since {
+				break
+			}
+
+			since = result.Entity.ResourceVersion
+
+			resp, err := s.watchEvent(r, result)
+			if err != nil {
+				break
+			}
+			if resp == nil {
+				break
+			}
+
+			err = w.Send(resp)
+			if err != nil {
+				s.log.Error("error sending watch event", "err", err)
+				return err
+			}
+		}
+	}
+}
+
+func (s *sqlEntityServer) watchEvent(r *entity.EntityWatchRequest, result *entity.EntityWatchResponse) (*entity.EntityWatchResponse, error) {
+	// if neither the previous nor the current result match our watch params, skip it
+	if !watchMatches(r, result.Entity) && !watchMatches(r, result.Previous) {
+		s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
+		return nil, nil
+	}
+
+	// remove the body and status if not requested
+	if !r.WithBody {
+		result.Entity.Body = nil
+		if result.Previous != nil {
+			result.Previous.Body = nil
+		}
+	}
+	if !r.WithStatus {
+		result.Entity.Status = nil
+		if result.Previous != nil {
+			result.Previous.Status = nil
+		}
+	}
+
+	s.log.Debug("sending watch result", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
+	return result, nil
 }
 
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.FindReferences")
+	defer span.End()
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "findReferences"}))
+
 	if err := s.Init(); err != nil {
+		ctxLogger.Error("init error", "error", err)
 		return nil, err
 	}
 
 	user, err := appcontext.User(ctx)
 	if err != nil {
+		ctxLogger.Error("error getting user from ctx", "error", err)
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("missing user in context")
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return nil, ErrUserNotFoundInContext
 	}
 
 	if r.NextPageToken != "" {
-		return nil, fmt.Errorf("not yet supported")
+		ctxLogger.Error("nextPageToken not yet supported", "error", ErrNextPageTokenNotSupported)
+		return nil, ErrNextPageTokenNotSupported
 	}
 
 	fields := []string{
@@ -1143,8 +1312,9 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 		" FROM entity_ref AS er JOIN entity AS e ON er.guid = e.guid" +
 		" WHERE er.namespace=? AND er.group=? AND er.resource=? AND er.resolved_to=?"
 
-	rows, err := s.sess.Query(ctx, sql, r.Namespace, r.Group, r.Resource, r.Name)
+	rows, err := s.query(ctx, sql, r.Namespace, r.Group, r.Resource, r.Name)
 	if err != nil {
+		ctxLogger.Error("query error", "error", err)
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
@@ -1163,6 +1333,7 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 
 		err = rows.Scan(args...)
 		if err != nil {
+			ctxLogger.Error("error scanning rows", "error", err)
 			return rsp, err
 		}
 
@@ -1177,4 +1348,46 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 	}
 
 	return rsp, err
+}
+
+func (s *sqlEntityServer) query(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.query", trace.WithAttributes(attribute.String("query", query)))
+	defer span.End()
+
+	rows, err := s.sess.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+// getLatestVersion returns the latest committed resource version for a given
+// kind.
+//
+// NOTE: This is a temporary workaround to allow old read operations to use the
+// new resource versioning scheme, which uses `kind_version` table. Note that
+// this is executed in a different transaction. This will be changed in future
+// PRs.
+func (s *sqlEntityServer) getLatestVersion(ctx context.Context, group, resource string) (int64, error) {
+	var ret int64
+
+	err := s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		req := sqlKindVersionGetRequest{
+			SQLTemplate:        sqltemplate.New(s.sqlDialect),
+			Group:              group,
+			Resource:           resource,
+			returnsKindVersion: new(returnsKindVersion),
+		}
+		res, err := queryRow(ctx, tx, sqlKindVersionGet, req)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		if res != nil {
+			ret = res.ResourceVersion
+		}
+
+		return nil
+	})
+
+	return ret, err
 }

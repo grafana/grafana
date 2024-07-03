@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
-import { HorizontalGroup, Spinner } from '@grafana/ui';
+import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -245,8 +245,8 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
 }
 
 const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
-  <HorizontalGroup>
+  <Stack>
     <Spinner />
     <em>{msg}</em>
-  </HorizontalGroup>
+  </Stack>
 );

@@ -15,9 +15,16 @@ import {
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
-import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { createRetentionPeriodBoundary } from '../history/richHistoryLocalStorageUtils';
+import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { contextSrv } from '../services/context_srv';
 
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
+import {
+  RichHistorySearchBackendFilters,
+  RichHistorySearchFilters,
+  RichHistorySettings,
+  SortOrder,
+} from './richHistoryTypes';
 
 export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
@@ -26,15 +33,27 @@ export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
  * Side-effect: store history in local storage
  */
 
+type addToRichHistoryParams = {
+  localOverride: boolean;
+  datasource: { uid: string; name?: string };
+  queries: DataQuery[];
+  starred: boolean;
+  comment?: string;
+  showNotif?: {
+    quotaExceededError?: boolean;
+    limitExceededWarning?: boolean;
+    otherErrors?: boolean;
+  };
+};
+
 export async function addToRichHistory(
-  datasourceUid: string,
-  datasourceName: string | null,
-  queries: DataQuery[],
-  starred: boolean,
-  comment: string | null,
-  showQuotaExceededError: boolean,
-  showLimitExceededWarning: boolean
+  params: addToRichHistoryParams
 ): Promise<{ richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
+  const { queries, localOverride, datasource, starred, comment, showNotif } = params;
+  // default showing of errors to true
+  const showQuotaExceededError = showNotif?.quotaExceededError ?? true;
+  const showLimitExceededWarning = showNotif?.limitExceededWarning ?? true;
+  const showOtherErrors = showNotif?.otherErrors ?? true;
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
 
@@ -44,9 +63,11 @@ export async function addToRichHistory(
     let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
-      const result = await getRichHistoryStorage().addToRichHistory({
-        datasourceUid: datasourceUid,
-        datasourceName: datasourceName ?? '',
+      // for autocomplete we want to ensure writing to local storage
+      const storage = localOverride ? getLocalRichHistoryStorage() : getRichHistoryStorage();
+      const result = await storage.addToRichHistory({
+        datasourceUid: datasource.uid,
+        datasourceName: datasource.name ?? '',
         queries: newQueriesToSave,
         starred,
         comment: comment ?? '',
@@ -57,7 +78,7 @@ export async function addToRichHistory(
         if (error.name === RichHistoryServiceError.StorageFull) {
           richHistoryStorageFull = true;
           showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
-        } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
+        } else if (showOtherErrors && error.name !== RichHistoryServiceError.DuplicatedEntry) {
           dispatch(
             notifyApp(
               createErrorNotification(
@@ -86,7 +107,22 @@ export async function addToRichHistory(
 }
 
 export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
-  return await getRichHistoryStorage().getRichHistory(filters);
+  // Transforming from frontend filters where from and to are days from now to absolute timestamps.
+  const filtersCopy: RichHistorySearchBackendFilters = {
+    ...filters,
+    from:
+      filters.to === undefined
+        ? filters.to
+        : createRetentionPeriodBoundary(filters.to, {
+            isLastTs: true,
+            tz: contextSrv.user?.timezone,
+          }),
+    to:
+      filters.from === undefined
+        ? filters.from
+        : createRetentionPeriodBoundary(filters.from, { isLastTs: true, tz: contextSrv.user?.timezone }),
+  };
+  return await getRichHistoryStorage().getRichHistory(filtersCopy);
 }
 
 export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {

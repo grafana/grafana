@@ -6,7 +6,7 @@ import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
-import { AppEvents, GrafanaTheme2, PanelData } from '@grafana/data';
+import { AppEvents, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import {
   ColorDimensionConfig,
@@ -15,9 +15,8 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from '@grafana/schema';
-import { Portal, stylesFactory } from '@grafana/ui';
+import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { DimensionContext } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
@@ -29,13 +28,19 @@ import {
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
-import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
+import {
+  Connections,
+  CONNECTION_VERTEX_ADD_ID,
+  CONNECTION_VERTEX_ID,
+} from 'app/plugins/panel/canvas/components/connections/Connections';
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { CanvasFrameOptions } from '../frame';
+import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
 import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
@@ -49,7 +54,7 @@ export interface SelectionParams {
 }
 
 export class Scene {
-  styles = getStyles(config.theme2);
+  styles = getStyles();
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
@@ -225,11 +230,14 @@ export class Scene {
 
       currentSelectedElements.forEach((element: ElementState) => {
         const elementContainer = element.div?.getBoundingClientRect();
+
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         element.setPlacementFromConstraint(elementContainer, framePlacement as DOMRect);
         currentLayer.doAction(LayerActionID.Delete, element);
         newLayer.doAction(LayerActionID.Duplicate, element, false, false);
       });
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       newLayer.setPlacementFromConstraint(framePlacement as DOMRect, currentLayer.div?.getBoundingClientRect());
 
       currentLayer.elements.push(newLayer);
@@ -390,6 +398,22 @@ export class Scene {
     return targetElements;
   };
 
+  disableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: false,
+      constraintViewable: false,
+      settingsViewable: false,
+    };
+  };
+
+  enableCustomables = () => {
+    this.moveable!.props = {
+      dimensionViewable: true,
+      constraintViewable: true,
+      settingsViewable: true,
+    };
+  };
+
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -413,6 +437,11 @@ export class Scene {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
 
+      // Setup rotatable
+      rotatable: allowChanges,
+      throttleRotate: 5,
+      rotationPosition: ['top', 'right'],
+
       // Setup snappable
       snappable: allowChanges,
       snapDirections: snapDirections,
@@ -426,8 +455,30 @@ export class Scene {
         settingsViewable: allowChanges,
       },
       origin: false,
-      className: this.styles.selected,
     })
+      .on('rotateStart', () => {
+        this.disableCustomables();
+      })
+      .on('rotate', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.applyRotate(event);
+        }
+      })
+      .on('rotateGroup', (e) => {
+        for (let event of e.events) {
+          const targetedElement = this.findElementByTarget(event.target);
+          if (targetedElement) {
+            targetedElement.applyRotate(event);
+          }
+        }
+      })
+      .on('rotateEnd', () => {
+        this.enableCustomables();
+        // Update the editor with the new rotation
+        this.moved.next(Date.now());
+      })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         let elementSupportsEditing = false;
@@ -624,6 +675,20 @@ export class Scene {
         return;
       }
 
+      // If selected target is a vertex, eject to handle vertex event
+      if (selectedTarget.id === CONNECTION_VERTEX_ID) {
+        this.connections.handleVertexDragStart(selectedTarget);
+        event.stop();
+        return;
+      }
+
+      // If selected target is an add vertex point, eject to handle add vertex event
+      if (selectedTarget.id === CONNECTION_VERTEX_ADD_ID) {
+        this.connections.handleVertexAddDragStart(selectedTarget);
+        event.stop();
+        return;
+      }
+
       const isTargetMoveableElement =
         this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
@@ -776,12 +841,9 @@ export class Scene {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  wrap: css`
-    overflow: hidden;
-    position: relative;
-  `,
-  selected: css`
-    z-index: 999 !important;
-  `,
-}));
+const getStyles = () => ({
+  wrap: css({
+    overflow: 'hidden',
+    position: 'relative',
+  }),
+});

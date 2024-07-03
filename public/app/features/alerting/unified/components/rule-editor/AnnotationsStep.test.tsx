@@ -17,8 +17,6 @@ import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 import { getDefaultFormValues } from '../../utils/rule-form';
 
-import 'whatwg-fetch';
-
 import AnnotationsStep from './AnnotationsStep';
 
 // To get anything displayed inside the Autosize component we need to mock it

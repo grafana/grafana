@@ -12,6 +12,7 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,8 +32,8 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	createUser(t, store, user.CreateUserCommand{
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -192,6 +193,69 @@ func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
 				}},
 			},
 		},
+	}, {
+		// TODO: Mute time intervals is deprecated in Alertmanager and scheduled to be
+		// removed before version 1.0. Remove this test when support for mute time
+		// intervals is removed.
+		name: "configuration with mute time intervals",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+						Routes: []*apimodels.Route{{
+							MuteTimeIntervals: []string{"weekends"},
+						}},
+					},
+					MuteTimeIntervals: []config.MuteTimeInterval{{
+						Name: "weekends",
+						TimeIntervals: []timeinterval.TimeInterval{{
+							Weekdays: []timeinterval.WeekdayRange{{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 1,
+									End:   5,
+								},
+							}},
+						}},
+					}},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
+	}, {
+		name: "configuration with time intervals",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+						Routes: []*apimodels.Route{{
+							MuteTimeIntervals: []string{"weekends"},
+						}},
+					},
+					TimeIntervals: []config.TimeInterval{{
+						Name: "weekends",
+						TimeIntervals: []timeinterval.TimeInterval{{
+							Weekdays: []timeinterval.WeekdayRange{{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 1,
+									End:   5,
+								},
+							}},
+						}},
+					}},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
 	}}
 
 	for _, tc := range cases {
@@ -219,16 +283,16 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		AppModeProduction:                     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	// editor from main organisation requests configuration
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
 	// create user under main organisation
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -240,7 +304,7 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	orgID := newOrg.ID
 
 	// create user under different organisation
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor-42",
 		Login:          "editor-42",
@@ -262,7 +326,6 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -337,10 +400,10 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -356,7 +419,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -388,7 +450,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 			"route": {
 				"receiver": "slack.receiver"
 			},
-			"templates": null,
 			"receivers": [{
 				"name": "slack.receiver",
 				"grafana_managed_receiver_configs": [{
@@ -436,7 +497,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -470,7 +530,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{

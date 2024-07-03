@@ -1,6 +1,8 @@
-import React from 'react';
+import debounce from 'debounce-promise';
+import React, { ChangeEvent } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Dashboard } from '@grafana/schema';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -8,7 +10,6 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
@@ -22,11 +23,10 @@ interface SaveDashboardAsFormDTO {
 
 export interface Props {
   dashboard: DashboardScene;
-  drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
   const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
@@ -98,7 +98,10 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
           aria-label="Save dashboard title field"
-          autoFocus
+          data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
+          onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
+            setValue('title', e.target.value, { shouldValidate: true });
+          }, 400)}
         />
       </Field>
       <Field

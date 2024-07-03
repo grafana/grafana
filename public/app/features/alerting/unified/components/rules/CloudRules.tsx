@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { LinkButton, LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
+import { LinkButton, LoadingPlaceholder, Pagination, Spinner, useStyles2, Text } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -55,7 +55,9 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
-          <h5>Mimir / Cortex / Loki</h5>
+          <Text element="h2" variant="h5">
+            Mimir / Cortex / Loki
+          </Text>
           {dataSourcesLoading.length ? (
             <LoadingPlaceholder
               className={styles.loader}
@@ -96,20 +98,20 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  loader: css`
-    margin-bottom: 0;
-  `,
-  sectionHeader: css`
-    display: flex;
-    justify-content: space-between;
-  `,
-  wrapper: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-  spinner: css`
-    text-align: center;
-    padding: ${theme.spacing(2)};
-  `,
+  loader: css({
+    marginBottom: 0,
+  }),
+  sectionHeader: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  wrapper: css({
+    marginBottom: theme.spacing(4),
+  }),
+  spinner: css({
+    textAlign: 'center',
+    padding: theme.spacing(2),
+  }),
   pagination: getPaginationStyles(theme),
   headerRow: css({
     display: 'flex',
