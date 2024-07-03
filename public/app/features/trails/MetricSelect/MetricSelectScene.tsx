@@ -268,7 +268,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         metricNamesWarning,
         metricNamesError: response.error,
       });
-
     } catch (err: unknown) {
       let error = 'Unknown error';
       if (isFetchError(err)) {
@@ -403,7 +402,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         await this.populateNestedRowsLayout(trail);
         break;
       case 'tabs':
-        await this.populateTabsViewLayout(trail);
+      case 'prefix-filter':
+        await this.populateFilterableViewLayout(trail);
         break;
       default:
         console.error('Not implemented yet: ', this.state.displayAs);
@@ -477,7 +477,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
   }
 
-  private async populateTabsViewLayout(trail: DataTrail) {
+  private async populateFilterableViewLayout(trail: DataTrail) {
     // Get the current filters to determine the count of them
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
@@ -567,6 +567,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.buildLayout();
   };
 
+  public onPrefixFilterChange = (val: SelectableValue) => {
+    this.setState({ selectedTabGroupOption: val.value });
+    this.buildLayout();
+  };
+
   public onDisplayTypeChanged = (val: SelectableValue) => {
     const bodyFormation = generateBodyFormation(val.value);
     if (val.value !== this.state.displayAs) {
@@ -635,6 +640,21 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               options={metricSelectSceneDisplayOptions.map((o) => ({ label: o.label, value: o.value }))}
             />
           </Field>
+          {displayAs === 'prefix-filter' && (
+            <Field label={'Select Prefix'} className={styles.displayOption}>
+              <Select
+                onChange={model.onPrefixFilterChange}
+                value={selectedTabGroupOption}
+                options={[
+                  {
+                    label: 'All',
+                    value: 'all',
+                  },
+                  ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
+                ]}
+              />
+            </Field>
+          )}
           <Field label={'Search metrics'} className={styles.searchField}>
             <Input
               placeholder="Search metrics"
