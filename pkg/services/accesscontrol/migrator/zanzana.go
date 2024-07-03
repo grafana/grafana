@@ -3,7 +3,6 @@ package migrator
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -75,11 +74,13 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "managed"
 		const query = `
-		SELECT ur.user_id, p.action, p.kind, p.identifier, r.org_id FROM permission p
-		INNER JOIN role r on p.role_id = r.id
-		LEFT JOIN user_role ur on r.id  = ur.role_id
-		LEFT JOIN team_role tr on r.id  = tr.role_id
-		LEFT JOIN builtin_role br on r.id  = br.role_id
+		SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id FROM permission p
+		INNER JOIN role r ON p.role_id = r.id
+		LEFT JOIN user_role ur ON r.id = ur.role_id
+		LEFT JOIN user u ON u.id = ur.user_id
+		LEFT JOIN team_role tr ON r.id = tr.role_id
+		LEFT JOIN team t ON tr.team_id = t.id
+		LEFT JOIN builtin_role br ON r.id  = br.role_id
 		WHERE r.name LIKE 'managed:%'
 	`
 		type Permission struct {
@@ -88,8 +89,8 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 			Action     string `xorm:"action"`
 			Kind       string
 			Identifier string
-			UserID     int64 `xorm:"user_id"`
-			TeamID     int64 `xorm:"user_id"`
+			UserUID    string `xorm:"user_uid"`
+			TeamUID    string `xorm:"team_uid"`
 		}
 
 		var permissions []Permission
@@ -103,10 +104,10 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 
 		for _, p := range permissions {
 			var subject string
-			if p.UserID > 0 {
-				subject = zanzana.NewObject(zanzana.TypeUser, strconv.FormatInt(p.UserID, 10))
-			} else if p.TeamID > 0 {
-				subject = zanzana.NewObject(zanzana.TypeTeam, strconv.FormatInt(p.TeamID, 10))
+			if len(p.UserUID) > 0 {
+				subject = zanzana.NewObject(zanzana.TypeUser, p.UserUID)
+			} else if len(p.TeamUID) > 0 {
+				subject = zanzana.NewObject(zanzana.TypeTeam, p.TeamUID)
 			} else {
 				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
 				continue
