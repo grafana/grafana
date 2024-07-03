@@ -23,6 +23,8 @@ export type DataQueryFullSpec = {
   spec: DataQuerySpec;
 };
 
+export type DataQueryPartialSpec = Partial<DataQuerySpec>;
+
 export type DataQuerySpecResponse = {
   apiVersion: string;
   items: DataQueryFullSpec[];

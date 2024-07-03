@@ -1,5 +1,4 @@
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { DataQueryFullSpec } from 'app/features/query-library/api/types';
 
 export type QueryTemplateRow = {
   index: string;
@@ -10,5 +9,4 @@ export type QueryTemplateRow = {
   createdAtTimestamp?: number;
   user?: string;
   uid?: string;
-  fullSpec?: DataQueryFullSpec;
 };

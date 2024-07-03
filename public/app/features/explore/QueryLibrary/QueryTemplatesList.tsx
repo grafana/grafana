@@ -46,7 +46,6 @@ export function QueryTemplatesList() {
       query: queryTemplate.targets[0],
       description: queryTemplate.title,
       user: queryTemplate.user,
-      fullSpec: queryTemplate.fullSpec,
     };
   });
 
