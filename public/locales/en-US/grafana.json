@@ -970,8 +970,9 @@
       "disconnect-error-title": "There was an error disconnecting",
       "run-migration-error-description": "See the Grafana server logs for more details",
       "run-migration-error-title": "There was an error migrating your resources",
-      "start-migration": "Upload everything",
-      "target-stack-title": "Uploading to"
+      "start-migration": "Build snapshot",
+      "target-stack-title": "Uploading to",
+      "upload-migration": "Upload & migrate snapshot"
     },
     "token-status": {
       "active": "Token created and active",

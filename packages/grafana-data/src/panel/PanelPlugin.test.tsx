@@ -4,7 +4,7 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
 } from '../field/standardFieldConfigEditorRegistry';
-import { FieldConfigProperty, FieldConfigPropertyItem } from '../types';
+import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
 import { PanelPlugin } from './PanelPlugin';
