@@ -12,6 +12,11 @@ const (
 	TypeTeam string = "team"
 )
 
+const (
+	RelationTeamMember string = "member"
+	RelationTeamAdmin  string = "admin"
+)
+
 func NewObject(typ, id string) string {
 	return fmt.Sprintf("%s:%s", typ, id)
 }
@@ -49,7 +54,7 @@ func TranslateToTuple(user string, action, kind, identifier string, orgID int64)
 	tuple.User = user
 	tuple.Relation = relation
 
-	// UID in grafana are not guarantee to be unique across orgs so we need to scope them.
+	// Some uid:s in grafana are not guarantee to be unique across orgs so we need to scope them.
 	if t.orgScoped {
 		tuple.Object = NewScopedObject(t.typ, identifier, strconv.FormatInt(orgID, 10))
 	} else {
