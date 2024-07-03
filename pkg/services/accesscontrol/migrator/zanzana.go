@@ -29,9 +29,14 @@ type ZanzanaSynchroniser struct {
 
 func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...TupleCollector) *ZanzanaSynchroniser {
 	// Append shared collectors that is used by both enterprise and oss
-	collectors = append(collectors, managedPermissionsCollector(store))
+	collectors = append(
+		collectors,
+		teamMembershipCollector(store),
+		managedPermissionsCollector(store),
+	)
 
 	return &ZanzanaSynchroniser{
+		client:     client,
 		log:        log.New("zanzana.sync"),
 		collectors: collectors,
 	}
@@ -74,15 +79,16 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "managed"
 		const query = `
-		SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id FROM permission p
-		INNER JOIN role r ON p.role_id = r.id
-		LEFT JOIN user_role ur ON r.id = ur.role_id
-		LEFT JOIN user u ON u.id = ur.user_id
-		LEFT JOIN team_role tr ON r.id = tr.role_id
-		LEFT JOIN team t ON tr.team_id = t.id
-		LEFT JOIN builtin_role br ON r.id  = br.role_id
-		WHERE r.name LIKE 'managed:%'
-	`
+			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN user_role ur ON r.id = ur.role_id
+			LEFT JOIN user u ON u.id = ur.user_id
+			LEFT JOIN team_role tr ON r.id = tr.role_id
+			LEFT JOIN team t ON tr.team_id = t.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE r.name LIKE 'managed:%'
+		`
 		type Permission struct {
 			RoleName   string `xorm:"role_name"`
 			OrgID      int64  `xorm:"org_id"`
@@ -122,6 +128,51 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 			// sync new data when more actions are supported
 			key := fmt.Sprintf("%s-%s", collectorID, p.Action)
 			tuples[key] = append(tuples[key], tuple)
+		}
+
+		return nil
+	}
+}
+
+func teamMembershipCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "team_membership"
+		const query = `
+			SELECT t.uid as team_uid, u.uid as user_uid, tm.permission
+			FROM team_member tm
+			INNER JOIN team t ON tm.team_id = t.id
+			INNER JOIN user u ON tm.user_id = u.id
+		`
+
+		type membership struct {
+			TeamUID    string `xorm:"team_uid"`
+			UserUID    string `xorm:"user_uid"`
+			Permission int
+		}
+
+		var memberships []membership
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&memberships)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, m := range memberships {
+			tuple := &openfgav1.TupleKey{
+				User:   zanzana.NewObject(zanzana.TypeUser, m.UserUID),
+				Object: zanzana.NewObject(zanzana.TypeTeam, m.TeamUID),
+			}
+
+			// Admin permission is 4 and member 0
+			if m.Permission == 4 {
+				tuple.Relation = zanzana.RelationTeamAdmin
+			} else {
+				tuple.Relation = zanzana.RelationTeamMember
+			}
+
+			tuples[collectorID] = append(tuples[collectorID], tuple)
 		}
 
 		return nil
