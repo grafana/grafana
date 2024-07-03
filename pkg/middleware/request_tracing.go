@@ -74,32 +74,40 @@ func RouteOperationName(req *http.Request) (string, bool) {
 func RequestTracing(tracer tracing.Tracer) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			if strings.HasPrefix(req.URL.Path, "/public/") || req.URL.Path == "/robots.txt" || req.URL.Path == "/favicon.ico" {
+			// skip tracing for a few endpoints
+			if strings.HasPrefix(req.URL.Path, "/public/") ||
+				req.URL.Path == "/robots.txt" ||
+				req.URL.Path == "/favicon.ico" {
 				next.ServeHTTP(w, req)
 				return
 			}
 
-			rw := web.Rw(w, req)
+			// Extract the parent span context from the incoming request.
+			ctx := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
 
-			wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-			ctx, span := tracer.Start(wireContext, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
-
-			req = req.WithContext(ctx)
-			next.ServeHTTP(w, req)
-
-			// Only call span.Finish when a route operation name have been set,
-			// meaning that not set the span would not be reported.
+			// generic span name for requests where there's no route operation name
+			spanName := fmt.Sprintf("HTTP %s <unknown>", req.Method)
 			// TODO: do not depend on web.Context from the future
 			if routeOperation, exists := RouteOperationName(web.FromContext(req.Context()).Req); exists {
-				defer span.End()
-				span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
+				spanName = fmt.Sprintf("HTTP %s %s", req.Method, routeOperation)
 			}
+
+			ctx, span := tracer.Start(ctx, spanName, trace.WithAttributes(
+				semconv.HTTPURLKey.String(req.RequestURI),
+				semconv.HTTPMethodKey.String(req.Method),
+			), trace.WithSpanKind(trace.SpanKindServer))
+			defer span.End()
+
+			req = req.WithContext(ctx)
+
+			// Ensure the response writer's status can be captured.
+			rw := web.Rw(w, req)
+
+			next.ServeHTTP(rw, req)
 
 			status := rw.Status()
 
 			span.SetAttributes(semconv.HTTPStatusCode(status))
-			span.SetAttributes(semconv.HTTPURL(req.RequestURI))
-			span.SetAttributes(semconv.HTTPMethod(req.Method))
 			if status >= 400 {
 				span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
 			}
