@@ -136,7 +136,7 @@ If label values originate from user input they should be validated. Use `metricu
 
 ### Guarantee the existence of metrics
 
-If you want to guarantee the existence of metrics before any observations has happened, you can use a couple of helper methods available in the `pkg/infra/metrics/metricutil` package.
+To guarantee the existence of metrics before any observations have happened, you can use the helper methods available in the `pkg/infra/metrics/metricutil` package.
 
 ### How to collect and visualize metrics locally
 
