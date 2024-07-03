@@ -31,7 +31,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.ReplDB, collectors .
 	// Append shared collectors that is used by both enterprise and oss
 	collectors = append(
 		collectors,
-		teamMembershipCollector(store),
+		teamMembershipCollector(store.DB()),
 		managedPermissionsCollector(store),
 	)
 
