@@ -77,8 +77,7 @@ The storage should be an interface that is not directly called from
 outside the service and should be kept to a minimum complexity to
 provide the functionality necessary for the service.
 
-There is a simple litmus test to reduce the complexity of the storage interface. 
-Namely this is whether an in-memory implementation is a feasible test double to build to test the service.
+Usa a simple litmus test to determine whether an in-memory implementation is a feasible test-double to assess the service. This will reduce the complexity of the storage interface. 
 
 ### Outside the service root
 
