@@ -195,7 +195,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	usr := &user.SignedInUser{
 		UserID:      1,
 		OrgID:       orgID,
-		Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)},
+		Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)},
 	}
 
 	var role *accesscontrol.Role

@@ -12,7 +12,12 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol")
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
@@ -232,30 +237,24 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
+//
+// Deprecated: use GroupScopesByActionContext instead
 func GroupScopesByAction(permissions []Permission) map[string][]string {
-	// Use a map to deduplicate scopes.
-	// User can have the same permission from multiple sources (e.g. team, basic role, directly assigned etc).
-	// User will also have duplicate permissions if action sets are used, as we will be double writing permissions for a while.
-	m := make(map[string]map[string]struct{})
+	return GroupScopesByActionContext(context.Background(), permissions)
+}
+
+// GroupScopesByAction will group scopes on action
+func GroupScopesByActionContext(ctx context.Context, permissions []Permission) map[string][]string {
+	_, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
+		attribute.Int("permissions_count", len(permissions)),
+	))
+	defer span.End()
+
+	m := make(map[string][]string)
 	for i := range permissions {
-		if _, ok := m[permissions[i].Action]; !ok {
-			m[permissions[i].Action] = make(map[string]struct{})
-		}
-		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
 	}
-
-	res := make(map[string][]string, len(m))
-	for action, scopes := range m {
-		scopeList := make([]string, len(scopes))
-		i := 0
-		for scope := range scopes {
-			scopeList[i] = scope
-			i++
-		}
-		res[action] = scopeList
-	}
-
-	return res
+	return m
 }
 
 // Reduce will reduce a list of permissions to its minimal form, grouping scopes by action

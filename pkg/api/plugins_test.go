@@ -104,7 +104,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				Permissions: map[int64]map[string][]string{},
 				OrgRoles:    map[int64]org.RoleType{},
 			}
-			expectedIdentity.Permissions[tc.permissionOrg] = ac.GroupScopesByAction(tc.permissions)
+			expectedIdentity.Permissions[tc.permissionOrg] = ac.GroupScopesByActionContext(context.Background(), tc.permissions)
 			hs.authnService = &authntest.FakeService{
 				ExpectedIdentity: expectedIdentity,
 			}

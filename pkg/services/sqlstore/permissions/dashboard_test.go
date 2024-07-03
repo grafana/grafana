@@ -173,7 +173,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 		require.NoError(t, err)
 
-		usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
+		usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}}
 
 		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
 			m := features.GetEnabled(context.Background())
@@ -345,7 +345,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 		recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 		require.NoError(t, err)
 
-		usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.signedInUserPermissions)}}
+		usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.signedInUserPermissions)}}
 
 		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
 			m := features.GetEnabled(context.Background())
@@ -456,7 +456,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			Action: dashboards.ActionFoldersWrite,
 			Scope:  dashboards.ScopeFoldersAll,
 		})
-		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.permissions)}}
+		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.permissions)}}
 
 		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagAccessActionSets)...), featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
 			m := features.GetEnabled(context.Background())
@@ -564,7 +564,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 
 	for _, tc := range testCases {
 		helperUser := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule,
-			Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersCreate,
 				},
@@ -583,7 +583,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			}
 
 			t.Run(tc.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-				usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.signedInUserPermissions)}}
+				usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.signedInUserPermissions)}}
 				db := setupNestedTest(t, helperUser, []accesscontrol.Permission{}, orgID, features)
 				recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
 				require.NoError(t, err)
@@ -693,7 +693,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			Scope:  "folders:uid:unrelated"}, accesscontrol.Permission{
 			Action: dashboards.ActionDashboardsCreate,
 			Scope:  "folders:uid:unrelated"})
-		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.signedInUserPermissions)}}
+		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.signedInUserPermissions)}}
 
 		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
 			m := features.GetEnabled(context.Background())

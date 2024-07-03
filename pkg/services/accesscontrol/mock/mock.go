@@ -120,7 +120,7 @@ func (m *Mock) Evaluate(ctx context.Context, usr identity.Requester, evaluator a
 		if err != nil {
 			return false, err
 		}
-		permissions = accesscontrol.GroupScopesByAction(userPermissions)
+		permissions = accesscontrol.GroupScopesByActionContext(ctx, userPermissions)
 	}
 
 	if evaluator.Evaluate(permissions) {

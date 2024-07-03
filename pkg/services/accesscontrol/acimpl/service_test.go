@@ -42,6 +42,7 @@ func setupTestEnv(t testing.TB) *Service {
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
 		store:         database.ProvideService(db.InitTestDB(t)),
+		tracer:        tracing.InitializeTracerForTest(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
