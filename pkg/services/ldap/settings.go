@@ -125,7 +125,9 @@ func GetConfig(cfg *Config) (*ServersConfig, error) {
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	return readConfig(cfg.ConfigFilePath)
+	var err error
+	config, err = readConfig(cfg.ConfigFilePath)
+	return config, err
 }
 
 func readConfig(configFile string) (*ServersConfig, error) {
