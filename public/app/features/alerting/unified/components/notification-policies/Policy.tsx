@@ -21,7 +21,7 @@ import {
   getTagColorsFromName,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import {
   AlertmanagerGroup,
@@ -741,10 +741,13 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
     metaOptions.push(
       <Tooltip
         placement="top"
-        content="How long to initially wait to send a notification for a group of alert instances."
+        content={t(
+          'alerting.policies.metadata.timingOptions.groupWait.description',
+          'How long to initially wait to send a notification for a group of alert instances.'
+        )}
       >
         <span>
-          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupWait">
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupWait.label">
             Wait <PrimaryText content={groupWait} /> to group instances
           </Trans>
         </span>
@@ -756,11 +759,14 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
     metaOptions.push(
       <Tooltip
         placement="top"
-        content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
+        content={t(
+          'alerting.policies.metadata.timingOptions.groupInterval.description',
+          'How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.'
+        )}
       >
         <span>
-          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupInterval">
-            <PrimaryText content={groupInterval} /> before sending updates
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupInterval.label">
+            Wait <PrimaryText content={groupInterval} /> before sending updates
           </Trans>
         </span>
       </Tooltip>
@@ -771,11 +777,14 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
     metaOptions.push(
       <Tooltip
         placement="top"
-        content="How often notifications are sent if the group of alerts has not changed since the last notification."
+        content={t(
+          'alerting.policies.metadata.timingOptions.repeatInterval.description',
+          'How often notifications are sent if the group of alerts has not changed since the last notification.'
+        )}
       >
         <span>
-          <Trans i18nKey="alerting.policies.metadata.timingOptions.repeatInterval">
-            repeated every <PrimaryText content={repeatInterval} />
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.repeatInterval.label">
+            Repeated every <PrimaryText content={repeatInterval} />
           </Trans>
         </span>
       </Tooltip>
@@ -787,7 +796,7 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
       {metaOptions.map((meta, index) => (
         <span key={uniqueId()}>
           {meta}
-          {index < metaOptions.length - 1 && ', '}
+          {index < metaOptions.length - 1 && ' · '}
         </span>
       ))}
     </MetaText>

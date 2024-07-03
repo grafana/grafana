@@ -65,9 +65,18 @@
     "policies": {
       "metadata": {
         "timingOptions": {
-          "groupInterval": "<0></0> before sending updates",
-          "groupWait": "Wait <1></1> to group instances",
-          "repeatInterval": "repeated every <1></1>"
+          "groupInterval": {
+            "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
+            "label": "Wait <1></1> before sending updates"
+          },
+          "groupWait": {
+            "description": "How long to initially wait to send a notification for a group of alert instances.",
+            "label": "Wait <1></1> to group instances"
+          },
+          "repeatInterval": {
+            "description": "How often notifications are sent if the group of alerts has not changed since the last notification.",
+            "label": "Repeated every <1></1>"
+          }
         }
       }
     }
