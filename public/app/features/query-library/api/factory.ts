@@ -4,7 +4,6 @@ import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, EditQueryTemplateC
 
 import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
-import { DataQueryFullSpec, DataQueryPartialSpec } from './types';
 
 export const queryLibraryApi = createApi({
   baseQuery,
@@ -33,6 +32,9 @@ export const queryLibraryApi = createApi({
       query: (editQueryTemplateCommand) => ({
         url: `${editQueryTemplateCommand.uid}`,
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json-patch+json',
+        },
         data: editQueryTemplateCommand.jsonPatch,
       }),
       invalidatesTags: ['QueryTemplatesList'],

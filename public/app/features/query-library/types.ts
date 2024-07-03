@@ -1,8 +1,8 @@
-import { Operation, ReplaceOperation } from 'fast-json-patch';
+import { Operation } from 'fast-json-patch';
 
 import { DataQuery } from '@grafana/schema';
 
-import { DataQueryFullSpec, DataQueryPartialSpec } from './api/types';
+import { DataQueryFullSpec } from './api/types';
 
 export type QueryTemplate = {
   uid: string;
