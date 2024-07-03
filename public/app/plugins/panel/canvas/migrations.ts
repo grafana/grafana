@@ -43,7 +43,9 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     }
   }
 
-  for (const override of panel.fieldConfig.overrides) {
+  for (let idx = 0; idx < panel.fieldConfig.overrides.length; idx++) {
+    const override = panel.fieldConfig.overrides[idx];
+
     if (override.matcher.id === FieldMatcherID.byName) {
       let props: DynamicConfigValue[] = [];
 
@@ -56,7 +58,11 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
         }
       }
 
-      override.properties = props;
+      if (props.length > 0) {
+        override.properties = props;
+      } else {
+        panel.fieldConfig.overrides.splice(idx, 1);
+      }
     }
   }
 
