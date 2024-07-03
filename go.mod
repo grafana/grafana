@@ -89,6 +89,7 @@ require (
 	github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-aws-sdk v0.28.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.4 // @grafana/partner-datasources
+	github.com/grafana/grafana-cloud-migration-snapshot v1.0.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.235.0 // @grafana/plugins-platform-backend
@@ -306,7 +307,7 @@ require (
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect; @grafana/plugins-platform-backend
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // @grafana/identity-access-team
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
@@ -380,11 +381,8 @@ require (
 	github.com/redis/rueidis v1.0.16 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rs/cors v1.10.1
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
+	github.com/rs/cors v1.10.1 // @grafana/identity-access-team
 	github.com/segmentio/asm v1.2.0 // indirect
-	github.com/segmentio/encoding v0.3.6 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
@@ -438,8 +436,6 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect; @grafana-app-platform-squad
 )
 
-require github.com/grafana/grafana-cloud-migration-snapshot v1.0.0
-
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.4 // indirect
@@ -460,8 +456,11 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pressly/goose/v3 v3.20.0 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
+	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
+	github.com/segmentio/encoding v0.3.6 // indirect
 	github.com/sethvargo/go-retry v0.2.4 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
