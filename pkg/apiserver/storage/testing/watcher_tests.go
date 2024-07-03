@@ -31,7 +31,7 @@ import (
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	utilflowcontrol "k8s.io/apiserver/pkg/util/flowcontrol"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 func RunTestWatch(ctx context.Context, t *testing.T, store storage.Interface) {
@@ -296,7 +296,7 @@ func RunTestWatchFromNonZero(ctx context.Context, t *testing.T, store storage.In
 		t.Fatalf("Watch failed: %v", err)
 	}
 	out := &example.Pod{}
-	store.GuaranteedUpdate(ctx, key, out, true, nil, storage.SimpleUpdate(
+	_ = store.GuaranteedUpdate(ctx, key, out, true, nil, storage.SimpleUpdate(
 		func(runtime.Object) (runtime.Object, error) {
 			newObj := storedObj.DeepCopy()
 			newObj.Annotations = map[string]string{"version": "2"}
@@ -1196,7 +1196,7 @@ func RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx context.Context
 // In that case we expect a watch request to be established.
 func RunSendInitialEventsBackwardCompatibility(ctx context.Context, t *testing.T, store storage.Interface) {
 	opts := storage.ListOptions{Predicate: storage.Everything}
-	opts.SendInitialEvents = pointer.Bool(true)
+	opts.SendInitialEvents = ptr.To(true)
 	w, err := store.Watch(ctx, KeyFunc("", ""), opts)
 	require.NoError(t, err)
 	w.Stop()
