@@ -43,20 +43,11 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     }
   }
 
-  let defaultLinks = panel.fieldConfig.defaults.links;
-
-  if (defaultLinks != null) {
-    // copy to all elements that have any field-mapped dimension
-    addLinks(panel.options.root.elements, defaultLinks);
-    panel.fieldConfig.defaults.links = undefined;
-  }
-
   for (const override of panel.fieldConfig.overrides) {
     if (override.matcher.id === FieldMatcherID.byName) {
       let props: DynamicConfigValue[] = [];
 
-      // append override links to elements with dimensiones mapped to same field name
-      // TODO: this isnt 100% correct, cause it will append to any already-added default field links, rather than override those
+      // append override links to elements with dimensions mapped to same field name
       for (const prop of override.properties) {
         if (prop.id === 'links') {
           addLinks(panel.options.root.elements, prop.value, override.matcher.options);
