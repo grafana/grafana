@@ -83,9 +83,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
       .then(() => {
         getAppEvents().publish({
           type: AppEvents.alertSuccess.name,
-          payload: [
-            t('explore.query-library.query-template-added', 'Query template successfully added to the library'),
-          ],
+          payload: [t('explore.query-library.query-template-edited', 'Query template successfully edited')],
         });
         return true;
       })
@@ -106,7 +104,10 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
       data.description || t('explore.query-library.default-description', 'Public', { timestamp: timestamp });
 
     if (templateData?.fullSpec) {
-      handleEditQueryTemplate(templateData.fullSpec).then((isSuccess) => {
+      handleEditQueryTemplate({
+        ...templateData.fullSpec,
+        spec: { ...templateData.fullSpec.spec, title: data.description },
+      }).then((isSuccess) => {
         onSave(isSuccess);
       });
     } else if (queryToAdd) {

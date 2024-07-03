@@ -83,8 +83,8 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
         <QueryTemplateForm
           onCancel={() => setEditFormOpen(false)}
           templateData={queryTemplate}
-          onSave={(data) => {
-            console.log(data);
+          onSave={() => {
+            setEditFormOpen(false);
           }}
         />
       </Modal>
