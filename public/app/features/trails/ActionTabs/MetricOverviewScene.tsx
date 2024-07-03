@@ -66,23 +66,25 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const variable = model.getVariable();
     const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
+    const help = metadata?.help;
+    const type = metadata?.type;
+    const unit = metadata?.unit;
+
     return (
       <StatusWrapper isLoading={labelsLoading || metadataLoading}>
         <Stack gap={6}>
           <>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Description</Text>
-              <div style={{ maxWidth: 360 }}>
-                {metadata?.help ? <div>{metadata?.help}</div> : <i>No description available</i>}
-              </div>
+              <Text weight={textWeight(help)}>Description</Text>
+              <div style={{ maxWidth: 360 }}>{help ? help : '&nbsp;'}</div>
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Type</Text>
-              {metadata?.type ? <div>{metadata?.type}</div> : <i>Unknown</i>}
+              <Text weight={textWeight(type)}>Type</Text>
+              {type ? type : '&nbsp;'}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Unit</Text>
-              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>Unknown</i>}
+              <Text weight={textWeight(unit)}>Unit</Text>
+              {unit ? unit : '&nbsp;'}
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
@@ -117,4 +119,8 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 
 export function buildMetricOverviewScene() {
   return new MetricOverviewScene({});
+}
+
+function textWeight(data: string | undefined) {
+  return data ? 'medium' : 'light';
 }
