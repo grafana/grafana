@@ -28,7 +28,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, DashboardDataDTO } from 'app/types';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
@@ -359,7 +359,7 @@ async function clickNewButton() {
 }
 
 function createModel(dashboard: DashboardModel) {
-  const scene = createDashboardSceneFromDashboardModel(dashboard);
+  const scene = createDashboardSceneFromDashboardModel(dashboard, {} as DashboardDataDTO);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
   const model = new PanelDataAlertingTab(VizPanelManager.createFor(vizPanel));
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);

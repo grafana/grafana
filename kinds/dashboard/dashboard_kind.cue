@@ -99,6 +99,9 @@ lineage: schemas: [{
 
 			// Snapshot options. They are present only if the dashboard is a snapshot.
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
+
+			// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
+			preload?: bool
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		///////////////////////////////////////
