@@ -45,8 +45,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sqlobj"
 )
 
 var (
@@ -267,20 +267,13 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		// resourceServer, err := entitybridge.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// HACK... for now
-		resourceServer, err := sqlobj.ProvideSQLResourceServer(s.db, s.tracing)
+		server, err := entitybridge.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
-
-		store := resource.NewLocalResourceStoreClient(resourceServer)
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(store,
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
 			o.RecommendedOptions.Etcd.StorageConfig.Codec)
+
 	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
@@ -295,9 +288,9 @@ func (s *service) start(ctx context.Context) error {
 		// defer conn.Close()
 
 		// Create a client instance
-		store := resource.NewResourceStoreClientGRPC(conn)
+		client := resource.NewResourceStoreClientGRPC(conn)
 
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {

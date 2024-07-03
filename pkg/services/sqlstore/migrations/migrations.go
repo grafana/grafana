@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ssosettings"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	basicResourceMigrations "github.com/grafana/grafana/pkg/storage/unified/basic/migrations"
 )
 
 // --- Migration Guide line ---
@@ -124,7 +125,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.AddRecordingRuleColumns(mg)
 
-	addObjectMigrations(mg)
+	basicResourceMigrations.AddBasicResourceMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

@@ -3,7 +3,6 @@ module github.com/grafana/grafana/pkg/storage/unified/resource
 go 1.21.10
 
 require (
-	github.com/bwmarrin/snowflake v0.3.0
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20240611075137-331cbe4e840f

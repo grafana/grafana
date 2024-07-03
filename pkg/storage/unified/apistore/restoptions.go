@@ -21,14 +21,21 @@ import (
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	store resource.ResourceStoreClient
-	Codec runtime.Codec
+	client resource.ResourceStoreClient
+	Codec  runtime.Codec
 }
 
-func NewRESTOptionsGetter(store resource.ResourceStoreClient, codec runtime.Codec) *RESTOptionsGetter {
+func NewRESTOptionsGetterForServer(server resource.ResourceServer, codec runtime.Codec) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		store: store,
-		Codec: codec,
+		client: resource.NewLocalResourceStoreClient(server),
+		Codec:  codec,
+	}
+}
+
+func NewRESTOptionsGetter(client resource.ResourceStoreClient, codec runtime.Codec) *RESTOptionsGetter {
+	return &RESTOptionsGetter{
+		client: client,
+		Codec:  codec,
 	}
 }
 
@@ -67,7 +74,7 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, resource, f.store, f.Codec, keyFunc, newFunc, newListFunc, getAttrsFunc)
+			return NewStorage(config, resource, f.client, f.Codec, keyFunc, newFunc, newListFunc, getAttrsFunc)
 		},
 		DeleteCollectionWorkers:   0,
 		EnableGarbageCollection:   false,
