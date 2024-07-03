@@ -1,14 +1,14 @@
 import { isString } from 'lodash';
 
+import { KeyValue } from '../types/data';
 import {
-  DataSourcePluginOptionsEditorProps,
-  SelectableValue,
-  KeyValue,
-  DataSourceSettings,
   DataSourceInstanceSettings,
-  DataSourceRef,
   DataSourceJsonData,
-} from '../types';
+  DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
+} from '../types/datasource';
+import { DataSourceRef } from '../types/query';
+import { SelectableValue } from '../types/select';
 
 /**
  * Convert instance settings to a reference
