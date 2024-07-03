@@ -113,7 +113,7 @@ For an example of the `Run` method, see the previous example.
 
 ## Disabled services
 
-If you want to guarantee that a background service is not run by Grafana when certain criteria are met or if a service is disabled, your service must satisfy the `registry.CanBeDisabled` interface. When the `service.IsDisabled` method returns `true`, Grafana won't call the `service.Run` method.
+If you want to guarantee that a background service is not run by Grafana when certain criteria are met, or if a service is disabled, your service must satisfy the `registry.CanBeDisabled` interface. When the `service.IsDisabled` method returns `true`, Grafana won't call the `service.Run` method.
 
 If you want to run certain initialization code whether service is disabled or not, you need to handle this in the service factory method.
 
