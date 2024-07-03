@@ -167,7 +167,7 @@ func (s *sqlStore) Delete(ctx.Context, root.DeleteLetterCommand) error { … }
 
 ## Legacy package hierarchy
 
-> **Note:** A lot of services still adhere to the legacy model as outlined below. While it is okay to
+> **Note:** Many services still adhere to the legacy model as outlined below. While it is okay to
 > extend existing services based on the legacy model, you are _strongly_ encouraged to structure any
 > new services or major refactorings using the new package layout.
 
