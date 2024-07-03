@@ -27,7 +27,7 @@ type ZanzanaSynchroniser struct {
 	collectors []TupleCollector
 }
 
-func NewZanzanaSynchroniser(client zanzana.Client, store db.ReplDB, collectors ...TupleCollector) *ZanzanaSynchroniser {
+func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...TupleCollector) *ZanzanaSynchroniser {
 	// Append shared collectors that is used by both enterprise and oss
 	collectors = append(
 		collectors,
@@ -75,7 +75,7 @@ func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
 // managedPermissionsCollector collects managed permissions into provided tuple map.
 // It will only store actions that are supported by our schema. Managed permissions can
 // be directly mapped to user/team/role without having to write an intermediate role.
-func managedPermissionsCollector(store db.ReplDB) TupleCollector {
+func managedPermissionsCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "managed"
 		const query = `
@@ -100,7 +100,7 @@ func managedPermissionsCollector(store db.ReplDB) TupleCollector {
 		}
 
 		var permissions []Permission
-		err := store.DB().WithDbSession(ctx, func(sess *db.Session) error {
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query).Find(&permissions)
 		})
 
@@ -134,7 +134,7 @@ func managedPermissionsCollector(store db.ReplDB) TupleCollector {
 	}
 }
 
-func teamMembershipCollector(store db.ReplDB) TupleCollector {
+func teamMembershipCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "team_membership"
 		const query = `
@@ -151,7 +151,7 @@ func teamMembershipCollector(store db.ReplDB) TupleCollector {
 		}
 
 		var memberships []membership
-		err := store.DB().WithDbSession(ctx, func(sess *db.Session) error {
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query).Find(&memberships)
 		})
 

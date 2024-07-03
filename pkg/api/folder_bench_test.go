@@ -463,7 +463,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	actionSets := resourcepermissions.NewActionSetService()
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db,
+		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db.DB(),
 	)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
