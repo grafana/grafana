@@ -33,9 +33,9 @@ export const queryLibraryApi = createApi({
         url: `${editQueryTemplateCommand.uid}`,
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json-patch+json',
+          'Content-Type': 'application/merge-patch+json',
         },
-        data: editQueryTemplateCommand.jsonPatch,
+        data: editQueryTemplateCommand.partialSpec,
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),
