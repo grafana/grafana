@@ -56,19 +56,18 @@ func convertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 
 func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
 	uid := getIntervalUID(interval) // TODO replace to stable UID when we switch to normal storage
-	return model.TimeInterval{
+	i := model.TimeInterval{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			UID:       types.UID(uid), // TODO This is needed to make PATCH work
-			Name:      uid,            // TODO replace to stable UID when we switch to normal storage
-			Namespace: namespacer(orgID),
-			Annotations: map[string]string{ // TODO find a better place for provenance?
-				"grafana.com/provenance": string(interval.Provenance),
-			},
+			UID:             types.UID(uid), // TODO This is needed to make PATCH work
+			Name:            uid,            // TODO replace to stable UID when we switch to normal storage
+			Namespace:       namespacer(orgID),
 			ResourceVersion: interval.Version,
 		},
 		Spec: spec,
 	}
+	i.SetProvenanceStatus(string(interval.Provenance))
+	return i
 }
 
 func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInterval, error) {

@@ -191,15 +191,13 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 			var expected = &v0alpha1.TimeInterval{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
-					Annotations: map[string]string{
-						"grafana.com/provenance": "",
-					},
 				},
 				Spec: v0alpha1.TimeIntervalSpec{
 					Name:          fmt.Sprintf("time-interval-1-%s", tc.user.Identity.GetLogin()),
 					TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
 				},
 			}
+			expected.SetProvenanceStatus("")
 			d, err := json.Marshal(expected)
 			require.NoError(t, err)
 
@@ -362,7 +360,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 		},
 	}, v1.CreateOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "", created.Annotations["grafana.com/provenance"])
+	require.Equal(t, "none", created.GetProvenanceStatus())
 
 	t.Run("should provide provenance status", func(t *testing.T) {
 		require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
@@ -373,7 +371,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 
 		got, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "API", got.Annotations["grafana.com/provenance"])
+		require.Equal(t, "API", got.GetProvenanceStatus())
 	})
 	t.Run("should not let update if provisioned", func(t *testing.T) {
 		updated := created.DeepCopy()
