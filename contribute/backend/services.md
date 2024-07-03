@@ -2,7 +2,7 @@
 
 A Grafana _service_ encapsulates and exposes application logic to the rest of the application through a set of related operations.
 
-Grafana uses [Wire](https://github.com/google/wire), which is a code generation tool that automates connecting components using [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection). Wire represents ependencies between components as function parameters, thus encouraging explicit initialization instead of using global variables.
+Grafana uses [Wire](https://github.com/google/wire), which is a code generation tool that automates connecting components using [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection). Wire represents dependencies between components as function parameters, which encourages explicit initialization instead of global variables.
 
 Even though the services in Grafana do different things, they share a number of patterns. To better understand how a service works, let's build one from scratch!
 
