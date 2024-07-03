@@ -216,13 +216,13 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: $(BRA) ## Build and run web server on filesystem changes.
+run: $(BRA) ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
 	$(BRA) run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
 	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
-		./pkg/cmd/grafana -- server -packaging=dev cfg:app_mode=development
+		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
