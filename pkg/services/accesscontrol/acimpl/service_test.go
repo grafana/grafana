@@ -42,6 +42,7 @@ func setupTestEnv(t testing.TB) *Service {
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
 		store:         database.ProvideService(db.InitTestDB(t)),
+		tracer:        tracing.InitializeTracerForTest(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -69,6 +70,8 @@ func TestUsageMetrics(t *testing.T) {
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
+				nil,
+				nil,
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})

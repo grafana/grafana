@@ -1,6 +1,7 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, SynchronousDataTransformerInfo, FieldMatcher, DataTransformContext } from '../../types';
+import { DataFrame } from '../../types/dataFrame';
+import { DataTransformContext, FieldMatcher, SynchronousDataTransformerInfo } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 

@@ -1,7 +1,8 @@
 import { difference } from 'lodash';
 
 import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
-import { Field, FieldType, NullValueMode } from '../types/index';
+import { NullValueMode } from '../types/data';
+import { Field, FieldType } from '../types/dataFrame';
 
 import { fieldReducers, ReducerID, reduceField, defaultCalcs } from './fieldReducer';
 

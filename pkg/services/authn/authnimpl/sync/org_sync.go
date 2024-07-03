@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -14,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service, cfg *setting.Cfg) *OrgSync {
-	return &OrgSync{userService, orgService, accessControl, cfg, log.New("org.sync")}
+func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service, cfg *setting.Cfg, tracer tracing.Tracer) *OrgSync {
+	return &OrgSync{userService, orgService, accessControl, cfg, log.New("org.sync"), tracer}
 }
 
 type OrgSync struct {
@@ -23,11 +24,14 @@ type OrgSync struct {
 	orgService    org.Service
 	accessControl accesscontrol.Service
 	cfg           *setting.Cfg
-
-	log log.Logger
+	log           log.Logger
+	tracer        tracing.Tracer
 }
 
 func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "org.sync.SyncOrgRolesHook")
+	defer span.End()
+
 	if !id.ClientParams.SyncOrgRoles {
 		return nil
 	}
@@ -131,6 +135,9 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 }
 
 func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request, err error) {
+	ctx, span := s.tracer.Start(ctx, "org.sync.SetDefaultOrgHook")
+	defer span.End()
+
 	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil || err != nil {
 		return
 	}
@@ -166,6 +173,9 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 }
 
 func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "org.sync.validateUsingOrg")
+	defer span.End()
+
 	query := org.GetUserOrgListQuery{UserID: userID}
 
 	result, err := s.orgService.GetUserOrgList(ctx, &query)
