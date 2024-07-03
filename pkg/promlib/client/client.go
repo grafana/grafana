@@ -94,7 +94,6 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 		return nil, err
 	}
 	u.RawQuery = reqUrlParsed.RawQuery
-
 	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
 	// nad we want to respect that.
 	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body))

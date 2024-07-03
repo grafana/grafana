@@ -109,7 +109,8 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	if strings.EqualFold(req.Path, "version-detect") {
+	switch {
+	case strings.EqualFold(req.Path, "version-detect"):
 		versionObj, found := i.versionCache.Get("version")
 		if found {
 			return sender.Send(versionObj.(*backend.CallResourceResponse))
@@ -121,6 +122,13 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		}
 		i.versionCache.Set("version", vResp, cache.DefaultExpiration)
 		return sender.Send(vResp)
+
+	case strings.EqualFold(req.Path, "selectors"):
+		resp, err := i.resource.GetSelectors(ctx, req)
+		if err != nil {
+			return err
+		}
+		return sender.Send(resp)
 	}
 
 	resp, err := i.resource.Execute(ctx, req)
