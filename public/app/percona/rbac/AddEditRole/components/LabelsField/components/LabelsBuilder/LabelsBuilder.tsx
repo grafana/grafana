@@ -1,13 +1,10 @@
 import React, { FC, useMemo } from 'react';
 
+import { MetricsLabelsSection, PromQuery, PrometheusDatasource, QueryPreview } from '@grafana/prometheus';
+import { promQueryModeller } from '@grafana/prometheus/src/querybuilder/PromQueryModeller';
+import { buildVisualQueryFromString } from '@grafana/prometheus/src/querybuilder/parsing';
+import { PromVisualQuery } from '@grafana/prometheus/src/querybuilder/types';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { promQueryModeller } from 'app/plugins/datasource/prometheus/querybuilder/PromQueryModeller';
-import { MetricsLabelsSection } from 'app/plugins/datasource/prometheus/querybuilder/components/MetricsLabelsSection';
-import { QueryPreview } from 'app/plugins/datasource/prometheus/querybuilder/components/QueryPreview';
-import { buildVisualQueryFromString } from 'app/plugins/datasource/prometheus/querybuilder/parsing';
-import { PromVisualQuery } from 'app/plugins/datasource/prometheus/querybuilder/types';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { styles } from './LabelsBuilder.styles';
 
@@ -32,8 +29,9 @@ const LabelsBuilder: FC<LabelsBuilderProps> = ({ value, onChange }) => {
   };
 
   return (
-    <div className={styles.QueryBuilder}>
-      <MetricsLabelsSection datasource={datasource} onChange={handleQueryChange} query={visualQuery} hideMetric />
+    <div className={styles.QueryBuilder} data-testid="test">
+      {/* @PERCONA_TODO hide metric */}
+      <MetricsLabelsSection datasource={datasource} onChange={handleQueryChange} query={visualQuery} />
       <div />
       {query.expr && <QueryPreview query={query.expr} />}
     </div>
