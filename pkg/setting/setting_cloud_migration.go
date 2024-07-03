@@ -1,12 +1,15 @@
 package setting
 
 import (
+	"os"
 	"time"
 )
 
 type CloudMigrationSettings struct {
 	IsTarget                  bool
 	GcomAPIToken              string
+	SnapshotFolder            string
+	StartSnapshotTimeout      time.Duration
 	FetchInstanceTimeout      time.Duration
 	CreateAccessPolicyTimeout time.Duration
 	FetchAccessPolicyTimeout  time.Duration
@@ -23,6 +26,8 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cloudMigration := cfg.Raw.Section("cloud_migration")
 	cfg.CloudMigration.IsTarget = cloudMigration.Key("is_target").MustBool(false)
 	cfg.CloudMigration.GcomAPIToken = cloudMigration.Key("gcom_api_token").MustString("")
+	cfg.CloudMigration.SnapshotFolder = cloudMigration.Key("snapshot_folder").MustString("")
+	cfg.CloudMigration.StartSnapshotTimeout = cloudMigration.Key("start_snapshot_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.FetchInstanceTimeout = cloudMigration.Key("fetch_instance_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.CreateAccessPolicyTimeout = cloudMigration.Key("create_access_policy_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.FetchAccessPolicyTimeout = cloudMigration.Key("fetch_access_policy_timeout").MustDuration(5 * time.Second)
@@ -32,4 +37,9 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.DeleteTokenTimeout = cloudMigration.Key("delete_token_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.TokenExpiresAfter = cloudMigration.Key("token_expires_after").MustDuration(7 * 24 * time.Hour)
 	cfg.CloudMigration.IsDeveloperMode = cloudMigration.Key("developer_mode").MustBool(false)
+
+	if cfg.CloudMigration.SnapshotFolder == "" {
+		homeDir, _ := os.UserHomeDir()
+		cfg.CloudMigration.SnapshotFolder = homeDir
+	}
 }

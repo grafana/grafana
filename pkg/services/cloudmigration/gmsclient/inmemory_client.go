@@ -15,7 +15,7 @@ func NewInMemoryClient() Client {
 }
 
 type memoryClientImpl struct {
-	snapshot *cloudmigration.InitializeSnapshotResponse
+	snapshot *cloudmigration.StartSnapshotResponse
 }
 
 func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
@@ -48,11 +48,11 @@ func (c *memoryClientImpl) MigrateData(
 	return &result, nil
 }
 
-func (c *memoryClientImpl) InitializeSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.InitializeSnapshotResponse, error) {
-	c.snapshot = &cloudmigration.InitializeSnapshotResponse{
-		EncryptionKey:  util.GenerateShortUID(),
-		GMSSnapshotUID: util.GenerateShortUID(),
-		UploadURL:      "localhost:3000",
+func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+	c.snapshot = &cloudmigration.StartSnapshotResponse{
+		EncryptionKey: util.GenerateShortUID(),
+		SnapshotID:    util.GenerateShortUID(),
+		UploadURL:     "localhost:3000",
 	}
 
 	return c.snapshot, nil
