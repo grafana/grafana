@@ -8,7 +8,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
-import { useLoadUserPreferencesQuery, usePatchUserPreferencesMutation } from 'app/features/preferences/api';
+import {
+  useGetUserPreferencesQuery,
+  usePatchUserPreferencesMutation,
+} from 'app/features/preferences/api/endpoints.gen';
 import { useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
@@ -27,7 +30,7 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const preferences = useLoadUserPreferencesQuery();
+    const preferences = useGetUserPreferencesQuery();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = useMemo(() => preferences.data?.navbar?.savedItemIds || [], [preferences]);
 
@@ -64,7 +67,7 @@ export const MegaMenu = memo(
       if (id) {
         const newItems = isPinned(id) ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
         patchPreferences({
-          body: {
+          preferencesDto: {
             navbar: {
               savedItemIds: newItems,
             },
