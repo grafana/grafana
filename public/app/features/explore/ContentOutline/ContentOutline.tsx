@@ -7,6 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
+import { ITEM_TYPES } from './ContentOutlineItem';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
@@ -56,7 +57,12 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }, {});
   });
 
-  const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
+  const scrollIntoView = (
+    ref: HTMLElement | null,
+    itemPanelId: string,
+    itemType: ITEM_TYPES | undefined,
+    customOffsetTop = 0
+  ) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
 
@@ -74,10 +80,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       behavior: 'smooth',
     });
 
-    reportInteraction('explore_toolbar_contentoutline_clicked', {
-      item: 'select_section',
-      type: itemPanelId,
-    });
+    // don't report for filters as they have their own interaction tracking setup in the onClick handler
+    if (itemType !== 'filter') {
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'select_section',
+        type: itemPanelId,
+      });
+    }
   };
 
   const toggle = () => {
@@ -137,7 +146,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
 
     if (activeParent) {
-      scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.customTopOffset);
+      scrollIntoView(activeParent.ref, activeParent.panelId, 'filter', activeParent.customTopOffset);
     }
   };
 
@@ -173,7 +182,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
                   })}
                   icon={item.icon}
-                  onClick={() => scrollIntoView(item.ref, item.panelId)}
+                  onClick={() => scrollIntoView(item.ref, item.panelId, item.type)}
                   tooltip={item.title}
                   collapsible={isCollapsible(item)}
                   collapsed={!sectionsExpanded[item.id]}
@@ -210,7 +219,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                           onClick={(e) => {
                             child.type === 'filter'
                               ? activateFilter(child.id)
-                              : scrollIntoView(child.ref, child.panelId, child.customTopOffset);
+                              : scrollIntoView(child.ref, child.panelId, child.type, child.customTopOffset);
                             child.onClick?.(e);
                           }}
                           tooltip={child.title}
