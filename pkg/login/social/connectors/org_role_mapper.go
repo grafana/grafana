@@ -53,9 +53,9 @@ func (m *OrgRoleMapper) MapOrgRoles(
 		return m.getDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
 	}
 
-	userOrgRoles := getMappedOrgRoles(externalOrgs, mappingCfg.orgMappings)
+	userOrgRoles, globalRole := getMappedOrgRoles(externalOrgs, mappingCfg.orgMappings)
 
-	if err := m.handleGlobalOrgMapping(userOrgRoles); err != nil {
+	if err := m.handleGlobalOrgMapping2(userOrgRoles, globalRole); err != nil {
 		// Cannot map global org roles, return nil (prevent resetting assignments)
 		return nil
 	}
@@ -125,6 +125,28 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 	return nil
 }
 
+func (m *OrgRoleMapper) handleGlobalOrgMapping2(orgRoles map[int64]org.RoleType, globalRole org.RoleType) error {
+	// No global role mapping => return
+	if globalRole == "" {
+		return nil
+	}
+
+	allOrgIDs, err := m.getAllOrgs()
+	if err != nil {
+		// Prevent resetting assignments
+		clear(orgRoles)
+		m.logger.Warn("error fetching all orgs, removing org mapping to prevent org sync")
+		return err
+	}
+
+	// Global mapping => for all orgs get top role mapping
+	for orgID := range allOrgIDs {
+		orgRoles[orgID] = getTopRole(orgRoles[orgID], globalRole)
+	}
+
+	return nil
+}
+
 // ParseOrgMappingSettings parses the `org_mapping` setting and returns an internal representation of the mapping.
 func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) *MappingConfiguration {
 	var res = []OrgRoleMapping{}
@@ -156,15 +178,25 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 			return &MappingConfiguration{orgMappings: []OrgRoleMapping{}, strictRoleMapping: roleStrict}
 		}
 
-		//TODO: mapToAllOrgs := decide on the value
-		orderedResMap[kv[0]] = OrgRoleMapping{
-			ExternalOrg:   kv[0],
-			InternalOrgID: int64(orgID),
-			Role:          getRoleForInternalOrgMapping(kv),
-			// TODO
-			//MapToAllOrgs:  mapToAllOrgs,
+		mapToAllOrgs := orgID == -1
+		orgMap := OrgRoleMapping{
+			ExternalOrg:  kv[0],
+			Role:         getRoleForInternalOrgMapping(kv),
+			MapToAllOrgs: mapToAllOrgs,
 		}
-
+		if mapToAllOrgs {
+			orgMap.MapToAllOrgs = true
+		} else {
+			orgMap.InternalOrgID = int64(orgID)
+		}
+		orderedResMap[kv[0]+fmt.Sprint(orgID)] = orgMap
+		// res = append(res, OrgRoleMapping{
+		// 	ExternalOrg:   kv[0],
+		// 	InternalOrgID: int64(orgID),
+		// 	Role:          getRoleForInternalOrgMapping(kv),
+		// 	// TODO
+		// 	//MapToAllOrgs:  mapToAllOrgs,
+		// })
 		res = convertOrderedResMapToSlice(orderedResMap)
 	}
 
@@ -224,7 +256,8 @@ func isValidOrgMappingFormat(kv []string) bool {
 	return len(kv) > 1 && len(kv) < 4
 }
 
-func getMappedOrgRoles(externalOrgs []string, orgMappings []OrgRoleMapping) map[int64]org.RoleType {
+func getMappedOrgRoles(externalOrgs []string, orgMappings []OrgRoleMapping) (map[int64]org.RoleType, org.RoleType) {
+	var globalRole org.RoleType
 	userOrgRoles := map[int64]org.RoleType{}
 
 	for _, mapping := range orgMappings {
@@ -235,12 +268,16 @@ func getMappedOrgRoles(externalOrgs []string, orgMappings []OrgRoleMapping) map[
 	for _, org := range externalOrgs {
 		for _, y := range orgMappings {
 			if org == y.ExternalOrg {
-				userOrgRoles[y.InternalOrgID] = getTopRole(y.Role, userOrgRoles[y.InternalOrgID])
+				if y.MapToAllOrgs {
+					globalRole = getTopRole(y.Role, globalRole)
+				} else {
+					userOrgRoles[y.InternalOrgID] = getTopRole(y.Role, userOrgRoles[y.InternalOrgID])
+				}
 			}
 		}
 	}
 
-	return userOrgRoles
+	return userOrgRoles, globalRole
 }
 
 func getTopRole(currRole org.RoleType, otherRole org.RoleType) org.RoleType {
