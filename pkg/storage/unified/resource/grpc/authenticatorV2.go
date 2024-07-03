@@ -125,6 +125,11 @@ func provideAuthenticatorV2(cfg *setting.Cfg, authCfg *authCfg, keysService sign
 }
 
 func (f *AuthenticatorV2) Authenticate(ctx context.Context) (context.Context, error) {
+	authCtx, err := identity.GetAuthCtx(ctx)
+	if err == nil && authCtx != nil {
+		return ctx, nil // noop, authentication context exists
+	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ctx, fmt.Errorf("no metadata found")
