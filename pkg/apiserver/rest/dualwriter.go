@@ -4,14 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog/v2"
 )
 
 var (
@@ -144,75 +141,6 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 type NamespacedKVStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key, value string) error
-}
-
-func SetDualWritingMode(
-	ctx context.Context,
-	kvs NamespacedKVStore,
-	legacy LegacyStorage,
-	storage Storage,
-	entity string,
-	desiredMode DualWriterMode,
-	reg prometheus.Registerer,
-) (DualWriter, error) {
-	toMode := map[string]DualWriterMode{
-		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
-		// writing to legacy storage without `unifiedStorage` enabled.
-		"1": Mode1,
-		"2": Mode2,
-		"3": Mode3,
-		"4": Mode4,
-	}
-	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
-
-	// Use entity name as key
-	m, ok, err := kvs.Get(ctx, entity)
-	if err != nil {
-		return nil, errors.New("failed to fetch current dual writing mode")
-	}
-
-	currentMode, valid := toMode[m]
-
-	if !valid && ok {
-		// Only log if "ok" because initially all instances will have mode unset for playlists.
-		klog.Info("invalid dual writing mode for playlists mode:", m)
-	}
-
-	if !valid || !ok {
-		// Default to mode 1
-		currentMode = Mode1
-
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
-			return nil, errDualWriterSetCurrentMode
-		}
-	}
-
-	// Desired mode is 2 and current mode is 1
-	if (desiredMode == Mode2) && (currentMode == Mode1) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode2
-
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
-			return nil, errDualWriterSetCurrentMode
-		}
-	}
-	if (desiredMode == Mode1) && (currentMode == Mode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode1
-
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
-			return nil, errDualWriterSetCurrentMode
-		}
-	}
-
-	// 	#TODO add support for other combinations of desired and current modes
-
-	return NewDualWriter(currentMode, legacy, storage, reg), nil
 }
 
 var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
