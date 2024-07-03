@@ -15,6 +15,7 @@ import (
 
 	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	zstore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 func TestMain(m *testing.M) {
@@ -89,6 +90,14 @@ func zanzanaServerIntegrationTest(tb testing.TB) *inprocgrpc.Channel {
 	}
 
 	db, cfg := db.InitTestDBWithCfg(tb)
+
+	// Hack to skip these tests on mysql 5.7
+	if db.GetDialect().DriverName() == migrator.MySQL {
+		if supported, err := db.RecursiveQueriesAreSupported(); !supported || err != nil {
+			tb.Skip("skipping integration test")
+		}
+	}
+
 	logger := log.NewNopLogger()
 
 	store, err := zstore.NewEmbeddedStore(cfg, db, logger)
