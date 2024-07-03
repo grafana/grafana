@@ -16,7 +16,6 @@ vendor/
 /requests
 tsconfig.tsbuildinfo
 __debug_bin*
-_output
 
 # Yarn
 .yarn/
