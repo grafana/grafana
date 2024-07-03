@@ -28,7 +28,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 		Tracer: tracer,
 	}
 
-	useEntitySQL := true
+	useEntitySQL := false
 	if useEntitySQL {
 		eDB, err := dbimpl.ProvideEntityDB(db, cfg, features, tracer)
 		if err != nil {

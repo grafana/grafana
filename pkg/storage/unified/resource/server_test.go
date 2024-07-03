@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -39,7 +38,6 @@ func TestSimpleServer(t *testing.T) {
 			Metadata:  fileblob.MetadataDontWrite, // skip
 		})
 		require.NoError(t, err)
-
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
 	store, err := NewCDKBackend(ctx, CDKBackendOptions{
@@ -53,7 +51,30 @@ func TestSimpleServer(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
-		raw := testdata(t, "01_create_playlist.json")
+		raw := []byte(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "fdgsv37qslr0ga",
+				"namespace": "default",
+				"annotations": {
+					"grafana.app/originName": "elsewhere",
+					"grafana.app/originPath": "path/to/item",
+					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+				}
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
+
 		key := &ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
@@ -143,14 +164,4 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, all.Items, 0) // empty
 	})
-}
-
-//go:embed testdata/*
-var testdataFS embed.FS
-
-func testdata(t *testing.T, filename string) []byte {
-	t.Helper()
-	b, err := testdataFS.ReadFile(`testdata/` + filename)
-	require.NoError(t, err)
-	return b
 }
