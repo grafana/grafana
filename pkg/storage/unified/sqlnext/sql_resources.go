@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Package-level errors.
@@ -157,48 +155,6 @@ func (s *sqlResourceStore) PrepareList(ctx context.Context, req *resource.ListRe
 	defer span.End()
 
 	fmt.Printf("TODO, LIST: %+v", req.Options.Key)
-
-	return nil, ErrNotImplementedYet
-}
-
-func (s *sqlResourceStore) PutBlob(ctx context.Context, req *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
-	if req.Method == resource.PutBlobRequest_HTTP {
-		return &resource.PutBlobResponse{
-			Status: &resource.StatusResult{
-				Status:  "Failure",
-				Message: "http upload not supported",
-				Code:    http.StatusNotImplemented,
-			},
-		}, nil
-	}
-
-	uid := util.GenerateShortUID()
-
-	fmt.Printf("TODO, UPLOAD: %s // %+v", uid, req)
-
-	return nil, ErrNotImplementedYet
-}
-
-func (s *sqlResourceStore) GetBlob(ctx context.Context, uid string, mustProxy bool) (*resource.GetBlobResponse, error) {
-	return nil, ErrNotImplementedYet
-}
-
-// Show resource history (and trash)
-func (s *sqlResourceStore) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	_, span := s.tracer.Start(ctx, "storage_server.History")
-	defer span.End()
-
-	fmt.Printf("TODO, GET History: %+v", req.Key)
-
-	return nil, ErrNotImplementedYet
-}
-
-// Used for efficient provisioning
-func (s *sqlResourceStore) Origin(ctx context.Context, req *resource.OriginRequest) (*resource.OriginResponse, error) {
-	_, span := s.tracer.Start(ctx, "storage_server.History")
-	defer span.End()
-
-	fmt.Printf("TODO, GET History: %+v", req.Key)
 
 	return nil, ErrNotImplementedYet
 }

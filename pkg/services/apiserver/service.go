@@ -45,8 +45,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sqlobj"
 )
 
 var (
@@ -267,7 +267,13 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		resourceServer, err := entitybridge.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
+		// resourceServer, err := entitybridge.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// HACK... for now
+		resourceServer, err := sqlobj.ProvideSQLResourceServer(s.db, s.tracing)
 		if err != nil {
 			return err
 		}
