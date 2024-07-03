@@ -150,14 +150,15 @@ func InstallAPIs(
 	for _, b := range builders {
 		var dualWrite grafanarest.DualWriteBuilder
 		if dualWriteEnabled {
-			mode := storageOpts.DualWriterDesiredModes[b.GetGroupVersion().Group]
+			gv := b.GetGroupVersion()
+			mode := storageOpts.DualWriterDesiredModes[gv.Group] // defaults to 0
 			over, ok := b.(DualWriteModeOverrider)
 			if ok {
 				mode = over.GetDesiredDualWriterMode()
 			}
 			if mode != grafanarest.Mode0 {
 				dualWrite = func(legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.DualWriter, error) {
-					return nil, fmt.Errorf("TODO init dual write (%d)", mode)
+					return grafanarest.NewDualWriter(mode, legacy, storage, reg), nil
 				}
 			}
 		}
