@@ -187,6 +187,7 @@ export class Scene {
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
     getPanelData: () => this.data,
+    getPanelInstance: () => this.panel,
   };
 
   updateData(data: PanelData) {

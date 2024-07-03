@@ -16,7 +16,6 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { DimensionContext } from 'app/features/dimensions';
 
-import { interpolateVariables } from './editor/element/utils';
 import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
@@ -115,6 +114,8 @@ export function getDataLinks(
   const panelData = dimensionContext.getPanelData();
   const frames = panelData?.series;
 
+  const canvasPanel = dimensionContext.getPanelInstance();
+
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
@@ -126,7 +127,21 @@ export function getDataLinks(
   };
 
   if (frames) {
-    elementOptions.getLinks = getLinksSupplier(frames[0], defaultField, {}, interpolateVariables);
+    elementOptions.getLinks = getLinksSupplier(
+      frames[0],
+      defaultField,
+      {
+        __dataContext: {
+          value: {
+            data: frames,
+            field: defaultField,
+            frame: frames[0],
+            frameIndex: 0,
+          },
+        },
+      },
+      canvasPanel.props.replaceVariables
+    );
   }
 
   if (elementOptions.getLinks) {

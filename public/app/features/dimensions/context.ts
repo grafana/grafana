@@ -7,6 +7,8 @@ import {
   TextDimensionConfig,
 } from '@grafana/schema';
 
+import { CanvasPanel } from '../../plugins/panel/canvas/CanvasPanel';
+
 import { DimensionSupplier } from './types';
 
 export interface DimensionContext {
@@ -16,4 +18,5 @@ export interface DimensionContext {
   getText(text: TextDimensionConfig): DimensionSupplier<string>;
   getResource(resource: ResourceDimensionConfig): DimensionSupplier<string>;
   getPanelData(): PanelData | undefined;
+  getPanelInstance(): CanvasPanel; // @TODO: For testing purposes - remove this!
 }
