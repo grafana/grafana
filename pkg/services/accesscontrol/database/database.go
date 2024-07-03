@@ -46,7 +46,7 @@ type AccessControlStore struct {
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	result := make([]accesscontrol.Permission, 0)
-	err := s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
+	err := s.sql.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
 			// no permission to fetch
 			return nil
