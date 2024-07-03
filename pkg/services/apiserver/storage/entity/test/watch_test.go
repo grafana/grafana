@@ -21,13 +21,11 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
-	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
-	storagetesting "k8s.io/apiserver/pkg/storage/testing"
 
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -109,7 +107,7 @@ func withDefaults(options *setupOptions, t *testing.T) {
 	options.newFunc = newPod
 	options.newListFunc = newPodList
 	options.prefix = t.TempDir()
-	options.resourcePrefix = "/pods"
+	options.resourcePrefix = "/resource/pods"
 	options.groupResource = schema.GroupResource{Resource: "pods"}
 }
 
@@ -136,8 +134,7 @@ func testSetup(t *testing.T, opts ...setupOption) (context.Context, storage.Inte
 			if err != nil {
 				return "", err
 			}
-			keyFn := grafanaregistry.NamespaceKeyFunc(setupOpts.groupResource)
-			return keyFn(genericapirequest.WithNamespace(genericapirequest.NewContext(), accessor.GetNamespace()), accessor.GetName())
+			return storagetesting.KeyFunc(accessor.GetNamespace(), accessor.GetName()), nil
 		},
 		setupOpts.newFunc,
 		setupOpts.newListFunc,
@@ -156,7 +153,6 @@ func TestIntegrationWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -168,7 +164,6 @@ func TestIntegrationClusterScopedWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
