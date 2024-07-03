@@ -15,9 +15,13 @@ import (
 
 func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o *options.Options) error {
 	defaultLogLevel := 0
-	ip := net.ParseIP(cfg.HTTPAddr)
-	if ip == nil {
-		return fmt.Errorf("invalid IP address: %s", cfg.HTTPAddr)
+	ip := net.IPv4(0, 0, 0, 0)
+	if cfg.HTTPAddr != "" {
+		httpAddr, err := net.ResolveIPAddr("ip", cfg.HTTPAddr)
+		if err != nil {
+			return fmt.Errorf("failed to parse IP address (%q): %w", cfg.HTTPAddr, err)
+		}
+		ip = httpAddr.IP
 	}
 	apiURL := cfg.AppURL
 	port, err := strconv.Atoi(cfg.HTTPPort)
