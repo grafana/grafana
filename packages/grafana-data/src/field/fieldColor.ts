@@ -6,8 +6,7 @@ import { colorManipulator } from '../themes';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
 import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
-import { RegistryItem } from '../utils';
-import { Registry } from '../utils/Registry';
+import { Registry, RegistryItem } from '../utils/Registry';
 
 import { getScaleCalculator, ColorScaleValue } from './scale';
 import { fallBackThreshold } from './thresholds';

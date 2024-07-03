@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, fireEvent, screen, waitFor, userEvent } from 'test/test-utils';
 
 import { VerifyEmailPage } from './VerifyEmailPage';

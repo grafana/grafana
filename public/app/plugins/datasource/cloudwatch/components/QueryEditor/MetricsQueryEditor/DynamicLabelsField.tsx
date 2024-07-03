@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { CodeEditor, getInputStyles, Monaco, useTheme2 } from '@grafana/ui';
 

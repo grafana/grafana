@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { FALLBACK_COLOR, PanelProps } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
