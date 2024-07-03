@@ -290,7 +290,7 @@ export const RowsList = (props: RowsListProps) => {
         const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
         const bbox = guessTextBoundingBox(
-          textWrapField.values[index],
+          row.values[seriesIndex],
           headerGroups[0].headers[seriesIndex],
           osContext,
           pxLineHeight,
@@ -374,7 +374,7 @@ export const RowsList = (props: RowsListProps) => {
       const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
       return guessTextBoundingBox(
-        textWrapField.values[index],
+        row.values[seriesIndex],
         headerGroups[0].headers[seriesIndex],
         osContext,
         pxLineHeight,
