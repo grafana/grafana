@@ -12,8 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    // Todo: standard vite config uses react-jsx but it causes typechecks to fail
-    "jsx": "react",
+    "jsx": "react-jsx",
 
     /* Linting */
     "strict": true,
