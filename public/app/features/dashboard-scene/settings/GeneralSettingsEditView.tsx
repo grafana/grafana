@@ -278,15 +278,11 @@ export class GeneralSettingsEditView
             </Field>
 
             <Field
-              label="Preload panels"
-              description="When enabled all panels will start loading as soon as the dashboard has been loaded"
-
-              // TODO
-              // label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Graph tooltip')}
-              // description={t(
-              //   'dashboard-settings.general.panel-options-graph-tooltip-description',
-              //   'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
-              // )}
+              label={t('dashboard-settings.general.panels-preload-label', 'Preload panels')}
+              description={t(
+                'dashboard-settings.general.panels-preload-description',
+                'When enabled all panels will start loading as soon as the dashboard has been loaded.'
+              )}
             >
               <Switch
                 id="preload-panels-dashboards-toggle"
