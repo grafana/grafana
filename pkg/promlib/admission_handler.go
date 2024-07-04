@@ -48,8 +48,8 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 	default:
 		return getBadRequest(fmt.Sprintf("expected apiVersion: v0alpha1, found: %s", settings.APIVersion)), nil
 	}
-	if settings.URL != "" {
-		return getBadRequest("unsupported URL value"), nil
+	if settings.URL == "" {
+		return getBadRequest("missing URL value"), nil
 	}
 
 	pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
