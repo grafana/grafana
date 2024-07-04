@@ -91,7 +91,7 @@ This feature makes it easy to include interactive visualizations from your Grafa
 
 The top header has gotten a major streamlining in Grafana V2.0.
 
-<img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png">
+<img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png" alt="Dashboard header">
 
 1. `Side menubar toggle` Toggle the side menubar on or off. This allows you to focus on the data presented on the Dashboard. The side menubar provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
 2. `Dashboard dropdown` The main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage the Playlist.
@@ -116,7 +116,7 @@ You can easily collapse or re-open the side menubar at any time by clicking the 
 
 ## New search view and starring dashboards
 
-![Dashboard header](/img/docs/v2/dashboard_search.jpg)
+![Dashboard search view](/img/docs/v2/dashboard_search.jpg)
 
 The dashboard search view has gotten a big overhaul. You can now see and filter by which dashboard you have personally starred.
 
