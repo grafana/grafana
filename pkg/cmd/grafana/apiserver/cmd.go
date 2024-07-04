@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/cli"
 
@@ -108,14 +110,31 @@ func RunCLI(opts commands.ServerOptions) int {
 	return cli.Run(cmd)
 }
 
+type lateInitializedTracingProvider struct {
+	trace.TracerProvider
+	tracer *lateInitializedTracingService
+}
+
+func (tp lateInitializedTracingProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
+	return tp.tracer
+}
+
 type lateInitializedTracingService struct {
 	tracing.Tracer
 }
 
 func newLateInitializedTracingService() *lateInitializedTracingService {
-	return &lateInitializedTracingService{
+	ts := &lateInitializedTracingService{
 		Tracer: tracing.InitializeTracerForTest(),
 	}
+
+	tp := &lateInitializedTracingProvider{
+		tracer: ts,
+	}
+
+	otel.SetTracerProvider(tp)
+
+	return ts
 }
 
 func (s *lateInitializedTracingService) InitTracer(tracer tracing.Tracer) {

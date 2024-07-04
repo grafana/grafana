@@ -70,12 +70,23 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest, opts ...grpc.CallOption) (*openfgav1.CheckResponse, error) {
-	return c.client.Check(ctx, in, opts...)
+func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	return c.client.Check(ctx, in)
 }
 
-func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest, opts ...grpc.CallOption) (*openfgav1.ListObjectsResponse, error) {
-	return c.client.ListObjects(ctx, in, opts...)
+func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	return c.client.ListObjects(ctx, in)
+}
+
+func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	_, err := c.client.Write(ctx, in)
+	return err
 }
 
 func (c *Client) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
