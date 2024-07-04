@@ -9,13 +9,13 @@ import (
 )
 
 func TestReadingLDAPSettings(t *testing.T) {
-	actualConfig, err := readConfig("testdata/ldap.toml")
+	config, err := readConfig("testdata/ldap.toml")
 	assert.Nil(t, err, "No error when reading ldap config")
-	assert.EqualValues(t, "127.0.0.1", actualConfig.Servers[0].Host)
-	assert.EqualValues(t, "tls1.3", actualConfig.Servers[0].MinTLSVersion)
-	assert.EqualValues(t, uint16(tls.VersionTLS13), actualConfig.Servers[0].minTLSVersion)
-	assert.EqualValues(t, []string{"TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"}, actualConfig.Servers[0].TLSCiphers)
-	assert.ElementsMatch(t, []uint16{tls.TLS_CHACHA20_POLY1305_SHA256, tls.TLS_AES_128_GCM_SHA256}, actualConfig.Servers[0].tlsCiphers)
+	assert.EqualValues(t, "127.0.0.1", config.Servers[0].Host)
+	assert.EqualValues(t, "tls1.3", config.Servers[0].MinTLSVersion)
+	assert.EqualValues(t, uint16(tls.VersionTLS13), config.Servers[0].minTLSVersion)
+	assert.EqualValues(t, []string{"TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"}, config.Servers[0].TLSCiphers)
+	assert.ElementsMatch(t, []uint16{tls.TLS_CHACHA20_POLY1305_SHA256, tls.TLS_AES_128_GCM_SHA256}, config.Servers[0].tlsCiphers)
 }
 
 func TestReadingLDAPSettingsWithEnvVariable(t *testing.T) {
@@ -33,20 +33,20 @@ func TestReadingLDAPSettingsUsingCache(t *testing.T) {
 	}
 
 	// cache is empty initially
-	assert.Nil(t, config)
+	assert.Nil(t, cachedConfig.config)
 
-	firstActualConfig, err := GetConfig(cfg)
+	firstConfig, err := GetConfig(cfg)
 
 	// cache has been initialized
-	assert.NotNil(t, config)
-	assert.EqualValues(t, *firstActualConfig, *config)
+	assert.NotNil(t, cachedConfig.config)
+	assert.EqualValues(t, *firstConfig, *cachedConfig.config)
 	assert.Nil(t, err)
-	assert.EqualValues(t, "127.0.0.1", config.Servers[0].Host)
+	assert.EqualValues(t, "127.0.0.1", cachedConfig.config.Servers[0].Host)
 
 	// make sure the cached config is returned on subsequent calls
-	cachedConfig := config
-	secondActualConfig, err := GetConfig(cfg)
+	config := cachedConfig.config
+	secondConfig, err := GetConfig(cfg)
 
-	assert.Equal(t, cachedConfig, secondActualConfig)
+	assert.Equal(t, config, secondConfig)
 	assert.Nil(t, err)
 }
