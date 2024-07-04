@@ -2,6 +2,7 @@ import { GrafanaTheme2, createTheme } from '@grafana/data';
 //@ts-ignore
 import { create } from '@storybook/theming';
 import '../../../public/app/core/icons/iconBundle';
+// TODO remove this comment
 
 const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({
