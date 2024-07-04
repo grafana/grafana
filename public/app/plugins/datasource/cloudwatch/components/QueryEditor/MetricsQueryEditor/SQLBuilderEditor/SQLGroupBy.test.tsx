@@ -17,7 +17,7 @@ const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   region: 'us-east-1',
   namespace: 'ec2',
   dimensions: { somekey: 'somevalue' },
-  metricQueryType: MetricQueryType.Query,
+  metricQueryType: MetricQueryType.Insights,
   metricEditorMode: MetricEditorMode.Builder,
   sql: sql,
 });

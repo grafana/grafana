@@ -271,7 +271,7 @@ type CloudWatchMetricsQuery struct {
 	Region *string        `json:"region,omitempty"`
 	Sql    *SQLExpression `json:"sql,omitempty"`
 
-	// When the metric query type is `metricQueryType` is set to `Query`, this field is used to specify the query string.
+	// When the metric query type is set to `Insights`, this field is used to specify the query string.
 	SqlExpression *string `json:"sqlExpression,omitempty"`
 
 	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
