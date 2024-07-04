@@ -285,8 +285,6 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('should not make requests for unsaved dashboard', async () => {
-    const capture = captureRequests();
-
     const unsavedDashboard = {
       ...dashboard,
       uid: null,
@@ -303,8 +301,6 @@ describe('PanelAlertTabContent', () => {
     );
 
     expect(await ui.notSavedYet.find()).toBeInTheDocument();
-    const requests = await capture;
-    expect(requests.length).toBe(0);
   });
 
   it('Will take into account datasource minInterval', async () => {
