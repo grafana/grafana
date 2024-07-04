@@ -1,17 +1,19 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useMemo, useCallback } from 'react';
+import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
-import { useGetUserPreferencesQuery, usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
+import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
+import { usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
@@ -27,9 +29,8 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const preferences = useGetUserPreferencesQuery();
     const [patchPreferences] = usePatchUserPreferencesMutation();
-    const pinnedItems = useMemo(() => preferences.data?.navbar?.savedItemIds || [], [preferences]);
+    const pinnedItems = usePinnedItems();
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -61,7 +62,7 @@ export const MegaMenu = memo(
     );
 
     const onPinItem = (id?: string) => {
-      if (id) {
+      if (id && config.featureToggles.pinNavItems) {
         const newItems = isPinned(id) ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
         patchPreferences({
           patchPrefsCmd: {

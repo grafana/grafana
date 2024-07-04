@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Icon, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -29,15 +30,17 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
         // As nav links are supposed to link to internal urls this option should be used with caution
         target === '_blank' && <Icon data-testid="external-link-icon" name="external-link-alt" />
       }
-      <Icon
-        name={isPinned ? 'favorite' : 'star'}
-        className={'pin-icon'}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onPin(id);
-        }}
-      />
+      {config.featureToggles.pinNavItems && (
+        <Icon
+          name={isPinned ? 'favorite' : 'star'}
+          className={'pin-icon'}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onPin(id);
+          }}
+        />
+      )}
     </div>
   );
 
