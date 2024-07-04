@@ -10,6 +10,7 @@ import { compact, uniqBy } from 'lodash';
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Labels } from '../../../../types/unified-alerting-dto';
+import { MatcherFieldValue } from '../types/silence-form';
 
 import { isPrivateLabelKey } from './labels';
 
@@ -143,6 +144,22 @@ export function quoteWithEscape(input: string) {
   const escaped = input.replace(/[\\"]/g, (c) => `\\${c}`);
   return `"${escaped}"`;
 }
+
+/**
+ * Quotes string only when reserved characters are used
+ */
+const RESERVED_CHARACTERS = /[\{\}\!\=\~\,\\\"\'\`\s]+/;
+export function quoteWithEscapeIfRequired(input: string) {
+  const shouldQuote = RESERVED_CHARACTERS.test(input);
+  return shouldQuote ? quoteWithEscape(input) : input;
+}
+
+export const encodeMatcher = ({ name, operator, value }: MatcherFieldValue) => {
+  const encodedLabelName = quoteWithEscapeIfRequired(name);
+  const encodedLabelValue = quoteWithEscape(value);
+
+  return `${encodedLabelName}${operator}${encodedLabelValue}`;
+};
 
 /**
  * Unquotes and unescapes a string **if it has been quoted**
