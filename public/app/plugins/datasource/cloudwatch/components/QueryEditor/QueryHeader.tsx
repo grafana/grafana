@@ -64,9 +64,10 @@ const QueryHeader = ({
     config.featureToggles.cloudWatchCrossAccountQuerying &&
     isMonitoringAccount &&
     (query.queryMode === 'Logs' ||
-      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Search) || 
-      (metricInsightsCrossAccountEnabled && isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Insights)
-    );
+      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Search) ||
+      (metricInsightsCrossAccountEnabled &&
+        isCloudWatchMetricsQuery(query) &&
+        query.metricQueryType === MetricQueryType.Insights));
 
   return (
     <>
