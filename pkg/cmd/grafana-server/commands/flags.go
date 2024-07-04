@@ -4,18 +4,19 @@ import "github.com/urfave/cli/v2"
 
 // flags for the grafana server command(s)
 var (
-	ConfigFile      string
-	HomePath        string
-	PidFile         string
-	Packaging       string
-	ConfigOverrides string
-	Version         bool
-	VerboseVersion  bool
-	Profile         bool
-	ProfileAddr     string
-	ProfilePort     uint64
-	Tracing         bool
-	TracingFile     string
+	ConfigFile        string
+	HomePath          string
+	PidFile           string
+	Packaging         string
+	ConfigOverrides   string
+	Version           bool
+	VerboseVersion    bool
+	Profile           bool
+	ProfileAddr       string
+	ProfilePort       uint64
+	ProfileContention bool
+	Tracing           bool
+	TracingFile       string
 )
 
 var commonFlags = []cli.Flag{
@@ -74,6 +75,12 @@ var commonFlags = []cli.Flag{
 		Value:       6060,
 		Usage:       "Define custom port for profiling",
 		Destination: &ProfilePort,
+	},
+	&cli.BoolFlag{
+		Name:        "profile-contention",
+		Value:       true,
+		Usage:       "Enable/disable contention profiling (report of all goroutine blocking and mutex contention events) (default true)",
+		Destination: &ProfileContention,
 	},
 	&cli.BoolFlag{
 		Name:        "tracing",

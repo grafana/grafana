@@ -12,24 +12,27 @@ import (
 )
 
 const (
-	profilingEnabledEnvName = "GF_DIAGNOSTICS_PROFILING_ENABLED"
-	profilingAddrEnvName    = "GF_DIAGNOSTICS_PROFILING_ADDR"
-	profilingPortEnvName    = "GF_DIAGNOSTICS_PROFILING_PORT"
-	tracingEnabledEnvName   = "GF_DIAGNOSTICS_TRACING_ENABLED"
-	tracingFileEnvName      = "GF_DIAGNOSTICS_TRACING_FILE"
+	profilingEnabledEnvName    = "GF_DIAGNOSTICS_PROFILING_ENABLED"
+	profilingAddrEnvName       = "GF_DIAGNOSTICS_PROFILING_ADDR"
+	profilingPortEnvName       = "GF_DIAGNOSTICS_PROFILING_PORT"
+	profilingContentionEnvName = "GF_DIAGNOSTICS_PROFILING_CONTENTION"
+	tracingEnabledEnvName      = "GF_DIAGNOSTICS_TRACING_ENABLED"
+	tracingFileEnvName         = "GF_DIAGNOSTICS_TRACING_FILE"
 )
 
 type profilingDiagnostics struct {
-	enabled bool
-	addr    string
-	port    uint64
+	enabled    bool
+	addr       string
+	port       uint64
+	contention bool
 }
 
-func newProfilingDiagnostics(enabled bool, addr string, port uint64) *profilingDiagnostics {
+func newProfilingDiagnostics(enabled bool, addr string, port uint64, contention bool) *profilingDiagnostics {
 	return &profilingDiagnostics{
-		enabled: enabled,
-		addr:    addr,
-		port:    port,
+		enabled:    enabled,
+		addr:       addr,
+		port:       port,
+		contention: contention,
 	}
 }
 
@@ -55,6 +58,15 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 			return fmt.Errorf("failed to parse %s environment variable to unsigned integer", profilingPortEnvName)
 		}
 		pd.port = port
+	}
+
+	contentionEnv := os.Getenv(profilingContentionEnvName)
+	if contentionEnv != "" {
+		contention, err := strconv.ParseBool(contentionEnv)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s environment variable as bool", profilingContentionEnvName)
+		}
+		pd.contention = contention
 	}
 
 	return nil
@@ -90,15 +102,20 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
-func setupProfiling(profile bool, profileAddr string, profilePort uint64) error {
-	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort)
+func setupProfiling(profile bool, profileAddr string, profilePort uint64, profileContention bool) error {
+	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, profileContention)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
 		return err
 	}
 
 	if profileDiagnostics.enabled {
-		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
-		runtime.SetBlockProfileRate(1)
+		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port, "contentionProfilingEnabled", profileDiagnostics.contention)
+
+		if profileDiagnostics.contention {
+			runtime.SetBlockProfileRate(1)
+			runtime.SetMutexProfileFraction(1)
+		}
+
 		go func() {
 			// TODO: We should enable the linter and fix G114 here.
 			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
