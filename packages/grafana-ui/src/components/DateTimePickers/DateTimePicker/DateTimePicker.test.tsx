@@ -14,7 +14,7 @@ afterAll(() => {
   return setTimeZoneResolver(() => defaultTimeZone);
 });
 
-const renderDatetimePicker = (props?: Props) => {
+const renderDatetimePicker = (props?: Partial<Props>) => {
   const combinedProps = Object.assign(
     {
       date: dateTimeForTimeZone(getTimeZone(), '2021-05-05 12:00:00'),
@@ -234,4 +234,20 @@ describe('Date time picker', () => {
       ).not.toBeInTheDocument();
     }
   );
+
+  it('should be able to use a custom timeZone', async () => {
+    renderDatetimePicker({
+      timeZone: 'America/New_York',
+      date: dateTimeForTimeZone(getTimeZone({ timeZone: 'utc' }), '2024-07-01 02:00:00'),
+    });
+
+    const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
+    expect(dateTimeInput).toHaveDisplayValue('2024-06-30 22:00:00');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
+    // Check that calendar date is set correctly
+    expect(screen.getByRole('button', { name: `June 30, 2024` })).toHaveClass('react-calendar__tile--active');
+    // Check that time is set correctly
+    expect(screen.getAllByRole('textbox')[1]).toHaveValue('22:00:00');
+  });
 });
