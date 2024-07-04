@@ -224,12 +224,13 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     useEffect(() => {
       if (date) {
+        const formattedDate = dateTimeFormat(date, { format, timeZone });
         setInternalDate({
-          invalid: !isValid(dateTimeFormat(date, { format, timeZone })),
-          value: isDateTime(date) ? dateTimeFormat(date, { format, timeZone }) : date,
+          invalid: !isValid(formattedDate),
+          value: isDateTime(date) ? formattedDate : date,
         });
       }
-    }, [date, format]);
+    }, [date, format, timeZone]);
 
     const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
       const isInvalid = !isValid(event.currentTarget.value);
