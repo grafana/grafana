@@ -23,12 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles, authnService authn.Service,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authnService authn.ServiceAuthenticateOnly,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:          cfg,
 		tracer:       tracer,
-		features:     features,
 		authnService: authnService,
 	}
 }
@@ -38,7 +37,7 @@ type ContextHandler struct {
 	Cfg          *setting.Cfg
 	tracer       tracing.Tracer
 	features     featuremgmt.FeatureToggles
-	authnService authn.Service
+	authnService authn.ServiceAuthenticateOnly
 }
 
 type reqContextKey = ctxkey.Key
