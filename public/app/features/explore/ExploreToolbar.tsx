@@ -80,7 +80,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   );
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
-  const showSmallPickerElement = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
+  const showSmallPickerElement = useSelector(
+    (state) => splitted || state.explore.panes[exploreId]!.containerWidth < (datasourceInstance?.meta.streaming ? 1305: 1210));
   const showSmallDataSourcePicker = useSelector(
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
