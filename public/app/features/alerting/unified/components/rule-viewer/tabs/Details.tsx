@@ -140,7 +140,7 @@ interface AnnotationValueProps {
   value: string;
 }
 
-function AnnotationValue({ value }: AnnotationValueProps) {
+export function AnnotationValue({ value }: AnnotationValueProps) {
   const needsExternalLink = value && value.startsWith('http');
   const tokenizeValue = <Tokenize input={value} delimiter={['{{', '}}']} />;
 

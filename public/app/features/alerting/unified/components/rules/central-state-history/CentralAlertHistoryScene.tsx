@@ -64,7 +64,12 @@ export const CentralAlertHistoryScene = () => {
       new SceneTimePicker({}),
       new SceneRefreshPicker({}),
     ],
-    $timeRange: new SceneTimeRange({}), //needed for using the time range sync in the url
+    // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
+    // and using a wider time range might lead to showing gaps in the events list and the chart.
+    $timeRange: new SceneTimeRange({
+      from: 'now-1h',
+      to: 'now',
+    }),
     $variables: new SceneVariableSet({
       variables: [filterVariable],
     }),
@@ -170,16 +175,16 @@ export const FilterInfo = () => {
       <Tooltip
         content={
           <div>
-            <Trans i18nKey="central-alert-history.filter.info.label1">
+            <Trans i18nKey="alerting.central-alert-history.filter.info.label1">
               Filter events using label querying without spaces, ex:
             </Trans>
             <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
-            <Trans i18nKey="central-alert-history.filter.info.label2">Invalid use of spaces:</Trans>
-            <pre>{`{severity= "critical"}`}</pre>
+            <Trans i18nKey="alerting.central-alert-history.filter.info.label2">Invalid use of spaces:</Trans>
+            <pre>{`{severity= "alerting.critical"}`}</pre>
             <pre>{`{severity ="critical"}`}</pre>
-            <Trans i18nKey="central-alert-history.filter.info.label3">Valid use of spaces:</Trans>
+            <Trans i18nKey="alerting.central-alert-history.filter.info.label3">Valid use of spaces:</Trans>
             <pre>{`{severity=" critical"}`}</pre>
-            <Trans i18nKey="central-alert-history.filter.info.label4">
+            <Trans i18nKey="alerting.central-alert-history.filter.info.label4">
               Filter alerts using label querying without braces, ex:
             </Trans>
             <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
