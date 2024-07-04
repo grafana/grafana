@@ -21,9 +21,9 @@ func TestReadingLDAPSettings(t *testing.T) {
 func TestReadingLDAPSettingsWithEnvVariable(t *testing.T) {
 	t.Setenv("ENV_PASSWORD", "MySecret")
 
-	actualConfig, err := readConfig("testdata/ldap.toml")
+	config, err := readConfig("testdata/ldap.toml")
 	require.NoError(t, err)
-	assert.EqualValues(t, "MySecret", actualConfig.Servers[0].BindPassword)
+	assert.EqualValues(t, "MySecret", config.Servers[0].BindPassword)
 }
 
 func TestReadingLDAPSettingsUsingCache(t *testing.T) {
