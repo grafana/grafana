@@ -150,9 +150,20 @@ jobs:
 
       - name: Run BigQuery query
         run: |
-          # gcloud config set project YOUR_PROJECT_ID
-          # gcloud bigquery query --nouse_legacy_sql 'YOUR_BIGQUERY_SQL_QUERY'
-          gcloud info
+          gcloud config set project grafanalabs-global
+          bq query --nouse_legacy_sql "
+          SELECT
+            property_name,
+            package_name,
+            COUNT(property_name) as cnt
+          FROM
+            \`grafanalabs-global.plugins_data.plugin_imports\`
+          WHERE
+            package_name IN ('@grafana/ui','@grafana/runtime','@grafana/experimental','@grafana/schema','@grafana/data')
+          GROUP BY
+            property_name, package_name
+          ORDER BY cnt DESC
+          "
 
       - name: Get link for the Github Action job
         id: job
