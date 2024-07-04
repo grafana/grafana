@@ -73,20 +73,22 @@ function usePagination(enablePagination: boolean, frames?: DataFrame[], maxPageS
   }
 
   const numberOfPages = Math.ceil(maybeNormalizedFrames.length / maxPageSize);
-  const pageOffset = (currentPage - 1) * maxPageSize;
+  // `maxPageSize` changing might lead to temporarily too large values of `currentPage`.
+  const currentPageCapped = Math.min(currentPage, numberOfPages);
+  const pageOffset = (currentPageCapped - 1) * maxPageSize;
   const paginatedFrames = maybeNormalizedFrames.slice(pageOffset, pageOffset + maxPageSize);
 
   // `paginationRev` needs to change value whenever any of the pagination settings changes.
   // It's used in to trigger a reconfiguration of the underlying graphs (which is cached,
   // hence an explicit nudge is required).
-  const paginationRev = `${currentPage}/${maxPageSize}`;
+  const paginationRev = `${currentPageCapped}/${maxPageSize}`;
 
   const showSmallVersion = paginationWidth < 550;
   const paginationElement = (
     <div className={styles.paginationContainer} ref={paginationWrapperRef}>
       <Pagination
         className={styles.paginationElement}
-        currentPage={currentPage}
+        currentPage={currentPageCapped}
         numberOfPages={numberOfPages}
         showSmallVersion={showSmallVersion}
         onNavigate={setCurrentPage}
