@@ -109,6 +109,19 @@ Use the **Transform** override property to transform series values without affec
 
 <!-- update shared filed above to add actual steps for adding this override -->
 
+## Add the Fill below to override
+
+The **Fill below to** option fills the area between two series. This option is only available as a series/field override.
+
+1. Edit the panel and click **Overrides**.
+1. Select the fields to fill below.
+1. In **Add override property**, select **Fill below to**.
+1. Select the series for which you want the fill to stop.
+
+The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
+
+{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
+
 ## Configuration options
 
 ### Panel options

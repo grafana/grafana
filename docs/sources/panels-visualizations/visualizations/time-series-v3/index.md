@@ -109,6 +109,19 @@ Use the **Transform** override property to transform series values without affec
 
 <!-- update shared filed above to add actual steps for adding this override -->
 
+## Add the Fill below to override
+
+The **Fill below to** option fills the area between two series. This option is only available as a series/field override.
+
+1. Edit the panel and click **Overrides**.
+1. Select the fields to fill below.
+1. In **Add override property**, select **Fill below to**.
+1. Select the series for which you want the fill to stop.
+
+The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
+
+{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
+
 ## Configuration options
 
 ### Panel options
@@ -117,27 +130,38 @@ Use the **Transform** override property to transform series values without affec
 
 ### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1">}}
+{{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1">}}
 
 ### Legend options
 
-{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/legend-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Axis options
 
 Options under the axis category change how the x- and y-axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
-| Option          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Time zone       | Set the desired time zone(s) to display along the x-axis.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Placement       | Select the placement of the y-axis. <br></br> **- Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow. <br>- **Left:** Display all y-axes on the left side. <br>- **Right:** Display all y-axes on the right side. <br>- **Hidden:** Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields. |
-| Label           | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Width           | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.<br></br>By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other.                                                                                                                            |
-| Show grid lines | Set the axis grid line visibility.<br>                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Color           | Set the color of the axis.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Show border     | Set the axis border visibility.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Scale           | Set the y-axis values scale.<br>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Centered zero   | Set the y-axis to be centered on zero.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Option                             | Description                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Time zone                          | Set the desired time zone(s) to display along the x-axis.                                                                                                                                                                                                                                                                                                                         |
+| [Placement](#placement)            | Select the placement of the y-axis.                                                                                                                                                                                                                                                                                                                                               |
+| Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.                                                                                                                                                                                                                                                                |
+| Width                              | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis. By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other. |
+| Show grid lines                    | Set the axis grid line visibility.<br>                                                                                                                                                                                                                                                                                                                                            |
+| Color                              | Set the color of the axis.                                                                                                                                                                                                                                                                                                                                                        |
+| Show border                        | Set the axis border visibility.                                                                                                                                                                                                                                                                                                                                                   |
+| Scale                              | Set the y-axis values scale.<br>                                                                                                                                                                                                                                                                                                                                                  |
+| Centered zero                      | Set the y-axis to be centered on zero.                                                                                                                                                                                                                                                                                                                                            |
+| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                         |
+| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                         |
+
+#### Placement
+
+Select the placement of the y-axis.
+
+- **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
+- **Left:** Display all y-axes on the left side.
+- **Right:** Display all y-axes on the right side.
+- **Hidden:** Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
 #### Soft min and soft max
 
@@ -150,6 +174,22 @@ To define hard limits of the y-axis, set standard min/max options. For more info
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
 ### Graph styles options
+
+| Option                                      | Description                                                                                                                                                                                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Style](#style)                             | Use this option to define how to display your time series data.                                                                                                                                                                       |
+| [Line interpolation](#line-interpolation)   | This option controls how the graph interpolates the series line.                                                                                                                                                                      |
+| [Line width](#line-width)                   | Line width is a slider that controls the thickness for series lines or the outline for bars.                                                                                                                                          |
+| [Fill opacity](#fill-opacity)               | Use opacity to specify the series area fill color.                                                                                                                                                                                    |
+| [Gradient mode](#gradient-mode)             | Gradient mode specifies the gradient fill, which is based on the series color.                                                                                                                                                        |
+| [Line style](#line-style)                   | Set the style of the line.                                                                                                                                                                                                            |
+| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph.                                                                                                                                                              |
+| [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected.                                                                                                                                              |
+| [Show points](#show-points)                 | You can configure your visualization to add points to lines or bars.                                                                                                                                                                  |
+| Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter.                                                                                                                                                                          |
+| [Stack series](#stack-series)               | Stacking allows Grafana to display series on top of each other.                                                                                                                                                                       |
+| [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point.                                                                                                                                                                                 |
+| Bar width factor                            | Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space. |
 
 #### Style
 
@@ -225,9 +265,9 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 ![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
-{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 #### Show points
 
@@ -236,10 +276,6 @@ You can configure your visualization to add points to lines or bars.
 - **Auto:** Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
 - **Always:** Show the points regardless of how dense the data set is.
 - **Never:** Do not show points.
-
-#### Point size
-
-Set the size of the points, from 1 to 40 pixels in diameter.
 
 #### Stack series
 
@@ -273,26 +309,9 @@ Set the position of the bar relative to a data point. In the examples below, **S
 - **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
   The bar is drawn after the point. The point is placed on the leading corner of the bar.
 
-#### Bar width factor
-
-Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space.
-
-#### Fill below to
-
-The **Fill below to** option fills the area between two series. This option is only available as a series/field override.
-
-1. Edit the panel and click **Overrides**.
-1. Select the fields to fill below.
-1. In **Add override property**, select **Fill below to**.
-1. Select the series for which you want the fill to stop.
-
-The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
-
-{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
-
 ### Standard options
 
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/standard-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Data links
 
@@ -304,8 +323,8 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ### Thresholds
 
-{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/thresholds-options-3.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Field overrides
 
-{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/overrides-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
