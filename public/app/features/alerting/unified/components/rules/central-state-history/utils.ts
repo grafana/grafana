@@ -2,7 +2,7 @@ import { groupBy } from 'lodash';
 
 import { DataFrame, Field as DataFrameField, DataFrameJSON, Field, FieldType } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
-import { GrafanaAlertState, isGrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
+import { isGrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { LogRecord } from '../state-history/common';
@@ -13,21 +13,24 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateToFilterValues 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
 /*
- * This function is used to convert the history response to a DataFrame list and filter the data by labels.
+ * This function is used to convert the history response to a DataFrame list and filter the data by labels and states
  * The response is a list of log records, each log record has a timestamp and a line.
  * We group all records by alert instance (unique set of labels) and create a DataFrame for each group (instance).
- * This allows us to be able to filter by labels in the groupDataFramesByTime function.
+ * This allows us to be able to filter by labels and states in the groupDataFramesByTime function.
  */
 export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
+  // Get the labels and states filters from the URL
   const stateToInQueryParams = getStateFilterToInQueryParams();
   const stateFromInQueryParams = getStateFilterFromInQueryParams();
   const stateToFilterValue = stateToInQueryParams === '' ? StateToFilterValues.all : stateToInQueryParams;
   const stateFromFilterValue = stateFromInQueryParams === '' ? StateToFilterValues.all : stateFromInQueryParams;
 
+  // Extract timestamps and lines from the response
   const tsValues = data?.data?.values[0] ?? [];
   const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
   const lines = data?.data?.values[1] ?? [];
 
+  // Filter log records by state and create a list of log records with the timestamp and line
   const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
     const line = lines[index];
     // values property can be undefined for some instance states (e.g. NoData)
@@ -36,10 +39,8 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
         return acc;
       }
       // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
-      // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
-      // eslint-disable-next-line
-      const baseStateTo = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
-      const baseStateFrom = mapStateWithReasonToBaseState(line.previous) as GrafanaAlertState;
+      const baseStateTo = mapStateWithReasonToBaseState(line.current);
+      const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
       const stateToMatch = stateToFilterValue !== StateToFilterValues.all ? stateToFilterValue === baseStateTo : true;
       const stateFromMatch =
         stateFromFilterValue !== StateToFilterValues.all ? stateFromFilterValue === baseStateFrom : true;

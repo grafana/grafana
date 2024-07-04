@@ -38,13 +38,14 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onLabelClick }: P
         const color = getLabelColor(label);
         return onLabelClick ? (
           <div
-            role="button"
+            role="button" // role="button" and tabIndex={0} is needed for keyboard navigation
             tabIndex={0} // Make it focusable
             key={label + value}
             onClick={() => onLabelClick(label, value)}
             className={styles.labelContainer}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              // needed for accessiblity: handle keyboard navigation
+              if (e.key === 'Enter') {
                 onLabelClick(label, value);
               }
             }}

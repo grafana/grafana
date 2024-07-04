@@ -67,24 +67,29 @@ export const StateFromFilterValues = {
 } as const;
 
 export const CentralAlertHistoryScene = () => {
+  // create the variables for the filters
+  // textbox variable for filtering by labels
   const labelsFilterVariable = new TextBoxVariable({
     name: LABELS_FILTER,
     label: 'Filter by labels: ',
   });
+  //custom variable for filtering by the current state
   const transitionsToFilterVariable = new CustomVariable({
     name: STATE_FILTER_TO,
-    value: 'all',
+    value: StateToFilterValues.all,
     label: 'Filter by current state:',
     hide: VariableHide.dontHide,
     query: `All : ${StateToFilterValues.all}, To Firing : ${StateToFilterValues.firing},To Normal : ${StateToFilterValues.normal},To Pending : ${StateToFilterValues.pending}`,
   });
+  //custom variable for filtering by the previous state
   const transitionsFromFilterVariable = new CustomVariable({
     name: STATE_FILTER_FROM,
-    value: 'all',
+    value: StateFromFilterValues.all,
     label: 'Filter by previous state:',
     hide: VariableHide.dontHide,
     query: `All : ${StateToFilterValues.all}, From Firing : ${StateToFilterValues.firing},From Normal : ${StateToFilterValues.normal},From Pending : ${StateToFilterValues.pending}`,
   });
+
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
   const scene = new EmbeddedScene({
@@ -208,6 +213,14 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
       .build(),
   });
 }
+/*
+ * This component shows a button to clear the filters.
+ * It is shown when the filters are active.
+ * props:
+ * labelsFilterVariable: the textbox variable for filtering by labels
+ * transitionsToFilterVariable: the custom variable for filtering by the current state
+ * transitionsFromFilterVariable: the custom variable for filtering by the previous state
+ */
 
 function ClearFilterButton({
   labelsFilterVariable,
@@ -219,9 +232,11 @@ function ClearFilterButton({
   transitionsFromFilterVariable: CustomVariable;
 }) {
   const styles = useStyles2(getStyles);
+  // get the current values of the filters
   const valueInLabelsFilter = labelsFilterVariable.getValue();
   const valueInTransitionsFilter = transitionsToFilterVariable.getValue();
   const valueInTransitionsFromFilter = transitionsFromFilterVariable.getValue();
+  // if no filter is active, return null
   if (
     !valueInLabelsFilter &&
     valueInTransitionsFilter === StateToFilterValues.all &&

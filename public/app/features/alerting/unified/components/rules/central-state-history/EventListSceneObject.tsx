@@ -521,7 +521,14 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
     />
   );
 }
-
+/**
+ * This hook filters the history records based on the label, stateTo and stateFrom filters.
+ * @param filterInLabel
+ * @param filterInStateTo
+ * @param filterInStateFrom
+ * @param stateHistory the original history records
+ * @returns the filtered history records
+ */
 function useRuleHistoryRecords(
   filterInLabel: string,
   filterInStateTo: string,
@@ -551,8 +558,8 @@ function useRuleHistoryRecords(
       }
       // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
       // eslint-disable-next-line
-      const baseStateTo = mapStateWithReasonToBaseState(line.current) as GrafanaAlertState;
-      const baseStateFrom = mapStateWithReasonToBaseState(line.previous) as GrafanaAlertState;
+      const baseStateTo = mapStateWithReasonToBaseState(line.current);
+      const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
       const stateToMatch = filterInStateTo !== StateToFilterValues.all ? filterInStateTo === baseStateTo : true;
       const stateFromMatch = filterInStateFrom !== StateToFilterValues.all ? filterInStateFrom === baseStateFrom : true;
       if (filterMatch && stateToMatch && stateFromMatch) {
