@@ -111,15 +111,15 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 	})
 }
 
+type evalResult struct {
+	runner   string
+	decision bool
+	err      error
+	duration time.Duration
+}
+
 // evaluateCompare run RBAC and zanzana checks in parallel and then compare result
 func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	type evalResult struct {
-		runner   string
-		decision bool
-		err      error
-		duration time.Duration
-	}
-
 	res := make(chan evalResult, 2)
 	go func() {
 		start := time.Now()
@@ -140,8 +140,8 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 	}
 
 	if first.decision != second.decision {
-		a.log.Error(
-			"eval result diff",
+		a.log.Warn(
+			"zanzana evaluation result does not match grafana",
 			"grafana_desision", first.decision,
 			"zanana_descision", second.decision,
 			"grafana_ms", first.duration,
@@ -149,10 +149,10 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 			"eval", evaluator.GoString(),
 		)
 	} else {
-		a.log.Info("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+		a.log.Debug("zanzana evaluation is correct", "grafana_ms", first.duration, "zanzana_ms", second.duration)
 	}
 
-	return false, nil
+	return first.decision, first.err
 }
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
