@@ -41,3 +41,18 @@ export function useReturnToPreviousInternal() {
     [chrome]
   );
 }
+
+const SINGLE_HEADER_BAR_HEIGHT = 40;
+
+export function useChromeHeaderHeight() {
+  const { chrome } = useGrafana();
+  const { kioskMode, searchBarHidden, chromeless } = chrome.useState();
+
+  if (kioskMode || chromeless) {
+    return 0;
+  } else if (searchBarHidden) {
+    return SINGLE_HEADER_BAR_HEIGHT;
+  } else {
+    return SINGLE_HEADER_BAR_HEIGHT * 2;
+  }
+}
