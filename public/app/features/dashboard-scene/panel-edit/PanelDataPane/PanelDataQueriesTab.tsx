@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
+import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
@@ -81,8 +81,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
         : undefined,
       dataSource: {
         default: panelManager.state.dsSettings?.isDefault,
-        type: panelManager.state.dsSettings?.type,
-        uid: panelManager.state.dsSettings?.uid,
+        ...(panelManager.state.dsSettings ? getDataSourceRef(panelManager.state.dsSettings) : {}),
       },
       queries,
       maxDataPoints: queryRunner.state.maxDataPoints,
@@ -145,7 +144,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   onAddQuery = (query: Partial<DataQuery>) => {
     const queries = this.getQueries();
     const dsSettings = this._panelManager.state.dsSettings;
-    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
+    this.onQueriesChange(addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : {}));
   };
 
   isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
