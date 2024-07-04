@@ -30,7 +30,6 @@ func (d *DualWriterMode3) Mode() DualWriterMode {
 	return Mode3
 }
 
-// TODO: replace mode1 for mode3
 const mode3Str = "3"
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
