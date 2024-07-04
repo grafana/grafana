@@ -347,7 +347,7 @@ describe('QueryEditor should render right editor', () => {
       config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
       props.datasource.resources.getAccounts = jest.fn().mockResolvedValue(['account123']);
       render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
-      await screen.findByText('Metric Query');
+      await screen.findByText('Metric Insights');
       expect(await screen.findByText('Account')).toBeInTheDocument();
     });
   });
