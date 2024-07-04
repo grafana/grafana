@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"sync"
 	"testing"
 
@@ -71,6 +72,12 @@ func TestReload(t *testing.T) {
 						"servers": []any{
 							map[string]any{
 								"host": "127.0.0.1",
+								"group_mappings": []any{
+									map[string]any{
+										"group_dn":      "cn=admin,ou=groups,dc=ldap,dc=goauthentik,dc=io",
+										"grafana_admin": true,
+									},
+								},
 							},
 						},
 					},
@@ -80,7 +87,15 @@ func TestReload(t *testing.T) {
 			expectedServersConfig: &ldap.ServersConfig{
 				Servers: []*ldap.ServerConfig{
 					{
-						Host: "127.0.0.1",
+						Host:    "127.0.0.1",
+						Timeout: 10,
+						Groups: []*ldap.GroupToOrgRole{
+							{
+								GroupDN:        "cn=admin,ou=groups,dc=ldap,dc=goauthentik,dc=io",
+								OrgId:          1,
+								IsGrafanaAdmin: &isAdmin,
+							},
+						},
 					},
 				},
 			},
@@ -122,6 +137,7 @@ func TestReload(t *testing.T) {
 								"group_search_base_dns":              []string{"ou=groups,dc=grafana,dc=org"},
 								"tls_ciphers": []string{
 									"TLS_AES_256_GCM_SHA384",
+									"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
 								},
 								"attributes": map[string]string{
 									"email":     "mail",
@@ -147,7 +163,7 @@ func TestReload(t *testing.T) {
 									},
 									map[string]any{
 										"group_dn": "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io",
-										"org_id":   1,
+										"org_id":   2,
 										"org_role": "Viewer",
 									},
 								},
@@ -160,14 +176,20 @@ func TestReload(t *testing.T) {
 			expectedServersConfig: &ldap.ServersConfig{
 				Servers: []*ldap.ServerConfig{
 					{
-						Host:          "127.0.0.1",
-						Port:          3389,
-						UseSSL:        true,
-						StartTLS:      true,
-						SkipVerifySSL: false,
-						MinTLSVersion: "TLS1.3",
+						Host:            "127.0.0.1",
+						Port:            3389,
+						UseSSL:          true,
+						StartTLS:        true,
+						SkipVerifySSL:   false,
+						MinTLSVersion:   "TLS1.3",
+						MinTLSVersionID: tls.VersionTLS13,
 						TLSCiphers: []string{
 							"TLS_AES_256_GCM_SHA384",
+							"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+						},
+						TLSCipherIDs: []uint16{
+							tls.TLS_AES_256_GCM_SHA384,
+							tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 						},
 						RootCACert:      "/path/to/certificate.crt",
 						RootCACertValue: []string{validCert},
@@ -204,7 +226,7 @@ func TestReload(t *testing.T) {
 							},
 							{
 								GroupDN: "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io",
-								OrgId:   1,
+								OrgId:   2,
 								OrgRole: "Viewer",
 							},
 						},
@@ -271,7 +293,8 @@ func TestReload(t *testing.T) {
 			expectedServersConfig: &ldap.ServersConfig{
 				Servers: []*ldap.ServerConfig{
 					{
-						Host: "127.0.0.1",
+						Host:    "127.0.0.1",
+						Timeout: 10,
 					},
 				},
 			},

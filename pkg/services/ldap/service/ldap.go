@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -96,6 +98,34 @@ func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) erro
 	ldapCfg, err := resolveServerConfig(settings.Settings["config"])
 	if err != nil {
 		return err
+	}
+
+	// calculate MinTLSVersionID and TLSCipherIDs from input text values
+	// also initialize Timeout and OrgID from group mappings with default values if they are not configured
+	for _, server := range ldapCfg.Servers {
+		if server.MinTLSVersion != "" {
+			server.MinTLSVersionID, err = util.TlsNameToVersion(server.MinTLSVersion)
+			if err != nil {
+				logger.Error("failed to set min TLS version, ignoring", "err", err)
+			}
+		}
+
+		if len(server.TLSCiphers) > 0 {
+			server.TLSCipherIDs, err = util.TlsCiphersToIDs(server.TLSCiphers)
+			if err != nil {
+				logger.Error("unrecognized TLS Cipher(s), ignoring", "err", err)
+			}
+		}
+
+		for _, groupMap := range server.Groups {
+			if groupMap.OrgId == 0 {
+				groupMap.OrgId = 1
+			}
+		}
+
+		if server.Timeout == 0 {
+			server.Timeout = defaultTimeout
+		}
 	}
 
 	s.loadingMutex.Lock()
