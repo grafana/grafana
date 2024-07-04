@@ -276,7 +276,7 @@ export function updateDataSource(dataSource: DataSourceSettings) {
       const formattedError = parseHealthCheckError(err);
 
       dispatch(testDataSourceFailed(formattedError));
-      const errorInfo = isFetchError(err) ? err.data : { message: 'An unexpected error occurred.', traceId: '' };
+      const errorInfo = isFetchError(err) ? err.data : { message: 'An unexpected error occurred.', traceID: '' };
       return Promise.reject(errorInfo);
     }
 
