@@ -163,5 +163,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
         borderBottom: `1px solid ${theme.colors.border.weak}`,
       },
     }),
+    virtualizedSeparator: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
   };
 });
