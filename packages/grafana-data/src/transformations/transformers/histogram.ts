@@ -2,8 +2,9 @@ import { map } from 'rxjs/operators';
 
 import { getDisplayProcessor } from '../../field/displayProcessor';
 import { createTheme, GrafanaTheme2 } from '../../themes';
-import { DataFrameType, DataTransformContext, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { DataFrameType } from '../../types/dataFrameTypes';
+import { DataTransformContext, SynchronousDataTransformerInfo } from '../../types/transformations';
 import { roundDecimals } from '../../utils/numbers';
 
 import { DataTransformerID } from './ids';
