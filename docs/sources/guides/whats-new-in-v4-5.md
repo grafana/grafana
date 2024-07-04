@@ -22,16 +22,16 @@ The new query editor has full syntax highlighting. As well as auto complete for 
 
 ### Elasticsearch: Add ad-hoc filters from the table panel
 
-{{< docs-imagebox img="/img/docs/v45/elastic_ad_hoc_filters.png" class="docs-image--block" >}}
+{{< docs-imagebox img="/img/docs/v45/elastic_ad_hoc_filters.png" class="docs-image--block" alt="Ad-hoc filters in table panel" >}}
 
 ### Table cell links!
 Create column styles that turn cells into links that use the value in the cell  (or other other row values) to generate a URL to another dashboard or system:
-![](/img/docs/v45/table_links.jpg)
+![Column styles tab with link options highlighted](/img/docs/v45/table_links.jpg)
 
 ### Query Inspector
 Query Inspector is a new feature that shows query requests and responses. This can be helpful if a graph is not shown or shows something very different than what you expected.
 More information [here](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630).
-![](/img/docs/v45/query_inspector.png)
+![Metric tab with Query inspecter highlighted](/img/docs/v45/query_inspector.png)
 
 ## Changelog
 
