@@ -106,6 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => {
             display: 'flex',
             flex: '1 1 0',
             flexDirection: 'column',
+            position: 'relative',
           }
         : {
             label: 'page-wrapper',

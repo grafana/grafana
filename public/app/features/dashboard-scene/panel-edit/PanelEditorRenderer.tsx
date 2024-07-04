@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -32,7 +33,13 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
-      <div {...containerProps} data-testid={selectors.components.PanelEditor.General.content}>
+      <div
+        {...containerProps}
+        className={cx(containerProps.className, {
+          [styles.content]: config.featureToggles.bodyScrolling,
+        })}
+        data-testid={selectors.components.PanelEditor.General.content}
+      >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
           <VizAndDataPane model={model} />
         </div>
@@ -175,6 +182,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       minHeight: 0,
       width: '100%',
+    }),
+    content: css({
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
     }),
     body: css({
       label: 'body',
