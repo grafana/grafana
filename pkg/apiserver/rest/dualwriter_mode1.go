@@ -77,7 +77,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 // Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
 func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	var method = "get"
-	log := d.Log.WithValues("kind", options.Kind, "method", method)
+	log := d.Log.WithValues("kind", options.Kind, "method", method, "name", name)
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
@@ -142,7 +142,7 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 
 func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	var method = "delete"
-	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method)
+	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method, "name", name)
 	ctx = klog.NewContext(ctx, d.Log)
 
 	startLegacy := time.Now()
@@ -209,7 +209,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 
 func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	var method = "update"
-	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method)
+	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method, "name", name)
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
