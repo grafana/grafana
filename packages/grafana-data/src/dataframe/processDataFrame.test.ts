@@ -1,5 +1,6 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { DataFrameDTO, Field, FieldType, TableData, TimeSeries } from '../types/index';
+import { TimeSeries, TableData } from '../types/data';
+import { FieldType, DataFrameDTO, Field } from '../types/dataFrame';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
 import {

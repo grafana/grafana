@@ -16,6 +16,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
   let vizPanelKey: string | null = null;
 
+  const canEdit = scene.canEditDashboard();
+
   const panelAttentionSubscription = appEvents.subscribe(SetPanelAttentionEvent, (event) => {
     if (typeof event.payload.panelId === 'string') {
       vizPanelKey = event.payload.panelId;
@@ -38,20 +40,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       if (!scene.state.viewPanelScene) {
         locationService.push(getViewPanelUrl(vizPanel));
-      }
-    }),
-  });
-
-  // Panel edit
-  keybindings.addBinding({
-    key: 'e',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      const sceneRoot = vizPanel.getRoot();
-      if (sceneRoot instanceof DashboardScene) {
-        const panelId = getPanelIdForVizPanel(vizPanel);
-        if (!scene.state.editPanel) {
-          locationService.push(getEditPanelUrl(panelId));
-        }
       }
     }),
   });
@@ -133,38 +121,55 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     },
   });
 
-  // Dashboard settings
-  keybindings.addBinding({
-    key: 'd s',
-    onTrigger: scene.onOpenSettings,
-  });
+  if (canEdit) {
+    // Panel edit
+    keybindings.addBinding({
+      key: 'e',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const sceneRoot = vizPanel.getRoot();
+        if (sceneRoot instanceof DashboardScene) {
+          const panelId = getPanelIdForVizPanel(vizPanel);
+          if (!scene.state.editPanel) {
+            locationService.push(getEditPanelUrl(panelId));
+          }
+        }
+      }),
+    });
 
-  keybindings.addBinding({
-    key: 'mod+s',
-    onTrigger: () => scene.openSaveDrawer({}),
-  });
+    // Dashboard settings
+    keybindings.addBinding({
+      key: 'd s',
+      onTrigger: scene.onOpenSettings,
+    });
+
+    // Open save drawer
+    keybindings.addBinding({
+      key: 'mod+s',
+      onTrigger: () => scene.openSaveDrawer({}),
+    });
+
+    // delete panel
+    keybindings.addBinding({
+      key: 'p r',
+      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+        if (scene.state.isEditing) {
+          onRemovePanel(scene, vizPanel);
+        }
+      }),
+    });
+
+    // duplicate panel
+    keybindings.addBinding({
+      key: 'p d',
+      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+        if (scene.state.isEditing) {
+          scene.duplicatePanel(vizPanel);
+        }
+      }),
+    });
+  }
 
   // toggle all panel legends (TODO)
-  // delete panel
-  keybindings.addBinding({
-    key: 'p r',
-    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (scene.state.isEditing) {
-        onRemovePanel(scene, vizPanel);
-      }
-    }),
-  });
-
-  // duplicate panel
-  keybindings.addBinding({
-    key: 'p d',
-    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (scene.state.isEditing) {
-        scene.duplicatePanel(vizPanel);
-      }
-    }),
-  });
-
   // toggle all exemplars (TODO)
   // collapse all rows (TODO)
   // expand all rows (TODO)
