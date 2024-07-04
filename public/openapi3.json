@@ -7009,7 +7009,9 @@
           "status": {
             "enum": [
               "OK",
-              "ERROR"
+              "ERROR",
+              "PENDING",
+              "UNKNOWN"
             ],
             "type": "string"
           },
@@ -7136,6 +7138,18 @@
           },
           "type": "array"
         },
+        "type": "object"
+      },
+      "NavbarPreference": {
+        "properties": {
+          "savedItemIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "title": "NavbarPreference defines model for NavbarPreference.",
         "type": "object"
       },
       "NewApiKeyResult": {
@@ -7699,6 +7713,9 @@
           },
           "language": {
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -8290,6 +8307,9 @@
           "language": {
             "description": "Selected language (beta)",
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -11540,6 +11560,9 @@
           },
           "language": {
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -15528,6 +15551,26 @@
         "operationId": "getSnapshot",
         "parameters": [
           {
+            "description": "ResultPage is used for pagination with ResultLimit",
+            "in": "query",
+            "name": "resultPage",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max limit for snapshot results returned.",
+            "in": "query",
+            "name": "resultLimit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
             "description": "Session UID of a session",
             "in": "path",
             "name": "uid",
@@ -15667,11 +15710,11 @@
         "operationId": "getShapshotList",
         "parameters": [
           {
-            "description": "Offset is used for pagination with limit",
+            "description": "Page is used for pagination with limit",
             "in": "query",
-            "name": "offset",
+            "name": "page",
             "schema": {
-              "default": 0,
+              "default": 1,
               "format": "int64",
               "type": "integer"
             }

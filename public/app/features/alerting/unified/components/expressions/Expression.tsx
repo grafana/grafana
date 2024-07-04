@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';

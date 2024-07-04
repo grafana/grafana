@@ -39,7 +39,7 @@ export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
-export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
+export { WeekStartPicker, getWeekStart, type WeekStart } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
@@ -238,6 +238,7 @@ export * from './Select/types';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonDot } from './Forms/RadioButtonList/RadioButtonDot';
 export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';

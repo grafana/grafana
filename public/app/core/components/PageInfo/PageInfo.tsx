@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -16,13 +16,13 @@ export function PageInfo({ info }: Props) {
   return (
     <div className={styles.container}>
       {info.map((infoItem, index) => (
-        <React.Fragment key={index}>
+        <Fragment key={index}>
           <div className={styles.infoItem}>
             <div className={styles.label}>{infoItem.label}</div>
             {infoItem.value}
           </div>
           {index + 1 < info.length && <div data-testid="page-info-separator" className={styles.separator} />}
-        </React.Fragment>
+        </Fragment>
       ))}
     </div>
   );

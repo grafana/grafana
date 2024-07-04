@@ -141,6 +141,28 @@ func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
 }
 
+// AddErrorAnnotations adds annotations to the state to indicate that an error occurred.
+func (a *State) AddErrorAnnotations(err error, rule *models.AlertRule) {
+	if err == nil {
+		return
+	}
+
+	a.Annotations["Error"] = err.Error()
+	// If the evaluation failed because a query returned an error then add the Ref ID and
+	// Datasource UID as labels
+	var utilError errutil.Error
+	if errors.As(a.Error, &utilError) &&
+		(errors.Is(a.Error, expr.QueryError) || errors.Is(a.Error, expr.ConversionError)) {
+		for _, next := range rule.Data {
+			if next.RefID == utilError.PublicPayload["refId"].(string) {
+				a.Labels["ref_id"] = next.RefID
+				a.Labels["datasource_uid"] = next.DatasourceUID
+				break
+			}
+		}
+	}
+}
+
 // IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
 func IsNormalStateWithNoReason(s *State) bool {
 	return s.State == eval.Normal && s.StateReason == ""
@@ -163,6 +185,19 @@ func (c StateTransition) PreviousFormatted() string {
 
 func (c StateTransition) Changed() bool {
 	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
+}
+
+type StateTransitions []StateTransition
+
+// StaleStates returns the subset of StateTransitions that are stale.
+func (c StateTransitions) StaleStates() StateTransitions {
+	var result StateTransitions
+	for _, t := range c {
+		if t.IsStale() {
+			result = append(result, t)
+		}
+	}
+	return result
 }
 
 type Evaluation struct {
@@ -272,6 +307,8 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
+			state.Error = result.Error
+			state.AddErrorAnnotations(result.Error, rule)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 			logger.Debug("Keeping state",
 				"state",
@@ -293,23 +330,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				"next_ends_at",
 				nextEndsAt)
 			state.SetError(result.Error, result.EvaluatedAt, nextEndsAt)
-
-			if result.Error != nil {
-				state.Annotations["Error"] = result.Error.Error()
-				// If the evaluation failed because a query returned an error then add the Ref ID and
-				// Datasource UID as labels
-				var utilError errutil.Error
-				if errors.As(state.Error, &utilError) &&
-					(errors.Is(state.Error, expr.QueryError) || errors.Is(state.Error, expr.ConversionError)) {
-					for _, next := range rule.Data {
-						if next.RefID == utilError.PublicPayload["refId"].(string) {
-							state.Labels["ref_id"] = next.RefID
-							state.Labels["datasource_uid"] = next.DatasourceUID
-							break
-						}
-					}
-				}
-			}
+			state.AddErrorAnnotations(result.Error, rule)
 		}
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
@@ -474,6 +495,11 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 	}
 
 	return r
+}
+
+// IsStale returns true if the state is stale, meaning that the state is ready to be evicted from the cache.
+func (a *State) IsStale() bool {
+	return a.StateReason == models.StateReasonMissingSeries
 }
 
 // shouldTakeImage returns true if the state just has transitioned to alerting from another state,

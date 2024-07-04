@@ -774,6 +774,36 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
     }
 
+def start_storybook_step():
+    return {
+        "name": "start-storybook",
+        "image": images["node"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn storybook --quiet",
+        ],
+        "detach": True,
+    }
+
+def e2e_storybook_step():
+    return {
+        "name": "end-to-end-tests-storybook-suite",
+        "image": images["cypress"],
+        "depends_on": [
+            "start-storybook",
+        ],
+        "environment": {
+            "HOST": "start-storybook",
+            "PORT": "9001",
+        },
+        "commands": [
+            "npx wait-on@7.2.0 -t 1m http://$HOST:$PORT",
+            "yarn e2e:storybook",
+        ],
+    }
+
 def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 

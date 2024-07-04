@@ -1,4 +1,3 @@
-import React from 'react';
 import SVG, { Props } from 'react-inlinesvg';
 
 import { textUtil } from '@grafana/data';

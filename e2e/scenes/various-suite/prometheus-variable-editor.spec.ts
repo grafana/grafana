@@ -77,8 +77,8 @@ function variableFlowToQueryEditor(variableName: string, queryType: string) {
     // do nothing
   }
 }
-
-describe('Prometheus variable query editor', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/prometheus-variable-editor.spec.ts
+describe.skip('Prometheus variable query editor', () => {
   beforeEach(() => {
     createPromDS(DATASOURCE_ID, DATASOURCE_NAME);
   });

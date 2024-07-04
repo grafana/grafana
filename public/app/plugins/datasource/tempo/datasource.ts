@@ -1,4 +1,4 @@
-import { groupBy, startCase } from 'lodash';
+import { groupBy } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
@@ -34,7 +34,11 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import { generateQueryFromAdHocFilters, generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import {
+  generateQueryFromAdHocFilters,
+  generateQueryFromFilters,
+  interpolateFilters,
+} from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -470,21 +474,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const expandedQuery = { ...query };
 
     if (query.filters) {
-      expandedQuery.filters = query.filters.map((filter) => {
-        const updatedFilter = {
-          ...filter,
-          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
-        };
-
-        if (filter.value) {
-          updatedFilter.value =
-            typeof filter.value === 'string'
-              ? this.templateSrv.replace(filter.value ?? '', scopedVars, VariableFormatID.Pipe)
-              : filter.value.map((v) => this.templateSrv.replace(v ?? '', scopedVars, VariableFormatID.Pipe));
-        }
-
-        return updatedFilter;
-      });
+      expandedQuery.filters = interpolateFilters(query.filters, scopedVars);
     }
 
     if (query.groupBy) {
@@ -748,17 +738,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   getQueryDisplayText(query: TempoQuery) {
-    if (query.queryType !== 'nativeSearch') {
+    if (query.queryType === 'traceql' || query.queryType === 'traceId') {
       return query.query ?? '';
     }
 
-    const keys: Array<
-      keyof Pick<TempoQuery, 'serviceName' | 'spanName' | 'search' | 'minDuration' | 'maxDuration' | 'limit'>
-    > = ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'];
-    return keys
-      .filter((key) => query[key])
-      .map((key) => `${startCase(key)}: ${query[key]}`)
-      .join(', ');
+    const appliedQuery = this.applyVariables(query, {});
+    return generateQueryFromFilters(appliedQuery.filters);
   }
 }
 

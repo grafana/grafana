@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Service interface {
@@ -24,8 +25,8 @@ type Service interface {
 	GetMigrationStatus(ctx context.Context, runUID string) (*CloudMigrationSnapshot, error)
 	GetMigrationRunList(ctx context.Context, migUID string) (*CloudMigrationRunList, error)
 
-	CreateSnapshot(ctx context.Context, sessionUid string) (*CloudMigrationSnapshot, error)
-	GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*CloudMigrationSnapshot, error)
+	CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*CloudMigrationSnapshot, error)
+	GetSnapshot(ctx context.Context, query GetSnapshotsQuery) (*CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query ListSnapshotsQuery) ([]CloudMigrationSnapshot, error)
 	UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error
 	CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error

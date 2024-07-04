@@ -2565,6 +2565,22 @@
         "operationId": "getSnapshot",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "description": "ResultPage is used for pagination with ResultLimit",
+            "name": "resultPage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 100,
+            "description": "Max limit for snapshot results returned.",
+            "name": "resultLimit",
+            "in": "query"
+          },
+          {
             "type": "string",
             "description": "Session UID of a session",
             "name": "uid",
@@ -2694,9 +2710,9 @@
           {
             "type": "integer",
             "format": "int64",
-            "default": 0,
-            "description": "Offset is used for pagination with limit",
-            "name": "offset",
+            "default": 1,
+            "description": "Page is used for pagination with limit",
+            "name": "page",
             "in": "query"
           },
           {
@@ -16902,7 +16918,9 @@
           "type": "string",
           "enum": [
             "OK",
-            "ERROR"
+            "ERROR",
+            "PENDING",
+            "UNKNOWN"
           ]
         },
         "type": {
@@ -17021,6 +17039,18 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/GettableRuleGroupConfig"
+        }
+      }
+    },
+    "NavbarPreference": {
+      "type": "object",
+      "title": "NavbarPreference defines model for NavbarPreference.",
+      "properties": {
+        "savedItemIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -17586,6 +17616,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -18177,6 +18210,9 @@
         "language": {
           "description": "Selected language (beta)",
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -21428,6 +21464,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"

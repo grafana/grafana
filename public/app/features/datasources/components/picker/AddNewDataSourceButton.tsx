@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LinkButton, ButtonVariant } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { Trans } from 'app/core/internationalization';
