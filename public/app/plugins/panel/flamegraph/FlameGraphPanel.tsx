@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { CoreApp, PanelProps } from '@grafana/data';
 import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/flamegraph';
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';

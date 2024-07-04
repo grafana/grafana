@@ -1,5 +1,6 @@
 import { createTheme } from '../themes';
-import { Field, FieldColorModeId, FieldType } from '../types';
+import { Field, FieldType } from '../types/dataFrame';
+import { FieldColorModeId } from '../types/fieldColor';
 
 import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
 

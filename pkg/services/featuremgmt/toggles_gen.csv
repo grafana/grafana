@@ -10,7 +10,6 @@ lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,f
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 storage,experimental,@grafana/grafana-app-platform-squad,false,false,false
 correlations,GA,@grafana/explore-squad,false,false,false
-exploreContentOutline,GA,@grafana/explore-squad,false,false,true
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateGraphPanel,preview,@grafana/dataviz-squad,false,false,true
@@ -21,7 +20,6 @@ autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateXYChartPanel,preview,@grafana/dataviz-squad,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-scenes,experimental,@grafana/dashboards-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
@@ -164,7 +162,7 @@ logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,fa
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
 notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false
-dashboardRestore,experimental,@grafana/grafana-frontend-platform,false,false,false
+dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
@@ -180,3 +178,7 @@ databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,f
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
+dashboardRestoreUI,experimental,@grafana/grafana-frontend-platform,false,false,false
+cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
+bodyScrolling,experimental,@grafana/grafana-frontend-platform,false,false,true
+cloudwatchMetricInsightsCrossAccount,experimental,@grafana/aws-datasources,false,false,true

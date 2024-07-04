@@ -1,4 +1,4 @@
-import { FALLBACK_COLOR } from '../types';
+import { FALLBACK_COLOR } from '../types/fieldColor';
 
 import { ThemeColors } from './createColors';
 

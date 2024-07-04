@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -37,7 +37,7 @@ export interface PromQueryBuilderProps {
   showExplain: boolean;
 }
 
-export const PromQueryBuilder = React.memo<PromQueryBuilderProps>((props) => {
+export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
   const [showDrawer, setShowDrawer] = useState<boolean>(false);

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
@@ -69,7 +68,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         >
           {scopes && !meta.dashboardNotFound && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {controls && hasControls && (
+          {controls && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >

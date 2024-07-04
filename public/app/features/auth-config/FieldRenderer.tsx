@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { UseFormReturn, Controller } from 'react-hook-form';
 
 import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';

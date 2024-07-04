@@ -110,6 +110,64 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
+name: pr-verify-storybook
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - yarn install --immutable || yarn install --immutable
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: yarn-install
+- commands:
+  - yarn storybook --quiet
+  depends_on:
+  - yarn-install
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
+  - yarn e2e:storybook
+  depends_on:
+  - start-storybook
+  environment:
+    HOST: start-storybook
+    PORT: "9001"
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - packages/grafana-ui/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
 name: pr-test-frontend
 node:
   type: no-parallel
@@ -594,6 +652,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/dashboards-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -601,6 +667,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -610,6 +684,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/panels-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -617,6 +699,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -1792,6 +1882,66 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
+name: main-verify-storybook
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - yarn install --immutable || yarn install --immutable
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: yarn-install
+- commands:
+  - yarn storybook --quiet
+  depends_on:
+  - yarn-install
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
+  - yarn e2e:storybook
+  depends_on:
+  - start-storybook
+  environment:
+    HOST: start-storybook
+    PORT: "9001"
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+  repo:
+  - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
 name: main-build-e2e-publish
 node:
   type: no-parallel
@@ -1909,6 +2059,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/dashboards-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -1916,6 +2074,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -1925,6 +2091,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/panels-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -1932,6 +2106,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -4996,6 +5178,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 06f574902baa67d8885abb48e48987f675d7637e30d4b783b3bb84e51b46cdaf
+hmac: c4a656d676b1228248f6948ac0347aea1d67016429aa24351d0a5c3e2d7dc617
 
 ...

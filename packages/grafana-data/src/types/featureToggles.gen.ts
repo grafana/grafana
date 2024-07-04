@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   storage?: boolean;
   correlations?: boolean;
-  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
@@ -40,7 +39,6 @@ export interface FeatureToggles {
   autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
@@ -199,4 +197,8 @@ export interface FeatureToggles {
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
+  dashboardRestoreUI?: boolean;
+  cloudWatchRoundUpEndTime?: boolean;
+  bodyScrolling?: boolean;
+  cloudwatchMetricInsightsCrossAccount?: boolean;
 }

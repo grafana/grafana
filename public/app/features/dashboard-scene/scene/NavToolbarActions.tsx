@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,6 +24,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
@@ -37,7 +39,9 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = <ToolbarActions dashboard={dashboard} />;
+  const id = useId();
+
+  const actions = <ToolbarActions dashboard={dashboard} key={id} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -319,7 +323,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+          dashboard.showModal(new ShareModal({}));
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >
@@ -370,7 +374,13 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   toolbarActions.push({
-    group: 'new-share-dashboard-button',
+    group: 'new-share-dashboard-buttons',
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-buttons',
     condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });

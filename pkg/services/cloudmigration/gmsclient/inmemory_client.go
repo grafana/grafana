@@ -2,7 +2,6 @@ package gmsclient
 
 import (
 	"context"
-	"encoding/json"
 	"math/rand"
 	"time"
 
@@ -16,7 +15,7 @@ func NewInMemoryClient() Client {
 }
 
 type memoryClientImpl struct {
-	snapshot *cloudmigration.InitializeSnapshotResponse
+	snapshot *cloudmigration.StartSnapshotResponse
 }
 
 func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
@@ -29,11 +28,11 @@ func (c *memoryClientImpl) MigrateData(
 	request cloudmigration.MigrateDataRequest,
 ) (*cloudmigration.MigrateDataResponse, error) {
 	result := cloudmigration.MigrateDataResponse{
-		Items: make([]cloudmigration.MigrateDataResponseItem, len(request.Items)),
+		Items: make([]cloudmigration.CloudMigrationResource, len(request.Items)),
 	}
 
 	for i, v := range request.Items {
-		result.Items[i] = cloudmigration.MigrateDataResponseItem{
+		result.Items[i] = cloudmigration.CloudMigrationResource{
 			Type:   v.Type,
 			RefID:  v.RefID,
 			Status: cloudmigration.ItemStatusOK,
@@ -49,49 +48,43 @@ func (c *memoryClientImpl) MigrateData(
 	return &result, nil
 }
 
-func (c *memoryClientImpl) InitializeSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.InitializeSnapshotResponse, error) {
-	c.snapshot = &cloudmigration.InitializeSnapshotResponse{
-		EncryptionKey:  util.GenerateShortUID(),
-		GMSSnapshotUID: util.GenerateShortUID(),
-		UploadURL:      "localhost:3000",
+func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+	c.snapshot = &cloudmigration.StartSnapshotResponse{
+		EncryptionKey: util.GenerateShortUID(),
+		SnapshotID:    util.GenerateShortUID(),
+		UploadURL:     "localhost:3000",
 	}
 
 	return c.snapshot, nil
 }
 
 func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
-	// just fake an entire response
-	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
-		Status:         cloudmigration.SnapshotStatusFinished,
-		GMSSnapshotUID: util.GenerateShortUID(),
-		Result:         []byte{},
-		Finished:       time.Now(),
-	}
-
-	result := []cloudmigration.MigrateDataResponseItem{
+	results := []cloudmigration.CloudMigrationResource{
 		{
 			Type:   cloudmigration.DashboardDataType,
-			RefID:  util.GenerateShortUID(),
+			RefID:  "dash1",
 			Status: cloudmigration.ItemStatusOK,
 		},
 		{
 			Type:   cloudmigration.DatasourceDataType,
-			RefID:  util.GenerateShortUID(),
+			RefID:  "ds1",
 			Status: cloudmigration.ItemStatusError,
 			Error:  "fake error",
 		},
 		{
 			Type:   cloudmigration.FolderDataType,
-			RefID:  util.GenerateShortUID(),
+			RefID:  "folder1",
 			Status: cloudmigration.ItemStatusOK,
 		},
 	}
 
-	b, err := json.Marshal(result)
-	if err != nil {
-		return nil, err
+	// just fake an entire response
+	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
+		Status:         cloudmigration.SnapshotStatusFinished,
+		GMSSnapshotUID: "gmssnapshotuid",
+		Resources:      results,
+		Finished:       time.Now(),
 	}
-	gmsSnapshot.Result = b
 
 	return &gmsSnapshot, nil
 }

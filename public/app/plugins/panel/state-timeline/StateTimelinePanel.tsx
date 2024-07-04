@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DashboardCursorSync, DataFrame, PanelProps } from '@grafana/data';

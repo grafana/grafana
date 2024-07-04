@@ -1,8 +1,6 @@
 package cloudmigration
 
 import (
-	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -45,8 +43,8 @@ type CloudMigrationSnapshot struct {
 	Updated        time.Time
 	Finished       time.Time
 
-	// []MigrateDataResponseItem
-	Result []byte `xorm:"result"` //store raw gms response body
+	// Stored in the cloud_migration_resource table
+	Resources []CloudMigrationResource `xorm:"-"`
 }
 
 type SnapshotStatus string
@@ -63,30 +61,29 @@ const (
 	SnapshotStatusUnknown           = "unknown"
 )
 
+type CloudMigrationResource struct {
+	ID  int64  `xorm:"pk autoincr 'id'"`
+	UID string `xorm:"uid"`
+
+	Type   MigrateDataType `xorm:"resource_type"`
+	RefID  string          `xorm:"resource_uid"`
+	Status ItemStatus      `xorm:"status"`
+	Error  string          `xorm:"error_string"`
+
+	SnapshotUID string `xorm:"snapshot_uid"`
+}
+
 // Deprecated, use GetSnapshotResult for the async workflow
 func (s CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
-	var result MigrateDataResponse
-	err := json.Unmarshal(s.Result, &result)
-	if err != nil {
-		return nil, errors.New("could not parse result of run")
+	result := MigrateDataResponse{
+		RunUID: s.UID,
+		Items:  s.Resources,
 	}
-	result.RunUID = s.UID
 	return &result, nil
 }
 
 func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
 	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
-}
-
-func (s CloudMigrationSnapshot) GetSnapshotResult() ([]MigrateDataResponseItem, error) {
-	var result []MigrateDataResponseItem
-	if len(s.Result) > 0 {
-		err := json.Unmarshal(s.Result, &result)
-		if err != nil {
-			return nil, errors.New("could not parse result of run")
-		}
-	}
-	return result, nil
 }
 
 type CloudMigrationRunList struct {
@@ -108,16 +105,23 @@ type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }
 
+type GetSnapshotsQuery struct {
+	SnapshotUID string
+	SessionUID  string
+	ResultPage  int
+	ResultLimit int
+}
+
 type ListSnapshotsQuery struct {
 	SessionUID string
-	Offset     int
+	Page       int
 	Limit      int
 }
 
 type UpdateSnapshotCmd struct {
-	UID    string
-	Status SnapshotStatus
-	Result []byte //store raw gms response body
+	UID       string
+	Status    SnapshotStatus
+	Resources []CloudMigrationResource
 }
 
 // access token
@@ -172,32 +176,31 @@ type MigrateDataRequestItem struct {
 type ItemStatus string
 
 const (
-	ItemStatusOK    ItemStatus = "OK"
-	ItemStatusError ItemStatus = "ERROR"
+	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusError   ItemStatus = "ERROR"
+	ItemStatusPending ItemStatus = "PENDING"
+	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 type MigrateDataResponse struct {
 	RunUID string
-	Items  []MigrateDataResponseItem
+	Items  []CloudMigrationResource
 }
 
 type MigrateDataResponseList struct {
 	RunUID string
 }
 
-type MigrateDataResponseItem struct {
-	Type   MigrateDataType
-	RefID  string
-	Status ItemStatus
-	Error  string
-}
-
 type CreateSessionResponse struct {
 	SnapshotUid string
 }
 
-type InitializeSnapshotResponse struct {
-	EncryptionKey  string
-	UploadURL      string
-	GMSSnapshotUID string
+type StartSnapshotResponse struct {
+	SnapshotID           string            `json:"snapshotID"`
+	MaxItemsPerPartition uint32            `json:"maxItemsPerPartition"`
+	Algo                 string            `json:"algo"`
+	UploadURL            string            `json:"uploadURL"`
+	PresignedURLFormData map[string]string `json:"presignedURLFormData"`
+	EncryptionKey        string            `json:"encryptionKey"`
+	Nonce                string            `json:"nonce"`
 }
