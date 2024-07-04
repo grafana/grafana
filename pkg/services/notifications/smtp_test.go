@@ -45,7 +45,7 @@ func TestBuildMail(t *testing.T) {
 
 		assert.Contains(t, buf.String(), "Foo-Header: foo_value")
 		assert.Contains(t, buf.String(), "From: from@address.com")
-		assert.Contains(t, buf.String(), "Message-ID:")
+		assert.Regexp(t, "Message-ID: <.*@address.com>", buf.String())
 		assert.Contains(t, buf.String(), "Some HTML body")
 		assert.Contains(t, buf.String(), "Some plain text body")
 		assert.Less(t, strings.Index(buf.String(), "Some plain text body"), strings.Index(buf.String(), "Some HTML body"))

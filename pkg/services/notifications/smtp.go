@@ -94,7 +94,12 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)
-	m.SetHeader("Message-ID", uuid.New().String())
+
+	at := strings.LastIndex(msg.From, "@")
+    if at >= 0 {
+        domain := msg.From[at+1:]
+		m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.NewString(), domain))
+	}
 
 	if sc.cfg.EnableTracing {
 		otel.GetTextMapPropagator().Inject(ctx, gomailHeaderCarrier{m})
