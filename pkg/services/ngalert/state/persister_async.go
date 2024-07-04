@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type AsyncStatePersister struct {
@@ -54,6 +56,11 @@ func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error 
 	a.log.Debug("Full state sync start")
 	instances := cache.asInstances(a.doNotSaveNormalState)
 	if err := a.store.FullSync(ctx, instances); err != nil {
+		if errors.Is(err, store.ErrLockDB) {
+			a.log.Warn("Full state sync failed to acquire the lock, probably another full sync is in progress")
+			return nil
+		}
+
 		a.log.Error("Full state sync failed", "duration", time.Since(startTime), "instances", len(instances))
 		return err
 	}

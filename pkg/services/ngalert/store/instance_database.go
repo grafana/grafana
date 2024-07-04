@@ -217,44 +217,52 @@ func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance
 	if len(instances) == 0 {
 		return nil
 	}
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// First we delete all records from the table
-		if _, err := sess.Exec("DELETE FROM alert_instance"); err != nil {
-			return fmt.Errorf("failed to delete alert_instance table: %w", err)
-		}
-		for _, alertInstance := range instances {
-			if err := models.ValidateAlertInstance(alertInstance); err != nil {
-				st.Logger.Warn("Failed to validate alert instance, skipping", "err", err, "rule_uid", alertInstance.RuleUID)
-				continue
-			}
-			labelTupleJSON, err := alertInstance.Labels.StringKey()
-			if err != nil {
-				st.Logger.Warn("Failed to generate alert instance labels key, skipping", "err", err, "rule_uid", alertInstance.RuleUID)
-				continue
-			}
 
-			_, err = sess.Exec(
-				"INSERT INTO alert_instance (rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time, resolved_at, last_sent_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-				alertInstance.RuleOrgID,
-				alertInstance.RuleUID,
-				labelTupleJSON,
-				alertInstance.LabelsHash,
-				alertInstance.CurrentState,
-				alertInstance.CurrentReason,
-				alertInstance.CurrentStateSince.Unix(),
-				alertInstance.CurrentStateEnd.Unix(),
-				alertInstance.LastEvalTime.Unix(),
-				nullableTimeToUnix(alertInstance.ResolvedAt),
-				nullableTimeToUnix(alertInstance.LastSentAt),
-			)
-			if err != nil {
-				return fmt.Errorf("failed to insert into alert_instance table: %w", err)
-			}
-		}
-		if err := sess.Commit(); err != nil {
-			return fmt.Errorf("failed to commit alert_instance table: %w", err)
-		}
-		return nil
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return st.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+			// If we are running in HA mode, the lock helps to prevent concurrent full syncs
+			// from running at the same time. This might lead to issues under certain conditions
+			// and transaction isolation levels.
+			return st.WithLock(ctx, "alert_instance_full_sync", func(ctx context.Context) error {
+				// First we delete all records from the table
+				if _, err := sess.Exec("DELETE FROM alert_instance"); err != nil {
+					return fmt.Errorf("failed to delete alert_instance table: %w", err)
+				}
+				for _, alertInstance := range instances {
+					if err := models.ValidateAlertInstance(alertInstance); err != nil {
+						st.Logger.Warn("Failed to validate alert instance, skipping", "err", err, "rule_uid", alertInstance.RuleUID)
+						continue
+					}
+					labelTupleJSON, err := alertInstance.Labels.StringKey()
+					if err != nil {
+						st.Logger.Warn("Failed to generate alert instance labels key, skipping", "err", err, "rule_uid", alertInstance.RuleUID)
+						continue
+					}
+
+					_, err = sess.Exec(
+						"INSERT INTO alert_instance (rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time, resolved_at, last_sent_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+						alertInstance.RuleOrgID,
+						alertInstance.RuleUID,
+						labelTupleJSON,
+						alertInstance.LabelsHash,
+						alertInstance.CurrentState,
+						alertInstance.CurrentReason,
+						alertInstance.CurrentStateSince.Unix(),
+						alertInstance.CurrentStateEnd.Unix(),
+						alertInstance.LastEvalTime.Unix(),
+						nullableTimeToUnix(alertInstance.ResolvedAt),
+						nullableTimeToUnix(alertInstance.LastSentAt),
+					)
+					if err != nil {
+						return fmt.Errorf("failed to insert into alert_instance table: %w", err)
+					}
+				}
+				if err := sess.Commit(); err != nil {
+					return fmt.Errorf("failed to commit alert_instance table: %w", err)
+				}
+				return nil
+			})
+		})
 	})
 }
 
