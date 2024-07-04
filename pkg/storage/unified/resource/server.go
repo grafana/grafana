@@ -22,13 +22,11 @@ import (
 
 // Package-level errors.
 var (
-	ErrNotFound                  = errors.New("entity not found")
-	ErrOptimisticLockingFailed   = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext     = errors.New("user not found in context")
-	ErrUnableToReadResourceJSON  = errors.New("unable to read resource json")
-	ErrNextPageTokenNotSupported = errors.New("nextPageToken not yet supported")
-	ErrLimitNotSupported         = errors.New("limit not yet supported")
-	ErrNotImplementedYet         = errors.New("not implemented yet")
+	ErrNotFound                 = errors.New("entity not found")
+	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
+	ErrUserNotFoundInContext    = errors.New("user not found in context")
+	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
+	ErrNotImplementedYet        = errors.New("not implemented yet")
 )
 
 // ResourceServer implements all services

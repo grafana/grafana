@@ -1201,12 +1201,16 @@ type ListOptions struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Namespace+Group+Resource+etc
+	// Group+Namespace+Resource (not name)
 	Key *ResourceKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// (best effort) Match label
 	// Allowed to send more results than actually match because the filter will be appled
 	// to the resutls agin in the client.  That time with the full field selector
 	Labels []*Requirement `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty"`
+	// (best effort) fields matcher
+	// Allowed to send more results than actually match because the filter will be appled
+	// to the resutls agin in the client.  That time with the full field selector
+	Fields []*Requirement `protobuf:"bytes,3,rep,name=fields,proto3" json:"fields,omitempty"`
 }
 
 func (x *ListOptions) Reset() {
@@ -1251,6 +1255,13 @@ func (x *ListOptions) GetKey() *ResourceKey {
 func (x *ListOptions) GetLabels() []*Requirement {
 	if x != nil {
 		return x.Labels
+	}
+	return nil
+}
+
+func (x *ListOptions) GetFields() []*Requirement {
+	if x != nil {
+		return x.Fields
 	}
 	return nil
 }
@@ -2529,13 +2540,16 @@ var file_resource_proto_rawDesc = []byte{
 	0x63, 0x65, 0x2e, 0x53, 0x6f, 0x72, 0x74, 0x2e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x05, 0x6f,
 	0x72, 0x64, 0x65, 0x72, 0x22, 0x1a, 0x0a, 0x05, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x12, 0x07, 0x0a,
 	0x03, 0x41, 0x53, 0x43, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x44, 0x45, 0x53, 0x43, 0x10, 0x01,
-	0x22, 0x65, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12,
-	0x27, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x72,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x4b, 0x65, 0x79, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2d, 0x0a, 0x06, 0x6c, 0x61, 0x62, 0x65,
-	0x6c, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75,
+	0x22, 0x94, 0x01, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x12, 0x27, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x4b, 0x65, 0x79, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2d, 0x0a, 0x06, 0x6c, 0x61, 0x62,
+	0x65, 0x6c, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x72, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74,
+	0x52, 0x06, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x73, 0x12, 0x2d, 0x0a, 0x06, 0x66, 0x69, 0x65, 0x6c,
+	0x64, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75,
 	0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52,
-	0x06, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x73, 0x22, 0xec, 0x01, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74,
+	0x06, 0x66, 0x69, 0x65, 0x6c, 0x64, 0x73, 0x22, 0xec, 0x01, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74,
 	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x26, 0x0a, 0x0f, 0x6e, 0x65, 0x78, 0x74, 0x5f,
 	0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x0d, 0x6e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12,
@@ -2831,53 +2845,54 @@ var file_resource_proto_depIdxs = []int32{
 	1,  // 8: resource.Sort.order:type_name -> resource.Sort.Order
 	5,  // 9: resource.ListOptions.key:type_name -> resource.ResourceKey
 	17, // 10: resource.ListOptions.labels:type_name -> resource.Requirement
-	0,  // 11: resource.ListRequest.version_match:type_name -> resource.ResourceVersionMatch
-	19, // 12: resource.ListRequest.options:type_name -> resource.ListOptions
-	6,  // 13: resource.ListResponse.items:type_name -> resource.ResourceWrapper
-	19, // 14: resource.WatchRequest.options:type_name -> resource.ListOptions
-	2,  // 15: resource.WatchEvent.type:type_name -> resource.WatchEvent.Type
-	35, // 16: resource.WatchEvent.resource:type_name -> resource.WatchEvent.Resource
-	35, // 17: resource.WatchEvent.previous:type_name -> resource.WatchEvent.Resource
-	5,  // 18: resource.HistoryRequest.key:type_name -> resource.ResourceKey
-	7,  // 19: resource.HistoryResponse.items:type_name -> resource.ResourceMeta
-	5,  // 20: resource.OriginRequest.key:type_name -> resource.ResourceKey
-	5,  // 21: resource.ResourceOriginInfo.key:type_name -> resource.ResourceKey
-	27, // 22: resource.OriginResponse.items:type_name -> resource.ResourceOriginInfo
-	3,  // 23: resource.HealthCheckResponse.status:type_name -> resource.HealthCheckResponse.ServingStatus
-	5,  // 24: resource.PutBlobRequest.resource:type_name -> resource.ResourceKey
-	4,  // 25: resource.PutBlobRequest.method:type_name -> resource.PutBlobRequest.Method
-	8,  // 26: resource.PutBlobResponse.status:type_name -> resource.StatusResult
-	5,  // 27: resource.GetBlobRequest.resource:type_name -> resource.ResourceKey
-	8,  // 28: resource.GetBlobResponse.status:type_name -> resource.StatusResult
-	15, // 29: resource.ResourceStore.Read:input_type -> resource.ReadRequest
-	9,  // 30: resource.ResourceStore.Create:input_type -> resource.CreateRequest
-	11, // 31: resource.ResourceStore.Update:input_type -> resource.UpdateRequest
-	13, // 32: resource.ResourceStore.Delete:input_type -> resource.DeleteRequest
-	20, // 33: resource.ResourceStore.List:input_type -> resource.ListRequest
-	22, // 34: resource.ResourceStore.Watch:input_type -> resource.WatchRequest
-	15, // 35: resource.ResourceIndex.Read:input_type -> resource.ReadRequest
-	24, // 36: resource.ResourceIndex.History:input_type -> resource.HistoryRequest
-	26, // 37: resource.ResourceIndex.Origin:input_type -> resource.OriginRequest
-	31, // 38: resource.BlobStore.PutBlob:input_type -> resource.PutBlobRequest
-	33, // 39: resource.BlobStore.GetBlob:input_type -> resource.GetBlobRequest
-	29, // 40: resource.Diagnostics.IsHealthy:input_type -> resource.HealthCheckRequest
-	16, // 41: resource.ResourceStore.Read:output_type -> resource.ReadResponse
-	10, // 42: resource.ResourceStore.Create:output_type -> resource.CreateResponse
-	12, // 43: resource.ResourceStore.Update:output_type -> resource.UpdateResponse
-	14, // 44: resource.ResourceStore.Delete:output_type -> resource.DeleteResponse
-	21, // 45: resource.ResourceStore.List:output_type -> resource.ListResponse
-	23, // 46: resource.ResourceStore.Watch:output_type -> resource.WatchEvent
-	16, // 47: resource.ResourceIndex.Read:output_type -> resource.ReadResponse
-	25, // 48: resource.ResourceIndex.History:output_type -> resource.HistoryResponse
-	28, // 49: resource.ResourceIndex.Origin:output_type -> resource.OriginResponse
-	32, // 50: resource.BlobStore.PutBlob:output_type -> resource.PutBlobResponse
-	34, // 51: resource.BlobStore.GetBlob:output_type -> resource.GetBlobResponse
-	30, // 52: resource.Diagnostics.IsHealthy:output_type -> resource.HealthCheckResponse
-	41, // [41:53] is the sub-list for method output_type
-	29, // [29:41] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	17, // 11: resource.ListOptions.fields:type_name -> resource.Requirement
+	0,  // 12: resource.ListRequest.version_match:type_name -> resource.ResourceVersionMatch
+	19, // 13: resource.ListRequest.options:type_name -> resource.ListOptions
+	6,  // 14: resource.ListResponse.items:type_name -> resource.ResourceWrapper
+	19, // 15: resource.WatchRequest.options:type_name -> resource.ListOptions
+	2,  // 16: resource.WatchEvent.type:type_name -> resource.WatchEvent.Type
+	35, // 17: resource.WatchEvent.resource:type_name -> resource.WatchEvent.Resource
+	35, // 18: resource.WatchEvent.previous:type_name -> resource.WatchEvent.Resource
+	5,  // 19: resource.HistoryRequest.key:type_name -> resource.ResourceKey
+	7,  // 20: resource.HistoryResponse.items:type_name -> resource.ResourceMeta
+	5,  // 21: resource.OriginRequest.key:type_name -> resource.ResourceKey
+	5,  // 22: resource.ResourceOriginInfo.key:type_name -> resource.ResourceKey
+	27, // 23: resource.OriginResponse.items:type_name -> resource.ResourceOriginInfo
+	3,  // 24: resource.HealthCheckResponse.status:type_name -> resource.HealthCheckResponse.ServingStatus
+	5,  // 25: resource.PutBlobRequest.resource:type_name -> resource.ResourceKey
+	4,  // 26: resource.PutBlobRequest.method:type_name -> resource.PutBlobRequest.Method
+	8,  // 27: resource.PutBlobResponse.status:type_name -> resource.StatusResult
+	5,  // 28: resource.GetBlobRequest.resource:type_name -> resource.ResourceKey
+	8,  // 29: resource.GetBlobResponse.status:type_name -> resource.StatusResult
+	15, // 30: resource.ResourceStore.Read:input_type -> resource.ReadRequest
+	9,  // 31: resource.ResourceStore.Create:input_type -> resource.CreateRequest
+	11, // 32: resource.ResourceStore.Update:input_type -> resource.UpdateRequest
+	13, // 33: resource.ResourceStore.Delete:input_type -> resource.DeleteRequest
+	20, // 34: resource.ResourceStore.List:input_type -> resource.ListRequest
+	22, // 35: resource.ResourceStore.Watch:input_type -> resource.WatchRequest
+	15, // 36: resource.ResourceIndex.Read:input_type -> resource.ReadRequest
+	24, // 37: resource.ResourceIndex.History:input_type -> resource.HistoryRequest
+	26, // 38: resource.ResourceIndex.Origin:input_type -> resource.OriginRequest
+	31, // 39: resource.BlobStore.PutBlob:input_type -> resource.PutBlobRequest
+	33, // 40: resource.BlobStore.GetBlob:input_type -> resource.GetBlobRequest
+	29, // 41: resource.Diagnostics.IsHealthy:input_type -> resource.HealthCheckRequest
+	16, // 42: resource.ResourceStore.Read:output_type -> resource.ReadResponse
+	10, // 43: resource.ResourceStore.Create:output_type -> resource.CreateResponse
+	12, // 44: resource.ResourceStore.Update:output_type -> resource.UpdateResponse
+	14, // 45: resource.ResourceStore.Delete:output_type -> resource.DeleteResponse
+	21, // 46: resource.ResourceStore.List:output_type -> resource.ListResponse
+	23, // 47: resource.ResourceStore.Watch:output_type -> resource.WatchEvent
+	16, // 48: resource.ResourceIndex.Read:output_type -> resource.ReadResponse
+	25, // 49: resource.ResourceIndex.History:output_type -> resource.HistoryResponse
+	28, // 50: resource.ResourceIndex.Origin:output_type -> resource.OriginResponse
+	32, // 51: resource.BlobStore.PutBlob:output_type -> resource.PutBlobResponse
+	34, // 52: resource.BlobStore.GetBlob:output_type -> resource.GetBlobResponse
+	30, // 53: resource.Diagnostics.IsHealthy:output_type -> resource.HealthCheckResponse
+	42, // [42:54] is the sub-list for method output_type
+	30, // [30:42] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_resource_proto_init() }

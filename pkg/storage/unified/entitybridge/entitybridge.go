@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gocloud.dev/blob/fileblob"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/klog/v2"
 
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -29,7 +30,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 	}
 
 	supportBlobs := true
-	useEntitySQL := true // save in SQL (but watch not working)
+	useEntitySQL := true
 
 	// Create a local blob filesystem blob store
 	if supportBlobs {
@@ -271,11 +272,15 @@ func (b *entityBridge) PrepareList(ctx context.Context, req *resource.ListReques
 		WithBody:      true,
 	}
 
-	// Assumes everything is equals
 	if len(req.Options.Labels) > 0 {
 		query.Labels = make(map[string]string)
 		for _, q := range req.Options.Labels {
-			query.Labels[q.Key] = q.Values[0]
+			// The entity structure only supports equals
+			// the rest will be processed handled by the upstream predicate
+			op := selection.Operator(q.Operator)
+			if op == selection.Equals || op == selection.DoubleEquals {
+				query.Labels[q.Key] = q.Values[0]
+			}
 		}
 	}
 

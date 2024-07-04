@@ -154,9 +154,9 @@ message ReadResponse {
 // The label filtering requirements:
 // https://github.com/kubernetes/kubernetes/blob/v1.30.1/staging/src/k8s.io/apimachinery/pkg/labels/selector.go#L141
 message Requirement {
-	string key = 1;
+  string key = 1;
   string operator = 2; // See https://github.com/kubernetes/kubernetes/blob/v1.30.1/staging/src/k8s.io/apimachinery/pkg/selection/operator.go#L21
-	repeated string values = 3; // typically one value, but depends on the operator
+  repeated string values = 3; // typically one value, but depends on the operator
 }
 
 message Sort {
@@ -164,12 +164,12 @@ message Sort {
     ASC = 0;
     DESC = 1;
   }
-	string field = 1;
+  string field = 1;
   Order order = 2;
 }
 
 message ListOptions {
-  // Namespace+Group+Resource+etc
+  // Group+Namespace+Resource (not name)
   ResourceKey key = 1;
 
   // (best effort) Match label
@@ -177,11 +177,10 @@ message ListOptions {
   // to the resutls agin in the client.  That time with the full field selector
   repeated Requirement labels = 2;
 
-  // TODO (later!) once we have a blob > search doc 
-  // Match fields (not yet supported)
-  // metadata.name
-  // metadata.namespace
-  // repeated Requirement fields = 3;
+  // (best effort) fields matcher
+  // Allowed to send more results than actually match because the filter will be appled
+  // to the resutls agin in the client.  That time with the full field selector
+  repeated Requirement fields = 3;
 }
 
 enum ResourceVersionMatch {
@@ -217,16 +216,16 @@ message ListResponse {
   int64 resource_version = 3;
 
   // remainingItemCount is the number of subsequent items in the list which are not included in this
-	// list response. If the list request contained label or field selectors, then the number of
-	// remaining items is unknown and the field will be left unset and omitted during serialization.
-	// If the list is complete (either because it is not chunking or because this is the last chunk),
-	// then there are no more remaining items and this field will be left unset and omitted during
-	// serialization.
+  // list response. If the list request contained label or field selectors, then the number of
+  // remaining items is unknown and the field will be left unset and omitted during serialization.
+  // If the list is complete (either because it is not chunking or because this is the last chunk),
+  // then there are no more remaining items and this field will be left unset and omitted during
+  // serialization.
   //
-	// The intended use of the remainingItemCount is *estimating* the size of a collection. Clients
-	// should not rely on the remainingItemCount to be set or to be exact.
-	// +optional
-	int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
+  // The intended use of the remainingItemCount is *estimating* the size of a collection. Clients
+  // should not rely on the remainingItemCount to be set or to be exact.
+  // +optional
+  int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
 }
 
 message WatchRequest {
