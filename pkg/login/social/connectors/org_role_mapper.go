@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -204,14 +205,26 @@ func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
 }
 
 func splitOrgMapping(mapping string) []string {
-	splitted := strings.Split(mapping, ":")
-	if len(splitted) <= 3 {
-		return splitted
+	result := make([]string, 0, 3)
+	re := regexp.MustCompile(":")
+	matches := re.FindAllStringIndex(mapping, -1)
+	from := 0
+
+	for _, match := range matches {
+		// match[0] is the start, match[1] is the end of the match
+		start, end := match[0], match[1]
+		// Check if the match is not preceded by two backslashes
+		if start == 0 || mapping[start-1:start] != `\` {
+			result = append(result, strings.ReplaceAll(mapping[from:end-1], `\`, ""))
+			from = end
+		}
 	}
-	result := make([]string, 3)
-	result[2] = splitted[len(splitted)-1]
-	result[1] = splitted[len(splitted)-2]
-	result[0] = strings.Join(splitted[:len(splitted)-2], ":")
+
+	result = append(result, mapping[from:])
+	if len(result) > 3 {
+		return []string{}
+	}
+
 	return result
 }
 
