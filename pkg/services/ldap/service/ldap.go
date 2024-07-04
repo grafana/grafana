@@ -141,7 +141,7 @@ func (s *LDAPImpl) ReloadConfig() error {
 	s.loadingMutex.Lock()
 	defer s.loadingMutex.Unlock()
 
-	config, err := readConfig(s.cfg.ConfigFilePath)
+	config, err := ldap.GetConfig(s.cfg)
 	if err != nil {
 		return err
 	}
