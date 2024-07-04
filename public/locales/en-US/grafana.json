@@ -62,6 +62,7 @@
         "error": "Error loading rule for this event.",
         "loading": "Loading...",
         "no-annotations": "No annotations",
+        "no-recognized-state": "No recognized state",
         "no-values": "No values",
         "not-found": "Rule not found for this event.",
         "not-grafana-rule": "Rule is not a Grafana rule",
@@ -75,7 +76,8 @@
         },
         "state-transitions": "State transition",
         "unknown-event-state": "Unknown",
-        "unknown-rule": "Unknown"
+        "unknown-rule": "Unknown",
+        "value-in-transition": "Value in transition"
       },
       "error": "Something went wrong loading the alert state history",
       "filter": {
@@ -91,11 +93,6 @@
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
-      }
-    },
-    "entral-alert-history": {
-      "details": {
-        "value-in-transition": "Value in transition"
       }
     },
     "policies": {

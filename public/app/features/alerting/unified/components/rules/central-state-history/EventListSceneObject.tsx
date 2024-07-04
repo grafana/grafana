@@ -230,11 +230,12 @@ interface EventStateProps {
 }
 export function EventState({ state, showLabel = false }: EventStateProps) {
   const styles = useStyles2(getStyles);
+  const toolTip = t('alerting.central-alert-history.details.no-recognized-state', 'No recognized state');
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
       <StateIcon
         iconName="exclamation-triangle"
-        tooltipContent="No recognized state"
+        tooltipContent={toolTip}
         labelText={<Trans i18nKey="alerting.central-alert-history.details.unknown-event-state">Unknown</Trans>}
         showLabel={Boolean(showLabel)}
         iconColor={styles.warningColor}

@@ -197,7 +197,7 @@ function ValueInTransition({ record }: ValueInTransitionProps) {
   return (
     <Stack gap={0.5} direction={'column'}>
       <Text variant="body" weight="light" color="secondary">
-        <Trans i18nKey="alerting.entral-alert-history.details.value-in-transition">Value in transition</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.value-in-transition">Value in transition</Trans>
       </Text>
       <Stack gap={0.5} direction={'row'} alignItems="center">
         <Text variant="body" weight="light">
