@@ -136,6 +136,16 @@ func (z *Zanzana) start(ctx context.Context) error {
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
+	if z.cfg.Env == setting.Dev && z.cfg.Zanzana.ListenHTTP {
+		go func() {
+			z.logger.Info("Starting OpenFGA HTTP server")
+			err := zanzana.StartOpenFGAHttpSever(z.cfg, z.handle, z.logger)
+			if err != nil {
+				z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
+			}
+		}()
+	}
+
 	// Run is blocking so we can just run it here
 	return z.handle.Run(ctx)
 }

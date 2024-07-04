@@ -61,6 +61,24 @@
         "parse-mode-warning-body": "Ĩƒ yőū ūşę ä <1>päřşę_mőđę</1> őpŧįőŉ őŧĥęř ŧĥäŉ <3>Ńőŉę</3>, ŧřūŉčäŧįőŉ mäy řęşūľŧ įŉ äŉ įŉväľįđ męşşäģę, čäūşįŉģ ŧĥę ŉőŧįƒįčäŧįőŉ ŧő ƒäįľ. Főř ľőŉģęř męşşäģęş, ŵę řęčőmmęŉđ ūşįŉģ äŉ äľŧęřŉäŧįvę čőŉŧäčŧ męŧĥőđ.",
         "parse-mode-warning-title": "Ŧęľęģřäm męşşäģęş äřę ľįmįŧęđ ŧő 4096 ŮŦF-8 čĥäřäčŧęřş."
       }
+    },
+    "policies": {
+      "metadata": {
+        "timingOptions": {
+          "groupInterval": {
+            "description": "Ħőŵ ľőŉģ ŧő ŵäįŧ þęƒőřę şęŉđįŉģ ä ŉőŧįƒįčäŧįőŉ äþőūŧ ŉęŵ äľęřŧş ŧĥäŧ äřę äđđęđ ŧő ä ģřőūp őƒ äľęřŧş ƒőř ŵĥįčĥ äŉ įŉįŧįäľ ŉőŧįƒįčäŧįőŉ ĥäş äľřęäđy þęęŉ şęŉŧ.",
+            "label": "Ŵäįŧ <1></1> þęƒőřę şęŉđįŉģ ūpđäŧęş"
+          },
+          "groupWait": {
+            "description": "Ħőŵ ľőŉģ ŧő įŉįŧįäľľy ŵäįŧ ŧő şęŉđ ä ŉőŧįƒįčäŧįőŉ ƒőř ä ģřőūp őƒ äľęřŧ įŉşŧäŉčęş.",
+            "label": "Ŵäįŧ <1></1> ŧő ģřőūp įŉşŧäŉčęş"
+          },
+          "repeatInterval": {
+            "description": "Ħőŵ őƒŧęŉ ŉőŧįƒįčäŧįőŉş äřę şęŉŧ įƒ ŧĥę ģřőūp őƒ äľęřŧş ĥäş ŉőŧ čĥäŉģęđ şįŉčę ŧĥę ľäşŧ ŉőŧįƒįčäŧįőŉ.",
+            "label": "Ŗępęäŧęđ ęvęřy <1></1>"
+          }
+        }
+      }
     }
   },
   "annotations": {
@@ -446,6 +464,8 @@
       "panel-options-graph-tooltip-description": "Cőŉŧřőľş ŧőőľŧįp äŉđ ĥővęř ĥįģĥľįģĥŧ þęĥävįőř äčřőşş đįƒƒęřęŉŧ päŉęľş. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
       "panel-options-graph-tooltip-label": "Ğřäpĥ ŧőőľŧįp",
       "panel-options-label": "Päŉęľ őpŧįőŉş",
+      "panels-preload-description": "Ŵĥęŉ ęŉäþľęđ äľľ päŉęľş ŵįľľ şŧäřŧ ľőäđįŉģ äş şőőŉ äş ŧĥę đäşĥþőäřđ ĥäş þęęŉ ľőäđęđ.",
+      "panels-preload-label": "Přęľőäđ päŉęľş",
       "tags-label": "Ŧäģş",
       "title": "Ğęŉęřäľ",
       "title-label": "Ŧįŧľę"
@@ -968,8 +988,9 @@
       "disconnect-error-title": "Ŧĥęřę ŵäş äŉ ęřřőř đįşčőŉŉęčŧįŉģ",
       "run-migration-error-description": "Ŝęę ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş",
       "run-migration-error-title": "Ŧĥęřę ŵäş äŉ ęřřőř mįģřäŧįŉģ yőūř řęşőūřčęş",
-      "start-migration": "Ůpľőäđ ęvęřyŧĥįŉģ",
-      "target-stack-title": "Ůpľőäđįŉģ ŧő"
+      "start-migration": "ßūįľđ şŉäpşĥőŧ",
+      "target-stack-title": "Ůpľőäđįŉģ ŧő",
+      "upload-migration": "Ůpľőäđ & mįģřäŧę şŉäpşĥőŧ"
     },
     "token-status": {
       "active": "Ŧőĸęŉ čřęäŧęđ äŉđ äčŧįvę",
@@ -1635,7 +1656,7 @@
     "restore-modal": {
       "restore-button": "Ŗęşŧőřę",
       "restore-loading": "Ŗęşŧőřįŉģ...",
-      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđ.",
+      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđş.",
       "text_other": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđş.",
       "title": "Ŗęşŧőřę Đäşĥþőäřđş"
     }
