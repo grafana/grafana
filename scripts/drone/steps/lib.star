@@ -799,7 +799,7 @@ def e2e_storybook_step():
             "PORT": "9001",
         },
         "commands": [
-            "npx wait-on -t 1m http://$HOST:$PORT",
+            "npx wait-on@7.2.0 -t 1m http://$HOST:$PORT",
             "yarn e2e:storybook",
         ],
     }
