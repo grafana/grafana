@@ -135,7 +135,7 @@ steps:
   image: node:20.9.0-alpine
   name: start-storybook
 - commands:
-  - npx wait-on@7.0.1 -t 1m http://$HOST:$PORT
+  - npx wait-on -t 1m http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -1907,7 +1907,7 @@ steps:
   image: node:20.9.0-alpine
   name: start-storybook
 - commands:
-  - npx wait-on@7.0.1 -t 1m http://$HOST:$PORT
+  - npx wait-on -t 1m http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -5178,6 +5178,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f748b563ad4ccb4e9235c169d8bd53aa15f7f5de16be52280041e82527cea10a
+hmac: 5381e135c6766e93bb158945f2a937fc0a27ef0a11489fdeede73d47f4799064
 
 ...
