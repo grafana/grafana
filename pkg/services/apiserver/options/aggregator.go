@@ -81,8 +81,8 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	}
 	// override the RESTOptionsGetter to use the file storage options getter
 	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig,
-		"apiregistration.k8s.io/apiservices",
-		"service.grafana.app/externalnames",
+		"/group/apiregistration.k8s.io/resource/apiservices",
+		"/group/service.grafana.app/resource/externalnames",
 	)
 	if err != nil {
 		return err

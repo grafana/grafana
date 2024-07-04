@@ -121,7 +121,7 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			watchKey := KeyFunc(tt.namespace, "")
-			key := KeyFunc(tt.namespace, tt.key)
+			key := KeyFunc(tt.namespace, "foo")
 			if !recursive {
 				watchKey = key
 			}
