@@ -23,6 +23,7 @@ Use the Grafana Alerting - Discord integration to receive alert notifications in
 ## Before you begin
 
 Create a Webhook to enable Grafana to send alert notifications to Discord channels.
+
 To create a Webhook in Discord, complete the following steps.
 
 1. Follow the steps in the [Intro to Webhooks guide](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
