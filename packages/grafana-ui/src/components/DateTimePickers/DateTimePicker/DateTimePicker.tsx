@@ -54,6 +54,7 @@ export interface Props {
   disabledSeconds?: () => number[];
   /** Can input be cleared/have empty values */
   clearable?: boolean;
+  /** Custom timezone for the date/time display */
   timeZone?: TimeZone;
 }
 
