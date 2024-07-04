@@ -3,6 +3,7 @@ package apiserver
 import (
 	"context"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/otel"
@@ -116,16 +117,17 @@ type lateInitializedTracingProvider struct {
 }
 
 func (tp lateInitializedTracingProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
-	return tp.tracer
+	return tp.tracer.getTracer()
 }
 
 type lateInitializedTracingService struct {
 	tracing.Tracer
+	mutex sync.RWMutex
 }
 
 func newLateInitializedTracingService() *lateInitializedTracingService {
 	ts := &lateInitializedTracingService{
-		Tracer: tracing.InitializeTracerForTest(),
+		Tracer: tracing.NewNoopTracerService(),
 	}
 
 	tp := &lateInitializedTracingProvider{
@@ -137,8 +139,17 @@ func newLateInitializedTracingService() *lateInitializedTracingService {
 	return ts
 }
 
-func (s *lateInitializedTracingService) InitTracer(tracer tracing.Tracer) {
+func (s *lateInitializedTracingService) getTracer() tracing.Tracer {
+	s.mutex.RLock()
+	t := s.Tracer
+	s.mutex.RUnlock()
+	return t
+}
+
+func (s *lateInitializedTracingService) InitTracer(tracer *tracing.TracingService) {
+	s.mutex.Lock()
 	s.Tracer = tracer
+	s.mutex.Unlock()
 }
 
 var _ tracing.Tracer = &lateInitializedTracingService{}
