@@ -14,6 +14,7 @@ import {
   AnnoKeyOriginPath,
   AnnoKeyOriginHash,
   AnnoKeyOriginName,
+  K8sAPIGroupList,
 } from './types';
 
 export interface GroupVersionResource {
@@ -109,4 +110,29 @@ function setOriginAsUI(meta: Partial<ObjectMeta>) {
   meta.annotations[AnnoKeyOriginName] = 'UI';
   meta.annotations[AnnoKeyOriginPath] = window.location.pathname;
   meta.annotations[AnnoKeyOriginHash] = config.buildInfo.versionString;
+}
+
+export class DatasourceAPIVersions {
+  private apiVersions?: { [pluginID: string]: string };
+
+  async get(pluginID: string): Promise<string | undefined> {
+    if (this.apiVersions) {
+      return this.apiVersions[pluginID];
+    }
+    const apis = await getBackendSrv().get<K8sAPIGroupList>('/apis');
+    const apiVersions: { [pluginID: string]: string } = {};
+    apis.groups.forEach((group) => {
+      if (group.name.includes('datasource.grafana.app')) {
+        const id = group.name.split('.')[0];
+        apiVersions[id] = group.preferredVersion.version;
+        // workaround for plugins that don't use the pluginID for the group name
+        // e.g. testdata uses testdata.datasource.grafana.app
+        if (!id.endsWith('-datasource')) {
+          apiVersions['grafana-' + id + '-datasource'] = group.preferredVersion.version;
+        }
+      }
+    });
+    this.apiVersions = apiVersions;
+    return apiVersions[pluginID];
+  }
 }

@@ -44,6 +44,7 @@ import {
   testDataSourceSucceeded,
 } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
+import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -264,6 +265,8 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
   };
 }
 
+const dsApiVersions = new DatasourceAPIVersions();
+
 export function updateDataSource(dataSource: DataSourceSettings) {
   return async (
     dispatch: (
@@ -271,6 +274,9 @@ export function updateDataSource(dataSource: DataSourceSettings) {
     ) => DataSourceSettings
   ) => {
     try {
+      if (config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+        dataSource.apiVersion = await dsApiVersions.get(dataSource.type);
+      }
       await api.updateDataSource(dataSource);
     } catch (err) {
       const formattedError = parseHealthCheckError(err);
