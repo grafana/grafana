@@ -25,6 +25,10 @@ func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.C
 	}
 }
 
+func ProvideAccessControlTest() *AccessControl {
+	return ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+}
+
 type AccessControl struct {
 	features  featuremgmt.FeatureToggles
 	log       log.Logger
@@ -142,8 +146,8 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 	if first.decision != second.decision {
 		a.log.Warn(
 			"zanzana evaluation result does not match grafana",
-			"grafana_desision", first.decision,
-			"zanana_descision", second.decision,
+			"grafana_decision", first.decision,
+			"zanana_decision", second.decision,
 			"grafana_ms", first.duration,
 			"zanzana_ms", second.duration,
 			"eval", evaluator.GoString(),
