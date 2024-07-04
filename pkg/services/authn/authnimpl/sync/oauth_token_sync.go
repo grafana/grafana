@@ -49,8 +49,10 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
+	ctxLogger := s.log.FromContext(ctx).New("userID", identity.ID.ID())
+
 	_, err, _ := s.singleflightGroup.Do(identity.ID.String(), func() (interface{}, error) {
-		s.log.Debug("Singleflight request for OAuth token sync", "key", identity.ID.String())
+		ctxLogger.Debug("Singleflight request for OAuth token sync")
 
 		// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
 		updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -63,7 +65,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 			token, _, err := s.service.HasOAuthEntry(ctx, identity)
 			if err != nil {
-				s.log.Error("Failed to get OAuth entry for verifying if token has already been refreshed", "id", identity.ID, "error", err)
+				ctxLogger.Error("Failed to get OAuth entry for verifying if token has already been refreshed", "id", identity.ID, "error", err)
 				return nil, err
 			}
 
@@ -73,14 +75,14 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 				return nil, nil
 			}
 
-			s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", refreshErr)
+			ctxLogger.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", refreshErr)
 
 			if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
-				s.log.Warn("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
+				ctxLogger.Warn("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
 			}
 
 			if err := s.sessionService.RevokeToken(ctx, identity.SessionToken, false); err != nil {
-				s.log.Warn("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
+				ctxLogger.Warn("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
 			}
 
 			return nil, refreshErr
