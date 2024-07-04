@@ -28,9 +28,16 @@ func WithLogger(logger log.Logger) ClientOption {
 	}
 }
 
+func WithSchema(dsl string) ClientOption {
+	return func(c *Client) {
+		c.dsl = dsl
+	}
+}
+
 type Client struct {
 	logger   log.Logger
 	client   openfgav1.OpenFGAServiceClient
+	dsl      string
 	tenantID string
 	storeID  string
 	modelID  string
@@ -53,6 +60,10 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 		c.tenantID = "stack-default"
 	}
 
+	if c.dsl == "" {
+		c.dsl = schema.DSL
+	}
+
 	store, err := c.getOrCreateStore(ctx, c.tenantID)
 	if err != nil {
 		return nil, err
@@ -60,7 +71,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 
 	c.storeID = store.GetId()
 
-	modelID, err := c.loadModel(ctx, c.storeID, schema.DSL)
+	modelID, err := c.loadModel(ctx, c.storeID, c.dsl)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +176,7 @@ func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (str
 
 			// If provided dsl is equal to a stored dsl we use that as the authorization id
 			if schema.EqualModels(dsl, storedDSL) {
-				return res.AuthorizationModels[0].GetId(), nil
+				return model.GetId(), nil
 			}
 		}
 
