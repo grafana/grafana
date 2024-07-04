@@ -29,7 +29,7 @@ A Histogram is a kind of bar chart that groups numbers into ranges, often called
 
 The Graph Panel now supports Histograms.
 
-![](/static/img/docs/v43/heatmap_histogram.png)
+![A histogram visualization](/static/img/docs/v43/heatmap_histogram.png)
 
 ## Histogram Aggregation Support for Elasticsearch
 
@@ -41,11 +41,11 @@ The Histogram support in the Graph Panel does not show changes over time - it ag
 
 Every column in a Heatmap is a histogram snapshot. Instead of visualizing higher values with higher bars, a heatmap visualizes higher values with color. The histogram shown above is equivalent to one column in the heatmap shown below.
 
-![](/static/img/docs/v43/heatmap_histogram_over_time.png)
+![A heatmap visualization](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
 The Heatmap panel also works with Elasticsearch Histogram Aggregations for more accurate server side bucketing.
 
-![](/assets/img/blog/v4/elastic_heatmap.jpg)
+![A heatmap with Elasticsearch Histogram Aggregations](/assets/img/blog/v4/elastic_heatmap.jpg)
 
 ## MySQL Data Source (alpha)
 
@@ -56,11 +56,11 @@ labeling the state of the data source as Alpha. Instead of holding up the releas
 
 **The query editor can show the generated and interpolated SQL that is sent to the MySQL server.**
 
-![](/static/img/docs/v43/mysql_table_query.png)
+![Query editor showing interpolated SQL](/static/img/docs/v43/mysql_table_query.png)
 
 **The query editor will also show any errors that resulted from running the query (very useful when you have a syntax error!).**
 
-![](/static/img/docs/v43/mysql_query_error.png)
+![Query editor showing errors](/static/img/docs/v43/mysql_query_error.png)
 
 ## Health Check Endpoint
 
@@ -74,7 +74,7 @@ Grafana now delays loading panels until they become visible (scrolled into view)
 
 The Prometheus data source now supports the Table Data format by automatically assigning a column to a label. This makes it really easy to browse data in the table panel.
 
-![](/static/img/docs/v43/prom_table_cols_as_labels.png)
+![Prometheus data in table format](/static/img/docs/v43/prom_table_cols_as_labels.png)
 
 ## Other Highlights From The Changelog
 
