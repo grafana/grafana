@@ -58,7 +58,7 @@ sudo yum install urw-fonts
 
 ## Troubleshoot backend performance
 
-If you're experiencing backend performance problems, such as high memory or CPU usage, please refer to [Configure profiling and tracing to troubleshoot Grafana]({{< relref "../../setup-grafana/configure-grafana/configure-tracing" >}}).
+If you're experiencing backend performance problems, such as high memory or CPU usage, please refer to [Configure profiling and tracing to troubleshoot Grafana]({{< relref "../setup-grafana/configure-grafana/configure-tracing/index.md" >}}).
 
 ## More help
 
