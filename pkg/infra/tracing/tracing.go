@@ -104,7 +104,6 @@ func NewNoopTracerService() *TracingService {
 	otel.SetTracerProvider(tp)
 
 	cfg := NewEmptyTracingConfig()
-	cfg.Propagation = "jaeger,w3c"
 	ots := &TracingService{cfg: cfg, tracerProvider: tp}
 	_ = ots.initOpentelemetryTracer()
 	return ots
