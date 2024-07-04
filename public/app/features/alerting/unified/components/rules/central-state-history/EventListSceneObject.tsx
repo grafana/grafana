@@ -221,7 +221,6 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
     return (
       <Text>
         <Trans i18nKey="alerting.central-alert-history.details.unknown-rule">Unknown</Trans>
-        {alertRuleName}
       </Text>
     );
   }
@@ -233,9 +232,7 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
           href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
           className={styles.alertName}
         >
-          <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
-            {alertRuleName}
-          </Trans>
+          {alertRuleName}
         </a>
       </Tooltip>
       <IconButton
@@ -350,9 +347,26 @@ export function EventState({ state, showLabel = false, addFilter, type }: EventS
       labelText: <Trans i18nKey="alerting.central-alert-history.details.state.pending">Pending</Trans>,
     },
   };
+  function onStateClick() {
+    addFilter('state', baseState, type === 'from' ? 'stateFrom' : 'stateTo');
+  }
 
   const config = stateConfig[baseState] || { iconName: 'exclamation-triangle', tooltipContent: 'Unknown State' };
-  return <StateIcon {...config} showLabel={showLabel} />;
+  return (
+    <div
+      onClick={onStateClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onStateClick();
+        }
+      }}
+      className={styles.state}
+      role="button"
+      tabIndex={0}
+    >
+      <StateIcon {...config} showLabel={showLabel} />
+    </div>
+  );
 }
 
 interface TimestampProps {
@@ -372,9 +386,7 @@ const Timestamp = ({ time }: TimestampProps) => {
 
   return (
     <Text variant="body" weight="light">
-      <Trans i18nKey="central-alert-history.details.timestamp" formattedDate={formattedDate}>
-        {formattedDate}
-      </Trans>
+      {formattedDate}
     </Text>
   );
 };

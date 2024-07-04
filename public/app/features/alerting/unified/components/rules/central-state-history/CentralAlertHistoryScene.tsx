@@ -259,7 +259,7 @@ export const FilterInfo = () => {
             </Trans>
             <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
             <Trans i18nKey="alerting.central-alert-history.filter.info.label2">Invalid use of spaces:</Trans>
-            <pre>{`{severity= "alerting.critical"}`}</pre>
+            <pre>{`{severity= "critical"}`}</pre>
             <pre>{`{severity ="critical"}`}</pre>
             <Trans i18nKey="alerting.central-alert-history.filter.info.label3">Valid use of spaces:</Trans>
             <pre>{`{severity=" critical"}`}</pre>

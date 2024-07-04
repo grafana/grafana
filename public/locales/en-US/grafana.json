@@ -208,9 +208,7 @@
   },
   "central-alert-history": {
     "details": {
-      "add-filter": "Add filter by alert name",
-      "alert-name": "{alertRuleName}",
-      "timestamp": "{formattedDate}"
+      "add-filter": "Add filter by alert name"
     },
     "filter": {
       "clear": "<0>Clear filters</0>"

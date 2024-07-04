@@ -208,9 +208,7 @@
   },
   "central-alert-history": {
     "details": {
-      "add-filter": "Åđđ ƒįľŧęř þy äľęřŧ ŉämę",
-      "alert-name": "{äľęřŧŖūľęŃämę}",
-      "timestamp": "{ƒőřmäŧŧęđĐäŧę}"
+      "add-filter": "Åđđ ƒįľŧęř þy äľęřŧ ŉämę"
     },
     "filter": {
       "clear": "<0>Cľęäř ƒįľŧęřş</0>"
