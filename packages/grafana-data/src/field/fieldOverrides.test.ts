@@ -1,21 +1,15 @@
 import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
 import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
-import { rangeUtil } from '../datetime';
+import { relativeToTimeRange } from '../datetime/rangeutil';
 import { createTheme } from '../themes';
 import { FieldMatcherID } from '../transformations/matchers/ids';
-import {
-  DataFrame,
-  Field,
-  FieldColorModeId,
-  FieldConfig,
-  FieldConfigPropertyItem,
-  FieldConfigSource,
-  FieldType,
-  GrafanaConfig,
-  InterpolateFunction,
-  ScopedVars,
-  ThresholdsMode,
-} from '../types';
+import { ScopedVars } from '../types/ScopedVars';
+import { GrafanaConfig } from '../types/config';
+import { FieldType, DataFrame, Field, FieldConfig } from '../types/dataFrame';
+import { FieldColorModeId } from '../types/fieldColor';
+import { FieldConfigPropertyItem, FieldConfigSource } from '../types/fieldOverrides';
+import { InterpolateFunction } from '../types/panel';
+import { ThresholdsMode } from '../types/thresholds';
 import { Registry } from '../utils/Registry';
 import { locationUtil } from '../utils/location';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
@@ -912,7 +906,7 @@ describe('getLinksSupplier', () => {
     });
 
     const datasourceUid = '1234';
-    const range = rangeUtil.relativeToTimeRange({ from: 600, to: 0 });
+    const range = relativeToTimeRange({ from: 600, to: 0 });
     const f0 = createDataFrame({
       name: 'A',
       fields: [
