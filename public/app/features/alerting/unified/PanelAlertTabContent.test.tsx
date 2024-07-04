@@ -26,7 +26,6 @@ import {
   mockRulerAlertingRule,
   mockRulerRuleGroup,
 } from './mocks';
-import { captureRequests } from './mocks/server/events';
 import { RuleFormValues } from './types/rule-form';
 import * as config from './utils/config';
 import { Annotation } from './utils/constants';
