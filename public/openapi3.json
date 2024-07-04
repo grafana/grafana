@@ -21463,7 +21463,7 @@
     },
     "/reports/images/:image": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.cfg:read`x.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`.",
         "operationId": "getSettingsImage",
         "responses": {
           "200": {
