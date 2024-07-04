@@ -11,7 +11,7 @@ weight = 4
 
 # Heatmap Panel
 
-![](/img/docs/v43/heatmap_panel_cover.jpg)
+![A heatmap visualization](/img/docs/v43/heatmap_panel_cover.jpg)
 
 > New panel only available in Grafana v4.3+
 
