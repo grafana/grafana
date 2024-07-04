@@ -25,7 +25,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
-import { Options } from './panelcfg.gen';
+import { Options, defaultOptions } from './panelcfg.gen';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
@@ -44,52 +44,55 @@ const styles = {
   }),
 };
 
-function usePagination(frames?: DataFrame[], maxPageSize?: number) {
-  const [pageNumber, setPageNumber] = useState(1);
+function usePagination(enablePagination: boolean, frames?: DataFrame[], maxPageSizeOptional?: number) {
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { paginatedFrames, pageCount } = useMemo(() => {
-    if (frames === undefined || maxPageSize === undefined || maxPageSize <= 0) {
-      return { paginatedFrames: frames };
+  const [paginationWrapperRef, { height: paginationHeight, width: paginationWidth }] = useMeasure<HTMLDivElement>();
+
+  const maybeNormalizedFrames = useMemo(() => {
+    if (!enablePagination || frames === undefined) {
+      return frames;
     }
+    return prepareFieldsForPagination(frames);
+  }, [enablePagination, frames]);
 
-    const normalizedFrames = prepareFieldsForPagination(frames);
-    const pageCount = Math.ceil(normalizedFrames.length / maxPageSize);
-    const pageOffset = (pageNumber - 1) * maxPageSize;
-    const paginatedFrames = normalizedFrames.slice(pageOffset, pageOffset + maxPageSize);
+  if (!enablePagination || maybeNormalizedFrames === undefined) {
+    return {
+      paginatedFrames: maybeNormalizedFrames,
+      paginationRev: 'disabled',
+      paginationElement: undefined,
+      paginationHeight: 0,
+    };
+  }
 
-    return { paginatedFrames, pageCount };
-  }, [frames, pageNumber, maxPageSize]);
+  // Some hackery to ensure `maxPageSize` is always defined and valid. We can remove this once
+  // it's possible to define these constraints in the panel options configuration.
+  let maxPageSize = maxPageSizeOptional ?? defaultOptions.maxPageSize;
+  if (maxPageSize === undefined || maxPageSize <= 0) {
+    maxPageSize = defaultOptions.maxPageSize!;
+  }
+
+  const numberOfPages = Math.ceil(maybeNormalizedFrames.length / maxPageSize);
+  const pageOffset = (currentPage - 1) * maxPageSize;
+  const paginatedFrames = maybeNormalizedFrames.slice(pageOffset, pageOffset + maxPageSize);
 
   // `paginationRev` needs to change value whenever any of the pagination settings changes.
   // It's used in to trigger a reconfiguration of the underlying graphs (which is cached,
   // hence an explicit nudge is required).
-  const paginationRev = `${pageNumber}/${maxPageSize}`;
+  const paginationRev = `${currentPage}/${maxPageSize}`;
 
-  const [paginationWrapperRef, { height: paginationWrapperHeight, width: paginationWrapperWidth }] =
-    useMeasure<HTMLDivElement>();
-
-  let paginationElement = undefined;
-  if (pageCount !== undefined) {
-    const showSmallVersion = paginationWrapperWidth < 550;
-    paginationElement = (
-      <div className={styles.paginationContainer} ref={paginationWrapperRef}>
-        <Pagination
-          className={styles.paginationElement}
-          currentPage={pageNumber}
-          numberOfPages={pageCount}
-          showSmallVersion={showSmallVersion}
-          onNavigate={setPageNumber}
-        />
-      </div>
-    );
-  }
-
-  let paginationHeight = paginationWrapperHeight;
-  if (paginationElement === undefined) {
-    // `paginationElement` might be unmounted if "max page size" panel options is changed,
-    // but `paginationWrapperHeight` won't reflect that, so an explicit handling is needed.
-    paginationHeight = 0;
-  }
+  const showSmallVersion = paginationWidth < 550;
+  const paginationElement = (
+    <div className={styles.paginationContainer} ref={paginationWrapperRef}>
+      <Pagination
+        className={styles.paginationElement}
+        currentPage={currentPage}
+        numberOfPages={numberOfPages}
+        showSmallVersion={showSmallVersion}
+        onNavigate={setCurrentPage}
+      />
+    </div>
+  );
 
   return { paginatedFrames, paginationRev, paginationElement, paginationHeight };
 }
@@ -120,6 +123,7 @@ export const StateTimelinePanel = ({
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
+    options.enablePagination,
     frames,
     options.maxPageSize
   );

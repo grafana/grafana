@@ -16,7 +16,11 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   alignValue?: ui.TimelineValueAlignment;
   /**
-   * Configures max page size (and whether pagination is enabled)
+   * Whether pagination should be enabled
+   */
+  enablePagination: boolean;
+  /**
+   * Configures max page size (if pagination is enabled)
    */
   maxPageSize?: number;
   /**
@@ -35,6 +39,8 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
 
 export const defaultOptions: Partial<Options> = {
   alignValue: 'left',
+  enablePagination: false,
+  maxPageSize: 20,
   mergeValues: true,
   rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
