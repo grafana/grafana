@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { StandardEditorProps } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { RadioButtonGroup } from '@grafana/ui';

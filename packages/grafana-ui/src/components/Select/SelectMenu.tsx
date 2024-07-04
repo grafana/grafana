@@ -1,8 +1,9 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import React, { RefCallback, useEffect, useMemo, useRef } from 'react';
+import { RefCallback, useEffect, useMemo, useRef } from 'react';
+import * as React from 'react';
 import { MenuListProps } from 'react-select';
-import { FixedSizeList as List } from 'react-window';
+import { VariableSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,8 +36,10 @@ export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.
 SelectMenu.displayName = 'SelectMenu';
 
 const VIRTUAL_LIST_ITEM_HEIGHT = 37;
+const VIRTUAL_DIVIDER_HEIGHT = 1;
 const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 8;
 const VIRTUAL_LIST_PADDING = 8;
+const DIVIDER_KEY = 'divider';
 // Some list items have icons or checkboxes so we need some extra width
 const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 
@@ -80,13 +83,17 @@ export const VirtualizedSelectMenu = ({
 
   // flatten the children to account for any categories
   // these will have array children that are the individual options
-  const flattenedChildren = children.flatMap((child) => {
+  const flattenedChildren = children.flatMap((child, index) => {
     if (hasArrayChildren(child)) {
       // need to remove the children from the category else they end up in the DOM twice
       const childWithoutChildren = React.cloneElement(child, {
         children: null,
       });
-      return [childWithoutChildren, ...child.props.children];
+      return [
+        childWithoutChildren,
+        ...child.props.children,
+        <div key={`${DIVIDER_KEY}-${flattenedOptions[index].label}`} className={styles.virtualizedSeparator} />,
+      ];
     }
     return [child];
   });
@@ -96,6 +103,15 @@ export const VirtualizedSelectMenu = ({
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
   const heightEstimate = Math.min(flattenedChildren.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
+  const getRowHeight = (rowIndex: number) => {
+    const row = flattenedChildren[rowIndex];
+    if (row.key.includes(DIVIDER_KEY)) {
+      return VIRTUAL_DIVIDER_HEIGHT;
+    }
+
+    return VIRTUAL_LIST_ITEM_HEIGHT;
+  };
+
   return (
     <List
       ref={listRef}
@@ -104,7 +120,8 @@ export const VirtualizedSelectMenu = ({
       width={widthEstimate}
       aria-label="Select options menu"
       itemCount={flattenedChildren.length}
-      itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
+      itemSize={getRowHeight}
+      estimatedItemSize={VIRTUAL_LIST_ITEM_HEIGHT}
     >
       {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{flattenedChildren[index]}</div>}
     </List>

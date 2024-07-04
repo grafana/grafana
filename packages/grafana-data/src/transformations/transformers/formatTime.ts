@@ -2,9 +2,13 @@ import { map } from 'rxjs/operators';
 
 import { TimeZone } from '@grafana/schema';
 
-import { cacheFieldDisplayNames } from '../../field';
-import { DataFrame, TransformationApplicabilityLevels } from '../../types';
-import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
+import { cacheFieldDisplayNames } from '../../field/fieldState';
+import { DataFrame } from '../../types/dataFrame';
+import {
+  DataTransformContext,
+  DataTransformerInfo,
+  TransformationApplicabilityLevels,
+} from '../../types/transformations';
 
 import { fieldToStringField } from './convertFieldType';
 import { DataTransformerID } from './ids';

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,7 @@ interface Props {
 export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const [filterQuery, setFilterQuery] = React.useState<string>(defaultQueryString ?? '');
+  const [filterQuery, setFilterQuery] = useState<string>(defaultQueryString ?? '');
 
   useDebounce(
     () => {

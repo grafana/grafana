@@ -16,6 +16,7 @@ import {
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
+import { getScopesFromUrl } from '../../dashboard/utils/getScopesFromUrl';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
@@ -83,7 +84,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-    const cachedDashboard = this.getFromCache(cacheKey);
+    const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
     if (cachedDashboard) {
       return cachedDashboard;
@@ -142,7 +143,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       // Do not cache new dashboards
-      this.dashboardCache = { dashboard: rsp, ts: Date.now(), cacheKey };
+      this.setDashboardCache(cacheKey, rsp);
     } catch (e) {
       // Ignore cancelled errors
       if (isFetchError(e) && e.cancelled) {
@@ -220,7 +221,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     const rsp = await this.fetchDashboard(options);
 
-    const fromCache = this.cache[options.uid];
+    const fromCache = this.getSceneFromCache(options.uid);
 
     // When coming from Explore, skip returnning scene from cache
     if (!comingFromExplore) {
@@ -234,7 +235,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid && !comingFromExplore) {
-        this.cache[options.uid] = scene;
+        this.setSceneCache(options.uid, scene);
       }
 
       return scene;
@@ -249,8 +250,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     throw new Error('Dashboard not found');
   }
 
-  public getFromCache(cacheKey: string) {
+  public getDashboardFromCache(cacheKey: string) {
     const cachedDashboard = this.dashboardCache;
+    cacheKey = this.getCacheKey(cacheKey);
 
     if (
       cachedDashboard &&
@@ -275,11 +277,37 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
+    cacheKey = this.getCacheKey(cacheKey);
+
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 
   public clearDashboardCache() {
     this.dashboardCache = undefined;
+  }
+
+  public getSceneFromCache(cacheKey: string) {
+    cacheKey = this.getCacheKey(cacheKey);
+
+    return this.cache[cacheKey];
+  }
+
+  public setSceneCache(cacheKey: string, scene: DashboardScene) {
+    cacheKey = this.getCacheKey(cacheKey);
+
+    this.cache[cacheKey] = scene;
+  }
+
+  public getCacheKey(cacheKey: string): string {
+    const scopesSearchParams = getScopesFromUrl();
+
+    if (!scopesSearchParams?.has('scopes')) {
+      return cacheKey;
+    }
+
+    scopesSearchParams.sort();
+
+    return `${cacheKey}__scp__${scopesSearchParams.toString()}`;
   }
 }
 
@@ -294,40 +322,57 @@ export function getDashboardScenePageStateManager(): DashboardScenePageStateMana
 }
 
 function getErrorScene(msg: string) {
-  return createDashboardSceneFromDashboardModel(
-    new DashboardModel(
-      {
-        ...defaultDashboard,
-        title: msg,
-        panels: [
+  const dto: DashboardDTO = {
+    dashboard: {
+      ...defaultDashboard,
+      uid: 'error-dash',
+      title: msg,
+      annotations: {
+        list: [
           {
-            fieldConfig: {
-              defaults: {},
-              overrides: [],
+            builtIn: 1,
+            datasource: {
+              type: 'grafana',
+              uid: '-- Grafana --',
             },
-            gridPos: {
-              h: 6,
-              w: 12,
-              x: 7,
-              y: 0,
-            },
-            id: 1,
-            options: {
-              code: {
-                language: 'plaintext',
-                showLineNumbers: false,
-                showMiniMap: false,
-              },
-              content: `<br/><br/><center><h1>${msg}</h1></center>`,
-              mode: 'html',
-            },
-            title: '',
-            transparent: true,
-            type: 'text',
+            enable: false,
+            hide: true,
+            iconColor: 'rgba(0, 211, 255, 1)',
+            name: 'Annotations & Alerts',
+            type: 'dashboard',
           },
         ],
       },
-      { canSave: false, canEdit: false }
-    )
-  );
+
+      panels: [
+        {
+          fieldConfig: {
+            defaults: {},
+            overrides: [],
+          },
+          gridPos: {
+            h: 6,
+            w: 12,
+            x: 7,
+            y: 0,
+          },
+          id: 1,
+          options: {
+            code: {
+              language: 'plaintext',
+              showLineNumbers: false,
+              showMiniMap: false,
+            },
+            content: `<br/><br/><center><h1>${msg}</h1></center>`,
+            mode: 'html',
+          },
+          title: '',
+          transparent: true,
+          type: 'text',
+        },
+      ],
+    },
+    meta: { canSave: false, canEdit: false },
+  };
+  return createDashboardSceneFromDashboardModel(new DashboardModel(dto.dashboard, dto.meta), dto.dashboard);
 }

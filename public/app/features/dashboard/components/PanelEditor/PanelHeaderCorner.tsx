@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { Component } from 'react';
+import { Component } from 'react';
 
 import { renderMarkdown, LinkModelSupplier, ScopedVars, IconName } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, getTemplateSrv } from '@grafana/runtime';
-import { Tooltip, PopoverContent, Icon } from '@grafana/ui';
+import { Tooltip, PopoverContent, Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -17,7 +17,7 @@ enum InfoMode {
   Links = 'Links',
 }
 
-export interface Props {
+export interface Props extends Themeable2 {
   panel: PanelModel;
   title?: string;
   description?: string;
@@ -45,22 +45,23 @@ export class PanelHeaderCorner extends Component<Props> {
   };
 
   getInfoContent = (): JSX.Element => {
-    const { panel } = this.props;
+    const { panel, theme } = this.props;
     const markdown = panel.description || '';
     const interpolatedMarkdown = getTemplateSrv().replace(markdown, panel.scopedVars);
     const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
     const links = this.props.links && this.props.links.getLinks(panel.replaceVariables);
+    const styles = getContentStyles(theme);
 
     return (
-      <div className="panel-info-content markdown-html">
+      <div className={styles.content}>
         <div dangerouslySetInnerHTML={{ __html: markedInterpolatedMarkdown }} />
 
         {links && links.length > 0 && (
-          <ul className="panel-info-corner-links">
+          <ul className={styles.cornerLinks}>
             {links.map((link, idx) => {
               return (
                 <li key={idx}>
-                  <a className="panel-info-corner-links__item" href={link.href} target={link.target}>
+                  <a href={link.href} target={link.target}>
                     {link.title}
                   </a>
                 </li>
@@ -102,7 +103,7 @@ export class PanelHeaderCorner extends Component<Props> {
   }
 }
 
-export default PanelHeaderCorner;
+export default withTheme2(PanelHeaderCorner);
 
 interface PanelInfoCornerProps {
   infoMode: InfoMode;
@@ -134,6 +135,25 @@ const iconMap: Record<InfoMode, IconName> = {
   [InfoMode.Info]: 'info',
   [InfoMode.Links]: 'external-link-alt',
 };
+
+const getContentStyles = (theme: GrafanaTheme2) => ({
+  content: css({
+    overflow: 'auto',
+
+    code: {
+      whiteSpace: 'normal',
+      wordWrap: 'break-word',
+    },
+
+    'pre > code': {
+      display: 'block',
+    },
+  }),
+  cornerLinks: css({
+    listStyle: 'none',
+    paddingLeft: 0,
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
