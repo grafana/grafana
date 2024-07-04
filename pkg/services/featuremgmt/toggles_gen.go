@@ -730,4 +730,12 @@ const (
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
+
+	// FlagBodyScrolling
+	// Adjusts Page to make body the scrollable element
+	FlagBodyScrolling = "bodyScrolling"
+
+	// FlagCloudwatchMetricInsightsCrossAccount
+	// Enables cross account observability for Cloudwatch Metric Insights
+	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 )
