@@ -1,5 +1,3 @@
-import { Trans } from 'react-i18next';
-
 import { PromMetricsMetadataItem } from '@grafana/prometheus';
 import {
   QueryVariable,
@@ -10,6 +8,7 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Stack, Text, TextLink } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
