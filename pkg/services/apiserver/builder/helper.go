@@ -97,12 +97,14 @@ func SetupConfig(
 
 		// Needs to run last in request chain to function as expected, hence we register it first.
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler = filters.WithRequester(handler)
+
 		if len(optionalMiddlewares) > 0 {
 			for _, m := range optionalMiddlewares {
 				handler = m(handler)
 			}
 		}
-		handler = filters.WithRequester(handler)
+
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, pathRewriters)

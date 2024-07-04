@@ -73,6 +73,7 @@ type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) er
 type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
 type PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
 
+// Could also do away with authn.Client, just not sure why contexthandler needs the whole interface of authn service
 type ServiceAuthenticateOnly interface {
 	// Authenticate authenticates a request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)

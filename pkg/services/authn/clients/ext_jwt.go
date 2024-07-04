@@ -20,9 +20,8 @@ import (
 var _ authn.Client = new(ExtendedJWT)
 
 const (
-	extJWTAuthenticationHeaderName  = "X-Access-Token"
-	extJWTAuthorizationHeaderName   = "X-Grafana-Id"
-	extJWTAccessTokenExpectAudience = "grafana"
+	extJWTAuthenticationHeaderName = "X-Access-Token"
+	extJWTAuthorizationHeaderName  = "X-Grafana-Id"
 )
 
 var (
@@ -46,7 +45,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 	})
 
 	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
-		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
+		AllowedAudiences: cfg.ExtJWTAuth.Audiences,
 	}, keys)
 
 	// For ID tokens, we explicitly do not validate audience, hence an empty AllowedAudiences
@@ -145,6 +144,8 @@ func (s *ExtendedJWT) authenticateAsUser(
 
 func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
+	// TODO: this is going to be a problem for service layer because it will need to send in *
+	// for the namespace when getting cluster scoped resources
 	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.Rest.NamespaceMatches(allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
 	}
