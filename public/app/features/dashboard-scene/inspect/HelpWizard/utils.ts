@@ -78,8 +78,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     // we want the debug dashboard to include the panel with any changes that were made while
     // in panel edit mode.
     const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
-    const parentItem = sourcePanel.parent as DashboardGridItem | LibraryVizPanel;
-    const dashGridItem = parentItem instanceof DashboardGridItem ? parentItem : parentItem.parent;
+    const dashGridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
     if (dashGridItem instanceof DashboardGridItem) {
       saveModel = {
         ...gridItemToPanel(dashGridItem),
