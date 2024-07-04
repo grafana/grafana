@@ -169,7 +169,6 @@ export const FilterList = ({
     }
   }, [onChange, values, items, selectedItems]);
 
-  const hasItems = items.length > 0;
   return (
     <Stack direction="column" gap={0.25}>
       {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
@@ -185,8 +184,7 @@ export const FilterList = ({
           <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
         </Stack>
       )}
-      {!hasItems && <Label className={styles.noValuesLabel}>No values</Label>}
-      {hasItems && (
+      {items.length > 0 ? (
         <>
           <List
             height={height}
@@ -220,6 +218,8 @@ export const FilterList = ({
             </div>
           </Stack>
         </>
+      ) : (
+        <Label className={styles.noValuesLabel}>No values</Label>
       )}
     </Stack>
   );
