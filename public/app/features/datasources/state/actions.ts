@@ -18,6 +18,7 @@ import {
 import { updateNavIndex } from 'app/core/actions';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -44,7 +45,6 @@ import {
   testDataSourceSucceeded,
 } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
-import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
