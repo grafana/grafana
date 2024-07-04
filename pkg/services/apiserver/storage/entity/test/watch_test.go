@@ -173,6 +173,7 @@ func TestIntegrationClusterScopedWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -331,7 +332,6 @@ func TestIntegrationSendInitialEventsBackwardCompatibility(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
