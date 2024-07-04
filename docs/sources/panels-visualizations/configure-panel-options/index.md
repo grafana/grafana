@@ -58,7 +58,7 @@ Add a title and description to a panel to share with users any important informa
 
    You can use [variables you have defined]({{< relref "../../dashboards/variables/" >}}) in the **Title** and **Description** field, but not [global variables]({{< relref "../../dashboards/variables/add-template-variables/#global-variables" >}}).
 
-   ![](/static/img/docs/panels/panel-options-8-0.png)
+   ![Panel options](/static/img/docs/panels/panel-options-8-0.png)
 
 ## View a panel JSON model
 
