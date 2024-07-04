@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,7 +54,7 @@ func SetupConfig(
 	buildVersion string,
 	buildCommit string,
 	buildBranch string,
-	optionalMiddlewares ...func(handler http.Handler) http.Handler,
+	optionalMiddlewares ...web.Middleware,
 ) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
