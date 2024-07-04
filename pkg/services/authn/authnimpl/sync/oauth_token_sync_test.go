@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -128,6 +129,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				sessionService:    sessionService,
 				socialService:     socialService,
 				singleflightGroup: new(singleflight.Group),
+				tracer:            tracing.InitializeTracerForTest(),
 			}
 
 			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)

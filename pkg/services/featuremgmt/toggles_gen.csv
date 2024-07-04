@@ -179,3 +179,6 @@ zanzana,experimental,@grafana/identity-access-team,false,false,false
 passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
 dashboardRestoreUI,experimental,@grafana/grafana-frontend-platform,false,false,false
+cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
+bodyScrolling,experimental,@grafana/grafana-frontend-platform,false,false,true
+cloudwatchMetricInsightsCrossAccount,experimental,@grafana/aws-datasources,false,false,true

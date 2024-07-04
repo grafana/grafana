@@ -33,14 +33,14 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
   if (error) {
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.error">Error loading rule for this event.</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.error">Error loading rule for this event.</Trans>
       </Text>
     );
   }
   if (loading) {
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.loading">Loading...</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.loading">Loading...</Trans>
       </Text>
     );
   }
@@ -48,7 +48,7 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
   if (!rule) {
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.not-found">Rule not found for this event.</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.not-found">Rule not found for this event.</Trans>
       </Text>
     );
   }
@@ -78,7 +78,7 @@ function StateTransition({ record, addFilter }: StateTransitionProps) {
   return (
     <Stack gap={0.5} direction={'column'}>
       <Text variant="body" weight="light" color="secondary">
-        <Trans i18nKey="central-alert-history.details.state-transitions">State transition</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.state-transitions">State transition</Trans>
       </Text>
       <Stack gap={0.5} direction={'row'} alignItems="center">
         <EventState state={record.line.previous} showLabel addFilter={addFilter} type="from" />
@@ -101,11 +101,11 @@ const Annotations = ({ rule }: AnnotationsProps) => {
   return (
     <>
       <Text variant="body" color="secondary" weight="light">
-        <Trans i18nKey="central-alert-history.details.annotations">Annotations</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.annotations">Annotations</Trans>
       </Text>
       {Object.keys(annotations).length === 0 ? (
         <Text variant="body" weight="light" italic>
-          <Trans i18nKey="central-alert-history.details.no-annotations">No annotations</Trans>
+          <Trans i18nKey="alerting.central-alert-history.details.no-annotations">No annotations</Trans>
         </Text>
       ) : (
         <div className={styles.metadataWrapper}>
@@ -138,7 +138,7 @@ const QueryVizualization = ({ ruleUID, rule, logRecords }: QueryVizualizationPro
   if (!isGrafanaRulerRule(rule?.rulerRule)) {
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.not-grafana-rule">Rule is not a Grafana rule</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.not-grafana-rule">Rule is not a Grafana rule</Trans>
       </Text>
     );
   }
@@ -193,13 +193,13 @@ interface ValueInTransitionProps {
   record: LogRecord;
 }
 function ValueInTransition({ record }: ValueInTransitionProps) {
-  const values = record.line.values
+  const values = record?.line?.values
     ? JSON.stringify(record.line.values)
-    : t('central-alert-history.details.no-values', 'No values');
+    : t('alerting.central-alert-history.details.no-values', 'No values');
   return (
     <Stack gap={0.5} direction={'column'}>
       <Text variant="body" weight="light" color="secondary">
-        <Trans i18nKey="central-alert-history.details.value-in-transition">Value in transition</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.value-in-transition">Value in transition</Trans>
       </Text>
       <Stack gap={0.5} direction={'row'} alignItems="center">
         <Text variant="body" weight="light">
@@ -216,7 +216,9 @@ function NumberTransitions({ transitions }: NumberTransitionsProps) {
   return (
     <Stack gap={0.5} direction={'column'} alignItems="flex-start" justifyContent={'center'}>
       <Text variant="body" weight="light" color="secondary">
-        <Trans i18nKey="central-alert-history.details.number-transitions">State transitions for selected period</Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.number-transitions">
+          State transitions for selected period
+        </Trans>
       </Text>
       <Text variant="body" weight="light">
         {transitions}

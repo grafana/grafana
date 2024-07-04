@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { ReactElement, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -146,16 +146,10 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
   if (isFetchError(error) && error.status === 404) {
     return <EntityNotFound entity="History" />;
   }
-  const title = t('central-alert-history.error', 'Something went wrong loading the alert state history');
+  const title = t('alerting.central-alert-history.error', 'Something went wrong loading the alert state history');
   const errorStr = stringifyErrorLike(error);
 
-  return (
-    <Alert title={title}>
-      <Trans i18nKey="central-alert-history.error-message" errorStr={errorStr}>
-        {errorStr}
-      </Trans>
-    </Alert>
-  );
+  return <Alert title={title}>{errorStr}</Alert>;
 }
 
 interface EventRowProps {
@@ -175,7 +169,10 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
 
   return (
     <Stack direction="column" gap={0}>
-      <div className={styles.header(isCollapsed)} data-testid="event-row-header">
+      <div
+        className={cx(styles.header, isCollapsed ? styles.collapsedHeader : styles.notCollapsedHeader)}
+        data-testid="event-row-header"
+      >
         <CollapseToggle
           size="sm"
           className={styles.collapseToggle}
@@ -223,10 +220,8 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
   if (!ruleUID) {
     return (
       <Text>
-        <Trans i18nKey="central-alert-history.details.unknown-rule">Unknown</Trans>
-        <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
-          {alertRuleName}
-        </Trans>
+        <Trans i18nKey="alerting.central-alert-history.details.unknown-rule">Unknown</Trans>
+        {alertRuleName}
       </Text>
     );
   }
@@ -296,15 +291,16 @@ interface EventStateProps {
   addFilter: (key: string, value: string, type: FilterType) => void;
   type: 'from' | 'to';
 }
-export function EventState({ state, showLabel, addFilter, type }: EventStateProps) {
+export function EventState({ state, showLabel = false, addFilter, type }: EventStateProps) {
   const styles = useStyles2(getStyles);
+  const toolTip = t('alerting.central-alert-history.details.no-recognized-state', 'No recognized state');
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
       <StateIcon
         iconName="exclamation-triangle"
-        tooltipContent="No recognized state"
-        labelText={<Trans i18nKey="central-alert-history.details.unknown-event-state">Unknown</Trans>}
-        showLabel={Boolean(showLabel)}
+        tooltipContent={toolTip}
+        labelText={<Trans i18nKey="alerting.central-alert-history.details.unknown-event-state">Unknown</Trans>}
+        showLabel={showLabel}
         iconColor={styles.warningColor}
       />
     );
@@ -327,54 +323,36 @@ export function EventState({ state, showLabel, addFilter, type }: EventStateProp
       iconName: 'check-circle',
       iconColor: Boolean(reason) ? styles.warningColor : styles.normalColor,
       tooltipContent: Boolean(reason) ? `Normal (${reason})` : 'Normal',
-      labelText: <Trans i18nKey="central-alert-history.details.state.normal">Normal</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.normal">Normal</Trans>,
     },
     Alerting: {
       iconName: 'exclamation-circle',
       iconColor: styles.alertingColor,
       tooltipContent: 'Alerting',
-      labelText: <Trans i18nKey="central-alert-history.details.state.alerting">Alerting</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.alerting">Alerting</Trans>,
     },
     NoData: {
       iconName: 'exclamation-triangle',
       iconColor: styles.warningColor,
       tooltipContent: 'Insufficient data',
-      labelText: <Trans i18nKey="central-alert-history.details.state.no-data">No data</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.no-data">No data</Trans>,
     },
     Error: {
       iconName: 'exclamation-circle',
       tooltipContent: 'Error',
       iconColor: styles.warningColor,
-      labelText: <Trans i18nKey="central-alert-history.details.state.error">Error</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.error">Error</Trans>,
     },
     Pending: {
       iconName: 'circle',
       iconColor: styles.warningColor,
       tooltipContent: Boolean(reason) ? `Pending (${reason})` : 'Pending',
-      labelText: <Trans i18nKey="central-alert-history.details.state.pending">Pending</Trans>,
+      labelText: <Trans i18nKey="alerting.central-alert-history.details.state.pending">Pending</Trans>,
     },
   };
 
-  function onStateClick() {
-    addFilter('state', baseState, type === 'from' ? 'stateFrom' : 'stateTo');
-  }
-
   const config = stateConfig[baseState] || { iconName: 'exclamation-triangle', tooltipContent: 'Unknown State' };
-  return (
-    <div
-      onClick={onStateClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          onStateClick();
-        }
-      }}
-      className={styles.state}
-      role="button"
-      tabIndex={0}
-    >
-      <StateIcon {...config} showLabel={Boolean(showLabel)} />
-    </div>
-  );
+  return <StateIcon {...config} showLabel={showLabel} />;
 }
 
 interface TimestampProps {
@@ -405,19 +383,22 @@ export default withErrorBoundary(HistoryEventsList, { style: 'page' });
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    header: (isCollapsed: boolean) =>
-      css({
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
-        flexWrap: 'nowrap',
-        borderBottom: isCollapsed ? `1px solid ${theme.colors.border.weak}` : 'none',
-
-        '&:hover': {
-          backgroundColor: theme.components.table.rowHoverBackground,
-        },
-      }),
+    header: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+      flexWrap: 'nowrap',
+      '&:hover': {
+        backgroundColor: theme.components.table.rowHoverBackground,
+      },
+    }),
+    collapsedHeader: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    notCollapsedHeader: css({
+      borderBottom: 'none',
+    }),
 
     collapseToggle: css({
       background: 'none',

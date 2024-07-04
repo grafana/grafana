@@ -63,6 +63,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingQueryOptimization`        | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `cloudWatchNewLabelParsing`        | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
 | `pluginProxyPreserveTrailingSlash` | Preserve plugin proxy trailing slash.                                                                                                                                                                                        |                    |
+| `cloudWatchRoundUpEndTime`         | Round up end time for metric queries to the next minute to avoid missing data                                                                                                                                                | Yes                |
 
 ## Public preview feature toggles
 
@@ -191,6 +192,7 @@ Experimental features might be changed or removed without prior notice.
 | `databaseReadReplica`                       | Use a read replica for some database queries.                                                                                                                                                                                                                                     |
 | `alertingApiServer`                         | Register Alerting APIs with the K8s API server                                                                                                                                                                                                                                    |
 | `dashboardRestoreUI`                        | Enables the frontend to be able to restore a recently deleted dashboard                                                                                                                                                                                                           |
+| `cloudwatchMetricInsightsCrossAccount`      | Enables cross account observability for Cloudwatch Metric Insights                                                                                                                                                                                                                |
 
 ## Development feature toggles
 
