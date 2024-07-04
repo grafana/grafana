@@ -633,11 +633,11 @@ function orgMappingDescription(provider: string): string {
     case 'azuread':
       return 'List of "<GroupID>:<OrgIdOrName>:<Role>" mappings.';
     case 'github':
-        return 'List of "<GitHubTeamName>:<OrgIdOrName>:<Role>" mappings.';
+      return 'List of "<GitHubTeamName>:<OrgIdOrName>:<Role>" mappings.';
     case 'gitlab':
       return 'List of "<GitlabGroupName>:<OrgIdOrName>:<Role>';
     case 'google':
-        return 'List of "<GoogleGroupName>:<OrgIdOrName>:<Role>';
+      return 'List of "<GoogleGroupName>:<OrgIdOrName>:<Role>';
     default:
       // Generic OAuth, Okta
       return 'List of "<ExternalName>:<OrgIdOrName>:<Role>" mappings.';

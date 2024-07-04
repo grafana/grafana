@@ -61,6 +61,14 @@ const testConfig: SSOProvider = {
   },
 };
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      isGrafanaAdmin: true,
+    },
+  };
+});
+
 const emptyConfig = {
   ...testConfig,
   settings: { ...testConfig.settings, enabled: false, clientId: '', clientSecret: '' },
@@ -146,7 +154,7 @@ describe('ProviderConfigForm', () => {
             clientSecret: 'test-client-secret',
             enabled: true,
             name: 'GitHub',
-            orgMapping: "[\"Group A:1:Editor\",\"Group B:2:Admin\"]",
+            orgMapping: '["Group A:1:Editor","Group B:2:Admin"]',
             roleAttributePath: 'new-attribute-path',
             roleAttributeStrict: true,
             scopes: 'user:email',
@@ -207,6 +215,7 @@ describe('ProviderConfigForm', () => {
             tlsClientKey: '',
             usePkce: false,
             useRefreshToken: false,
+            orgMapping: '',
           },
         },
         { showErrorAlert: false }
