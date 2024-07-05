@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const defaultTimeout = 10
+const DefaultTimeout = 10
 
 // Config holds parameters from the .ini config file
 type Config struct {
@@ -36,13 +36,13 @@ type ServerConfig struct {
 	Host string `toml:"host" json:"host"`
 	Port int    `toml:"port" json:"port,omitempty"`
 
-	UseSSL        bool     `toml:"use_ssl" json:"use_ssl,omitempty"`
-	StartTLS      bool     `toml:"start_tls" json:"start_tls,omitempty"`
-	SkipVerifySSL bool     `toml:"ssl_skip_verify" json:"ssl_skip_verify,omitempty"`
-	MinTLSVersion string   `toml:"min_tls_version" json:"min_tls_version,omitempty"`
-	minTLSVersion uint16   `toml:"-" json:"-"`
-	TLSCiphers    []string `toml:"tls_ciphers" json:"tls_ciphers,omitempty"`
-	tlsCiphers    []uint16 `toml:"-" json:"-"`
+	UseSSL          bool     `toml:"use_ssl" json:"use_ssl,omitempty"`
+	StartTLS        bool     `toml:"start_tls" json:"start_tls,omitempty"`
+	SkipVerifySSL   bool     `toml:"ssl_skip_verify" json:"ssl_skip_verify,omitempty"`
+	MinTLSVersion   string   `toml:"min_tls_version" json:"min_tls_version,omitempty"`
+	MinTLSVersionID uint16   `toml:"-" json:"-"`
+	TLSCiphers      []string `toml:"tls_ciphers" json:"tls_ciphers,omitempty"`
+	TLSCipherIDs    []uint16 `toml:"-" json:"-"`
 
 	RootCACert      string       `toml:"root_ca_cert" json:"root_ca_cert,omitempty"`
 	RootCACertValue []string     `json:"root_ca_cert_value,omitempty"`
@@ -184,14 +184,14 @@ func readConfig(configFile string) (*ServersConfig, error) {
 		}
 
 		if server.MinTLSVersion != "" {
-			server.minTLSVersion, err = util.TlsNameToVersion(server.MinTLSVersion)
+			server.MinTLSVersionID, err = util.TlsNameToVersion(server.MinTLSVersion)
 			if err != nil {
 				logger.Error("Failed to set min TLS version. Ignoring", "err", err)
 			}
 		}
 
 		if len(server.TLSCiphers) > 0 {
-			server.tlsCiphers, err = util.TlsCiphersToIDs(server.TLSCiphers)
+			server.TLSCipherIDs, err = util.TlsCiphersToIDs(server.TLSCiphers)
 			if err != nil {
 				logger.Error("Unrecognized TLS Cipher(s). Ignoring", "err", err)
 			}
@@ -209,7 +209,7 @@ func readConfig(configFile string) (*ServersConfig, error) {
 
 		// set default timeout if unspecified
 		if server.Timeout == 0 {
-			server.Timeout = defaultTimeout
+			server.Timeout = DefaultTimeout
 		}
 	}
 
