@@ -97,7 +97,7 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
 
   // if `query.expr` is not parsable this might throw an error
   try {
-    if (isLogsQuery(query.expr)) {
+    if (isLogsQuery(query.expr) && queryType === LokiQueryType.Instant) {
       queryType = LokiQueryType.Range;
     }
   } catch (e) {}
