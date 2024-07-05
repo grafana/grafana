@@ -24,6 +24,7 @@ var _ accesscontrol.AccessControl = new(AccessControl)
 
 func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.Client) *AccessControl {
 	logger := log.New("accesscontrol")
+	initMetrics()
 	return &AccessControl{
 		features, logger, accesscontrol.NewResolvers(logger), zclient,
 	}
@@ -130,13 +131,19 @@ type evalResult struct {
 func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	res := make(chan evalResult, 2)
 	go func() {
+		timer := prometheus.NewTimer(mAccessEngineEvaluationsSeconds.WithLabelValues("zanzana"))
+		defer timer.ObserveDuration()
 		start := time.Now()
+
 		hasAccess, err := a.evaluateZanzana(ctx, user, evaluator)
 		res <- evalResult{"zanzana", hasAccess, err, time.Since(start)}
 	}()
 
 	go func() {
+		timer := prometheus.NewTimer(mAccessEngineEvaluationsSeconds.WithLabelValues("grafana"))
+		defer timer.ObserveDuration()
 		start := time.Now()
+
 		hasAccess, err := a.evaluate(ctx, user, evaluator)
 		res <- evalResult{"grafana", hasAccess, err, time.Since(start)}
 	}()
@@ -151,6 +158,7 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 		if second.err != nil {
 			a.log.Error("zanzana evaluation failed", "error", second.err)
 		} else if first.decision != second.decision {
+			mZanzanaEvaluationStatusTotal.WithLabelValues("error").Inc()
 			a.log.Warn(
 				"zanzana evaluation result does not match grafana",
 				"grafana_decision", first.decision,
@@ -160,6 +168,7 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 				"eval", evaluator.GoString(),
 			)
 		} else {
+			mZanzanaEvaluationStatusTotal.WithLabelValues("success").Inc()
 			a.log.Debug("zanzana evaluation is correct", "grafana_ms", first.duration, "zanzana_ms", second.duration)
 		}
 	}
