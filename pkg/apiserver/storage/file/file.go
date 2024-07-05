@@ -196,23 +196,21 @@ func (s *Storage) Delete(
 	defer s.rvMutex.Unlock()
 
 	fpath := s.filePath(key)
-	var currentState runtime.Object
-	var stateIsCurrent bool
+	currentState := s.newFunc()
+	stateIsCurrent := false
 	if cachedExistingObject != nil {
 		currentState = cachedExistingObject
 	} else {
-		getOptions := storage.GetOptions{}
-		if preconditions != nil && preconditions.ResourceVersion != nil {
-			getOptions.ResourceVersion = *preconditions.ResourceVersion
+		err := s.Get(ctx, key, storage.GetOptions{}, currentState)
+		if err != nil {
+			return err
 		}
-		if err := s.Get(ctx, key, getOptions, currentState); err == nil {
-			stateIsCurrent = true
-		}
+		stateIsCurrent = true
 	}
 
 	for {
 		if preconditions != nil {
-			if err := preconditions.Check(key, out); err != nil {
+			if err := preconditions.Check(key, currentState); err != nil {
 				if stateIsCurrent {
 					return err
 				}
@@ -226,28 +224,20 @@ func (s *Storage) Delete(
 			}
 		}
 
-		if err := validateDeletion(ctx, out); err != nil {
-			if stateIsCurrent {
-				return err
-			}
-
-			// If the state is not current, we need to re-read the state and try again.
-			if err := s.Get(ctx, key, storage.GetOptions{}, currentState); err == nil {
-				stateIsCurrent = true
-			}
-			continue
-		}
-
-		if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
+		generatedRV := s.getNewResourceVersion()
+		if err := s.versioner.UpdateObject(currentState, generatedRV); err != nil {
 			return err
 		}
 
-		generatedRV := s.getNewResourceVersion()
-		if err := s.versioner.UpdateObject(out, generatedRV); err != nil {
+		if err := validateDeletion(ctx, currentState); err != nil {
 			return err
 		}
 
 		if err := deleteFile(fpath); err != nil {
+			return err
+		}
+
+		if err := copyModifiedObjectToDestination(currentState, out); err != nil {
 			return err
 		}
 
@@ -388,14 +378,18 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return storage.NewKeyNotFoundError(key, int64(rv))
 	}
 
-	_, err = readFile(s.codec, fpath, func() runtime.Object {
-		return objPtr
+	obj, err := readFile(s.codec, fpath, func() runtime.Object {
+		return s.newFunc()
 	})
 	if err != nil {
 		if opts.IgnoreNotFound {
 			return runtime.SetZeroValue(objPtr)
 		}
 		return storage.NewKeyNotFoundError(key, int64(rv))
+	}
+
+	if err := copyModifiedObjectToDestination(obj, objPtr); err != nil {
+		return err
 	}
 
 	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, s.getCurrentResourceVersion()); err != nil {
