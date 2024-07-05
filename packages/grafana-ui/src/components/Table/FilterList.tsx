@@ -190,20 +190,11 @@ export const FilterList = ({
           height={height}
           itemCount={items.length}
           itemSize={ITEM_HEIGHT}
+          itemData={{ data: items, values: selectedItems, onCheckedChanged, className: styles.filterListRow }}
           width="100%"
           className={styles.filterList}
         >
-          {({ index, style }) => {
-            const option = items[index];
-            const { value, label } = option;
-            const isChecked = values.find((s) => s.value === value) !== undefined;
-
-            return (
-              <div className={styles.filterListRow} style={style} title={label}>
-                <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
-              </div>
-            );
-          }}
+          {ItemRenderer}
         </List>
       )}
       {items.length && (
@@ -223,6 +214,28 @@ export const FilterList = ({
     </Stack>
   );
 };
+
+interface ItemRendererProps {
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    onCheckedChanged: (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => void;
+    data: SelectableValue[];
+    values: SelectableValue[];
+    className: string;
+  };
+}
+function ItemRenderer({ index, style, data: { onCheckedChanged, data, values, className } }: ItemRendererProps) {
+  const option = data[index];
+  const { value, label } = option;
+  const isChecked = values.find((s) => s.value === value) !== undefined;
+
+  return (
+    <div className={className} style={style} title={label}>
+      <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
+    </div>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   filterList: css({
