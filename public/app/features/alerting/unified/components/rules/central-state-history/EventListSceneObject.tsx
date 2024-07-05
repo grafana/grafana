@@ -27,7 +27,6 @@ import {
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import {
-  GrafanaAlertState,
   GrafanaAlertStateWithReason,
   isAlertStateWithReason,
   isGrafanaAlertState,
@@ -302,9 +301,7 @@ export function EventState({ state, showLabel = false, addFilter, type }: EventS
       />
     );
   }
-  // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
-  // eslint-disable-next-line
-  const baseState = mapStateWithReasonToBaseState(state) as GrafanaAlertState;
+  const baseState = mapStateWithReasonToBaseState(state);
   const reason = mapStateWithReasonToReason(state);
   interface StateConfig {
     iconName: IconName;
@@ -556,8 +553,6 @@ function useRuleHistoryRecords(
       if (!isGrafanaAlertState(line.current) || !isGrafanaAlertState(line.previous)) {
         return acc;
       }
-      // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
-      // eslint-disable-next-line
       const baseStateTo = mapStateWithReasonToBaseState(line.current);
       const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
       const stateToMatch = filterInStateTo !== StateToFilterValues.all ? filterInStateTo === baseStateTo : true;
