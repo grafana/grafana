@@ -21,7 +21,6 @@ export const useScopes = ({ handler, hidden }: UseScopesOptions = {}) => {
     }
 
     const sub = scopesScene?.subscribeToSelectedScopes((scopes) => {
-      console.log('scopes', scopes);
       setValue(scopes);
       handler?.(scopes);
     });
