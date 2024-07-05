@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -39,7 +40,8 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
-  const search = locationService.getSearch();
+  const location = useLocation();
+  const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
