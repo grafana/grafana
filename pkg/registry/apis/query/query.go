@@ -153,12 +153,21 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		qdr = &backend.QueryDataResponse{}
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
+		if err != nil {
+			return
+		}
 	default:
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+		if err != nil {
+			return
+		}
 	}
 
 	if len(req.Expressions) > 0 {
 		qdr, err = b.handleExpressions(ctx, req, qdr)
+		if err != nil {
+			return
+		}
 	}
 
 	// Remove hidden results
