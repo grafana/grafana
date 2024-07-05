@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
@@ -190,7 +190,7 @@ export const FilterList = ({
           height={height}
           itemCount={items.length}
           itemSize={ITEM_HEIGHT}
-          itemData={{ data: items, values: selectedItems, onCheckedChanged, className: styles.filterListRow }}
+          itemData={{ items, values: selectedItems, onCheckedChanged, className: styles.filterListRow }}
           width="100%"
           className={styles.filterList}
         >
@@ -215,18 +215,17 @@ export const FilterList = ({
   );
 };
 
-interface ItemRendererProps {
-  index: number;
-  style: React.CSSProperties;
+interface ItemRendererProps extends ListChildComponentProps {
   data: {
     onCheckedChanged: (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => void;
-    data: SelectableValue[];
+    items: SelectableValue[];
     values: SelectableValue[];
     className: string;
   };
 }
-function ItemRenderer({ index, style, data: { onCheckedChanged, data, values, className } }: ItemRendererProps) {
-  const option = data[index];
+
+function ItemRenderer({ index, style, data: { onCheckedChanged, items, values, className } }: ItemRendererProps) {
+  const option = items[index];
   const { value, label } = option;
   const isChecked = values.find((s) => s.value === value) !== undefined;
 
