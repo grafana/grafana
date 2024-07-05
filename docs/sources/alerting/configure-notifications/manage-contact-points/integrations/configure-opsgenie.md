@@ -33,7 +33,7 @@ To create an API key in Opsgenie, complete the following steps.
 
 ## Procedure
 
-To create your Opsgenie integration in Grafana Alerting, complete the following steps:
+To create your Opsgenie integration in Grafana Alerting, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 1. Click **+ Add contact point**.
