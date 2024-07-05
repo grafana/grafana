@@ -51,7 +51,7 @@ To create your Opsgenie integration in Grafana Alerting, complete the following 
 
 The Opsgenie contact point is ready to receive alert notifications.
 
-To add this contact point to your alert, complete the following steps:
+To add this contact point to your alert rule, complete the following steps:
 
 1. In Grafana, navigate to **Alerting** > **Alert rules**.
 1. Edit or create a new alert rule.
