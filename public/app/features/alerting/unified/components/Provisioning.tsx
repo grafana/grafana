@@ -1,6 +1,6 @@
 import { ComponentPropsWithoutRef } from 'react';
 
-import { Alert, Badge } from '@grafana/ui';
+import { Alert, Badge, Tooltip } from '@grafana/ui';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
@@ -26,6 +26,15 @@ export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps)
   );
 };
 
-export const ProvisioningBadge = () => {
-  return <Badge text={'Provisioned'} color={'purple'} />;
+export const ProvisioningBadge = ({ tooltip }: { tooltip?: boolean }) => {
+  const badge = <Badge text={'Provisioned'} color={'purple'} />;
+
+  if (tooltip) {
+    return (
+      <Tooltip content={'This resource has been provisioned and cannot be edited through the UI'}>
+        <span>{badge}</span>
+      </Tooltip>
+    );
+  }
+  return badge;
 };
