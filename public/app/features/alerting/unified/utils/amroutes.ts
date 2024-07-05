@@ -8,7 +8,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { normalizeMatchers, parseMatcherToArray, quoteWithEscape, unquoteWithUnescape } from './matchers';
+import { encodeMatcher, normalizeMatchers, parseMatcherToArray, unquoteWithUnescape } from './matchers';
 import { findExistingRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
 
@@ -189,9 +189,8 @@ export const formAmRouteToAmRoute = (
   // Grafana maintains a fork of AM to support all utf-8 characters in the "object_matchers" property values but this
   // does not exist in upstream AlertManager
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    amRoute.matchers = formAmRoute.object_matchers?.map(
-      ({ name, operator, value }) => `${quoteWithEscape(name)}${operator}${quoteWithEscape(value)}`
-    );
+    // to support UTF-8 characters we must wrap label keys and values with double quotes if they contain reserved characters.
+    amRoute.matchers = formAmRoute.object_matchers?.map(encodeMatcher);
     amRoute.object_matchers = undefined;
   } else {
     amRoute.object_matchers = normalizeMatchers(amRoute);
