@@ -148,6 +148,9 @@ jobs:
         with:
           version: '>= 363.0.0'
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Run BigQuery query
         run: |
           gcloud config set project grafanalabs-global
