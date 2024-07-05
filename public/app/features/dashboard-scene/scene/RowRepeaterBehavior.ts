@@ -80,6 +80,11 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     if (!(variable instanceof MultiValueVariable)) {
       console.error('RepeatedRowBehavior: Variable is not a MultiValueVariable');
       return;
+    } else {
+      if (!(variable as MultiValueVariable).state.isMulti) {
+        // There is no use in repeating a row for a variable that is not a multi value select variable.
+        return;
+      }
     }
 
     const rowToRepeat = this._getRow();
