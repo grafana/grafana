@@ -134,7 +134,7 @@ func TestWatchFromZero(t *testing.T) {
 
 // TestWatchFromNonZero tests that
 // - watch from non-0 should just watch changes after given version
-func TestWatchFromNoneZero(t *testing.T) {
+func TestWatchFromNonZero(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -148,10 +148,12 @@ func TestDelayedWatchDelivery(t *testing.T) {
 	storagetesting.RunTestDelayedWatchDelivery(ctx, t, store)
 }
 
-/* func TestWatchError(t *testing.T) {
+/*
+func TestWatchError(t *testing.T) {
 	ctx, store, _ := testSetup(t)
 	storagetesting.RunTestWatchError(ctx, t, &storeWithPrefixTransformer{store})
-} */
+}
+*/
 
 func TestWatchContextCancel(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)

@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/conversion"
@@ -35,10 +34,6 @@ const MaxUpdateAttempts = 30
 
 var _ storage.Interface = (*Storage)(nil)
 
-// Replace with: https://github.com/kubernetes/kubernetes/blob/v1.29.0-alpha.3/staging/src/k8s.io/apiserver/pkg/storage/errors.go#L28
-// When we upgrade to 1.29
-var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be set on objects to be created")
-
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	root           string
@@ -52,7 +47,6 @@ type Storage struct {
 	trigger        storage.IndexerFuncs
 	indexers       *cache.Indexers
 
-	rvGenerationNode *snowflake.Node
 	// rvMutex provides synchronization between Get and GetList+Watch+CUD methods
 	// with access to resource version generation for the latter group
 	rvMutex   sync.RWMutex
@@ -84,11 +78,6 @@ func NewStorage(
 		return nil, func() {}, fmt.Errorf("could not establish a writable directory at path=%s", root)
 	}
 
-	rvGenerationNode, err := snowflake.NewNode(1)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	s := &Storage{
 		root:           root,
 		resourcePrefix: resourcePrefix,
@@ -101,8 +90,7 @@ func NewStorage(
 		trigger:        trigger,
 		indexers:       indexers,
 
-		rvGenerationNode: rvGenerationNode,
-		watchSet:         NewWatchSet(),
+		watchSet: NewWatchSet(),
 
 		versioner: &storage.APIObjectVersioner{},
 	}
@@ -116,8 +104,11 @@ func NewStorage(
 }
 
 func (s *Storage) getNewResourceVersion() uint64 {
-	snowflakeNumber := s.rvGenerationNode.Generate().Int64()
-	s.currentRV = uint64(snowflakeNumber)
+	if s.currentRV == 0 {
+		s.currentRV = uint64(time.Now().UnixMilli())
+	} else {
+		s.currentRV = s.currentRV + 1
+	}
 	return s.currentRV
 }
 
@@ -154,7 +145,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 	metaObj.SetSelfLink("")
 	if metaObj.GetResourceVersion() != "" {
-		return errResourceVersionSetOnCreate
+		return storage.ErrResourceVersionSetOnCreate
 	}
 
 	if err := s.versioner.UpdateObject(obj, generatedRV); err != nil {
@@ -663,6 +654,7 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	if err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
 	}
+
 	// Enforce the storage.Interface guarantee that the resource version of the returned data
 	// "will be at least 'resourceVersion'".
 	if minimumRV > actualRevision {
