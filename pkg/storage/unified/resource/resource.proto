@@ -122,11 +122,8 @@ message DeleteResponse {
   // Status code
   StatusResult status = 1;
 
-  // The new resource version
+  // The resource version for the deletion marker
   int64 resource_version = 2;
-
-  // The deleted payload
-  bytes value = 3;
 }
 
 message ReadRequest {
@@ -159,14 +156,6 @@ message Requirement {
   repeated string values = 3; // typically one value, but depends on the operator
 }
 
-message Sort {
-  enum Order {
-    ASC = 0;
-    DESC = 1;
-  }
-  string field = 1;
-  Order order = 2;
-}
 
 message ListOptions {
   // Group+Namespace+Resource (not name)

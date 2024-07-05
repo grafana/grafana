@@ -284,12 +284,8 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		// TODO: determine when to close the connection, we cannot defer it here
-		// defer conn.Close()
-
 		// Create a client instance
 		client := resource.NewResourceStoreClientGRPC(conn)
-
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeUnified:
