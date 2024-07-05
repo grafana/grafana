@@ -12,7 +12,7 @@ import (
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
-func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keyService signingkeys.Service) EntityStoreClient {
+func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keyService signingkeys.Service) (EntityStoreClient, error) {
 	channel := &inprocgrpc.Channel{}
 
 	auth, err := grpcUtils.ProvideInProcessAuthenticatorV2(cfg, keyService)
