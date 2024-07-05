@@ -1,5 +1,6 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
+import { ReadNamespacedTimeIntervalApiResponse } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
@@ -330,7 +331,8 @@ export interface TimeInterval {
 export type MuteTimeInterval = {
   name: string;
   time_intervals: TimeInterval[];
-  provenance?: string;
+  provisioned?: boolean;
+  metadata?: ReadNamespacedTimeIntervalApiResponse['metadata'];
 };
 
 export interface AlertManagerDataSourceJsonData extends DataSourceJsonData {
