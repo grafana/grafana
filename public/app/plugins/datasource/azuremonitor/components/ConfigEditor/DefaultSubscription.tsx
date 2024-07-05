@@ -1,6 +1,7 @@
 import { useEffect, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Select, Button, Field } from '@grafana/ui';
 
 import { isCredentialsComplete } from '../../credentials';
@@ -72,6 +73,12 @@ export const DefaultSubscription = (props: Props) => {
         label="Default Subscription"
         data-testid={selectors.components.configEditor.defaultSubscription.input}
         htmlFor="default-subscription"
+        required={config.featureToggles.azureMonitorPrometheusExemplars}
+        description={
+          config.featureToggles.azureMonitorPrometheusExemplars
+            ? 'Required for Prometheus Exemplar queries to function correctly'
+            : ''
+        }
       >
         <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
           <Select
