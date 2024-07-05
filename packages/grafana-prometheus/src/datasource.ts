@@ -69,6 +69,7 @@ import {
   PromQuery,
   PromQueryRequest,
   RuleMapping,
+  RuleQueryMapping,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
@@ -82,7 +83,7 @@ export class PrometheusDatasource
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
   type: string;
-  ruleMappings: { [index: string]: string };
+  ruleMappings: RuleQueryMapping;
   hasIncrementalQuery: boolean;
   url: string;
   id: number;
@@ -970,18 +971,22 @@ export function alignRange(
   };
 }
 
-export function extractRuleMappingFromGroups(groups: RuleMapping[]) {
-  return groups.reduce(
+export function extractRuleMappingFromGroups(groups: RuleMapping[]): RuleQueryMapping {
+  return groups.reduce<RuleQueryMapping>(
     (mapping, group) =>
       group.rules
-        .filter((rule: any) => rule.type === 'recording')
-        .reduce(
-          (acc: { [key: string]: string }, rule: any) => ({
-            ...acc,
-            [rule.name]: rule.query,
-          }),
-          mapping
-        ),
+        .filter((rule) => rule.type === 'recording')
+        .reduce((acc, rule) => {
+          // retrieve existing record
+          const existingRule = acc[rule.name] ?? [];
+          // push a new query with labels
+          existingRule.push({
+            query: rule.query,
+            labels: rule.labels,
+          });
+          acc[rule.name] = existingRule;
+          return acc;
+        }, mapping),
     {}
   );
 }

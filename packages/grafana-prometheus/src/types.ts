@@ -146,7 +146,7 @@ export type RuleMapping = {
   name: string;
   file: string;
   rules: Rule[];
-  interval: number;
+  interval?: number;
   limit?: number;
 };
 
@@ -155,10 +155,9 @@ export type Rule = {
   name: string;
   query: string;
   duration?: number;
-  labels: Record<string, string>;
+  labels?: Record<string, string>;
   annotations?: Record<string, string>;
   alerts?: AlertInfo[];
-  health: string;
   type: 'alerting' | 'recording';
 };
 
@@ -169,4 +168,11 @@ export type AlertInfo = {
   state: string;
   activeAt: string;
   value: string;
+};
+
+export type RuleQueryMapping = {
+  [key: string]: Array<{
+    query: string;
+    labels?: Record<string, string>;
+  }>;
 };
