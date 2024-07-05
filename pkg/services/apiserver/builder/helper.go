@@ -140,6 +140,7 @@ func InstallAPIs(
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
 	reg prometheus.Registerer,
+	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
@@ -157,7 +158,11 @@ func InstallAPIs(
 			}
 			if mode != grafanarest.Mode0 {
 				dualWrite = func(legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.DualWriter, error) {
-					return grafanarest.NewDualWriter(mode, legacy, storage, reg), nil
+					currentMode, err := grafanarest.SetDualWritingMode(context.Background(), kvStore, legacy, storage, b.GetGroupVersion().Group, mode, reg)
+					if err != nil {
+						return nil, err
+					}
+					return grafanarest.NewDualWriter(currentMode, legacy, storage, reg), nil
 				}
 			}
 		}
