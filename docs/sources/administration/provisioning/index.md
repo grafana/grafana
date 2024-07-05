@@ -269,9 +269,8 @@ The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, 
 
 #### Custom HTTP headers for data sources
 
-Data sources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
-going to that data source. The header name is configured in the `jsonData` field and the header value should be
-configured in `secureJsonData`.
+Data sources managed with provisioning can be configured to add HTTP headers to all requests.
+The header name is configured in the `jsonData` field and the header value is configured in `secureJsonData`.
 
 ```yaml
 apiVersion: 1
