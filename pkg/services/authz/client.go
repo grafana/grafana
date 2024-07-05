@@ -84,14 +84,10 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client = newInProcLegacyClient(authCfg, tracer, server)
+		client, err = newInProcLegacyClient(cfg, authCfg, tracer, server)
 	case ModeGRPC:
 		client, err = newGrpcLegacyClient(cfg, authCfg, tracer)
-		if err != nil {
-			return nil, err
-		}
 	}
-
 	return client, err
 }
 
@@ -112,7 +108,7 @@ func ProvideStandaloneAuthZClient(
 	return newGrpcLegacyClient(cfg, authCfg, tracer)
 }
 
-func newInProcLegacyClient(authCfg *Cfg, tracer tracing.Tracer, server *legacyServer) *LegacyClient {
+func newInProcLegacyClient(cfg *setting.Cfg, authCfg *Cfg, tracer tracing.Tracer, server *legacyServer) (*LegacyClient, error) {
 	channel := &inprocgrpc.Channel{}
 
 	// In-process we don't have to authenticate the service making the request
@@ -129,15 +125,15 @@ func newInProcLegacyClient(authCfg *Cfg, tracer tracing.Tracer, server *legacySe
 		server,
 	)
 
-	pass := func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		return invoker(ctx, method, req, reply, cc, opts...)
+	authIntercept, err := grpcUtils.NewServiceClientInterceptor(cfg,
+		authnlib.TokenExchangeRequest{Namespace: getNamespace(cfg), Audiences: []string{"authZService"}})
+	if err != nil {
+		return nil, err
 	}
 
-	streamPass := func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		return streamer(ctx, desc, cc, method, opts...)
-	}
-
-	conn := grpchan.InterceptClientConn(channel, pass, streamPass)
+	// In-Process normally no access token is needed as the client and server are in the same process
+	// Instantiating with a request for testing purposes, access token should be disabled by default
+	conn := grpchan.InterceptClientConn(channel, authIntercept.UnaryClientInterceptor, authIntercept.StreamClientInterceptor)
 
 	client := authzv1.NewAuthzServiceClient(conn)
 
@@ -146,7 +142,7 @@ func newInProcLegacyClient(authCfg *Cfg, tracer tracing.Tracer, server *legacySe
 		clientV1: client,
 		logger:   log.New("authz.client"),
 		tracer:   tracer,
-	}
+	}, nil
 }
 func getNamespace(cfg *setting.Cfg) string {
 	if cfg.StackID != "" {
@@ -156,10 +152,8 @@ func getNamespace(cfg *setting.Cfg) string {
 }
 
 func newGrpcLegacyClient(cfg *setting.Cfg, authCfg *Cfg, tracer tracing.Tracer) (*LegacyClient, error) {
-	authIntercept, err := grpcUtils.NewServiceClientInterceptor(cfg, authnlib.TokenExchangeRequest{
-		Namespace: getNamespace(cfg),
-		Audiences: []string{"authZService"},
-	})
+	authIntercept, err := grpcUtils.NewServiceClientInterceptor(cfg,
+		authnlib.TokenExchangeRequest{Namespace: getNamespace(cfg), Audiences: []string{"authZService"}})
 	if err != nil {
 		return nil, err
 	}
