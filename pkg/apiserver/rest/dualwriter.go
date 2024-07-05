@@ -1,11 +1,13 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -34,8 +36,6 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -95,25 +95,28 @@ const (
 	Mode4
 )
 
+// TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer) DualWriter {
+	metrics := &dualWriterMetrics{}
+	metrics.init(reg)
 	switch mode {
 	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
 	// writing to legacy storage without `unifiedStorage` enabled.
 	case Mode1:
 		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage, metrics)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage)
+		return newDualWriterMode2(legacy, storage, metrics)
 	case Mode3:
 		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage)
+		return newDualWriterMode3(legacy, storage, metrics)
 	case Mode4:
 		// read and write only from storage
-		return newDualWriterMode4(legacy, storage)
+		return newDualWriterMode4(legacy, storage, metrics)
 	default:
-		return newDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage, metrics)
 	}
 }
 
@@ -135,13 +138,19 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
+type NamespacedKVStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key, value string) error
+}
+
 func SetDualWritingMode(
 	ctx context.Context,
-	kvs *kvstore.NamespacedKVStore,
+	kvs NamespacedKVStore,
 	legacy LegacyStorage,
 	storage Storage,
 	entity string,
 	desiredMode DualWriterMode,
+	reg prometheus.Registerer,
 ) (DualWriter, error) {
 	toMode := map[string]DualWriterMode{
 		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
@@ -200,5 +209,27 @@ func SetDualWritingMode(
 
 	// 	#TODO add support for other combinations of desired and current modes
 
-	return NewDualWriter(currentMode, legacy, storage), nil
+	return NewDualWriter(currentMode, legacy, storage, reg), nil
+}
+
+var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func Compare(storageObj, legacyObj runtime.Object) bool {
+	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+}
+
+func removeMeta(obj runtime.Object) []byte {
+	cpy := obj.DeepCopyObject()
+	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if err != nil {
+		return nil
+	}
+	// we don't want to compare meta fields
+	delete(unstObj, "meta")
+	jsonObj, err := json.Marshal(cpy)
+	if err != nil {
+		return nil
+	}
+	return jsonObj
 }

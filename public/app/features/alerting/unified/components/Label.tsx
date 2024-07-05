@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -33,11 +33,9 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
             )}
           </Stack>
         </div>
-        {value && (
-          <div className={styles.value} title={value.toString()}>
-            {value}
-          </div>
-        )}
+        <div className={styles.value} title={value?.toString()}>
+          {value ?? '-'}
+        </div>
       </Stack>
     </div>
   );

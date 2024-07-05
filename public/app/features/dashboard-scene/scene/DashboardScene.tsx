@@ -1,9 +1,17 @@
 import * as H from 'history';
 
-import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import {
+  AppEvents,
+  CoreApp,
+  DataQueryRequest,
+  NavIndex,
+  NavModelItem,
+  locationUtil,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+} from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  getUrlSyncManager,
   SceneFlexLayout,
   sceneGraph,
   SceneGridLayout,
@@ -27,7 +35,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
@@ -70,7 +78,7 @@ import { ScopesScene } from './Scopes/ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -83,6 +91,8 @@ export interface DashboardSceneState extends SceneObjectState {
   links: DashboardLink[];
   /** Is editable */
   editable?: boolean;
+  /** Allows disabling grid lazy loading */
+  preload?: boolean;
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
@@ -117,6 +127,8 @@ export interface DashboardSceneState extends SceneObjectState {
   isEmpty?: boolean;
   /** Scene object that handles the scopes selector */
   scopes?: ScopesScene;
+  /** Kiosk mode */
+  kioskMode?: KioskMode;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -203,27 +215,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
-      this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
-  }
-
-  public startUrlSync() {
-    if (!this.state.meta.isEmbedded) {
-      getUrlSyncManager().initSync(this);
-    }
-  }
-
-  public stopUrlSync() {
-    getUrlSyncManager().cleanUp(this);
   }
 
   public onEnterEditMode = (fromExplore = false) => {
     this._fromExplore = fromExplore;
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
-
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
@@ -294,10 +294,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private exitEditModeConfirmed(restoreInitialState = true) {
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
-    // Stop url sync before updating url
-    this.stopUrlSync();
 
-    // Now we can update urls
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
@@ -321,8 +318,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       // Do not restore
       this.setState({ isEditing: false });
     }
-    // and start url sync again
-    this.startUrlSync();
+
+    // if we are in edit panel, we need to onDiscard()
+    // so the useEffect cleanup comes later and
+    // doesn't try to commit the changes
+    if (this.state.editPanel) {
+      this.state.editPanel.onDiscard();
+    }
+
     // Disable grid dragging
     this.propagateEditModeChange();
   }
@@ -390,6 +393,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel } = this.state;
+
+    if (meta.dashboardNotFound) {
+      return { text: 'Not found' };
+    }
 
     let pageNav: NavModelItem = {
       text: this.state.title,
@@ -585,8 +592,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       newGridItem = new DashboardGridItem({
         x: gridItem.state.x,
         y: gridItem.state.y,
-        height: NEW_PANEL_HEIGHT,
-        width: NEW_PANEL_WIDTH,
+        height: gridItem.state.height,
+        width: gridItem.state.width,
         body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
       });
     }
@@ -844,6 +851,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
+      scopes: this.state.scopes?.getSelectedScopes(),
+    };
+  }
+
+  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    return {
       scopes: this.state.scopes?.getSelectedScopes(),
     };
   }

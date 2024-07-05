@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
@@ -81,6 +81,8 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
         htmlFor={`input-advanced-resource-picker-metricNamespace`}
         labelWidth={15}
         data-testid={selectors.components.queryEditor.resourcePicker.advanced.namespace.input}
+        invalid={resources[0]?.metricNamespace?.endsWith('/')}
+        error={'Namespace cannot end with a "/"'}
       >
         <Input
           id={`input-advanced-resource-picker-metricNamespace`}

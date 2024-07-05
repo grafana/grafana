@@ -72,6 +72,10 @@
             "pr": {
               "type": "number",
               "description": "GitHub pull request the plugin was built from"
+            },
+            "build": {
+              "type": "number",
+              "description": "Build job number used to build this plugin."
             }
           }
         },
@@ -578,11 +582,6 @@
         },
         "required": ["extensionPointId", "title", "type"]
       }
-    },
-    "apiVersion": {
-      "type": "string",
-      "description": "[internal only] The API version for the plugin. Used for Datasource API servers. This metadata is temporary and will be removed in the future.",
-      "pattern": "^v([\\d]+)(?:(alpha|beta)([\\d]+))?$"
     }
   }
 }

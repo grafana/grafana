@@ -110,6 +110,64 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
+name: pr-verify-storybook
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - yarn install --immutable || yarn install --immutable
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: yarn-install
+- commands:
+  - yarn storybook --quiet
+  depends_on:
+  - yarn-install
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
+  - yarn e2e:storybook
+  depends_on:
+  - start-storybook
+  environment:
+    HOST: start-storybook
+    PORT: "9001"
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - packages/grafana-ui/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
 name: pr-test-frontend
 node:
   type: no-parallel
@@ -434,15 +492,6 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
-  - apk add --update make build-base
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.22.4-alpine
-  name: lint-backend
-- commands:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.22.4-alpine
   name: validate-modfile
@@ -603,6 +652,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/dashboards-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -610,6 +667,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -619,6 +684,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/panels-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -626,6 +699,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -874,7 +955,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+  image: grafana/mimir-alpine:r295-a23e559
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1321,7 +1402,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+  image: grafana/mimir-alpine:r295-a23e559
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1761,15 +1842,6 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
-  - apk add --update make build-base
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.22.4-alpine
-  name: lint-backend
-- commands:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.22.4-alpine
   name: validate-modfile
@@ -1784,6 +1856,66 @@ steps:
   - compile-build-cmd
   image: byrnedo/alpine-curl:0.1.8
   name: lint-drone
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+  repo:
+  - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: main-verify-storybook
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - yarn install --immutable || yarn install --immutable
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: yarn-install
+- commands:
+  - yarn storybook --quiet
+  depends_on:
+  - yarn-install
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
+  - yarn e2e:storybook
+  depends_on:
+  - start-storybook
+  environment:
+    HOST: start-storybook
+    PORT: "9001"
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
 trigger:
   branch: main
   event:
@@ -1927,6 +2059,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/dashboards-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -1934,6 +2074,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -1943,6 +2091,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/panels-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -1950,6 +2106,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -2317,7 +2481,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+  image: grafana/mimir-alpine:r295-a23e559
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2749,6 +2913,47 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: create-release-pr
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apk add perl
+  - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
+  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
+    fi`
+  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
+  - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
+    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  depends_on: []
+  environment:
+    GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: byrnedo/alpine-curl:0.1.8
+  name: create-release-pr
+trigger:
+  event:
+  - promote
+  target: release-pr
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -2805,6 +3010,24 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-storybook
+- commands:
+  - apk add perl
+  - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
+  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
+    fi`
+  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
+  - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
+    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  depends_on:
+  - publish-artifacts
+  - publish-static-assets
+  environment:
+    GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: byrnedo/alpine-curl:0.1.8
+  name: create-release-pr
 trigger:
   event:
   - promote
@@ -2874,6 +3097,40 @@ trigger:
   - promote
   target:
   - public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: verify-grafanacom-artifacts
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apk add curl bash
+  - "\n            for i in {1..5}; do\n                if ./scripts/drone/verify-grafanacom.sh;
+    then\n                    exit 0\n                elif [ $i -eq 5 ]; then\n                    exit
+    1\n                else\n                    sleep 60\n                fi\n            done\n
+    \           "
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: verify-grafanacom
+trigger:
+  event:
+  - promote
+  target: verify-grafanacom-artifacts
 type: docker
 volumes:
 - host:
@@ -2960,6 +3217,16 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom
+- commands:
+  - apk add curl bash
+  - "\n            for i in {1..5}; do\n                if ./scripts/drone/verify-grafanacom.sh;
+    then\n                    exit 0\n                elif [ $i -eq 5 ]; then\n                    exit
+    1\n                else\n                    sleep 60\n                fi\n            done\n
+    \           "
+  depends_on:
+  - publish-grafanacom
+  image: node:20.9.0-alpine
+  name: verify-grafanacom
 trigger:
   event:
   - promote
@@ -4113,7 +4380,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+  image: grafana/mimir-alpine:r295-a23e559
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -4632,7 +4899,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir-alpine:r295-a23e559
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -4667,7 +4934,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir-alpine:r295-a23e559
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4911,6 +5178,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7d2348a3bc09c44b08dda2d737f91c7de3e5048aa47ba65eada4cdde1eea9fa6
+hmac: c4a656d676b1228248f6948ac0347aea1d67016429aa24351d0a5c3e2d7dc617
 
 ...

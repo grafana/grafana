@@ -4,27 +4,33 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
 )
 
-var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", CreationTimestamp: metav1.Time{}}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Now()}}}
+var exampleObjNoRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", CreationTimestamp: metav1.Time{}}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Now()}}}
 var exampleObjDifferentRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "3"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
-var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Now()}}}
 var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListMeta: metav1.ListMeta{}, Items: []example.Pod{*exampleObj}}
 var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
+
+var p = prometheus.NewRegistry()
 
 func TestMode1_Create(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
-		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		setupStorageFn func(m *mock.Mock)
 		name           string
 		wantErr        bool
 	}
@@ -36,8 +42,8 @@ func TestMode1_Create(t *testing.T) {
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, anotherObj, mock.Anything, mock.Anything).Return(anotherObj, nil)
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObjNoRV, nil)
 				},
 			},
 			{
@@ -63,10 +69,10 @@ func TestMode1_Create(t *testing.T) {
 				tt.setupLegacyFn(m, tt.input)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(m, tt.input)
+				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us, p)
 
 			obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 
@@ -75,9 +81,9 @@ func TestMode1_Create(t *testing.T) {
 				return
 			}
 
-			us.AssertNotCalled(t, "Create", context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
-
-			assert.Equal(t, obj, exampleObj)
+			acc, err := meta.Accessor(obj)
+			assert.NoError(t, err)
+			assert.Equal(t, acc.GetResourceVersion(), "1")
 			assert.NotEqual(t, obj, anotherObj)
 		})
 	}
@@ -129,7 +135,8 @@ func TestMode1_Get(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us)
+			p := prometheus.NewRegistry()
+			dw := NewDualWriter(Mode1, ls, us, p)
 
 			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
@@ -180,7 +187,7 @@ func TestMode1_List(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us, p)
 
 			_, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
@@ -235,7 +242,7 @@ func TestMode1_Delete(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us, p)
 
 			obj, _, err := dw.Delete(context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
@@ -294,7 +301,7 @@ func TestMode1_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us, p)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 
@@ -370,7 +377,7 @@ func TestMode1_Update(t *testing.T) {
 				tt.setupGetFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us, p)
 
 			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 

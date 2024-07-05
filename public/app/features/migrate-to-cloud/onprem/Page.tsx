@@ -1,15 +1,17 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
-  useDeleteCloudMigrationMutation,
-  useGetCloudMigrationRunListQuery,
-  useGetCloudMigrationRunQuery,
-  useGetMigrationListQuery,
-  useRunCloudMigrationMutation,
+  SnapshotDto,
+  useCreateSnapshotMutation,
+  useDeleteSessionMutation,
+  useGetSessionListQuery,
+  useGetShapshotListQuery,
+  useGetSnapshotQuery,
+  useUploadSnapshotMutation,
 } from '../api';
 
 import { DisconnectModal } from './DisconnectModal';
@@ -32,9 +34,9 @@ import { ResourcesTable } from './ResourcesTable';
  *      2. call GetCloudMigrationRun with the ID from first step to list the result of that migration
  */
 
-function useGetLatestMigrationDestination() {
-  const result = useGetMigrationListQuery();
-  const latestMigration = result.data?.migrations?.at(-1);
+function useGetLatestSession() {
+  const result = useGetSessionListQuery();
+  const latestMigration = result.data?.sessions?.at(-1);
 
   return {
     ...result,
@@ -42,64 +44,88 @@ function useGetLatestMigrationDestination() {
   };
 }
 
-function useGetLatestMigrationRun(migrationUid?: string) {
-  const listResult = useGetCloudMigrationRunListQuery(migrationUid ? { uid: migrationUid } : skipToken);
-  const latestMigrationRun = listResult.data?.runs?.at(-1);
+const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
+  'INITIALIZING',
+  'CREATING',
+  'UPLOADING',
+  'PENDING_PROCESSING',
+  'PROCESSING',
+];
 
-  const runResult = useGetCloudMigrationRunQuery(
-    latestMigrationRun?.uid && migrationUid ? { runUid: latestMigrationRun.uid } : skipToken
-  );
+const STATUS_POLL_INTERVAL = 5 * 1000;
+
+function useGetLatestSnapshot(sessionUid?: string) {
+  const [shouldPoll, setShouldPoll] = useState(false);
+
+  const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
+  const lastItem = listResult.data?.snapshots?.at(-1); // TODO: account for pagination and ensure we're truely getting the last one
+
+  const getSnapshotQueryArgs = sessionUid && lastItem?.uid ? { uid: sessionUid, snapshotUid: lastItem.uid } : skipToken;
+
+  const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
+    pollingInterval: shouldPoll ? STATUS_POLL_INTERVAL : 0,
+    skipPollingIfUnfocused: true,
+  });
+
+  useEffect(() => {
+    const shouldPoll = SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status);
+    setShouldPoll(shouldPoll);
+  }, [snapshotResult?.data?.status]);
 
   return {
-    ...runResult,
+    ...snapshotResult,
 
-    data: runResult.data,
+    error: listResult.error || snapshotResult.error,
 
-    error: listResult.error || runResult.error,
-
-    isError: listResult.isError || runResult.isError,
-    isLoading: listResult.isLoading || runResult.isLoading,
-    isFetching: listResult.isFetching || runResult.isFetching,
+    // isSuccess and isUninitialised should always be from snapshotResult
+    // as only the 'final' values from those are important
+    isError: listResult.isError || snapshotResult.isError,
+    isLoading: listResult.isLoading || snapshotResult.isLoading,
+    isFetching: listResult.isFetching || snapshotResult.isFetching,
   };
 }
 
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
-  const migrationDestination = useGetLatestMigrationDestination();
-  const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.uid);
-  const [performRunMigration, runMigrationResult] = useRunCloudMigrationMutation();
-  const [performDisconnect, disconnectResult] = useDeleteCloudMigrationMutation();
+  const session = useGetLatestSession();
+  const snapshot = useGetLatestSnapshot(session.data?.uid);
+  const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
+  const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
+  const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
+
+  const sessionUid = session.data?.uid;
+  const snapshotUid = snapshot.data?.uid;
+  const migrationMeta = session.data;
+  const isInitialLoading = session.isLoading;
 
   // isBusy is not a loading state, but indicates that the system is doing *something*
   // and all buttons should be disabled
   const isBusy =
-    runMigrationResult.isLoading ||
-    migrationDestination.isFetching ||
-    lastMigrationRun.isFetching ||
+    createSnapshotResult.isLoading ||
+    uploadSnapshotResult.isLoading ||
+    session.isLoading ||
+    snapshot.isLoading ||
     disconnectResult.isLoading;
 
-  const resources = lastMigrationRun.data?.items;
-  const migrationDestUID = migrationDestination.data?.uid;
+  const resources = snapshot.data?.results;
 
   const handleDisconnect = useCallback(async () => {
-    if (!migrationDestUID) {
-      return;
+    if (sessionUid) {
+      performDisconnect({ uid: sessionUid });
     }
+  }, [performDisconnect, sessionUid]);
 
-    const resp = await performDisconnect({ uid: migrationDestUID });
-    if (!('error' in resp)) {
-      setDisconnectModalOpen(false);
+  const handleCreateSnapshot = useCallback(() => {
+    if (sessionUid) {
+      performCreateSnapshot({ uid: sessionUid });
     }
-  }, [migrationDestUID, performDisconnect]);
+  }, [performCreateSnapshot, sessionUid]);
 
-  const handleStartMigration = useCallback(() => {
-    if (migrationDestination.data?.uid) {
-      performRunMigration({ uid: migrationDestination.data?.uid });
+  const handleUploadSnapshot = useCallback(() => {
+    if (sessionUid && snapshotUid) {
+      performUploadSnapshot({ uid: sessionUid, snapshotUid: snapshotUid });
     }
-  }, [performRunMigration, migrationDestination]);
-
-  const migrationMeta = migrationDestination.data;
-  const isInitialLoading = migrationDestination.isLoading;
+  }, [performUploadSnapshot, sessionUid, snapshotUid]);
 
   if (isInitialLoading) {
     // TODO: better loading state
@@ -111,7 +137,7 @@ export const Page = () => {
   return (
     <>
       <Stack direction="column" gap={4}>
-        {runMigrationResult.isError && (
+        {createSnapshotResult.isError && (
           <Alert
             severity="error"
             title={t(
@@ -136,7 +162,7 @@ export const Page = () => {
           </Alert>
         )}
 
-        {migrationMeta.stack && (
+        {migrationMeta.slug && (
           <Box
             borderColor="weak"
             borderStyle="solid"
@@ -150,7 +176,7 @@ export const Page = () => {
               title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
               value={
                 <>
-                  {migrationMeta.stack}{' '}
+                  {migrationMeta.slug}{' '}
                   <Button
                     disabled={isBusy}
                     onClick={() => setDisconnectModalOpen(true)}
@@ -164,12 +190,22 @@ export const Page = () => {
               }
             />
 
+            <MigrationInfo title="Status" value={snapshot?.data?.status ?? 'no snapshot yet'} />
+
             <Button
-              disabled={isBusy}
-              onClick={handleStartMigration}
-              icon={runMigrationResult.isLoading ? 'spinner' : undefined}
+              disabled={isBusy || Boolean(snapshot.data)}
+              onClick={handleCreateSnapshot}
+              icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
             >
-              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Upload everything</Trans>
+              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
+            </Button>
+
+            <Button
+              disabled={isBusy || !(snapshot.data?.status === 'PENDING_UPLOAD')}
+              onClick={handleUploadSnapshot}
+              icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
+            >
+              <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload & migrate snapshot</Trans>
             </Button>
           </Box>
         )}

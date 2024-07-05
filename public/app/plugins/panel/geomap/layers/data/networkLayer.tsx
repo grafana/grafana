@@ -6,7 +6,7 @@ import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
 import FlowLine from 'ol-ext/style/FlowLine';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 

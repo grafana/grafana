@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -47,7 +48,7 @@ export const VizTooltipRow = ({
         maxHeight: 55,
         whiteSpace: 'wrap',
         wordBreak: 'break-word',
-        overflowY: 'scroll',
+        overflowY: 'auto',
       }
     : {
         whiteSpace: 'wrap',

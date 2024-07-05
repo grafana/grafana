@@ -10,9 +10,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -112,16 +112,16 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		id, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
 		if err != nil {
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
 		} else {
-			reqContext.SignedInUser = identity.SignedInUser()
-			reqContext.UserToken = identity.SessionToken
+			reqContext.SignedInUser = id.SignedInUser()
+			reqContext.UserToken = id.SessionToken
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
-			reqContext.IsRenderCall = identity.IsAuthenticatedBy(login.RenderModule)
+			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
@@ -138,7 +138,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
 	})
 }
 

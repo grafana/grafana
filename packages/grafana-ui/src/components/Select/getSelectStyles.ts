@@ -17,6 +17,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     option: css({
       label: 'grafana-select-option',
       padding: '8px',
+      position: 'relative',
       display: 'flex',
       alignItems: 'center',
       flexDirection: 'row',
@@ -64,6 +65,17 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     optionSelected: css({
       background: theme.colors.action.selected,
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        transform: 'translateX(-50%)',
+        width: theme.spacing(0.5),
+        left: 0,
+      },
     }),
     optionDisabled: css({
       label: 'grafana-select-option-disabled',
@@ -150,6 +162,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       ':has(+ [role="option"])': {
         borderBottom: `1px solid ${theme.colors.border.weak}`,
       },
+    }),
+    virtualizedSeparator: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 });

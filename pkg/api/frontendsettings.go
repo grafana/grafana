@@ -413,14 +413,15 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		}
 
 		dsDTO := plugins.DataSourceDTO{
-			ID:        ds.ID,
-			UID:       ds.UID,
-			Type:      ds.Type,
-			Name:      ds.Name,
-			URL:       url,
-			IsDefault: ds.IsDefault,
-			Access:    string(ds.Access),
-			ReadOnly:  ds.ReadOnly,
+			ID:         ds.ID,
+			UID:        ds.UID,
+			Type:       ds.Type,
+			Name:       ds.Name,
+			URL:        url,
+			IsDefault:  ds.IsDefault,
+			Access:     string(ds.Access),
+			ReadOnly:   ds.ReadOnly,
+			APIVersion: ds.APIVersion,
 		}
 
 		ap, exists := availablePlugins.Get(plugins.TypeDataSource, ds.Type)

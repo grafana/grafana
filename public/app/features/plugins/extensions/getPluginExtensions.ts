@@ -41,9 +41,9 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
-let registry: PluginExtensionRegistry = { id: '', extensions: {} };
-
 export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
+  let registry: PluginExtensionRegistry = { id: '', extensions: {} };
+
   // Create a subscription to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
   extensionRegistry.asObservable().subscribe((r) => {

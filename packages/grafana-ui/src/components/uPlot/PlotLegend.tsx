@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
@@ -39,7 +39,7 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
   });
 }
 
-export const PlotLegend = React.memo(
+export const PlotLegend = memo(
   ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
     const legendItems = config

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import {
@@ -16,12 +16,12 @@ import {
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
-import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { parseMatchers } from '../../utils/alertmanager';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
@@ -35,7 +35,7 @@ import { SilenceStateTag } from './SilenceStateTag';
 import { SilencesFilter } from './SilencesFilter';
 
 export interface SilenceTableItem extends Silence {
-  silencedAlerts: AlertmanagerAlert[];
+  silencedAlerts: AlertmanagerAlert[] | undefined;
 }
 
 type SilenceTableColumnProps = DynamicTableColumnProps<SilenceTableItem>;
@@ -47,10 +47,15 @@ interface Props {
 const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchOnFocus: true };
 
 const SilencesTable = ({ alertManagerSourceName }: Props) => {
+  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.PreviewSilencedInstances
+  );
+  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
       { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
-      API_QUERY_OPTIONS
+      { ...API_QUERY_OPTIONS, skip: !canPreview }
     );
 
   const {
@@ -83,26 +88,26 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
       return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesNotExpired.map((silence) => {
-      const silencedAlerts = findSilencedAlerts(silence.id);
+      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
       return {
         id: silence.id,
         data: { ...silence, silencedAlerts },
       };
     });
-  }, [filteredSilencesNotExpired, alertManagerAlerts]);
+  }, [filteredSilencesNotExpired, alertManagerAlerts, canPreview]);
 
   const itemsExpired = useMemo((): SilenceTableItemProps[] => {
     const findSilencedAlerts = (id: string) => {
       return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesExpired.map((silence) => {
-      const silencedAlerts = findSilencedAlerts(silence.id);
+      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
       return {
         id: silence.id,
         data: { ...silence, silencedAlerts },
       };
     });
-  }, [filteredSilencesExpired, alertManagerAlerts]);
+  }, [filteredSilencesExpired, alertManagerAlerts, canPreview]);
 
   if (isLoading || amAlertsIsLoading) {
     return <LoadingPlaceholder text="Loading silences..." />;
@@ -304,7 +309,7 @@ function useColumns(alertManagerSourceName: string) {
         id: 'alerts',
         label: 'Alerts silenced',
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
-          return <span data-testid="alerts">{silencedAlerts.length}</span>;
+          return <span data-testid="alerts">{Array.isArray(silencedAlerts) ? silencedAlerts.length : '-'}</span>;
         },
         size: 2,
       },
