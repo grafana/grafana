@@ -133,7 +133,7 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType, 
 // If the roleStrict is enabled, the mapping should contain a valid role for each org.
 func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) *MappingConfiguration {
 	var res = []OrgRoleMapping{}
-	var orderedResMap = make(map[string]OrgRoleMapping)
+	var precedenceResMap = make(map[string]OrgRoleMapping)
 	for _, v := range mappings {
 		kv := strings.Split(v, ":")
 		if !isValidOrgMappingFormat(kv) {
@@ -172,16 +172,16 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 		} else {
 			orgMap.InternalOrgID = int64(orgID)
 		}
-		orderedResMap[fmt.Sprintf("%s:%d", kv[0], orgID)] = orgMap
-		res = convertOrderedResMapToSlice(orderedResMap)
+		precedenceResMap[fmt.Sprintf("%s:%d", kv[0], orgID)] = orgMap
+		res = convertPrecedenceResMapToSlice(precedenceResMap)
 	}
 
 	return &MappingConfiguration{orgMappings: res, strictRoleMapping: roleStrict}
 }
 
-func convertOrderedResMapToSlice(orderedResMap map[string]OrgRoleMapping) []OrgRoleMapping {
+func convertPrecedenceResMapToSlice(precedenceResMap map[string]OrgRoleMapping) []OrgRoleMapping {
 	var res = []OrgRoleMapping{}
-	for _, orgRoleMapping := range orderedResMap {
+	for _, orgRoleMapping := range precedenceResMap {
 		res = append(res, orgRoleMapping)
 	}
 	return res
