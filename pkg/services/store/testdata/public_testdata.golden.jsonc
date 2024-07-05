@@ -1,5 +1,5 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
-//
+//  
 //  Frame[0] {
 //      "type": "directory-listing",
 //      "typeVersion": [
@@ -10,7 +10,7 @@
 //          "HasMore": false
 //      }
 //  }
-//  Name:
+//  Name: 
 //  Dimensions: 3 Fields by 3 Rows
 //  +----------------------------+----------------------+---------------+
 //  | Name: name                 | Name: mediaType      | Name: size    |
@@ -21,8 +21,8 @@
 //  | example-with-style.geojson | application/geo+json | 3332          |
 //  | usa-states.geojson         | application/geo+json | 89263         |
 //  +----------------------------+----------------------+---------------+
-//
-//
+//  
+//  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
   "status": 200,

@@ -10,6 +10,23 @@ const (
 	maxPrefixParts = 2
 )
 
+// SplitScope returns kind, attribute and Identifier
+func SplitScope(scope string) (string, string, string) {
+	if scope == "" {
+		return "", "", ""
+	}
+
+	fragments := strings.Split(scope, ":")
+	switch l := len(fragments); l {
+	case 1: // Splitting a wildcard scope "*" -> kind: "*"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[0], fragments[0]
+	case 2: // Splitting a wildcard scope with specified kind "dashboards:*" -> kind: "dashboards"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[1], fragments[1]
+	default: // Splitting a scope with all fields specified "dashboards:uid:my_dash" -> kind: "dashboards"; attribute: "uid"; identifier: "my_dash"
+		return fragments[0], fragments[1], strings.Join(fragments[2:], ":")
+	}
+}
+
 func ParseScopeID(scope string) (int64, error) {
 	id, err := strconv.ParseInt(ScopeSuffix(scope), 10, 64)
 	if err != nil {
