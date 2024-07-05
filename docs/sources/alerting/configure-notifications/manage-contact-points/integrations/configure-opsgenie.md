@@ -27,7 +27,7 @@ To create an API key in Opsgenie, complete the following steps.
 
 1. Follow the steps in the [API integration guide](https://support.atlassian.com/opsgenie/docs/create-a-default-api-integration/).
 
-    Make sure you turn on the integration.
+   Make sure you turn on the integration.
 
 1. Copy the API key.
 
@@ -41,9 +41,9 @@ To create your Opsgenie integration in Grafana Alerting, complete the following 
 4. From the **Integration** list, select **Opsgenie**.
 5. In the **API key** field, paste in your API key.
 6. In the **Alert API URL**, enter `https://api.opsgenie.com/v2/alerts`.
-7. Click **Test** to check that your integration works. 
+7. Click **Test** to check that your integration works.
 
-    A test alert notification is sent to the Alerts page in Opsgenie.
+   A test alert notification is sent to the Alerts page in Opsgenie.
 
 8. Click **Save contact point**.
 
