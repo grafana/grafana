@@ -25,3 +25,28 @@ func TestReadingLDAPSettingsWithEnvVariable(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, "MySecret", config.Servers[0].BindPassword)
 }
+
+func TestReadingLDAPSettingsUsingCache(t *testing.T) {
+	cfg := &Config{
+		Enabled:        true,
+		ConfigFilePath: "testdata/ldap.toml",
+	}
+
+	// cache is empty initially
+	assert.Nil(t, cachedConfig.config)
+
+	firstConfig, err := GetConfig(cfg)
+
+	// cache has been initialized
+	assert.NotNil(t, cachedConfig.config)
+	assert.EqualValues(t, *firstConfig, *cachedConfig.config)
+	assert.Nil(t, err)
+	assert.EqualValues(t, "127.0.0.1", cachedConfig.config.Servers[0].Host)
+
+	// make sure the cached config is returned on subsequent calls
+	config := cachedConfig.config
+	secondConfig, err := GetConfig(cfg)
+
+	assert.Equal(t, config, secondConfig)
+	assert.Nil(t, err)
+}
