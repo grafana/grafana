@@ -165,7 +165,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Kafka REST Proxy             | `kafka`                   |
 | Line                         | `line`                    |
-| Microsoft Teams              | `teams`                   |
+| [Microsoft Teams](ref:teams) | `teams`                   |
 | [Opsgenie](ref:opsgenie)     | `opsgenie`                |
 | [Pagerduty](ref:pagerduty)   | `pagerduty`               |
 | Pushover                     | `pushover`                |
