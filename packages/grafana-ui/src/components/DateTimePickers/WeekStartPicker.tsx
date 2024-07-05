@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,6 +22,18 @@ const weekStarts: Array<SelectableValue<WeekStart | ''>> = [
   { value: 'sunday', label: 'Sunday' },
   { value: 'monday', label: 'Monday' },
 ];
+
+const isWeekStart = (value: string): value is WeekStart => {
+  return ['saturday', 'sunday', 'monday'].includes(value);
+};
+
+export const getWeekStart = (value: string): WeekStart => {
+  if (isWeekStart(value)) {
+    return value;
+  }
+
+  return 'monday';
+};
 
 export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;

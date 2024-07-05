@@ -18,6 +18,7 @@ type UpdatePrefsCmd struct {
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language     string                       `json:"language"`
 	Cookies      []pref.CookieType            `json:"cookies,omitempty"`
+	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
 }
 
 // swagger:model
@@ -34,4 +35,5 @@ type PatchPrefsCmd struct {
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
 	Cookies          []pref.CookieType            `json:"cookies,omitempty"`
+	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
 }

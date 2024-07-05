@@ -63,7 +63,7 @@ func NodeVersion(d *dagger.Client, src *dagger.Directory) *dagger.Container {
 
 func WithUpdatedVersion(d *dagger.Client, src *dagger.Directory, nodeVersion, version string) *dagger.Directory {
 	nodeVersion = strings.TrimPrefix(strings.TrimSpace(nodeVersion), "v")
-	image := fmt.Sprintf("node:%s-slim", nodeVersion)
+	image := fmt.Sprintf("node:%s", nodeVersion)
 
 	return d.Container().From(image).
 		WithDirectory("/src", src).

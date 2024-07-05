@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, useEffect, useRef, useState } from 'react';
+import { memo, CSSProperties, ReactElement, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,7 +24,7 @@ export interface SubMenuProps {
 }
 
 /** @internal */
-export const SubMenu = React.memo(({ items, isOpen, close, customStyle }: SubMenuProps) => {
+export const SubMenu = memo(({ items, isOpen, close, customStyle }: SubMenuProps) => {
   const styles = useStyles2(getStyles);
   const localRef = useRef<HTMLDivElement>(null);
   const [handleKeys] = useMenuFocus({

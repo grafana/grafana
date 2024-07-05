@@ -1,4 +1,4 @@
-import React from 'react';
+import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
@@ -30,7 +30,7 @@ const RuleViewer = (props: RuleViewerProps): JSX.Element => {
 
   // we convert the stringified ID to a rule identifier object which contains additional
   // type and source information
-  const identifier = React.useMemo(() => {
+  const identifier = useMemo(() => {
     if (!id) {
       throw new Error('Rule ID is required');
     }

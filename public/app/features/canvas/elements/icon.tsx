@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
 
 import { LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';

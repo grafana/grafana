@@ -1,7 +1,6 @@
 import { render as rtlRender, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { contextSrv } from 'app/core/core';

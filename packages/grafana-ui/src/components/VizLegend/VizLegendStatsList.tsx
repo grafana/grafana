@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 
