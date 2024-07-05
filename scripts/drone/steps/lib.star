@@ -1239,26 +1239,26 @@ def verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]):
         # JEV: remove this?
         "environment": {},
         "commands": [
-                'echo "Updating package lists..."',
-                # Redirect superfluous outputs.
-                'apt-get update >/dev/null 2>&1',
-                'echo "Installing prerequisites..."',
-                # Redirect superfluous outputs.
-                'DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1',
-                'echo "Adding Grafana repository..."',
-                'mkdir -p /etc/apt/keyrings/',
-                'wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null',
-                'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
-                # Redirect superfluous outputs.
-                'apt-get update >/dev/null 2>&1',
-                'echo "Attempting to install Grafana version ${TAG}..."',
-                'if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then',
-                '    echo "Successfully installed Grafana version ${TAG}"',
-                'else',
-                '    echo "Failed to install Grafana version ${TAG}"',
-                '    exit 1',
-                'fi',
-            ],
+            'echo "Updating package lists..."',
+            # Redirect superfluous outputs.
+            "apt-get update >/dev/null 2>&1",
+            'echo "Installing prerequisites..."',
+            # Redirect superfluous outputs.
+            "DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1",
+            'echo "Adding Grafana repository..."',
+            "mkdir -p /etc/apt/keyrings/",
+            "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null",
+            'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
+            # Redirect superfluous outputs.
+            "apt-get update >/dev/null 2>&1",
+            'echo "Attempting to install Grafana version ${TAG}..."',
+            "if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then",
+            '    echo "Successfully installed Grafana version ${TAG}"',
+            "else",
+            '    echo "Failed to install Grafana version ${TAG}"',
+            "    exit 1",
+            "fi",
+        ],
         "depends_on": depends_on,
     }
 
@@ -1270,18 +1270,18 @@ def verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]):
         "environment": {},
         "commands": [
             'echo "Updating package lists..."',
-            'dnf check-update -y',
+            "dnf check-update -y",
             'echo "Adding Grafana GPG key..."',
-            'rpm --import https://packages.grafana.com/gpg.key',
+            "rpm --import https://packages.grafana.com/gpg.key",
             'echo "Installing Grafana..."',
-            'dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.aarch64.rpm',
+            "dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.aarch64.rpm",
             'echo "Verifying Grafana installation..."',
             'if rpm -q grafana | grep -q "${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
-            'else',
+            "else",
             '    echo "Failed to verify Grafana version ${TAG}"',
-            '    exit 1',
-            'fi',
+            "    exit 1",
+            "fi",
         ],
         "depends_on": depends_on,
     }
