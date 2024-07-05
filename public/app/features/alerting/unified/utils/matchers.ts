@@ -145,14 +145,15 @@ export function quoteWithEscape(input: string) {
   return `"${escaped}"`;
 }
 
+// The list of reserved characters that indicate we should be escaping the label key / value are
+// { } ! = ~ , \ " ' ` and any whitespace (\s), encoded in the regular expression below
+//
+// See Alertmanager PR: https://github.com/prometheus/alertmanager/pull/3453
+const RESERVED_CHARACTERS = /[\{\}\!\=\~\,\\\"\'\`\s]+/;
+
 /**
  * Quotes string only when reserved characters are used
  */
-
-// The list of reserved characters that indicate we should be escaping the label key / value are
-// { } ! = ~ , \ " ' ` and any whitespace (\s), encoded in the regular expression below
-const RESERVED_CHARACTERS = /[\{\}\!\=\~\,\\\"\'\`\s]+/;
-
 export function quoteWithEscapeIfRequired(input: string) {
   const shouldQuote = RESERVED_CHARACTERS.test(input);
   return shouldQuote ? quoteWithEscape(input) : input;
