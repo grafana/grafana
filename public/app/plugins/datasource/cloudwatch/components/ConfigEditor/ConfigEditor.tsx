@@ -87,8 +87,8 @@ export const ConfigEditor = (props: Props) => {
 
   const styles = useStyles2(getStyles);
 
-  return  <div className={styles.formStyles}>
-  
+  return (
+    <div className={styles.formStyles}>
       {warning && (
         <Alert title="CloudWatch Authentication" severity="warning" onRemove={dismissWarning}>
           {warning}
@@ -196,6 +196,7 @@ export const ConfigEditor = (props: Props) => {
         datasourceUid={options.jsonData.tracingDatasourceUid}
       />
     </div>
+  );
 };
 
 function useDatasource(props: Props) {

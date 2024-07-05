@@ -23,7 +23,6 @@ import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
 import { VariableTextField } from './VariableTextField';
 
-
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData, VariableQuery>;
 
 const queryTypes: Array<{ value: string; label: string }> = [
@@ -186,7 +185,11 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             allowCustomValue
             error={dimensionKeyError}
           />
-          <EditorField label="Dimensions" className={styles.dimensionsWidth} tooltip="Dimensions to filter the returned values on">
+          <EditorField
+            label="Dimensions"
+            className={styles.dimensionsWidth}
+            tooltip="Dimensions to filter the returned values on"
+          >
             <Dimensions
               metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
               onChange={(dimensions) => {
