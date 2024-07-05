@@ -32,12 +32,18 @@ func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	if rsp == nil {
 		return http.StatusInternalServerError
 	}
+
+	var code int
 	for _, v := range rsp.Responses {
-		if v.Error != nil {
-			return http.StatusMultiStatus
+		if code == 0 {
+			code = int(v.Status)
+		} else if code != int(v.Status) {
+			code = http.StatusMultiStatus
+			break
 		}
 	}
-	return http.StatusOK
+
+	return code
 }
 
 // Defines a query behavior in a datasource.  This is a similar model to a CRD where the

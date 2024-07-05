@@ -80,18 +80,8 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 		return http.StatusBadRequest, nil, err
 	}
 
-	code := http.StatusOK
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
-	if err == nil {
-		for _, v := range rsp.Responses {
-			if v.Error != nil {
-				code = http.StatusMultiStatus
-				break
-			}
-		}
-	} else {
-		code = http.StatusInternalServerError
-	}
+	code := query.GetResponseCode(rsp)
 	return code, rsp, err
 }
 
