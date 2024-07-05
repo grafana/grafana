@@ -86,9 +86,9 @@ func getKey(val string) (*resource.ResourceKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	if k.Group == "" {
-		return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
-	}
+	// if k.Group == "" {
+	// 	return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
+	// }
 	if k.Resource == "" {
 		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 	}

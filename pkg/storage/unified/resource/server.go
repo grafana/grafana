@@ -447,10 +447,10 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		return nil, err
 	}
 
-	if req.Key.Group == "" {
-		status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
-		return &ReadResponse{Status: status}, nil
-	}
+	// if req.Key.Group == "" {
+	// 	status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
+	// 	return &ReadResponse{Status: status}, nil
+	// }
 	if req.Key.Resource == "" {
 		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
 		return &ReadResponse{Status: status}, nil
@@ -499,7 +499,6 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
-
 
 	ctx := srv.Context()
 
