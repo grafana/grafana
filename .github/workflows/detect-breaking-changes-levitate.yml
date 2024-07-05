@@ -8,6 +8,7 @@ on:
       - 'packages/**'
     branches:
       - 'main'
+  workflow_dispatch:
 
 jobs:
   buildPR:

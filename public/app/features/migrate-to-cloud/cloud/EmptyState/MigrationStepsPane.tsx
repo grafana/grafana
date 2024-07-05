@@ -4,24 +4,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { InfoItem } from '../shared/InfoItem';
+import { InfoItem } from '../../shared/InfoItem';
 
-export const InfoPane = () => {
+export const MigrationStepsPane = () => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Box alignItems="flex-start" display="flex" padding={2} gap={2} direction="column" backgroundColor="secondary">
+    <Box alignItems="flex-start" display="flex" direction="column" gap={2}>
       <InfoItem
-        title={t('migrate-to-cloud.migrate-to-this-stack.title', 'Migrate configuration to this stack')}
-        linkTitle={t('migrate-to-cloud.migrate-to-this-stack.link-title', 'View the full migration guide')}
-        linkHref="https://grafana.com/docs/grafana-cloud/account-management/migration-guide"
-      >
-        <Trans i18nKey="migrate-to-cloud.migrate-to-this-stack.body">
-          Some configuration from your self-managed Grafana instance can be automatically copied to this cloud stack.
-        </Trans>
-      </InfoItem>
-      <InfoItem
-        title={t('migrate-to-cloud.get-started.title', 'How to get started')}
+        title={t('migrate-to-cloud.get-started.title', 'Performing a migration')}
         linkTitle={t('migrate-to-cloud.get-started.link-title', 'Learn more about Private Data Source Connect')}
         linkHref="https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect"
       >
@@ -62,6 +53,9 @@ export const InfoPane = () => {
       </InfoItem>
       <TextLink href="/connections/private-data-source-connections">
         {t('migrate-to-cloud.get-started.configure-pdc-link', 'Configure PDC for this stack')}
+      </TextLink>
+      <TextLink href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide">
+        {t('migrate-to-cloud.migrate-to-this-stack.link-title', 'View the full migration guide')}
       </TextLink>
     </Box>
   );
