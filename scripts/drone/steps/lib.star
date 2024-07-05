@@ -1234,7 +1234,7 @@ def publish_linux_packages_step(package_manager = "deb"):
 
 def verify_linux_DEB_packages_step():
     return {
-        "name": "verify-linux-packages",
+        "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
         "environment": {},
         "commands": [
@@ -1264,10 +1264,24 @@ def verify_linux_DEB_packages_step():
 
 def verify_linux_RPM_packages_step():
     return {
-        "name": "verify-linux-packages",
+        "name": "verify-linux-RPM-packages",
         "image": images["rocky"],
         "environment": {},
-        
+        "commands": [
+            'echo "Updating package lists..."',
+            'dnf check-update -y',
+            'echo "Adding Grafana GPG key..."',
+            'rpm --import https://packages.grafana.com/gpg.key',
+            'echo "Installing Grafana..."',
+            'dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.aarch64.rpm',
+            'echo "Verifying Grafana installation..."',
+            'if rpm -q grafana | grep -q "${TAG}"; then',
+            '    echo "Successfully verified Grafana version ${TAG}"',
+            'else',
+            '    echo "Failed to verify Grafana version ${TAG}"',
+            '    exit 1',
+            'fi',
+        ],
             # JEV: will this name exist at transpile time?
         "depends_on": ["publish-linux-packages-rpm"],
     }
