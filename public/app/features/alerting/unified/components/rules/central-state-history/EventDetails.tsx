@@ -53,9 +53,9 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
     );
   }
   // get the transitions count for the rule and labels: transitions count for this instance.
-  const getTransitionsCountByRuleUIDAndLabels = (ruleUID: string, labels: string) => {
+  const getTransitionsCountByRuleUIDAndLabels = (ruleUID: string, labels?: Record<string, string> | undefined) => {
     return logRecords.filter(
-      (record) => record.line.ruleUID === ruleUID && JSON.stringify(record.line.labels) === labels
+      (record) => record.line.ruleUID === ruleUID && JSON.stringify(record.line.labels) === JSON.stringify(labels)
     ).length;
   };
 
@@ -65,7 +65,7 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
         <StateTransition record={record} addFilter={addFilter} />
         <ValueInTransition record={record} />
         <NumberTransitions
-          transitions={ruleUID ? getTransitionsCountByRuleUIDAndLabels(ruleUID, JSON.stringify(record.line.labels)) : 0}
+          transitions={ruleUID ? getTransitionsCountByRuleUIDAndLabels(ruleUID, record.line.labels) : 0}
         />
       </Stack>
       <Annotations rule={rule} />

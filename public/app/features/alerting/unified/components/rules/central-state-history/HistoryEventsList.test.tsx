@@ -137,5 +137,6 @@ describe('HistoryEventsList', () => {
     await waitFor(() => {
       expect(ui.loadingBar.query()).not.toBeInTheDocument();
     });
+    expect(ui.rowHeader.query()).not.toBeInTheDocument();
   });
 });
