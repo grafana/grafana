@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	ErrAccessNotImplemented = errors.New("access control not implemented for resource")
+	errAccessNotImplemented = errors.New("access control not implemented for resource")
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)
@@ -96,15 +96,11 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 	}
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
-		if implemented := zanzana.CheckAvailableAction(action); !implemented {
-			return false, ErrAccessNotImplemented
-		}
-
 		kind, _, identifier := accesscontrol.SplitScope(scope)
 		key, ok := zanzana.TranslateToTuple(user.GetUID().String(), action, kind, identifier, user.GetOrgID())
 		if !ok {
 			// unsupported translation
-			return false, nil
+			return false, errAccessNotImplemented
 		}
 
 		res, err := a.zclient.Check(ctx, &openfgav1.CheckRequest{
@@ -151,7 +147,7 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 		first, second = second, first
 	}
 
-	if !errors.Is(second.err, ErrAccessNotImplemented) {
+	if !errors.Is(second.err, errAccessNotImplemented) {
 		if second.err != nil {
 			a.log.Error("zanzana evaluation failed", "error", second.err)
 		} else if first.decision != second.decision {
