@@ -33,7 +33,6 @@ func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keySe
 	// Instantiating with a request for testing purposes, access token should be disabled by default
 	authIntercept, err := grpcUtils.NewClientInterceptor(cfg,
 		authn.TokenExchangeRequest{Namespace: "stack-" + cfg.StackID, Audiences: []string{"entityStoreServer"}})
-
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +43,6 @@ func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keySe
 func NewEntityStoreClientGRPC(cfg *setting.Cfg, channel *grpc.ClientConn) (EntityStoreClient, error) {
 	authIntercept, err := grpcUtils.NewClientInterceptor(cfg,
 		authn.TokenExchangeRequest{Namespace: "stack-" + cfg.StackID, Audiences: []string{"entityStoreServer"}})
-
 	if err != nil {
 		return nil, err
 	}
