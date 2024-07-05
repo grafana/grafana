@@ -15,7 +15,9 @@ interface DynamicTablePagination {
 
 export interface DynamicTableColumnProps<T = unknown> {
   id: string | number;
+  /** Column header to display */
   label: string;
+  alignColumn?: 'end' | string;
 
   renderCell: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   size?: number | string;
@@ -108,7 +110,7 @@ export const DynamicTable = <T extends object>({
           {renderPrefixHeader && renderPrefixHeader()}
           {isExpandable && <div className={styles.cell} />}
           {cols.map((col) => (
-            <div className={styles.cell} key={col.id}>
+            <div className={styles.cell} key={col.id} style={{ justifyContent: col.alignColumn || 'initial' }}>
               {col.label}
             </div>
           ))}
@@ -138,6 +140,7 @@ export const DynamicTable = <T extends object>({
                   className={cx(styles.cell, styles.bodyCell, col.className)}
                   data-column={col.label}
                   key={`${item.id}-${col.id}`}
+                  style={{ justifyContent: col.alignColumn || 'initial' }}
                 >
                   {col.renderCell(item, index)}
                 </div>
