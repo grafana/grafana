@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -874,6 +875,11 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			UIDs:                 query.FolderUIDs,
 			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
 		})
+	}
+
+	// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
+	if query.SignedInUser == nil || query.SignedInUser.GetID().Namespace() != identity.NamespaceServiceAccount {
+		filters = append(filters, searchstore.K6FolderFilter{})
 	}
 
 	filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
