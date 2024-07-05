@@ -33,6 +33,10 @@ func GetResponseCode(rsp *backend.QueryDataResponse) int {
 		return http.StatusInternalServerError
 	}
 
+	if len(rsp.Responses) == 0 {
+		return http.StatusOK
+	}
+
 	var code int
 	for _, v := range rsp.Responses {
 		if code == 0 {
