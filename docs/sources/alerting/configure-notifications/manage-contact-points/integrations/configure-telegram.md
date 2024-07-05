@@ -49,7 +49,7 @@ Add the bot to a group chat by following the steps below. Once the bot is added 
 
 1. In the Telegram app, **open a group or start a new one**.
 1. Search and **add the bot to the group**.
-1. Copy the **chat ID** from the URL in your browser's address bar. It should look similar to this: `https://web.telegram.org/a/#-4266674385`.
+1. Copy the **chat ID** from the URL in your browser's address bar. It should look like this: `https://web.telegram.org/a/#-4266674385`.
 
    The chat ID is the sequence of numbers that follows the `#` symbol. For example: `-4266674385`.
 
