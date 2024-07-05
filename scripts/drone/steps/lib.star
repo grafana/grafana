@@ -1258,7 +1258,7 @@ def verify_linux_DEB_packages_step():
                 '    exit 1',
                 'fi',
             ],
-            # JEV: will this name exist at transpile time?
+            # JEV: will this name exist at transpile time (the "deb" part - see `publish_linux_packages_step`'s "name")?
         "depends_on": ["publish-linux-packages-deb"],
     }
 
@@ -1282,7 +1282,7 @@ def verify_linux_RPM_packages_step():
             '    exit 1',
             'fi',
         ],
-            # JEV: will this name exist at transpile time?
+            # JEV: will this name exist at transpile time (the "rpm" part - see `publish_linux_packages_step`'s "name")?
         "depends_on": ["publish-linux-packages-rpm"],
     }
 
