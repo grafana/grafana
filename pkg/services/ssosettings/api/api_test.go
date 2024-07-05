@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -564,7 +565,7 @@ func setupTests(t *testing.T, service ssosettings.Service) *webtest.Server {
 	api := &Api{
 		Log:                logger,
 		RouteRegister:      routing.NewRouteRegister(),
-		AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		SSOSettingsService: service,
 	}
 

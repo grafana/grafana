@@ -56,6 +56,39 @@
     "pause": "Pause evaluation"
   },
   "alerting": {
+    "central-alert-history": {
+      "details": {
+        "annotations": "Annotations",
+        "error": "Error loading rule for this event.",
+        "loading": "Loading...",
+        "no-annotations": "No annotations",
+        "no-recognized-state": "No recognized state",
+        "no-values": "No values",
+        "not-found": "Rule not found for this event.",
+        "not-grafana-rule": "Rule is not a Grafana rule",
+        "number-transitions": "State transitions for selected period",
+        "state": {
+          "alerting": "Alerting",
+          "error": "Error",
+          "no-data": "No data",
+          "normal": "Normal",
+          "pending": "Pending"
+        },
+        "state-transitions": "State transition",
+        "unknown-event-state": "Unknown",
+        "unknown-rule": "Unknown",
+        "value-in-transition": "Value in transition"
+      },
+      "error": "Something went wrong loading the alert state history",
+      "filter": {
+        "info": {
+          "label1": "Filter events using label querying without spaces, ex:",
+          "label2": "Invalid use of spaces:",
+          "label3": "Valid use of spaces:",
+          "label4": "Filter alerts using label querying without braces, ex:"
+        }
+      }
+    },
     "contact-points": {
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
@@ -171,17 +204,6 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
-    }
-  },
-  "central-alert-history": {
-    "error": "Something went wrong loading the alert state history",
-    "filter": {
-      "info": {
-        "label1": "Filter events using label querying without spaces, ex:",
-        "label2": "Invalid use of spaces:",
-        "label3": "Valid use of spaces:",
-        "label4": "Filter alerts using label querying without braces, ex:"
-      }
     }
   },
   "clipboard-button": {
@@ -922,7 +944,7 @@
       "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
       "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
       "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
-      "title": "How to get started"
+      "title": "Performing a migration"
     },
     "is-it-secure": {
       "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
@@ -930,12 +952,11 @@
       "title": "Is it secure?"
     },
     "migrate-to-this-stack": {
-      "body": "Some configuration from your self-managed Grafana instance can be automatically copied to this cloud stack.",
+      "body": "You can migrate some resources from your self-managed Grafana installation to this cloud stack. To do this securely, you'll need to generate a migration token. Your self-managed instance will use the token to authenticate with this cloud stack.",
       "link-title": "View the full migration guide",
-      "title": "Migrate configuration to this stack"
+      "title": "Let us help you migrate to this stack"
     },
     "migration-token": {
-      "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
       "delete-modal-cancel": "Cancel",
       "delete-modal-confirm": "Delete",
@@ -951,8 +972,7 @@
       "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
       "modal-field-label": "Token",
       "modal-title": "Migration token created",
-      "status": "Current status: <1></1>",
-      "title": "Migration token"
+      "status": "Current status: <1></1>"
     },
     "pdc": {
       "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
