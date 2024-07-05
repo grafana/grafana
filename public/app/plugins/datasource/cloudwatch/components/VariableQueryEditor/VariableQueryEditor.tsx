@@ -1,6 +1,9 @@
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import {
@@ -19,6 +22,7 @@ import { Dimensions } from '../shared/Dimensions/Dimensions';
 import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
 import { VariableTextField } from './VariableTextField';
+
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData, VariableQuery>;
 
@@ -117,8 +121,11 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.DimensionKeys,
     VariableQueryType.DimensionValues,
   ].includes(parsedQuery.queryType);
+
+  const styles = useStyles2(getStyles);
+
   return (
-    <div className={'width-15'}>
+    <div className={styles.formStyles}>
       <VariableQueryField
         value={parsedQuery.queryType}
         options={queryTypes}
@@ -179,7 +186,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             allowCustomValue
             error={dimensionKeyError}
           />
-          <EditorField label="Dimensions" className="width-30" tooltip="Dimensions to filter the returned values on">
+          <EditorField label="Dimensions" className={styles.dimensionsWidth} tooltip="Dimensions to filter the returned values on">
             <Dimensions
               metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
               onChange={(dimensions) => {
@@ -275,3 +282,12 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  formStyles: css({
+    maxWidth: theme.spacing(30),
+  }),
+  dimensionsWidth: css({
+    width: theme.spacing(50),
+  }),
+});
