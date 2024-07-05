@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { ReactElement, useMemo, useState } from 'react';
+import { useLocation } from 'react-router';
 import { useMeasure } from 'react-use';
 
 import { DataFrameJSON, GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
@@ -215,6 +216,8 @@ interface AlertRuleNameProps {
 }
 function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps) {
   const styles = useStyles2(getStyles);
+  const { pathname, search } = useLocation();
+  const returnTo = encodeURIComponent(`${pathname}${search}`);
   const alertRuleName = labels['alertname'];
   if (!ruleUID) {
     return (
@@ -228,7 +231,7 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
     <Stack gap={1} direction={'row'} alignItems="center">
       <Tooltip content={alertRuleName ?? ''}>
         <a
-          href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
+          href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${returnTo}`}
           className={styles.alertName}
         >
           {alertRuleName}
