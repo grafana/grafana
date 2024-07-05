@@ -234,8 +234,8 @@ def publish_packages_pipeline():
                 "target": "verify-linux-packages",
             },
             steps = [
-                verify_linux_DEB_packages_step(depends_on = []),
-                verify_linux_RPM_packages_step(depends_on = []),
+                verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]),
+                verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]),
             ],
         ),
         pipeline(

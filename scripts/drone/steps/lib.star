@@ -1232,7 +1232,7 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def verify_linux_DEB_packages_step():
+def verify_linux_DEB_packages_step(depends_on):
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
@@ -1259,8 +1259,7 @@ def verify_linux_DEB_packages_step():
                 '    exit 1',
                 'fi',
             ],
-            # JEV: will this name exist at starlark transpile time (the "deb" part - see `publish_linux_packages_step`'s "name")?
-        "depends_on": ["publish-linux-packages-deb"],
+        "depends_on": depends_on,
     }
 
 def verify_linux_RPM_packages_step():
@@ -1284,8 +1283,7 @@ def verify_linux_RPM_packages_step():
             '    exit 1',
             'fi',
         ],
-            # JEV: will this name exist at starlark transpile time (the "rpm" part - see `publish_linux_packages_step`'s "name")?
-        "depends_on": ["publish-linux-packages-rpm"],
+        "depends_on": depends_on,
     }
 
 def verify_gen_cue_step():
