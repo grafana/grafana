@@ -34,7 +34,7 @@ func addQueryHistoryMigrations(mg *Migrator) {
 		Name: "query_history_datasource_index",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "query_history_item_uid", Type: DB_BigInt, Nullable: false},
+			{Name: "query_history_item_uid", Type: DB_NVarchar, Nullable: false},
 			{Name: "datasource_uid", Type: DB_NVarchar, Length: 40, Nullable: true},
 		},
 	}
