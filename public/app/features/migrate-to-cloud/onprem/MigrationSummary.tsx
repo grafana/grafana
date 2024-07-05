@@ -52,7 +52,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
       alignItems="center"
       justifyContent="space-between"
     >
-      <Stack gap={4}>
+      <Stack gap={4} wrap="wrap">
         <MigrationInfo title={t('migrate-to-cloud.summary.snapshot-date', 'Snapshot timestamp')}>
           {snapshot?.created ? (
             snapshot?.created
@@ -102,7 +102,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
           onClick={onUploadSnapshot}
           icon={uploadSnapshotIsLoading ? 'spinner' : undefined}
         >
-          <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload & migrate snapshot</Trans>
+          <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload snapshot</Trans>
         </Button>
       )}
     </Box>

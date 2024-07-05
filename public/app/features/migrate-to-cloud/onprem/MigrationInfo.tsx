@@ -9,7 +9,7 @@ interface MigrationInfoProps {
 
 export function MigrationInfo({ title, children }: MigrationInfoProps) {
   return (
-    <Box minWidth={18} display="flex" direction="column">
+    <Box minWidth={{ xs: 0, xxl: 16 }} display="flex" direction="column">
       <Text variant="bodySmall" color="secondary">
         {title}
       </Text>

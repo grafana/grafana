@@ -986,7 +986,7 @@
       "successful-resource-count": "Successfully migrated",
       "target-stack-title": "Uploading to",
       "total-resource-count": "Total resources",
-      "upload-migration": "Upload & migrate snapshot"
+      "upload-migration": "Upload snapshot"
     },
     "token-status": {
       "active": "Token created and active",
