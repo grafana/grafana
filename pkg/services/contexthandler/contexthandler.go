@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +36,6 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn
 type ContextHandler struct {
 	Cfg           *setting.Cfg
 	tracer        tracing.Tracer
-	features      featuremgmt.FeatureToggles
 	authenticator authn.Authenticator
 }
 
