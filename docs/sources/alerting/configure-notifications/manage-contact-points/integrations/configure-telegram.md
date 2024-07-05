@@ -24,7 +24,7 @@ Use the Grafana Alerting - Telegram integration to send [Telegram](https://teleg
 
 ### Telegram bot API token and chat ID
 
-To integrate Grafana with Telegram, you need to obtain a Telegram **bot API token** and a **chat ID** (i.e., the ID of the Telegram chat where you want to receive the alert notifications).
+To integrate Grafana with Telegram, you need to get a Telegram **bot API token** and a **chat ID** (the ID of the Telegram chat where you want to receive the alert notifications). To complete the integration, use the browser version of Telegram.
 
 ### Set up your Telegram bot
 
@@ -44,29 +44,9 @@ Add the bot to a group chat by following the steps below. Once the bot is added 
 
 1. In the Telegram app, **open a group or start a new one**.
 1. Search and **add the bot to the group**.
-1. **Interact with the bot** by sending a dummy message that starts with "`/`". E.g. `/hola @bot_name`.
+1. Copy the **chat ID** from the URL in your browser's address bar. It should look like this: `https://web.telegram.org/a/#-4266674385`.
 
-   {{< figure src="/media/blog/telegram-grafana-alerting/telegram-screenshot.png" alt="A screenshot that shows a message to a Telegram bot." >}}
-
-1. To obtain the **chat ID**, send an [HTTP request](https://core.telegram.org/bots/api#getupdates) to the bot. Copy the below URL and replace `{your_bot_api_token}` with your bot API token.
-
-   ```
-   https://api.telegram.org/bot{your_bot_api_token}/getUpdates
-   ```
-
-1. **Paste the URL in your browser**.
-1. If the request is successful, it will return a response in JSON format.
-
-   ```
-   ...
-   "chat": {
-           "id": -4065678900,
-           "title": "Tony and Hello world bot",
-           "type": "group",
-   ...
-   ```
-
-1. Copy the value of the `“id”` that appears under `“chat”`.
+   The chat ID is the sequence of numbers that follows the `#` symbol. For example: `-4266674385`.
 
 ## Procedure
 
