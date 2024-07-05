@@ -113,7 +113,7 @@ The **Querying** section is shown in number 3 in the screenshot.
 
 **Minimum step** is used for queries returning time-series data. The default value is 15 seconds.
 
-Adjusting this option can help prevent gaps when you zoom in to profiling data. 
+Adjusting this option can help prevent gaps when you zoom in to profiling data.
 
 ### Private data source connect
 
