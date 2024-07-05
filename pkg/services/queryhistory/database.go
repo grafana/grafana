@@ -118,7 +118,6 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 		`)
 		writeStarredSQL(query, s.store, &countBuilder, true)
 		writeFiltersSQL(query, user, s.store, &countBuilder)
-
 		_, err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Get(&totalCount)
 		return err
 	})
