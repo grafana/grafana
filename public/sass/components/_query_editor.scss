@@ -13,12 +13,6 @@
 
 .tight-form-func {
   background: $tight-form-func-bg;
-
-  &.show-function-controls {
-    padding-top: 5px;
-    min-width: 100px;
-    text-align: center;
-  }
 }
 
 input[type='text'].tight-form-func-param {
@@ -53,12 +47,6 @@ input[type='text'].tight-form-func-param {
 
 .tight-form-func {
   background: $tight-form-func-bg;
-
-  &.show-function-controls {
-    padding-top: 5px;
-    min-width: 100px;
-    text-align: center;
-  }
 }
 
 .rst-text::before {
