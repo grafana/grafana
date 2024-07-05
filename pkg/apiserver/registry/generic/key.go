@@ -12,63 +12,75 @@ import (
 )
 
 type Key struct {
-	Group     string
-	Resource  string
-	Namespace string
-	Name      string
+	Group     string `json:"group,omitempty"`
+	Resource  string `json:"resource"`
+	Namespace string `json:"namespace,omitempty"`
+	Name      string `json:"name,omitempty"`
 }
 
-func ParseKey(key string) (*Key, error) {
-	// /<group>/<resource>[/namespaces/<namespace>][/<name>]
-	parts := strings.Split(key, "/")
-	if len(parts) < 3 {
-		return nil, fmt.Errorf("invalid key (expecting at least 2 parts): %s", key)
+// ParseKey parses a key string into a Key.
+// Format: [/group/<group>]/resource/<resource>[/namespace/<namespace>][/name/<name>]
+func ParseKey(raw string) (*Key, error) {
+	parts := strings.Split(raw, "/")
+	key := &Key{}
+
+	// Skip the first empty string
+	if parts[0] == "" {
+		parts = parts[1:]
 	}
 
-	if parts[0] != "" {
-		return nil, fmt.Errorf("invalid key (expecting leading slash): %s", key)
+	for i := 0; i < len(parts); i += 2 {
+		k := parts[i]
+		if i+1 >= len(parts) {
+			return nil, fmt.Errorf("invalid key: %s", raw)
+		}
+		v := parts[i+1]
+		switch k {
+		case "group":
+			key.Group = v
+		case "resource":
+			key.Resource = v
+		case "namespace":
+			key.Namespace = v
+		case "name":
+			key.Name = v
+		default:
+			return nil, fmt.Errorf("invalid key name: %s", key)
+		}
 	}
 
-	k := &Key{
-		Group:    parts[1],
-		Resource: parts[2],
+	if len(key.Resource) == 0 {
+		return nil, fmt.Errorf("missing resource: %s", raw)
 	}
 
-	if len(parts) == 3 {
-		return k, nil
-	}
-
-	if parts[3] != "namespaces" {
-		k.Name = parts[3]
-		return k, nil
-	}
-
-	if len(parts) < 5 {
-		return nil, fmt.Errorf("invalid key (expecting namespace after 'namespaces'): %s", key)
-	}
-
-	k.Namespace = parts[4]
-
-	if len(parts) == 5 {
-		return k, nil
-	}
-
-	k.Name = parts[5]
-
-	return k, nil
+	return key, nil
 }
 
+// String returns the string representation of the Key.
 func (k *Key) String() string {
-	s := "/" + k.Group + "/" + k.Resource
+	var builder strings.Builder
+
+	if len(k.Group) > 0 {
+		builder.WriteString("/group/")
+		builder.WriteString(k.Group)
+	}
+	if len(k.Resource) > 0 {
+		builder.WriteString("/resource/")
+		builder.WriteString(k.Resource)
+	}
 	if len(k.Namespace) > 0 {
-		s += "/namespaces/" + k.Namespace
+		builder.WriteString("/namespace/")
+		builder.WriteString(k.Namespace)
 	}
 	if len(k.Name) > 0 {
-		s += "/" + k.Name
+		builder.WriteString("/name/")
+		builder.WriteString(k.Name)
 	}
-	return s
+
+	return builder.String()
 }
 
+// IsEqual returns true if the keys are equal.
 func (k *Key) IsEqual(other *Key) bool {
 	return k.Group == other.Group &&
 		k.Resource == other.Resource &&

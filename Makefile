@@ -169,8 +169,13 @@ fix-cue: $(CUE)
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
+.PHONY: update-workspace
+update-workspace:
+	@echo "updating workspace"
+	$(GO) mod download
+
 .PHONY: build-go
-build-go: gen-go ## Build all Go binaries.
+build-go: update-workspace gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -211,13 +216,13 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: $(BRA) ## Build and run web server on filesystem changes.
+run: $(BRA) ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
 	$(BRA) run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
 	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
-		./pkg/cmd/grafana -- server -packaging=dev cfg:app_mode=development
+		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild

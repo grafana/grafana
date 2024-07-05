@@ -1,16 +1,13 @@
 import { AlignedData } from 'uplot';
 
-import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta } from '..';
 import { join } from '../transformations/transformers/joinDataFrames';
+import { Labels, QueryResultMeta } from '../types/data';
+import { FieldDTO, DataFrame, Field, FieldType } from '../types/dataFrame';
+import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
-import {
-  DataFrameJSON,
-  decodeFieldValueEntities,
-  FieldSchema,
-  guessFieldTypeFromValue,
-  toFilteredDataFrameDTO,
-} from '.';
+import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
+import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
  * Indicate if the frame is appened or replace

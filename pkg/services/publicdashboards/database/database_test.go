@@ -91,7 +91,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
 		}
 
-		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}}
+		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
 
 		actest.AddUserPermissionToDB(t, sqlStore, usr)
 
@@ -120,7 +120,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
 		}
 
-		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}}
+		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
 
 		actest.AddUserPermissionToDB(t, sqlStore, usr)
 
@@ -148,7 +148,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:another-dashboard-2-uid"},
 		}
 
-		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}}
+		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
 
 		actest.AddUserPermissionToDB(t, sqlStore, usr)
 

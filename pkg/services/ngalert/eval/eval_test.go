@@ -1029,6 +1029,146 @@ func TestEvaluateRaw(t *testing.T) {
 	})
 }
 
+func TestEvaluateRawLimit(t *testing.T) {
+	t.Run("should apply the limit to the successful query evaluation", func(t *testing.T) {
+		resp := backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						},
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "baz"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		cases := []struct {
+			desc            string
+			cond            models.Condition
+			evalResultLimit int
+			error           string
+		}{
+			{
+				desc:            "too many results from the condition query results in an error",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: 1,
+				error:           "query evaluation returned too many results: 2 (limit: 1)",
+			},
+			{
+				desc:            "if the limit equals to the number of condition query frames, no error is returned",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: len(resp.Responses["B"].Frames),
+			},
+			{
+				desc:            "if the limit is 0, no error is returned",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: 0,
+			},
+			{
+				desc:            "if the limit is -1, no error is returned",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: -1,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.desc, func(t *testing.T) {
+				e := conditionEvaluator{
+					pipeline: nil,
+					expressionService: &fakeExpressionService{
+						hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+							return &resp, nil
+						},
+					},
+					condition:       tc.cond,
+					evalResultLimit: tc.evalResultLimit,
+				}
+
+				result, err := e.EvaluateRaw(context.Background(), time.Now())
+
+				if tc.error != "" {
+					require.Error(t, err)
+					require.EqualError(t, err, tc.error)
+				} else {
+					require.NoError(t, err)
+					require.NotNil(t, result)
+				}
+			})
+		}
+	})
+
+	t.Run("should return the original error if the evaluation did not succeed", func(t *testing.T) {
+		cases := []struct {
+			desc            string
+			queryEvalResult *backend.QueryDataResponse
+			queryEvalError  error
+			evalResultLimit int
+		}{
+			{
+				desc:            "the original query evaluation result is preserved",
+				queryEvalResult: &backend.QueryDataResponse{},
+				queryEvalError:  errors.New("some query error"),
+				evalResultLimit: 1,
+			},
+			{
+				desc:            "the original query evaluation result is preserved (no evaluation result)",
+				queryEvalResult: nil,
+				queryEvalError:  errors.New("some query error"),
+				evalResultLimit: 1,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.desc, func(t *testing.T) {
+				e := conditionEvaluator{
+					pipeline: nil,
+					expressionService: &fakeExpressionService{
+						hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+							return tc.queryEvalResult, tc.queryEvalError
+						},
+					},
+					evalResultLimit: tc.evalResultLimit,
+				}
+
+				result, err := e.EvaluateRaw(context.Background(), time.Now())
+				require.Error(t, err)
+				require.Equal(t, err, tc.queryEvalError)
+				require.Equal(t, result, tc.queryEvalResult)
+			})
+		}
+	})
+}
+
 func TestResults_HasNonRetryableErrors(t *testing.T) {
 	tc := []struct {
 		name     string

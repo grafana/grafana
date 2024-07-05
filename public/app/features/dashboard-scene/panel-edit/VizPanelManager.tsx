@@ -267,8 +267,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     };
 
     const newOptions = newPlugin?.onPanelTypeChanged?.(panel, prevPluginId, prevOptions, prevFieldConfig);
+
     if (newOptions) {
-      newPanel.onOptionsChange(newOptions, true);
+      newPanel.onOptionsChange(newOptions, true, true);
     }
 
     if (newPlugin?.onPanelMigration) {
