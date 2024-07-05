@@ -12,7 +12,7 @@ import (
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
-func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keyService signingkeys.Service) (EntityStoreClient, error) {
+func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keyService signingkeys.Service) EntityStoreClient {
 	channel := &inprocgrpc.Channel{}
 
 	auth, err := grpcUtils.ProvideInProcessAuthenticatorV2(cfg, keyService)
@@ -29,14 +29,7 @@ func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keySe
 		server,
 	)
 
-	// In-Process normally no access token is needed as the client and server are in the same process
-	// Instantiating with a request for testing purposes, access token should be disabled by default
-	authIntercept, err := grpcUtils.NewClientInterceptor(cfg,
-		authn.TokenExchangeRequest{Namespace: "stack-" + cfg.StackID, Audiences: []string{"entityStoreServer"}})
-	if err != nil {
-		return nil, err
-	}
-
+	authIntercept := grpcUtils.NewInProcClientInterceptor()
 	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, authIntercept.UnaryClientInterceptor, authIntercept.StreamClientInterceptor)), nil
 }
 

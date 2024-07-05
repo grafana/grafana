@@ -125,14 +125,7 @@ func newInProcLegacyClient(cfg *setting.Cfg, authCfg *Cfg, tracer tracing.Tracer
 		server,
 	)
 
-	authIntercept, err := grpcUtils.NewServiceClientInterceptor(cfg,
-		authnlib.TokenExchangeRequest{Namespace: getNamespace(cfg), Audiences: []string{"authZService"}})
-	if err != nil {
-		return nil, err
-	}
-
-	// In-Process normally no access token is needed as the client and server are in the same process
-	// Instantiating with a request for testing purposes, access token should be disabled by default
+	authIntercept := grpcUtils.NewInProcServiceClientInterceptor()
 	conn := grpchan.InterceptClientConn(channel, authIntercept.UnaryClientInterceptor, authIntercept.StreamClientInterceptor)
 
 	client := authzv1.NewAuthzServiceClient(conn)

@@ -20,30 +20,37 @@ import (
 type ClientInterceptor struct {
 	clientCfg   *authClientCfg
 	tokenClient authnlib.TokenExchanger
-	tokenReq    authnlib.TokenExchangeRequest
+	tokenReq    *authnlib.TokenExchangeRequest
 	logger      log.Logger
+}
+
+// NewInProcServiceClientInterceptor creates a new client interceptor for service clients (with no user involved)
+func NewInProcServiceClientInterceptor() *ClientInterceptor {
+	return &ClientInterceptor{clientCfg: &authClientCfg{accessTokenEnabled: false, withUser: false}, logger: log.New("authz.client")}
+}
+
+// NewInProcClientInterceptor creates a new client interceptor for clients that require user information.
+func NewInProcClientInterceptor() *ClientInterceptor {
+	return &ClientInterceptor{clientCfg: &authClientCfg{accessTokenEnabled: false, withUser: true}, logger: log.New("authz.client")}
 }
 
 // NewServiceClientInterceptor creates a new client interceptor for service clients (with no user involved)
 func NewServiceClientInterceptor(cfg *setting.Cfg, tokenReq authnlib.TokenExchangeRequest) (*ClientInterceptor, error) {
-	return newClientInterceptor(cfg, tokenReq, false)
+	return newClientInterceptor(readAuthClientConfig(cfg), log.New("authz.client"), &tokenReq)
 }
 
 // NewClientInterceptor creates a new client interceptor for clients that require user information.
 func NewClientInterceptor(cfg *setting.Cfg, tokenReq authnlib.TokenExchangeRequest) (*ClientInterceptor, error) {
-	return newClientInterceptor(cfg, tokenReq, true)
+	clientCfg := readAuthClientConfig(cfg)
+	clientCfg.withUser = true
+	return newClientInterceptor(clientCfg, log.New("authz.client"), &tokenReq)
 }
 
-func newClientInterceptor(cfg *setting.Cfg, tokenReq authnlib.TokenExchangeRequest, withUser bool) (*ClientInterceptor, error) {
+func newClientInterceptor(clientCfg *authClientCfg, logger log.Logger, tokenReq *authnlib.TokenExchangeRequest) (*ClientInterceptor, error) {
 	var (
-		tokenClient authnlib.TokenExchanger
-		err         error
-		logger      = log.New("authz.client")
-		clientCfg   = readAuthClientConfig(cfg)
+		err    error
+		client = &ClientInterceptor{clientCfg: clientCfg, logger: logger, tokenReq: tokenReq}
 	)
-
-	clientCfg.withUser = withUser
-
 	if clientCfg.accessTokenEnabled {
 		if clientCfg.token == "" {
 			return nil, fmt.Errorf("token is required")
@@ -51,13 +58,16 @@ func newClientInterceptor(cfg *setting.Cfg, tokenReq authnlib.TokenExchangeReque
 		if clientCfg.tokenExchangeURL == "" {
 			return nil, fmt.Errorf("token exchange URL is required")
 		}
-		client := http.DefaultClient
-		if setting.Env == setting.Dev {
-			client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+		if tokenReq == nil {
+			return nil, fmt.Errorf("token exchange request is required")
 		}
-		tokenClient, err = authnlib.NewTokenExchangeClient(
+		httpClient := http.DefaultClient
+		if setting.Env == setting.Dev {
+			httpClient = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+		}
+		client.tokenClient, err = authnlib.NewTokenExchangeClient(
 			authnlib.TokenExchangeConfig{TokenExchangeURL: clientCfg.tokenExchangeURL, Token: clientCfg.token},
-			authnlib.WithHTTPClient(client),
+			authnlib.WithHTTPClient(httpClient),
 		)
 		if err != nil {
 			return nil, err
@@ -66,12 +76,7 @@ func newClientInterceptor(cfg *setting.Cfg, tokenReq authnlib.TokenExchangeReque
 		logger.Warn("access token is disabled")
 	}
 
-	return &ClientInterceptor{
-		clientCfg:   clientCfg,
-		tokenClient: tokenClient,
-		tokenReq:    tokenReq,
-		logger:      logger,
-	}, nil
+	return client, nil
 }
 
 func (h *ClientInterceptor) UnaryClientInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
@@ -110,12 +115,12 @@ func (h *ClientInterceptor) wrapContext(ctx context.Context) (context.Context, e
 	// TODO (gamab): set OrgID when no user is present
 
 	if !h.clientCfg.accessTokenEnabled {
-		ctxLogger.Info("not adding access token to outgoing context: access token is disabled")
+		ctxLogger.Debug("not adding access token to outgoing context: access token is disabled")
 		return metadata.NewOutgoingContext(ctx, md), nil
 	}
 
-	ctxLogger.Info("Exchanging token for access token")
-	token, err := h.tokenClient.Exchange(ctx, h.tokenReq)
+	ctxLogger.Debug("Exchanging token for access token")
+	token, err := h.tokenClient.Exchange(ctx, *h.tokenReq)
 	if err != nil {
 		ctxLogger.Error("Error exchanging token for access token", "error", err)
 		return nil, err
