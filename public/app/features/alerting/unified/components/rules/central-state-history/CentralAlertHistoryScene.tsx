@@ -29,7 +29,7 @@ import {
   StackingMode,
   Tooltip,
   TooltipDisplayMode,
-  useStyles2
+  useStyles2,
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -243,9 +243,7 @@ function ClearFilterButton({
   return (
     <Tooltip content="Clear filter">
       <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
-        <Trans i18nKey="alerting.central-alert-history.filter.clear">
-          Clear filters
-        </Trans>
+        <Trans i18nKey="alerting.central-alert-history.filter.clear">Clear filters</Trans>
       </Button>
     </Tooltip>
   );
@@ -284,5 +282,5 @@ const getStyles = () => ({
   container: css({
     padding: '0',
     alignSelf: 'center',
-  })
+  }),
 });
