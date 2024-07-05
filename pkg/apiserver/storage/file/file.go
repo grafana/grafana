@@ -39,13 +39,6 @@ var _ storage.Interface = (*Storage)(nil)
 // When we upgrade to 1.29
 var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be set on objects to be created")
 
-type parsedKey struct {
-	group     string
-	resource  string
-	namespace string
-	name      string
-}
-
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	root           string
@@ -606,10 +599,6 @@ func (s *Storage) GuaranteedUpdate(
 
 	s.rvMutex.Lock()
 	generatedRV := s.getNewResourceVersion()
-	if err != nil {
-		s.rvMutex.Unlock()
-		return err
-	}
 	s.rvMutex.Unlock()
 
 	if err := s.versioner.UpdateObject(updatedObj, generatedRV); err != nil {
