@@ -1,13 +1,9 @@
-// import { css } from '@emotion/css';
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { useMemo, useRef, useState } from 'react';
 
-import {
-  // useStyles2,
-  useTheme2,
-} from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 import { getSelectStyles } from '../Select/getSelectStyles';
@@ -43,7 +39,7 @@ function itemFilter(inputValue: string) {
 }
 
 function estimateSize() {
-  return 60;
+  return 30;
 }
 
 export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
@@ -51,7 +47,6 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
   const listRef = useRef(null);
 
-  // const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -92,11 +87,8 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                   ref={rowVirtualizer.measureElement}
                   className={cx(
                     styles.option,
-                    selectedItem?.value === items[virtualRow.index].value && styles.optionSelected
+                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected
                   )}
-                  style={{
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
                 >
                   <span className={styles.optionBody}>{items[virtualRow.index].label}</span>
                   {items[virtualRow.index].description && (
@@ -111,24 +103,3 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     </div>
   );
 };
-
-// const getStyles = () => ({
-//   dropdown: css({
-//     position: 'absolute',
-//     height: 400,
-//     width: 600,
-//     overflowY: 'scroll',
-//     contain: 'strict',
-//   }),
-//   menuItem: css({
-//     position: 'absolute',
-//     top: 0,
-//     left: 0,
-//     width: '100%',
-//     display: 'flex',
-//     flexDirection: 'column',
-//     '&:first-child': {
-//       fontWeight: 'bold',
-//     },
-//   }),
-// });
