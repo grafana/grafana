@@ -314,7 +314,21 @@ func TestValidate(t *testing.T) {
 					"config": map[string]any{
 						"servers": []any{
 							map[string]any{
-								"host": "127.0.0.1",
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"min_tls_version": "TLS1.3",
+								"tls_ciphers":     []string{"TLS_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"},
+								"group_mappings": []any{
+									map[string]any{
+										"group_dn":      "cn=admins,ou=groups,dc=grafana,dc=org",
+										"grafana_admin": true,
+									},
+									map[string]any{
+										"group_dn": "cn=users,ou=groups,dc=grafana,dc=org",
+										"org_role": "Editor",
+									},
+								},
 							},
 						},
 					},
@@ -376,10 +390,14 @@ func TestValidate(t *testing.T) {
 					"config": map[string]any{
 						"servers": []any{
 							map[string]any{
-								"host": "127.0.0.1",
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
 							},
 							map[string]any{
-								"port": 123,
+								"port":            123,
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
 							},
 						},
 					},
@@ -387,6 +405,116 @@ func TestValidate(t *testing.T) {
 			},
 			isValid:       false,
 			containsError: "no host configured",
+		},
+		{
+			description: "validation fails if search filter is not configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no search filter",
+		},
+		{
+			description: "validation fails if search base DN is not configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":          "127.0.0.1",
+								"search_filter": "(cn=%s)",
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no search base DN",
+		},
+		{
+			description: "validation fails if min TLS version is invalid",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"min_tls_version": "TLS5.18",
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "invalid min TLS version",
+		},
+		{
+			description: "validation fails if TLS cyphers are invalid",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"tls_ciphers":     []string{"TLS_AES_128_GCM_SHA256", "invalid-tls-cypher"},
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "invalid TLS ciphers",
+		},
+		{
+			description: "validation fails if a group mapping contains no organization role",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"group_mappings": []any{
+									map[string]any{
+										"group_dn":      "cn=admins,ou=groups,dc=grafana,dc=org",
+										"org_role":      "Admin",
+										"grafana_admin": true,
+									},
+									map[string]any{
+										"group_dn": "cn=users,ou=groups,dc=grafana,dc=org",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "organization role",
 		},
 	}
 
