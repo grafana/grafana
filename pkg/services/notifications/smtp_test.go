@@ -23,7 +23,7 @@ func TestBuildMail(t *testing.T) {
 
 	message := &Message{
 		To:      []string{"to@address.com"},
-		From:    "from@address.com",
+		From:    "Mr. Foo <from@address.com>",
 		Subject: "Some subject",
 		Body: map[string]string{
 			"text/html":  "Some HTML body",
@@ -44,7 +44,7 @@ func TestBuildMail(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Contains(t, buf.String(), "Foo-Header: foo_value")
-		assert.Contains(t, buf.String(), "From: from@address.com")
+		assert.Contains(t, buf.String(), "From: Mr. Foo <from@address.com>")
 		assert.Regexp(t, "Message-ID: <.*@address.com>", buf.String())
 		assert.Contains(t, buf.String(), "Some HTML body")
 		assert.Contains(t, buf.String(), "Some plain text body")

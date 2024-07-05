@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/mail"
 	"net/textproto"
 	"strconv"
 	"strings"
@@ -95,10 +96,13 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)
 
-	at := strings.LastIndex(msg.From, "@")
-    if at >= 0 {
-        domain := msg.From[at+1:]
-		m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.NewString(), domain))
+	from, err := mail.ParseAddress(msg.From)
+	if err == nil {
+		at := strings.LastIndex(from.Address, "@")
+		if at >= 0 {
+			domain := from.Address[at+1:]
+			m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.NewString(), domain))
+		}
 	}
 
 	if sc.cfg.EnableTracing {
