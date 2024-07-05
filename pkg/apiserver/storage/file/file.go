@@ -388,7 +388,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return storage.NewKeyNotFoundError(key, int64(rv))
 	}
 
-	obj, err := readFile(s.codec, fpath, func() runtime.Object {
+	_, err = readFile(s.codec, fpath, func() runtime.Object {
 		return objPtr
 	})
 	if err != nil {
@@ -398,12 +398,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return storage.NewKeyNotFoundError(key, int64(rv))
 	}
 
-	currentVersion, err := s.versioner.ObjectResourceVersion(obj)
-	if err != nil {
-		return err
-	}
-
-	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
+	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, s.getCurrentResourceVersion()); err != nil {
 		return err
 	}
 
