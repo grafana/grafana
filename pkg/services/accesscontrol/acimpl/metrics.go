@@ -22,6 +22,7 @@ type acMetrics struct {
 
 var once sync.Once
 
+// TODO: use prometheus.Registerer
 func initMetrics() *acMetrics {
 	m := &acMetrics{}
 	once.Do(func() {
