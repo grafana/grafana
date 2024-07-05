@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const defaultTimeout = 10
+const DefaultTimeout = 10
 
 // Config holds parameters from the .ini config file
 type Config struct {
@@ -209,7 +209,7 @@ func readConfig(configFile string) (*ServersConfig, error) {
 
 		// set default timeout if unspecified
 		if server.Timeout == 0 {
-			server.Timeout = defaultTimeout
+			server.Timeout = DefaultTimeout
 		}
 	}
 

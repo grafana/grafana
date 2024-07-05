@@ -123,7 +123,7 @@ func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) erro
 		}
 
 		if server.Timeout == 0 {
-			server.Timeout = defaultTimeout
+			server.Timeout = ldap.DefaultTimeout
 		}
 	}
 
