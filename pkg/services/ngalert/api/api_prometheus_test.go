@@ -14,11 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -558,7 +560,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			log:     log.NewNopLogger(),
 			manager: fakeAIM,
 			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 		}
 
 		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
@@ -673,7 +675,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
