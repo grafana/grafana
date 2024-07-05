@@ -63,3 +63,9 @@ func TranslateToTuple(user string, action, kind, identifier string, orgID int64)
 
 	return tuple, true
 }
+
+// CheckAvailableAction return true if check can be performed on specific action
+func CheckAvailableAction(action string) bool {
+	_, ok := actionTranslations[action]
+	return ok
+}

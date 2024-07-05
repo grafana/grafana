@@ -233,7 +233,11 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 
 func (a anyEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
 	for _, e := range a.anyOf {
-		if allowed, _ := e.EvaluateCustom(fn); allowed {
+		allowed, err := e.EvaluateCustom(fn)
+		if err != nil {
+			return false, err
+		}
+		if allowed {
 			return true, nil
 		}
 	}

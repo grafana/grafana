@@ -16,6 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+var (
+	ErrAccessNotImplemented = errors.New("access control not implemented for resource")
+)
+
 var _ accesscontrol.AccessControl = new(AccessControl)
 
 func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.Client) *AccessControl {
@@ -92,6 +96,10 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 	}
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
+		if implemented := zanzana.CheckAvailableAction(action); !implemented {
+			return false, ErrAccessNotImplemented
+		}
+
 		kind, _, identifier := accesscontrol.SplitScope(scope)
 		key, ok := zanzana.TranslateToTuple(user.GetUID().String(), action, kind, identifier, user.GetOrgID())
 		if !ok {
@@ -143,17 +151,21 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 		first, second = second, first
 	}
 
-	if first.decision != second.decision {
-		a.log.Warn(
-			"zanzana evaluation result does not match grafana",
-			"grafana_decision", first.decision,
-			"zanana_decision", second.decision,
-			"grafana_ms", first.duration,
-			"zanzana_ms", second.duration,
-			"eval", evaluator.GoString(),
-		)
-	} else {
-		a.log.Debug("zanzana evaluation is correct", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+	if !errors.Is(second.err, ErrAccessNotImplemented) {
+		if second.err != nil {
+			a.log.Error("zanzana evaluation failed", "error", second.err)
+		} else if first.decision != second.decision {
+			a.log.Warn(
+				"zanzana evaluation result does not match grafana",
+				"grafana_decision", first.decision,
+				"zanana_decision", second.decision,
+				"grafana_ms", first.duration,
+				"zanzana_ms", second.duration,
+				"eval", evaluator.GoString(),
+			)
+		} else {
+			a.log.Debug("zanzana evaluation is correct", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+		}
 	}
 
 	return first.decision, first.err
