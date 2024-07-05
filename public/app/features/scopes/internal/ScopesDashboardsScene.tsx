@@ -1,7 +1,7 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Link } from 'react-router-dom';
 
-import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Button, CustomScrollbar, FilterInput, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -14,6 +14,7 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: SuggestedDashboard[];
   filteredDashboards: SuggestedDashboard[];
   isLoading: boolean;
+  isVisible: boolean;
   scopesSelected: boolean;
   searchQuery: string;
 }
@@ -26,25 +27,26 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
       dashboards: [],
       filteredDashboards: [],
       isLoading: false,
+      isVisible: false,
       scopesSelected: false,
       searchQuery: '',
     });
   }
 
-  public async fetchDashboards(scopes: Scope[]) {
-    if (scopes.length === 0) {
+  public async fetchDashboards(scopeNames: string[]) {
+    if (scopeNames.length === 0) {
       return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false, scopesSelected: false });
     }
 
     this.setState({ isLoading: true });
 
-    const dashboards = await fetchSuggestedDashboards(scopes);
+    const dashboards = await fetchSuggestedDashboards(scopeNames);
 
     this.setState({
       dashboards,
       filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
       isLoading: false,
-      scopesSelected: scopes.length > 0,
+      scopesSelected: scopeNames.length > 0,
     });
   }
 
@@ -57,6 +59,29 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
+  public toggle(scopeNames: string[]) {
+    if (this.state.isVisible) {
+      this.hide();
+    } else {
+      this.show(scopeNames);
+    }
+  }
+
+  public show(scopeNames: string[]) {
+    this.fetchDashboards(scopeNames);
+    this.setState({ isVisible: true });
+  }
+
+  public hide() {
+    this.setState({ isVisible: false });
+  }
+
+  public enterViewMode() {
+    this.hide();
+  }
+
+  public exitViewMode() {}
+
   private filterDashboards(dashboards: SuggestedDashboard[], searchQuery: string): SuggestedDashboard[] {
     const lowerCasedSearchQuery = searchQuery.toLowerCase();
 
@@ -65,21 +90,25 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { dashboards, filteredDashboards, isLoading, searchQuery, scopesSelected } = model.useState();
+  const { dashboards, filteredDashboards, isLoading, isVisible, searchQuery, scopesSelected } = model.useState();
   const styles = useStyles2(getStyles);
 
   const [queryParams] = useQueryParams();
 
+  if (!isVisible) {
+    return null;
+  }
+
   if (!isLoading) {
     if (!scopesSelected) {
       return (
-        <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundNoScopes">
+        <p className={cx(styles.container, styles.noResultsContainer)} data-testid="scopes-dashboards-notFoundNoScopes">
           <Trans i18nKey="scopes.suggestedDashboards.noResultsNoScopes">No scopes selected</Trans>
         </p>
       );
     } else if (dashboards.length === 0) {
       return (
-        <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForScope">
+        <p className={cx(styles.container, styles.noResultsContainer)} data-testid="scopes-dashboards-notFoundForScope">
           <Trans i18nKey="scopes.suggestedDashboards.noResultsForScopes">
             No dashboards found for the selected scopes
           </Trans>
@@ -89,7 +118,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   }
 
   return (
-    <>
+    <div className={styles.container}>
       <div className={styles.searchInputContainer}>
         <FilterInput
           disabled={isLoading}
@@ -132,16 +161,20 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           </Button>
         </p>
       )}
-    </>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    noResultsContainer: css({
-      alignItems: 'center',
+    container: css({
+      backgroundColor: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
+      padding: theme.spacing(2),
+    }),
+    noResultsContainer: css({
+      alignItems: 'center',
       gap: theme.spacing(1),
       justifyContent: 'center',
       textAlign: 'center',

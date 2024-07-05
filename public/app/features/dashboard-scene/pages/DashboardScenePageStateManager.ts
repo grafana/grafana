@@ -14,9 +14,9 @@ import {
   removeDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
+import { scopesScene } from 'app/features/scopes';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
-import { getScopesFromUrl } from '../../dashboard/utils/getScopesFromUrl';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
@@ -299,15 +299,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public getCacheKey(cacheKey: string): string {
-    const scopesSearchParams = getScopesFromUrl();
+    const scopesCacheKey = scopesScene?.getSelectedScopesNames().sort().join('__scp__') ?? '';
 
-    if (!scopesSearchParams?.has('scopes')) {
-      return cacheKey;
-    }
-
-    scopesSearchParams.sort();
-
-    return `${cacheKey}__scp__${scopesSearchParams.toString()}`;
+    return `${cacheKey}__scp__${scopesCacheKey}`;
   }
 }
 

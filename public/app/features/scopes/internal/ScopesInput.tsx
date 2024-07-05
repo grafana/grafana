@@ -40,20 +40,21 @@ export function ScopesInput({
       let titles: string[];
 
       if (path.length > 0) {
-        titles = path
-          .map((nodeName) => {
-            const cl = currentLevel[nodeName];
-            if (!cl) {
-              return null;
-            }
+        titles = path.reduce<string[]>((acc, nodeName) => {
+          const cl = currentLevel[nodeName];
 
-            const { title, nodes } = cl;
+          if (!cl) {
+            return acc;
+          }
 
-            currentLevel = nodes;
+          const { title, nodes } = cl;
 
-            return title;
-          })
-          .filter((title) => title !== null) as string[];
+          currentLevel = nodes;
+
+          acc.push(title);
+
+          return acc;
+        }, []);
 
         if (titles[0] === '') {
           titles.splice(0, 1);
