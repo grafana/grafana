@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -186,11 +185,6 @@ type Request struct {
 	OrgID int64
 	// HTTPRequest is the original HTTP request to authenticate
 	HTTPRequest *http.Request
-
-	// Resp is the response writer to use for the request
-	// Used to set cookies and headers
-	Resp web.ResponseWriter
-
 	// metadata is additional information about the auth request
 	metadata map[string]string
 }

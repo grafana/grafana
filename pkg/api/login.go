@@ -201,7 +201,7 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
-	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
+	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req})
 	if err != nil {
 		tokenErr := &auth.CreateTokenErr{}
 		if errors.As(err, &tokenErr) {

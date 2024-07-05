@@ -173,7 +173,6 @@ func TestExtendedJWT_Test(t *testing.T) {
 
 			actual := env.s.Test(context.Background(), &authn.Request{
 				HTTPRequest: validHTTPReq,
-				Resp:        nil,
 			})
 
 			assert.Equal(t, tc.want, actual)
@@ -320,7 +319,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			id, err := env.s.Authenticate(context.Background(), &authn.Request{
 				OrgID:       tc.orgID,
 				HTTPRequest: validHTTPReq,
-				Resp:        nil,
 			})
 			if tc.wantErr != nil {
 				assert.ErrorIs(t, err, tc.wantErr)
