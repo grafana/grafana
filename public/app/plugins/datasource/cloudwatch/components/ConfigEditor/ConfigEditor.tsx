@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -22,7 +23,6 @@ import { LogGroupsFieldWrapper } from '../shared/LogGroups/LogGroupsField';
 
 import { SecureSocksProxySettingsNewStyling } from './SecureSocksProxySettingsNewStyling';
 import { XrayLinkConfig } from './XrayLinkConfig';
-import { css } from '@emotion/css';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
