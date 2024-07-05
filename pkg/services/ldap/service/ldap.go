@@ -99,6 +99,34 @@ func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) erro
 		return err
 	}
 
+	// calculate MinTLSVersionID and TLSCipherIDs from input text values
+	// also initialize Timeout and OrgID from group mappings with default values if they are not configured
+	for _, server := range ldapCfg.Servers {
+		if server.MinTLSVersion != "" {
+			server.MinTLSVersionID, err = util.TlsNameToVersion(server.MinTLSVersion)
+			if err != nil {
+				s.log.Error("failed to set min TLS version, ignoring", "err", err, "server", server.Host)
+			}
+		}
+
+		if len(server.TLSCiphers) > 0 {
+			server.TLSCipherIDs, err = util.TlsCiphersToIDs(server.TLSCiphers)
+			if err != nil {
+				s.log.Error("unrecognized TLS Cipher(s), ignoring", "err", err, "server", server.Host)
+			}
+		}
+
+		for _, groupMap := range server.Groups {
+			if groupMap.OrgId == 0 {
+				groupMap.OrgId = 1
+			}
+		}
+
+		if server.Timeout == 0 {
+			server.Timeout = ldap.DefaultTimeout
+		}
+	}
+
 	s.loadingMutex.Lock()
 	defer s.loadingMutex.Unlock()
 
