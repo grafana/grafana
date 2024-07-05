@@ -145,6 +145,12 @@ func (s QueryHistoryService) deleteQuery(ctx context.Context, user *user.SignedI
 			s.log.Error("Failed to unstar query while deleting it from query history", "query", UID, "user", user.UserID, "error", err)
 		}
 
+		// remove the index
+		_, err = session.Table("query_history_datasource_index").Where("query_history_item_uid = ?", UID).Delete(QueryHistoryDatasourceIndex{})
+		if err != nil {
+			s.log.Error("Failed to remove the index for the query item", "query", UID, "user", user.UserID, "error", err)
+		}
+
 		// Then delete it
 		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Delete(QueryHistory{})
 		if err != nil {
@@ -303,21 +309,30 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 	var rowsCount int64
 
 	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
+		uids_sql := `SELECT uid FROM (
+			SELECT uid FROM query_history
+			LEFT JOIN query_history_star
+			ON query_history_star.query_uid = query_history.uid
+			WHERE query_history_star.query_uid IS NULL
+			AND query_history.created_at <= ?
+			ORDER BY query_history.id ASC
+			LIMIT 10000
+		) AS q`
+
+		index_sql := `DELETE
+			FROM query_history_datasource_index
+			WHERE query_history_item_uid IN (` + uids_sql + `)`
+
 		sql := `DELETE
 			FROM query_history
-			WHERE uid IN (
-				SELECT uid FROM (
-					SELECT uid FROM query_history
-					LEFT JOIN query_history_star
-					ON query_history_star.query_uid = query_history.uid
-					WHERE query_history_star.query_uid IS NULL
-					AND query_history.created_at <= ?
-					ORDER BY query_history.id ASC
-					LIMIT 10000
-				) AS q
-			)`
+			WHERE uid IN (` + uids_sql + `)`
 
-		res, err := session.Exec(sql, strconv.FormatInt(olderThan, 10))
+		res, err := session.Exec(index_sql, strconv.FormatInt(olderThan, 10))
+		if err != nil {
+			return err
+		}
+
+		res, err = session.Exec(sql, strconv.FormatInt(olderThan, 10))
 		if err != nil {
 			return err
 		}
