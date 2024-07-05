@@ -269,6 +269,29 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			},
 		},
 		{
+			name:       "should return correct mapping when the first part contains multiple colons",
+			rawMapping: []string{"Groups\\:IT\\:ops:1:Viewer"},
+			roleStrict: false,
+			expected: &MappingConfiguration{
+				orgMapping:        map[string]map[int64]org.RoleType{"Groups:IT:ops": {1: org.RoleViewer}},
+				strictRoleMapping: false,
+			},
+		},
+		{
+			name:       "should return correct mapping when the org name contains multiple colons",
+			rawMapping: []string{`Group1:Org\:1:Viewer`},
+			roleStrict: false,
+			setupMock: func(orgService *orgtest.MockService) {
+				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
+					return query.Name == "Org:1"
+				})).Return(&org.Org{ID: 1}, nil)
+			},
+			expected: &MappingConfiguration{
+				orgMapping:        map[string]map[int64]org.RoleType{"Group1": {1: org.RoleViewer}},
+				strictRoleMapping: false,
+			},
+		},
+		{
 			name:       "should return empty mapping when org mapping is nil",
 			rawMapping: nil,
 			expected: &MappingConfiguration{
@@ -277,8 +300,8 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			},
 		},
 		{
-			name:       "should return empty mapping when the org mapping format is invalid and strict role mapping is enabled",
-			rawMapping: []string{"External:Org1:First:Organization:Editor"},
+			name:       "should return empty mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
+			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Viewer"},
 			roleStrict: true,
 			expected: &MappingConfiguration{
 				orgMapping:        map[string]map[int64]org.RoleType{},
@@ -286,11 +309,11 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			},
 		},
 		{
-			name:       "should return only the valid mappings from the raw mappings when strict role mapping is disabled",
-			rawMapping: []string{"External:Org1:First:Organization:Editor", "Second:1:Editor"},
+			name:       "should skip org mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
+			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Admin"},
 			roleStrict: false,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleEditor}},
+				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleAdmin}},
 				strictRoleMapping: false,
 			},
 		},
