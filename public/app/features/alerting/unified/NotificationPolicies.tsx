@@ -5,6 +5,7 @@ import { useAsyncFn } from 'react-use';
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Alert, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -15,7 +16,6 @@ import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
-import { mergeTimeIntervals } from './components/mute-timings/util';
 import {
   NotificationPoliciesFilter,
   findRoutesByMatchers,
@@ -65,6 +65,7 @@ const AmRoutes = () => {
 
   const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
+  const { data: muteTimings } = useMuteTimings({ alertmanager: selectedAlertmanager ?? '' });
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
@@ -207,9 +208,8 @@ const AmRoutes = () => {
   if (!selectedAlertmanager) {
     return null;
   }
-  const time_intervals = result?.alertmanager_config ? mergeTimeIntervals(result?.alertmanager_config) : [];
 
-  const numberOfMuteTimings = time_intervals.length;
+  const numberOfMuteTimings = muteTimings?.length || 0;
   const haveData = result && !resultError && !resultLoading;
   const isFetching = !result && resultLoading;
   const haveError = resultError && !resultLoading;
