@@ -24,21 +24,21 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authnService authn.ServiceAuthenticateOnly,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:          cfg,
-		tracer:       tracer,
-		authnService: authnService,
+		Cfg:           cfg,
+		tracer:        tracer,
+		authenticator: authenticator,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg          *setting.Cfg
-	tracer       tracing.Tracer
-	features     featuremgmt.FeatureToggles
-	authnService authn.ServiceAuthenticateOnly
+	Cfg           *setting.Cfg
+	tracer        tracing.Tracer
+	features      featuremgmt.FeatureToggles
+	authenticator authn.Authenticator
 }
 
 type reqContextKey = ctxkey.Key
@@ -112,7 +112,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		id, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
+		id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
 		if err != nil {
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err

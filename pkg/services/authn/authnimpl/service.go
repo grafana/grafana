@@ -40,7 +40,7 @@ func ProvideAuthnService(s *Service) authn.Service {
 }
 
 // make sure service also implements authn.ServiceAuthenticateOnly interface
-func ProvideAuthnServiceAuthenticateOnly(s *Service) authn.ServiceAuthenticateOnly {
+func ProvideAuthnServiceAuthenticateOnly(s *Service) authn.Authenticator {
 	return s
 }
 
