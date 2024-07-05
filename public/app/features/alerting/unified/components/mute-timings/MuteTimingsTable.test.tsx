@@ -1,61 +1,157 @@
-import { render, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { render, screen, userEvent, within } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
+import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
+import { defaultConfig } from 'app/features/alerting/unified/MuteTimings.test';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setGrafanaAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/configure';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
+import { TIME_INTERVAL_UID_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { GRAFANA_DATASOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { MuteTimingsTable } from './MuteTimingsTable';
 
-jest.mock('app/types', () => ({
-  ...jest.requireActual('app/types'),
-  useDispatch: () => jest.fn(),
-}));
 const renderWithProvider = (alertManagerSource?: string) => {
-  const store = configureStore();
-
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
-          <MuteTimingsTable alertManagerSourceName={alertManagerSource ?? GRAFANA_DATASOURCE_NAME} />
-        </AlertmanagerProvider>
-      </Router>
-    </Provider>
+    <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
+      <MuteTimingsTable alertManagerSourceName={alertManagerSource ?? GRAFANA_RULES_SOURCE_NAME} />
+    </AlertmanagerProvider>
   );
 };
 
+setupMswServer();
+
 describe('MuteTimingsTable', () => {
-  it(' shows export button when allowed and supported', async () => {
-    grantUserPermissions([
-      AccessControlAction.AlertingNotificationsRead,
-      AccessControlAction.AlertingNotificationsWrite,
-    ]);
-    const { findByRole } = renderWithProvider();
-    expect(await findByRole('button', { name: /export all/i })).toBeInTheDocument();
-  });
-  it('It does not show export button when not allowed ', async () => {
-    // when not allowed
-    grantUserPermissions([]);
-    const { queryByRole } = renderWithProvider();
-    await waitFor(() => {
-      expect(queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+  describe('with necessary permissions', () => {
+    beforeEach(() => {
+      setGrafanaAlertmanagerConfig(defaultConfig);
+      config.featureToggles.alertingApiServer = false;
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+    });
+
+    it("shows 'export all' drawer when allowed and supported", async () => {
+      const user = userEvent.setup();
+      renderWithProvider();
+      await user.click(await screen.findByRole('button', { name: /export all/i }));
+
+      expect(await screen.findByRole('dialog', { name: /drawer title export/i })).toBeInTheDocument();
+    });
+
+    it("shows individual 'export' drawer when allowed and supported, and can close", async () => {
+      const user = userEvent.setup();
+      renderWithProvider();
+      const table = await screen.findByTestId('dynamic-table');
+      const exportMuteTiming = await within(table).findByText(/export/i);
+      await user.click(exportMuteTiming);
+
+      expect(await screen.findByRole('dialog', { name: /drawer title export/i })).toBeInTheDocument();
+
+      await user.click(screen.getByText(/cancel/i));
+
+      expect(screen.queryByRole('dialog', { name: /drawer title export/i })).not.toBeInTheDocument();
+    });
+
+    it('does not show export button when not supported', async () => {
+      renderWithProvider('potato');
+      expect(screen.queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+    });
+
+    it('deletes interval', async () => {
+      // TODO: Don't use captureRequests for this, move to stateful mock server instead
+      // and check that the interval is no longer in the list
+      const capture = captureRequests();
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click((await screen.findAllByText(/delete/i))[0]);
+      await user.click(await screen.findByRole('button', { name: /delete/i }));
+
+      const requests = await capture;
+      const amConfigUpdateRequest = requests.find(
+        (r) => r.url.includes('/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
+      );
+
+      const body = await amConfigUpdateRequest?.clone().json();
+      expect(body.alertmanager_config.mute_time_intervals).toHaveLength(0);
+    });
+
+    it('allow cancelling deletion', async () => {
+      // TODO: Don't use captureRequests for this, move to stateful mock server instead
+      // and check that the interval is still in the list
+      const capture = captureRequests();
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click((await screen.findAllByText(/delete/i))[0]);
+      await user.click(await screen.findByRole('button', { name: /cancel/i }));
+
+      const requests = await capture;
+      const amConfigUpdateRequest = requests.find(
+        (r) => r.url.includes('/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
+      );
+
+      expect(amConfigUpdateRequest).toBeUndefined();
     });
   });
-  it('It does not show export button when not supported ', async () => {
-    // when not supported
-    grantUserPermissions([
-      AccessControlAction.AlertingNotificationsRead,
-      AccessControlAction.AlertingNotificationsWrite,
-    ]);
-    const { queryByRole } = renderWithProvider('potato');
-    await waitFor(() => {
-      expect(queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+
+  describe('without necessary permissions', () => {
+    beforeEach(() => {
+      grantUserPermissions([]);
+    });
+
+    it('does not show export button when not allowed ', async () => {
+      renderWithProvider();
+      expect(screen.queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('using alertingApiServer feature toggle', () => {
+    beforeEach(() => {
+      // Set orgId to 1 as this ensures we test we're calling the API with the correct namespace
+      // (should be default, not org-1)
+      // If that logic is incorrect, the API would reject our call with a 403, so its implicitly tested here
+      contextSrv.user.orgId = 1;
+      config.featureToggles.alertingApiServer = true;
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+    });
+
+    afterEach(() => {
+      config.featureToggles.alertingApiServer = false;
+    });
+
+    it('shows list of intervals from k8s API', async () => {
+      renderWithProvider();
+      expect(await screen.findByTestId('dynamic-table')).toBeInTheDocument();
+
+      expect(await screen.findByText('Provisioned')).toBeInTheDocument();
+    });
+
+    it('deletes interval', async () => {
+      // TODO: Don't use captureRequests for this, move to stateful mock server instead
+      // and check that the interval is no longer in the list
+      const capture = captureRequests();
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click((await screen.findAllByText(/delete/i))[0]);
+      await user.click(await screen.findByRole('button', { name: /delete/i }));
+
+      const requests = await capture;
+      const deleteRequest = requests.find(
+        (r) => r.url.includes(`timeintervals/${TIME_INTERVAL_UID_HAPPY_PATH}`) && r.method === 'DELETE'
+      );
+
+      expect(deleteRequest).toBeDefined();
     });
   });
 });
