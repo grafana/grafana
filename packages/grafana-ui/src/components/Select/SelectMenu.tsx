@@ -90,7 +90,7 @@ export const VirtualizedSelectMenu = ({
       return [
         childWithoutChildren,
         ...child.props.children.slice(0, -1),
-        // add a divider after the category
+        // add a bottom divider to the last item in the category
         React.cloneElement(child.props.children.at(-1), {
           innerProps: {
             style: {
