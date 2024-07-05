@@ -26,8 +26,6 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
-<<<<<<< HEAD
-=======
   email:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email/
@@ -43,7 +41,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram/
->>>>>>> 8bc8b4b31f0 (alerting/integrations:telegram-update (#90105))
   webhook:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
@@ -54,16 +51,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
-<<<<<<< HEAD
-  oncall:
-=======
   teams:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
   external-alertmanager:
->>>>>>> 8bc8b4b31f0 (alerting/integrations:telegram-update (#90105))
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
     - pattern: /docs/grafana-cloud/
@@ -157,13 +150,10 @@ Once configured, you can use integrations as part of your contact points to rece
 | Name                         | Type                      |
 | ---------------------------- | ------------------------- |
 | DingDing                     | `dingding`                |
-<<<<<<< HEAD
 | Discord                      | `discord`                 |
 | Email                        | `email`                   |
-=======
 | [Discord](ref:discord)       | `discord`                 |
 | [Email](ref:email)           | `email`                   |
->>>>>>> 8bc8b4b31f0 (alerting/integrations:telegram-update (#90105))
 | Google Chat                  | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Hipchat                      | `hipchat`                 |
