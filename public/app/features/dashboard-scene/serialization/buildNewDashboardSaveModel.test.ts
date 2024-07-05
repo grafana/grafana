@@ -44,6 +44,11 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       newDashboardWithFiltersAndGroupBy: false,
     },
+    bootData: {
+      user: {
+        timezone: 'Africa/Abidjan',
+      },
+    },
   },
   getDataSourceSrv: () => ({
     get: (): Promise<DataSourceApi> => {
@@ -71,6 +76,11 @@ describe('buildNewDashboardSaveModel', () => {
       expect(result.dashboard.templating?.list).toHaveLength(2);
       expect(result.dashboard.templating?.list?.[0].type).toBe('adhoc');
       expect(result.dashboard.templating?.list?.[1].type).toBe('groupby');
+    });
+
+    it("should set the new dashboard's timezone to the user's timezone", async () => {
+      const result = await buildNewDashboardSaveModel();
+      expect(result.dashboard.timezone).toEqual('Africa/Abidjan');
     });
   });
 });
