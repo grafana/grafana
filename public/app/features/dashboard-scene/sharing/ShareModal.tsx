@@ -91,7 +91,10 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
-    DashboardInteractions.sharingTabChanged({ item: tab.value, shareResource: getTrackingSource(this.state.panelRef) });
+    DashboardInteractions.sharingCategoryClicked({
+      item: tab.value,
+      shareResource: getTrackingSource(this.state.panelRef),
+    });
     this.setState({ activeTab: tab.value });
   };
 }

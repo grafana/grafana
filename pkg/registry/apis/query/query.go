@@ -79,7 +79,7 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
-	// See: /pkg/apiserver/builder/helper.go#L34
+	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
 		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
@@ -150,7 +150,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
-		break // nothing to do
+		qdr = &backend.QueryDataResponse{}
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
 	default:

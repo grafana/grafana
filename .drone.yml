@@ -135,7 +135,7 @@ steps:
   image: node:20.9.0-alpine
   name: start-storybook
 - commands:
-  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -151,11 +151,8 @@ trigger:
     exclude:
     - docs/**
     - '*.md'
-    - pkg/**
-    - packaging/**
-    - go.sum
-    - go.mod
-    include: []
+    include:
+    - packages/grafana-ui/**
 type: docker
 volumes:
 - host:
@@ -1910,7 +1907,7 @@ steps:
   image: node:20.9.0-alpine
   name: start-storybook
 - commands:
-  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -5293,5 +5290,4 @@ name: gcr_credentials
 ---
 kind: signature
 hmac: 52049f67842eb34919b96eeb94a29580fa095da152b3b547c0c850d50f774c0c
-
 ...

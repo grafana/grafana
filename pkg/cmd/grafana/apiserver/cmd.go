@@ -3,8 +3,11 @@ package apiserver
 import (
 	"context"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/cli"
 
@@ -108,18 +111,45 @@ func RunCLI(opts commands.ServerOptions) int {
 	return cli.Run(cmd)
 }
 
+type lateInitializedTracingProvider struct {
+	trace.TracerProvider
+	tracer *lateInitializedTracingService
+}
+
+func (tp lateInitializedTracingProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
+	return tp.tracer.getTracer()
+}
+
 type lateInitializedTracingService struct {
 	tracing.Tracer
+	mutex sync.RWMutex
 }
 
 func newLateInitializedTracingService() *lateInitializedTracingService {
-	return &lateInitializedTracingService{
-		Tracer: tracing.InitializeTracerForTest(),
+	ts := &lateInitializedTracingService{
+		Tracer: tracing.NewNoopTracerService(),
 	}
+
+	tp := &lateInitializedTracingProvider{
+		tracer: ts,
+	}
+
+	otel.SetTracerProvider(tp)
+
+	return ts
 }
 
-func (s *lateInitializedTracingService) InitTracer(tracer tracing.Tracer) {
+func (s *lateInitializedTracingService) getTracer() tracing.Tracer {
+	s.mutex.RLock()
+	t := s.Tracer
+	s.mutex.RUnlock()
+	return t
+}
+
+func (s *lateInitializedTracingService) InitTracer(tracer *tracing.TracingService) {
+	s.mutex.Lock()
 	s.Tracer = tracer
+	s.mutex.Unlock()
 }
 
 var _ tracing.Tracer = &lateInitializedTracingService{}
