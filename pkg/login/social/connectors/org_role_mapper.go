@@ -12,7 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const mapperMatchAllOrgID = -1
+const (
+	mapperMatchAllOrgID = -1
+	escapeStr           = `\`
+)
+
+var separatorRegexp = regexp.MustCompile(":")
 
 // OrgRoleMapper maps external orgs/groups to Grafana orgs and basic roles.
 type OrgRoleMapper struct {
@@ -206,16 +211,15 @@ func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
 
 func splitOrgMapping(mapping string) []string {
 	result := make([]string, 0, 3)
-	re := regexp.MustCompile(":")
-	matches := re.FindAllStringIndex(mapping, -1)
+	matches := separatorRegexp.FindAllStringIndex(mapping, -1)
 	from := 0
 
 	for _, match := range matches {
 		// match[0] is the start, match[1] is the end of the match
 		start, end := match[0], match[1]
 		// Check if the match is not preceded by two backslashes
-		if start == 0 || mapping[start-1:start] != `\` {
-			result = append(result, strings.ReplaceAll(mapping[from:end-1], `\`, ""))
+		if start == 0 || mapping[start-1:start] != escapeStr {
+			result = append(result, strings.ReplaceAll(mapping[from:end-1], escapeStr, ""))
 			from = end
 		}
 	}

@@ -300,6 +300,24 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			},
 		},
 		{
+			name:       "should return empty mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
+			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Viewer"},
+			roleStrict: true,
+			expected: &MappingConfiguration{
+				orgMapping:        map[string]map[int64]org.RoleType{},
+				strictRoleMapping: true,
+			},
+		},
+		{
+			name:       "should skip org mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
+			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Admin"},
+			roleStrict: false,
+			expected: &MappingConfiguration{
+				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleAdmin}},
+				strictRoleMapping: false,
+			},
+		},
+		{
 			name:       "should return empty mapping if at least one org was not found or the resolution failed and strict role mapping is enabled",
 			rawMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
 			roleStrict: true,
