@@ -9,26 +9,19 @@ export interface Props {
   onClick?: React.MouseEventHandler<SVGElement>;
 }
 
-export class TagBadge extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
+export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
+  const { color } = getTagColorsFromName(label);
 
-  render() {
-    const { label, removeIcon, count, onClick } = this.props;
-    const { color } = getTagColorsFromName(label);
+  const tagStyle = {
+    backgroundColor: color,
+  };
 
-    const tagStyle = {
-      backgroundColor: color,
-    };
+  const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
 
-    const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
-
-    return (
-      <span className={`label label-tag`} style={tagStyle}>
-        {removeIcon && <Icon onClick={onClick} name="times" />}
-        {label} {countLabel}
-      </span>
-    );
-  }
-}
+  return (
+    <span className={`label label-tag`} style={tagStyle}>
+      {removeIcon && <Icon onClick={onClick} name="times" />}
+      {label} {countLabel}
+    </span>
+  );
+};
