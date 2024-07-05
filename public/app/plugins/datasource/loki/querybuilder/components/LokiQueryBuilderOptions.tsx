@@ -67,7 +67,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onRunQuery();
     }
 
-    const queryType = getLokiQueryType(query);
+    let queryType = getLokiQueryType(query);
     const isLogQuery = isLogsQuery(query.expr);
     const filteredQueryTypeOptions = isLogQuery
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
@@ -76,6 +76,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     // if the state's queryType is still Instant, trigger a change to range for log queries
     if (isLogQuery && queryType === LokiQueryType.Instant) {
       onChange({ ...query, queryType: LokiQueryType.Range });
+      queryType = LokiQueryType.Range;
     }
 
     const isValidStep = useMemo(() => {
