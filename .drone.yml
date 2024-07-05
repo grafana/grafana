@@ -3142,6 +3142,73 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: verify-linux-packages
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo "Updating package lists..."
+  - apt-get update >/dev/null 2>&1
+  - echo "Installing prerequisites..."
+  - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
+    wget >/dev/null 2>&1
+  - echo "Adding Grafana repository..."
+  - mkdir -p /etc/apt/keyrings/
+  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
+    > /dev/null
+  - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
+    main" | tee -a /etc/apt/sources.list.d/grafana.list
+  - apt-get update >/dev/null 2>&1
+  - echo "Attempting to install Grafana version ${TAG}..."
+  - if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then
+  - '    echo "Successfully installed Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to install Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  depends_on: []
+  environment: {}
+  image: ubuntu:22.04
+  name: verify-linux-DEB-packages
+- commands:
+  - echo "Updating package lists..."
+  - dnf check-update -y
+  - echo "Adding Grafana GPG key..."
+  - rpm --import https://packages.grafana.com/gpg.key
+  - echo "Installing Grafana..."
+  - dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.aarch64.rpm
+  - echo "Verifying Grafana installation..."
+  - if rpm -q grafana | grep -q "${TAG}"; then
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  depends_on: []
+  environment: {}
+  image: rockylinux:9
+  name: verify-linux-RPM-packages
+trigger:
+  event:
+  - promote
+  target: verify-linux-packages
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 depends_on:
 - publish-artifacts-public
 - publish-docker-public
@@ -3208,6 +3275,48 @@ steps:
     service_account_json:
       from_secret: packages_service_account
     target_bucket: grafana-packages
+- commands:
+  - echo "Updating package lists..."
+  - apt-get update >/dev/null 2>&1
+  - echo "Installing prerequisites..."
+  - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
+    wget >/dev/null 2>&1
+  - echo "Adding Grafana repository..."
+  - mkdir -p /etc/apt/keyrings/
+  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
+    > /dev/null
+  - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
+    main" | tee -a /etc/apt/sources.list.d/grafana.list
+  - apt-get update >/dev/null 2>&1
+  - echo "Attempting to install Grafana version ${TAG}..."
+  - if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then
+  - '    echo "Successfully installed Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to install Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  depends_on: []
+  environment: {}
+  image: ubuntu:22.04
+  name: verify-linux-DEB-packages
+- commands:
+  - echo "Updating package lists..."
+  - dnf check-update -y
+  - echo "Adding Grafana GPG key..."
+  - rpm --import https://packages.grafana.com/gpg.key
+  - echo "Installing Grafana..."
+  - dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.aarch64.rpm
+  - echo "Verifying Grafana installation..."
+  - if rpm -q grafana | grep -q "${TAG}"; then
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  depends_on: []
+  environment: {}
+  image: rockylinux:9
+  name: verify-linux-RPM-packages
 - commands:
   - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
   depends_on:
@@ -4915,6 +5024,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.10.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4950,6 +5060,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.10.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
+  - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
   depends_on:
   - authenticate-gcr
   environment:
@@ -5181,6 +5292,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 6c273dec437d3ae5ae9a42450c57956259a691ff0df7c161a57eaa683c867acd
+hmac: 52049f67842eb34919b96eeb94a29580fa095da152b3b547c0c850d50f774c0c
 
 ...
