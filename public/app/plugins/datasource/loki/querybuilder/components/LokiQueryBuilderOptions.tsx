@@ -69,6 +69,14 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     const queryType = getLokiQueryType(query);
     const isLogQuery = isLogsQuery(query.expr);
+    const filteredQueryTypeOptions = isLogQuery
+      ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
+      : queryTypeOptions;
+
+    // if the state's queryType is still Instant, trigger a change to range for log queries
+    if (isLogQuery && queryType === LokiQueryType.Instant) {
+      onChange({ ...query, queryType: LokiQueryType.Range });
+    }
 
     const isValidStep = useMemo(() => {
       if (!query.step || isValidGrafanaDuration(query.step) || !isNaN(Number(query.step))) {
@@ -96,9 +104,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               onCommitChange={onLegendFormatChanged}
             />
           </EditorField>
-          <EditorField label="Type">
-            <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
-          </EditorField>
+          {filteredQueryTypeOptions.length > 1 && (
+            <EditorField label="Type">
+              <RadioButtonGroup options={filteredQueryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
+            </EditorField>
+          )}
           {isLogQuery && (
             <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
               <AutoSizeInput

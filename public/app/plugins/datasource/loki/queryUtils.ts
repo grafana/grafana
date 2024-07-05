@@ -91,9 +91,16 @@ export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
 }
 
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
-  const queryType = getLokiQueryType(query);
+  let queryType = getLokiQueryType(query);
   // instant and range are deprecated, we want to remove them
   const { instant, range, ...rest } = query;
+
+  // if `query.expr` is not parsable this might throw an error
+  try {
+    if (isLogsQuery(query.expr)) {
+      queryType = LokiQueryType.Range;
+    }
+  } catch (e) {}
   return { ...rest, queryType };
 }
 
@@ -200,7 +207,8 @@ export function isQueryWithError(query: string): boolean {
 }
 
 export function isLogsQuery(query: string): boolean {
-  return !isQueryWithNode(query, MetricExpr);
+  // As a safeguard we are checking for a length of 2, because at least the query should be `{}`
+  return query.trim().length > 2 && !isQueryWithNode(query, MetricExpr);
 }
 
 export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
