@@ -22,13 +22,6 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 		getAllOrgsError    error
 		expected           map[int64]org.RoleType
 	}{
-		// {
-		// 	name:               "should map correctly and respect the mapping precedence when multiple org mappings are provided for the same org",
-		// 	externalOrgs:       []string{"First", "Second"},
-		// 	orgMappingSettings: []string{"First:*:Editor", "Second:*:Viewer"},
-		// 	directlyMappedRole: "",
-		// 	expected:           map[int64]org.RoleType{1: org.RoleViewer},
-		// },
 		{
 			name:               "should return the default mapping when no org mapping settings are provided and directly mapped role is not set",
 			externalOrgs:       []string{},
@@ -232,14 +225,6 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 		setupMock  func(*orgtest.MockService)
 		expected   *MappingConfiguration
 	}{
-		// {
-		// 	name:       "test",
-		// 	rawMapping: []string{"*:1:Editor", "*:2:Editor"},
-		// 	expected: &MappingConfiguration{
-		// 		orgMappings:       []OrgRoleMapping{},
-		// 		strictRoleMapping: false,
-		// 	},
-		// },
 		{
 			name:       "should return empty mapping when no org mapping settings are provided",
 			rawMapping: []string{},
