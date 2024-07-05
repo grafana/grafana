@@ -299,7 +299,10 @@ func (s *service) start(ctx context.Context) error {
 		// defer conn.Close()
 
 		// Create a client instance
-		store := entity.NewEntityStoreClientGRPC(conn)
+		store, err := entity.NewEntityStoreClientGRPC(s.cfg, conn)
+		if err != nil {
+			return err
+		}
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 

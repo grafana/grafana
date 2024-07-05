@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 const (
@@ -53,11 +54,10 @@ type Client interface {
 }
 
 type LegacyClient struct {
-	authCfg     *Cfg
-	clientV1    authzv1.AuthzServiceClient
-	logger      log.Logger
-	tokenClient authnlib.TokenExchanger
-	tracer      tracing.Tracer
+	authCfg  *Cfg
+	clientV1 authzv1.AuthzServiceClient
+	logger   log.Logger
+	tracer   tracing.Tracer
 }
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
@@ -86,7 +86,7 @@ func ProvideAuthZClient(
 	case ModeInProc:
 		client = newInProcLegacyClient(authCfg, tracer, server)
 	case ModeGRPC:
-		client, err = newGrpcLegacyClient(authCfg, tracer)
+		client, err = newGrpcLegacyClient(cfg, authCfg, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +109,7 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newGrpcLegacyClient(authCfg, tracer)
+	return newGrpcLegacyClient(cfg, authCfg, tracer)
 }
 
 func newInProcLegacyClient(authCfg *Cfg, tracer tracing.Tracer, server *legacyServer) *LegacyClient {
@@ -148,34 +148,38 @@ func newInProcLegacyClient(authCfg *Cfg, tracer tracing.Tracer, server *legacySe
 		tracer:   tracer,
 	}
 }
+func getNamespace(cfg *setting.Cfg) string {
+	if cfg.StackID != "" {
+		return "stack-" + cfg.StackID
+	}
+	return "*"
+}
 
-func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (*LegacyClient, error) {
+func newGrpcLegacyClient(cfg *setting.Cfg, authCfg *Cfg, tracer tracing.Tracer) (*LegacyClient, error) {
+	authIntercept, err := grpcUtils.NewServiceClientInterceptor(cfg, authnlib.TokenExchangeRequest{
+		Namespace: getNamespace(cfg),
+		Audiences: []string{"authZService"},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// Create a connection to the gRPC server
-	conn, err := grpc.NewClient(authCfg.remoteAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(authCfg.remoteAddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(authIntercept.UnaryClientInterceptor),
+		grpc.WithStreamInterceptor(authIntercept.StreamClientInterceptor))
 	if err != nil {
 		return nil, err
 	}
 
 	client := authzv1.NewAuthzServiceClient(conn)
 
-	var tokenClient authnlib.TokenExchanger
-	if authCfg.env != setting.Dev {
-		// Instantiate the token exchange client
-		tokenClient, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            authCfg.token,
-			TokenExchangeURL: authCfg.tokenExchangeUrl,
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &LegacyClient{
-		authCfg:     authCfg,
-		clientV1:    client,
-		logger:      log.New("authz.client"),
-		tokenClient: tokenClient,
-		tracer:      tracer,
+		authCfg:  authCfg,
+		clientV1: client,
+		logger:   log.New("authz.client"),
+		tracer:   tracer,
 	}, nil
 }
 
@@ -241,21 +245,6 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 		StackId: req.StackID,
 		Action:  action,
 		Subject: req.Subject,
-	}
-
-	// Exchange a token to query the authz service
-	if c.tokenClient != nil {
-		token, err := c.tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
-			Namespace: c.authCfg.tokenNamespace,
-			Audiences: c.authCfg.tokenAudience,
-		})
-		if err != nil {
-			return false, tracing.Errorf(span, "failed to exchange token: %w", err)
-		}
-		outCtx = identity.WithAuthCtx(outCtx, &identity.AuthCtx{
-			AccessToken: token.Token,
-			OrgID:       req.StackID,
-		})
 	}
 
 	// Query the authz service

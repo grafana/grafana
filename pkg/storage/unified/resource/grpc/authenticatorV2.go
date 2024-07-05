@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/go-jose/go-jose/v3"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,7 +34,7 @@ var (
 
 type AuthenticatorV2 struct {
 	atVerifier      authnlib.Verifier[authnlib.AccessTokenClaims]
-	authCfg         *authCfg
+	authCfg         *authSrvCfg
 	cfg             *setting.Cfg
 	idVerifier      authnlib.Verifier[authnlib.IDTokenClaims]
 	logger          log.Logger
@@ -64,10 +62,7 @@ func (k *keyServiceWrapper) Get(ctx context.Context, keyID string) (*jose.JSONWe
 }
 
 func ProvideAuthenticatorV2(cfg *setting.Cfg, audience string) (*AuthenticatorV2, error) {
-	authCfg, err := readAuthConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read auth config: %w", err)
-	}
+	authCfg := readAuthSrvConfig(cfg)
 	authCfg.mode = remoteMode
 	if authCfg.signingKeysURL == "" {
 		return nil, fmt.Errorf("missing grpc_authentication.signing_keys_url in configuration file")
@@ -77,19 +72,14 @@ func ProvideAuthenticatorV2(cfg *setting.Cfg, audience string) (*AuthenticatorV2
 }
 
 func ProvideInProcessAuthenticatorV2(cfg *setting.Cfg, keysService signingkeys.Service) (*AuthenticatorV2, error) {
-	// TODO: if the authCtx is already in, let's not verify the id token again.
-
-	authCfg, err := readAuthConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read auth config: %w", err)
-	}
+	authCfg := readAuthSrvConfig(cfg)
 	authCfg.mode = inProcessMode
 	// In-process mode does not require an audience
 	authCfg.allowedAudiences = []string{}
 	return provideAuthenticatorV2(cfg, authCfg, keysService)
 }
 
-func provideAuthenticatorV2(cfg *setting.Cfg, authCfg *authCfg, keysService signingkeys.Service) (*AuthenticatorV2, error) {
+func provideAuthenticatorV2(cfg *setting.Cfg, authCfg *authSrvCfg, keysService signingkeys.Service) (*AuthenticatorV2, error) {
 	// Create a key retriever based on the authentication mode
 	var retriever authnlib.KeyRetriever
 	if authCfg.mode == inProcessMode {
@@ -150,8 +140,10 @@ func (f *AuthenticatorV2) Authenticate(ctx context.Context) (context.Context, er
 	if f.authCfg.mode == inProcessMode {
 		return f.inProcAuthentication(ctx, orgID, md)
 	}
+
 	// FIXME: Once we have access-token support on-prem, we can remove this
-	if f.cfg.Env == setting.Dev {
+	// TODO (gamab): Make sure this does not break production environments
+	if !f.authCfg.accessTokenEnabled && f.cfg.Env == setting.Dev {
 		f.logger.FromContext(ctx).Info("skipping access token verification in dev mode")
 		return f.inProcAuthentication(ctx, orgID, md)
 	}
@@ -348,57 +340,4 @@ func getFirstMetadataValue(md metadata.MD, key string) (string, bool) {
 	}
 
 	return values[0], true
-}
-
-var _ interceptors.Authenticator = (*AuthenticatorV2)(nil)
-
-func UnaryClientInterceptorV2(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	ctx, err := wrapContextV2(ctx)
-	if err != nil {
-		return err
-	}
-	return invoker(ctx, method, req, reply, cc, opts...)
-}
-
-var _ grpc.UnaryClientInterceptor = UnaryClientInterceptorV2
-
-func StreamClientInterceptorV2(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	ctx, err := wrapContextV2(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return streamer(ctx, desc, cc, method, opts...)
-}
-
-var _ grpc.StreamClientInterceptor = StreamClientInterceptorV2
-
-func wrapContextV2(ctx context.Context) (context.Context, error) {
-	md := metadata.Pairs()
-
-	// Use auth context if available
-	if authCtx, err := identity.GetAuthCtx(ctx); err == nil {
-		if authCtx.IDClaims != nil {
-			md.Append(mdToken, authCtx.IDToken)
-		}
-		if authCtx.AccessClaims != nil {
-			md.Append(mdAccessToken, authCtx.AccessToken)
-		}
-		md.Append(mdOrgID, strconv.FormatInt(authCtx.OrgID, 10))
-
-		return metadata.NewOutgoingContext(ctx, md), nil
-	}
-
-	// Fallback to user
-	if user, err := identity.GetRequester(ctx); err == nil {
-		// set grpc metadata into the context to pass to the grpc server
-		return metadata.NewOutgoingContext(ctx, metadata.Pairs(
-			mdToken, user.GetIDToken(),
-			mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
-			// "grafana-userid", strconv.FormatInt(user.UserID, 10),
-			// "grafana-login", user.Login,
-		)), nil
-	}
-
-	// No auth context or user found
-	return ctx, fmt.Errorf("no auth context or user found")
 }
