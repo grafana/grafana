@@ -3,7 +3,7 @@ import { byLabelText, byTestId } from 'testing-library-selector';
 
 import { setupMswServer } from '../../../mockApi';
 
-import { StateFromFilterValues, StateToFilterValues } from './CentralAlertHistoryScene';
+import { StateFilterValues } from './CentralAlertHistoryScene';
 import { HistoryEventsList } from './EventListSceneObject';
 
 setupMswServer();
@@ -20,8 +20,8 @@ describe('HistoryEventsList', () => {
     render(
       <HistoryEventsList
         valueInLabelFilter={''}
-        valueInStateToFilter={StateToFilterValues.all}
-        valueInStateFromFilter={StateFromFilterValues.all}
+        valueInStateToFilter={StateFilterValues.all}
+        valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
       />
     );
@@ -34,8 +34,8 @@ describe('HistoryEventsList', () => {
     render(
       <HistoryEventsList
         valueInLabelFilter={'alertname=alert1'}
-        valueInStateToFilter={StateToFilterValues.all}
-        valueInStateFromFilter={StateFromFilterValues.all}
+        valueInStateToFilter={StateFilterValues.all}
+        valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
       />
     );
@@ -55,8 +55,8 @@ describe('HistoryEventsList', () => {
     render(
       <HistoryEventsList
         valueInLabelFilter={''}
-        valueInStateFromFilter={StateToFilterValues.firing}
-        valueInStateToFilter={StateToFilterValues.normal}
+        valueInStateFromFilter={StateFilterValues.firing}
+        valueInStateToFilter={StateFilterValues.normal}
         addFilter={jest.fn()}
       />
     );
@@ -73,8 +73,8 @@ describe('HistoryEventsList', () => {
     render(
       <HistoryEventsList
         valueInLabelFilter={''}
-        valueInStateToFilter={StateToFilterValues.firing}
-        valueInStateFromFilter={StateFromFilterValues.all}
+        valueInStateToFilter={StateFilterValues.firing}
+        valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
       />
     );
@@ -93,8 +93,8 @@ describe('HistoryEventsList', () => {
     render(
       <HistoryEventsList
         valueInLabelFilter={''}
-        valueInStateFromFilter={StateToFilterValues.firing}
-        valueInStateToFilter={StateToFilterValues.all}
+        valueInStateFromFilter={StateFilterValues.firing}
+        valueInStateToFilter={StateFilterValues.all}
         addFilter={jest.fn()}
       />
     );
@@ -111,8 +111,8 @@ describe('HistoryEventsList', () => {
     render(
       <HistoryEventsList
         valueInLabelFilter={'alertname=alert1'}
-        valueInStateToFilter={StateToFilterValues.firing}
-        valueInStateFromFilter={StateFromFilterValues.all}
+        valueInStateToFilter={StateFilterValues.firing}
+        valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
       />
     );
@@ -129,8 +129,8 @@ describe('HistoryEventsList', () => {
     render(
       <HistoryEventsList
         valueInLabelFilter={'nonexistentlabel=xyz'}
-        valueInStateToFilter={StateToFilterValues.all}
-        valueInStateFromFilter={StateFromFilterValues.all}
+        valueInStateToFilter={StateFilterValues.all}
+        valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
       />
     );

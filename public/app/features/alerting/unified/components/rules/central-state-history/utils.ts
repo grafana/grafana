@@ -8,7 +8,7 @@ import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager'
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateToFilterValues } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } from './CentralAlertHistoryScene';
 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
@@ -22,8 +22,8 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
   // Get the labels and states filters from the URL
   const stateToInQueryParams = getStateFilterToInQueryParams();
   const stateFromInQueryParams = getStateFilterFromInQueryParams();
-  const stateToFilterValue = stateToInQueryParams === '' ? StateToFilterValues.all : stateToInQueryParams;
-  const stateFromFilterValue = stateFromInQueryParams === '' ? StateToFilterValues.all : stateFromInQueryParams;
+  const stateToFilterValue = stateToInQueryParams === '' ? StateFilterValues.all : stateToInQueryParams;
+  const stateFromFilterValue = stateFromInQueryParams === '' ? StateFilterValues.all : stateFromInQueryParams;
 
   // Extract timestamps and lines from the response
   const tsValues = data?.data?.values[0] ?? [];
@@ -41,9 +41,9 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
       // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
       const baseStateTo = mapStateWithReasonToBaseState(line.current);
       const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
-      const stateToMatch = stateToFilterValue !== StateToFilterValues.all ? stateToFilterValue === baseStateTo : true;
+      const stateToMatch = stateToFilterValue !== StateFilterValues.all ? stateToFilterValue === baseStateTo : true;
       const stateFromMatch =
-        stateFromFilterValue !== StateToFilterValues.all ? stateFromFilterValue === baseStateFrom : true;
+        stateFromFilterValue !== StateFilterValues.all ? stateFromFilterValue === baseStateFrom : true;
       // filter by state
       if (stateToMatch && stateFromMatch) {
         acc.push({ timestamp, line });

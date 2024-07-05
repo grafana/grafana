@@ -27,10 +27,9 @@ import {
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
-  Text,
   Tooltip,
   TooltipDisplayMode,
-  useStyles2,
+  useStyles2
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -52,14 +51,7 @@ export const STATE_FILTER_FROM = 'stateFilterFrom';
  * Both share time range and filter variable from the parent scene.
  */
 
-export const StateToFilterValues = {
-  all: 'all',
-  firing: 'Alerting',
-  normal: 'Normal',
-  pending: 'Pending',
-} as const;
-
-export const StateFromFilterValues = {
+export const StateFilterValues = {
   all: 'all',
   firing: 'Alerting',
   normal: 'Normal',
@@ -76,18 +68,18 @@ export const CentralAlertHistoryScene = () => {
   //custom variable for filtering by the current state
   const transitionsToFilterVariable = new CustomVariable({
     name: STATE_FILTER_TO,
-    value: StateToFilterValues.all,
+    value: StateFilterValues.all,
     label: 'Filter by current state:',
     hide: VariableHide.dontHide,
-    query: `All : ${StateToFilterValues.all}, To Firing : ${StateToFilterValues.firing},To Normal : ${StateToFilterValues.normal},To Pending : ${StateToFilterValues.pending}`,
+    query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
   });
   //custom variable for filtering by the previous state
   const transitionsFromFilterVariable = new CustomVariable({
     name: STATE_FILTER_FROM,
-    value: StateFromFilterValues.all,
+    value: StateFilterValues.all,
     label: 'Filter by previous state:',
     hide: VariableHide.dontHide,
-    query: `All : ${StateToFilterValues.all}, From Firing : ${StateToFilterValues.firing},From Normal : ${StateToFilterValues.normal},From Pending : ${StateToFilterValues.pending}`,
+    query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
   });
 
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
@@ -231,7 +223,6 @@ function ClearFilterButton({
   transitionsToFilterVariable: CustomVariable;
   transitionsFromFilterVariable: CustomVariable;
 }) {
-  const styles = useStyles2(getStyles);
   // get the current values of the filters
   const valueInLabelsFilter = labelsFilterVariable.getValue();
   const valueInTransitionsFilter = transitionsToFilterVariable.getValue();
@@ -239,25 +230,23 @@ function ClearFilterButton({
   // if no filter is active, return null
   if (
     !valueInLabelsFilter &&
-    valueInTransitionsFilter === StateToFilterValues.all &&
-    valueInTransitionsFromFilter === StateFromFilterValues.all
+    valueInTransitionsFilter === StateFilterValues.all &&
+    valueInTransitionsFromFilter === StateFilterValues.all
   ) {
     return null;
   }
   const onClearFilter = () => {
     labelsFilterVariable.setValue('');
-    transitionsToFilterVariable.changeValueTo(StateToFilterValues.all);
-    transitionsFromFilterVariable.changeValueTo(StateFromFilterValues.all);
+    transitionsToFilterVariable.changeValueTo(StateFilterValues.all);
+    transitionsFromFilterVariable.changeValueTo(StateFilterValues.all);
   };
   return (
     <Tooltip content="Clear filter">
-      <div className={styles.clearFilter}>
-        <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
-          <Trans i18nKey="central-alert-history.filter.clear">
-            <Text>Clear filters</Text>
-          </Trans>
-        </Button>
-      </div>
+      <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
+        <Trans i18nKey="alerting.central-alert-history.filter.clear">
+          Clear filters
+        </Trans>
+      </Button>
     </Tooltip>
   );
 }
@@ -295,11 +284,5 @@ const getStyles = () => ({
   container: css({
     padding: '0',
     alignSelf: 'center',
-  }),
-  clearFilter: css({
-    alignSelf: 'center',
-    display: 'flex',
-    alignItems: 'center',
-    flexDirection: 'row',
-  }),
+  })
 });

@@ -35,27 +35,18 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onLabelClick }: P
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
       {labelsToShow.map(([label, value]) => {
-        const color = getLabelColor(label);
-        return onLabelClick ? (
-          <div
-            role="button" // role="button" and tabIndex={0} is needed for keyboard navigation
-            tabIndex={0} // Make it focusable
+        return (
+          <Label
             key={label + value}
-            onClick={() => onLabelClick(label, value)}
-            className={styles.labelContainer}
-            onKeyDown={(e) => {
-              // needed for accessiblity: handle keyboard navigation
-              if (e.key === 'Enter') {
-                onLabelClick(label, value);
-              }
-            }}
-          >
-            <Label size={size} label={label} value={value} color={color} />
-          </div>
-        ) : (
-          <Label key={label + value} size={size} label={label} value={value} color={color} />
+            size={size}
+            label={label}
+            value={value}
+            color={getLabelColor(label)}
+            onLabelClick={onLabelClick}
+          />
         );
       })}
+
       {!showCommonLabels && hasCommonLabels && (
         <Button
           variant="secondary"
@@ -95,12 +86,6 @@ const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => {
       alignItems: 'center',
 
       gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
-    }),
-    labelContainer: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      cursor: 'pointer',
     }),
   };
 };

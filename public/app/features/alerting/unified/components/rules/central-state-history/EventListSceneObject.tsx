@@ -36,7 +36,7 @@ import {
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { usePagination } from '../../../hooks/usePagination';
-import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AlertLabels } from '../../AlertLabels';
@@ -44,7 +44,7 @@ import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateToFilterValues } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
@@ -223,7 +223,7 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
       </Text>
     );
   }
-  const ariaLabel = t('central-alert-history.details.add-filter', 'Add filter by alert name');
+  const ariaLabel = t('alerting.central-alert-history.details.add-filter', 'Add filter by alert name');
   return (
     <Stack gap={1} direction={'row'} alignItems="center">
       <Tooltip content={alertRuleName ?? ''}>
@@ -269,7 +269,7 @@ interface StateIconProps {
   showLabel: boolean;
 }
 const StateIcon = ({ iconName, iconColor, tooltipContent, labelText, showLabel }: StateIconProps) => (
-  <Tooltip content={tooltipContent}>
+  <Tooltip content={tooltipContent} placement="top">
     <Stack gap={0.5} direction={'row'} alignItems="center">
       <Icon name={iconName} size="md" className={iconColor} />
       {showLabel && (
@@ -459,9 +459,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     colorIcon: css({
       color: theme.colors.primary.text,
+      '&:hover': {
+        opacity: 0.8,
+      },
     }),
     state: css({
-      cursor: 'pointer',
+      '&:hover': {
+        opacity: 0.8,
+        cursor: 'copy',
+      },
     }),
   };
 };
@@ -501,9 +507,7 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
       stateFromFilterVariable.changeValueTo(value);
     }
     if (type === 'label') {
-      const finalFilter = valueInfilterTextBox
-        ? `${valueInfilterTextBox.toString()} ,${newFilterToAdd}`
-        : newFilterToAdd;
+      const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
       labelsFiltersVariable.setValue(finalFilter);
     }
   };
@@ -555,8 +559,8 @@ function useRuleHistoryRecords(
       }
       const baseStateTo = mapStateWithReasonToBaseState(line.current);
       const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
-      const stateToMatch = filterInStateTo !== StateToFilterValues.all ? filterInStateTo === baseStateTo : true;
-      const stateFromMatch = filterInStateFrom !== StateToFilterValues.all ? filterInStateFrom === baseStateFrom : true;
+      const stateToMatch = filterInStateTo !== StateFilterValues.all ? filterInStateTo === baseStateTo : true;
+      const stateFromMatch = filterInStateFrom !== StateFilterValues.all ? filterInStateFrom === baseStateFrom : true;
       if (filterMatch && stateToMatch && stateFromMatch) {
         acc.push({ timestamp, line });
       }

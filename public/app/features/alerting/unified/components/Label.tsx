@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { CSSProperties, ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
@@ -13,30 +13,65 @@ interface Props {
   value: ReactNode;
   color?: string;
   size?: LabelSize;
+  onLabelClick?: (label: string, value: string) => void;
 }
 
 // TODO allow customization with color prop
-const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
+const Label = ({ label, value, icon, color, size = 'md', onLabelClick }: Props) => {
   const styles = useStyles2(getStyles, color, size);
   const ariaLabel = `${label}: ${value}`;
+  const labelStr = label?.toString() ?? '';
+  const valueStr = value?.toString() ?? '';
 
   return (
     <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
-      <Stack direction="row" gap={0} alignItems="stretch">
-        <div className={styles.label}>
-          <Stack direction="row" gap={0.5} alignItems="center">
-            {icon && <Icon name={icon} />}
-            {label && (
-              <span className={styles.labelText} title={label.toString()}>
-                {label ?? ''}
-              </span>
-            )}
+      {onLabelClick ? (
+        <div
+          className={cx(styles.label, Boolean(onLabelClick) && styles.clickable)}
+          role="button" // role="button" and tabIndex={0} is needed for keyboard navigation
+          tabIndex={0} // Make it focusable
+          key={labelStr + valueStr}
+          onClick={() => onLabelClick(labelStr, valueStr)}
+          onKeyDown={(e) => {
+            // needed for accessiblity: handle keyboard navigation
+            if (e.key === 'Enter') {
+              onLabelClick(labelStr, valueStr);
+            }
+          }}
+        >
+          <Stack direction="row" gap={0} alignItems="stretch">
+            <div className={styles.label}>
+              <Stack direction="row" gap={0.5} alignItems="center">
+                {icon && <Icon name={icon} />}
+                {label && (
+                  <span className={styles.labelText} title={label.toString()}>
+                    {label ?? ''}
+                  </span>
+                )}
+              </Stack>
+            </div>
+            <div className={styles.value} title={value?.toString()}>
+              {value ?? '-'}
+            </div>
           </Stack>
         </div>
-        <div className={styles.value} title={value?.toString()}>
-          {value ?? '-'}
-        </div>
-      </Stack>
+      ) : (
+        <Stack direction="row" gap={0} alignItems="stretch">
+          <div className={styles.label}>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              {icon && <Icon name={icon} />}
+              {label && (
+                <span className={styles.labelText} title={label.toString()}>
+                  {label ?? ''}
+                </span>
+              )}
+            </Stack>
+          </div>
+          <div className={styles.value} title={value?.toString()}>
+            {value ?? '-'}
+          </div>
+        </Stack>
+      )}
     </div>
   );
 };
@@ -93,6 +128,12 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       border: `solid 1px ${borderColor}`,
       borderTopLeftRadius: theme.shape.borderRadius(2),
       borderBottomLeftRadius: theme.shape.borderRadius(2),
+    }),
+    clickable: css({
+      '&:hover': {
+        opacity: 0.8,
+        cursor: 'copy',
+      },
     }),
     value: css({
       color: 'inherit',
