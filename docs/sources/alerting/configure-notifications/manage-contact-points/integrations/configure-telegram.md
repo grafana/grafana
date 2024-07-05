@@ -29,7 +29,7 @@ For longer messages, we recommend using an alternative contact method.
 
 ### Telegram bot API token and chat ID
 
-To integrate Grafana with Telegram, you need to obtain a Telegram **bot API token** and a **chat ID** (i.e., the ID of the Telegram chat where you want to receive the alert notifications). To complete the integration, please use the browser version of Telegram.
+To integrate Grafana with Telegram, you need to get a Telegram **bot API token** and a **chat ID** (the ID of the Telegram chat where you want to receive the alert notifications). To complete the integration, use the browser version of Telegram.
 
 ### Set up your Telegram bot
 
