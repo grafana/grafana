@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/BurntSushi/toml"
 
@@ -93,7 +94,11 @@ var loadingMutex = &sync.Mutex{}
 
 // We need to define in this space so `GetConfig` fn
 // could be defined as singleton
-var config *ServersConfig
+var cachedConfig struct {
+	config       *ServersConfig
+	filePath     string
+	fileModified time.Time
+}
 
 func GetLDAPConfig(cfg *setting.Cfg) *Config {
 	return &Config{
@@ -117,15 +122,27 @@ func GetConfig(cfg *Config) (*ServersConfig, error) {
 		return nil, nil
 	}
 
-	// Make it a singleton
-	if config != nil {
-		return config, nil
+	configFileStats, err := os.Stat(cfg.ConfigFilePath)
+	if err != nil {
+		return nil, err
+	}
+	configFileModified := configFileStats.ModTime()
+
+	// return the config from cache if the config file hasn't been modified
+	if cachedConfig.config != nil && cachedConfig.filePath == cfg.ConfigFilePath && cachedConfig.fileModified.Equal(configFileModified) {
+		return cachedConfig.config, nil
 	}
 
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	return readConfig(cfg.ConfigFilePath)
+	cachedConfig.config, err = readConfig(cfg.ConfigFilePath)
+	if err == nil {
+		cachedConfig.filePath = cfg.ConfigFilePath
+		cachedConfig.fileModified = configFileModified
+	}
+
+	return cachedConfig.config, err
 }
 
 func readConfig(configFile string) (*ServersConfig, error) {
