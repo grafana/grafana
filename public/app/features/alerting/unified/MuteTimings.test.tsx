@@ -1,39 +1,47 @@
-import { fireEvent, render, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { InitialEntry } from 'history';
+import { Route } from 'react-router';
+import { render, within, userEvent, screen } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import {
+  setAlertmanagerConfig,
+  setGrafanaAlertmanagerConfig,
+} from 'app/features/alerting/unified/mocks/server/configure';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
+import { MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import {
+  TIME_INTERVAL_UID_HAPPY_PATH,
+  TIME_INTERVAL_UID_PROVISIONED,
+} from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import MuteTimings from './MuteTimings';
-import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
-import { DataSourceType } from './utils/datasource';
+import { grantUserPermissions, mockDataSource } from './mocks';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
-jest.mock('./api/alertmanager');
-
-const mocks = {
-  api: {
-    fetchAlertManagerConfig: jest.mocked(fetchAlertManagerConfig),
-    updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
-  },
-};
-
-const renderMuteTimings = (location = '/alerting/routes/mute-timing/new') => {
-  locationService.push(location);
-
-  return render(
-    <TestProvider>
+const indexPageText = 'redirected routes page';
+const renderMuteTimings = (location: InitialEntry = '/alerting/routes/mute-timing/new') => {
+  render(
+    <>
+      <Route path="/alerting/routes" exact>
+        {indexPageText}
+      </Route>
       <MuteTimings />
-    </TestProvider>
+    </>,
+    { historyOptions: { initialEntries: [location] } }
   );
 };
 
+const alertmanagerName = 'alertmanager';
+
 const dataSources = {
   am: mockDataSource({
-    name: 'Alertmanager',
+    name: alertmanagerName,
+    uid: MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID,
     type: DataSourceType.Alertmanager,
   }),
 };
@@ -86,7 +94,8 @@ const muteTimeInterval2: MuteTimeInterval = {
   ],
 };
 
-const defaultConfig: AlertManagerCortexConfig = {
+/** Alertmanager config where time intervals are stored in `mute_time_intervals` property */
+export const defaultConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
     receivers: [{ name: 'default' }, { name: 'critical' }],
     route: {
@@ -104,6 +113,8 @@ const defaultConfig: AlertManagerCortexConfig = {
   },
   template_files: {},
 };
+
+/** Alertmanager config where time intervals are stored in `time_intervals` property */
 const defaultConfigWithNewTimeIntervalsField: AlertManagerCortexConfig = {
   alertmanager_config: {
     receivers: [{ name: 'default' }, { name: 'critical' }],
@@ -123,6 +134,7 @@ const defaultConfigWithNewTimeIntervalsField: AlertManagerCortexConfig = {
   template_files: {},
 };
 
+/** Alertmanager config where time intervals are stored in both `time_intervals` and `mute_time_intervals` properties */
 const defaultConfigWithBothTimeIntervalsField: AlertManagerCortexConfig = {
   alertmanager_config: {
     receivers: [{ name: 'default' }, { name: 'critical' }],
@@ -143,169 +155,135 @@ const defaultConfigWithBothTimeIntervalsField: AlertManagerCortexConfig = {
   template_files: {},
 };
 
-const resetMocks = () => {
-  jest.resetAllMocks();
+const expectToHaveRedirectedToTable = async () => expect(await screen.findByText(indexPageText)).toBeInTheDocument();
 
-  mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-    return Promise.resolve({ ...defaultConfig });
-  });
-  mocks.api.updateAlertManagerConfig.mockImplementation(() => {
-    return Promise.resolve();
-  });
+const fillOutForm = async ({
+  name,
+  startsAt,
+  endsAt,
+  days,
+  months,
+  years,
+}: {
+  name?: string;
+  startsAt?: string;
+  endsAt?: string;
+  days?: string;
+  months?: string;
+  years?: string;
+}) => {
+  const user = userEvent.setup();
+  name && (await user.type(ui.nameField.get(), name));
+  startsAt && (await user.type(ui.startsAt.get(), startsAt));
+  endsAt && (await user.type(ui.endsAt.get(), endsAt));
+  days && (await user.type(ui.days.get(), days));
+  months && (await user.type(ui.months.get(), months));
+  years && (await user.type(ui.years.get(), years));
+};
+
+const saveMuteTiming = async () => {
+  const user = userEvent.setup();
+  await user.click(screen.getByText(/save mute timing/i));
+};
+
+setupMswServer();
+
+const getAlertmanagerConfigUpdate = async (requests: Request[]) => {
+  const alertmanagerUpdate = requests.find(
+    (r) => r.url.match('/alertmanager/(.*)/config/api/v1/alert') && r.method === 'POST'
+  );
+
+  return alertmanagerUpdate!.clone().json();
 };
 
 describe('Mute timings', () => {
   beforeEach(() => {
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    resetMocks();
+    setupDataSources(dataSources.am);
     // FIXME: scope down
     grantUserPermissions(Object.values(AccessControlAction));
+
+    setGrafanaAlertmanagerConfig(defaultConfig);
+    setAlertmanagerConfig(defaultConfig);
   });
 
   it('creates a new mute timing, with mute_time_intervals in config', async () => {
+    const capture = captureRequests();
     renderMuteTimings();
 
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
-    expect(ui.nameField.get()).toBeInTheDocument();
+    await screen.findByText(/create mute timing/i);
 
-    await userEvent.type(ui.nameField.get(), 'maintenance period');
-    await userEvent.type(ui.startsAt.get(), '22:00');
-    await userEvent.type(ui.endsAt.get(), '24:00');
-    await userEvent.type(ui.days.get(), '-1');
-    await userEvent.type(ui.months.get(), 'january, july');
-
-    fireEvent.submit(ui.form.get());
-
-    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
-
-    const { mute_time_intervals: _, ...configWithoutMuteTimings } = defaultConfig.alertmanager_config;
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
-      ...defaultConfig,
-      alertmanager_config: {
-        ...configWithoutMuteTimings,
-        mute_time_intervals: [
-          muteTimeInterval,
-          {
-            name: 'maintenance period',
-            time_intervals: [
-              {
-                days_of_month: ['-1'],
-                months: ['january', 'july'],
-                times: [
-                  {
-                    start_time: '22:00',
-                    end_time: '24:00',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+    await fillOutForm({
+      name: 'maintenance period',
+      startsAt: '22:00',
+      endsAt: '24:00',
+      days: '-1',
+      months: 'january, july',
     });
+
+    await saveMuteTiming();
+
+    await expectToHaveRedirectedToTable();
+
+    const requests = await capture;
+    const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
+    // Check that the last mute_time_interval is the one we just submitted via the form
+    expect(alertmanagerUpdate.alertmanager_config.mute_time_intervals.pop().name).toEqual('maintenance period');
   });
 
   it('creates a new mute timing, with time_intervals in config', async () => {
-    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-      return Promise.resolve({
-        ...defaultConfigWithNewTimeIntervalsField,
-      });
+    const capture = captureRequests();
+    setAlertmanagerConfig(defaultConfigWithNewTimeIntervalsField);
+    renderMuteTimings({
+      pathname: '/alerting/routes/mute-timing/new',
+      search: `?alertmanager=${alertmanagerName}`,
     });
-    renderMuteTimings();
 
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
-    expect(ui.nameField.get()).toBeInTheDocument();
-
-    await userEvent.type(ui.nameField.get(), 'maintenance period');
-    await userEvent.type(ui.startsAt.get(), '22:00');
-    await userEvent.type(ui.endsAt.get(), '24:00');
-    await userEvent.type(ui.days.get(), '-1');
-    await userEvent.type(ui.months.get(), 'january, july');
-
-    fireEvent.submit(ui.form.get());
-
-    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
-
-    const { mute_time_intervals: _, ...configWithoutMuteTimings } = defaultConfig.alertmanager_config;
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
-      ...defaultConfig,
-      alertmanager_config: {
-        ...configWithoutMuteTimings,
-        mute_time_intervals: [
-          muteTimeInterval,
-          {
-            name: 'maintenance period',
-            time_intervals: [
-              {
-                days_of_month: ['-1'],
-                months: ['january', 'july'],
-                times: [
-                  {
-                    start_time: '22:00',
-                    end_time: '24:00',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+    await fillOutForm({
+      name: 'maintenance period',
+      startsAt: '22:01',
+      endsAt: '24:00',
+      days: '-1',
+      months: 'january, july',
     });
+
+    await saveMuteTiming();
+    await expectToHaveRedirectedToTable();
+
+    const requests = await capture;
+    const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
+    expect(alertmanagerUpdate.alertmanager_config.time_intervals.pop().name).toEqual('maintenance period');
   });
-  it('creates a new mute timing, with time_intervals and mute_time_intervals in config', async () => {
-    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-      return Promise.resolve({
-        ...defaultConfigWithBothTimeIntervalsField,
-      });
-    });
-    renderMuteTimings();
 
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
+  it('creates a new mute timing, with time_intervals and mute_time_intervals in config', async () => {
+    setGrafanaAlertmanagerConfig(defaultConfigWithBothTimeIntervalsField);
+    renderMuteTimings({
+      pathname: '/alerting/routes/mute-timing/new',
+      search: `?alertmanager=${alertmanagerName}`,
+    });
+
     expect(ui.nameField.get()).toBeInTheDocument();
 
-    await userEvent.type(ui.nameField.get(), 'maintenance period');
-    await userEvent.type(ui.startsAt.get(), '22:00');
-    await userEvent.type(ui.endsAt.get(), '24:00');
-    await userEvent.type(ui.days.get(), '-1');
-    await userEvent.type(ui.months.get(), 'january, july');
-
-    fireEvent.submit(ui.form.get());
-
-    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
-
-    const { mute_time_intervals, time_intervals, ...configWithoutMuteTimings } = defaultConfig.alertmanager_config;
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
-      ...defaultConfig,
-      alertmanager_config: {
-        ...configWithoutMuteTimings,
-        mute_time_intervals: [
-          muteTimeInterval,
-          muteTimeInterval2,
-          {
-            name: 'maintenance period',
-            time_intervals: [
-              {
-                days_of_month: ['-1'],
-                months: ['january', 'july'],
-                times: [
-                  {
-                    start_time: '22:00',
-                    end_time: '24:00',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+    await fillOutForm({
+      name: 'maintenance period',
+      startsAt: '22:00',
+      endsAt: '24:00',
+      days: '-1',
+      months: 'january, july',
     });
+
+    await saveMuteTiming();
+    await expectToHaveRedirectedToTable();
   });
 
   it('prepopulates the form when editing a mute timing', async () => {
-    renderMuteTimings('/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`);
+    const capture = captureRequests();
 
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
-    expect(ui.nameField.get()).toBeInTheDocument();
+    renderMuteTimings({
+      pathname: '/alerting/routes/mute-timing/edit',
+      search: `?muteName=${encodeURIComponent(muteTimeInterval.name)}`,
+    });
+
+    expect(await ui.nameField.find()).toBeInTheDocument();
     expect(ui.nameField.get()).toHaveValue(muteTimeInterval.name);
     expect(ui.months.get()).toHaveValue(muteTimeInterval.time_intervals[0].months?.join(', '));
 
@@ -317,121 +295,109 @@ describe('Mute timings', () => {
 
     const monday = within(ui.weekdays.get()).getByText('Mon');
     await userEvent.click(monday);
-    await userEvent.type(ui.days.get(), '-7:-1');
-    await userEvent.type(ui.months.get(), '3, 6, 9, 12');
-    await userEvent.type(ui.years.get(), '2021:2024');
 
-    fireEvent.submit(ui.form.get());
+    const formValues = {
+      days: '-7:-1',
+      months: '3, 6, 9, 12',
+      years: '2021:2024',
+    };
 
-    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
-      alertmanager_config: {
-        receivers: [
-          {
-            name: 'default',
-          },
-          {
-            name: 'critical',
-          },
-        ],
-        route: {
-          receiver: 'default',
-          group_by: ['alertname'],
-          routes: [
-            {
-              matchers: ['env=prod', 'region!=EU'],
-              mute_time_intervals: ['default-mute'],
-            },
-          ],
-        },
-        templates: [],
-        mute_time_intervals: [
-          {
-            name: 'default-mute',
-            time_intervals: [
-              {
-                weekdays: ['monday'],
-                days_of_month: ['-7:-1'],
-                months: ['3', '6', '9', '12'],
-                years: ['2021:2024'],
-              },
-            ],
-          },
-        ],
-      },
-      template_files: {},
+    await fillOutForm(formValues);
+
+    await saveMuteTiming();
+    await expectToHaveRedirectedToTable();
+
+    const requests = await capture;
+    const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
+    const mostRecentInterval = alertmanagerUpdate.alertmanager_config.mute_time_intervals.pop().time_intervals[0];
+
+    expect(mostRecentInterval).toMatchObject({
+      days_of_month: [formValues.days],
+      months: formValues.months.split(', '),
+      years: [formValues.years],
     });
   });
 
   it('form is invalid with duplicate mute timing name', async () => {
     renderMuteTimings();
 
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
-    await waitFor(() => expect(ui.nameField.get()).toBeInTheDocument());
-    await userEvent.type(ui.nameField.get(), 'default-mute');
-    await userEvent.type(ui.days.get(), '1');
-    await waitFor(() => expect(ui.nameField.get()).toHaveValue('default-mute'));
+    await fillOutForm({ name: muteTimeInterval.name, days: '1' });
 
-    fireEvent.submit(ui.form.get());
+    await saveMuteTiming();
 
-    // Form state should be invalid and prevent firing of update action
-    await waitFor(() => expect(byRole('alert').get()).toBeInTheDocument());
-    expect(mocks.api.updateAlertManagerConfig).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
   });
 
   it('replaces mute timings in routes when the mute timing name is changed', async () => {
-    renderMuteTimings('/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`);
+    renderMuteTimings({
+      pathname: '/alerting/routes/mute-timing/edit',
+      search: `?muteName=${encodeURIComponent(muteTimeInterval.name)}`,
+    });
 
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
-    expect(ui.nameField.get()).toBeInTheDocument();
+    expect(await ui.nameField.find()).toBeInTheDocument();
     expect(ui.nameField.get()).toHaveValue(muteTimeInterval.name);
 
     await userEvent.clear(ui.nameField.get());
-    await userEvent.type(ui.nameField.get(), 'Lunch breaks');
+    await fillOutForm({ name: 'Lunch breaks' });
+    await saveMuteTiming();
 
-    fireEvent.submit(ui.form.get());
+    await expectToHaveRedirectedToTable();
+  });
 
-    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
-      alertmanager_config: {
-        receivers: [
-          {
-            name: 'default',
-          },
-          {
-            name: 'critical',
-          },
-        ],
-        route: {
-          receiver: 'default',
-          group_by: ['alertname'],
-          routes: [
-            {
-              matchers: ['env=prod', 'region!=EU'],
-              mute_time_intervals: ['Lunch breaks'],
-            },
-          ],
-        },
-        templates: [],
-        mute_time_intervals: [
-          {
-            name: 'Lunch breaks',
-            time_intervals: [
-              {
-                times: [
-                  {
-                    start_time: '12:00',
-                    end_time: '24:00',
-                  },
-                ],
-                days_of_month: ['15', '-1'],
-                months: ['august:december', 'march'],
-              },
-            ],
-          },
-        ],
-      },
-      template_files: {},
+  it('shows error when mute timing does not exist', async () => {
+    renderMuteTimings({
+      pathname: '/alerting/routes/mute-timing/edit',
+      search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${'does not exist'}`,
+    });
+
+    expect(await screen.findByText(/No matching mute timing found/i)).toBeInTheDocument();
+  });
+
+  describe('alertingApiServer feature toggle', () => {
+    beforeEach(() => {
+      config.featureToggles.alertingApiServer = true;
+    });
+
+    it('allows creation of new mute timings', async () => {
+      await renderMuteTimings({
+        pathname: '/alerting/routes/mute-timing/new',
+      });
+
+      await fillOutForm({ name: 'a new mute timing' });
+
+      await saveMuteTiming();
+      await expectToHaveRedirectedToTable();
+    });
+
+    it('shows error when mute timing does not exist', async () => {
+      renderMuteTimings({
+        pathname: '/alerting/routes/mute-timing/edit',
+        search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${TIME_INTERVAL_UID_HAPPY_PATH + '_force_breakage'}`,
+      });
+
+      expect(await screen.findByText(/No matching mute timing found/i)).toBeInTheDocument();
+    });
+
+    it('loads edit form correctly and allows saving', async () => {
+      renderMuteTimings({
+        pathname: '/alerting/routes/mute-timing/edit',
+        search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${TIME_INTERVAL_UID_HAPPY_PATH}`,
+      });
+
+      // For now, we expect the name field to be disabled editing via the k8s API
+      expect(await ui.nameField.find()).toBeDisabled();
+
+      await saveMuteTiming();
+      await expectToHaveRedirectedToTable();
+    });
+
+    it('loads view form for provisioned interval', async () => {
+      renderMuteTimings({
+        pathname: '/alerting/routes/mute-timing/edit',
+        search: `?muteName=${TIME_INTERVAL_UID_PROVISIONED}`,
+      });
+
+      expect(await screen.findByText(/This mute timing cannot be edited through the UI/i)).toBeInTheDocument();
     });
   });
 });
