@@ -270,10 +270,10 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 		},
 		{
 			name:       "should return correct mapping when the first part contains multiple colons",
-			rawMapping: []string{`Groups\:IT:1:Viewer`},
+			rawMapping: []string{"Groups\\:IT\\:ops:1:Viewer"},
 			roleStrict: false,
 			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Groups:IT": {1: org.RoleViewer}},
+				orgMapping:        map[string]map[int64]org.RoleType{"Groups:IT:ops": {1: org.RoleViewer}},
 				strictRoleMapping: false,
 			},
 		},
