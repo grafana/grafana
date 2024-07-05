@@ -141,3 +141,32 @@ export type StandardPromVariableQuery = {
   query: string;
   refId: string;
 };
+
+export type RuleMapping = {
+  name: string;
+  file: string;
+  rules: Rule[];
+  interval: number;
+  limit?: number;
+};
+
+// There may be other fields in the data but those are the ones we care for now
+export type Rule = {
+  name: string;
+  query: string;
+  duration?: number;
+  labels: Record<string, string>;
+  annotations?: Record<string, string>;
+  alerts?: AlertInfo[];
+  health: string;
+  type: 'alerting' | 'recording';
+};
+
+// we don't need this type at all but having no type for alerts looks bad
+export type AlertInfo = {
+  labels: Record<string, string>;
+  annotations: Record<string, string>;
+  state: string;
+  activeAt: string;
+  value: string;
+};

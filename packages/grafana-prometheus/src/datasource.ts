@@ -68,6 +68,7 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
+  RuleMapping,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
@@ -969,7 +970,7 @@ export function alignRange(
   };
 }
 
-export function extractRuleMappingFromGroups(groups: any[]) {
+export function extractRuleMappingFromGroups(groups: RuleMapping[]) {
   return groups.reduce(
     (mapping, group) =>
       group.rules
