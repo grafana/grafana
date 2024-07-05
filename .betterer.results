@@ -2882,6 +2882,9 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard-scene/scene/RowRepeaterBehavior.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard-scene/scene/Scopes/ScopesInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
