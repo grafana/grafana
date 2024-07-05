@@ -23,6 +23,7 @@ Use the Grafana Alerting - Opsgenie integration to receive alert notifications i
 ## Before you begin
 
 Create an API key to enable Grafana to send alert notifications to Opsgenie alert dashboard.
+
 To create an API key in Opsgenie, complete the following steps.
 
 1. Follow the steps in the [API integration guide](https://support.atlassian.com/opsgenie/docs/create-a-default-api-integration/).
