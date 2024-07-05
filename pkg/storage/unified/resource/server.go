@@ -500,7 +500,6 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		return err
 	}
 
-	fmt.Printf("WATCH %v\n", req.Options.Key)
 
 	ctx := srv.Context()
 
