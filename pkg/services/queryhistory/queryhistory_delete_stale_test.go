@@ -45,7 +45,6 @@ func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {
 	// In this scenario we have 2 starred queries and 1 not starred query
 	testScenarioWithMultipleQueriesInQueryHistory(t, "Stale starred query history can not be deleted",
 		func(t *testing.T, sc scenarioContext) {
-
 			// all indices are added
 			err := sc.sqlStore.WithDbSession(context.Background(), func(dbSession *db.Session) error {
 				count, err := dbSession.Table("query_history_datasource_index").Count()

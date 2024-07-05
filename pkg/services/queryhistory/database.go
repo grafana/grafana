@@ -327,12 +327,12 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 			FROM query_history
 			WHERE uid IN (` + uids_sql + `)`
 
-		res, err := session.Exec(index_sql, strconv.FormatInt(olderThan, 10))
+		_, err := session.Exec(index_sql, strconv.FormatInt(olderThan, 10))
 		if err != nil {
 			return err
 		}
 
-		res, err = session.Exec(sql, strconv.FormatInt(olderThan, 10))
+		res, err := session.Exec(sql, strconv.FormatInt(olderThan, 10))
 		if err != nil {
 			return err
 		}

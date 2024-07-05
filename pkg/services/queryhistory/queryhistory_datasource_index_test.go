@@ -15,7 +15,6 @@ var mixedQueryMissingUID = []byte(`[{"alias":"","bucketAggs":[{"field":"@timesta
 var invalidJSON = []byte(`{`)
 
 func TestQueryHistoryDatasourceIndex(t *testing.T) {
-
 	t.Run("should return error when json is invalid", func(t *testing.T) {
 		json, _ := simplejson.NewJson(invalidJSON)
 		_, err := FindDataSourceUIDs(json)
