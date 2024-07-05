@@ -1262,7 +1262,7 @@ def verify_linux_DEB_packages_step(depends_on):
         "depends_on": depends_on,
     }
 
-def verify_linux_RPM_packages_step():
+def verify_linux_RPM_packages_step(depends_on):
     return {
         "name": "verify-linux-RPM-packages",
         "image": images["rocky"],
