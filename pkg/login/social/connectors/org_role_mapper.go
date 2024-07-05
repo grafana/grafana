@@ -44,7 +44,7 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 	}
 }
 
-// MapOrgRoles maps the external orgs/groups to Grafana orgs and roles. It returns a map or orgID to role.
+// MapOrgRoles maps the external orgs/groups to Grafana orgs and roles. It returns a  map or orgID to role.
 //
 // mappingCfg: mapping configuration from external orgs to Grafana orgs and roles. Use `ParseOrgMappingSettings` to convert the raw setting to this format.
 //
@@ -64,7 +64,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	userOrgRoles, globalRole := getMappedOrgRoles(externalOrgs, mappingCfg.orgMappings)
 
 	if err := m.handleGlobalOrgMapping(userOrgRoles, globalRole); err != nil {
-		// Cannot map global org roles, return nil (prevent resetting assignments)
+		// Cannot map global org roles, return nil (prevent resetting assignment)
 		return nil
 	}
 
