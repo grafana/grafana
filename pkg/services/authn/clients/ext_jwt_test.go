@@ -313,7 +313,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			if tc.idToken != nil {
 				env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
 				env.s.idTokenVerifier = &mockIDVerifier{Claims: *tc.idToken}
-				validHTTPReq.Header.Add(extJWTAuthorizationHeaderName, generateIDToken(*tc.idToken, pk, jose.RS256))
+				validHTTPReq.Header.Add(ExtJWTAuthorizationHeaderName, generateIDToken(*tc.idToken, pk, jose.RS256))
 			}
 
 			id, err := env.s.Authenticate(context.Background(), &authn.Request{

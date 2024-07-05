@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -123,6 +124,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		}
 
+		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
+
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 		span.AddEvent("user", trace.WithAttributes(
 			attribute.String("uname", reqContext.Login),
@@ -139,6 +142,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
 	})
+}
+
+func (h *ContextHandler) excludeSensitiveHeadersFromRequest(req *http.Request) {
+	req.Header.Del(authnClients.ExtJWTAuthenticationHeaderName)
+	req.Header.Del(authnClients.ExtJWTAuthorizationHeaderName)
 }
 
 func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) web.BeforeFunc {
