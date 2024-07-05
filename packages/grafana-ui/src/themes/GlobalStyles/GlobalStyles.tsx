@@ -15,6 +15,7 @@ import { getJsonFormatterStyles } from './jsonFormatter';
 import { getLegacySelectStyles } from './legacySelect';
 import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
+import { getQueryPartStyles } from './queryPart';
 import { getRcTimePickerStyles } from './rcTimePicker';
 import { getSkeletonStyles } from './skeletonStyles';
 import { getSlateStyles } from './slate';
@@ -28,6 +29,7 @@ export function GlobalStyles() {
     <Global
       styles={[
         getAccessibilityStyles(theme),
+        getAgularPanelStyles(theme),
         getCodeStyles(theme),
         getElementStyles(theme),
         getExtraStyles(theme),
@@ -35,13 +37,13 @@ export function GlobalStyles() {
         getFontStyles(theme),
         getFormElementStyles(theme),
         getJsonFormatterStyles(theme),
-        getPageStyles(theme),
         getCardStyles(theme),
-        getAgularPanelStyles(theme),
         getMarkdownStyles(theme),
+        getPageStyles(theme),
+        getQueryPartStyles(theme),
+        getRcTimePickerStyles(theme),
         getSkeletonStyles(theme),
         getSlateStyles(theme),
-        getRcTimePickerStyles(theme),
         getUplotStyles(theme),
         getLegacySelectStyles(theme),
       ]}
