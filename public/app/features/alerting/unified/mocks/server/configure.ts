@@ -3,6 +3,7 @@ import { HttpResponse } from 'msw';
 import server from 'app/features/alerting/unified/mockApi';
 import { mockFolder } from 'app/features/alerting/unified/mocks';
 import {
+  getAlertmanagerConfigHandler,
   getGrafanaAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
@@ -41,6 +42,13 @@ export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']
  */
 export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
   server.use(getGrafanaAlertmanagerConfigHandler(config));
+};
+
+/**
+ * Makes the mock server respond with different (other) Alertmanager config
+ */
+export const setAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
+  server.use(getAlertmanagerConfigHandler(config));
 };
 
 /**
