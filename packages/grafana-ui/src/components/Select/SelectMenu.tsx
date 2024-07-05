@@ -35,7 +35,7 @@ export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.
 
 SelectMenu.displayName = 'SelectMenu';
 
-const VIRTUAL_LIST_ITEM_HEIGHT = 38;
+const VIRTUAL_LIST_ITEM_HEIGHT = 37;
 const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 8;
 const VIRTUAL_LIST_PADDING = 8;
 // Some list items have icons or checkboxes so we need some extra width
