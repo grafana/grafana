@@ -15,14 +15,15 @@ export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
   const { color } = getTagColorsFromName(label);
   const styles = useStyles2(getStyles);
 
-  const tagStyle = {
-    backgroundColor: color,
-  };
-
   const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
 
   return (
-    <span className={styles.badge} style={tagStyle}>
+    <span
+      className={styles.badge}
+      style={{
+        backgroundColor: color,
+      }}
+    >
       {removeIcon && <Icon onClick={onClick} name="times" />}
       {label} {countLabel}
     </span>
