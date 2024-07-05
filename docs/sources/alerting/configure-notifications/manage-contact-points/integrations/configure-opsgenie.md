@@ -36,16 +36,16 @@ To create an API key in Opsgenie, complete the following steps.
 To create your Opsgenie integration in Grafana Alerting, complete the following steps:
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
-2. Click **+ Add contact point**.
-3. Enter a contact point name.
-4. From the **Integration** list, select **Opsgenie**.
-5. In the **API key** field, paste in your API key.
-6. In the **Alert API URL**, enter `https://api.opsgenie.com/v2/alerts`.
-7. Click **Test** to check that your integration works.
+1. Click **+ Add contact point**.
+1. Enter a contact point name.
+1. From the **Integration** list, select **Opsgenie**.
+1. In the **API key** field, paste in your API key.
+1. In the **Alert API URL**, enter `https://api.opsgenie.com/v2/alerts`.
+1. Click **Test** to check that your integration works.
 
    A test alert notification is sent to the Alerts page in Opsgenie.
 
-8. Click **Save contact point**.
+1. Click **Save contact point**.
 
 ## Next steps
 
@@ -54,8 +54,8 @@ The Opsgenie contact point is ready to receive alert notifications.
 To add this contact point to your alert, complete the following steps:
 
 1. In Grafana, navigate to **Alerting** > **Alert rules**.
-2. Edit or create a new alert rule.
-3. Scroll down to the **Configure labels and notifications** section.
-4. Under **Notifications**, click **Select contact point**.
-5. From the drop-down menu, select the previously created contact point.
-6. Click **Save rule and exit**.
+1. Edit or create a new alert rule.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Under **Notifications**, click **Select contact point**.
+1. From the drop-down menu, select the previously created contact point.
+1. Click **Save rule and exit**.
