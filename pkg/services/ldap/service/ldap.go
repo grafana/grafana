@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -127,6 +128,34 @@ func (s *LDAPImpl) Validate(ctx context.Context, settings models.SSOSettings, ol
 		// host is required for every LDAP server config
 		if server.Host == "" {
 			return fmt.Errorf("no host configured for server with index %d", i)
+		}
+
+		if server.SearchFilter == "" {
+			return fmt.Errorf("no search filter configured for server with index %d", i)
+		}
+
+		if len(server.SearchBaseDNs) == 0 {
+			return fmt.Errorf("no search base DN configured for server with index %d", i)
+		}
+
+		if server.MinTLSVersion != "" {
+			_, err = util.TlsNameToVersion(server.MinTLSVersion)
+			if err != nil {
+				return fmt.Errorf("invalid min TLS version configured for server with index %d", i)
+			}
+		}
+
+		if len(server.TLSCiphers) > 0 {
+			_, err = util.TlsCiphersToIDs(server.TLSCiphers)
+			if err != nil {
+				return fmt.Errorf("invalid TLS ciphers configured for server with index %d", i)
+			}
+		}
+
+		for _, groupMap := range server.Groups {
+			if groupMap.OrgRole == "" && groupMap.IsGrafanaAdmin == nil {
+				return fmt.Errorf("organization role or Grafana admin status is required in group mappings for server with index %d", i)
+			}
 		}
 	}
 
