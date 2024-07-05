@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -106,14 +105,14 @@ func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) erro
 		if server.MinTLSVersion != "" {
 			server.MinTLSVersionID, err = util.TlsNameToVersion(server.MinTLSVersion)
 			if err != nil {
-				logger.Error("failed to set min TLS version, ignoring", "err", err)
+				s.log.Error("failed to set min TLS version, ignoring", "err", err)
 			}
 		}
 
 		if len(server.TLSCiphers) > 0 {
 			server.TLSCipherIDs, err = util.TlsCiphersToIDs(server.TLSCiphers)
 			if err != nil {
-				logger.Error("unrecognized TLS Cipher(s), ignoring", "err", err)
+				s.log.Error("unrecognized TLS Cipher(s), ignoring", "err", err)
 			}
 		}
 
