@@ -46,6 +46,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
+  opsgenie:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-opsgenie/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-opsgenie/
   pagerduty:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
@@ -160,8 +165,8 @@ The following table lists the contact point integrations supported by Grafana.
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Kafka REST Proxy             | `kafka`                   |
 | Line                         | `line`                    |
-| [Microsoft Teams](ref:teams) | `teams`                   |
-| Opsgenie                     | `opsgenie`                |
+| Microsoft Teams              | `teams`                   |
+| [Opsgenie](ref:opsgenie)     | `opsgenie`                |
 | [Pagerduty](ref:pagerduty)   | `pagerduty`               |
 | Pushover                     | `pushover`                |
 | Sensu Go                     | `sensugo`                 |
