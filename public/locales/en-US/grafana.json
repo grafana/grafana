@@ -58,6 +58,7 @@
   "alerting": {
     "central-alert-history": {
       "details": {
+        "add-filter": "Add filter by alert name",
         "annotations": "Annotations",
         "error": "Error loading rule for this event.",
         "loading": "Loading...",
@@ -81,6 +82,7 @@
       },
       "error": "Something went wrong loading the alert state history",
       "filter": {
+        "clear": "Clear filters",
         "info": {
           "label1": "Filter events using label querying without spaces, ex:",
           "label2": "Invalid use of spaces:",
@@ -204,14 +206,6 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
-    }
-  },
-  "central-alert-history": {
-    "details": {
-      "add-filter": "Add filter by alert name"
-    },
-    "filter": {
-      "clear": "<0>Clear filters</0>"
     }
   },
   "clipboard-button": {

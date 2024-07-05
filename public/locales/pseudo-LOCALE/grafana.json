@@ -58,6 +58,7 @@
   "alerting": {
     "central-alert-history": {
       "details": {
+        "add-filter": "Åđđ ƒįľŧęř þy äľęřŧ ŉämę",
         "annotations": "Åŉŉőŧäŧįőŉş",
         "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
         "loading": "Ŀőäđįŉģ...",
@@ -81,6 +82,7 @@
       },
       "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
       "filter": {
+        "clear": "Cľęäř ƒįľŧęřş",
         "info": {
           "label1": "Fįľŧęř ęvęŉŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ şpäčęş, ęχ:",
           "label2": "Ĩŉväľįđ ūşę őƒ şpäčęş:",
@@ -204,14 +206,6 @@
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
-    }
-  },
-  "central-alert-history": {
-    "details": {
-      "add-filter": "Åđđ ƒįľŧęř þy äľęřŧ ŉämę"
-    },
-    "filter": {
-      "clear": "<0>Cľęäř ƒįľŧęřş</0>"
     }
   },
   "clipboard-button": {
