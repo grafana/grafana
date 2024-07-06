@@ -87,10 +87,6 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 
 			// generic span name for requests where there's no route operation name
 			spanName := fmt.Sprintf("HTTP %s <unknown>", req.Method)
-			// TODO: do not depend on web.Context from the future
-			if routeOperation, exists := RouteOperationName(web.FromContext(req.Context()).Req); exists {
-				spanName = fmt.Sprintf("HTTP %s %s", req.Method, routeOperation)
-			}
 
 			ctx, span := tracer.Start(ctx, spanName, trace.WithAttributes(
 				semconv.HTTPURLKey.String(req.RequestURI),
@@ -104,6 +100,13 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			rw := web.Rw(w, req)
 
 			next.ServeHTTP(rw, req)
+
+			// Reset the span name after the request has been processed, as
+			// the route operation may have been injected by middleware.
+			// TODO: do not depend on web.Context from the future
+			if routeOperation, exists := RouteOperationName(web.FromContext(req.Context()).Req); exists {
+				span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
+			}
 
 			status := rw.Status()
 

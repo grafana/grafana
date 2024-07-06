@@ -108,10 +108,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     currentNode.isExpanded = isExpanded;
     currentNode.query = query;
 
-    this.setState({ nodes, loadingNodeName: undefined });
-
     if (isExpanded || isDifferentQuery) {
-      this.setState({ loadingNodeName: name });
+      this.setState({ nodes, loadingNodeName: name });
 
       this.nodesFetchingSub = from(fetchNodes(name, query))
         .pipe(
@@ -138,6 +136,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
           this.nodesFetchingSub?.unsubscribe();
         });
+    } else {
+      this.setState({ nodes, loadingNodeName: undefined });
     }
   }
 
