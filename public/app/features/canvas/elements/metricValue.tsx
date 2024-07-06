@@ -11,7 +11,6 @@ import { frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/src/compon
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
@@ -192,8 +191,6 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
     if (textConfig?.color) {
       data.color = dimensionContext.getColor(textConfig.color).value();
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     return data;
   },

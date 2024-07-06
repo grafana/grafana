@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import { createRef } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data/src';
+import { Field, GrafanaTheme2, LinkModel } from '@grafana/data/src';
 import { LinkButton, Portal, Stack, useStyles2, VizTooltipContainer } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -30,12 +30,27 @@ export const CanvasTooltip = ({ scene }: Props) => {
     return <></>;
   }
 
+  const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
+
+  if ((element.options.links?.length ?? 0) > 0 && element.getLinks != null) {
+    element.getLinks({}).forEach((link) => {
+      const key = `${link.title}/${link.href}`;
+      if (!linkLookup.has(key)) {
+        links.push(link);
+        linkLookup.add(key);
+      }
+    });
+  }
+
+  // sort element data links
+  links.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
+
   const renderDataLinks = () =>
-    element.data?.links &&
-    element.data?.links.length > 0 && (
+    links.length > 0 && (
       <div>
         <Stack direction={'column'}>
-          {element.data?.links?.map((link: LinkModel, i: number) => (
+          {links.map((link: LinkModel, i: number) => (
             <LinkButton
               key={i}
               icon={'external-link-alt'}

@@ -9,7 +9,6 @@ import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { LineConfig } from 'app/plugins/panel/canvas/panelcfg.gen';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
@@ -107,8 +106,6 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         data.strokeColor = dimensionContext.getColor(iconConfig.stroke.color).value();
       }
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.path);
 
     return data;
   },

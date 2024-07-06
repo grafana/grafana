@@ -2,7 +2,7 @@ import { CSSProperties } from 'react';
 import * as React from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import { LinkModel } from '@grafana/data';
+import { FieldType, getLinksSupplier, LinkModel, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -42,6 +42,8 @@ export class ElementState implements LayerElement {
   // Calculated
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any; // depends on the type
+
+  getLinks?: (config: ValueLinkConfig) => LinkModel[];
 
   constructor(
     public item: CanvasElementItem,
@@ -367,6 +369,34 @@ export class ElementState implements LayerElement {
       this.revId++; // rerender
     }
 
+    const scene = this.getScene();
+    const frames = scene?.context.getPanelData()?.series;
+
+    if (frames) {
+      const defaultField = {
+        name: 'Default field',
+        type: FieldType.string,
+        config: { links: this.options.links ?? [] },
+        values: [],
+      };
+
+      this.getLinks = getLinksSupplier(
+        frames[0],
+        defaultField,
+        {
+          __dataContext: {
+            value: {
+              data: frames,
+              field: defaultField,
+              frame: frames[0],
+              frameIndex: 0,
+            },
+          },
+        },
+        scene?.panel.props.replaceVariables!
+      );
+    }
+
     const { background, border } = this.options;
     const css: CSSProperties = {};
     if (background) {
@@ -560,12 +590,23 @@ export class ElementState implements LayerElement {
       scene?.connections.handleMouseEnter(event);
     }
 
-    if (this.options.oneClickLinks && this.div && this.data.links.length > 0) {
-      const primaryDataLink = this.data.links.find((link: LinkModel) => link.sortIndex === 0);
-      const dataLinkTitle = primaryDataLink ? primaryDataLink.title : this.data.links[0].title;
-      this.div.style.cursor = 'pointer';
-      this.div.title = `Navigate to ${dataLinkTitle === '' ? 'data link' : dataLinkTitle}`;
+    if (this.options.oneClickLinks && this.div && this.options.links && this.options.links.length > 0) {
+      const primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        this.div.style.cursor = 'pointer';
+        this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
+      }
     }
+  };
+
+  getPrimaryDataLink = () => {
+    if (this.getLinks) {
+      const links = this.getLinks({});
+      const primaryDataLink = links.find((link: LinkModel) => link.sortIndex === 0);
+      return primaryDataLink ?? links[0];
+    }
+
+    return undefined;
   };
 
   handleTooltip = (event: React.MouseEvent) => {
@@ -596,13 +637,11 @@ export class ElementState implements LayerElement {
     const scene = this.getScene();
 
     // If one-link access is enabled, open the primary link
-    if (!scene?.isEditingEnabled && this.options.oneClickLinks && this.data.links.length > 0) {
-      let primaryDataLink = this.data.links.find((link: LinkModel) => link.sortIndex === 0);
-      if (!primaryDataLink) {
-        primaryDataLink = this.data.links[0];
+    if (!scene?.isEditingEnabled && this.options.oneClickLinks) {
+      let primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        window.open(primaryDataLink.href, primaryDataLink.target);
       }
-
-      window.open(primaryDataLink.href, primaryDataLink.target);
     } else {
       this.handleTooltip(event);
       this.onTooltipCallback();

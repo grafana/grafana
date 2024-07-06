@@ -6,7 +6,6 @@ import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
@@ -117,8 +116,6 @@ export const cloudItem: CanvasElementItem = {
     if (textConfig?.color) {
       data.color = dimensionContext.getColor(textConfig.color).value();
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     const { background, border } = elementOptions;
     data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
