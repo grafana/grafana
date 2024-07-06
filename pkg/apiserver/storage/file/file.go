@@ -188,66 +188,40 @@ func (s *Storage) Delete(
 	out runtime.Object,
 	preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc,
-	cachedExistingObject runtime.Object,
+	_ runtime.Object,
 ) error {
-	// TODO: is it gonna be contentious
-	// Either way, this should have max attempts logic
 	s.rvMutex.Lock()
 	defer s.rvMutex.Unlock()
 
 	fpath := s.filePath(key)
-	currentState := s.newFunc()
-	stateIsCurrent := false
-	if cachedExistingObject != nil {
-		currentState = cachedExistingObject
-	} else {
-		err := s.Get(ctx, key, storage.GetOptions{}, currentState)
-		if err != nil {
-			return err
-		}
-		stateIsCurrent = true
+	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
+		return err
 	}
 
-	for {
-		if preconditions != nil {
-			if err := preconditions.Check(key, currentState); err != nil {
-				if stateIsCurrent {
-					return err
-				}
-
-				// If the state is not current, we need to re-read the state and try again.
-				if err := s.Get(ctx, key, storage.GetOptions{}, currentState); err != nil {
-					return err
-				}
-				stateIsCurrent = true
-				continue
-			}
-		}
-
-		generatedRV := s.getNewResourceVersion()
-		if err := s.versioner.UpdateObject(currentState, generatedRV); err != nil {
+	if preconditions != nil {
+		if err := preconditions.Check(key, out); err != nil {
 			return err
 		}
-
-		if err := validateDeletion(ctx, currentState); err != nil {
-			return err
-		}
-
-		if err := deleteFile(fpath); err != nil {
-			return err
-		}
-
-		if err := copyModifiedObjectToDestination(currentState, out); err != nil {
-			return err
-		}
-
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: out.DeepCopyObject(),
-			Type:   watch.Deleted,
-		}, nil)
-
-		return nil
 	}
+
+	generatedRV := s.getNewResourceVersion()
+	if err := s.versioner.UpdateObject(out, generatedRV); err != nil {
+		return err
+	}
+
+	if err := validateDeletion(ctx, out); err != nil {
+		return err
+	}
+
+	if err := deleteFile(fpath); err != nil {
+		return err
+	}
+
+	s.watchSet.notifyWatchers(watch.Event{
+		Object: out.DeepCopyObject(),
+		Type:   watch.Deleted,
+	}, nil)
+	return nil
 }
 
 // Watch begins watching the specified key. Events are decoded into API objects,

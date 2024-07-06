@@ -154,7 +154,9 @@ func TestList(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
-	storagetesting.RunTestList(ctx, t, store, nil, true)
+	storagetesting.RunTestList(ctx, t, store, func(ctx context.Context, t *testing.T, rv string) {
+
+	}, true)
 }
 
 func TestGetListNonRecursive(t *testing.T) {
