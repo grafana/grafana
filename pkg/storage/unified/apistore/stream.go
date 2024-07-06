@@ -201,3 +201,13 @@ func (d *streamDecoder) Close() {
 }
 
 var _ watch.Decoder = (*streamDecoder)(nil)
+var _ watch.Interface = (*dummyWatch)(nil)
+
+type dummyWatch struct{}
+
+func (d *dummyWatch) Stop() {}
+func (d *dummyWatch) ResultChan() <-chan watch.Event {
+	stream := make(chan watch.Event)
+	close(stream)
+	return stream
+}

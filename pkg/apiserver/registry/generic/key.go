@@ -28,6 +28,16 @@ func ParseKey(raw string) (*Key, error) {
 	if parts[0] == "" {
 		parts = parts[1:]
 	}
+	if parts[0] == "pods" {
+		key.Resource = parts[0]
+		switch len(parts) {
+		case 2:
+			key.Name = parts[1]
+		default:
+			return nil, fmt.Errorf("invalid key (key:%s)", raw)
+		}
+		return key, nil
+	}
 
 	for i := 0; i < len(parts); i += 2 {
 		k := parts[i]
@@ -45,7 +55,7 @@ func ParseKey(raw string) (*Key, error) {
 		case "name":
 			key.Name = v
 		default:
-			return nil, fmt.Errorf("invalid key name: %s", key)
+			return nil, fmt.Errorf("invalid key (key:%s, part:%s)", raw, k)
 		}
 	}
 

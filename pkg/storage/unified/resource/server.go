@@ -243,20 +243,20 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 	obj.SetOriginInfo(origin)
 
 	// Make sure old values do not mutate things they should not
-	if event.OldMeta != nil {
+	if event.OldMeta != nil && false { // ???
 		old := event.OldMeta
 
-		if obj.GetUID() != event.OldMeta.GetUID() {
+		if obj.GetUID() != old.GetUID() {
 			return nil, apierrors.NewBadRequest(
 				fmt.Sprintf("UIDs do not match (old: %s, new: %s)", old.GetUID(), obj.GetUID()))
 		}
 
 		// Can not change creation timestamps+user
-		if obj.GetCreatedBy() != event.OldMeta.GetCreatedBy() {
+		if obj.GetCreatedBy() != old.GetCreatedBy() {
 			return nil, apierrors.NewBadRequest(
 				fmt.Sprintf("created by changed (old: %s, new: %s)", old.GetCreatedBy(), obj.GetCreatedBy()))
 		}
-		if obj.GetCreationTimestamp() != event.OldMeta.GetCreationTimestamp() {
+		if obj.GetCreationTimestamp() != old.GetCreationTimestamp() {
 			return nil, apierrors.NewBadRequest(
 				fmt.Sprintf("creation timestamp changed (old:%v, new:%v)", old.GetCreationTimestamp(), obj.GetCreationTimestamp()))
 		}
@@ -397,7 +397,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	if err != nil {
 		return nil, err
 	}
-	if latest.ResourceVersion != req.ResourceVersion {
+	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
 		return nil, ErrOptimisticLockingFailed
 	}
 

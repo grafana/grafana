@@ -302,8 +302,13 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	if (opts.SendInitialEvents == nil && requestedRV == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
+		fmt.Printf("DO LIST %v\n", key)
 		if err := s.GetList(ctx, key, opts, listObj); err != nil {
-			return nil, err
+			if errors.Is(err, context.Canceled) {
+				fmt.Printf("XXX CANCELLED %v\n", key)
+			}
+			fmt.Printf("ERROR %v\n", err)
+			return &dummyWatch{}, nil
 		}
 
 		listAccessor, err := meta.ListAccessor(listObj)
@@ -409,7 +414,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		if opts.IgnoreNotFound {
 			return runtime.SetZeroValue(objPtr)
 		}
-		return storage.NewKeyNotFoundError(key, req.ResourceVersion)
+		return err // storage.NewKeyNotFoundError(key, req.ResourceVersion)
 	}
 	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
 		return err
@@ -514,10 +519,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
-
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
 		return err
@@ -556,7 +557,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 		ok, err := predicate.Matches(tmp)
 		if err == nil && ok {
-			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
+			v.Set(reflect.Append(v, reflect.ValueOf(tmp).Elem()))
 		}
 	}
 
@@ -594,6 +595,9 @@ func (s *Storage) GuaranteedUpdate(
 	cachedExistingObject runtime.Object,
 ) error {
 	k, err := getKey(key)
+	if err != nil {
+		return err
+	}
 	existingObject := s.newFunc()
 
 	var (
@@ -647,10 +651,25 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	req := &resource.UpdateRequest{Key: k, Value: buf.Bytes()}
-	rsp, err := s.client.Update(ctx, req)
-	if err != nil {
-		return err
+	// Switch to create when existing value does not exist
+	var rsp *resource.UpdateResponse
+	if created {
+		req := &resource.CreateRequest{Key: k, Value: buf.Bytes()}
+		upp, err := s.client.Create(ctx, req)
+		if err != nil {
+			return err
+		}
+		rsp = &resource.UpdateResponse{
+			Value:           upp.Value,
+			ResourceVersion: upp.ResourceVersion,
+			Status:          upp.Status,
+		}
+	} else {
+		req := &resource.UpdateRequest{Key: k, Value: buf.Bytes()}
+		rsp, err = s.client.Update(ctx, req)
+		if err != nil {
+			return err
+		}
 	}
 	err = errorWrap(rsp.Status)
 	if err != nil {
@@ -668,6 +687,7 @@ func (s *Storage) GuaranteedUpdate(
 	}
 	accessor.SetResourceVersionInt64(rsp.ResourceVersion)
 
+	// direct watch events...
 	{
 		eventType := watch.Modified
 		if created {

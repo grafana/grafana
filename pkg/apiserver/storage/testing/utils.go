@@ -33,6 +33,7 @@ import (
 // All tests use the "pods" resource, so the resource is hardcoded to "pods".
 var KeyFunc = func(namespace, name string) string {
 	k := grafanaregistry.Key{
+		Group:     "example.apiserver.k8s.io",
 		Resource:  "pods",
 		Namespace: namespace,
 		Name:      name,

@@ -163,7 +163,7 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	}
 
 	raw, err := s.bucket.ReadAll(ctx, path)
-	if err == nil && isDeletedMarker(raw) {
+	if raw == nil || (err == nil && isDeletedMarker(raw)) {
 		return nil, apierrors.NewNotFound(schema.GroupResource{
 			Group:    req.Key.Group,
 			Resource: req.Key.Resource,
