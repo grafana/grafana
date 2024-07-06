@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/api/apitesting"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -92,16 +91,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
 	store, destroyFunc, err := NewStorage(
 		config.ForResource(setupOpts.groupResource),
-		setupOpts.groupResource,
 		client,
-		setupOpts.codec,
-		func(obj runtime.Object) (string, error) {
-			accessor, err := meta.Accessor(obj)
-			if err != nil {
-				return "", err
-			}
-			return storagetesting.KeyFunc(accessor.GetNamespace(), accessor.GetName()), nil
-		},
 		setupOpts.newFunc,
 		setupOpts.newListFunc,
 		storage.DefaultNamespaceScopedAttr,

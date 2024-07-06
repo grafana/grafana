@@ -1,8 +1,3 @@
-// SPDX-License-Identifier: AGPL-3.0-only
-// Provenance-includes-location: https://github.com/kubernetes-sigs/apiserver-runtime/blob/main/pkg/experimental/storage/filepath/jsonfile_rest.go
-// Provenance-includes-license: Apache-2.0
-// Provenance-includes-copyright: The Kubernetes Authors.
-
 package apistore
 
 import (
@@ -10,9 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"reflect"
 	"strconv"
+	"sync/atomic"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -24,49 +20,76 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
-
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+const MaxUpdateAttempts = 30
+
 var _ storage.Interface = (*Storage)(nil)
 
-// Storage implements storage.Interface and stores resources in unified storage
+// Replace with: https://github.com/kubernetes/kubernetes/blob/v1.29.0-alpha.3/staging/src/k8s.io/apiserver/pkg/storage/errors.go#L28
+// When we upgrade to 1.29
+var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be set on objects to be created")
+
+// Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
-	config       *storagebackend.ConfigForResource
-	store        resource.ResourceStoreClient
+	client       resource.ResourceStoreClient
 	gr           schema.GroupResource
 	codec        runtime.Codec
-	keyFunc      func(obj runtime.Object) (string, error)
 	newFunc      func() runtime.Object
 	newListFunc  func() runtime.Object
 	getAttrsFunc storage.AttrFunc
-	// trigger      storage.IndexerFuncs
-	// indexers     *cache.Indexers
+
+	rv atomic.Int64
+
+	watchSet  *WatchSet
+	versioner storage.Versioner
 }
 
+// NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
-	gr schema.GroupResource,
-	store resource.ResourceStoreClient,
-	codec runtime.Codec,
-	keyFunc func(obj runtime.Object) (string, error),
+	client resource.ResourceStoreClient,
 	newFunc func() runtime.Object,
 	newListFunc func() runtime.Object,
 	getAttrsFunc storage.AttrFunc,
 ) (storage.Interface, factory.DestroyFunc, error) {
-	return &Storage{
-		config:       config,
-		gr:           gr,
-		codec:        codec,
-		store:        store,
-		keyFunc:      keyFunc,
+
+	s := &Storage{
+		client:       client,
+		gr:           config.GroupResource,
+		codec:        config.Codec,
 		newFunc:      newFunc,
 		newListFunc:  newListFunc,
 		getAttrsFunc: getAttrsFunc,
-	}, nil, nil
+
+		watchSet: NewWatchSet(),
+
+		versioner: &storage.APIObjectVersioner{},
+	}
+
+	// start with a large counter
+	s.rv.Swap(time.Now().UnixMilli())
+
+	return s, func() {
+		s.watchSet.CleanupWatchers()
+	}, nil
+}
+
+func (s *Storage) getCurrentResourceVersion() uint64 {
+	return uint64(s.rv.Load())
+}
+
+func (s *Storage) getNewResourceVersion() uint64 {
+	return uint64(s.rv.Add(1))
+}
+
+func (s *Storage) Versioner() storage.Versioner {
+	return s.versioner
 }
 
 func errorWrap(status *resource.StatusResult) error {
@@ -125,9 +148,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		Value: buf.Bytes(),
 	}
 
-	// TODO?? blob from context?
-
-	rsp, err := s.store.Create(ctx, cmd)
+	rsp, err := s.client.Create(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -150,6 +171,15 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 	after.SetResourceVersionInt64(rsp.ResourceVersion)
+
+	// set a timer to delete the file after ttl seconds
+	if ttl > 0 {
+		time.AfterFunc(time.Second*time.Duration(ttl), func() {
+			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj); err != nil {
+				panic(err)
+			}
+		})
+	}
 	return nil
 }
 
@@ -158,87 +188,199 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // If 'cachedExistingObject' is non-nil, it can be used as a suggestion about the
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
-func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	k, err := getKey(key)
-	if err != nil {
-		return err
+func (s *Storage) Delete(
+	ctx context.Context,
+	key string,
+	out runtime.Object,
+	preconditions *storage.Preconditions,
+	validateDeletion storage.ValidateObjectFunc,
+	cachedExistingObject runtime.Object,
+) error {
+	var currentState runtime.Object
+	var stateIsCurrent bool
+	if cachedExistingObject != nil {
+		currentState = cachedExistingObject
+	} else {
+		getOptions := storage.GetOptions{}
+		if preconditions != nil && preconditions.ResourceVersion != nil {
+			getOptions.ResourceVersion = *preconditions.ResourceVersion
+		}
+		if err := s.Get(ctx, key, getOptions, currentState); err == nil {
+			stateIsCurrent = true
+		}
 	}
 
-	if validateDeletion != nil {
-		return fmt.Errorf("not supported (validate deletion)")
-	}
+	for {
+		if preconditions != nil {
+			if err := preconditions.Check(key, out); err != nil {
+				if stateIsCurrent {
+					return err
+				}
 
-	cmd := &resource.DeleteRequest{Key: k}
-	if preconditions != nil {
-		if preconditions.ResourceVersion != nil {
-			cmd.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
-			if err != nil {
-				return err
+				// If the state is not current, we need to re-read the state and try again.
+				if err := s.Get(ctx, key, storage.GetOptions{}, currentState); err != nil {
+					return err
+				}
+				stateIsCurrent = true
+				continue
 			}
 		}
-		if preconditions.UID != nil {
-			cmd.Uid = string(*preconditions.UID)
-		}
-	}
 
-	rsp, err := s.store.Delete(ctx, cmd)
-	if err != nil {
-		return err
+		if err := validateDeletion(ctx, out); err != nil {
+			if stateIsCurrent {
+				return err
+			}
+
+			// If the state is not current, we need to re-read the state and try again.
+			if err := s.Get(ctx, key, storage.GetOptions{}, currentState); err == nil {
+				stateIsCurrent = true
+			}
+			continue
+		}
+
+		k, err := getKey(key)
+		if err != nil {
+			return err
+		}
+
+		cmd := &resource.DeleteRequest{Key: k}
+		if preconditions != nil {
+			if preconditions.ResourceVersion != nil {
+				cmd.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+			if preconditions.UID != nil {
+				cmd.Uid = string(*preconditions.UID)
+			}
+		}
+
+		rsp, err := s.client.Delete(ctx, cmd)
+		if err != nil {
+			return err
+		}
+		err = errorWrap(rsp.Status)
+		if err != nil {
+			return err
+		}
+
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: out.DeepCopyObject(),
+			Type:   watch.Deleted,
+		}, nil)
+
+		return nil
 	}
-	err = errorWrap(rsp.Status)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // Watch begins watching the specified key. Events are decoded into API objects,
-// and any items selected by 'p' are sent down to returned watch.Interface.
+// and any items selected by the predicate are sent down to returned watch.Interface.
 // resourceVersion may be used to specify what version to begin watching,
 // which should be the current resourceVersion, and no longer rv+1
 // (e.g. reconnecting without missing any updates).
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	listopts, _, err := toListRequest(key, opts)
+	p := opts.Predicate
+	listObj := s.newListFunc()
+
+	// Parses to 0 for opts.ResourceVersion == 0
+	requestedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
+	}
+
+	parsedkey, err := grafanaregistry.ParseKey(key)
 	if err != nil {
 		return nil, err
 	}
-	if listopts == nil {
-		return watch.NewEmptyWatch(), nil
+
+	var namespace *string
+	if parsedkey.Namespace != "" {
+		namespace = &parsedkey.Namespace
 	}
 
-	cmd := &resource.WatchRequest{
-		Since:               listopts.ResourceVersion,
-		Options:             listopts.Options,
-		SendInitialEvents:   false,
-		AllowWatchBookmarks: opts.Predicate.AllowWatchBookmarks,
-	}
-	if opts.SendInitialEvents != nil {
-		cmd.SendInitialEvents = *opts.SendInitialEvents
-	}
-
-	client, err := s.store.Watch(ctx, cmd)
-	if err != nil {
-		// if the context was canceled, just return a new empty watch
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
-			return watch.NewEmptyWatch(), nil
+	if (opts.SendInitialEvents == nil && requestedRV == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
+		if err := s.GetList(ctx, key, opts, listObj); err != nil {
+			return nil, err
 		}
-		return nil, err
+
+		listAccessor, err := meta.ListAccessor(listObj)
+		if err != nil {
+			klog.Errorf("could not determine new list accessor in watch")
+			return nil, err
+		}
+		// Updated if requesting RV was either "0" or ""
+		maybeUpdatedRV, err := s.versioner.ParseResourceVersion(listAccessor.GetResourceVersion())
+		if err != nil {
+			klog.Errorf("could not determine new list RV in watch")
+			return nil, err
+		}
+
+		jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, p, s.versioner, namespace)
+
+		initEvents := make([]watch.Event, 0)
+		listPtr, err := meta.GetItemsPtr(listObj)
+		if err != nil {
+			return nil, err
+		}
+		v, err := conversion.EnforcePtr(listPtr)
+		if err != nil || v.Kind() != reflect.Slice {
+			return nil, fmt.Errorf("need pointer to slice: %v", err)
+		}
+
+		for i := 0; i < v.Len(); i++ {
+			obj, ok := v.Index(i).Addr().Interface().(runtime.Object)
+			if !ok {
+				return nil, fmt.Errorf("need item to be a runtime.Object: %v", err)
+			}
+
+			initEvents = append(initEvents, watch.Event{
+				Type:   watch.Added,
+				Object: obj.DeepCopyObject(),
+			})
+		}
+
+		if p.AllowWatchBookmarks && len(initEvents) > 0 {
+			lastInitEvent := initEvents[len(initEvents)-1]
+			lastItemRV, err := s.versioner.ObjectResourceVersion(lastInitEvent.Object)
+			if err != nil {
+				return nil, fmt.Errorf("could not get last init event's revision for bookmark: %v", err)
+			}
+
+			bookmarkEvent := watch.Event{
+				Type:   watch.Bookmark,
+				Object: s.newFunc(),
+			}
+
+			if err := s.versioner.UpdateObject(bookmarkEvent.Object, lastItemRV); err != nil {
+				return nil, err
+			}
+
+			bookmarkObject, err := meta.Accessor(bookmarkEvent.Object)
+			if err != nil {
+				return nil, fmt.Errorf("could not get bookmark object's acccesor: %v", err)
+			}
+			bookmarkObject.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
+			initEvents = append(initEvents, bookmarkEvent)
+		}
+
+		jw.Start(initEvents...)
+		return jw, nil
 	}
 
-	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := &streamDecoder{
-		client:  client,
-		newFunc: s.newFunc,
-		opts:    opts,
-		codec:   s.codec,
+	maybeUpdatedRV := requestedRV
+	if maybeUpdatedRV == 0 {
+		maybeUpdatedRV = s.getCurrentResourceVersion()
 	}
+	jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, p, s.versioner, namespace)
 
-	return watch.NewStreamWatcher(decoder, reporter), nil
+	jw.Start()
+	return jw, nil
 }
 
-// Get decodes object found at key into objPtr. On a not found error, will either
+// Get unmarshals object found at key into objPtr. On a not found error, will either
 // return a zero object of the requested type, or an error, depending on 'opts.ignoreNotFound'.
 // Treats empty responses and nil response nodes exactly like a not found error.
 // The returned contents may be delayed, but it is guaranteed that they will
@@ -258,12 +400,18 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		}
 	}
 
-	rsp, err := s.store.Read(ctx, req)
+	rsp, err := s.client.Read(ctx, req)
 	if err != nil {
 		return err
 	}
 	err = errorWrap(rsp.Status)
 	if err != nil {
+		if opts.IgnoreNotFound {
+			return runtime.SetZeroValue(objPtr)
+		}
+		return storage.NewKeyNotFoundError(key, req.ResourceVersion)
+	}
+	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
 		return err
 	}
 
@@ -354,8 +502,18 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if err != nil {
 		return err
 	}
+	remainingItems := int64(0)
 
-	rsp, err := s.store.List(ctx, req)
+	resourceVersionInt, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+	if err != nil {
+		return err
+	}
+
+	rsp, err := s.client.List(ctx, req)
+	if err != nil {
+		return err
+	}
+
 	if err != nil {
 		return err
 	}
@@ -370,6 +528,20 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	for _, item := range rsp.Items {
+		currentVersion := uint64(item.ResourceVersion)
+
+		if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
+			// Apply the minimum resource version validation when we are not being called as part of Watch
+			// SendInitialEvents flow
+			// reason: the resource version of currently returned init items will always be < list RV
+			// they are being generated for, unless of course, the requestedRV == "0"/""
+			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
+				// Below log left for debug. It's usually not an error condition
+				// klog.Infof("failed to assert minimum resource version constraint against list version")
+				continue
+			}
+		}
+
 		tmp := s.newFunc()
 
 		tmp, _, err = s.codec.Decode(item.Value, nil, tmp)
@@ -382,31 +554,20 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		}
 		obj.SetResourceVersionInt64(item.ResourceVersion)
 
-		// apply any predicates not handled in storage
-		matches, err := predicate.Matches(tmp)
-		if err != nil {
-			return apierrors.NewInternalError(err)
+		ok, err := predicate.Matches(tmp)
+		if err == nil && ok {
+			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 		}
-		if !matches {
-			continue
-		}
-
-		v.Set(reflect.Append(v, reflect.ValueOf(tmp).Elem()))
 	}
 
-	listAccessor, err := meta.ListAccessor(listObj)
-	if err != nil {
+	if resourceVersionInt == 0 {
+		resourceVersionInt = s.getNewResourceVersion()
+	}
+
+	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
 		return err
 	}
-	if rsp.NextPageToken != "" {
-		listAccessor.SetContinue(rsp.NextPageToken)
-	}
-	if rsp.RemainingItemCount > 0 {
-		listAccessor.SetRemainingItemCount(&rsp.RemainingItemCount)
-	}
-	if rsp.ResourceVersion > 0 {
-		listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
-	}
+
 	return nil
 }
 
@@ -433,59 +594,51 @@ func (s *Storage) GuaranteedUpdate(
 	cachedExistingObject runtime.Object,
 ) error {
 	k, err := getKey(key)
-	if err != nil {
-		return err
-	}
+	existingObject := s.newFunc()
 
-	// Get the current version
-	err = s.Get(ctx, key, storage.GetOptions{}, destination)
-	if err != nil {
-		if ignoreNotFound && apierrors.IsNotFound(err) {
-			// destination is already set to zero value
-			// we'll create the resource
-		} else {
-			return err
+	var (
+		res        storage.ResponseMeta
+		updatedObj runtime.Object
+		created    bool
+	)
+
+	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
+		err = s.Get(ctx, key, storage.GetOptions{}, existingObject)
+		if err != nil {
+			if ignoreNotFound && apierrors.IsNotFound(err) {
+				created = true
+			} else {
+				return apierrors.NewNotFound(s.gr, k.Name)
+			}
 		}
-	}
 
-	accessor, err := utils.MetaAccessor(destination)
-	if err != nil {
-		return err
-	}
+		if err := preconditions.Check(key, existingObject); err != nil {
+			if attempt >= MaxUpdateAttempts {
+				return fmt.Errorf("precondition failed: %w", err)
+			}
+			continue
+		}
 
-	// Early optimistic locking failure
-	previousVersion, _ := strconv.ParseInt(accessor.GetResourceVersion(), 10, 64)
-	if preconditions != nil {
-		if preconditions.ResourceVersion != nil {
-			rv, err := strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
-			if err != nil {
+		updatedObj, _, err = tryUpdate(existingObject, res)
+		if err != nil {
+			if attempt >= MaxUpdateAttempts {
 				return err
 			}
-			if rv != previousVersion {
-				return fmt.Errorf("optimistic locking mismatch (previousVersion mismatch)")
-			}
+			continue
 		}
-
-		if preconditions.UID != nil {
-			if accessor.GetUID() != *preconditions.UID {
-				return fmt.Errorf("optimistic locking mismatch (UID mismatch)")
-			}
-		}
+		break
 	}
 
-	res := &storage.ResponseMeta{}
-	updatedObj, _, err := tryUpdate(destination, *res)
+	unchanged, err := isUnchanged(s.codec, existingObject, updatedObj)
 	if err != nil {
-		var statusErr *apierrors.StatusError
-		if errors.As(err, &statusErr) {
-			// For now, forbidden may come from a mutation handler
-			if statusErr.ErrStatus.Reason == metav1.StatusReasonForbidden {
-				return statusErr
-			}
+		return err
+	}
+
+	if unchanged {
+		if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
+			return err
 		}
-		return apierrors.NewInternalError(
-			fmt.Errorf("could not successfully update object. key=%s, err=%s", k.String(), err.Error()),
-		)
+		return nil
 	}
 
 	var buf bytes.Buffer
@@ -495,7 +648,7 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	req := &resource.UpdateRequest{Key: k, Value: buf.Bytes()}
-	rsp, err := s.store.Update(ctx, req)
+	rsp, err := s.client.Update(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -509,12 +662,44 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return err
 	}
-	accessor, err = utils.MetaAccessor(destination)
+	accessor, err := utils.MetaAccessor(destination)
 	if err != nil {
 		return err
 	}
 	accessor.SetResourceVersionInt64(rsp.ResourceVersion)
+
+	{
+		eventType := watch.Modified
+		if created {
+			eventType = watch.Added
+			s.watchSet.notifyWatchers(watch.Event{
+				Object: destination.DeepCopyObject(),
+				Type:   eventType,
+			}, nil)
+			return nil
+		}
+
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: destination.DeepCopyObject(),
+			Type:   eventType,
+		}, existingObject.DeepCopyObject())
+	}
+
 	return nil
+}
+
+func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object) (bool, error) {
+	buf := new(bytes.Buffer)
+	if err := codec.Encode(obj, buf); err != nil {
+		return false, err
+	}
+
+	newBuf := new(bytes.Buffer)
+	if err := codec.Encode(newObj, newBuf); err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
 }
 
 // Count returns number of different entries under the key (generally being path prefix).
@@ -522,10 +707,50 @@ func (s *Storage) Count(key string) (int64, error) {
 	return 0, nil
 }
 
-func (s *Storage) Versioner() storage.Versioner {
-	return &storage.APIObjectVersioner{}
+// RequestWatchProgress requests the a watch stream progress status be sent in the
+// watch response stream as soon as possible.
+// Used for monitor watch progress even if watching resources with no changes.
+//
+// If watch is lagging, progress status might:
+// * be pointing to stale resource version. Use etcd KV request to get linearizable resource version.
+// * not be delivered at all. It's recommended to poll request progress periodically.
+//
+// Note: Only watches with matching context grpc metadata will be notified.
+// https://github.com/kubernetes/kubernetes/blob/9325a57125e8502941d1b0c7379c4bb80a678d5c/vendor/go.etcd.io/etcd/client/v3/watch.go#L1037-L1042
+//
+// TODO: Remove when storage.Interface will be separate from etc3.store.
+// Deprecated: Added temporarily to simplify exposing RequestProgress for watch cache.
+func (s *Storage) RequestWatchProgress(_ context.Context) error {
+	return nil
 }
 
-func (s *Storage) RequestWatchProgress(ctx context.Context) error {
+// validateMinimumResourceVersion returns a 'too large resource' version error when the provided minimumResourceVersion is
+// greater than the most recent actualRevision available from storage.
+func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, actualRevision uint64) error {
+	if minimumResourceVersion == "" {
+		return nil
+	}
+	minimumRV, err := s.versioner.ParseResourceVersion(minimumResourceVersion)
+	if err != nil {
+		return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
+	}
+	// Enforce the storage.Interface guarantee that the resource version of the returned data
+	// "will be at least 'resourceVersion'".
+	if minimumRV > actualRevision {
+		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
+	}
+	return nil
+}
+
+func copyModifiedObjectToDestination(updatedObj runtime.Object, destination runtime.Object) error {
+	u, err := conversion.EnforcePtr(updatedObj)
+	if err != nil {
+		return fmt.Errorf("unable to enforce updated object pointer: %w", err)
+	}
+	d, err := conversion.EnforcePtr(destination)
+	if err != nil {
+		return fmt.Errorf("unable to enforce destination pointer: %w", err)
+	}
+	d.Set(u)
 	return nil
 }

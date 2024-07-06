@@ -74,7 +74,7 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, resource, f.client, f.Codec, keyFunc, newFunc, newListFunc, getAttrsFunc)
+			return NewStorage(config, f.client, newFunc, newListFunc, getAttrsFunc)
 		},
 		DeleteCollectionWorkers:   0,
 		EnableGarbageCollection:   false,
