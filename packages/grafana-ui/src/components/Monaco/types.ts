@@ -28,6 +28,7 @@ export interface CodeEditorProps {
   showMiniMap?: boolean;
   showLineNumbers?: boolean;
   monacoOptions?: MonacoOptions;
+  languageConfiguration?: monacoType.languages.LanguageConfiguration;
 
   /**
    * Callback before the editor has mounted that gives you raw access to monaco
