@@ -218,14 +218,19 @@ def validate_openapi_spec_step():
         ],
     }
 
-def dockerize_step(name, hostname, port):
-    return {
+def dockerize_step(name, hostname, port, canFail = False):
+    step = {
         "name": name,
         "image": images["dockerize"],
         "commands": [
             "dockerize -wait tcp://{}:{} -timeout 120s".format(hostname, port),
         ],
     }
+
+    if canFail:
+        step["failure"] = "ignore"
+
+    return step
 
 def build_storybook_step(ver_mode):
     return {
