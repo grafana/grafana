@@ -145,4 +145,5 @@ export enum FieldConfigProperty {
   Links = 'links',
   Color = 'color',
   Filterable = 'filterable',
+  FieldMinMax = 'fieldMinMax',
 }

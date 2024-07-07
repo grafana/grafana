@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
@@ -6,6 +6,21 @@ import { NodeGraphSuggestionsSupplier } from './suggestions';
 import { NodeGraphOptions } from './types';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
+  .useFieldConfig({
+    disableStandardOptions: [
+      FieldConfigProperty.Thresholds,
+      FieldConfigProperty.Mappings,
+      FieldConfigProperty.Color,
+      FieldConfigProperty.Max,
+      FieldConfigProperty.Min,
+      FieldConfigProperty.Unit,
+      FieldConfigProperty.Decimals,
+      FieldConfigProperty.DisplayName,
+      FieldConfigProperty.NoValue,
+      FieldConfigProperty.Filterable,
+      FieldConfigProperty.FieldMinMax,
+    ],
+  })
   .setPanelOptions((builder, context) => {
     builder.addNestedOptions({
       category: ['Nodes'],
