@@ -44,7 +44,7 @@ type Storage struct {
 	newListFunc  func() runtime.Object
 	getAttrsFunc storage.AttrFunc
 
-	rv atomic.Int64
+	currentRV atomic.Int64
 
 	watchSet  *WatchSet
 	versioner storage.Versioner
@@ -72,20 +72,13 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 	}
 
-	// start with a large counter
-	s.rv.Swap(time.Now().UnixMilli())
-
 	return s, func() {
 		s.watchSet.CleanupWatchers()
 	}, nil
 }
 
 func (s *Storage) getCurrentResourceVersion() uint64 {
-	return uint64(s.rv.Load())
-}
-
-func (s *Storage) getNewResourceVersion() uint64 {
-	return uint64(s.rv.Add(1))
+	return uint64(s.currentRV.Load())
 }
 
 func (s *Storage) Versioner() storage.Versioner {
@@ -109,9 +102,9 @@ func getKey(val string) (*resource.ResourceKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	// if k.Group == "" {
-	// 	return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
-	// }
+	if k.Group == "" {
+		k.Group = "example.apiserver.k8s.io" //return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
+	}
 	if k.Resource == "" {
 		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 	}
@@ -180,6 +173,13 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 			}
 		})
 	}
+
+	fmt.Printf("CREATE %v\n", key)
+	s.watchSet.notifyWatchers(watch.Event{
+		Object: out.DeepCopyObject(),
+		Type:   watch.Added,
+	}, nil)
+
 	return nil
 }
 
@@ -258,6 +258,9 @@ func (s *Storage) Delete(
 
 		rsp, err := s.client.Delete(ctx, cmd)
 		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return storage.NewKeyNotFoundError(key, cmd.ResourceVersion)
+			}
 			return err
 		}
 		err = errorWrap(rsp.Status)
@@ -375,6 +378,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return jw, nil
 	}
 
+	fmt.Printf("WATCH %v\n", key)
 	maybeUpdatedRV := requestedRV
 	if maybeUpdatedRV == 0 {
 		maybeUpdatedRV = s.getCurrentResourceVersion()
@@ -408,6 +412,9 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	rsp, err := s.client.Read(ctx, req)
 	if err != nil {
 		return err
+	}
+	if rsp.Status != nil && rsp.Status.Code == 404 {
+		return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 	}
 	err = errorWrap(rsp.Status)
 	if err != nil {
@@ -509,14 +516,12 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 	remainingItems := int64(0)
 
-	resourceVersionInt, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
-	if err != nil {
-		return err
-	}
-
 	rsp, err := s.client.List(ctx, req)
 	if err != nil {
 		return err
+	}
+	if rsp.ResourceVersion > s.currentRV.Load() {
+		s.currentRV.Swap(rsp.ResourceVersion)
 	}
 
 	listPtr, err := meta.GetItemsPtr(listObj)
@@ -561,11 +566,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		}
 	}
 
-	if resourceVersionInt == 0 {
-		resourceVersionInt = s.getNewResourceVersion()
-	}
-
-	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
+	if err := s.versioner.UpdateList(listObj, uint64(rsp.ResourceVersion), "", &remainingItems); err != nil {
 		return err
 	}
 
@@ -612,7 +613,7 @@ func (s *Storage) GuaranteedUpdate(
 			if ignoreNotFound && apierrors.IsNotFound(err) {
 				created = true
 			} else {
-				return apierrors.NewNotFound(s.gr, k.Name)
+				return storage.NewKeyNotFoundError(key, 0)
 			}
 		}
 
@@ -689,20 +690,17 @@ func (s *Storage) GuaranteedUpdate(
 
 	// direct watch events...
 	{
-		eventType := watch.Modified
 		if created {
-			eventType = watch.Added
 			s.watchSet.notifyWatchers(watch.Event{
+				Type:   watch.Added,
 				Object: destination.DeepCopyObject(),
-				Type:   eventType,
 			}, nil)
-			return nil
+		} else {
+			s.watchSet.notifyWatchers(watch.Event{
+				Type:   watch.Modified,
+				Object: destination.DeepCopyObject(),
+			}, existingObject.DeepCopyObject())
 		}
-
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: destination.DeepCopyObject(),
-			Type:   eventType,
-		}, existingObject.DeepCopyObject())
 	}
 
 	return nil

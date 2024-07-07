@@ -68,7 +68,10 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	for _, opt := range opts {
 		opt(&setupOpts, t)
 	}
-
+	setupOpts.groupResource = schema.GroupResource{
+		Group:    "example.apiserver.k8s.io",
+		Resource: "pods",
+	}
 	testUserA := &identity.StaticRequester{
 		Namespace:      identity.NamespaceUser,
 		Login:          "testuser",

@@ -613,20 +613,17 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	eventType := watch.Modified
 	if created {
-		eventType = watch.Added
 		s.watchSet.notifyWatchers(watch.Event{
 			Object: destination.DeepCopyObject(),
-			Type:   eventType,
+			Type:   watch.Added,
 		}, nil)
-		return nil
+	} else {
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: destination.DeepCopyObject(),
+			Type:   watch.Modified,
+		}, objFromDisk.DeepCopyObject())
 	}
-
-	s.watchSet.notifyWatchers(watch.Event{
-		Object: destination.DeepCopyObject(),
-		Type:   eventType,
-	}, objFromDisk.DeepCopyObject())
 
 	return nil
 }
