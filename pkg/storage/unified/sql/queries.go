@@ -38,8 +38,10 @@ var (
 	sqlResourceUpdate          = mustTemplate("resource_update.sql")
 	sqlResourceRead            = mustTemplate("resource_read.sql")
 	sqlResourceUpdateRV        = mustTemplate("resource_update_rv.sql")
+	sqlResourceHistoryRead     = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryUpdateRV = mustTemplate("resource_history_update_rv.sql")
 	sqlResourceHistoryInsert   = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll     = mustTemplate("resource_history_poll.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -95,21 +97,43 @@ func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
 }
 
-// sqlResourceReadRequest can be used to retrieve a row from either the "resource"
-// or the "resource_history" tables.
+// sqlResourceHistoryReadRequest can be used to retrieve a row fromthe "resource_history" tables.
 
-type readResponse struct {
+type historyPollResponse struct {
+	Key             resource.ResourceKey
+	ResourceVersion int64
+	Value           []byte
+	Action          int
+}
+
+func (r *historyPollResponse) Results() (*historyPollResponse, error) {
+	return r, nil
+}
+
+type sqlResourceHistoryPollRequest struct {
+	*sqltemplate.SQLTemplate
+	SinceResourceVersion int64
+	*historyPollResponse
+}
+
+func (r sqlResourceHistoryPollRequest) Validate() error {
+	return nil // TODO
+}
+
+// sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
+
+type readResponseSet struct {
 	resource.ReadResponse
 }
 
-func (r *readResponse) Results() (*readResponse, error) {
+func (r *readResponseSet) Results() (*readResponseSet, error) {
 	return r, nil
 }
 
 type sqlResourceReadRequest struct {
 	*sqltemplate.SQLTemplate
 	Request *resource.ReadRequest
-	*readResponse
+	*readResponseSet
 }
 
 func (r sqlResourceReadRequest) Validate() error {

@@ -160,7 +160,7 @@ func TestQueries(t *testing.T) {
 					Request: &resource.ReadRequest{
 						Key: &resource.ResourceKey{},
 					},
-					readResponse: new(readResponse),
+					readResponseSet: new(readResponseSet),
 				},
 				Expected: expected{
 					"resource_read_mysql_sqlite.sql": dialects{
@@ -178,6 +178,20 @@ func TestQueries(t *testing.T) {
 				},
 				Expected: expected{
 					"resource_update_rv_mysql_sqlite.sql": dialects{
+						sqltemplate.MySQL,
+						sqltemplate.SQLite,
+					},
+				},
+			},
+		},
+		sqlResourceHistoryRead: {
+			{
+				Name: "single path",
+				Data: &sqlResourceReadRequest{
+					SQLTemplate: new(sqltemplate.SQLTemplate),
+				},
+				Expected: expected{
+					"resource_history_read_mysql_sqlite.sql": dialects{
 						sqltemplate.MySQL,
 						sqltemplate.SQLite,
 					},
