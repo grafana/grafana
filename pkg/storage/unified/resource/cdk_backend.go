@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -25,8 +26,6 @@ type CDKBackendOptions struct {
 	Tracer     trace.Tracer
 	Bucket     *blob.Bucket
 	RootFolder string
-
-	NextResourceVersion NextResourceVersion
 }
 
 func NewCDKBackend(ctx context.Context, opts CDKBackendOptions) (StorageBackend, error) {
@@ -49,25 +48,22 @@ func NewCDKBackend(ctx context.Context, opts CDKBackendOptions) (StorageBackend,
 		return nil, fmt.Errorf("the root folder does not exist")
 	}
 
-	// This is not safe when running in HA!
-	if opts.NextResourceVersion == nil {
-		opts.NextResourceVersion = newResourceVersionCounter(time.Now().UnixMilli())
-	}
-
-	return &cdkBackend{
+	backend := &cdkBackend{
 		tracer: opts.Tracer,
 		bucket: opts.Bucket,
 		root:   opts.RootFolder,
-		nextRV: opts.NextResourceVersion,
-	}, nil
+	}
+	backend.rv.Swap(time.Now().UnixMilli())
+	return backend, nil
 }
 
 type cdkBackend struct {
 	tracer trace.Tracer
 	bucket *blob.Bucket
 	root   string
-	nextRV NextResourceVersion
-	mutex  sync.Mutex
+
+	mutex sync.Mutex
+	rv    atomic.Int64
 
 	// Simple watch stream -- NOTE, this only works for single tenant!
 	broadcaster Broadcaster[*WrittenEvent]
@@ -117,7 +113,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 
-		rv = s.nextRV()
+		rv = s.rv.Add(1)
 		err = s.bucket.WriteAll(ctx, s.getPath(event.Key, rv), event.Value, &blob.WriterOptions{
 			ContentType: "application/json",
 		})
@@ -163,7 +159,7 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	}
 
 	raw, err := s.bucket.ReadAll(ctx, path)
-	if err == nil && isDeletedMarker(raw) {
+	if raw == nil || (err == nil && isDeletedMarker(raw)) {
 		return nil, apierrors.NewNotFound(schema.GroupResource{
 			Group:    req.Key.Group,
 			Resource: req.Key.Resource,
@@ -193,7 +189,9 @@ func (s *cdkBackend) PrepareList(ctx context.Context, req *ListRequest) (*ListRe
 		return nil, err
 	}
 
-	rsp := &ListResponse{}
+	rsp := &ListResponse{
+		ResourceVersion: s.rv.Load(),
+	}
 	for _, item := range resources {
 		latest := item.versions[0]
 		raw, err := s.bucket.ReadAll(ctx, latest.key)
