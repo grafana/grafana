@@ -242,24 +242,13 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 	}
 	obj.SetOriginInfo(origin)
 
-	// Make sure old values do not mutate things they should not
-	if event.OldMeta != nil && false { // ???
+	// Ensure old values do not mutate things they should not
+	if event.OldMeta != nil {
 		old := event.OldMeta
 
-		if obj.GetUID() != old.GetUID() {
-			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("UIDs do not match (old: %s, new: %s)", old.GetUID(), obj.GetUID()))
-		}
-
-		// Can not change creation timestamps+user
-		if obj.GetCreatedBy() != old.GetCreatedBy() {
-			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("created by changed (old: %s, new: %s)", old.GetCreatedBy(), obj.GetCreatedBy()))
-		}
-		if obj.GetCreationTimestamp() != old.GetCreationTimestamp() {
-			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("creation timestamp changed (old:%v, new:%v)", old.GetCreationTimestamp(), obj.GetCreationTimestamp()))
-		}
+		obj.SetUID(old.GetUID())
+		obj.SetCreatedBy(old.GetCreatedBy())
+		obj.SetCreationTimestamp(old.GetCreationTimestamp())
 	}
 	return event, nil
 }
