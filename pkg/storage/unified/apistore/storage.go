@@ -21,6 +21,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -268,8 +269,16 @@ func (s *Storage) Delete(
 			return err
 		}
 
+		copy := out.DeepCopyObject()
+		access, err := utils.MetaAccessor(copy)
+		if err != nil {
+			return err
+		}
+		access.SetResourceVersionInt64(rsp.ResourceVersion)
+		access.SetDeletionTimestamp(ptr.To(metav1.Now()))
+
 		s.watchSet.notifyWatchers(watch.Event{
-			Object: out.DeepCopyObject(),
+			Object: copy,
 			Type:   watch.Deleted,
 		}, nil)
 
@@ -378,7 +387,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return jw, nil
 	}
 
-	fmt.Printf("WATCH %v\n", key)
+	fmt.Printf(" WATCH %v\n", key)
 	maybeUpdatedRV := requestedRV
 	if maybeUpdatedRV == 0 {
 		maybeUpdatedRV = s.getCurrentResourceVersion()

@@ -286,7 +286,7 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 		if maxRV == 0 {
 			maxRV = w.requestedRV
 		}
-		fmt.Printf("START %v\n", maxRV)
+		fmt.Printf("START watchNode(maxRV:%v, %v)\n", maxRV, w.id)
 
 		w.s.bufferedMutex.RLock()
 		for _, e := range w.s.buffered {
@@ -296,7 +296,7 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 				continue
 			}
 
-			if maxRV > eventRV {
+			if maxRV >= eventRV {
 				fmt.Printf("SKIP (buffered): %v (less then %v)\n", eventRV, maxRV)
 				continue
 			} else {
@@ -323,7 +323,7 @@ func (w *watchNode) Start(initEvents ...watch.Event) {
 					continue
 				}
 
-				if maxRV > eventRV {
+				if maxRV >= eventRV {
 					fmt.Printf("SKIP: %v (less then %v)\n", eventRV, maxRV)
 					continue
 				} else {

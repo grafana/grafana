@@ -31,8 +31,11 @@ func ParseKey(raw string) (*Key, error) {
 	if parts[0] == "pods" {
 		key.Resource = parts[0]
 		switch len(parts) {
-		case 2:
+		case 2: // key:pods/t1-foo1
 			key.Name = parts[1]
+		case 3: // key:pods/t1-ns1/t1-foo1
+			key.Namespace = parts[1]
+			key.Name = parts[2]
 		default:
 			return nil, fmt.Errorf("invalid key (key:%s)", raw)
 		}
