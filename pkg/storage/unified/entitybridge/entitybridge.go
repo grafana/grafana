@@ -17,6 +17,10 @@ import (
 // Creates a ResourceServer using the existing entity tables
 // NOTE: the server is optional and only used to pass init+close functions
 func EntityAsResourceServer(client entity.EntityStoreClient, server sqlstash.SqlEntityServer, tracer tracing.Tracer) (resource.ResourceServer, error) {
+	if client == nil {
+		return nil, fmt.Errorf("client must be defined")
+	}
+
 	// Use this bridge as the resource store
 	bridge := &entityBridge{
 		client: client,

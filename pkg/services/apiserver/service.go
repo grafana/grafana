@@ -330,9 +330,15 @@ func (s *service) start(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+			client = entity.NewEntityStoreClientLocal(entityServer)
 		}
+
+		// ??? we could add a (short lived!) feature flag to pick which wrapper to use,
+		// or just jump to the new bridge
+		//
 		// serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
 		// 	client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+
 		server, err := entitybridge.EntityAsResourceServer(client, entityServer, s.tracing)
 		if err != nil {
 			return err
