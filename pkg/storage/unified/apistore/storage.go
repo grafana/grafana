@@ -164,9 +164,9 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 		return err
 	}
 
-	if validateDeletion != nil {
-		return fmt.Errorf("not supported (validate deletion)")
-	}
+	// if validateDeletion != nil {
+	// 	return fmt.Errorf("not supported (validate deletion)")
+	// }
 
 	cmd := &resource.DeleteRequest{Key: k}
 	if preconditions != nil {
