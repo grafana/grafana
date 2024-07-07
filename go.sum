@@ -2332,8 +2332,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.235.0 h1:UnZ/iBDvCkfDgwR94opi8trAWJX
 github.com/grafana/grafana-plugin-sdk-go v0.235.0/go.mod h1:6n9LbrjGL3xAATntYVNcIi90G9BVHRJjzHKz5FXVfWw=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701190119-78f9c0fd4144 h1:FA9896cLHomvfJcEgTAEhx8q5qGsV1dhuOfnEHM2b+U=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701190119-78f9c0fd4144/go.mod h1:DkxMin+qOh1Fgkxfbt+CUfBqqsCQJMG9op8Os/irBPA=
-github.com/grafana/grafana/pkg/apiserver v0.0.0-20240701190119-78f9c0fd4144 h1:L6oXfFiskSvg0B/47ueqgC0Hty4oWLQe8b0afK1KAsg=
-github.com/grafana/grafana/pkg/apiserver v0.0.0-20240701190119-78f9c0fd4144/go.mod h1:KMzFZMO20l+xNC4iYT3NncdjRUX5G3Fw6TXVHKB9XXM=
+github.com/grafana/grafana/pkg/apiserver v0.0.0-20240706163945-aaf23c64c33b h1:A3NkCwZQIzTG0MVFC1CTMDxekUkzSG/vgGKEeixlX4s=
+github.com/grafana/grafana/pkg/apiserver v0.0.0-20240706163945-aaf23c64c33b/go.mod h1:qfZc7FEYBdKcxHUTtWtEAH+ArbMIkEQnbVPzr8giY3k=
 github.com/grafana/grafana/pkg/promlib v0.0.6 h1:FuRyHMIgVVXkLuJnCflNfk3gqJflmyiI+/ZuJ9MoAfY=
 github.com/grafana/grafana/pkg/promlib v0.0.6/go.mod h1:shFkrG1fQ/PPNRGhxAPNMLp0SAeG/jhqaLoG6n2191M=
 github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240624122844-a89deaeb7365 h1:XRHqYGxjN2+/4QHPoOtr7kYTL9p2P5UxTXfnbiaO/NI=
