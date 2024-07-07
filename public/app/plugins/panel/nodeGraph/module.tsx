@@ -7,19 +7,7 @@ import { NodeGraphOptions } from './types';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
   .useFieldConfig({
-    disableStandardOptions: [
-      FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Mappings,
-      FieldConfigProperty.Color,
-      FieldConfigProperty.Max,
-      FieldConfigProperty.Min,
-      FieldConfigProperty.Unit,
-      FieldConfigProperty.Decimals,
-      FieldConfigProperty.DisplayName,
-      FieldConfigProperty.NoValue,
-      FieldConfigProperty.Filterable,
-      FieldConfigProperty.FieldMinMax,
-    ],
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
   })
   .setPanelOptions((builder, context) => {
     builder.addNestedOptions({
