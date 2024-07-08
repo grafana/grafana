@@ -99,7 +99,7 @@ interface AnnotationsProps {
 const Annotations = ({ rule }: AnnotationsProps) => {
   const styles = useStyles2(getStyles);
   const annotations = rule.annotations;
-  if (!annotations) {
+  if (!annotations || Object.keys(annotations).length === 0) {
     return null;
   }
   return (
@@ -107,20 +107,14 @@ const Annotations = ({ rule }: AnnotationsProps) => {
       <Text variant="body" color="secondary" weight="light">
         <Trans i18nKey="alerting.central-alert-history.details.annotations">Annotations</Trans>
       </Text>
-      {Object.keys(annotations).length === 0 ? (
-        <Text variant="body" weight="light" italic>
-          <Trans i18nKey="alerting.central-alert-history.details.no-annotations">No annotations</Trans>
-        </Text>
-      ) : (
-        <div className={styles.metadataWrapper}>
-          {Object.entries(annotations).map(([name, value]) => (
-            <MetaText direction="column" key={name}>
-              {name}
-              <AnnotationValue value={value} />
-            </MetaText>
-          ))}
-        </div>
-      )}
+      <div className={styles.metadataWrapper}>
+        {Object.entries(annotations).map(([name, value]) => (
+          <MetaText direction="column" key={name}>
+            {name}
+            <AnnotationValue value={value} />
+          </MetaText>
+        ))}
+      </div>
     </>
   );
 };

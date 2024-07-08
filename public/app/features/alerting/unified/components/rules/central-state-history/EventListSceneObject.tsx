@@ -13,18 +13,7 @@ import {
   VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
-import {
-  Alert,
-  Icon,
-  IconButton,
-  LoadingBar,
-  Pagination,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-  withErrorBoundary,
-} from '@grafana/ui';
+import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import {
@@ -226,26 +215,15 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
       </Text>
     );
   }
-  const ariaLabel = t('alerting.central-alert-history.details.add-filter', 'Add filter by alert name');
   return (
-    <Stack gap={1} direction={'row'} alignItems="center">
-      <Tooltip content={alertRuleName ?? ''}>
-        <a
-          href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${returnTo}`}
-          className={styles.alertName}
-        >
-          {alertRuleName}
-        </a>
-      </Tooltip>
-      <IconButton
-        name="plus-circle"
-        size="sm"
-        onClick={() => addFilterByName(alertRuleName)}
-        aria-label={ariaLabel}
-        tooltip={ariaLabel}
-        className={styles.colorIcon}
-      />
-    </Stack>
+    <Tooltip content={alertRuleName ?? ''}>
+      <a
+        href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${returnTo}&tab=history`}
+        className={styles.alertName}
+      >
+        {alertRuleName}
+      </a>
+    </Tooltip>
   );
 }
 
@@ -469,7 +447,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     state: css({
       '&:hover': {
         opacity: 0.8,
-        cursor: 'copy',
+        cursor: 'pointer',
       },
     }),
   };

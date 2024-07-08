@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { VariableHide } from '@grafana/data';
+import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import {
   CustomVariable,
   EmbeddedScene,
@@ -63,13 +63,13 @@ export const CentralAlertHistoryScene = () => {
   // textbox variable for filtering by labels
   const labelsFilterVariable = new TextBoxVariable({
     name: LABELS_FILTER,
-    label: 'Filter by labels: ',
+    label: 'Labels: ',
   });
   //custom variable for filtering by the current state
   const transitionsToFilterVariable = new CustomVariable({
     name: STATE_FILTER_TO,
     value: StateFilterValues.all,
-    label: 'Filter by current state:',
+    label: 'End state:',
     hide: VariableHide.dontHide,
     query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
   });
@@ -77,7 +77,7 @@ export const CentralAlertHistoryScene = () => {
   const transitionsFromFilterVariable = new CustomVariable({
     name: STATE_FILTER_FROM,
     value: StateFilterValues.all,
-    label: 'Filter by previous state:',
+    label: 'Start state:',
     hide: VariableHide.dontHide,
     query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
   });
@@ -86,10 +86,19 @@ export const CentralAlertHistoryScene = () => {
 
   const scene = new EmbeddedScene({
     controls: [
+      new VariableValueSelectors({
+        $variables: new SceneVariableSet({
+          variables: [labelsFilterVariable],
+        }),
+      }),
       new SceneReactObject({
         component: FilterInfo,
       }),
-      new VariableValueSelectors({}),
+      new VariableValueSelectors({
+        $variables: new SceneVariableSet({
+          variables: [transitionsFromFilterVariable, transitionsToFilterVariable],
+        }),
+      }),
       new SceneReactObject({
         component: ClearFilterButton,
         props: {
@@ -278,9 +287,13 @@ export const FilterInfo = () => {
   );
 };
 
-const getStyles = () => ({
-  container: css({
-    padding: '0',
-    alignSelf: 'center',
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css({
+      padding: '0',
+      alignSelf: 'center',
+      marginLeft: theme.spacing(-1),
+      marginRight: theme.spacing(1),
+    }),
+  };
+};
