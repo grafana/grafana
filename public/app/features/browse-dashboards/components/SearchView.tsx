@@ -58,7 +58,8 @@ export function SearchView({
 
   const { keyboardEvents } = useKeyNavigationListener();
 
-  const value = searchState.result ?? initialLoadingView;
+  const showPlaceholder = !searchState.result || searchState.loading;
+  const value = showPlaceholder ? initialLoadingView : searchState.result;
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {

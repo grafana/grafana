@@ -86,7 +86,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
 
     // Set internal state
-    this.setState({ sort, ...state });
+    this.setState({ sort, ...state, loading: this.hasSearchFilters() });
 
     // Update url state
     this.updateLocation({
@@ -197,14 +197,14 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return (
+    return Boolean(
       this.state.query ||
-      this.state.tag.length ||
-      this.state.starred ||
-      this.state.panel_type ||
-      this.state.sort ||
-      this.state.deleted ||
-      this.state.layout === SearchLayout.List
+        this.state.tag.length ||
+        this.state.starred ||
+        this.state.panel_type ||
+        this.state.sort ||
+        this.state.deleted ||
+        this.state.layout === SearchLayout.List
     );
   }
 
