@@ -1,7 +1,5 @@
 import { random } from 'lodash';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 import { e2e } from '../utils';
 
 const DATASOURCE_ID = 'sandbox-test-datasource';
@@ -88,9 +86,7 @@ describe('Datasource sandbox', () => {
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
         // make sure the datasource was correctly selected and rendered
-        cy.get(`span[data-testid="${selectors.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME)}"]`).should(
-          'be.visible'
-        );
+        e2e.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME).should('be.visible');
 
         cy.wait(300); // wait to prevent false positives because cypress checks too fast
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('not.exist');
@@ -102,9 +98,7 @@ describe('Datasource sandbox', () => {
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
 
         // make sure the datasource was correctly selected and rendered
-        cy.get(`span[data-testid="${selectors.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME)}"]`).should(
-          'be.visible'
-        );
+        e2e.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME).should('be.visible');
 
         const valueToType = 'test' + random(100);
 
@@ -126,9 +120,7 @@ describe('Datasource sandbox', () => {
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
         // make sure the datasource was correctly selected and rendered
-        cy.get(`span[data-testid="${selectors.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME)}"]`).should(
-          'be.visible'
-        );
+        e2e.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME).should('be.visible');
 
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('exist');
       });
@@ -139,9 +131,7 @@ describe('Datasource sandbox', () => {
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
 
         // make sure the datasource was correctly selected and rendered
-        cy.get(`span[data-testid="${selectors.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME)}"]`).should(
-          'be.visible'
-        );
+        e2e.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME).should('be.visible');
 
         const valueToType = 'test' + random(100);
 
