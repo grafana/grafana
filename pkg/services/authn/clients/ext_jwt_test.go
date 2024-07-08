@@ -51,6 +51,17 @@ var (
 			Namespace:       "default", // org ID of 1 is special and translates to default
 		},
 	}
+	validIDTokenClaimsWithStackSet = idTokenClaims{
+		Claims: &jwt.Claims{
+			Subject:  "user:2",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: "extended_jwt",
+			Namespace:       "stack-1234",
+		},
+	}
 	validAcessTokenClaimsWildcard = accessTokenClaims{
 		Claims: &jwt.Claims{
 			Subject:  "access-policy:this-uid",
@@ -183,6 +194,7 @@ func TestExtendedJWT_Test(t *testing.T) {
 func TestExtendedJWT_Authenticate(t *testing.T) {
 	type testCase struct {
 		name        string
+		cfg         *setting.Cfg // optional, only used when overriding the cfg provided by default test setup
 		accessToken *accessTokenClaims
 		idToken     *idTokenClaims
 		orgID       int64
@@ -250,7 +262,32 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         authn.MustParseNamespaceID("user:2"),
 				OrgID:                      1,
-				AllowedKubernetesNamespace: "default",
+				AllowedKubernetesNamespace: "*",
+				AuthenticatedBy:            "extendedjwt",
+				AuthID:                     "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+				},
+			},
+		},
+		{
+			name:        "should authenticate as user using wildcard namespace for access token, setting allowed namespace to specific",
+			accessToken: &validAcessTokenClaimsWildcard,
+			idToken:     &validIDTokenClaimsWithStackSet,
+			orgID:       1,
+			cfg: &setting.Cfg{
+				// default org set up by the authenticator is 1
+				StackID: "1234",
+				ExtJWTAuth: setting.ExtJWTSettings{
+					Enabled:      true,
+					ExpectIssuer: "http://localhost:3000",
+				},
+			},
+			want: &authn.Identity{
+				ID:                         authn.MustParseNamespaceID("user:2"),
+				OrgID:                      1,
+				AllowedKubernetesNamespace: "stack-1234",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -305,7 +342,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			env := setupTestCtx(nil)
+			env := setupTestCtx(tc.cfg)
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
