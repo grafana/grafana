@@ -3186,8 +3186,8 @@ steps:
   - 'echo "Step 3: Installing prerequisites..."'
   - dnf install -y dnf-utils >/dev/null 2>&1
   - 'echo "Step 4: Installing Grafana..."'
-  - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm;
-    then
+  - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+    >/dev/null 2>&1; then
   - '    echo "Successfully installed Grafana version ${TAG}"'
   - else
   - '    echo "Failed to install Grafana version ${TAG}"'
@@ -3315,8 +3315,8 @@ steps:
   - 'echo "Step 3: Installing prerequisites..."'
   - dnf install -y dnf-utils >/dev/null 2>&1
   - 'echo "Step 4: Installing Grafana..."'
-  - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm;
-    then
+  - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+    >/dev/null 2>&1; then
   - '    echo "Successfully installed Grafana version ${TAG}"'
   - else
   - '    echo "Failed to install Grafana version ${TAG}"'
@@ -5310,6 +5310,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 960a4c0cda3f00f44d953e9a4997e74be1af2a6453d29cd549a397f943bc4300
+hmac: 09f99756ce439d4e1aa0afa4fa673f988ea90b448f89ed50bdfc2ba3282a12f9
 
 ...

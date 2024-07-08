@@ -1285,7 +1285,7 @@ def verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]):
             'echo "Step 3: Installing prerequisites..."',
             "dnf install -y dnf-utils >/dev/null 2>&1",
             'echo "Step 4: Installing Grafana..."',
-            "if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm; then",
+            "if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm >/dev/null 2>&1; then",
             '    echo "Successfully installed Grafana version ${TAG}"',
             "else",
             '    echo "Failed to install Grafana version ${TAG}"',
