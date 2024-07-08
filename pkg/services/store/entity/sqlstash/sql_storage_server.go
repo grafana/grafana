@@ -13,19 +13,24 @@ import (
 	"sync"
 	"time"
 
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	foldersapi "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -44,15 +49,18 @@ var (
 // Make sure we implement correct interfaces
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer, authorizer authz.Client, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SqlEntityServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	entityServer := &sqlEntityServer{
-		db:     db,
-		log:    log.New("sql-entity-server"),
-		ctx:    ctx,
-		cancel: cancel,
-		tracer: tracer,
+		authorizer: authorizer,
+		cfg:        cfg,
+		features:   features,
+		db:         db,
+		log:        log.New("sql-entity-server"),
+		ctx:        ctx,
+		cancel:     cancel,
+		tracer:     tracer,
 	}
 
 	if err := prometheus.Register(NewStorageMetrics()); err != nil {
@@ -73,6 +81,9 @@ type SqlEntityServer interface {
 }
 
 type sqlEntityServer struct {
+	authorizer  authz.Client
+	cfg         *setting.Cfg
+	features    featuremgmt.FeatureToggles
 	log         log.Logger
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
@@ -288,6 +299,31 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	if err != nil {
 		ctxLogger.Error("read error", "error", err)
 	}
+
+	// Check access
+	if s.features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
+		authCtx, err := identity.GetAuthCtx(ctx)
+		if err != nil {
+			ctxLogger.Error("error getting user from ctx", "error", err)
+			return nil, err
+		}
+
+		if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
+			StackID: authCtx.OrgID, // TODO (gamab) make sure OrgID/StackID are interchangeable
+			Subject: authCtx.SujectID(),
+			Method:  authz.MethodRead,
+			Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
+			Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
+		}); err != nil || !hasAccess {
+			ctxLogger.Error("access denied",
+				"user", authCtx.SujectID(),
+				"method", authz.MethodRead,
+				"key", res.Key,
+				"error", err)
+			return nil, ErrNotFound
+		}
+	}
+
 	return res, err
 }
 
@@ -574,15 +610,15 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		ctxLogger.Error("error getting user from ctx", "error", err)
-		return nil, err
-	}
-	if user == nil {
-		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
-		return nil, ErrUserNotFoundInContext
-	}
+	// user, err := appcontext.User(ctx)
+	// if err != nil {
+	// 	ctxLogger.Error("error getting user from ctx", "error", err)
+	// 	return nil, err
+	// }
+	// if user == nil {
+	// 	ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+	// 	return nil, ErrUserNotFoundInContext
+	// }
 
 	fields := s.getReadFields(r)
 
@@ -669,7 +705,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	rvMaxRow := &RVMaxRow{}
 	query, args := rvMaxQuery.ToQuery()
 
-	err = s.sess.Get(ctx, rvMaxRow, query, args...)
+	err := s.sess.Get(ctx, rvMaxRow, query, args...)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			ctxLogger.Error("error running rvMaxQuery", "error", err)

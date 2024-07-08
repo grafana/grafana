@@ -1,0 +1,9 @@
+apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  generateName: mydash
+spec:
+  title: mydash
+  uid: mydash
+  folderUid: 'cdon6nybrjg8we'
+  folder: test

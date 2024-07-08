@@ -13,13 +13,14 @@ import (
 )
 
 const (
-	mdToken   = "grafana-idtoken"
-	mdLogin   = "grafana-login"
-	mdUserID  = "grafana-user-id"
-	mdUserUID = "grafana-user-uid"
-	mdOrgName = "grafana-org-name"
-	mdOrgID   = "grafana-org-id"
-	mdOrgRole = "grafana-org-role"
+	mdAccessToken = "grafana-access-token"
+	mdToken       = "grafana-idtoken"
+	mdLogin       = "grafana-login"
+	mdUserID      = "grafana-user-id"
+	mdUserUID     = "grafana-user-uid"
+	mdOrgName     = "grafana-org-name"
+	mdOrgID       = "grafana-org-id"
+	mdOrgRole     = "grafana-org-role"
 )
 
 // This is in a package we can no import
@@ -139,7 +140,6 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
-	// set grpc metadata into the context to pass to the grpc server
 	return metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user)), nil
 }
 

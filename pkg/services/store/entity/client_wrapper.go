@@ -6,13 +6,19 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/setting"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
-func NewEntityStoreClientLocal(server EntityStoreServer) EntityStoreClient {
+func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keyService signingkeys.Service) (EntityStoreClient, error) {
 	channel := &inprocgrpc.Channel{}
 
-	auth := &grpcUtils.Authenticator{}
+	auth, err := grpcUtils.ProvideInProcessAuthenticatorV2(cfg, keyService)
+	if err != nil {
+		return nil, err
+	}
 
 	channel.RegisterService(
 		grpchan.InterceptServer(
@@ -22,9 +28,17 @@ func NewEntityStoreClientLocal(server EntityStoreServer) EntityStoreClient {
 		),
 		server,
 	)
-	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
+
+	authIntercept := grpcUtils.NewInProcClientInterceptor()
+	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, authIntercept.UnaryClientInterceptor, authIntercept.StreamClientInterceptor)), nil
 }
 
-func NewEntityStoreClientGRPC(channel *grpc.ClientConn) EntityStoreClient {
-	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
+func NewEntityStoreClientGRPC(cfg *setting.Cfg, channel *grpc.ClientConn) (EntityStoreClient, error) {
+	authIntercept, err := grpcUtils.NewClientInterceptor(cfg,
+		authn.TokenExchangeRequest{Namespace: "stack-" + cfg.StackID, Audiences: []string{"entityStoreServer"}})
+	if err != nil {
+		return nil, err
+	}
+
+	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, authIntercept.UnaryClientInterceptor, authIntercept.StreamClientInterceptor)), nil
 }

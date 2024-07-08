@@ -41,7 +41,8 @@ type DashboardsAPIBuilder struct {
 	access                  access.DashboardAccess
 	dashStore               dashboards.Store
 
-	log log.Logger
+	features featuremgmt.FeatureToggles
+	log      log.Logger
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
@@ -60,13 +61,14 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
+		access:                  access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+		accessControl:           accessControl,
 		dashboardService:        dashboardService,
 		dashboardVersionService: dashboardVersionService,
 		dashStore:               dashStore,
-		accessControl:           accessControl,
-		namespacer:              namespacer,
-		access:                  access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+		features:                features,
 		log:                     log.New("grafana-apiserver.dashboards"),
+		namespacer:              namespacer,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -77,8 +79,12 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
+	m, ok := modeMap[v0alpha1.GROUPRESOURCE]
+	if !dualWrite || !ok {
+		return grafanarest.Mode0
+	}
+
+	return m
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -147,7 +153,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(desiredMode, legacyStore, store, reg)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage

@@ -22,9 +22,10 @@ const (
 )
 
 type Cfg struct {
-	remoteAddress string
+	env           string
 	listen        bool
 	mode          Mode
+	remoteAddress string
 }
 
 func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
@@ -36,8 +37,9 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 	}
 
 	return &Cfg{
-		remoteAddress: section.Key("remote_address").MustString(""),
+		env:           cfg.Env,
 		listen:        section.Key("listen").MustBool(false),
 		mode:          mode,
+		remoteAddress: section.Key("remote_address").MustString(""),
 	}, nil
 }
