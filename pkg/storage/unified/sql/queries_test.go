@@ -185,6 +185,29 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+		sqlResourceHistoryList: {
+			{
+				Name: "single path",
+				Data: &sqlResourceHistoryListRequest{
+					SQLTemplate: new(sqltemplate.SQLTemplate),
+					Request: &historyListRequest{
+						Limit: 10,
+						Options: &resource.ListOptions{
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+							},
+						},
+					},
+					Response: new(resource.ResourceWrapper),
+				},
+				Expected: expected{
+					"resource_history_list_mysql_sqlite.sql": dialects{
+						sqltemplate.MySQL,
+						sqltemplate.SQLite,
+					},
+				},
+			},
+		},
 		sqlResourceUpdateRV: {
 			{
 				Name: "single path",
