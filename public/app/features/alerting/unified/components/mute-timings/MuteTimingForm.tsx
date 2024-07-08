@@ -77,6 +77,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
 
   const formApi = useForm({ defaultValues, values: defaultValues });
 
+  const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'mute_timings' });
+
   const onSubmit = async (values: MuteTimingFields) => {
     setUpdating(true);
     const timeInterval = createMuteTiming(values);
@@ -90,7 +92,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
 
     return updateOrCreate()
       .then(() => {
-        locationService.push('/alerting/routes/?tab=mute_timings');
+        locationService.push(returnLink);
       })
       .finally(() => {
         setUpdating(false);
@@ -148,7 +150,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
               type="button"
               variant="secondary"
               fill="outline"
-              href={makeAMLink('/alerting/routes/', selectedAlertmanager, { tab: 'mute_timings' })}
+              href={makeAMLink(returnLink)}
               disabled={updating}
             >
               <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
