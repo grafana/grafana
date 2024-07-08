@@ -10,49 +10,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 const trace_prefix = "sql.resource."
-
-// Package-level errors.
-var (
-	ErrNotImplementedYet = errors.New("not implemented yet (sqlnext)")
-)
-
-func ProvideSQLResourceServer(db db.ResourceDBInterface, tracer tracing.Tracer) (resource.ResourceServer, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	store := &backend{
-		db:     db,
-		log:    log.New("sql-resource-server"),
-		ctx:    ctx,
-		cancel: cancel,
-		tracer: tracer,
-	}
-
-	if err := prometheus.Register(sqlstash.NewStorageMetrics()); err != nil {
-		return nil, err
-	}
-
-	return resource.NewResourceServer(resource.ResourceServerOptions{
-		Tracer:      tracer,
-		Backend:     store,
-		Diagnostics: store,
-		Lifecycle:   store,
-	})
-}
 
 type backendOptions struct {
 	DB     db.ResourceDBInterface
@@ -201,13 +170,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
 
-		// // 3. Rebuild the whole folder tree structure if we're creating a folder
-		// TODO: We need a better way to do this that does not require a custom table
-		// if newEntity.Group == folder.GROUP && newEntity.Resource == folder.RESOURCE {
-		// 	if err = s.updateFolderTree(ctx, tx, key.Namespace); err != nil {
-		// 		return fmt.Errorf("rebuild folder tree structure: %w", err)
-		// 	}
-		// }
+		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increpement resource version for this kind
 		rv, err := resourceVersionAtomicInc(ctx, tx, b.sqlDialect, event.Key)
@@ -270,13 +233,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
 
-		// // 3. Rebuild the whole folder tree structure if we're creating a folder
-		// TODO: We need a better way to do this that does not require a custom table
-		// if newEntity.Group == folder.GROUP && newEntity.Resource == folder.RESOURCE {
-		// 	if err = s.updateFolderTree(ctx, tx, key.Namespace); err != nil {
-		// 		return fmt.Errorf("rebuild folder tree structure: %w", err)
-		// 	}
-		// }
+		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increpement resource version for this kind
 		rv, err := resourceVersionAtomicInc(ctx, tx, b.sqlDialect, event.Key)
@@ -339,13 +296,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
 
-		// // 3. Rebuild the whole folder tree structure if we're creating a folder
-		// TODO: We need a better way to do this that does not require a custom table
-		// if newEntity.Group == folder.GROUP && newEntity.Resource == folder.RESOURCE {
-		// 	if err = s.updateFolderTree(ctx, tx, key.Namespace); err != nil {
-		// 		return fmt.Errorf("rebuild folder tree structure: %w", err)
-		// 	}
-		// }
+		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increpement resource version for this kind
 		newVersion, err = resourceVersionAtomicInc(ctx, tx, b.sqlDialect, event.Key)

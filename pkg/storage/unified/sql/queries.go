@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -16,12 +15,7 @@ var (
 	//go:embed data/*.sql
 	sqlTemplatesFS embed.FS
 
-	// all templates
-	helpers = template.FuncMap{
-		"listSep": helperListSep,
-		"join":    helperJoin,
-	}
-	sqlTemplates = template.Must(template.New("sql").Funcs(helpers).ParseFS(sqlTemplatesFS, `data/*.sql`))
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -121,14 +115,6 @@ func (r sqlResourceHistoryPollRequest) Validate() error {
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
 
-type key struct {
-	resource.ReadResponse
-}
-
-type readRequest struct {
-	resource.ReadResponse
-}
-
 type readResponse struct {
 	resource.ReadResponse
 }
@@ -187,32 +173,4 @@ type sqlResourceVersionRequest struct {
 
 func (r sqlResourceVersionRequest) Validate() error {
 	return nil // TODO
-}
-
-// Template helpers.
-
-// helperListSep is a helper that helps writing simpler loops in SQL templates.
-// Example usage:
-//
-//	{{ $comma := listSep ", "  }}
-//	{{ range .Values }}
-//		{{/* here we put "-" on each end to remove extra white space */}}
-//		{{- call $comma -}}
-//		{{ .Value }}
-//	{{ end }}
-func helperListSep(sep string) func() string {
-	var addSep bool
-
-	return func() string {
-		if addSep {
-			return sep
-		}
-		addSep = true
-
-		return ""
-	}
-}
-
-func helperJoin(sep string, elems ...string) string {
-	return strings.Join(elems, sep)
 }
