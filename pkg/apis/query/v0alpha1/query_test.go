@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -75,4 +77,40 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		  "to": "200"
 		}
 	  }`, string(out))
+}
+
+func TestGetResponseCode(t *testing.T) {
+	t.Run("return the code if consistent throughout", func(t *testing.T) {
+		assert.Equal(t, 200, query.GetResponseCode(&backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				"A": {
+					Status: 200,
+				},
+				"B": {
+					Status: 200,
+				},
+			},
+		}))
+	})
+	t.Run("return error if returned by query", func(t *testing.T) {
+		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				"A": {
+					Status: 400,
+				},
+			},
+		}))
+	})
+	t.Run("return 207 if different", func(t *testing.T) {
+		assert.Equal(t, 207, query.GetResponseCode(&backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				"A": {
+					Status: 200,
+				},
+				"B": {
+					Status: 404,
+				},
+			},
+		}))
+	})
 }
