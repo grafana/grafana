@@ -90,10 +90,12 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                     selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected
                   )}
                 >
-                  <span className={styles.optionBody}>{items[virtualRow.index].label}</span>
-                  {items[virtualRow.index].description && (
-                    <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
-                  )}
+                  <div className={styles.optionBody}>
+                    <span>{items[virtualRow.index].label}</span>
+                    {items[virtualRow.index].description && (
+                      <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                    )}
+                  </div>
                 </li>
               );
             })}
