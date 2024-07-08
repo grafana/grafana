@@ -655,6 +655,25 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 		}
 	}
 
+	// Override feature toggles from environment variables.
+	// This is done separately because feature toggles are not stored in the ini file.
+	// Overriding feature toggles from environment variables is useful when setting them to `false`.
+	// To set them to `true`, `GF_FEATURE_TOGGLES_ENABLED` can also be used.
+	const featureTogglesPrefix = "GF_FEATURE_TOGGLES_"
+	featuresSection := file.Section("feature_toggles")
+	for _, kv := range os.Environ() {
+		parts := strings.SplitN(kv, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		featureName := parts[0]
+		featureValue := parts[1]
+		if !strings.HasPrefix(featureName, featureTogglesPrefix) {
+			continue
+		}
+		featuresSection.Key(strings.TrimPrefix(featureName, featureTogglesPrefix)).SetValue(featureValue)
+		cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", featureName, RedactedValue(featureName, featureValue)))
+	}
 	return nil
 }
 
