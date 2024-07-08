@@ -1241,7 +1241,7 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]):
+def verify_linux_DEB_packages_step(depends_on = []):
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
@@ -1271,7 +1271,7 @@ def verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]):
         "depends_on": depends_on,
     }
 
-def verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]):
+def verify_linux_RPM_packages_step(depends_on = []):
     return {
         "name": "verify-linux-RPM-packages",
         "image": images["rocky"],

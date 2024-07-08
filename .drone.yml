@@ -3303,7 +3303,8 @@ steps:
   - '    echo "Failed to install Grafana version ${TAG}"'
   - '    exit 1'
   - fi
-  depends_on: []
+  depends_on:
+  - publish-linux-packages-deb
   environment: {}
   image: ubuntu:22.04
   name: verify-linux-DEB-packages
@@ -3330,7 +3331,8 @@ steps:
   - '    exit 1'
   - fi
   - echo "Verification complete."
-  depends_on: []
+  depends_on:
+  - publish-linux-packages-rpm
   environment: {}
   image: rockylinux:9
   name: verify-linux-RPM-packages
@@ -5310,6 +5312,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 09f99756ce439d4e1aa0afa4fa673f988ea90b448f89ed50bdfc2ba3282a12f9
+hmac: 4dc4174d94e2c5ed9be83e5e4a66dec093d295b4662b5076cc13475f78839d24
 
 ...

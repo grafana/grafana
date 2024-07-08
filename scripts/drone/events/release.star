@@ -206,8 +206,8 @@ def publish_packages_pipeline():
         publish_linux_packages_step(package_manager = "deb"),
         publish_linux_packages_step(package_manager = "rpm"),
         # JEV: is this hardcoded arg going to be an issue?
-        verify_linux_DEB_packages_step(depends_on = []),
-        verify_linux_RPM_packages_step(depends_on = []),
+        verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]),
+        verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]),
         publish_grafanacom_step(ver_mode = "release"),
         verify_grafanacom_step(),
     ]
@@ -235,8 +235,8 @@ def publish_packages_pipeline():
                 "target": "verify-linux-packages",
             },
             steps = [
-                verify_linux_DEB_packages_step(depends_on = []),
-                verify_linux_RPM_packages_step(depends_on = []),
+                verify_linux_DEB_packages_step(),
+                verify_linux_RPM_packages_step(),
             ],
         ),
         pipeline(
