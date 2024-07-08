@@ -24,6 +24,8 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportMuteTimings);
 
+  const closeDeleteModal = () => setShowDeleteDrawer(false);
+
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
   const viewOrEditHref = makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
     muteName: muteTiming?.metadata?.name || muteTiming.name,
@@ -45,14 +47,6 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         {!isGrafanaDataSource && isDisabled(muteTiming) && <Badge text="Disabled" color="orange" />}
         <Authorize actions={[AlertmanagerAction.UpdateMuteTiming]}>{viewOrEditButton}</Authorize>
 
-        {!muteTiming.provisioned && (
-          <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
-            <LinkButton icon="trash-alt" variant="secondary" size="sm" onClick={() => setShowDeleteDrawer(true)}>
-              <Trans i18nKey="alerting.common.delete">Delete</Trans>
-            </LinkButton>
-          </Authorize>
-        )}
-
         {exportSupported && (
           <LinkButton
             icon="download-alt"
@@ -65,6 +59,14 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
             <Trans i18nKey="alerting.common.export">Export</Trans>
           </LinkButton>
         )}
+
+        {!muteTiming.provisioned && (
+          <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
+            <LinkButton icon="trash-alt" variant="secondary" size="sm" onClick={() => setShowDeleteDrawer(true)}>
+              <Trans i18nKey="alerting.common.delete">Delete</Trans>
+            </LinkButton>
+          </Authorize>
+        )}
       </Stack>
       <ConfirmModal
         isOpen={showDeleteDrawer}
@@ -76,9 +78,9 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
             name: muteTiming?.metadata?.name || muteTiming.name,
           });
 
-          setShowDeleteDrawer(false);
+          closeDeleteModal();
         }}
-        onDismiss={() => setShowDeleteDrawer(false)}
+        onDismiss={closeDeleteModal}
       />
       {ExportDrawer}
     </>
