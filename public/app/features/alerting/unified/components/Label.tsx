@@ -132,7 +132,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     clickable: css({
       '&:hover': {
         opacity: 0.8,
-        cursor: 'copy',
+        cursor: 'pointer',
       },
     }),
     value: css({
