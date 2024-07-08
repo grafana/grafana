@@ -1,9 +1,8 @@
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
 
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
 
@@ -25,10 +24,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     : 'This data source does not support ad hoc filters yet.';
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
-    const dsRef: DataSourceRef = {
-      uid: ds.uid,
-      type: ds.type,
-    };
+    const dsRef = getDataSourceRef(ds);
 
     variable.setState({
       datasource: dsRef,
