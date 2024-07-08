@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'react-use';
 
@@ -18,11 +19,13 @@ interface Props {
   activeItem?: NavModelItem;
   onClick?: () => void;
   level?: number;
+  onPin: (id?: string) => void;
+  isPinned: (id?: string) => boolean;
 }
 
 const MAX_DEPTH = 2;
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
+export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPinned }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
@@ -101,6 +104,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             }}
             target={link.target}
             url={link.url}
+            id={link.id}
+            onPin={onPin}
+            isPinned={isPinned(link.id)}
           >
             <div
               className={cx(styles.labelWrapper, {
@@ -126,6 +132,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
                   activeItem={activeItem}
                   onClick={onClick}
                   level={level + 1}
+                  onPin={onPin}
+                  isPinned={isPinned}
                 />
               ))
           ) : (

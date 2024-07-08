@@ -2,8 +2,11 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -135,6 +138,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	require.NoError(t, err)
 	// dont know if this is the best, but dont want to refactor at the moment
 	cfg.CloudMigration.IsDeveloperMode = true
+	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewString())
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	if withDashboardMock {

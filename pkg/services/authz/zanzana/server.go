@@ -1,26 +1,20 @@
 package zanzana
 
 import (
-	"github.com/openfga/openfga/pkg/logger"
 	"github.com/openfga/openfga/pkg/server"
 	"github.com/openfga/openfga/pkg/storage"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
+
+	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 )
 
-func NewServer(store storage.OpenFGADatastore) (*server.Server, error) {
-	// FIXME(kalleep): add support for more options, configure logging, tracing etc
-	opts := []server.OpenFGAServiceV1Option{
-		server.WithDatastore(store),
-		// FIXME(kalleep): Write and log adapter for open fga logging interface
-		server.WithLogger(logger.NewNoopLogger()),
-	}
+func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
+	return zserver.New(store, logger)
+}
 
-	// FIXME(kalleep): Interceptors
-	// We probably need to at least need to add store id interceptor also
-	// would be nice to inject our own requestid?
-	srv, err := server.NewServerWithOpts(opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	return srv, nil
+func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
+	return zserver.StartOpenFGAHttpSever(cfg, srv, logger)
 }

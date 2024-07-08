@@ -1,23 +1,25 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
-import { cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { css, cx } from '@emotion/css';
+import { PureComponent, ReactNode } from 'react';
 
-import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
+import {
+  isDataFrame,
+  LocalStorageValueProvider,
+  QueryEditorProps,
+  QueryHint,
+  TimeRange,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
-import { LocalStorageValueProvider } from '../gcopypaste/app/core/components/LocalStorageValueProvider';
-import {
-  CancelablePromise,
-  isCancelablePromiseRejection,
-  makePromiseCancelable,
-} from '../gcopypaste/app/core/utils/CancelablePromise';
 import { roundMsToMin } from '../language_utils';
 import { PromOptions, PromQuery } from '../types';
 
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
+import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
@@ -49,7 +51,7 @@ interface PromQueryFieldState {
   hint: QueryHint | null;
 }
 
-class PromQueryFieldClass extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
+class PromQueryFieldClass extends PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps) {
@@ -265,8 +267,12 @@ class PromQueryFieldClass extends React.PureComponent<PromQueryFieldProps, PromQ
 
               {ExtraFieldElement}
               {hint ? (
-                <div className="query-row-break">
-                  <div className="prom-query-field-info text-warning">
+                <div
+                  className={css({
+                    flexBasis: '100%',
+                  })}
+                >
+                  <div className="text-warning">
                     {hint.label}{' '}
                     {hint.fix ? (
                       <button

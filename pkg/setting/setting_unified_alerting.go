@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
-	alertingCluster "github.com/grafana/alerting/cluster"
 	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"gopkg.in/ini.v1"
+
+	alertingCluster "github.com/grafana/alerting/cluster"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -63,6 +64,7 @@ const (
 	stateHistoryDefaultEnabled     = true
 	lokiDefaultMaxQueryLength      = 721 * time.Hour // 30d1h, matches the default value in Loki
 	defaultRecordingRequestTimeout = 10 * time.Second
+	lokiDefaultMaxQuerySize        = 65536 // 64kb
 )
 
 type UnifiedAlertingSettings struct {
@@ -89,6 +91,7 @@ type UnifiedAlertingSettings struct {
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
+	EvaluationResultLimit          int
 	DisableJitter                  bool
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
@@ -113,6 +116,9 @@ type UnifiedAlertingSettings struct {
 
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
+
+	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
+	ResolvedAlertRetention time.Duration
 }
 
 type RecordingRuleSettings struct {
@@ -156,6 +162,7 @@ type UnifiedAlertingStateHistorySettings struct {
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
 	LokiMaxQueryLength    time.Duration
+	LokiMaxQuerySize      int
 	MultiPrimary          string
 	MultiSecondaries      []string
 	ExternalLabels        map[string]string
@@ -349,6 +356,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	quotas := iniFile.Section("quota")
 	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
+	uaCfg.EvaluationResultLimit = quotas.Key("alerting_rule_evaluation_results").MustInt(-1)
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
@@ -400,6 +408,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
 		LokiMaxQueryLength:    stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
+		LokiMaxQuerySize:      stateHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
 		MultiPrimary:          stateHistory.Key("primary").MustString(""),
 		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
@@ -431,6 +440,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 
 	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
+	if err != nil {
+		return err
+	}
+
+	uaCfg.ResolvedAlertRetention, err = gtime.ParseDuration(valueAsString(ua, "resolved_alert_retention", (15 * time.Minute).String()))
 	if err != nil {
 		return err
 	}

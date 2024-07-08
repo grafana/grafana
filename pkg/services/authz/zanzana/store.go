@@ -2,12 +2,17 @@ package zanzana
 
 import (
 	"github.com/openfga/openfga/pkg/storage"
-	"github.com/openfga/openfga/pkg/storage/memory"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 )
 
-// FIXME(kalleep): Add support for postgres, mysql and sqlite data stores.
-// Postgres and mysql is already implmented by openFGA so we just need to hook up migartions for them.
-// There is no support for sqlite atm but we are working on adding it: https://github.com/openfga/openfga/pull/1615
-func NewStore() storage.OpenFGADatastore {
-	return memory.New()
+func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
+	return store.NewStore(cfg, logger)
+}
+func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error) {
+	return store.NewEmbeddedStore(cfg, db, logger)
 }

@@ -1,6 +1,7 @@
 import { MatcherOperator, Route } from '../../../../plugins/datasource/alertmanager/types';
 
 import {
+  encodeMatcher,
   getMatcherQueryParams,
   isPromQLStyleMatcher,
   matcherToObjectMatcher,
@@ -9,6 +10,7 @@ import {
   parsePromQLStyleMatcher,
   parseQueryParamMatchers,
   quoteWithEscape,
+  quoteWithEscapeIfRequired,
   unquoteWithUnescape,
 } from './matchers';
 
@@ -174,5 +176,20 @@ describe('parsePromQLStyleMatcher', () => {
 
   it('should throw when not using correct syntax', () => {
     expect(() => parsePromQLStyleMatcher('foo="bar"')).toThrow();
+  });
+
+  it('should only encode matchers if the label key contains reserved characters', () => {
+    expect(quoteWithEscapeIfRequired('foo')).toBe('foo');
+    expect(quoteWithEscapeIfRequired('foo bar')).toBe('"foo bar"');
+    expect(quoteWithEscapeIfRequired('foo{}bar')).toBe('"foo{}bar"');
+    expect(quoteWithEscapeIfRequired('foo\\bar')).toBe('"foo\\\\bar"');
+  });
+
+  it('should properly encode a matcher field', () => {
+    expect(encodeMatcher({ name: 'foo', operator: MatcherOperator.equal, value: 'baz' })).toBe('foo="baz"');
+    expect(encodeMatcher({ name: 'foo bar', operator: MatcherOperator.equal, value: 'baz' })).toBe('"foo bar"="baz"');
+    expect(encodeMatcher({ name: 'foo{}bar', operator: MatcherOperator.equal, value: 'baz qux' })).toBe(
+      '"foo{}bar"="baz qux"'
+    );
   });
 });

@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Input, Tooltip } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
+import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { NodesMap, SelectedScope } from './types';
@@ -28,6 +27,12 @@ export function ScopesInput({
 }: ScopesInputProps) {
   const styles = useStyles2(getStyles);
 
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+
+  useEffect(() => {
+    setIsTooltipVisible(false);
+  }, [scopes]);
+
   const scopesPaths = useMemo(() => {
     const pathsTitles = scopes.map(({ scope, path }) => {
       let currentLevel = nodes;
@@ -35,13 +40,20 @@ export function ScopesInput({
       let titles: string[];
 
       if (path.length > 0) {
-        titles = path.map((nodeName) => {
-          const { title, nodes } = currentLevel[nodeName];
+        titles = path
+          .map((nodeName) => {
+            const cl = currentLevel[nodeName];
+            if (!cl) {
+              return null;
+            }
 
-          currentLevel = nodes;
+            const { title, nodes } = cl;
 
-          return title;
-        });
+            currentLevel = nodes;
+
+            return title;
+          })
+          .filter((title) => title !== null) as string[];
 
         if (titles[0] === '') {
           titles.splice(0, 1);
@@ -57,7 +69,7 @@ export function ScopesInput({
 
     const groupedByPath = groupBy(pathsTitles, ([path]) => path);
 
-    return Object.entries(groupedByPath)
+    const scopesPaths = Object.entries(groupedByPath)
       .map(([path, pathScopes]) => {
         const scopesTitles = pathScopes.map(([, scopeTitle]) => scopeTitle).join(', ');
 
@@ -68,41 +80,44 @@ export function ScopesInput({
           {path}
         </p>
       ));
+
+    return <>{scopesPaths}</>;
   }, [nodes, scopes, styles]);
 
   const scopesTitles = useMemo(() => scopes.map(({ scope }) => scope.spec.title).join(', '), [scopes]);
 
-  const input = (
-    <Input
-      readOnly
-      placeholder={t('scopes.filters.input.placeholder', 'Select scopes...')}
-      loading={isLoading}
-      value={scopesTitles}
-      aria-label={t('scopes.filters.input.placeholder', 'Select scopes...')}
-      data-testid="scopes-filters-input"
-      suffix={
-        scopes.length > 0 && !isDisabled ? (
-          <IconButton
-            aria-label={t('scopes.filters.input.removeAll', 'Remove all scopes')}
-            name="times"
-            onClick={() => onRemoveAllClick()}
-          />
-        ) : undefined
-      }
-      onClick={() => {
-        if (!isDisabled) {
-          onInputClick();
+  const input = useMemo(
+    () => (
+      <Input
+        readOnly
+        placeholder={t('scopes.filters.input.placeholder', 'Select scopes...')}
+        loading={isLoading}
+        value={scopesTitles}
+        aria-label={t('scopes.filters.input.placeholder', 'Select scopes...')}
+        data-testid="scopes-filters-input"
+        suffix={
+          scopes.length > 0 && !isDisabled ? (
+            <IconButton
+              aria-label={t('scopes.filters.input.removeAll', 'Remove all scopes')}
+              name="times"
+              onClick={() => onRemoveAllClick()}
+            />
+          ) : undefined
         }
-      }}
-    />
+        onMouseOver={() => setIsTooltipVisible(true)}
+        onMouseOut={() => setIsTooltipVisible(false)}
+        onClick={() => {
+          if (!isDisabled) {
+            onInputClick();
+          }
+        }}
+      />
+    ),
+    [isDisabled, isLoading, onInputClick, onRemoveAllClick, scopes, scopesTitles]
   );
 
-  if (scopes.length === 0) {
-    return input;
-  }
-
   return (
-    <Tooltip content={<>{scopesPaths}</>} interactive={true}>
+    <Tooltip content={scopesPaths} show={scopes.length === 0 ? false : isTooltipVisible}>
       {input}
     </Tooltip>
   );

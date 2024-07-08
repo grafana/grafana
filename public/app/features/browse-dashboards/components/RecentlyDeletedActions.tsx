@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -9,10 +9,12 @@ import appEvents from '../../../core/app_events';
 import { Trans } from '../../../core/internationalization';
 import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
-import { useRestoreDashboardMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
-import { clearFolders, setAllSelection, useActionSelectionState } from '../../browse-dashboards/state';
+import { useHardDeleteDashboardMutation, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
-import { RestoreModal } from '../components/RestoreModal';
+import { clearFolders, setAllSelection, useActionSelectionState } from '../state';
+
+import { PermanentlyDeleteModal } from './PermanentlyDeleteModal';
+import { RestoreModal } from './RestoreModal';
 
 export function RecentlyDeletedActions() {
   const styles = useStyles2(getStyles);
@@ -22,6 +24,7 @@ export function RecentlyDeletedActions() {
   const [, stateManager] = useRecentlyDeletedStateManager();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
+  const [deleteDashboard, { isLoading: isDeleteLoading }] = useHardDeleteDashboardMutation();
 
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
@@ -64,6 +67,13 @@ export function RecentlyDeletedActions() {
     onActionComplete();
   };
 
+  const onDelete = async () => {
+    const promises = selectedDashboards.map((uid) => deleteDashboard({ dashboardUID: uid }));
+
+    await Promise.all(promises);
+    onActionComplete();
+  };
+
   const showRestoreModal = () => {
     appEvents.publish(
       new ShowModalReactEvent({
@@ -77,10 +87,26 @@ export function RecentlyDeletedActions() {
     );
   };
 
+  const showDeleteModal = () => {
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: PermanentlyDeleteModal,
+        props: {
+          selectedDashboards,
+          onConfirm: onDelete,
+          isLoading: isDeleteLoading,
+        },
+      })
+    );
+  };
+
   return (
     <div className={styles.row}>
       <Button onClick={showRestoreModal} variant="secondary">
         <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
+      </Button>
+      <Button onClick={showDeleteModal} variant="destructive">
+        <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
       </Button>
     </div>
   );
@@ -88,6 +114,13 @@ export function RecentlyDeletedActions() {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css({
-    marginBottom: theme.spacing(2),
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+    margin: theme.spacing(2, 0),
+
+    [theme.breakpoints.up('md')]: {
+      marginTop: 0,
+    },
   }),
 });

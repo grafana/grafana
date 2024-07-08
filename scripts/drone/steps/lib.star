@@ -218,14 +218,19 @@ def validate_openapi_spec_step():
         ],
     }
 
-def dockerize_step(name, hostname, port):
-    return {
+def dockerize_step(name, hostname, port, canFail = False):
+    step = {
         "name": name,
         "image": images["dockerize"],
         "commands": [
             "dockerize -wait tcp://{}:{} -timeout 120s".format(hostname, port),
         ],
     }
+
+    if canFail:
+        step["failure"] = "ignore"
+
+    return step
 
 def build_storybook_step(ver_mode):
     return {
@@ -774,6 +779,36 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
     }
 
+def start_storybook_step():
+    return {
+        "name": "start-storybook",
+        "image": images["node"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn storybook --quiet",
+        ],
+        "detach": True,
+    }
+
+def e2e_storybook_step():
+    return {
+        "name": "end-to-end-tests-storybook-suite",
+        "image": images["cypress"],
+        "depends_on": [
+            "start-storybook",
+        ],
+        "environment": {
+            "HOST": "start-storybook",
+            "PORT": "9001",
+        },
+        "commands": [
+            "npx wait-on@7.2.0 -t 1m http://$HOST:$PORT",
+            "yarn e2e:storybook",
+        ],
+    }
+
 def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 
@@ -929,7 +964,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
 
     return step
 
-def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None):
+def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None, canFail = False):
     """Integration test steps
 
     Args:
@@ -938,6 +973,7 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
       hostname: the hostname where the remote server is available.
       port: the port where the remote server is available.
       environment: Any extra environment variables needed to run the integration tests.
+      canFail: controls whether the step can fail.
 
     Returns:
       A list of drone steps. If a hostname / port were provided, then a step to wait for the remove server to be
@@ -957,6 +993,9 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
             "apk add --update build-base",
         ] + cmds,
     }
+
+    if canFail:
+        step["failure"] = "ignore"
 
     if environment:
         step["environment"] = environment
@@ -1034,7 +1073,7 @@ def remote_alertmanager_integration_tests_steps():
         "AM_URL": "http://mimir_backend:8080",
     }
 
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment, canFail = True)
 
 def memcached_integration_tests_steps():
     cmds = [
@@ -1150,6 +1189,34 @@ def publish_grafanacom_step(ver_mode):
         "commands": [
             cmd,
         ],
+    }
+
+def verify_grafanacom_step(depends_on = ["publish-grafanacom"]):
+    return {
+        "name": "verify-grafanacom",
+        "image": images["node"],
+        "commands": [
+            # Download and install `curl` and `bash` - both of which aren't available inside of the `node:{version}-alpine` docker image.
+            "apk add curl bash",
+
+            # There may be a slight lag between when artifacts are uploaded to Google Storage,
+            # and when they become available on the website. This `for` loop sould account for that discrepancy.
+            # We attempt the verification up to 5 times. If successful, exit the loop with a success (0) status.
+            # If any attempt fails, but it's not the final attempt, wait 60 seconds before the next attempt.
+            # If the 5th (final) attempt fails, exit with error (1) status.
+            """
+            for i in {1..5}; do
+                if ./scripts/drone/verify-grafanacom.sh; then
+                    exit 0
+                elif [ $i -eq 5 ]; then
+                    exit 1
+                else
+                    sleep 60
+                fi
+            done
+            """,
+        ],
+        "depends_on": depends_on,
     }
 
 def publish_linux_packages_step(package_manager = "deb"):

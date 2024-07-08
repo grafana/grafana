@@ -1,12 +1,14 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -35,8 +37,6 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -139,9 +139,14 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
+type NamespacedKVStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key, value string) error
+}
+
 func SetDualWritingMode(
 	ctx context.Context,
-	kvs *kvstore.NamespacedKVStore,
+	kvs NamespacedKVStore,
 	legacy LegacyStorage,
 	storage Storage,
 	entity string,
@@ -206,4 +211,42 @@ func SetDualWritingMode(
 	// 	#TODO add support for other combinations of desired and current modes
 
 	return NewDualWriter(currentMode, legacy, storage, reg), nil
+}
+
+var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func Compare(storageObj, legacyObj runtime.Object) bool {
+	if storageObj == nil || legacyObj == nil {
+		return storageObj == nil && legacyObj == nil
+	}
+	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+}
+
+func removeMeta(obj runtime.Object) []byte {
+	cpy := obj.DeepCopyObject()
+	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if err != nil {
+		return nil
+	}
+	// we don't want to compare meta fields
+	delete(unstObj, "metadata")
+
+	jsonObj, err := json.Marshal(cpy)
+	if err != nil {
+		return nil
+	}
+	return jsonObj
+}
+
+func getName(o runtime.Object) string {
+	if o == nil {
+		return ""
+	}
+	accessor, err := meta.Accessor(o)
+	if err != nil {
+		klog.Error("failed to get object name: ", err)
+		return ""
+	}
+	return accessor.GetName()
 }

@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	ldap "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
@@ -68,7 +68,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 	cfg.Raw = iniFile
 
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	sqlStore := db.InitTestDB(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
@@ -82,7 +82,6 @@ func TestSocialService_ProvideService(t *testing.T) {
 		nil,
 		&setting.OSSImpl{Cfg: cfg},
 		&licensing.OSSLicensingService{},
-		ldap.ProvideService(cfg),
 	)
 
 	for _, tc := range testCases {
@@ -181,7 +180,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	sqlStore := db.InitTestDB(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
@@ -195,7 +194,6 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 		nil,
 		nil,
 		&licensing.OSSLicensingService{},
-		ldap.ProvideService(cfg),
 	)
 
 	for _, tc := range testCases {

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { TypedVariableModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

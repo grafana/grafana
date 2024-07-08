@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LoadingState } from '@grafana/data';
 import {
   SceneComponentProps,
@@ -27,7 +25,7 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     super({
       ...state,
       options: {
-        withTransforms: true,
+        withTransforms: false,
         withFieldConfig: true,
       },
     });

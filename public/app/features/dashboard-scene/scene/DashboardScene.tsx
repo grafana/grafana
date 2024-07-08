@@ -78,7 +78,7 @@ import { ScopesScene } from './Scopes/ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -91,6 +91,8 @@ export interface DashboardSceneState extends SceneObjectState {
   links: DashboardLink[];
   /** Is editable */
   editable?: boolean;
+  /** Allows disabling grid lazy loading */
+  preload?: boolean;
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
@@ -119,8 +121,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** True when a user copies a panel in the dashboard */
-  hasCopiedPanel?: boolean;
   /** The dashboard doesn't have panels */
   isEmpty?: boolean;
   /** Scene object that handles the scopes selector */
@@ -170,7 +170,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
-      hasCopiedPanel: store.exists(LS_PANEL_COPY_KEY),
       scopes: state.uid && config.featureToggles.scopeFilters ? new ScopesScene() : undefined,
       ...state,
     });
@@ -317,6 +316,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.setState({ isEditing: false });
     }
 
+    // if we are in edit panel, we need to onDiscard()
+    // so the useEffect cleanup comes later and
+    // doesn't try to commit the changes
+    if (this.state.editPanel) {
+      this.state.editPanel.onDiscard();
+    }
+
     // Disable grid dragging
     this.propagateEditModeChange();
   }
@@ -384,6 +390,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel } = this.state;
+
+    if (meta.dashboardNotFound) {
+      return { text: 'Not found' };
+    }
 
     let pageNav: NavModelItem = {
       text: this.state.title,
@@ -635,7 +645,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
     appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Use **Paste panel** toolbar action to paste.']);
-    this.setState({ hasCopiedPanel: true });
   }
 
   public pastePanel() {
@@ -690,7 +699,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       children: [gridItem, ...sceneGridLayout.state.children],
     });
 
-    this.setState({ hasCopiedPanel: false });
     store.delete(LS_PANEL_COPY_KEY);
   }
 
