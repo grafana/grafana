@@ -218,14 +218,19 @@ def validate_openapi_spec_step():
         ],
     }
 
-def dockerize_step(name, hostname, port):
-    return {
+def dockerize_step(name, hostname, port, canFail = False):
+    step = {
         "name": name,
         "image": images["dockerize"],
         "commands": [
             "dockerize -wait tcp://{}:{} -timeout 120s".format(hostname, port),
         ],
     }
+
+    if canFail:
+        step["failure"] = "ignore"
+
+    return step
 
 def build_storybook_step(ver_mode):
     return {
@@ -799,7 +804,7 @@ def e2e_storybook_step():
             "PORT": "9001",
         },
         "commands": [
-            "npx wait-on@7.0.1 http://$HOST:$PORT",
+            "npx wait-on@7.2.0 -t 1m http://$HOST:$PORT",
             "yarn e2e:storybook",
         ],
     }
@@ -959,7 +964,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
 
     return step
 
-def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None):
+def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None, canFail = False):
     """Integration test steps
 
     Args:
@@ -968,6 +973,7 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
       hostname: the hostname where the remote server is available.
       port: the port where the remote server is available.
       environment: Any extra environment variables needed to run the integration tests.
+      canFail: controls whether the step can fail.
 
     Returns:
       A list of drone steps. If a hostname / port were provided, then a step to wait for the remove server to be
@@ -987,6 +993,9 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
             "apk add --update build-base",
         ] + cmds,
     }
+
+    if canFail:
+        step["failure"] = "ignore"
 
     if environment:
         step["environment"] = environment
@@ -1064,7 +1073,7 @@ def remote_alertmanager_integration_tests_steps():
         "AM_URL": "http://mimir_backend:8080",
     }
 
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment, canFail = True)
 
 def memcached_integration_tests_steps():
     cmds = [

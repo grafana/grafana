@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,7 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const mapperMatchAllOrgID = -1
+const (
+	mapperMatchAllOrgID = -1
+	escapeStr           = `\`
+)
+
+var separatorRegexp = regexp.MustCompile(":")
 
 // OrgRoleMapper maps external orgs/groups to Grafana orgs and basic roles.
 type OrgRoleMapper struct {
@@ -132,7 +138,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 	res := map[string]map[int64]org.RoleType{}
 
 	for _, v := range mappings {
-		kv := strings.Split(v, ":")
+		kv := splitOrgMapping(v)
 		if !isValidOrgMappingFormat(kv) {
 			m.logger.Error("Skipping org mapping due to invalid format.", "mapping", fmt.Sprintf("%v", v))
 			if roleStrict {
@@ -201,6 +207,29 @@ func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
 		allOrgIDs[org.ID] = true
 	}
 	return allOrgIDs, nil
+}
+
+func splitOrgMapping(mapping string) []string {
+	result := make([]string, 0, 3)
+	matches := separatorRegexp.FindAllStringIndex(mapping, -1)
+	from := 0
+
+	for _, match := range matches {
+		// match[0] is the start, match[1] is the end of the match
+		start, end := match[0], match[1]
+		// Check if the match is not preceded by two backslashes
+		if start == 0 || mapping[start-1:start] != escapeStr {
+			result = append(result, strings.ReplaceAll(mapping[from:end-1], escapeStr, ""))
+			from = end
+		}
+	}
+
+	result = append(result, mapping[from:])
+	if len(result) > 3 {
+		return []string{}
+	}
+
+	return result
 }
 
 func getRoleForInternalOrgMapping(kv []string) org.RoleType {
