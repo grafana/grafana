@@ -155,7 +155,7 @@ jobs:
       - name: Run BigQuery query
         run: |
           gcloud config set project grafanalabs-global
-          CLOUDSDK_CORE_PROJECT=grafanalabs-workload-identity=grafanalabs-global bq query --nouse_legacy_sql --project_id=grafanalabs-global "
+          CLOUDSDK_CORE_PROJECT=grafanalabs-global bq query --nouse_legacy_sql --project_id=grafanalabs-global "
           SELECT
             property_name,
             package_name,
