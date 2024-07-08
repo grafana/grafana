@@ -54,14 +54,38 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		return err
 	}
 
+	archive, err := m.install(ctx, pluginID, version, compatOpts)
+	if err != nil {
+		return err
+	}
+
+	for _, dep := range archive.Dependencies {
+		m.log.Info(fmt.Sprintf("Fetching %s dependency %s...", pluginID, dep.ID))
+
+		err = m.Add(ctx, dep.ID, dep.Version, opts)
+		if err != nil {
+			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+		}
+	}
+
+	_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, []string{archive.Path}))
+	if err != nil {
+		m.log.Error("Could not load plugins", "path", archive.Path, "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
-			return plugins.ErrInstallCorePlugin
+			return nil, plugins.ErrInstallCorePlugin
 		}
 
 		if plugin.Info.Version == version {
-			return plugins.DuplicateError{
+			return nil, plugins.DuplicateError{
 				PluginID: plugin.ID,
 			}
 		}
@@ -69,74 +93,51 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		// get plugin update information to confirm if target update is possible
 		pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// if existing plugin version is the same as the target update version
 		if pluginArchiveInfo.Version == plugin.Info.Version {
-			return plugins.DuplicateError{
+			return nil, plugins.DuplicateError{
 				PluginID: plugin.ID,
 			}
 		}
 
 		if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
-			return fmt.Errorf("could not determine update options for %s", pluginID)
+			return nil, fmt.Errorf("could not determine update options for %s", pluginID)
 		}
 
 		// remove existing installation of plugin
 		err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if pluginArchiveInfo.URL != "" {
 			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		} else {
 			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	} else {
 		var err error
 		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, m.pluginStorageDirFunc, pluginArchive.File)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// download dependency plugins
-	pathsToScan := []string{extractedArchive.Path}
-	for _, dep := range extractedArchive.Dependencies {
-		m.log.Info(fmt.Sprintf("Fetching %s dependencies...", dep.ID))
-		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
-		if err != nil {
-			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
-		}
-
-		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, m.pluginStorageDirFunc, d.File)
-		if err != nil {
-			return err
-		}
-
-		pathsToScan = append(pathsToScan, depArchive.Path)
-	}
-
-	_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, pathsToScan))
-	if err != nil {
-		m.log.Error("Could not load plugins", "paths", pathsToScan, "error", err)
-		return err
-	}
-
-	return nil
+	return extractedArchive, nil
 }
 
 func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
