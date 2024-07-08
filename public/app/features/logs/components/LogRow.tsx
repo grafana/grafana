@@ -18,7 +18,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, PopoverContent, Themeable2, Tooltip, withTheme2 } from '@grafana/ui';
 
-import { ContentOutlineItemContextProps } from '../../explore/ContentOutline/ContentOutlineContext';
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
 import { LogDetails } from './LogDetails';
