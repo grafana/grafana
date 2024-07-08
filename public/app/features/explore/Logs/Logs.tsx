@@ -147,6 +147,7 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
 
 const PINNED_LOGS_LIMIT = 3;
 const PINNED_LOGS_TITLE = 'Pinned log';
+const PINNED_LOGS_MESSAGE = 'Pin to content outline';
 
 const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const {
@@ -195,7 +196,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [forceEscape, setForceEscape] = useState<boolean>(false);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
-  const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>('Pin to content outline');
+  const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
@@ -219,6 +220,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   // Get pinned log lines
   const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
   const pinnedLogs = logsParent?.children?.filter((outlines) => outlines.title === PINNED_LOGS_TITLE);
+
+  const getPinnedLogsCount = useCallback(() => {
+    const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
+  }, [outlineItems]);
 
   const registerLogLevelsWithContentOutline = useCallback(() => {
     const levelsArr = Object.keys(LogLevelColor);
@@ -275,6 +281,21 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       });
     }
   }, [logsVolumeData?.data, unregisterAllChildren, logsVolumeEnabled, hiddenLogLevels, register, toggleLegendRef]);
+
+  useEffect(() => {
+    if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
+      setPinLineButtonTooltipTitle(
+        <span style={{ display: 'flex', textAlign: 'center' }}>
+          ❗️
+          <Trans i18nKey="explore.logs.maximum-pinned-logs">
+            Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
+          </Trans>
+        </span>
+      );
+    } else {
+      setPinLineButtonTooltipTitle(PINNED_LOGS_MESSAGE);
+    }
+  }, [outlineItems, getPinnedLogsCount]);
 
   useEffect(() => {
     if (loading && !previousLoading && panelState?.logs?.id) {
@@ -654,18 +675,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [logsContainerRef, topLogsRef]);
 
   const onPinToContentOutlineClick = (row: LogRowModel) => {
-    if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
-      setPinLineButtonTooltipTitle(
-        <span style={{ display: 'flex', textAlign: 'center' }}>
-          ❗️
-          <Trans i18nKey="explore.logs.maximum-pinned-logs">
-            Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
-          </Trans>
-        </span>
-      );
-      return;
-    }
-
     // find the Logs parent item
     const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
 
@@ -674,30 +683,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       updateItem(logsParent.id, { expanded: true });
     }
 
-    register?.({
-      id: row.rowId,
-      icon: 'gf-logs',
-      title: PINNED_LOGS_TITLE,
-      panelId: 'Logs',
-      level: 'child',
-      ref: null,
-      color: LogLevelColor[row.logLevel],
-      childOnTop: true,
-      onClick: () => onOpenContext(row, () => {}),
-      onRemove: (id: string) => {
-        unregister?.(id);
-        if (getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
-          setPinLineButtonTooltipTitle('Pin to content outline');
-        }
-      },
-    });
+    const alreadyPinned = pinnedLogs?.find((pin) => pin.id === row.rowId);
+    if (alreadyPinned && row.rowId) {
+      unregister?.(row.rowId);
+    } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT) {
+      register?.({
+        id: row.rowId,
+        icon: 'gf-logs',
+        title: PINNED_LOGS_TITLE,
+        panelId: 'Logs',
+        level: 'child',
+        ref: null,
+        color: LogLevelColor[row.logLevel],
+        childOnTop: true,
+        onClick: () => onOpenContext(row, () => {}),
+        onRemove: (id: string) => {
+          unregister?.(id);
+          if (getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
+            setPinLineButtonTooltipTitle(PINNED_LOGS_MESSAGE);
+          }
+        },
+      });
+    }
 
     props.onPinLineCallback?.();
-  };
-
-  const getPinnedLogsCount = () => {
-    const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
-    return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
   };
 
   const hasUnescapedContent = checkUnescapedContent(logRows);

@@ -221,17 +221,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       app,
       styles,
       getRowContextQuery,
-      pinnedLogs,
+      pinned,
     } = this.props;
 
-    const isLogPinned = pinnedLogs?.some((log) => log.id === row.rowId);
     const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const { sampleMessage, isSampled } = checkLogsSampled(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: showingContext || permalinked || isLogPinned,
+      [styles.highlightBackground]: showingContext || permalinked || pinned,
     });
     const logRowDetailsBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
