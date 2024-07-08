@@ -11,8 +11,8 @@ export const isEmptyObject = (value: unknown): value is Record<string, never> =>
   return typeof value === 'object' && value !== null && Object.keys(value).length === 0;
 };
 
+/** Stringifies an object that may contain circular references */
 export function safeStringifyValue(value: unknown) {
-  // Avoid circular references ignoring those references
   const getCircularReplacer = () => {
     const seen = new WeakSet();
     return (_: string, value: object | null) => {
@@ -27,11 +27,5 @@ export function safeStringifyValue(value: unknown) {
     };
   };
 
-  try {
-    return JSON.stringify(value, getCircularReplacer());
-  } catch (error) {
-    console.error(error);
-  }
-
-  return '';
+  return JSON.stringify(value, getCircularReplacer());
 }
