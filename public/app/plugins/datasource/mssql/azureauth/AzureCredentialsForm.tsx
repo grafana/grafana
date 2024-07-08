@@ -192,15 +192,15 @@ export const AzureCredentialsForm = (props: Props) => {
           label="Application Client ID"
           required
           htmlFor="application-client-id"
-          invalid={!credentials.applicationClientId}
+          invalid={!credentials.clientId}
           error={'Application Client ID is required'}
         >
           <Input
             width={45}
-            value={credentials.applicationClientId || ''}
+            value={credentials.clientId || ''}
             onChange={(event: ChangeEvent<HTMLInputElement>) => {
               const value = event.target.value;
-              onInputChange({ property: 'applicationClientId', value });
+              onInputChange({ property: 'clientId', value });
             }}
             disabled={disabled}
             aria-label="Application Client ID"

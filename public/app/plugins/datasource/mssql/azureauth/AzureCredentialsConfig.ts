@@ -41,8 +41,8 @@ export const getCredentials = (
   // Secure JSON data/fields
   const clientSecretStoredServerSide = dsSettings.secureJsonFields?.azureClientSecret;
   const clientSecret = dsSettings.secureJsonData?.azureClientSecret;
-  const passwordStoredServerSide = dsSettings.secureJsonFields?.azurePassword;
-  const password = dsSettings.secureJsonData?.azurePassword;
+  const passwordStoredServerSide = dsSettings.secureJsonFields?.password;
+  const password = dsSettings.secureJsonData?.password;
 
   // BootConfig data
   const managedIdentityEnabled = !!bootConfig.azure?.managedIdentityEnabled;
@@ -80,7 +80,7 @@ export const getCredentials = (
         return {
           authType: AzureAuthType.AD_PASSWORD,
           userId: credentials.userId,
-          applicationClientId: credentials.applicationClientId,
+          clientId: credentials.clientId,
           password: getSecret(passwordStoredServerSide, password)
         }
   }
@@ -148,19 +148,19 @@ export const updateCredentials = (
           azureCredentials: {
             authType: AzureAuthType.AD_PASSWORD,
             userId: credentials.userId,
-            applicationClientId: credentials.applicationClientId,
+            clientId: credentials.clientId,
           },
         },
         secureJsonData: {
           ...dsSettings.secureJsonData,
-          azurePassword:
+          password:
             typeof credentials.password === 'string' && credentials.password.length > 0
               ? credentials.password
               : undefined,
         },
         secureJsonFields: {
           ...dsSettings.secureJsonFields,
-          azurePassword: typeof credentials.password === 'symbol',
+          password: typeof credentials.password === 'symbol',
         },
       };
 

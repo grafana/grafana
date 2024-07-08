@@ -48,5 +48,5 @@ export const dataSourceSettingsWithClientSecretInSecureJSONData: Partial<
   DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>
 > = {
   ...basicJSONData,
-  secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX', azurePassword:'test-password'},
+  secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX', password:'test-password'},
 };

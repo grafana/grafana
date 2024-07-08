@@ -325,7 +325,7 @@ func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentia
 		connStr += fmt.Sprintf("user id=%s;password=%s;applicationclientid=%s;fedauth=%s;",
 			c.UserId,
 			c.Password,
-			c.ApplicationClientId,
+			c.ClientId,
 			"ActiveDirectoryPassword",
 		)
 	default:

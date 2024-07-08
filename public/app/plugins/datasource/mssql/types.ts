@@ -39,7 +39,6 @@ export interface AzureCredentialsType {
   clientSecret?: string | ConcealedSecretType;
   userId?: string;
   password?: string | ConcealedSecretType;
-  applicationClientId?: string;
 }
 
 export interface MssqlOptions extends SQLOptions {
@@ -67,7 +66,7 @@ export type AzureAuthJSONDataType = DataSourceJsonData & {
 
 export type AzureAuthSecureJSONDataType = {
   azureClientSecret: undefined | string | ConcealedSecretType;
-  azurePassword: undefined | string | ConcealedSecretType;
+  password: undefined | string | ConcealedSecretType;
 };
 
 export type AzureAuthConfigType = {
