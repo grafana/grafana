@@ -40,7 +40,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
       cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
       dataSource: {
         default: datasourceSettings?.isDefault,
-        ...(datasourceSettings ? getDataSourceRef(datasourceSettings) : {}),
+        ...(datasourceSettings ? getDataSourceRef(datasourceSettings) : { type: undefined, uid: undefined }),
       },
       queryCachingTTL: datasourceSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
       queries: panel.targets,

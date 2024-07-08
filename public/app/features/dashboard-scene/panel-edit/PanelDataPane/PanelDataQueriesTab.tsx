@@ -81,7 +81,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
         : undefined,
       dataSource: {
         default: panelManager.state.dsSettings?.isDefault,
-        ...(panelManager.state.dsSettings ? getDataSourceRef(panelManager.state.dsSettings) : {}),
+        ...(panelManager.state.dsSettings
+          ? getDataSourceRef(panelManager.state.dsSettings)
+          : { type: undefined, uid: undefined }),
       },
       queries,
       maxDataPoints: queryRunner.state.maxDataPoints,
@@ -144,7 +146,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   onAddQuery = (query: Partial<DataQuery>) => {
     const queries = this.getQueries();
     const dsSettings = this._panelManager.state.dsSettings;
-    this.onQueriesChange(addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : {}));
+    this.onQueriesChange(
+      addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined })
+    );
   };
 
   isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {

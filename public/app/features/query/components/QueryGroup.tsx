@@ -174,7 +174,12 @@ export class QueryGroup extends PureComponent<Props, State> {
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
 
-    const ds = dsSettings && !dsSettings.meta.mixed ? getDataSourceRef(dsSettings) : defaultDataSource?.getRef();
+    const ds =
+      dsSettings && !dsSettings.meta.mixed
+        ? getDataSourceRef(dsSettings)
+        : defaultDataSource
+          ? defaultDataSource.getRef()
+          : { type: undefined, uid: undefined };
 
     return {
       ...this.state.dataSource?.getDefaultQuery?.(CoreApp.PanelEditor),
@@ -241,7 +246,9 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQuery = (query: Partial<DataQuery>) => {
     const { dsSettings, queries } = this.state;
-    this.onQueriesChange(addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : {}));
+    this.onQueriesChange(
+      addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined })
+    );
     this.onScrollBottom();
   };
 
