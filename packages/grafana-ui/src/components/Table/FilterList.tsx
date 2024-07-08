@@ -184,41 +184,42 @@ export const FilterList = ({
           <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
         </Stack>
       )}
-      {!items.length && <Label>No values</Label>}
-      {items.length && (
-        <List
-          height={height}
-          itemCount={items.length}
-          itemSize={ITEM_HEIGHT}
-          width="100%"
-          className={styles.filterList}
-        >
-          {({ index, style }) => {
-            const option = items[index];
-            const { value, label } = option;
-            const isChecked = values.find((s) => s.value === value) !== undefined;
+      {items.length > 0 ? (
+        <>
+          <List
+            height={height}
+            itemCount={items.length}
+            itemSize={ITEM_HEIGHT}
+            width="100%"
+            className={styles.filterList}
+          >
+            {({ index, style }) => {
+              const option = items[index];
+              const { value, label } = option;
+              const isChecked = values.find((s) => s.value === value) !== undefined;
 
-            return (
-              <div className={styles.filterListRow} style={style} title={label}>
-                <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
-              </div>
-            );
-          }}
-        </List>
-      )}
-      {items.length && (
-        <Stack direction="column" gap={0.25}>
-          <div className={cx(styles.selectDivider)} />
-          <div className={cx(styles.filterListRow)}>
-            <Checkbox
-              value={selectCheckValue}
-              indeterminate={selectCheckIndeterminate}
-              label={selectCheckLabel}
-              description={selectCheckDescription}
-              onChange={onSelectChanged}
-            />
-          </div>
-        </Stack>
+              return (
+                <div className={styles.filterListRow} style={style} title={label}>
+                  <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
+                </div>
+              );
+            }}
+          </List>
+          <Stack direction="column" gap={0.25}>
+            <div className={cx(styles.selectDivider)} />
+            <div className={cx(styles.filterListRow)}>
+              <Checkbox
+                value={selectCheckValue}
+                indeterminate={selectCheckIndeterminate}
+                label={selectCheckLabel}
+                description={selectCheckDescription}
+                onChange={onSelectChanged}
+              />
+            </div>
+          </Stack>
+        </>
+      ) : (
+        <Label className={styles.noValuesLabel}>No values</Label>
       )}
     </Stack>
   );
@@ -245,5 +246,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(0.5, 2),
+  }),
+  noValuesLabel: css({
+    paddingTop: theme.spacing(1),
   }),
 });
