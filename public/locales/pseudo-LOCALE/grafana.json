@@ -58,16 +58,14 @@
   "alerting": {
     "central-alert-history": {
       "details": {
-        "add-filter": "Åđđ ƒįľŧęř þy äľęřŧ ŉämę",
         "annotations": "Åŉŉőŧäŧįőŉş",
         "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
         "loading": "Ŀőäđįŉģ...",
-        "no-annotations": "Ńő äŉŉőŧäŧįőŉş",
         "no-recognized-state": "Ńő řęčőģŉįžęđ şŧäŧę",
         "no-values": "Ńő väľūęş",
         "not-found": "Ŗūľę ŉőŧ ƒőūŉđ ƒőř ŧĥįş ęvęŉŧ.",
         "not-grafana-rule": "Ŗūľę įş ŉőŧ ä Ğřäƒäŉä řūľę",
-        "number-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉş ƒőř şęľęčŧęđ pęřįőđ",
+        "number-transitions": "Ŝŧäŧę ŧřäŉşįŧįőŉş ƒőř şęľęčŧęđ pęřįőđ:",
         "state": {
           "alerting": "Åľęřŧįŉģ",
           "error": "Ēřřőř",
@@ -89,7 +87,8 @@
           "label3": "Väľįđ ūşę őƒ şpäčęş:",
           "label4": "Fįľŧęř äľęřŧş ūşįŉģ ľäþęľ qūęřyįŉģ ŵįŧĥőūŧ þřäčęş, ęχ:"
         }
-      }
+      },
+      "filterBy": "Fįľŧęř þy:"
     },
     "contact-points": {
       "telegram": {

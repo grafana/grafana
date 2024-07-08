@@ -64,11 +64,11 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
       <Stack direction={'row'} gap={6}>
         <StateTransition record={record} addFilter={addFilter} />
         <ValueInTransition record={record} />
-        <NumberTransitions
-          transitions={ruleUID ? getTransitionsCountByRuleUIDAndLabels(ruleUID, record.line.labels) : 0}
-        />
       </Stack>
       <Annotations rule={rule} />
+      <NumberTransitions
+        transitions={ruleUID ? getTransitionsCountByRuleUIDAndLabels(ruleUID, record.line.labels) : 0}
+      />
       <QueryVizualization rule={rule} ruleUID={ruleUID} logRecords={logRecords} />
     </Stack>
   );
@@ -211,17 +211,18 @@ interface NumberTransitionsProps {
   transitions: number;
 }
 function NumberTransitions({ transitions }: NumberTransitionsProps) {
+  const styles = useStyles2(getStyles);
   return (
-    <Stack gap={0.5} direction={'column'} alignItems="flex-start" justifyContent={'center'}>
-      <Text variant="body" weight="light" color="secondary">
+    <div className={styles.transitionsNumber}>
+      <Text variant="body" weight="bold" color="secondary">
         <Trans i18nKey="alerting.central-alert-history.details.number-transitions">
-          State transitions for selected period
+          State transitions for selected period:
         </Trans>
       </Text>
       <Text variant="body" weight="light">
         {transitions}
       </Text>
-    </Stack>
+    </div>
   );
 }
 const getStyles = (theme: GrafanaTheme2) => {
@@ -231,6 +232,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridTemplateColumns: 'auto auto',
       rowGap: theme.spacing(3),
       columnGap: theme.spacing(12),
+    }),
+    transitionsNumber: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(0.5),
+      alignItems: 'center',
+      marginTop: theme.spacing(1.5),
     }),
   };
 };

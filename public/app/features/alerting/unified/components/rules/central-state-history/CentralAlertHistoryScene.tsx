@@ -27,6 +27,7 @@ import {
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
+  Text,
   Tooltip,
   TooltipDisplayMode,
   useStyles2,
@@ -86,6 +87,9 @@ export const CentralAlertHistoryScene = () => {
 
   const scene = new EmbeddedScene({
     controls: [
+      new SceneReactObject({
+        component: LabelFilter,
+      }),
       new VariableValueSelectors({
         $variables: new SceneVariableSet({
           variables: [labelsFilterVariable],
@@ -258,10 +262,23 @@ function ClearFilterButton({
   );
 }
 
-export const FilterInfo = () => {
+const LabelFilter = () => {
+  const styles = useStyles2(getStyles)
+  return (
+    <div className={styles.filterLabelContainer}>
+      <Text variant="body" weight="light" color="secondary">
+        <Trans i18nKey="alerting.central-alert-history.filterBy">
+          Filter by:
+        </Trans>
+      </Text>
+    </div>
+  )
+}
+
+const FilterInfo = () => {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.container}>
+    <div className={styles.filterInfoContainer}>
       <Tooltip
         content={
           <div>
@@ -289,11 +306,15 @@ export const FilterInfo = () => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css({
+    filterInfoContainer: css({
       padding: '0',
       alignSelf: 'center',
       marginLeft: theme.spacing(-1),
       marginRight: theme.spacing(1),
+    }),
+    filterLabelContainer: css({
+      padding: '0',
+      alignSelf: 'center',
     }),
   };
 };
