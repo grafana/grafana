@@ -528,9 +528,9 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 		eval := &Evaluation{
 			EvaluationTime:  time.Time{},
 			EvaluationState: 0,
-			Values: map[string]*float64{
-				"B": util.Pointer(rand.Float64()),
-				"A": util.Pointer(expected),
+			Values: map[string]float64{
+				"B": rand.Float64(),
+				"A": expected,
 			},
 			Condition: "A",
 		}
@@ -543,8 +543,8 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 		eval := &Evaluation{
 			EvaluationTime:  time.Time{},
 			EvaluationState: 0,
-			Values: map[string]*float64{
-				"C": util.Pointer(rand.Float64()),
+			Values: map[string]float64{
+				"C": rand.Float64(),
 			},
 			Condition: "A",
 		}
@@ -556,8 +556,8 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 		eval := &Evaluation{
 			EvaluationTime:  time.Time{},
 			EvaluationState: 0,
-			Values: map[string]*float64{
-				"A": nil,
+			Values: map[string]float64{
+				"A": math.NaN(),
 			},
 			Condition: "A",
 		}
