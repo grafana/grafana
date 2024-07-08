@@ -32,6 +32,7 @@ var (
 	sqlResourceUpdate          = mustTemplate("resource_update.sql")
 	sqlResourceRead            = mustTemplate("resource_read.sql")
 	sqlResourceList            = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList     = mustTemplate("resource_history_list.sql")
 	sqlResourceUpdateRV        = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead     = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryUpdateRV = mustTemplate("resource_history_update_rv.sql")
@@ -141,6 +142,20 @@ type sqlResourceListRequest struct {
 }
 
 func (r sqlResourceListRequest) Validate() error {
+	return nil // TODO
+}
+
+type historyListRequest struct {
+	ResourceVersion, Limit, Offset int64
+	Options                        *resource.ListOptions
+}
+type sqlResourceHistoryListRequest struct {
+	*sqltemplate.SQLTemplate
+	Request  *historyListRequest
+	Response *resource.ResourceWrapper
+}
+
+func (r sqlResourceHistoryListRequest) Validate() error {
 	return nil // TODO
 }
 

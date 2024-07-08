@@ -351,6 +351,9 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 	_, span := b.tracer.Start(ctx, trace_prefix+"List")
 	defer span.End()
 
+	if req.ResourceVersion > 0 || req.NextPageToken != "" {
+		return b.listAtRevision(ctx, req)
+	}
 	return b.listLatest(ctx, req)
 }
 
@@ -372,6 +375,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 		}
 
 		// Fetch one extra row for Limit
+		lim := req.Limit
 		if req.Limit > 0 {
 			req.Limit++
 		}
@@ -397,8 +401,76 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 			}
 			rw := *readReq.Response
 
-			if req.Limit > 0 && i >= req.Limit {
-				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: i - 1}
+			if lim > 0 && i > lim {
+				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: lim}
+				out.NextPageToken = continueToken.String()
+				break
+			}
+			out.Items = append(out.Items, &rw)
+		}
+
+		return nil
+	})
+
+	return out, err
+}
+
+// listAtRevision fetches the resources from the resource_history table at a specific revision.
+func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+	// Get the RV
+	rv := req.ResourceVersion
+	offset := int64(0)
+	if rv == 0 {
+		continueToken, err := GetContinueToken(req.NextPageToken)
+		if err != nil {
+			return nil, fmt.Errorf("get continue token: %w", err)
+		}
+		rv = continueToken.ResourceVersion
+		offset = continueToken.StartOffset
+	}
+
+	out := &resource.ListResponse{
+		Items:           []*resource.ResourceWrapper{}, // TODO: we could pre-allocate the capacity if we estimate the number of items
+		ResourceVersion: rv,
+	}
+
+	err := b.sqlDB.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
+
+		// Fetch one extra row for Limit
+		lim := req.Limit
+		if lim > 0 {
+			req.Limit++
+		}
+		readReq := sqlResourceHistoryListRequest{
+			SQLTemplate: sqltemplate.New(b.sqlDialect),
+			Request: &historyListRequest{
+				ResourceVersion: rv,
+				Limit:           req.Limit,
+				Offset:          offset,
+				Options:         req.Options,
+			},
+			Response: new(resource.ResourceWrapper),
+		}
+		query, err := sqltemplate.Execute(sqlResourceHistoryList, readReq)
+		if err != nil {
+			return fmt.Errorf("execute SQL template to list resources at revision: %w", err)
+		}
+		rows, err := tx.QueryContext(ctx, query, readReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("list resources at revision: %w", err)
+		}
+		for i := int64(1); rows.Next(); i++ {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if err := rows.Scan(readReq.GetScanDest()...); err != nil {
+				return fmt.Errorf("scan row #%d: %w", i, err)
+			}
+			rw := *readReq.Response
+
+			if lim > 0 && i > lim {
+				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: offset + lim}
 				out.NextPageToken = continueToken.String()
 				break
 			}

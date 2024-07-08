@@ -218,7 +218,6 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int64(i), rv)
 	}
-
 	t.Run("fetch all latest", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{})
 		assert.NoError(t, err)
@@ -226,7 +225,7 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.Empty(t, res.NextPageToken)
 	})
 
-	t.Run("fetch first page", func(t *testing.T) {
+	t.Run("list latest first page ", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
 			Limit: 5,
 		})
@@ -236,5 +235,50 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int64(10), continueToken.ResourceVersion)
 		assert.Equal(t, int64(5), continueToken.StartOffset)
+	})
+
+	t.Run("list at revision", func(t *testing.T) {
+		res, err := store.PrepareList(ctx, &resource.ListRequest{
+			ResourceVersion: 4,
+		})
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 4)
+		assert.Equal(t, "initial value 1", string(res.Items[0].Value))
+		assert.Empty(t, res.NextPageToken)
+	})
+
+	t.Run("fetch first page at revision with limit", func(t *testing.T) {
+		res, err := store.PrepareList(ctx, &resource.ListRequest{
+			Limit:           3,
+			ResourceVersion: 5,
+		})
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 3)
+		assert.Equal(t, "initial value 1", string(res.Items[0].Value))
+		assert.Equal(t, "initial value 2", string(res.Items[1].Value))
+		assert.Equal(t, "initial value 3", string(res.Items[2].Value))
+		continueToken, err := GetContinueToken(res.NextPageToken)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(5), continueToken.ResourceVersion)
+		assert.Equal(t, int64(3), continueToken.StartOffset)
+	})
+
+	t.Run("fetch second page at revision", func(t *testing.T) {
+		continueToken := &ContinueToken{
+			ResourceVersion: 5,
+			StartOffset:     2,
+		}
+		res, err := store.PrepareList(ctx, &resource.ListRequest{
+			NextPageToken: continueToken.String(),
+			Limit:         2,
+		})
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 2)
+		assert.Equal(t, "initial value 3", string(res.Items[0].Value))
+		assert.Equal(t, "initial value 4", string(res.Items[1].Value))
+		continueToken, err = GetContinueToken(res.NextPageToken)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(5), continueToken.ResourceVersion)
+		assert.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
