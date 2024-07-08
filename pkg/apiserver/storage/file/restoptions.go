@@ -71,7 +71,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
-		ResourcePrefix:            "/" + resource.Group + "/" + resource.Resource,
+		ResourcePrefix:            "/group/" + resource.Group + "/resource/" + resource.Resource,
 		CountMetricPollPeriod:     1 * time.Second,
 		StorageObjectCountTracker: storageConfig.Config.StorageObjectCountTracker,
 	}

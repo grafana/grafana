@@ -37,9 +37,9 @@ export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
 // Identify where values came from
-const AnnoKeyOriginName = 'grafana.app/originName';
-const AnnoKeyOriginPath = 'grafana.app/originPath';
-const AnnoKeyOriginHash = 'grafana.app/originHash';
+export const AnnoKeyOriginName = 'grafana.app/originName';
+export const AnnoKeyOriginPath = 'grafana.app/originPath';
+export const AnnoKeyOriginHash = 'grafana.app/originHash';
 const AnnoKeyOriginTimestamp = 'grafana.app/originTimestamp';
 
 type GrafanaAnnotations = {
@@ -149,4 +149,14 @@ export interface ResourceClient<T = object, K = string> {
   list(opts?: ListOptions): Promise<ResourceList<T, K>>;
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   delete(name: string): Promise<MetaStatus>;
+}
+
+export interface K8sAPIGroup {
+  name: string;
+  versions: Array<{ groupVersion: string; version: string }>;
+  preferredVersion: { groupVersion: string; version: string };
+}
+export interface K8sAPIGroupList {
+  kind: 'APIGroupList';
+  groups: K8sAPIGroup[];
 }

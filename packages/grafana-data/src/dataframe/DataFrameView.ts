@@ -1,5 +1,5 @@
-import { DisplayProcessor } from '../types';
 import { DataFrame, Field } from '../types/dataFrame';
+import { DisplayProcessor } from '../types/displayValue';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
 /**
