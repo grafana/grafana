@@ -54,8 +54,8 @@ As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user gro
 Related links:
 
 - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
-- [Set up SAML with Azure AD]({{< relref "#set-up-saml-with-azure-ad" >}}) TODO
-- [Configure a Graph API application in Azure AD]({{< relref "#configure-a-graph-api-application-in-azure-ad" >}}) TODO
+- [Set up SAML with Azure AD]({{< relref "../saml#set-up-saml-with-azure-ad" >}})
+- [Configure a Graph API application in Azure AD]({{< relref "../saml#configure-a-graph-api-application-in-azure-ad" >}})
   {{% /admonition %}}
 
 ## Steps To Configure SAML Authentication
