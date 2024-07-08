@@ -1,5 +1,5 @@
-import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactNode } from 'react';
+import { css } from '@emotion/css';
+import { CSSProperties, ReactNode, useMemo } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -23,11 +23,32 @@ const Label = ({ label, value, icon, color, size = 'md', onLabelClick }: Props) 
   const labelStr = label?.toString() ?? '';
   const valueStr = value?.toString() ?? '';
 
+  const innerLabel = useMemo(
+    () => (
+      <Stack direction="row" gap={0} alignItems="stretch">
+        <div className={styles.label}>
+          <Stack direction="row" gap={0.5} alignItems="center">
+            {icon && <Icon name={icon} />}
+            {label && (
+              <span className={styles.labelText} title={label.toString()}>
+                {label ?? ''}
+              </span>
+            )}
+          </Stack>
+        </div>
+        <div className={styles.value} title={value?.toString()}>
+          {value ?? '-'}
+        </div>
+      </Stack>
+    ),
+    [icon, label, value, styles]
+  );
+
   return (
     <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
       {onLabelClick ? (
         <div
-          className={cx(styles.label, Boolean(onLabelClick) && styles.clickable)}
+          className={styles.clickable}
           role="button" // role="button" and tabIndex={0} is needed for keyboard navigation
           tabIndex={0} // Make it focusable
           key={labelStr + valueStr}
@@ -36,41 +57,14 @@ const Label = ({ label, value, icon, color, size = 'md', onLabelClick }: Props) 
             // needed for accessiblity: handle keyboard navigation
             if (e.key === 'Enter') {
               onLabelClick(labelStr, valueStr);
+              e.preventDefault();
             }
           }}
         >
-          <Stack direction="row" gap={0} alignItems="stretch">
-            <div className={styles.label}>
-              <Stack direction="row" gap={0.5} alignItems="center">
-                {icon && <Icon name={icon} />}
-                {label && (
-                  <span className={styles.labelText} title={label.toString()}>
-                    {label ?? ''}
-                  </span>
-                )}
-              </Stack>
-            </div>
-            <div className={styles.value} title={value?.toString()}>
-              {value ?? '-'}
-            </div>
-          </Stack>
+          {innerLabel}
         </div>
       ) : (
-        <Stack direction="row" gap={0} alignItems="stretch">
-          <div className={styles.label}>
-            <Stack direction="row" gap={0.5} alignItems="center">
-              {icon && <Icon name={icon} />}
-              {label && (
-                <span className={styles.labelText} title={label.toString()}>
-                  {label ?? ''}
-                </span>
-              )}
-            </Stack>
-          </div>
-          <div className={styles.value} title={value?.toString()}>
-            {value ?? '-'}
-          </div>
-        </Stack>
+        innerLabel
       )}
     </div>
   );
