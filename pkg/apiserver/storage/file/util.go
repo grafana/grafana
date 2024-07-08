@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -37,7 +38,14 @@ func writeFile(codec runtime.Codec, path string, obj runtime.Object) error {
 	return os.WriteFile(path, buf.Bytes(), 0600)
 }
 
+var fileReadCount uint64 = 0
+
+func getReadsAndReset() uint64 {
+	return atomic.SwapUint64(&fileReadCount, 0)
+}
+
 func readFile(codec runtime.Codec, path string, newFunc func() runtime.Object) (runtime.Object, error) {
+	atomic.AddUint64(&fileReadCount, 1)
 	content, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err

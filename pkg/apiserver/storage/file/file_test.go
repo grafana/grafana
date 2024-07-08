@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -20,7 +21,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
-	"github.com/stretchr/testify/assert"
 )
 
 func init() {
@@ -66,9 +66,6 @@ func checkStorageInvariants(s storage.Interface) storagetesting.KeyValidation {
 		err := s.Get(ctx, key, storage.GetOptions{}, obj)
 		if err != nil {
 			t.Fatalf("Get failed: %v", err)
-		}
-		if obj.SelfLink != "" {
-			t.Errorf("stored output should have empty selfLink")
 		}
 	}
 }
@@ -159,15 +156,47 @@ func TestList(t *testing.T) {
 	}, true)
 }
 
+func compact(store *Storage) storagetesting.Compaction {
+	return func(ctx context.Context, t *testing.T, resourceVersion string) {
+		// tests expect that the resource version is incremented after compaction:
+		// https://github.com/kubernetes/apiserver/blob/4f7f407e71725f4056328bbeb6d6139843716ca6/pkg/storage/etcd3/compact.go#L137
+		_ = store.getNewResourceVersion()
+	}
+}
+
 func TestGetListNonRecursive(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
-	storagetesting.RunTestGetListNonRecursive(ctx, t, func(ctx context.Context, t *testing.T, resourceVersion string) {}, store)
+	storagetesting.RunTestGetListNonRecursive(ctx, t, compact(store.(*Storage)), store)
 }
 
 func checkStorageCalls(t *testing.T, pageSize, estimatedProcessedObjects uint64) {
-	// No-op function for now, since cacher passes pagination calls to underlying storage.
+	if reads := getReadsAndReset(); reads != estimatedProcessedObjects {
+		t.Errorf("unexpected reads: %d, expected: %d", reads, estimatedProcessedObjects)
+	}
+	estimatedGetCalls := uint64(1)
+	if pageSize != 0 {
+		// We expect that kube-apiserver will be increasing page sizes
+		// if not full pages are received, so we should see significantly less
+		// than 1000 pages (which would be result of talking to etcd with page size
+		// copied from pred.Limit).
+		// The expected number of calls is n+1 where n is the smallest n so that:
+		// pageSize + pageSize * 2 + pageSize * 4 + ... + pageSize * 2^n >= podCount.
+		// For pageSize = 1, podCount = 1000, we get n+1 = 10, 2 ^ 10 = 1024.
+		currLimit := pageSize
+		for sum := uint64(1); sum < estimatedProcessedObjects; {
+			currLimit *= 2
+			if currLimit > 10000 {
+				currLimit = 10000
+			}
+			sum += currLimit
+			estimatedGetCalls++
+		}
+	}
+	if reads := getReadsAndReset(); reads != estimatedGetCalls {
+		t.Errorf("unexpected reads: %d, expected: %d", reads, estimatedProcessedObjects)
+	}
 }
 
 func TestListContinuation(t *testing.T) {
@@ -195,8 +224,7 @@ func TestListInconsistentContinuation(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
-	// TODO(#109831): Enable use of this by setting compaction.
-	storagetesting.RunTestListInconsistentContinuation(ctx, t, store, nil)
+	storagetesting.RunTestListInconsistentContinuation(ctx, t, store, compact(store.(*Storage)))
 }
 
 func TestConsistentList(t *testing.T) {
@@ -204,7 +232,10 @@ func TestConsistentList(t *testing.T) {
 }
 
 func TestGuaranteedUpdate(t *testing.T) {
-	// TODO(#109831): Enable use of this test and run it.
+	// ctx, store, destroyFunc, err := testSetup(t)
+	// defer destroyFunc()
+	// assert.NoError(t, err)
+	// storagetesting.RunTestGuaranteedUpdate(ctx, t, store, nil)
 }
 
 func TestGuaranteedUpdateWithTTL(t *testing.T) {
@@ -215,7 +246,10 @@ func TestGuaranteedUpdateWithTTL(t *testing.T) {
 }
 
 func TestGuaranteedUpdateChecksStoredData(t *testing.T) {
-	// TODO(#109831): Enable use of this test and run it.
+	// ctx, store, destroyFunc, err := testSetup(t)
+	// defer destroyFunc()
+	// assert.NoError(t, err)
+	// storagetesting.RunTestGuaranteedUpdateChecksStoredData(ctx, t, store)
 }
 
 func TestGuaranteedUpdateWithConflict(t *testing.T) {

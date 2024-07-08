@@ -293,8 +293,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		}
 
 		if p.AllowWatchBookmarks && len(initEvents) > 0 {
-			lastInitEvent := initEvents[len(initEvents)-1]
-			lastItemRV, err := s.versioner.ObjectResourceVersion(lastInitEvent.Object)
+			listRV, err := s.versioner.ParseResourceVersion(listAccessor.GetResourceVersion())
 			if err != nil {
 				return nil, fmt.Errorf("could not get last init event's revision for bookmark: %v", err)
 			}
@@ -304,7 +303,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 				Object: s.newFunc(),
 			}
 
-			if err := s.versioner.UpdateObject(bookmarkEvent.Object, lastItemRV); err != nil {
+			if err := s.versioner.UpdateObject(bookmarkEvent.Object, listRV); err != nil {
 				return nil, err
 			}
 
@@ -437,17 +436,12 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	for _, obj := range objs {
-		currentVersion, err := s.versioner.ObjectResourceVersion(obj)
-		if err != nil {
-			return err
-		}
-
 		if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
 			// Apply the minimum resource version validation when we are not being called as part of Watch
 			// SendInitialEvents flow
 			// reason: the resource version of currently returned init items will always be < list RV
 			// they are being generated for, unless of course, the requestedRV == "0"/""
-			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
+			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, s.getCurrentResourceVersion()); err != nil {
 				// Below log left for debug. It's usually not an error condition
 				// klog.Infof("failed to assert minimum resource version constraint against list version")
 				continue
@@ -461,7 +455,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	if resourceVersionInt == 0 {
-		resourceVersionInt = s.getNewResourceVersion()
+		resourceVersionInt = s.getCurrentResourceVersion()
 	}
 
 	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
