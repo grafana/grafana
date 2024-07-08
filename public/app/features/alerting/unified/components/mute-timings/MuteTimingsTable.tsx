@@ -3,11 +3,11 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, LinkButton, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { MuteTimingActionsButtons } from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
 import {
   ALL_MUTE_TIMINGS,
-  MuteTimingActionsButtons,
-  useExportMuteTiming,
-} from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
+  useExportMuteTimingsDrawer,
+} from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { Authorize } from '../../components/Authorize';
@@ -28,7 +28,7 @@ interface MuteTimingsTableProps {
 
 export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTimingsTableProps) => {
   const styles = useStyles2(getStyles);
-  const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTiming();
+  const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTimingsDrawer();
 
   const { data, isLoading } = useMuteTimings({ alertmanager: alertManagerSourceName });
 

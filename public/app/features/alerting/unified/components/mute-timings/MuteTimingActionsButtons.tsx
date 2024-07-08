@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useToggle } from 'react-use';
+import { useState } from 'react';
 
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { Authorize } from '../../components/Authorize';
@@ -10,43 +10,8 @@ import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbili
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
-import { GrafanaMuteTimingsExporter } from '../export/GrafanaMuteTimingsExporter';
 
 import { useDeleteMuteTiming } from './useMuteTimings';
-export const ALL_MUTE_TIMINGS = Symbol('all mute timings');
-
-type ExportProps = [JSX.Element | null, (muteTiming: string | typeof ALL_MUTE_TIMINGS) => void];
-
-export const useExportMuteTiming = (): ExportProps => {
-  const [muteTimingName, setMuteTimingName] = useState<string | typeof ALL_MUTE_TIMINGS | null>(null);
-  const [isExportDrawerOpen, toggleShowExportDrawer] = useToggle(false);
-
-  const handleClose = useCallback(() => {
-    setMuteTimingName(null);
-    toggleShowExportDrawer(false);
-  }, [toggleShowExportDrawer]);
-
-  const handleOpen = (receiverName: string | typeof ALL_MUTE_TIMINGS) => {
-    setMuteTimingName(receiverName);
-    toggleShowExportDrawer(true);
-  };
-
-  const drawer = useMemo(() => {
-    if (!muteTimingName || !isExportDrawerOpen) {
-      return null;
-    }
-
-    if (muteTimingName === ALL_MUTE_TIMINGS) {
-      // use this drawer when we want to export all mute timings
-      return <GrafanaMuteTimingsExporter onClose={handleClose} />;
-    } else {
-      // use this one for exporting a single mute timing
-      return <GrafanaMuteTimingsExporter muteTimingName={muteTimingName} onClose={handleClose} />;
-    }
-  }, [isExportDrawerOpen, handleClose, muteTimingName]);
-
-  return [drawer, handleOpen];
-};
 
 interface MuteTimingActionsButtonsProps {
   muteTiming: MuteTimeInterval;
@@ -56,7 +21,7 @@ interface MuteTimingActionsButtonsProps {
 export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }: MuteTimingActionsButtonsProps) => {
   const deleteMuteTiming = useDeleteMuteTiming({ alertmanager: alertManagerSourceName! });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
-  const [ExportDrawer, showExportDrawer] = useExportMuteTiming();
+  const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportMuteTimings);
 
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
