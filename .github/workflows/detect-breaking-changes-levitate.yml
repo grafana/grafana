@@ -157,7 +157,7 @@ jobs:
           # unset GCLOUD_PROJECT
           # unset GCP_PROJECT
           # unset GOOGLE_CLOUD_PROJECT
-
+          gcloud auth login
           gcloud config set project grafanalabs-global
           CLOUDSDK_CORE_PROJECT=grafanalabs-global bq query --nouse_legacy_sql --project_id=grafanalabs-global "
           SELECT
