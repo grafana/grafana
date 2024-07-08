@@ -154,14 +154,14 @@ func TestBackendPrepareList(t *testing.T) {
 	assert.NotNil(t, store)
 
 	// Create a few resources before initing the watch
-	writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)    // rv=1
-	writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)    // rv=2 - will be modified at rv=6
-	writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted at rv=7
-	writeEvent(ctx, store, "item4", resource.WatchEvent_ADDED)    // rv=4
-	writeEvent(ctx, store, "item5", resource.WatchEvent_ADDED)    // rv=5
-	writeEvent(ctx, store, "item2", resource.WatchEvent_MODIFIED) // rv=6
-	writeEvent(ctx, store, "item3", resource.WatchEvent_DELETED)  // rv=7
-	writeEvent(ctx, store, "item6", resource.WatchEvent_ADDED)    // rv=8
+	_, _ = writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)    // rv=1
+	_, _ = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)    // rv=2 - will be modified at rv=6
+	_, _ = writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted at rv=7
+	_, _ = writeEvent(ctx, store, "item4", resource.WatchEvent_ADDED)    // rv=4
+	_, _ = writeEvent(ctx, store, "item5", resource.WatchEvent_ADDED)    // rv=5
+	_, _ = writeEvent(ctx, store, "item2", resource.WatchEvent_MODIFIED) // rv=6
+	_, _ = writeEvent(ctx, store, "item3", resource.WatchEvent_DELETED)  // rv=7
+	_, _ = writeEvent(ctx, store, "item6", resource.WatchEvent_ADDED)    // rv=8
 	t.Run("fetch all latest", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{})
 		assert.NoError(t, err)
