@@ -862,6 +862,10 @@ export enum VariableFormatID {
 
 export interface DataSourceRef {
   /**
+   *  Datasource API version
+   */
+  apiVersion?: string;
+  /**
    * The plugin type-id
    */
   type?: string;
