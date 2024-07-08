@@ -194,7 +194,7 @@ steps:
   name: betterer-frontend
 - commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -258,7 +258,7 @@ services: []
 steps:
 - commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -346,7 +346,7 @@ services: []
 steps:
 - commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -466,7 +466,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -966,7 +966,7 @@ services:
 steps:
 - commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -1307,7 +1307,7 @@ services: []
 steps:
 - commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -5181,6 +5181,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e296b5401c0632dc2549a2c3d0594a58c459f5d185376e9f1728ce75c1d8ff3c
+hmac: 33b84712df805ae55115bdfedc6c40f71c75e7d6065656b49295b0f78f47bb9d
 
 ...
