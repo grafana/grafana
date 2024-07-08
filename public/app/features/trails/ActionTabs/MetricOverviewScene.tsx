@@ -17,7 +17,7 @@ import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
 
 import { getLabelOptions } from './utils';
-import { getUnit } from '../AutomaticMetricQueries/units';
+import { getUnit, getUnitFromMetric } from '../AutomaticMetricQueries/units';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
   metadata?: PromMetricsMetadataItem;
@@ -72,9 +72,10 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
 
     // Get unit name from the second to last part of the metric name
+    debugger;
     const metricScene = getMetricSceneFor(model);
     const metric = metricScene.state.metric;
-    const suffix = metric.split("_").at(-2)
+    const unit = getUnitFromMetric(metric);
     return (
       <StatusWrapper isLoading={labelsLoading || metadataLoading}>
         <Stack gap={6}>
@@ -91,7 +92,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Unit</Text>
-              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>{getUnit(suffix)}</i>}
+              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>{unit}</i>}
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
