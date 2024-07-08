@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LinkButton, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { MuteTimingActionsButtons } from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
 import {
   ALL_MUTE_TIMINGS,
@@ -30,7 +31,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTi
   const styles = useStyles2(getStyles);
   const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTimingsDrawer();
 
-  const { data, isLoading } = useMuteTimings({ alertmanager: alertManagerSourceName });
+  const { data, isLoading, error } = useMuteTimings({ alertmanager: alertManagerSourceName });
 
   const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
     const muteTimings = data || [];
@@ -52,6 +53,16 @@ export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTi
 
   if (isLoading) {
     return <LoadingPlaceholder text="Loading mute timings..." />;
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" title={t('alerting.mute_timings.error-loading.title', 'Error loading mute timings')}>
+        <Trans i18nKey="alerting.mute_timings.error-loading.description">
+          Could not load mute timings. Please try again later.
+        </Trans>
+      </Alert>
+    );
   }
 
   return (

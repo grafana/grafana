@@ -53,7 +53,7 @@ const getIntervalByName = (name: string) => {
   return allTimeIntervals.items.find((interval) => interval.metadata.name === name);
 };
 
-const listNamespacedTimeIntervalHandler = () =>
+export const listNamespacedTimeIntervalHandler = () =>
   http.get<{ namespace: string }>(`${baseUrl}/namespaces/:namespace/timeintervals`, ({ params }) => {
     const { namespace } = params;
 

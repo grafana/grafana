@@ -102,6 +102,12 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       }
     },
+    "mute_timings": {
+      "error-loading": {
+        "description": "Could not load mute timings. Please try again later.",
+        "title": "Error loading mute timings"
+      }
+    },
     "mute-timings": {
       "save": "Save mute timing",
       "saving": "Saving mute timing"

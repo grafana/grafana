@@ -102,6 +102,12 @@
         "parse-mode-warning-title": "Ŧęľęģřäm męşşäģęş äřę ľįmįŧęđ ŧő 4096 ŮŦF-8 čĥäřäčŧęřş."
       }
     },
+    "mute_timings": {
+      "error-loading": {
+        "description": "Cőūľđ ŉőŧ ľőäđ mūŧę ŧįmįŉģş. Pľęäşę ŧřy äģäįŉ ľäŧęř.",
+        "title": "Ēřřőř ľőäđįŉģ mūŧę ŧįmįŉģş"
+      }
+    },
     "mute-timings": {
       "save": "Ŝävę mūŧę ŧįmįŉģ",
       "saving": "Ŝävįŉģ mūŧę ŧįmįŉģ"

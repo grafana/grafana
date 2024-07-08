@@ -4,7 +4,10 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { defaultConfig } from 'app/features/alerting/unified/MuteTimings.test';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setGrafanaAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/configure';
+import {
+  setGrafanaAlertmanagerConfig,
+  setMuteTimingsListError,
+} from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { TIME_INTERVAL_UID_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
 import { AccessControlAction } from 'app/types';
@@ -134,6 +137,12 @@ describe('MuteTimingsTable', () => {
       expect(await screen.findByTestId('dynamic-table')).toBeInTheDocument();
 
       expect(await screen.findByText('Provisioned')).toBeInTheDocument();
+    });
+
+    it('shows error when mute timings cannot load', async () => {
+      setMuteTimingsListError();
+      renderWithProvider();
+      expect(await screen.findByText(/error loading mute timings/i)).toBeInTheDocument();
     });
 
     it('deletes interval', async () => {
