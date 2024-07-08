@@ -143,3 +143,48 @@ func TestBackendHappyPath(t *testing.T) {
 		assert.Equal(t, resource.WatchEvent_DELETED, event.Type)
 	})
 }
+
+func TestBackendWatchWriteEventsFromHead(t *testing.T) {
+	ctx := context.Background()
+	dbstore := db.InitTestDB(t)
+
+	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
+	assert.NoError(t, err)
+	store, err := NewBackendStore(backendOptions{
+		DB: rdb,
+	})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, store)
+
+	// Create a few resources before initing the watch
+	_, err = store.WriteEvent(ctx, resource.WriteEvent{
+		Type:  resource.WatchEvent_ADDED,
+		Value: []byte("initial value 0"),
+		Key: &resource.ResourceKey{
+			Namespace: "namespace",
+			Group:     "group",
+			Resource:  "resource",
+			Name:      "item 0",
+		},
+	})
+	assert.NoError(t, err)
+
+	// Start the watch
+	stream, err := store.WatchWriteEvents(ctx)
+	assert.NoError(t, err)
+
+	// Create one more event
+	_, err = store.WriteEvent(ctx, resource.WriteEvent{
+		Type:  resource.WatchEvent_ADDED,
+		Value: []byte("initial value 2"),
+		Key: &resource.ResourceKey{
+			Namespace: "namespace",
+			Group:     "group",
+			Resource:  "resource",
+			Name:      "item2",
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, "item2", (<-stream).Key.Name)
+}

@@ -387,21 +387,30 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
+	if err := b.Init(); err != nil {
+		return nil, err
+	}
+	// Fetch the lastest RV
+	rows, err := b.sqlDB.QueryContext(ctx, `SELECT COALESCE(max("resource_version"), 0)  FROM "resource";`)
+	if err != nil {
+		return nil, fmt.Errorf("fetch latest rv: %w", err)
+	}
+	since := int64(0)
+	if rows.Next() {
+		if err := rows.Scan(&since); err != nil {
+			return nil, fmt.Errorf("scan since resource version: %w", err)
+		}
+	}
+	// Start the poller
 	stream := make(chan *resource.WrittenEvent)
-	go b.poller(ctx, stream)
+	go b.poller(ctx, since, stream)
 	return stream, nil
 }
 
-func (b *backend) poller(ctx context.Context, stream chan<- *resource.WrittenEvent) {
+func (b *backend) poller(ctx context.Context, since int64, stream chan<- *resource.WrittenEvent) {
 	var err error
 
-	// FIXME: we need a way to state startup of server from a (Group, Resource)
-	// standpoint, and consider that new (Group, Resource) may be added to
-	// `kind_version`, so we should probably also poll for changes in there
-	since := int64(0)
-
 	interval := 100 * time.Millisecond // TODO make this configurable
-
 	t := time.NewTicker(interval)
 	defer close(stream)
 	defer t.Stop()
@@ -433,7 +442,6 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 	if err != nil {
 		return 0, fmt.Errorf("execute SQL template to poll for resource history: %w", err)
 	}
-
 	rows, err := b.sqlDB.QueryContext(ctx, query, pollReq.GetArgs()...)
 	if err != nil {
 		return 0, fmt.Errorf("poll for resource history: %w", err)
