@@ -148,13 +148,13 @@ jobs:
         with:
           version: '>= 363.0.0'
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
 
       - name: Run BigQuery query
         run: |
           gcloud config set project grafanalabs-global
-          bq query --nouse_legacy_sql "
+          bq query --nouse_legacy_sql --project_id=grafanalabs-global "
           SELECT
             property_name,
             package_name,
