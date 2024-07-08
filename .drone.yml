@@ -3179,19 +3179,21 @@ steps:
   image: ubuntu:22.04
   name: verify-linux-DEB-packages
 - commands:
-  - echo "Updating package lists..."
-  - dnf check-update -y
-  - echo "Adding Grafana GPG key..."
+  - 'echo "Step 1: Updating package lists..."'
+  - dnf check-update -y > /dev/null 2>&1 || true
+  - 'echo "Step 2: Adding Grafana GPG key..."'
   - rpm --import https://packages.grafana.com/gpg.key
-  - echo "Installing Grafana..."
+  - 'echo "Step 3: Installing Grafana..."'
   - dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.aarch64.rpm
-  - echo "Verifying Grafana installation..."
+    | grep -v '^(Updating|Last metadata|Dependencies|Package|Installed)'
+  - 'echo "Step 4: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "${TAG}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
   - '    exit 1'
   - fi
+  - echo "Verification complete."
   depends_on: []
   environment: {}
   image: rockylinux:9
@@ -3299,19 +3301,21 @@ steps:
   image: ubuntu:22.04
   name: verify-linux-DEB-packages
 - commands:
-  - echo "Updating package lists..."
-  - dnf check-update -y
-  - echo "Adding Grafana GPG key..."
+  - 'echo "Step 1: Updating package lists..."'
+  - dnf check-update -y > /dev/null 2>&1 || true
+  - 'echo "Step 2: Adding Grafana GPG key..."'
   - rpm --import https://packages.grafana.com/gpg.key
-  - echo "Installing Grafana..."
+  - 'echo "Step 3: Installing Grafana..."'
   - dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.aarch64.rpm
-  - echo "Verifying Grafana installation..."
+    | grep -v '^(Updating|Last metadata|Dependencies|Package|Installed)'
+  - 'echo "Step 4: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "${TAG}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
   - '    exit 1'
   - fi
+  - echo "Verification complete."
   depends_on: []
   environment: {}
   image: rockylinux:9
@@ -5292,6 +5296,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 207165e04f9fe74a8401c167e0ba3a50e450f6332572d78e90e4cf43142d85e5
+hmac: c86a82b79822e66cc7aafdc8e00e3d69d4c8bad8c35a9c26f44ba4ed6660aa28
 
 ...
