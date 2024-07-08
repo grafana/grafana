@@ -2,7 +2,6 @@ package sql
 
 import (
 	"embed"
-	"encoding/json"
 	"errors"
 	"testing"
 	"text/template"
@@ -39,13 +38,6 @@ func testdata(t *testing.T, filename string) []byte {
 	require.NoError(t, err)
 
 	return b
-}
-
-func testdataJSON(t *testing.T, filename string, dest any) {
-	t.Helper()
-	b := testdata(t, filename)
-	err := json.Unmarshal(b, dest)
-	require.NoError(t, err)
 }
 
 func TestQueries(t *testing.T) {
