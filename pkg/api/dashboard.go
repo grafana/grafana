@@ -253,7 +253,7 @@ func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
 	if err != nil {
 		return anonString
 	}
-	return user.Login
+	return user.Name // LOGZ.IO GRAFANA CHANGE :: DEV-43349 - user.Login to usr.Name as login field
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
