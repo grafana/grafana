@@ -3,33 +3,29 @@ import { delay, http, HttpResponse } from 'msw';
 import { RulerRuleGroupDTO } from '../../../../../../types/unified-alerting-dto';
 import { namespaces } from '../../mimirRulerApi';
 import { HandlerOptions } from '../configure';
-import { MIMIR_DATASOURCE_UID } from '../constants';
 
 export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) => {
-  return http.post<{ namespaceName: string }>(
-    `/api/ruler/${MIMIR_DATASOURCE_UID}/api/v1/rules/:namespaceName`,
-    async () => {
-      if (options?.delay !== undefined) {
-        await delay(options.delay);
-      }
-
-      if (options?.response) {
-        return options.response;
-      }
-
-      return HttpResponse.json({
-        status: 'success',
-        error: '',
-        errorType: '',
-        data: null,
-      });
+  return http.post<{ namespaceName: string }>(`/api/ruler/:dataSourceUID/api/v1/rules/:namespaceName`, async () => {
+    if (options?.delay !== undefined) {
+      await delay(options.delay);
     }
-  );
+
+    if (options?.response) {
+      return options.response;
+    }
+
+    return HttpResponse.json({
+      status: 'success',
+      error: '',
+      errorType: '',
+      data: null,
+    });
+  });
 };
 
 export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
   return http.get<{ namespaceName: string; groupName: string }>(
-    `/api/ruler/${MIMIR_DATASOURCE_UID}/api/v1/rules/:namespaceName/:groupName`,
+    `/api/ruler/:dataSourceUID/api/v1/rules/:namespaceName/:groupName`,
     ({ params: { namespaceName, groupName } }) => {
       if (options?.response) {
         return options.response;
@@ -52,7 +48,7 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
 
 export const deleteRulerRuleGroupHandler = () => {
   return http.delete<{ namespaceName: string; groupName: string }>(
-    `/api/ruler/${MIMIR_DATASOURCE_UID}/api/v1/rules/:namespaceName/:groupName`,
+    `/api/ruler/:dataSourceUID/api/v1/rules/:namespaceName/:groupName`,
     ({ params: { namespaceName } }) => {
       const namespace = namespaces[namespaceName];
       if (!namespace) {
