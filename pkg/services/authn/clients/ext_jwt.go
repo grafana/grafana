@@ -20,9 +20,8 @@ import (
 var _ authn.Client = new(ExtendedJWT)
 
 const (
-	extJWTAuthenticationHeaderName  = "X-Access-Token"
-	extJWTAuthorizationHeaderName   = "X-Grafana-Id"
-	extJWTAccessTokenExpectAudience = "grafana"
+	ExtJWTAuthenticationHeaderName = "X-Access-Token"
+	ExtJWTAuthorizationHeaderName  = "X-Grafana-Id"
 )
 
 var (
@@ -46,7 +45,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 	})
 
 	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
-		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
+		AllowedAudiences: cfg.ExtJWTAuth.Audiences,
 	}, keys)
 
 	// For ID tokens, we explicitly do not validate audience, hence an empty AllowedAudiences
@@ -129,11 +128,19 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
 	}
 
+	// For use in service layer, allow higher privilege
+	allowedKubernetesNamespace := accessTokenClaims.Rest.Namespace
+	if len(s.cfg.StackID) > 0 {
+		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
+		allowedKubernetesNamespace = idTokenClaims.Rest.Namespace
+	}
+
 	return &authn.Identity{
-		ID:              userID,
-		OrgID:           s.getDefaultOrgID(),
-		AuthenticatedBy: login.ExtendedJWTModule,
-		AuthID:          accessID.String(),
+		ID:                         userID,
+		OrgID:                      s.getDefaultOrgID(),
+		AuthenticatedBy:            login.ExtendedJWTModule,
+		AuthID:                     accessID.String(),
+		AllowedKubernetesNamespace: allowedKubernetesNamespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
@@ -159,11 +166,12 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 	}
 
 	return &authn.Identity{
-		ID:              id,
-		UID:             id,
-		OrgID:           s.getDefaultOrgID(),
-		AuthenticatedBy: login.ExtendedJWTModule,
-		AuthID:          claims.Subject,
+		ID:                         id,
+		UID:                        id,
+		OrgID:                      s.getDefaultOrgID(),
+		AuthenticatedBy:            login.ExtendedJWTModule,
+		AuthID:                     claims.Subject,
+		AllowedKubernetesNamespace: claims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
@@ -208,7 +216,7 @@ func (s *ExtendedJWT) Priority() uint {
 
 // retrieveAuthenticationToken retrieves the JWT token from the request.
 func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(extJWTAuthenticationHeaderName)
+	jwtToken := httpRequest.Header.Get(ExtJWTAuthenticationHeaderName)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
@@ -216,7 +224,7 @@ func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) str
 
 // retrieveAuthorizationToken retrieves the JWT token from the request.
 func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(extJWTAuthorizationHeaderName)
+	jwtToken := httpRequest.Header.Get(ExtJWTAuthorizationHeaderName)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")

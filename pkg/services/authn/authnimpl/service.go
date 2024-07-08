@@ -39,6 +39,11 @@ func ProvideAuthnService(s *Service) authn.Service {
 	return s
 }
 
+// make sure service also implements authn.ServiceAuthenticateOnly interface
+func ProvideAuthnServiceAuthenticateOnly(s *Service) authn.Authenticator {
+	return s
+}
+
 // make sure service implements authn.IdentitySynchronizer interface
 func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 	return s

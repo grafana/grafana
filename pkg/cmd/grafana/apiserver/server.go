@@ -76,7 +76,7 @@ func (o *APIServerOptions) loadAPIGroupBuilders(ctx context.Context, tracer trac
 	return nil
 }
 
-func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error) {
+func (o *APIServerOptions) Config(tracer tracing.Tracer) (*genericapiserver.RecommendedConfig, error) {
 	if err := o.Options.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts(
 		"localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")},
 	); err != nil {
@@ -122,6 +122,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		setting.BuildVersion,
 		setting.BuildCommit,
 		setting.BuildBranch,
+		o.factory.GetOptionalMiddlewares(tracer)...,
 	)
 	return serverConfig, err
 }

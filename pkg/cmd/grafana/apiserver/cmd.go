@@ -74,13 +74,13 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				return err
 			}
 
-			config, err := o.Config()
-			if err != nil {
-				return err
-			}
-
 			if o.Options.TracingOptions.TracingService != nil {
 				tracer.InitTracer(o.Options.TracingOptions.TracingService)
+			}
+
+			config, err := o.Config(tracer)
+			if err != nil {
+				return err
 			}
 
 			defer o.factory.Shutdown()

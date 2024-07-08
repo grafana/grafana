@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,7 +26,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
 		)
 
@@ -49,7 +47,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: id},
 		)
 
@@ -75,7 +72,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
 
@@ -97,7 +93,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
 
@@ -128,7 +123,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			cfg,
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
 		)
 
@@ -154,7 +148,6 @@ func TestContextHandler(t *testing.T) {
 			handler := contexthandler.ProvideService(
 				cfg,
 				tracing.InitializeTracerForTest(),
-				featuremgmt.WithFeatures(),
 				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID(id)}},
 			)
 
