@@ -186,8 +186,10 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
   return new SceneFlexItem({
     minHeight: 300,
     body: PanelBuilders.timeseries()
-      .setTitle('Events')
-      .setDescription('Alert events during the period of time.')
+      .setTitle('Alert Events')
+      .setDescription(
+        'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
+      )
       .setData(getSceneQuery(datasource))
       .setColor({ mode: 'continuous-BlPu' })
       .setCustomFieldConfig('fillOpacity', 100)

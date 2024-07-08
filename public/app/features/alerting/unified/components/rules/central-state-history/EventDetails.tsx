@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { max, min, uniqBy } from 'lodash';
+import { capitalize, max, min, uniqBy } from 'lodash';
 import { useMemo } from 'react';
 
 import { FieldType, GrafanaTheme2, LoadingState, PanelData, TimeRange, dateTime, makeTimeRange } from '@grafana/data';
@@ -13,11 +13,11 @@ import { parse } from '../../../utils/rule-id';
 import { MetaText } from '../../MetaText';
 import { AnnotationValue } from '../../rule-viewer/tabs/Details';
 import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
-import { STATE_HISTORY_POLLING_INTERVAL, useFrameSubset } from '../state-history/LokiStateHistory';
+import { useFrameSubset } from '../state-history/LokiStateHistory';
 import { LogRecord } from '../state-history/common';
 import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
-import { EventState, FilterType } from './EventListSceneObject';
+import { EventState, FilterType, LIMIT_EVENTS } from './EventListSceneObject';
 
 interface EventDetailsProps {
   record: LogRecord;
@@ -74,6 +74,15 @@ interface StateVisualizationProps {
   labels: Record<string, string>;
 }
 
+/**
+ * This component fetches the state history for the given ruleUID and time range, and displays the state transitions and the log timeline.
+ * Fetching the state history for the alert rule uid, and labels,
+ * makes the result to be more accurate, as it might be that we are not showing all the state transitions in the log records.
+ * @param ruleUID
+ * @param timeRange
+ * @param labels
+ * @returns
+ */
 function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationProps) {
   const { useGetRuleHistoryQuery } = stateHistoryApi;
 
@@ -87,12 +96,11 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
       ruleUid: ruleUID,
       from: timeRange.from.unix(),
       to: timeRange.to.unix(),
-      limit: 250,
+      limit: LIMIT_EVENTS,
     },
     {
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      pollingInterval: STATE_HISTORY_POLLING_INTERVAL,
     }
   );
 
@@ -161,16 +169,16 @@ const Annotations = ({ rule }: AnnotationsProps) => {
   }
   return (
     <>
-      <Text variant="body" color="secondary" weight="light">
-        <Trans i18nKey="alerting.central-alert-history.details.annotations">Annotations</Trans>
-      </Text>
       <div className={styles.metadataWrapper}>
-        {Object.entries(annotations).map(([name, value]) => (
-          <MetaText direction="column" key={name}>
-            {name}
-            <AnnotationValue value={value} />
-          </MetaText>
-        ))}
+        {Object.entries(annotations).map(([name, value]) => {
+          const capitalizedName = capitalize(name);
+          return (
+            <MetaText direction="column" key={capitalizedName}>
+              {capitalizedName}
+              <AnnotationValue value={value} />
+            </MetaText>
+          );
+        })}
       </div>
     </>
   );
