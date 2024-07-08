@@ -28,7 +28,7 @@ type BaseAlertmanagerArgs = {
 export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
 
 /** Value of `PROVENANCE_ANNOTATION` given for file provisioned intervals */
-const PROVENANCE_FILE = 'file';
+export const PROVENANCE_FILE = 'file';
 
 const parseTimeInterval = (item: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval) => {
   const { metadata, spec } = item;

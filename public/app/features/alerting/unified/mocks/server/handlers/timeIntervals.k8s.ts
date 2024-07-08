@@ -1,8 +1,9 @@
-// POST /apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/timeintervals
-
 import { HttpResponse, http } from 'msw';
 
-import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import {
+  PROVENANCE_ANNOTATION,
+  PROVENANCE_FILE,
+} from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 
 const baseUrl = '/apis/notifications.alerting.grafana.app/v0alpha1';
@@ -37,7 +38,7 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
     {
       metadata: {
         annotations: {
-          [PROVENANCE_ANNOTATION]: 'file',
+          [PROVENANCE_ANNOTATION]: PROVENANCE_FILE,
         },
         name: TIME_INTERVAL_UID_PROVISIONED,
         uid: TIME_INTERVAL_UID_PROVISIONED,
