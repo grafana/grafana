@@ -1,4 +1,4 @@
-import { CoreApp, LoadingState, getDefaultTimeRange, store } from '@grafana/data';
+import { CoreApp, LoadingState, getDefaultTimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -15,6 +15,7 @@ import {
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
