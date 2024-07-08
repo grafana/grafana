@@ -46,6 +46,7 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   const parentlessItemsRef = useRef<ParentlessItems>({});
 
   const register: RegisterFunction = useCallback((outlineItem) => {
+    // Allow the caller to define unique ID so the outlineItem can be differentiated
     const id = outlineItem.id
       ? outlineItem.id
       : uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);

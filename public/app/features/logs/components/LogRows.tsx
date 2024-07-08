@@ -245,7 +245,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onUnpinLine={this.props.onUnpinLine}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((log) => log.id === row.rowId)}
-                  pinnedLogs={pinnedLogs}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}
@@ -267,7 +266,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
-                  pinnedLogs={pinnedLogs}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((log) => log.id === row.rowId)}
                   isFilterLabelActive={this.props.isFilterLabelActive}

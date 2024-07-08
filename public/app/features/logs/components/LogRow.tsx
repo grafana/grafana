@@ -64,7 +64,6 @@ interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
-  pinnedLogs?: ContentOutlineItemContextProps[];
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
 }
