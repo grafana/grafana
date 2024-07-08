@@ -10,8 +10,8 @@ import { dispatch } from 'app/store/store';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { anyOfRequestState } from '../../hooks/useAsync';
 import {
-  anyOfRequestState,
   useMoveRuleGroup,
   useRenameRuleGroup,
   useUpdateRuleGroupConfiguration,
@@ -188,9 +188,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
    *  2. rename the rule group, but keeping it in the same namespace
    *  3. move the rule group to a new namespace, optionally with a different group name
    */
-  const [updateRuleGroup, updateRuleGroupState] = useUpdateRuleGroupConfiguration();
-  const [moveRuleGroup, moveRuleGroupState] = useMoveRuleGroup();
-  const [renameRuleGroup, renameRuleGroupState] = useRenameRuleGroup();
+  const [updateRuleGroupState, updateRuleGroup] = useUpdateRuleGroupConfiguration();
+  const [moveRuleGroupState, moveRuleGroup] = useMoveRuleGroup();
+  const [renameRuleGroupState, renameRuleGroup] = useRenameRuleGroup();
 
   const { loading, error } = anyOfRequestState(updateRuleGroupState, moveRuleGroupState, renameRuleGroupState);
 
@@ -229,18 +229,17 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     const shouldMove = isGrafanaManagedGroup ? false : updatedNamespaceName !== ruleGroupIdentifier.namespaceName;
     const shouldRename = updatedGroupName !== ruleGroupIdentifier.groupName;
 
-    if (shouldMove) {
-      await moveRuleGroup(ruleGroupIdentifier, updatedNamespaceName, updatedGroupName, updatedInterval);
+    try {
+      if (shouldMove) {
+        await moveRuleGroup.execute(ruleGroupIdentifier, updatedNamespaceName, updatedGroupName, updatedInterval);
+      } else if (shouldRename) {
+        await renameRuleGroup.execute(ruleGroupIdentifier, updatedGroupName, updatedInterval);
+      } else {
+        await updateRuleGroup.execute(ruleGroupIdentifier, updatedInterval);
+      }
       onClose(true);
-    } else if (shouldRename) {
-      await renameRuleGroup(ruleGroupIdentifier, updatedGroupName, updatedInterval);
-      onClose(true);
-    } else {
-      await updateRuleGroup(ruleGroupIdentifier, updatedInterval);
-      onClose(true);
-    }
-
-    await dispatch(fetchRulerRulesAction({ rulesSourceName }));
+      await dispatch(fetchRulerRulesAction({ rulesSourceName }));
+    } catch (_error) {} // React hook form will handle errors
   };
 
   const formAPI = useForm<FormValues>({
@@ -272,7 +271,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   return (
     <Modal className={styles.modal} isOpen={true} title={modalTitle} onDismiss={onClose} onClickBackdrop={onClose}>
       <FormProvider {...formAPI}>
-        <form onSubmit={(e) => e.preventDefault()} key={JSON.stringify(defaultValues)}>
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} key={JSON.stringify(defaultValues)}>
           <>
             {!props.hideFolder && (
               <Stack gap={1} alignItems={'center'}>
@@ -384,11 +383,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  disabled={!isDirty || !isValid || loading}
-                  onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
-                >
+                <Button type="submit" disabled={!isDirty || !isValid || loading}>
                   {loading ? 'Saving...' : 'Save'}
                 </Button>
               </Modal.ButtonRow>

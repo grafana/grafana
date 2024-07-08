@@ -1,5 +1,4 @@
 import { HttpResponse } from 'msw';
-import { AsyncState } from 'react-use/lib/useAsyncFn';
 import { render, userEvent } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
@@ -33,9 +32,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
+import { AsyncState, isError, isLoading, isSuccess, isUninitialized } from './useAsync';
 import {
-  isSuccess,
-  isUninitialized,
   useDeleteRuleFromGroup,
   useMoveRuleGroup,
   usePauseRuleInGroup,
@@ -256,7 +254,7 @@ describe('useUpdateRuleGroupConfiguration', () => {
 });
 
 const UpdateRuleGroupComponent = () => {
-  const [updateRuleGroup, requestState] = useUpdateRuleGroupConfiguration();
+  const [requestState, updateRuleGroup] = useUpdateRuleGroupConfiguration();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -266,14 +264,14 @@ const UpdateRuleGroupComponent = () => {
 
   return (
     <>
-      <button onClick={() => updateRuleGroup(ruleGroupID, '2m')} />
+      <button onClick={() => updateRuleGroup.execute(ruleGroupID, '2m')} />
       <SerializeState state={requestState} />
     </>
   );
 };
 
 const RenameRuleGroupComponent = () => {
-  const [renameRuleGroup, requestState] = useRenameRuleGroup();
+  const [requestState, renameRuleGroup] = useRenameRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -283,14 +281,14 @@ const RenameRuleGroupComponent = () => {
 
   return (
     <>
-      <button onClick={() => renameRuleGroup(ruleGroupID, 'another-group-name', '2m')} />
+      <button onClick={() => renameRuleGroup.execute(ruleGroupID, 'another-group-name', '2m')} />
       <SerializeState state={requestState} />
     </>
   );
 };
 
 const MoveGrafanaManagedRuleGroupComponent = () => {
-  const [moveRuleGroup, requestState] = useMoveRuleGroup();
+  const [requestState, moveRuleGroup] = useMoveRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -300,7 +298,7 @@ const MoveGrafanaManagedRuleGroupComponent = () => {
 
   return (
     <>
-      <button onClick={() => moveRuleGroup(ruleGroupID, 'another-namespace', 'another-group-name', '2m')} />
+      <button onClick={() => moveRuleGroup.execute(ruleGroupID, 'another-namespace', 'another-group-name', '2m')} />
       <SerializeState state={requestState} />
     </>
   );
@@ -310,10 +308,10 @@ function SerializeState({ state }: { state: AsyncState<unknown> }) {
   return (
     <>
       {isUninitialized(state) && 'uninitialized'}
-      {state.loading && 'loading'}
+      {isLoading(state) && 'loading'}
       {isSuccess(state) && 'success'}
-      {isSuccess(state) && `result: ${JSON.stringify(state.value, null, 2)}`}
-      {state.error && `error: ${stringifyErrorLike(state.error)}`}
+      {isSuccess(state) && `result: ${JSON.stringify(state.result, null, 2)}`}
+      {isError(state) && `error: ${stringifyErrorLike(state.error)}`}
     </>
   );
 }
@@ -329,7 +327,7 @@ const MoveDataSourceManagedRuleGroupComponent = ({
   group,
   interval,
 }: MoveDataSourceManagedRuleGroupComponentProps) => {
-  const [moveRuleGroup, requestState] = useMoveRuleGroup();
+  const [requestState, moveRuleGroup] = useMoveRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: MIMIR_DATASOURCE_UID,
@@ -339,7 +337,7 @@ const MoveDataSourceManagedRuleGroupComponent = ({
 
   return (
     <>
-      <button onClick={() => moveRuleGroup(ruleGroupID, namespace, group, interval)} />
+      <button onClick={() => moveRuleGroup.execute(ruleGroupID, namespace, group, interval)} />
       <SerializeState state={requestState} />
     </>
   );
@@ -347,7 +345,7 @@ const MoveDataSourceManagedRuleGroupComponent = ({
 
 // this test component will cycle through the loading states
 const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
-  const [pauseRule, requestState] = usePauseRuleInGroup();
+  const [requestState, pauseRule] = usePauseRuleInGroup();
 
   const rulerRule = options.rulerRule ?? grafanaRulerRule;
   const rule = mockCombinedRule({
@@ -358,7 +356,7 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
 
   const onClick = () => {
     // always handle your errors!
-    pauseRule(ruleGroupID, rulerRule.grafana_alert.uid, true).catch(() => {});
+    pauseRule.execute(ruleGroupID, rulerRule.grafana_alert.uid, true).catch(() => {});
   };
 
   return (
@@ -373,12 +371,12 @@ type DeleteTestComponentProps = {
   rule: CombinedRule;
 };
 const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
-  const [deleteRuleFromGroup, requestState] = useDeleteRuleFromGroup();
+  const [requestState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
 
   // always handle your errors!
   const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
   const onClick = () => {
-    deleteRuleFromGroup(ruleGroupID, rule.rulerRule!);
+    deleteRuleFromGroup.execute(ruleGroupID, rule.rulerRule!);
   };
 
   return (

@@ -1,13 +1,11 @@
 import { Action } from '@reduxjs/toolkit';
-import { useAsyncFn } from 'react-use';
-import { AsyncState } from 'react-use/lib/useAsyncFn';
 
 import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
-import { notFoundToNull } from '../api/util';
+import { notFoundToNullOrThrow } from '../api/util';
 import {
   deleteRuleAction,
   moveRuleGroupAction,
@@ -18,6 +16,8 @@ import {
 } from '../reducers/ruler/ruleGroups';
 import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
 import { isGrafanaRulesSource } from '../utils/datasource';
+
+import { useAsync } from './useAsync';
 
 /**
  * Hook for reuse that handles freshly fetching a rule group's definition, applying an action to it,
@@ -71,23 +71,18 @@ export function usePauseRuleInGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
-  const [state, pauseFn] = useAsyncFn(
-    async (ruleGroup: RuleGroupIdentifier, uid: string, pause: boolean) => {
-      const { namespaceName } = ruleGroup;
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, uid: string, pause: boolean) => {
+    const { namespaceName } = ruleGroup;
 
-      const action = pauseRuleAction({ uid, pause });
-      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const action = pauseRuleAction({ uid, pause });
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-      return upsertRuleGroup({
-        rulerConfig,
-        namespace: namespaceName,
-        payload: newRuleGroupDefinition,
-      }).unwrap();
-    },
-    [produceNewRuleGroup, upsertRuleGroup]
-  );
-
-  return [pauseFn, state] as const;
+    return upsertRuleGroup({
+      rulerConfig,
+      namespace: namespaceName,
+      payload: newRuleGroupDefinition,
+    }).unwrap();
+  });
 }
 
 /**
@@ -101,7 +96,7 @@ export function useDeleteRuleFromGroup() {
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
-  const [state, deleteFn] = useAsyncFn(async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
     const { groupName, namespaceName } = ruleGroup;
 
     const action = deleteRuleAction({ rule });
@@ -123,8 +118,6 @@ export function useDeleteRuleFromGroup() {
       payload: newRuleGroupDefinition,
     }).unwrap();
   });
-
-  return [deleteFn, state] as const;
 }
 
 /**
@@ -134,23 +127,18 @@ export function useUpdateRuleGroupConfiguration() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
-  const [state, updateFn] = useAsyncFn(
-    async (ruleGroup: RuleGroupIdentifier, interval: string) => {
-      const { namespaceName } = ruleGroup;
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, interval: string) => {
+    const { namespaceName } = ruleGroup;
 
-      const action = updateRuleGroupAction({ interval });
-      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const action = updateRuleGroupAction({ interval });
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-      return upsertRuleGroup({
-        rulerConfig,
-        namespace: namespaceName,
-        payload: newRuleGroupDefinition,
-      }).unwrap();
-    },
-    [produceNewRuleGroup, upsertRuleGroup]
-  );
-
-  return [updateFn, state] as const;
+    return upsertRuleGroup({
+      rulerConfig,
+      namespace: namespaceName,
+      payload: newRuleGroupDefinition,
+    }).unwrap();
+  });
 }
 
 /**
@@ -163,7 +151,7 @@ export function useMoveRuleGroup() {
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
-  const [state, moveFn] = useAsyncFn(
+  return useAsync(
     async (ruleGroup: RuleGroupIdentifier, namespaceName: string, groupName?: string, interval?: string) => {
       // we could technically support moving rule groups to another folder, though we don't have a "move" wizard yet.
       if (isGrafanaRulesSource(ruleGroup.dataSourceName)) {
@@ -189,7 +177,7 @@ export function useMoveRuleGroup() {
           group: targetGroupName,
         })
           .unwrap()
-          .catch(notFoundToNull);
+          .catch(notFoundToNullOrThrow);
 
         if (targetGroup?.rules?.length) {
           throw new Error('Target group already has rules, merging rule groups is currently not supported.');
@@ -210,11 +198,8 @@ export function useMoveRuleGroup() {
       }).unwrap();
 
       return result;
-    },
-    [produceNewRuleGroup, fetchRuleGroup, upsertRuleGroup, deleteRuleGroup]
+    }
   );
-
-  return [moveFn, state] as const;
 }
 
 /**
@@ -226,67 +211,41 @@ export function useRenameRuleGroup() {
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
-  const [state, renameFn] = useAsyncFn(
-    async (ruleGroup: RuleGroupIdentifier, groupName: string, interval?: string) => {
-      const action = renameRuleGroupAction({ groupName, interval });
-      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, groupName: string, interval?: string) => {
+    const action = renameRuleGroupAction({ groupName, interval });
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-      const oldGroupName = ruleGroup.groupName;
-      const newGroupName = action.payload.groupName;
-      const namespaceName = ruleGroup.namespaceName;
+    const oldGroupName = ruleGroup.groupName;
+    const newGroupName = action.payload.groupName;
+    const namespaceName = ruleGroup.namespaceName;
 
-      // check if the target group exists
-      const targetGroup = await fetchRuleGroup({
-        rulerConfig,
-        namespace: namespaceName,
-        group: newGroupName,
-      })
-        .unwrap()
-        .catch(notFoundToNull);
+    // check if the target group exists
+    const targetGroup = await fetchRuleGroup({
+      rulerConfig,
+      namespace: namespaceName,
+      group: newGroupName,
+    })
+      .unwrap()
+      .catch(notFoundToNullOrThrow);
 
-      if (targetGroup?.rules?.length) {
-        throw new Error('Target group has existing rules, merging rule groups is currently not supported.');
-      }
+    if (targetGroup?.rules?.length) {
+      throw new Error('Target group has existing rules, merging rule groups is currently not supported.');
+    }
 
-      // if the target group does not exist, create the new group
-      const result = await upsertRuleGroup({
-        rulerConfig,
-        namespace: namespaceName,
-        payload: newRuleGroupDefinition,
-      }).unwrap();
+    // if the target group does not exist, create the new group
+    const result = await upsertRuleGroup({
+      rulerConfig,
+      namespace: namespaceName,
+      payload: newRuleGroupDefinition,
+    }).unwrap();
 
-      // now delete the group we renamed
-      await deleteRuleGroup({
-        rulerConfig,
-        namespace: namespaceName,
-        group: oldGroupName,
-      }).unwrap();
+    // now delete the group we renamed
+    await deleteRuleGroup({
+      rulerConfig,
+      namespace: namespaceName,
+      group: oldGroupName,
+    }).unwrap();
 
-      return result;
-    },
-    [produceNewRuleGroup, fetchRuleGroup, upsertRuleGroup, deleteRuleGroup]
-  );
-
-  return [renameFn, state] as const;
-}
-
-export function anyOfRequestState(...states: Array<AsyncState<unknown>>) {
-  return {
-    loading: states.some((state) => state.loading),
-    error: states.find((state) => state.error)?.error,
-    success: states.some(isSuccess),
-  };
-}
-
-// @todo move this to some util file?
-export function isError<T>(state: AsyncState<T>) {
-  return Boolean(state.error);
-}
-
-export function isSuccess<T>(state: AsyncState<T>) {
-  return state.value !== undefined && !state.loading && !state.error;
-}
-
-export function isUninitialized<T>(state: AsyncState<T>) {
-  return !Boolean(state.error) && !state.loading && state.value === undefined;
+    return result;
+  });
 }

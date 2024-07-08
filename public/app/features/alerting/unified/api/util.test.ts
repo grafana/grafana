@@ -1,4 +1,4 @@
-import { notFoundToNull } from './util';
+import { notFoundToNullOrThrow } from './util';
 
 describe('notFoundToNull', () => {
   it('should convert notFound error to null', () => {
@@ -7,7 +7,7 @@ describe('notFoundToNull', () => {
       data: null,
     };
 
-    expect(notFoundToNull(fetchError)).toBe(null);
+    expect(notFoundToNullOrThrow(fetchError)).toBe(null);
   });
 
   it('should not catch any non-404 error', () => {
@@ -17,7 +17,7 @@ describe('notFoundToNull', () => {
     };
 
     expect(() => {
-      notFoundToNull(fetchError);
+      notFoundToNullOrThrow(fetchError);
     }).toThrow();
   });
 });
