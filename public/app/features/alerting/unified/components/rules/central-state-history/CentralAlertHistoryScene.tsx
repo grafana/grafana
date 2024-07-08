@@ -90,19 +90,10 @@ export const CentralAlertHistoryScene = () => {
       new SceneReactObject({
         component: LabelFilter,
       }),
-      new VariableValueSelectors({
-        $variables: new SceneVariableSet({
-          variables: [labelsFilterVariable],
-        }),
-      }),
       new SceneReactObject({
         component: FilterInfo,
       }),
-      new VariableValueSelectors({
-        $variables: new SceneVariableSet({
-          variables: [transitionsFromFilterVariable, transitionsToFilterVariable],
-        }),
-      }),
+      new VariableValueSelectors({}),
       new SceneReactObject({
         component: ClearFilterButton,
         props: {
@@ -263,17 +254,15 @@ function ClearFilterButton({
 }
 
 const LabelFilter = () => {
-  const styles = useStyles2(getStyles)
+  const styles = useStyles2(getStyles);
   return (
     <div className={styles.filterLabelContainer}>
       <Text variant="body" weight="light" color="secondary">
-        <Trans i18nKey="alerting.central-alert-history.filterBy">
-          Filter by:
-        </Trans>
+        <Trans i18nKey="alerting.central-alert-history.filterBy">Filter by:</Trans>
       </Text>
     </div>
-  )
-}
+  );
+};
 
 const FilterInfo = () => {
   const styles = useStyles2(getStyles);
@@ -309,8 +298,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     filterInfoContainer: css({
       padding: '0',
       alignSelf: 'center',
-      marginLeft: theme.spacing(-1),
-      marginRight: theme.spacing(1),
+      marginRight: theme.spacing(-1),
     }),
     filterLabelContainer: css({
       padding: '0',

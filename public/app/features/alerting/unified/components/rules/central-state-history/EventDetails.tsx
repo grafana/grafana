@@ -2,29 +2,32 @@ import { css } from '@emotion/css';
 import { max, min, uniqBy } from 'lodash';
 import { useMemo } from 'react';
 
-import { FieldType, GrafanaTheme2, LoadingState, PanelData, dateTime, makeTimeRange } from '@grafana/data';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { FieldType, GrafanaTheme2, LoadingState, PanelData, TimeRange, dateTime, makeTimeRange } from '@grafana/data';
+import { Alert, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { useCombinedRule } from '../../../hooks/useCombinedRule';
 import { parse } from '../../../utils/rule-id';
-import { isGrafanaRulerRule } from '../../../utils/rules';
 import { MetaText } from '../../MetaText';
-import { VizWrapper } from '../../rule-editor/VizWrapper';
 import { AnnotationValue } from '../../rule-viewer/tabs/Details';
+import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
+import { STATE_HISTORY_POLLING_INTERVAL, useFrameSubset } from '../state-history/LokiStateHistory';
 import { LogRecord } from '../state-history/common';
+import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
 import { EventState, FilterType } from './EventListSceneObject';
 
 interface EventDetailsProps {
   record: LogRecord;
-  logRecords: LogRecord[];
   addFilter: (key: string, value: string, type: FilterType) => void;
+  timeRange: TimeRange;
 }
-export function EventDetails({ record, logRecords, addFilter }: EventDetailsProps) {
+export function EventDetails({ record, addFilter, timeRange }: EventDetailsProps) {
   // get the rule from the ruleUID
   const ruleUID = record.line?.ruleUID ?? '';
+  const labelsInInstance = record.line?.labels;
   const identifier = useMemo(() => {
     return parse(ruleUID, true);
   }, [ruleUID]);
@@ -52,12 +55,6 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
       </Text>
     );
   }
-  // get the transitions count for the rule and labels: transitions count for this instance.
-  const getTransitionsCountByRuleUIDAndLabels = (ruleUID: string, labels?: Record<string, string> | undefined) => {
-    return logRecords.filter(
-      (record) => record.line.ruleUID === ruleUID && JSON.stringify(record.line.labels) === JSON.stringify(labels)
-    ).length;
-  };
 
   return (
     <Stack direction="column" gap={0.5}>
@@ -66,11 +63,71 @@ export function EventDetails({ record, logRecords, addFilter }: EventDetailsProp
         <ValueInTransition record={record} />
       </Stack>
       <Annotations rule={rule} />
-      <NumberTransitions
-        transitions={ruleUID ? getTransitionsCountByRuleUIDAndLabels(ruleUID, record.line.labels) : 0}
-      />
-      <QueryVizualization rule={rule} ruleUID={ruleUID} logRecords={logRecords} />
+      <StateVisualization ruleUID={ruleUID} timeRange={timeRange} labels={labelsInInstance ?? {}} />
     </Stack>
+  );
+}
+
+interface StateVisualizationProps {
+  ruleUID: string;
+  timeRange: TimeRange;
+  labels: Record<string, string>;
+}
+
+function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationProps) {
+  const { useGetRuleHistoryQuery } = stateHistoryApi;
+
+  const {
+    currentData: stateHistory,
+    isLoading,
+    isError,
+    error,
+  } = useGetRuleHistoryQuery(
+    {
+      ruleUid: ruleUID,
+      from: timeRange.from.unix(),
+      to: timeRange.to.unix(),
+      limit: 250,
+    },
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      pollingInterval: STATE_HISTORY_POLLING_INTERVAL,
+    }
+  );
+
+  const { dataFrames } = useRuleHistoryRecords(
+    stateHistory,
+    labels
+      ? Object.entries(labels)
+          .map(([key, value]) => `${key}=${value}`)
+          .join(',')
+      : ''
+  );
+
+  const { frameSubset, frameTimeRange } = useFrameSubset(dataFrames);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  if (isError) {
+    return (
+      <Alert title="Error fetching the state history" severity="error">
+        {error instanceof Error ? error.message : 'Unable to fetch alert state history'}
+      </Alert>
+    );
+  }
+  if (!frameSubset || frameSubset.length === 0) {
+    return null;
+  }
+
+  const numberOfTransitions = dataFrames[0]?.fields[0]?.values?.length - 1 ?? 0; // we subtract 1 as the first value is the initial state
+
+  return (
+    <>
+      <NumberTransitions transitions={ruleUID ? numberOfTransitions : 0} />
+      <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
+    </>
   );
 }
 
@@ -117,35 +174,6 @@ const Annotations = ({ rule }: AnnotationsProps) => {
       </div>
     </>
   );
-};
-
-/**
- *
- * This component renders the visualization for the rule condition values over the selected time range.
- * The visualization is a time series graph with the condition values on the y-axis and time on the x-axis.
- * The values are extracted from the log records already fetched from the history api.
- * The graph is rendered only if the rule is a Grafana rule.
- *
- */
-interface QueryVizualizationProps {
-  ruleUID: string;
-  rule: CombinedRule;
-  logRecords: LogRecord[];
-}
-const QueryVizualization = ({ ruleUID, rule, logRecords }: QueryVizualizationProps) => {
-  if (!isGrafanaRulerRule(rule?.rulerRule)) {
-    return (
-      <Text>
-        <Trans i18nKey="alerting.central-alert-history.details.not-grafana-rule">Rule is not a Grafana rule</Trans>
-      </Text>
-    );
-  }
-  // get the condition from the rule
-  const condition = rule?.rulerRule.grafana_alert?.condition ?? 'A';
-  // get the panel data for the rule
-  const panelData = getPanelDataForRule(ruleUID, logRecords, condition);
-  // render the visualization
-  return <VizWrapper data={panelData} thresholds={undefined} thresholdsType={undefined} />;
 };
 
 /**

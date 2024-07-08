@@ -29,6 +29,7 @@ import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
@@ -47,7 +48,7 @@ const PAGE_SIZE = 100;
  * The list is filtered by the labels in the filter variable and by the time range variable in the scene graph.
  */
 interface HistoryEventsListProps {
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
   valueInLabelFilter: VariableValue;
   valueInStateToFilter: VariableValue;
   valueInStateFromFilter: VariableValue;
@@ -90,7 +91,7 @@ export const HistoryEventsList = ({
   return (
     <>
       <LoadingIndicator visible={isLoading} />
-      <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} />
+      <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} timeRange={timeRange} />
     </>
   );
 };
@@ -104,8 +105,9 @@ const LoadingIndicator = ({ visible = false }) => {
 interface HistoryLogEventsProps {
   logRecords: LogRecord[];
   addFilter: (key: string, value: string, type: FilterType) => void;
+  timeRange: TimeRange;
 }
-function HistoryLogEvents({ logRecords, addFilter }: HistoryLogEventsProps) {
+function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   return (
     <Stack direction="column" gap={0}>
@@ -115,8 +117,8 @@ function HistoryLogEvents({ logRecords, addFilter }: HistoryLogEventsProps) {
             <EventRow
               key={record.timestamp + (record.line.fingerprint ?? '')}
               record={record}
-              logRecords={logRecords}
               addFilter={addFilter}
+              timeRange={timeRange}
             />
           );
         })}
@@ -143,17 +145,14 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
 
 interface EventRowProps {
   record: LogRecord;
-  logRecords: LogRecord[];
   addFilter: (key: string, value: string, type: FilterType) => void;
+  timeRange: TimeRange;
 }
-function EventRow({ record, logRecords, addFilter }: EventRowProps) {
+function EventRow({ record, addFilter, timeRange }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
   function onLabelClick(label: string, value: string) {
     addFilter(label, value, 'label');
-  }
-  function addFilterByName(alertRuleName: string) {
-    addFilter('alertname', alertRuleName, 'label');
   }
 
   return (
@@ -176,13 +175,7 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
             <EventTransition previous={record.line.previous} current={record.line.current} addFilter={addFilter} />
           </div>
           <div className={styles.alertNameCol}>
-            {record.line.labels ? (
-              <AlertRuleName
-                labels={record.line.labels}
-                ruleUID={record.line.ruleUID}
-                addFilterByName={addFilterByName}
-              />
-            ) : null}
+            {record.line.labels ? <AlertRuleName labels={record.line.labels} ruleUID={record.line.ruleUID} /> : null}
           </div>
           <div className={styles.labelsCol}>
             <AlertLabels labels={record.line.labels ?? {}} size="xs" onLabelClick={onLabelClick} />
@@ -191,7 +184,7 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
-          <EventDetails record={record} logRecords={logRecords} addFilter={addFilter} />
+          <EventDetails record={record} addFilter={addFilter} timeRange={timeRange} />
         </div>
       )}
     </Stack>
@@ -201,12 +194,11 @@ function EventRow({ record, logRecords, addFilter }: EventRowProps) {
 interface AlertRuleNameProps {
   labels: Record<string, string>;
   ruleUID?: string;
-  addFilterByName: (alertRuleName: string) => void;
 }
-function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps) {
+function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
   const styles = useStyles2(getStyles);
   const { pathname, search } = useLocation();
-  const returnTo = encodeURIComponent(`${pathname}${search}`);
+  const returnTo = `${pathname}${search}`;
   const alertRuleName = labels['alertname'];
   if (!ruleUID) {
     return (
@@ -215,12 +207,13 @@ function AlertRuleName({ labels, ruleUID, addFilterByName }: AlertRuleNameProps)
       </Text>
     );
   }
+  const ruleViewUrl = createUrl(`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view`, {
+    tab: 'history',
+    returnTo,
+  });
   return (
     <Tooltip content={alertRuleName ?? ''}>
-      <a
-        href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${returnTo}&tab=history`}
-        className={styles.alertName}
-      >
+      <a href={ruleViewUrl} className={styles.alertName}>
         {alertRuleName}
       </a>
     </Tooltip>

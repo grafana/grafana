@@ -1,6 +1,8 @@
 import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byTestId } from 'testing-library-selector';
 
+import { getDefaultTimeRange } from '@grafana/data';
+
 import { setupMswServer } from '../../../mockApi';
 
 import { StateFilterValues } from './CentralAlertHistoryScene';
@@ -23,6 +25,7 @@ describe('HistoryEventsList', () => {
         valueInStateToFilter={StateFilterValues.all}
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
+        timeRange={getDefaultTimeRange()}
       />
     );
     await waitFor(() => {
@@ -37,6 +40,7 @@ describe('HistoryEventsList', () => {
         valueInStateToFilter={StateFilterValues.all}
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
+        timeRange={getDefaultTimeRange()}
       />
     );
     await waitFor(() => {
@@ -58,6 +62,7 @@ describe('HistoryEventsList', () => {
         valueInStateFromFilter={StateFilterValues.firing}
         valueInStateToFilter={StateFilterValues.normal}
         addFilter={jest.fn()}
+        timeRange={getDefaultTimeRange()}
       />
     );
     await waitFor(() => {
@@ -76,6 +81,7 @@ describe('HistoryEventsList', () => {
         valueInStateToFilter={StateFilterValues.firing}
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
+        timeRange={getDefaultTimeRange()}
       />
     );
     await waitFor(() => {
@@ -96,6 +102,7 @@ describe('HistoryEventsList', () => {
         valueInStateFromFilter={StateFilterValues.firing}
         valueInStateToFilter={StateFilterValues.all}
         addFilter={jest.fn()}
+        timeRange={getDefaultTimeRange()}
       />
     );
     await waitFor(() => {
@@ -114,6 +121,7 @@ describe('HistoryEventsList', () => {
         valueInStateToFilter={StateFilterValues.firing}
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
+        timeRange={getDefaultTimeRange()}
       />
     );
     await waitFor(() => {
@@ -132,6 +140,7 @@ describe('HistoryEventsList', () => {
         valueInStateToFilter={StateFilterValues.all}
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
+        timeRange={getDefaultTimeRange()}
       />
     );
     await waitFor(() => {
