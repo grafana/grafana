@@ -94,7 +94,7 @@
       "metadata": {
         "name": "alertingApiServer",
         "resourceVersion": "1718908755156",
-        "creationTimestamp": "2024-06-20T18:39:15Z"
+        "creationTimestamp": "2024-06-20T20:52:03Z"
       },
       "spec": {
         "description": "Register Alerting APIs with the K8s API server",
@@ -334,7 +334,7 @@
       "metadata": {
         "name": "authZGRPCServer",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-18T16:18:48Z"
+        "creationTimestamp": "2024-06-13T09:41:35Z"
       },
       "spec": {
         "description": "Enables the gRPC server for authorization",
@@ -440,7 +440,7 @@
         "name": "autofixDSUID",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2024-05-03T11:32:07Z",
-        "deletionTimestamp": "2024-06-18T14:28:32Z"
+        "deletionTimestamp": "2024-06-20T10:56:39Z"
       },
       "spec": {
         "description": "Automatically migrates invalid datasource UIDs",
@@ -509,7 +509,7 @@
       "metadata": {
         "name": "bodyScrolling",
         "resourceVersion": "1720021873452",
-        "creationTimestamp": "2024-07-01T09:10:52Z",
+        "creationTimestamp": "2024-07-01T10:28:39Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -626,7 +626,7 @@
       "metadata": {
         "name": "cloudWatchRoundUpEndTime",
         "resourceVersion": "1720021873452",
-        "creationTimestamp": "2024-06-25T14:02:23Z",
+        "creationTimestamp": "2024-06-27T15:10:28Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -642,7 +642,7 @@
       "metadata": {
         "name": "cloudwatchMetricInsightsCrossAccount",
         "resourceVersion": "1719497905377",
-        "creationTimestamp": "2024-06-27T14:18:25Z"
+        "creationTimestamp": "2024-07-02T10:34:12Z"
       },
       "spec": {
         "description": "Enables cross account observability for Cloudwatch Metric Insights",
@@ -702,7 +702,7 @@
       "metadata": {
         "name": "dashboardRestoreUI",
         "resourceVersion": "1720021873452",
-        "creationTimestamp": "2024-06-25T13:15:38Z",
+        "creationTimestamp": "2024-06-25T14:43:13Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -774,7 +774,7 @@
       "metadata": {
         "name": "databaseReadReplica",
         "resourceVersion": "1720021873452",
-        "creationTimestamp": "2024-06-18T16:18:48Z",
+        "creationTimestamp": "2024-06-18T15:07:15Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -864,7 +864,7 @@
       "metadata": {
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-18T16:18:48Z"
+        "creationTimestamp": "2024-06-18T19:37:44Z"
       },
       "spec": {
         "description": "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
@@ -974,7 +974,7 @@
         "name": "exploreContentOutline",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2023-10-13T16:57:13Z",
-        "deletionTimestamp": "2024-06-17T09:45:00Z"
+        "deletionTimestamp": "2024-06-24T15:45:42Z"
       },
       "spec": {
         "description": "Content outline sidebar",
@@ -1069,7 +1069,7 @@
       "metadata": {
         "name": "failWrongDSUID",
         "resourceVersion": "1718721033692",
-        "creationTimestamp": "2024-06-18T14:30:33Z"
+        "creationTimestamp": "2024-06-20T10:56:39Z"
       },
       "spec": {
         "description": "Throws an error if a datasource has an invalid UIDs",
@@ -1818,7 +1818,7 @@
       "metadata": {
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-18T16:18:48Z"
+        "creationTimestamp": "2024-06-17T09:41:50Z"
       },
       "spec": {
         "description": "Enables the backend query flow for Open Search datasource plugin",
@@ -1887,7 +1887,7 @@
       "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
-        "creationTimestamp": "2024-06-13T14:52:15Z"
+        "creationTimestamp": "2024-06-20T15:49:19Z"
       },
       "spec": {
         "description": "Enables the passing of scopes to dashboards fetching in Grafana",
@@ -1925,7 +1925,7 @@
       "metadata": {
         "name": "pinNavItems",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-18T16:18:48Z"
+        "creationTimestamp": "2024-06-10T11:40:03Z"
       },
       "spec": {
         "description": "Enables pinning of nav items",
@@ -2064,7 +2064,7 @@
         "name": "prometheusIncrementalQueryInstrumentation",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-07-05T19:39:49Z",
-        "deletionTimestamp": "2024-06-20T11:30:37Z"
+        "deletionTimestamp": "2024-06-20T13:04:22Z"
       },
       "spec": {
         "description": "Adds RudderStack events to incremental queries",
@@ -2303,7 +2303,7 @@
         "name": "scenes",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-07-07T06:53:02Z",
-        "deletionTimestamp": "2024-06-26T11:58:18Z"
+        "deletionTimestamp": "2024-06-27T07:03:46Z"
       },
       "spec": {
         "description": "Experimental framework to build interactive dashboards",
@@ -2397,7 +2397,7 @@
       "metadata": {
         "name": "ssoSettingsLDAP",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-18T16:18:48Z"
+        "creationTimestamp": "2024-06-18T11:31:27Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
@@ -2592,7 +2592,7 @@
       "metadata": {
         "name": "zanzana",
         "resourceVersion": "1718787304727",
-        "creationTimestamp": "2024-06-19T08:55:04Z"
+        "creationTimestamp": "2024-06-19T13:59:47Z"
       },
       "spec": {
         "description": "Use openFGA as authorization engine.",
