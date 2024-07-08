@@ -63,6 +63,7 @@ For configuring controls outside of playlist playback, you can use the following
 #### Known limitations
 
 - The [variable usage check](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/) is not yet available.
+<!-- Replace this link with Cloud version in WNIC and maybe remove the general docs link -->
 - Editing a panel:
 
   - The **Library panels** tab is not available anymore. You can replace a library panel from the panel menu.
@@ -82,6 +83,8 @@ If you want to learn more, in detail, about all the improvements we've made, don
 <!-- Haris Rozajac -->
 
 _Generally available in all editions of Grafana_
+
+<!-- Fix availability tags in WNIC-->
 
 Grafana Explore now allows for logs filtering and pinning in content outline.
 
