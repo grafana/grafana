@@ -48,6 +48,8 @@ TableJsonViewCellOptions: {
 // Json view cell options
 TableImageCellOptions: {
 	type: TableCellDisplayMode & "image"
+	alt?: string
+	title?: string
 } @cuetsy(kind="interface")
 
 // Show data links in the cell

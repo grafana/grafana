@@ -1,4 +1,4 @@
-import { FieldType } from '../types';
+import { FieldType } from '../types/dataFrame';
 
 import { createDataFrame, toDataFrame } from './processDataFrame';
 import { anySeriesWithTimeField, addRow } from './utils';

@@ -20,8 +20,8 @@ import {
   standardEditorsRegistry,
 } from '../field/standardFieldConfigEditorRegistry';
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
-import { isObject } from '../types';
 import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { isObject } from '../types/data';
 import { FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 
