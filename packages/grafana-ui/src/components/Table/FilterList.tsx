@@ -191,9 +191,9 @@ export const FilterList = ({
             itemCount={items.length}
             itemSize={ITEM_HEIGHT}
             itemData={{ items, values: selectedItems, onCheckedChanged, className: styles.filterListRow }}
-          width="100%"
-          className={styles.filterList}
-        >
+            width="100%"
+            className={styles.filterList}
+          >
             {ItemRenderer}
           </List>
           <Stack direction="column" gap={0.25}>
