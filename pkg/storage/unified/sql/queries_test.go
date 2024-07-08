@@ -168,6 +168,7 @@ func TestQueries(t *testing.T) {
 				Data: &sqlResourceListRequest{
 					SQLTemplate: new(sqltemplate.SQLTemplate),
 					Request: &resource.ListRequest{
+						Limit: 10,
 						Options: &resource.ListOptions{
 							Key: &resource.ResourceKey{
 								Namespace: "ns",

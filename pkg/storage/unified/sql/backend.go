@@ -138,8 +138,6 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 		return b.update(ctx, event)
 	case resource.WatchEvent_DELETED:
 		return b.delete(ctx, event)
-	default:
-
 	}
 	return 0, fmt.Errorf("unsupported event type")
 }
@@ -353,37 +351,64 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 	_, span := b.tracer.Start(ctx, trace_prefix+"List")
 	defer span.End()
 
-	readReq := sqlResourceListRequest{
-		SQLTemplate: sqltemplate.New(b.sqlDialect),
-		Request:     req,
-		Response:    new(resource.ResourceWrapper),
-	}
-	query, err := sqltemplate.Execute(sqlResourceList, readReq)
-	if err != nil {
-		return nil, fmt.Errorf("execute SQL template to list resources: %w", err)
-	}
+	return b.listLatest(ctx, req)
+}
 
-	rows, err := b.sqlDB.QueryContext(ctx, query, readReq.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("list resources: %w", err)
-	}
-
+// listLatest fetches the resources from the resource table.
+func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	out := &resource.ListResponse{
-		Items:           make([]*resource.ResourceWrapper, req.Limit),
-		ResourceVersion: 0, // TODO
+		Items:           []*resource.ResourceWrapper{}, // TODO: we could pre-allocate the capacity if we estimate the number of items
+		ResourceVersion: 0,
+	}
 
-	}
-	for i := 1; rows.Next(); i++ {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
+	err := b.sqlDB.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
+
+		// TODO: Here the lastest RV might be lower than the actual latest RV
+		// because delete events are not included in the resource table.
+		out.ResourceVersion, err = fetchLatestRV(ctx, tx)
+		if err != nil {
+			return err
 		}
-		if err := rows.Scan(readReq.GetScanDest()...); err != nil {
-			return nil, fmt.Errorf("scan row #%d: %w", i, err)
+
+		// Fetch one extra row for Limit
+		if req.Limit > 0 {
+			req.Limit++
 		}
-		rw := *readReq.Response
-		out.Items = append(out.Items, &rw)
-	}
-	return out, nil
+		readReq := sqlResourceListRequest{
+			SQLTemplate: sqltemplate.New(b.sqlDialect),
+			Request:     req,
+			Response:    new(resource.ResourceWrapper),
+		}
+		query, err := sqltemplate.Execute(sqlResourceList, readReq)
+		if err != nil {
+			return fmt.Errorf("execute SQL template to list resources: %w", err)
+		}
+		rows, err := tx.QueryContext(ctx, query, readReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("list resources: %w", err)
+		}
+		for i := int64(1); rows.Next(); i++ {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if err := rows.Scan(readReq.GetScanDest()...); err != nil {
+				return fmt.Errorf("scan row #%d: %w", i, err)
+			}
+			rw := *readReq.Response
+
+			if req.Limit > 0 && i >= req.Limit {
+				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: i - 1}
+				out.NextPageToken = continueToken.String()
+				break
+			}
+			out.Items = append(out.Items, &rw)
+		}
+
+		return nil
+	})
+
+	return out, err
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
@@ -424,19 +449,21 @@ func (b *backend) poller(ctx context.Context, since int64, stream chan<- *resour
 }
 
 // fetchLatestRV returns the current maxium RV in the resource table
-func fetchLatestRV(ctx context.Context, db db.DB) (int64, error) {
+func fetchLatestRV(ctx context.Context, db db.ContextExecer) (int64, error) {
 	// Fetch the lastest RV
 	rows, err := db.QueryContext(ctx, `SELECT COALESCE(max("resource_version"), 0)  FROM "resource";`)
 	if err != nil {
 		return 0, fmt.Errorf("fetch latest rv: %w", err)
 	}
-	since := int64(0)
 	if rows.Next() {
-		if err := rows.Scan(&since); err != nil {
+		rv := new(int64)
+		if err := rows.Scan(&rv); err != nil {
 			return 0, fmt.Errorf("scan since resource version: %w", err)
 		}
+		return *rv, nil
+
 	}
-	return since, nil
+	return 0, fmt.Errorf("no rows")
 }
 
 func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {

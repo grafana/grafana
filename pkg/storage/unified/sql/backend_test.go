@@ -115,6 +115,7 @@ func TestBackendHappyPath(t *testing.T) {
 		assert.Len(t, resp.Items, 2)
 		assert.Equal(t, "updated value", string(resp.Items[0].Value))
 		assert.Equal(t, "initial value 3", string(resp.Items[1].Value))
+		assert.Equal(t, int64(4), resp.ResourceVersion)
 	})
 
 	t.Run("Watch events", func(t *testing.T) {
@@ -187,4 +188,53 @@ func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "item2", (<-stream).Key.Name)
+}
+
+func TestBackendPrepareList(t *testing.T) {
+	ctx := context.Background()
+	dbstore := db.InitTestDB(t)
+
+	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
+	assert.NoError(t, err)
+	store, err := NewBackendStore(backendOptions{
+		DB: rdb,
+	})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, store)
+
+	// Create a few resources before initing the watch
+	for i := 1; i <= 10; i++ {
+		rv, err := store.WriteEvent(ctx, resource.WriteEvent{
+			Type:  resource.WatchEvent_ADDED,
+			Value: []byte("initial value " + strconv.Itoa(i)),
+			Key: &resource.ResourceKey{
+				Namespace: "namespace",
+				Group:     "group",
+				Resource:  "resource",
+				Name:      "item" + strconv.Itoa(i),
+			},
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, int64(i), rv)
+	}
+
+	t.Run("fetch all latest", func(t *testing.T) {
+		res, err := store.PrepareList(ctx, &resource.ListRequest{})
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 10)
+		assert.Empty(t, res.NextPageToken)
+	})
+
+	t.Run("fetch first page", func(t *testing.T) {
+		res, err := store.PrepareList(ctx, &resource.ListRequest{
+			Limit: 5,
+		})
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 5)
+		continueToken, err := GetContinueToken(res.NextPageToken)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(10), continueToken.ResourceVersion)
+		assert.Equal(t, int64(5), continueToken.StartOffset)
+	})
 }
