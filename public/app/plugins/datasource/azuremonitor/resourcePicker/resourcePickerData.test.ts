@@ -4,7 +4,7 @@ import {
   createMockARGSubscriptionResponse,
 } from '../__mocks__/argResourcePickerResponse';
 import createMockDatasource from '../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
+import { createMockInstanceSetttings } from '../__mocks__/settings';
 import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
 

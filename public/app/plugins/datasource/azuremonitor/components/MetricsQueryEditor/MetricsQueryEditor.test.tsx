@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import createMockDatasource from '../../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
 import createMockPanelData from '../../__mocks__/panelData';
 import createMockQuery from '../../__mocks__/query';
 import {
@@ -10,6 +9,7 @@ import {
   createMockSubscriptions,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+import { createMockInstanceSetttings } from '../../__mocks__/settings';
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import { selectOptionInTest } from '../../utils/testUtils';

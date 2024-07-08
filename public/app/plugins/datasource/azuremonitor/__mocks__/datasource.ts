@@ -4,7 +4,7 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import Datasource from '../datasource';
 import { AzureDataSourceJsonData } from '../types';
 
-import { createMockInstanceSetttings } from './instanceSettings';
+import { createMockInstanceSetttings } from './settings';
 import { DeepPartial } from './utils';
 
 export interface Context {

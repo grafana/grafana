@@ -1,5 +1,5 @@
-import { createMockInstanceSetttings } from './__mocks__/instanceSettings';
 import createMockQuery from './__mocks__/query';
+import { createMockInstanceSetttings } from './__mocks__/settings';
 import { singleVariable } from './__mocks__/variables';
 import Datasource from './datasource';
 import { AzureQueryType } from './types';
