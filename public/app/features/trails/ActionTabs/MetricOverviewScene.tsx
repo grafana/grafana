@@ -71,6 +71,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const { loading: labelsLoading } = variable.useState();
     const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
 
+    // Get unit name from the second to last part of the metric name
     const metricScene = getMetricSceneFor(model);
     const metric = metricScene.state.metric;
     const suffix = metric.split("_").at(-2)
@@ -90,7 +91,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Unit</Text>
-              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>Unit fallback, {getUnit(suffix)}</i>}
+              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>{getUnit(suffix)}</i>}
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Labels</Text>
