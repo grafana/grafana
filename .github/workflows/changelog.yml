@@ -39,4 +39,5 @@ jobs:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           cat _changelog.md
-          gh release create --draft ${{ inputs.version }} --notes-file _changelog.md
+          # skip for now
+          # gh release create --draft ${{ inputs.version }} --notes-file _changelog.md
