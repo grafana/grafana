@@ -48,28 +48,6 @@ jobs:
         echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
         echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-  mirror_branch:
-    name: Mirror release branch
-    needs: setup
-    uses: grafana/security-patch-actions/.github/workflows/mirror-branch.yml@main
-    with:
-      ref: "release-${{ needs.setup.outputs.version }}"
-      src_repo: grafana/grafana-security-mirror
-      dest_repo: grafana/grafana
-      dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
-    secrets: inherit
-  mirror_tag:
-    # Because the tag is almost always on the release-branch, we should make sure we mirror the release branch before
-    # mirroring the tag
-    needs: [setup, mirror_branch]
-    name: Mirror tag
-    uses: grafana/security-patch-actions/.github/workflows/mirror-tag.yml@main
-    with:
-      tag: "v${{ needs.setup.outputs.version }}"
-      src_repo: grafana/grafana-security-mirror
-      dest_repo: grafana/grafana
-      dry_run: ${{ needs.setup.outputs.dry_run == 'true'}}
-    secrets: inherit
   post_changelog_on_forum:
     needs: setup
     runs-on: ubuntu-latest
