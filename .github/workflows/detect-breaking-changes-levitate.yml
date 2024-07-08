@@ -143,23 +143,20 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.LEVITATE_SA }}
 
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-        with:
-          version: '>= 363.0.0'
-          project_id: 'grafanalabs-global'
-          install_components: 'bq'
+      # - name: 'Set up Cloud SDK'
+      #   uses: 'google-github-actions/setup-gcloud@v2'
+      #   with:
+      #     version: '>= 363.0.0'
+      #     project_id: 'grafanalabs-global'
+      #     install_components: 'bq'
 
-
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
 
       - name: Run BigQuery query
         run: |
-          unset CLOUDSDK_CORE_PROJECT
-          unset GCLOUD_PROJECT
-          unset GCP_PROJECT
-          unset GOOGLE_CLOUD_PROJECT
+          # unset CLOUDSDK_CORE_PROJECT
+          # unset GCLOUD_PROJECT
+          # unset GCP_PROJECT
+          # unset GOOGLE_CLOUD_PROJECT
 
           gcloud config set project grafanalabs-global
           CLOUDSDK_CORE_PROJECT=grafanalabs-global bq query --nouse_legacy_sql --project_id=grafanalabs-global "
