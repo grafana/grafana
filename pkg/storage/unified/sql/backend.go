@@ -377,9 +377,9 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resourc
 	}
 
 	readReq := sqlResourceReadRequest{
-		SQLTemplate:     sqltemplate.New(b.sqlDialect),
-		Request:         req,
-		readResponseSet: new(readResponseSet),
+		SQLTemplate:  sqltemplate.New(b.sqlDialect),
+		Request:      req,
+		readResponse: new(readResponse),
 	}
 
 	sr := sqlResourceRead
@@ -399,12 +399,40 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resourc
 }
 
 func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
-	_, span := b.tracer.Start(ctx, "storage_server.List")
+	_, span := b.tracer.Start(ctx, trace_prefix+"List")
 	defer span.End()
 
-	fmt.Printf("TODO, LIST: %+v", req.Options.Key)
+	readReq := sqlResourceListRequest{
+		SQLTemplate: sqltemplate.New(b.sqlDialect),
+		Request:     req,
+		Response:    new(resource.ResourceWrapper),
+	}
+	query, err := sqltemplate.Execute(sqlResourceList, readReq)
+	if err != nil {
+		return nil, fmt.Errorf("execute SQL template to list resources: %w", err)
+	}
 
-	return nil, ErrNotImplementedYet
+	rows, err := b.sqlDB.QueryContext(ctx, query, readReq.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("list resources: %w", err)
+	}
+
+	out := &resource.ListResponse{
+		Items:           make([]*resource.ResourceWrapper, req.Limit),
+		ResourceVersion: 0, // TODO
+
+	}
+	for i := 1; rows.Next(); i++ {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		if err := rows.Scan(readReq.GetScanDest()...); err != nil {
+			return nil, fmt.Errorf("scan row #%d: %w", i, err)
+		}
+		rw := *readReq.Response
+		out.Items = append(out.Items, &rw)
+	}
+	return out, nil
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
@@ -491,6 +519,9 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 
 // resourceVersionAtomicInc atomically increases the version of a kind within a
 // transaction.
+// TODO: Ideally we should attempt to update the RV in the resource and resource_history tables
+// in a single roundtrip. This would reduce the latency of the operation, and also increase the
+// throughput of the system. This is a good candidate for a future optimization.
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
 
 	// 1. Increment the resource version

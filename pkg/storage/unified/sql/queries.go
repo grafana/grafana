@@ -37,6 +37,7 @@ var (
 	sqlResourceInsert          = mustTemplate("resource_insert.sql")
 	sqlResourceUpdate          = mustTemplate("resource_update.sql")
 	sqlResourceRead            = mustTemplate("resource_read.sql")
+	sqlResourceList            = mustTemplate("resource_list.sql")
 	sqlResourceUpdateRV        = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead     = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryUpdateRV = mustTemplate("resource_history_update_rv.sql")
@@ -97,8 +98,6 @@ func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
 }
 
-// sqlResourceHistoryReadRequest can be used to retrieve a row fromthe "resource_history" tables.
-
 type historyPollResponse struct {
 	Key             resource.ResourceKey
 	ResourceVersion int64
@@ -122,21 +121,40 @@ func (r sqlResourceHistoryPollRequest) Validate() error {
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
 
-type readResponseSet struct {
+type key struct {
 	resource.ReadResponse
 }
 
-func (r *readResponseSet) Results() (*readResponseSet, error) {
+type readRequest struct {
+	resource.ReadResponse
+}
+
+type readResponse struct {
+	resource.ReadResponse
+}
+
+func (r *readResponse) Results() (*readResponse, error) {
 	return r, nil
 }
 
 type sqlResourceReadRequest struct {
 	*sqltemplate.SQLTemplate
 	Request *resource.ReadRequest
-	*readResponseSet
+	*readResponse
 }
 
 func (r sqlResourceReadRequest) Validate() error {
+	return nil // TODO
+}
+
+// List
+type sqlResourceListRequest struct {
+	*sqltemplate.SQLTemplate
+	Request  *resource.ListRequest
+	Response *resource.ResourceWrapper
+}
+
+func (r sqlResourceListRequest) Validate() error {
 	return nil // TODO
 }
 

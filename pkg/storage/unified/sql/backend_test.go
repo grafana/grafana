@@ -11,14 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/zeebo/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestBackendCRUDLW(t *testing.T) {
+func TestBackendHappyPath(t *testing.T) {
 	ctx := context.Background()
 	dbstore := db.InitTestDB(t)
 
@@ -34,11 +34,11 @@ func TestBackendCRUDLW(t *testing.T) {
 	stream, err := store.WatchWriteEvents(ctx)
 	assert.NoError(t, err)
 
-	t.Run("WriteEvent Add 3 objects", func(t *testing.T) {
+	t.Run("Add 3 resources", func(t *testing.T) {
 		for i := 1; i <= 3; i++ {
 			rv, err := store.WriteEvent(ctx, resource.WriteEvent{
 				Type:  resource.WatchEvent_ADDED,
-				Value: []byte("initial value"),
+				Value: []byte("initial value " + strconv.Itoa(i)),
 				Key: &resource.ResourceKey{
 					Namespace: "namespace",
 					Group:     "group",
@@ -51,7 +51,7 @@ func TestBackendCRUDLW(t *testing.T) {
 		}
 	})
 
-	t.Run("WriteEvent Update item2", func(t *testing.T) {
+	t.Run("Update item2", func(t *testing.T) {
 		rv, err := store.WriteEvent(ctx, resource.WriteEvent{
 			Type:  resource.WatchEvent_MODIFIED,
 			Value: []byte("updated value"),
@@ -66,7 +66,7 @@ func TestBackendCRUDLW(t *testing.T) {
 		assert.Equal(t, int64(4), rv)
 	})
 
-	t.Run("WriteEvent Delete item1", func(t *testing.T) {
+	t.Run("Delete item1", func(t *testing.T) {
 		rv, err := store.WriteEvent(ctx, resource.WriteEvent{
 			Type: resource.WatchEvent_DELETED,
 			Key: &resource.ResourceKey{
@@ -80,7 +80,7 @@ func TestBackendCRUDLW(t *testing.T) {
 		assert.Equal(t, int64(5), rv)
 	})
 
-	t.Run("Read latest", func(t *testing.T) {
+	t.Run("Read latest item 2", func(t *testing.T) {
 		resp, err := store.Read(ctx, &resource.ReadRequest{
 			Key: &resource.ResourceKey{
 				Namespace: "namespace",
@@ -94,7 +94,7 @@ func TestBackendCRUDLW(t *testing.T) {
 		assert.Equal(t, "updated value", string(resp.Value))
 	})
 
-	t.Run("Read early verions", func(t *testing.T) {
+	t.Run("Read early verion of item2", func(t *testing.T) {
 		resp, err := store.Read(ctx, &resource.ReadRequest{
 			Key: &resource.ResourceKey{
 				Namespace: "namespace",
@@ -106,32 +106,40 @@ func TestBackendCRUDLW(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), resp.ResourceVersion)
-		assert.Equal(t, "initial value", string(resp.Value))
+		assert.Equal(t, "initial value 2", string(resp.Value))
+	})
+
+	t.Run("PrepareList latest", func(t *testing.T) {
+		resp, err := store.PrepareList(ctx, &resource.ListRequest{})
+		assert.NoError(t, err)
+		assert.Len(t, resp.Items, 2)
+		assert.Equal(t, "updated value", string(resp.Items[0].Value))
+		assert.Equal(t, "initial value 3", string(resp.Items[1].Value))
 	})
 
 	t.Run("Watch events", func(t *testing.T) {
 		event := <-stream
 		assert.Equal(t, "item1", event.Key.Name)
-		assert.Equal(t, 1, event.ResourceVersion)
+		assert.Equal(t, int64(1), event.ResourceVersion)
 		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
 		event = <-stream
 		assert.Equal(t, "item2", event.Key.Name)
-		assert.Equal(t, 2, event.ResourceVersion)
+		assert.Equal(t, int64(2), event.ResourceVersion)
 		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
 
 		event = <-stream
 		assert.Equal(t, "item3", event.Key.Name)
-		assert.Equal(t, 3, event.ResourceVersion)
+		assert.Equal(t, int64(3), event.ResourceVersion)
 		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
 
 		event = <-stream
 		assert.Equal(t, "item2", event.Key.Name)
-		assert.Equal(t, 4, event.ResourceVersion)
+		assert.Equal(t, int64(4), event.ResourceVersion)
 		assert.Equal(t, resource.WatchEvent_MODIFIED, event.Type)
 
 		event = <-stream
 		assert.Equal(t, "item1", event.Key.Name)
-		assert.Equal(t, 5, event.ResourceVersion)
+		assert.Equal(t, int64(5), event.ResourceVersion)
 		assert.Equal(t, resource.WatchEvent_DELETED, event.Type)
 	})
 }

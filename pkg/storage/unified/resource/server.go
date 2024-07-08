@@ -504,6 +504,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
+	// TODO:
 
 	rsp, err := s.backend.PrepareList(ctx, req)
 	// Status???
