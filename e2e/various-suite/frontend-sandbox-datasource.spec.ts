@@ -85,6 +85,8 @@ describe('Datasource sandbox', () => {
         e2e.pages.Explore.visit();
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+        // make sure the datasource was correctly selected and rendered
+        cy.get('span[data-testid="data-testid SandboxDatasourceInstance breadcrumb"]').should('exist');
 
         cy.wait(300); // wait to prevent false positives because cypress checks too fast
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('not.exist');
@@ -94,6 +96,9 @@ describe('Datasource sandbox', () => {
         e2e.pages.Explore.visit();
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+
+        // make sure the datasource was correctly selected and rendered
+        cy.get('span[data-testid="data-testid SandboxDatasourceInstance breadcrumb"]').should('exist');
 
         const valueToType = 'test' + random(100);
 
@@ -114,6 +119,8 @@ describe('Datasource sandbox', () => {
         e2e.pages.Explore.visit();
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+        // make sure the datasource was correctly selected and rendered
+        cy.get('span[data-testid="data-testid SandboxDatasourceInstance breadcrumb"]').should('exist');
 
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('exist');
       });
@@ -122,6 +129,9 @@ describe('Datasource sandbox', () => {
         e2e.pages.Explore.visit();
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+
+        // make sure the datasource was correctly selected and rendered
+        cy.get('span[data-testid="data-testid SandboxDatasourceInstance breadcrumb"]').should('exist');
 
         const valueToType = 'test' + random(100);
 
