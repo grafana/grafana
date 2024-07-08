@@ -44,6 +44,10 @@ export const reportPageview = () => {
  * @public
  */
 export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>) => {
+  // get static reporting context and append it to properties
+  if (config.reportingStaticContext && config.reportingStaticContext instanceof Object) {
+    properties = { ...properties, ...config.reportingStaticContext };
+  }
   getEchoSrv().addEvent<InteractionEchoEvent>({
     type: EchoEventType.Interaction,
     payload: {
