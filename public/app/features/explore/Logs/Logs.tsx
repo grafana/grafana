@@ -146,6 +146,7 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
 };
 
 const PINNED_LOGS_LIMIT = 3;
+const PINNED_LOGS_TITLE = 'Pinned log';
 
 const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const {
@@ -214,6 +215,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+
+  // Get pinned log lines
+  const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
+  const pinnedLogs = logsParent?.children?.filter((outlines) => outlines.title === PINNED_LOGS_TITLE);
 
   const registerLogLevelsWithContentOutline = useCallback(() => {
     const levelsArr = Object.keys(LogLevelColor);
@@ -670,8 +675,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
 
     register?.({
+      id: row.rowId,
       icon: 'gf-logs',
-      title: 'Pinned log',
+      title: PINNED_LOGS_TITLE,
       panelId: 'Logs',
       level: 'child',
       ref: null,
@@ -691,7 +697,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const getPinnedLogsCount = () => {
     const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
-    return logsParent?.children?.filter((child) => child.title === 'Pinned log').length ?? 0;
+    return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
   };
 
   const hasUnescapedContent = checkUnescapedContent(logRows);
@@ -905,6 +911,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 sortOrder={logsSortOrder}
               >
                 <LogRows
+                  pinnedLogs={pinnedLogs}
                   logRows={logRows}
                   deduplicatedRows={dedupedRows}
                   dedupStrategy={dedupStrategy}

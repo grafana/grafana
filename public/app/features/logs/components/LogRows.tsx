@@ -17,6 +17,7 @@ import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { withTheme2, Themeable2, PopoverContent } from '@grafana/ui';
 
+import { ContentOutlineItemContextProps } from '../../explore/ContentOutline/ContentOutlineContext';
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
@@ -63,6 +64,7 @@ export interface Props extends Themeable2 {
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
+  pinnedLogs?: ContentOutlineItemContextProps[];
   containerRendered?: boolean;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
@@ -191,7 +193,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   );
 
   render() {
-    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, ...rest } = this.props;
+    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, pinnedLogs, ...rest } =
+      this.props;
     const { renderAll } = this.state;
     const styles = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
@@ -242,6 +245,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onUnpinLine={this.props.onUnpinLine}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
+                  pinnedLogs={pinnedLogs}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}
@@ -263,6 +267,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
+                  pinnedLogs={pinnedLogs}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}

@@ -1,6 +1,8 @@
 import { uniqueId } from 'lodash';
 import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
 
+import { MakeOptional } from '../../trails/shared';
+
 import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 
 export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
@@ -10,7 +12,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
   children?: ContentOutlineItemContextProps[];
 }
 
-type RegisterFunction = (outlineItem: Omit<ContentOutlineItemContextProps, 'id'>) => string;
+type RegisterFunction = (outlineItem: MakeOptional<ContentOutlineItemContextProps, 'id'>) => string;
 
 export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
@@ -44,7 +46,9 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   const parentlessItemsRef = useRef<ParentlessItems>({});
 
   const register: RegisterFunction = useCallback((outlineItem) => {
-    const id = uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
+    const id = outlineItem.id
+      ? outlineItem.id
+      : uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
 
     setOutlineItems((prevItems) => {
       if (outlineItem.level === 'root') {
