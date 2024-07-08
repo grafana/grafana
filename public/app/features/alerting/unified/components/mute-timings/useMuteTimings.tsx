@@ -27,13 +27,16 @@ type BaseAlertmanagerArgs = {
 /** Name of the custom annotation label used in k8s APIs for us to discern if a given entity was provisioned */
 export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
 
+/** Value of `PROVENANCE_ANNOTATION` given for file provisioned intervals */
+const PROVENANCE_FILE = 'file';
+
 const parseTimeInterval = (item: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval) => {
   const { metadata, spec } = item;
   return {
     ...spec,
     id: metadata.uid || spec.name,
     metadata: metadata,
-    provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] === 'file',
+    provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] === PROVENANCE_FILE,
   };
 };
 
@@ -49,7 +52,7 @@ const useAlertmanagerIntervals = () =>
       const timeIntervals = intervals.map((interval) => ({
         ...interval,
         id: interval.name,
-        provisioned: muteTimingsProvenances[interval.name] === 'file',
+        provisioned: muteTimingsProvenances[interval.name] === PROVENANCE_FILE,
       }));
 
       return {
@@ -172,7 +175,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
           const muteTimingsProvenances = alertmanager_config?.muteTimeProvenances ?? {};
 
           return {
-            data: { ...timing, provisioned: muteTimingsProvenances[timing.name] === 'file' },
+            data: { ...timing, provisioned: muteTimingsProvenances[timing.name] === PROVENANCE_FILE },
             ...rest,
           };
         }
