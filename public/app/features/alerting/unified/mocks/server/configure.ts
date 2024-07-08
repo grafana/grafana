@@ -14,7 +14,7 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { buildInfoResponse } from '../../testSetup/featureDiscovery';
 import { DataSourceType } from '../../utils/datasource';
 
-import { MIMIR_DATASOURCE_UID } from './constnts';
+import { MIMIR_DATASOURCE_UID } from './constants';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/grafanaRuler';
 
 export type HandlerOptions = {

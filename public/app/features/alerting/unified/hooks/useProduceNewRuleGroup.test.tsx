@@ -26,7 +26,7 @@ import {
   setRulerRuleGroupHandler,
   setUpdateRulerRuleNamespaceHandler,
 } from '../mocks/server/configure';
-import { MIMIR_DATASOURCE_UID } from '../mocks/server/constnts';
+import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/grafanaRuler';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';

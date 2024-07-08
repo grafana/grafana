@@ -3,7 +3,7 @@ import { delay, http, HttpResponse } from 'msw';
 import { RulerRuleGroupDTO } from '../../../../../../types/unified-alerting-dto';
 import { namespaces } from '../../mimirRulerApi';
 import { HandlerOptions } from '../configure';
-import { MIMIR_DATASOURCE_UID } from '../constnts';
+import { MIMIR_DATASOURCE_UID } from '../constants';
 
 export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) => {
   return http.post<{ namespaceName: string }>(
