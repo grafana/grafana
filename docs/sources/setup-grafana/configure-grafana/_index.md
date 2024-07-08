@@ -1275,6 +1275,12 @@ Set plugins that will receive Azure settings via plugin context.
 
 By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
 
+### client_password_credentials_enabled
+
+MSSQL will be able to use AD password auth.
+
+Disabled by default, needs to be explicitly enabled.
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.

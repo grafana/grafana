@@ -275,6 +275,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
 			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
 			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
+			ClientPasswordCredentialsEnabled:       hs.Cfg.Azure.ClientPasswordCredentialsEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{

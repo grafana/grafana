@@ -6,29 +6,17 @@ import { Button, Field, Select, Input } from '@grafana/ui/src/components';
 import { AzureCredentialsType, AzureAuthType } from '../types';
 
 export interface Props {
+  managedIdentityEnabled: boolean;
+  clientPasswordCredentialsEnabled: boolean;
   credentials: AzureCredentialsType;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentialsType) => void;
   disabled?: boolean;
 }
 
-const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
-  {
-    value: AzureAuthType.MSI,
-    label: 'Managed Identity',
-  },
-  {
-    value: AzureAuthType.CLIENT_SECRET,
-    label: 'App Registration',
-  },
-  {
-    value: AzureAuthType.AD_PASSWORD,
-    label: 'Password'
-  },
-];
 
 export const AzureCredentialsForm = (props: Props) => {
-  const { credentials, azureCloudOptions, onCredentialsChange, disabled } = props;
+  const { managedIdentityEnabled, clientPasswordCredentialsEnabled, credentials, azureCloudOptions, onCredentialsChange, disabled } = props;
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
@@ -39,6 +27,26 @@ export const AzureCredentialsForm = (props: Props) => {
       onCredentialsChange(updated);
     }
   };
+
+  const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
+    {
+      value: AzureAuthType.CLIENT_SECRET,
+      label: 'App Registration',
+    },
+  ];
+  if (managedIdentityEnabled) {
+    authTypeOptions.push(  {
+      value: AzureAuthType.MSI,
+      label: 'Managed Identity',
+    })
+  }
+  if (clientPasswordCredentialsEnabled) {
+    authTypeOptions.push(  
+      {
+        value: AzureAuthType.AD_PASSWORD,
+        label: 'Password'
+      })
+  }
 
   const onInputChange = ({ property, value }: { property: keyof AzureCredentialsType; value: string }) => {
     if (onCredentialsChange) {

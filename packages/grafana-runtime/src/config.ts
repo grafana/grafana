@@ -26,6 +26,7 @@ export interface AzureSettings {
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
   userIdentityFallbackCredentialsEnabled: boolean;
+  clientPasswordCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -131,6 +132,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
     userIdentityFallbackCredentialsEnabled: false,
+    clientPasswordCredentialsEnabled: false,
   };
   caching = {
     enabled: false,

@@ -142,6 +142,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 				}
 			}
 		}
+
+		m[azsettings.ClientPasswordCredentialsEnabled] = strconv.FormatBool(azureSettings.ClientPasswordCredentialsEnabled)
 	}
 
 	if s.cfg.UserFacingDefaultError != "" {
