@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -35,86 +34,55 @@ func TestBackendHappyPath(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("Add 3 resources", func(t *testing.T) {
-		for i := 1; i <= 3; i++ {
-			rv, err := store.WriteEvent(ctx, resource.WriteEvent{
-				Type:  resource.WatchEvent_ADDED,
-				Value: []byte("initial value " + strconv.Itoa(i)),
-				Key: &resource.ResourceKey{
-					Namespace: "namespace",
-					Group:     "group",
-					Resource:  "resource",
-					Name:      "item" + strconv.Itoa(i),
-				},
-			})
-			assert.NoError(t, err)
-			assert.Equal(t, int64(i), rv)
-		}
+		rv, err := writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), rv)
+
+		rv, err = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(2), rv)
+
+		rv, err = writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(3), rv)
+
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
-		rv, err := store.WriteEvent(ctx, resource.WriteEvent{
-			Type:  resource.WatchEvent_MODIFIED,
-			Value: []byte("updated value"),
-			Key: &resource.ResourceKey{
-				Namespace: "namespace",
-				Group:     "group",
-				Resource:  "resource",
-				Name:      "item2",
-			},
-		})
+		rv, err := writeEvent(ctx, store, "item2", resource.WatchEvent_MODIFIED)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(4), rv)
 	})
 
 	t.Run("Delete item1", func(t *testing.T) {
-		rv, err := store.WriteEvent(ctx, resource.WriteEvent{
-			Type: resource.WatchEvent_DELETED,
-			Key: &resource.ResourceKey{
-				Namespace: "namespace",
-				Group:     "group",
-				Resource:  "resource",
-				Name:      "item1",
-			},
-		})
+		rv, err := writeEvent(ctx, store, "item1", resource.WatchEvent_DELETED)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(5), rv)
 	})
 
 	t.Run("Read latest item 2", func(t *testing.T) {
-		resp, err := store.Read(ctx, &resource.ReadRequest{
-			Key: &resource.ResourceKey{
-				Namespace: "namespace",
-				Group:     "group",
-				Resource:  "resource",
-				Name:      "item2",
-			},
-		})
+		resp, err := store.Read(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
 		assert.NoError(t, err)
 		assert.Equal(t, int64(4), resp.ResourceVersion)
-		assert.Equal(t, "updated value", string(resp.Value))
+		assert.Equal(t, "item2 MODIFIED", string(resp.Value))
 	})
 
 	t.Run("Read early verion of item2", func(t *testing.T) {
 		resp, err := store.Read(ctx, &resource.ReadRequest{
-			Key: &resource.ResourceKey{
-				Namespace: "namespace",
-				Group:     "group",
-				Resource:  "resource",
-				Name:      "item2",
-			},
+			Key:             resourceKey("item2"),
 			ResourceVersion: 3, // item2 was created at rv=2 and updated at rv=4
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), resp.ResourceVersion)
-		assert.Equal(t, "initial value 2", string(resp.Value))
+		assert.Equal(t, "item2 ADDED", string(resp.Value))
 	})
 
 	t.Run("PrepareList latest", func(t *testing.T) {
 		resp, err := store.PrepareList(ctx, &resource.ListRequest{})
 		assert.NoError(t, err)
 		assert.Len(t, resp.Items, 2)
-		assert.Equal(t, "updated value", string(resp.Items[0].Value))
-		assert.Equal(t, "initial value 3", string(resp.Items[1].Value))
+		assert.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
+		assert.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
 		assert.Equal(t, int64(4), resp.ResourceVersion)
 	})
 
@@ -159,16 +127,7 @@ func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 	assert.NotNil(t, store)
 
 	// Create a few resources before initing the watch
-	_, err = store.WriteEvent(ctx, resource.WriteEvent{
-		Type:  resource.WatchEvent_ADDED,
-		Value: []byte("initial value 0"),
-		Key: &resource.ResourceKey{
-			Namespace: "namespace",
-			Group:     "group",
-			Resource:  "resource",
-			Name:      "item 0",
-		},
-	})
+	_, err = writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
 	assert.NoError(t, err)
 
 	// Start the watch
@@ -176,16 +135,7 @@ func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create one more event
-	_, err = store.WriteEvent(ctx, resource.WriteEvent{
-		Type:  resource.WatchEvent_ADDED,
-		Value: []byte("initial value 2"),
-		Key: &resource.ResourceKey{
-			Namespace: "namespace",
-			Group:     "group",
-			Resource:  "resource",
-			Name:      "item2",
-		},
-	})
+	_, err = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)
 	assert.NoError(t, err)
 	assert.Equal(t, "item2", (<-stream).Key.Name)
 }
@@ -204,37 +154,31 @@ func TestBackendPrepareList(t *testing.T) {
 	assert.NotNil(t, store)
 
 	// Create a few resources before initing the watch
-	for i := 1; i <= 10; i++ {
-		rv, err := store.WriteEvent(ctx, resource.WriteEvent{
-			Type:  resource.WatchEvent_ADDED,
-			Value: []byte("initial value " + strconv.Itoa(i)),
-			Key: &resource.ResourceKey{
-				Namespace: "namespace",
-				Group:     "group",
-				Resource:  "resource",
-				Name:      "item" + strconv.Itoa(i),
-			},
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, int64(i), rv)
-	}
+	writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)    // rv=1
+	writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)    // rv=2 - will be modified at rv=6
+	writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted at rv=7
+	writeEvent(ctx, store, "item4", resource.WatchEvent_ADDED)    // rv=4
+	writeEvent(ctx, store, "item5", resource.WatchEvent_ADDED)    // rv=5
+	writeEvent(ctx, store, "item2", resource.WatchEvent_MODIFIED) // rv=6
+	writeEvent(ctx, store, "item3", resource.WatchEvent_DELETED)  // rv=7
+	writeEvent(ctx, store, "item6", resource.WatchEvent_ADDED)    // rv=8
 	t.Run("fetch all latest", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{})
 		assert.NoError(t, err)
-		assert.Len(t, res.Items, 10)
+		assert.Len(t, res.Items, 5)
 		assert.Empty(t, res.NextPageToken)
 	})
 
 	t.Run("list latest first page ", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
-			Limit: 5,
+			Limit: 3,
 		})
 		assert.NoError(t, err)
-		assert.Len(t, res.Items, 5)
+		assert.Len(t, res.Items, 3)
 		continueToken, err := GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
-		assert.Equal(t, int64(10), continueToken.ResourceVersion)
-		assert.Equal(t, int64(5), continueToken.StartOffset)
+		assert.Equal(t, int64(8), continueToken.ResourceVersion)
+		assert.Equal(t, int64(3), continueToken.StartOffset)
 	})
 
 	t.Run("list at revision", func(t *testing.T) {
@@ -243,29 +187,33 @@ func TestBackendPrepareList(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 4)
-		assert.Equal(t, "initial value 1", string(res.Items[0].Value))
+		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		assert.Equal(t, "item2 ADDED", string(res.Items[1].Value))
+		assert.Equal(t, "item3 ADDED", string(res.Items[2].Value))
+		assert.Equal(t, "item4 ADDED", string(res.Items[3].Value))
 		assert.Empty(t, res.NextPageToken)
 	})
 
 	t.Run("fetch first page at revision with limit", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
 			Limit:           3,
-			ResourceVersion: 5,
+			ResourceVersion: 7,
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 3)
-		assert.Equal(t, "initial value 1", string(res.Items[0].Value))
-		assert.Equal(t, "initial value 2", string(res.Items[1].Value))
-		assert.Equal(t, "initial value 3", string(res.Items[2].Value))
+		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		assert.Equal(t, "item4 ADDED", string(res.Items[1].Value))
+		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
+
 		continueToken, err := GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
-		assert.Equal(t, int64(5), continueToken.ResourceVersion)
+		assert.Equal(t, int64(7), continueToken.ResourceVersion)
 		assert.Equal(t, int64(3), continueToken.StartOffset)
 	})
 
 	t.Run("fetch second page at revision", func(t *testing.T) {
 		continueToken := &ContinueToken{
-			ResourceVersion: 5,
+			ResourceVersion: 8,
 			StartOffset:     2,
 		}
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
@@ -274,11 +222,34 @@ func TestBackendPrepareList(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 2)
-		assert.Equal(t, "initial value 3", string(res.Items[0].Value))
-		assert.Equal(t, "initial value 4", string(res.Items[1].Value))
+		assert.Equal(t, "item5 ADDED", string(res.Items[0].Value))
+		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+
 		continueToken, err = GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
-		assert.Equal(t, int64(5), continueToken.ResourceVersion)
+		assert.Equal(t, int64(8), continueToken.ResourceVersion)
 		assert.Equal(t, int64(4), continueToken.StartOffset)
 	})
+}
+
+func writeEvent(ctx context.Context, store *backend, name string, action resource.WatchEvent_Type) (int64, error) {
+	return store.WriteEvent(ctx, resource.WriteEvent{
+		Type:  action,
+		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
+		Key: &resource.ResourceKey{
+			Namespace: "namespace",
+			Group:     "group",
+			Resource:  "resource",
+			Name:      name,
+		},
+	})
+}
+
+func resourceKey(name string) *resource.ResourceKey {
+	return &resource.ResourceKey{
+		Namespace: "namespace",
+		Group:     "group",
+		Resource:  "resource",
+		Name:      name,
+	}
 }
