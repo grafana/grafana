@@ -88,8 +88,21 @@ export const HistoryEventsList = ({
     return <HistoryErrorMessage error={error} />;
   }
 
+  const maximumEventsReached = !isLoading && stateHistory?.data?.values?.[0]?.length === LIMIT_EVENTS;
+
   return (
     <>
+      {maximumEventsReached && (
+        <Alert
+          severity="warning"
+          title={t('alerting.central-alert-history.too-many-events.title', 'Unable to display all events')}
+        >
+          {t(
+            'alerting.central-alert-history.too-many-events.text',
+            'The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.'
+          )}
+        </Alert>
+      )}
       <LoadingIndicator visible={isLoading} />
       <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} timeRange={timeRange} />
     </>
@@ -178,7 +191,7 @@ function EventRow({ record, addFilter, timeRange }: EventRowProps) {
             {record.line.labels ? <AlertRuleName labels={record.line.labels} ruleUID={record.line.ruleUID} /> : null}
           </div>
           <div className={styles.labelsCol}>
-            <AlertLabels labels={record.line.labels ?? {}} size="xs" onLabelClick={onLabelClick} />
+            <AlertLabels labels={record.line.labels ?? {}} size="xs" onClick={onLabelClick} />
           </div>
         </Stack>
       </div>

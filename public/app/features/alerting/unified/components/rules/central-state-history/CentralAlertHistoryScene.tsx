@@ -229,6 +229,7 @@ function ClearFilterButton({
 }) {
   // get the current values of the filters
   const valueInLabelsFilter = labelsFilterVariable.getValue();
+  //todo: use parsePromQLStyleMatcherLooseSafe to validate the label filter and check the lenghtof the result
   const valueInTransitionsFilter = transitionsToFilterVariable.getValue();
   const valueInTransitionsFromFilter = transitionsFromFilterVariable.getValue();
   // if no filter is active, return null

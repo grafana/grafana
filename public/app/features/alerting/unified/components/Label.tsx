@@ -13,11 +13,11 @@ interface Props {
   value: ReactNode;
   color?: string;
   size?: LabelSize;
-  onLabelClick?: (label: string, value: string) => void;
+  onClick?: (label: string, value: string) => void;
 }
 
 // TODO allow customization with color prop
-const Label = ({ label, value, icon, color, size = 'md', onLabelClick }: Props) => {
+const Label = ({ label, value, icon, color, size = 'md', onClick }: Props) => {
   const styles = useStyles2(getStyles, color, size);
   const ariaLabel = `${label}: ${value}`;
   const labelStr = label?.toString() ?? '';
@@ -46,17 +46,17 @@ const Label = ({ label, value, icon, color, size = 'md', onLabelClick }: Props) 
 
   return (
     <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
-      {onLabelClick ? (
+      {onClick ? (
         <div
           className={styles.clickable}
           role="button" // role="button" and tabIndex={0} is needed for keyboard navigation
           tabIndex={0} // Make it focusable
           key={labelStr + valueStr}
-          onClick={() => onLabelClick(labelStr, valueStr)}
+          onClick={() => onClick(labelStr, valueStr)}
           onKeyDown={(e) => {
             // needed for accessiblity: handle keyboard navigation
             if (e.key === 'Enter') {
-              onLabelClick(labelStr, valueStr);
+              onClick(labelStr, valueStr);
               e.preventDefault();
             }
           }}

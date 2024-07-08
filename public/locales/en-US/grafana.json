@@ -64,7 +64,6 @@
         "no-recognized-state": "No recognized state",
         "no-values": "No values",
         "not-found": "Rule not found for this event.",
-        "not-grafana-rule": "Rule is not a Grafana rule",
         "number-transitions": "State transitions for selected period:",
         "state": {
           "alerting": "Alerting",
@@ -88,7 +87,11 @@
           "label4": "Filter alerts using label querying without braces, ex:"
         }
       },
-      "filterBy": "Filter by:"
+      "filterBy": "Filter by:",
+      "too-many-events": {
+        "text": "The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.",
+        "title": "Unable to display all events"
+      }
     },
     "contact-points": {
       "telegram": {

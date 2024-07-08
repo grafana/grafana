@@ -15,10 +15,10 @@ interface Props {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
-  onLabelClick?: (label: string, value: string) => void;
+  onClick?: (label: string, value: string) => void;
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size, onLabelClick }: Props) => {
+export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
@@ -42,7 +42,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onLabelClick }: P
             label={label}
             value={value}
             color={getLabelColor(label)}
-            onLabelClick={onLabelClick}
+            onClick={onClick}
           />
         );
       })}
