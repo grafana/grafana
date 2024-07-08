@@ -1,4 +1,4 @@
-package clientmiddleware
+package instrumentationutils
 
 import (
 	"context"
@@ -9,23 +9,25 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestRequestStatus(t *testing.T) {
 	tcs := []struct {
-		s             requestStatus
+		s             RequestStatus
 		expectedLabel string
 	}{
 		{
-			s:             requestStatusOK,
+			s:             RequestStatusOK,
 			expectedLabel: "ok",
 		},
 		{
-			s:             requestStatusError,
+			s:             RequestStatusError,
 			expectedLabel: "error",
 		},
 		{
-			s:             requestStatusCancelled,
+			s:             RequestStatusCancelled,
 			expectedLabel: "cancelled",
 		},
 	}
@@ -42,28 +44,33 @@ func TestRequestStatusFromError(t *testing.T) {
 	tcs := []struct {
 		desc           string
 		err            error
-		expectedStatus requestStatus
+		expectedStatus RequestStatus
 	}{
 		{
 			desc:           "no error should be status ok",
 			err:            nil,
-			expectedStatus: requestStatusOK,
+			expectedStatus: RequestStatusOK,
 		},
 		{
 			desc:           "error should be status error",
 			err:            errors.New("boom"),
-			expectedStatus: requestStatusError,
+			expectedStatus: RequestStatusError,
 		},
 		{
 			desc:           "context canceled should be status cancelled",
 			err:            context.Canceled,
-			expectedStatus: requestStatusCancelled,
+			expectedStatus: RequestStatusCancelled,
+		},
+		{
+			desc:           "gRPC canceled should be status cancelled",
+			err:            status.Error(codes.Canceled, "canceled"),
+			expectedStatus: RequestStatusCancelled,
 		},
 	}
 
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
-			status := requestStatusFromError(tc.err)
+			status := RequestStatusFromError(tc.err)
 			require.Equal(t, tc.expectedStatus, status)
 		})
 	}
@@ -94,43 +101,80 @@ func TestRequestStatusFromQueryDataResponse(t *testing.T) {
 		desc           string
 		resp           *backend.QueryDataResponse
 		err            error
-		expectedStatus requestStatus
+		expectedStatus RequestStatus
 	}{
 		{
 			desc:           "no error should be status ok",
 			err:            nil,
-			expectedStatus: requestStatusOK,
+			expectedStatus: RequestStatusOK,
 		},
 		{
 			desc:           "error should be status error",
 			err:            errors.New("boom"),
-			expectedStatus: requestStatusError,
+			expectedStatus: RequestStatusError,
 		},
 		{
 			desc:           "context canceled should be status cancelled",
 			err:            context.Canceled,
-			expectedStatus: requestStatusCancelled,
+			expectedStatus: RequestStatusCancelled,
 		},
 		{
 			desc:           "response without error should be status ok",
 			resp:           responseWithoutError,
-			expectedStatus: requestStatusOK,
+			expectedStatus: RequestStatusOK,
 		},
 		{
 			desc:           "response with error should be status error",
 			resp:           responseWithError,
-			expectedStatus: requestStatusError,
+			expectedStatus: RequestStatusError,
 		},
 		{
 			desc:           "response with multiple error should pick the highest status cancelled",
 			resp:           responseWithMultipleErrors,
-			expectedStatus: requestStatusError,
+			expectedStatus: RequestStatusError,
 		},
 	}
 
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
-			status := requestStatusFromQueryDataResponse(tc.resp, tc.err)
+			status := RequestStatusFromQueryDataResponse(tc.resp, tc.err)
+			require.Equal(t, tc.expectedStatus, status)
+		})
+	}
+}
+
+func TestRequestStatusFromErrorString(t *testing.T) {
+	tcs := []struct {
+		desc           string
+		err            string
+		expectedStatus RequestStatus
+	}{
+		{
+			desc:           "no error should be status ok",
+			err:            "",
+			expectedStatus: RequestStatusOK,
+		},
+		{
+			desc:           "error should be status error",
+			err:            errors.New("boom").Error(),
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "context canceled should be status cancelled",
+			err:            context.Canceled.Error(),
+			expectedStatus: RequestStatusCancelled,
+		},
+		{
+			desc:           "gRPC canceled should be status cancelled",
+			err:            status.Error(codes.Canceled, "canceled").Error(),
+			expectedStatus: RequestStatusCancelled,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			status := RequestStatusFromErrorString(tc.err)
+			fmt.Print(tc.err)
 			require.Equal(t, tc.expectedStatus, status)
 		})
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
@@ -30,13 +31,13 @@ type LoggerMiddleware struct {
 	logger plog.Logger
 }
 
-func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) (requestStatus, error)) error {
+func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) (instrumentationutils.RequestStatus, error)) error {
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
 	status, err := fn(ctx)
 	logParams := []any{
-		"status", status,
+		"status", status.String(),
 		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
@@ -48,7 +49,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 
 	ctxLogger := m.logger.FromContext(ctx)
 	logFunc := ctxLogger.Info
-	if status > requestStatusOK {
+	if status > instrumentationutils.RequestStatusOK {
 		logFunc = ctxLogger.Error
 	}
 
@@ -63,11 +64,11 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	var resp *backend.QueryDataResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (status requestStatus, innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
 
 		if innerErr != nil {
-			return requestStatusFromError(innerErr), innerErr
+			return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 		}
 
 		ctxLogger := m.logger.FromContext(ctx)
@@ -83,7 +84,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 			}
 		}
 
-		return requestStatusFromQueryDataResponse(resp, innerErr), innerErr
+		return instrumentationutils.RequestStatusFromQueryDataResponse(resp, innerErr), innerErr
 	})
 
 	return resp, err
@@ -94,9 +95,9 @@ func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallRe
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	err := m.logRequest(ctx, func(ctx context.Context) (status requestStatus, innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
 		innerErr = m.next.CallResource(ctx, req, sender)
-		return requestStatusFromError(innerErr), innerErr
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
 	return err
@@ -108,9 +109,9 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	}
 
 	var resp *backend.CheckHealthResult
-	err := m.logRequest(ctx, func(ctx context.Context) (status requestStatus, innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
 		resp, innerErr = m.next.CheckHealth(ctx, req)
-		return requestStatusFromError(innerErr), innerErr
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
 	return resp, err
@@ -122,9 +123,9 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := m.logRequest(ctx, func(ctx context.Context) (status requestStatus, innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
 		resp, innerErr = m.next.CollectMetrics(ctx, req)
-		return requestStatusFromError(innerErr), innerErr
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
 	return resp, err
