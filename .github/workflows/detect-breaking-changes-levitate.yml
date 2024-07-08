@@ -147,6 +147,7 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
           version: '>= 363.0.0'
+          project_id: 'grafanalabs-global'
 
       # - name: Setup tmate session
       #   uses: mxschmitt/action-tmate@v3
