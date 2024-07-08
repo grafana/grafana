@@ -20,6 +20,7 @@ import {
   PanelEvents,
   QueryResultMetaNotice,
   TimeRange,
+  getDataSourceRef,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -364,7 +365,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onClickExample = (query: TQuery) => {
     if (query.datasource === undefined) {
-      query.datasource = { type: this.props.dataSource.type, uid: this.props.dataSource.uid };
+      query.datasource = getDataSourceRef(this.props.dataSource);
     }
 
     this.props.onChange({

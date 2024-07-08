@@ -424,6 +424,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
+      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None,
     });
 
     builder.addNumberInput({

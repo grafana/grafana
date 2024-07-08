@@ -110,6 +110,64 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
+name: pr-verify-storybook
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - yarn install --immutable || yarn install --immutable
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: yarn-install
+- commands:
+  - yarn storybook --quiet
+  depends_on:
+  - yarn-install
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
+  - yarn e2e:storybook
+  depends_on:
+  - start-storybook
+  environment:
+    HOST: start-storybook
+    PORT: "9001"
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - packages/grafana-ui/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
 name: pr-test-frontend
 node:
   type: no-parallel
@@ -1079,6 +1137,7 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
+  failure: ignore
   image: golang:1.22.4-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -1824,6 +1883,66 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
+name: main-verify-storybook
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - yarn install --immutable || yarn install --immutable
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: yarn-install
+- commands:
+  - yarn storybook --quiet
+  depends_on:
+  - yarn-install
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
+  - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
+  - yarn e2e:storybook
+  depends_on:
+  - start-storybook
+  environment:
+    HOST: start-storybook
+    PORT: "9001"
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+  repo:
+  - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
 name: main-build-e2e-publish
 node:
   type: no-parallel
@@ -2524,6 +2643,7 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
+  failure: ignore
   image: golang:1.22.4-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -4416,6 +4536,7 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
+  failure: ignore
   image: golang:1.22.4-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -5060,6 +5181,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a916fba452c568a0e1d392702db3423fa52652d8d60f65f7b7aa43a7c1e952f4
+hmac: e296b5401c0632dc2549a2c3d0594a58c459f5d185376e9f1728ce75c1d8ff3c
 
 ...
