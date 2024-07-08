@@ -108,20 +108,26 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
     stateHistory,
     labels
       ? Object.entries(labels)
-          .map(([key, value]) => `${key}=${value}`)
-          .join(',')
+        .map(([key, value]) => `${key}=${value}`)
+        .join(',')
       : ''
   );
 
   const { frameSubset, frameTimeRange } = useFrameSubset(dataFrames);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>
+      <Trans i18nKey="alerting.central-alert-history.details.loading">
+        Loading...
+      </Trans>
+    </div>;
   }
   if (isError) {
     return (
-      <Alert title="Error fetching the state history" severity="error">
-        {error instanceof Error ? error.message : 'Unable to fetch alert state history'}
+      <Alert title={t('alerting.central-alert-history.details.error-fetching.title', 'Error fetching the state history')} severity="error">
+        {error instanceof Error
+          ? error.message
+          : t('alerting.central-alert-history.details.error-fetching.message', 'Unable to fetch alert state history')}
       </Alert>
     );
   }

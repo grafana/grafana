@@ -58,8 +58,11 @@
   "alerting": {
     "central-alert-history": {
       "details": {
-        "annotations": "Åŉŉőŧäŧįőŉş",
         "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
+        "error-fetching": {
+          "message": "Ůŉäþľę ŧő ƒęŧčĥ äľęřŧ şŧäŧę ĥįşŧőřy",
+          "title": "Ēřřőř ƒęŧčĥįŉģ ŧĥę şŧäŧę ĥįşŧőřy"
+        },
         "loading": "Ŀőäđįŉģ...",
         "no-recognized-state": "Ńő řęčőģŉįžęđ şŧäŧę",
         "no-values": "Ńő väľūęş",

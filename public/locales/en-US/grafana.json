@@ -58,8 +58,11 @@
   "alerting": {
     "central-alert-history": {
       "details": {
-        "annotations": "Annotations",
         "error": "Error loading rule for this event.",
+        "error-fetching": {
+          "message": "Unable to fetch alert state history",
+          "title": "Error fetching the state history"
+        },
         "loading": "Loading...",
         "no-recognized-state": "No recognized state",
         "no-values": "No values",
