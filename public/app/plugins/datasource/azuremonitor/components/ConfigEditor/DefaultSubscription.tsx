@@ -1,7 +1,6 @@
 import { useEffect, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Select, Button, Field } from '@grafana/ui';
 
 import { isCredentialsComplete } from '../../credentials';
