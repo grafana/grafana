@@ -32,6 +32,7 @@ import {
   getVariablesWithMetricConstant,
   MakeOptional,
   MetricSelectedEvent,
+  TRAIL_BREAKDOWN_VIEW_KEY,
   trailDS,
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
@@ -53,12 +54,13 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery' | 'layout'>) {
     const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
+    const layout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY) ?? 'grid';
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),
       autoQuery,
       queryDef: state.queryDef ?? autoQuery.main,
-      layout: state.layout ?? 'grid',
+      layout: layout as LayoutType,
       ...state,
     });
 
