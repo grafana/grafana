@@ -192,3 +192,15 @@ func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*ReplStore, *sett
 	}
 	return &ReplStore{ss, ss}, cfg
 }
+
+// InitTestReplDBWithMigration initializes the test DB given custom migrations.
+func InitTestReplDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *ReplStore {
+	t.Helper()
+	features := getFeaturesForTesting(opts...)
+	cfg := getCfgForTesting(opts...)
+	ss, err := initTestDB(t, cfg, features, migration, opts...)
+	if err != nil {
+		t.Fatalf("failed to initialize sql store: %s", err)
+	}
+	return &ReplStore{ss, ss}
+}

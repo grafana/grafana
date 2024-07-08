@@ -25,7 +25,7 @@ import (
 // - each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
-	sqlStore := db.InitTestDB(b)
+	sqlStore := db.InitTestReplDB(b)
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
 		cfg:           setting.NewCfg(),
