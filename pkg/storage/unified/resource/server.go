@@ -490,6 +490,8 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		return &ReadResponse{Status: status}, nil
 	}
 
+	// TODO: shall we also check for the namespace and Name ? Or is that a backend concern?
+
 	rsp, err := s.backend.Read(ctx, req)
 	if err != nil {
 		if rsp == nil {
@@ -504,7 +506,6 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
-	// TODO:
 
 	rsp, err := s.backend.PrepareList(ctx, req)
 	// Status???

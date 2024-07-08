@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 // Package-level errors.

@@ -144,7 +144,7 @@ func TestBackendHappyPath(t *testing.T) {
 	})
 }
 
-func TestBackendWatchWriteEventsFromHead(t *testing.T) {
+func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 	ctx := context.Background()
 	dbstore := db.InitTestDB(t)
 

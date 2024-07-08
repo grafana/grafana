@@ -391,15 +391,9 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 		return nil, err
 	}
 	// Fetch the lastest RV
-	rows, err := b.sqlDB.QueryContext(ctx, `SELECT COALESCE(max("resource_version"), 0)  FROM "resource";`)
+	since, err := fetchLatestRV(ctx, b.sqlDB)
 	if err != nil {
-		return nil, fmt.Errorf("fetch latest rv: %w", err)
-	}
-	since := int64(0)
-	if rows.Next() {
-		if err := rows.Scan(&since); err != nil {
-			return nil, fmt.Errorf("scan since resource version: %w", err)
-		}
+		return nil, err
 	}
 	// Start the poller
 	stream := make(chan *resource.WrittenEvent)
@@ -427,6 +421,22 @@ func (b *backend) poller(ctx context.Context, since int64, stream chan<- *resour
 			t.Reset(interval)
 		}
 	}
+}
+
+// fetchLatestRV returns the current maxium RV in the resource table
+func fetchLatestRV(ctx context.Context, db db.DB) (int64, error) {
+	// Fetch the lastest RV
+	rows, err := db.QueryContext(ctx, `SELECT COALESCE(max("resource_version"), 0)  FROM "resource";`)
+	if err != nil {
+		return 0, fmt.Errorf("fetch latest rv: %w", err)
+	}
+	since := int64(0)
+	if rows.Next() {
+		if err := rows.Scan(&since); err != nil {
+			return 0, fmt.Errorf("scan since resource version: %w", err)
+		}
+	}
+	return since, nil
 }
 
 func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
