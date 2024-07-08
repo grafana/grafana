@@ -74,11 +74,6 @@ export const DefaultSubscription = (props: Props) => {
         data-testid={selectors.components.configEditor.defaultSubscription.input}
         htmlFor="default-subscription"
         required={config.featureToggles.azureMonitorPrometheusExemplars}
-        description={
-          config.featureToggles.azureMonitorPrometheusExemplars
-            ? 'Required for Prometheus Exemplar queries to function correctly'
-            : ''
-        }
       >
         <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
           <Select
