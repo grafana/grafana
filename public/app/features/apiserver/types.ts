@@ -150,3 +150,13 @@ export interface ResourceClient<T = object, K = string> {
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   delete(name: string): Promise<MetaStatus>;
 }
+
+export interface K8sAPIGroup {
+  name: string;
+  versions: Array<{ groupVersion: string; version: string }>;
+  preferredVersion: { groupVersion: string; version: string };
+}
+export interface K8sAPIGroupList {
+  kind: 'APIGroupList';
+  groups: K8sAPIGroup[];
+}
