@@ -49,7 +49,7 @@ export interface Props extends Themeable2 {
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onPinLine?: (row: LogRowModel) => void;
+  onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   onLogRowHover?: (row?: LogRowModel) => void;

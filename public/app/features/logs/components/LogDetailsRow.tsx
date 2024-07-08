@@ -38,7 +38,7 @@ export interface Props extends Themeable2 {
   row: LogRowModel;
   app?: CoreApp;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  onPinLine?: (row: LogRowModel) => void;
+  onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
 }
 
@@ -333,7 +333,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                     const originalOnClick = link.onClick;
                     link.onClick = (e, origin) => {
                       // Pin the line
-                      onPinLine(row);
+                      onPinLine(row, false);
 
                       // Execute the link onClick function
                       originalOnClick(e, origin);

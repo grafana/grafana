@@ -674,7 +674,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     topLogsRef.current?.scrollIntoView();
   }, [logsContainerRef, topLogsRef]);
 
-  const onPinToContentOutlineClick = (row: LogRowModel) => {
+  const onPinToContentOutlineClick = (row: LogRowModel, allowUnPin = true) => {
     // find the Logs parent item
     const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
 
@@ -684,7 +684,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
 
     const alreadyPinned = pinnedLogs?.find((pin) => pin.id === row.rowId);
-    if (alreadyPinned && row.rowId) {
+    if (alreadyPinned && row.rowId && allowUnPin) {
       unregister?.(row.rowId);
     } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT) {
       register?.({
