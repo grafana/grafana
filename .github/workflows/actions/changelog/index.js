@@ -117,7 +117,7 @@ const getHistory = async (name, owner, target, since) => {
               endCursor
             }
             nodes {
-							id
+              id
               associatedPullRequests(first: 1) {
                 nodes {
                   title
@@ -127,17 +127,17 @@ const getHistory = async (name, owner, target, since) => {
                       name
                     }
                   }
-									commits(first: 1) {
-										nodes {
-											commit {
-												author {
-													user {
-														login
-													}
-												}
-											}
-										}
-									}
+                  commits(first: 1) {
+                    nodes {
+                      commit {
+                        author {
+                          user {
+                            login
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -284,7 +284,7 @@ ${items
       }`
   )
   .join('\n')}
-	`;
+  `;
 
   // Render all present sections for the given changelog
   return `# ${changelog.version} (${changelog.releaseDate})
@@ -311,7 +311,7 @@ if (process.env.GITHUB_OUTPUT) {
 
 // Save changelog as an output file (if requested)
 if (process.env.INPUT_OUTPUT_FILE) {
-	LOG(`Output to ${process.env.INPUT_OUTPUT_FILE}`);
-	writeFileSync(process.env.INPUT_OUTPUT_FILE, md);
+  LOG(`Output to ${process.env.INPUT_OUTPUT_FILE}`);
+  writeFileSync(process.env.INPUT_OUTPUT_FILE, md);
 }
 
