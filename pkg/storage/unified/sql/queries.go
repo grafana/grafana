@@ -106,7 +106,7 @@ func (r *historyPollResponse) Results() (*historyPollResponse, error) {
 type sqlResourceHistoryPollRequest struct {
 	*sqltemplate.SQLTemplate
 	SinceResourceVersion int64
-	*historyPollResponse
+	Response             *historyPollResponse
 }
 
 func (r sqlResourceHistoryPollRequest) Validate() error {

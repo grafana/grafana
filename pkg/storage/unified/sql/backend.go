@@ -446,7 +446,7 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 	pollReq := sqlResourceHistoryPollRequest{
 		SQLTemplate:          sqltemplate.New(b.sqlDialect),
 		SinceResourceVersion: since,
-		historyPollResponse:  new(historyPollResponse),
+		Response:             new(historyPollResponse),
 	}
 	query, err := sqltemplate.Execute(sqlResourceHistoryPoll, pollReq)
 	if err != nil {
@@ -465,7 +465,7 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 		if err := rows.Scan(pollReq.GetScanDest()...); err != nil {
 			return 0, fmt.Errorf("scan row #%d polling for resource history: %w", i, err)
 		}
-		resp := *pollReq.historyPollResponse
+		resp := pollReq.Response
 		next = resp.ResourceVersion
 
 		stream <- &resource.WrittenEvent{
