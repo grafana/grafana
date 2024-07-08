@@ -33,8 +33,8 @@ function useProduceNewRuleGroup() {
   const [fetchRuleGroup, requestState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   /**
-   * This function will fetch the latest we have on the rule group, apply a diff to it via a reducer and sends
-   * the new rule group update to the correct endpoint.
+   * This function will fetch the latest configuration we have for the rule group, apply a diff to it via a reducer and sends
+   * returns the result.
    *
    * The API does not allow operations on a single rule and will always overwrite the existing rule group with the payload.
    *
