@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"strings"
 
@@ -589,11 +590,16 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 	convertToResources := func() error {
 		for idx, group := range body.Groups {
 			gr := group
-			resources = append(resources, hcl.Resource{
-				Type: "grafana_rule_group",
-				Name: fmt.Sprintf("rule_group_%04d", idx),
-				Body: &gr,
-			})
+			toHashedGruopIdx := append([]byte(gr.Name), []byte(string(idx))...)
+			hash, err := fnv.New32().Write(toHashedGruopIdx)
+			if err != nil {
+				resources = append(resources, hcl.Resource{
+					Type: "grafana_rule_group",
+					Name: fmt.Sprintf("rule_group_%04d", hash),
+					Body: &gr,
+				})
+			}
+
 		}
 		for idx, cp := range body.ContactPoints {
 			upd, err := ContactPointFromContactPointExport(cp)
