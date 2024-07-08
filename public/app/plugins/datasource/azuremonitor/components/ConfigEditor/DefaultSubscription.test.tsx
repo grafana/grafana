@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createMockInstanceSetttings } from '../../__mocks__/settings';
+import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
 import { selectors } from '../../e2e/selectors';
 
 import { DefaultSubscription, Props } from './DefaultSubscription';

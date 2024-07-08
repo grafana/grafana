@@ -1,8 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { createMockDatasourceSettings } from '../../__mocks__/settings';
-import * as credentials from '../../credentials';
-import { AzureCloud } from '../../types';
+import { createMockDatasourceSettings } from '../../__mocks__/datasourceSettings';
 
 import { MonitorConfig, Props } from './MonitorConfig';
 

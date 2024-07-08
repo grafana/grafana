@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 
 import createMockDatasource from '../../__mocks__/datasource';
+import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
   mockSearchResults,
 } from '../../__mocks__/resourcePickerRows';
-import { createMockInstanceSetttings } from '../../__mocks__/settings';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
 import { ResourceRowType } from './types';
