@@ -348,14 +348,14 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 	}
 
 	stats := &cloudmigration.SnapshotResourceStats{
-		CountsByType:   make(map[string]int, len(typeCounts)),
-		CountsByStatus: make(map[string]int, len(statusCounts)),
+		CountsByType:   make(map[cloudmigration.MigrateDataType]int, len(typeCounts)),
+		CountsByStatus: make(map[cloudmigration.ItemStatus]int, len(statusCounts)),
 	}
 	for _, c := range typeCounts {
-		stats.CountsByType[c.Type] = c.Count
+		stats.CountsByType[cloudmigration.MigrateDataType(c.Type)] = c.Count
 	}
 	for _, c := range statusCounts {
-		stats.CountsByStatus[c.Status] = c.Count
+		stats.CountsByStatus[cloudmigration.ItemStatus(c.Status)] = c.Count
 	}
 	return stats, nil
 }

@@ -442,6 +442,19 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		}
 	}
 
+	dtoStats := SnapshotResponseStats{
+		Types:    make(map[MigrateDataType]int),
+		Statuses: make(map[ItemStatus]int),
+	}
+	if snapshot.StatsRollup != nil {
+		for s, c := range snapshot.StatsRollup.CountsByStatus {
+			dtoStats.Statuses[ItemStatus(s)] = c
+		}
+		for s, c := range snapshot.StatsRollup.CountsByType {
+			dtoStats.Types[MigrateDataType(s)] = c
+		}
+	}
+
 	respDto := GetSnapshotResponseDTO{
 		SnapshotDTO: SnapshotDTO{
 			SnapshotUID: snapshot.UID,
@@ -450,7 +463,8 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 			Created:     snapshot.Created,
 			Finished:    snapshot.Finished,
 		},
-		Results: dtoResults,
+		Results:     dtoResults,
+		StatsRollup: dtoStats,
 	}
 
 	return response.JSON(http.StatusOK, respDto)
