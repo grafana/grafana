@@ -213,7 +213,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, topScene, history, settings, metric } = model.useState();
     const chromeHeaderHeight = useChromeHeaderHeight();
-    const styles = useStyles2(getStyles, chromeHeaderHeight);
+    const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
