@@ -77,7 +77,7 @@ func RunServer(opts ServerOptions) error {
 		}
 	}()
 
-	if err := setupProfiling(Profile, ProfileAddr, ProfilePort); err != nil {
+	if err := setupProfiling(Profile, ProfileAddr, ProfilePort, ProfileBlockRate, ProfileMutexFraction); err != nil {
 		return err
 	}
 	if err := setupTracing(Tracing, TracingFile, logger); err != nil {
