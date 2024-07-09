@@ -130,3 +130,47 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 
 	return resp, err
 }
+func (m *LoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if req == nil {
+		return m.next.ValidateAdmission(ctx, req)
+	}
+
+	var resp *backend.ValidationResponse
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.ValidateAdmission(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return resp, err
+}
+
+func (m *LoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if req == nil {
+		return m.next.MutateAdmission(ctx, req)
+	}
+
+	var resp *backend.MutationResponse
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.MutateAdmission(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return resp, err
+}
+
+func (m *LoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if req == nil {
+		return m.next.ConvertObject(ctx, req)
+	}
+
+	var resp *backend.ConversionResponse
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.ConvertObject(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return resp, err
+}
