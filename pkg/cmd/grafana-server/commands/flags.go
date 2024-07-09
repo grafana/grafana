@@ -18,8 +18,8 @@ var (
 	Profile              bool
 	ProfileAddr          string
 	ProfilePort          uint64
-	ProfileBlockRate     uint64
-	ProfileMutexFraction uint64
+	ProfileBlockRate     int
+	ProfileMutexFraction int
 	ProfileContention    bool
 	Tracing              bool
 	TracingFile          string
@@ -82,15 +82,15 @@ var commonFlags = []cli.Flag{
 		Usage:       "Define custom port for profiling",
 		Destination: &ProfilePort,
 	},
-	&cli.Uint64Flag{
+	&cli.IntFlag{
 		Name:        "profile-block-rate",
 		Value:       1,
 		Usage:       "Controls the fraction of goroutine blocking events that are reported in the blocking profile. The profiler aims to sample an average of one blocking event per rate nanoseconds spent blocked. To turn off profiling entirely, use 0",
 		Destination: &ProfileBlockRate,
 	},
-	&cli.Uint64Flag{
+	&cli.IntFlag{
 		Name:        "profile-mutex-rate",
-		Value:       uint64(runtime.SetMutexProfileFraction(-1)),
+		Value:       runtime.SetMutexProfileFraction(-1),
 		Usage:       "Controls the fraction of mutex contention events that are reported in the mutex profile. On average 1/rate events are reported. To turn off mutex profiling entirely, use 0",
 		Destination: &ProfileMutexFraction,
 	},

@@ -25,17 +25,17 @@ type profilingDiagnostics struct {
 	enabled   bool
 	addr      string
 	port      uint64
-	blockRate uint64
-	mutexRate uint64
+	blockRate int
+	mutexRate int
 }
 
-func newProfilingDiagnostics(enabled bool, addr string, port uint64, blockRate uint64, mutexRate uint64) *profilingDiagnostics {
+func newProfilingDiagnostics(enabled bool, addr string, port uint64, blockRate int, mutexRate int) *profilingDiagnostics {
 	return &profilingDiagnostics{
 		enabled:   enabled,
 		addr:      addr,
 		port:      port,
-		blockRate: blockRate,
-		mutexRate: mutexRate,
+		blockRate: int(blockRate),
+		mutexRate: int(mutexRate),
 	}
 }
 
@@ -65,7 +65,7 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 
 	blockRateEnv := os.Getenv(profilingBlockRateEnvName)
 	if blockRateEnv != "" {
-		blockRate, err := strconv.ParseUint(blockRateEnv, 10, 64)
+		blockRate, err := strconv.Atoi(blockRateEnv)
 		if err != nil {
 			return fmt.Errorf("failed to parse %s environment variable as int", profilingBlockRateEnvName)
 		}
@@ -74,7 +74,7 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 
 	mutexFractionEnv := os.Getenv(profilingMutexRateEnvName)
 	if mutexFractionEnv != "" {
-		mutexProfileFraction, err := strconv.ParseUint(mutexFractionEnv, 10, 64)
+		mutexProfileFraction, err := strconv.Atoi(mutexFractionEnv)
 		if err != nil {
 			return fmt.Errorf("failed to parse %s environment variable as int", profilingMutexRateEnvName)
 		}
@@ -114,7 +114,7 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
-func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockRate uint64, mutexFraction uint64) error {
+func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockRate int, mutexFraction int) error {
 	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, blockRate, mutexFraction)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
 		return err
@@ -122,8 +122,8 @@ func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockR
 
 	if profileDiagnostics.enabled {
 		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port, "blockProfileRate", profileDiagnostics.blockRate, "mutexProfileRate", profileDiagnostics.mutexRate)
-		runtime.SetBlockProfileRate(int(profileDiagnostics.blockRate))
-		runtime.SetMutexProfileFraction(int(profileDiagnostics.mutexRate))
+		runtime.SetBlockProfileRate(profileDiagnostics.blockRate)
+		runtime.SetMutexProfileFraction(profileDiagnostics.mutexRate)
 
 		go func() {
 			// TODO: We should enable the linter and fix G114 here.
