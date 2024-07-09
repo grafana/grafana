@@ -63,16 +63,6 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable<SnapshotVariableState>>) => {
-    // //if filters are present, render the filter component
-    // // model can have filters or not, so we need to check
-    // if (model.state.filters && model.state.filters.length > 0) {
-    //   return model.state.filters.map((filter) => {
-    //     return SnapshotFilterRenderer({
-    //       filter,
-    //       datasource: { uid: '' },
-    //     });
-    //   });
-    // }
     return renderSelectForVariable(model);
   };
   // we will always preserve the current value and text for snapshots

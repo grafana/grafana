@@ -198,13 +198,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
 
   if (oldModel.templating?.list?.length) {
     if (oldModel.meta.isSnapshot) {
-      //create the variable set only with custom variables
-
       const variableObjects = oldModel.templating.list
         .map((v) => {
           try {
-            if (v.type === 'adhoc' && v.filters) {
-              const snapshotVariable = new AdHocFiltersVariable({
+            // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
+            if (v.type === 'adhoc') {
+              return new AdHocFiltersVariable({
                 name: v.name,
                 label: v.label,
                 readOnly: true,
@@ -218,15 +217,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
                 defaultKeys: v.defaultKeys,
                 useQueriesAsFilterForOptions: true,
               });
-              return snapshotVariable;
             }
+            // for other variable types we are using the SnapshotVariable
             return createVariableForSnapshots(v);
           } catch (err) {
             console.error(err);
             return null;
           }
         })
-
         // TODO: Remove filter
         // Added temporarily to allow skipping non-compatible variables
         .filter((v): v is SceneVariable => Boolean(v));
