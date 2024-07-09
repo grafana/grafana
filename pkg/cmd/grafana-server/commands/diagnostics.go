@@ -34,8 +34,8 @@ func newProfilingDiagnostics(enabled bool, addr string, port uint64, blockRate i
 		enabled:   enabled,
 		addr:      addr,
 		port:      port,
-		blockRate: int(blockRate),
-		mutexRate: int(mutexRate),
+		blockRate: blockRate,
+		mutexRate: mutexRate,
 	}
 }
 
