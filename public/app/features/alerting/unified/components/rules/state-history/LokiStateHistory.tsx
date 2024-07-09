@@ -20,7 +20,7 @@ interface Props {
   ruleUID: string;
 }
 
-export const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
+const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 const MAX_TIMELINE_SERIES = 12;
 
 const LokiStateHistory = ({ ruleUID }: Props) => {
