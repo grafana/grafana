@@ -47,7 +47,7 @@ To follow this guide, you need:
 {{% admonition type="note" %}}
 It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
 
-Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows,.
+Grafana versions 11.1 and below do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows.
 
 As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
 
@@ -100,9 +100,9 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
       - The Assertion Consumer Service URL is the endpoint where the IdP sends the SAML assertion after the user has been authenticated.
    1. If you want to use the **Single Logout** feature, copy the **Single Logout Service URL** and provide it to your SAML IdP.
 1. Finish configuring Grafana using IdP data
-1. Provide Grafana metadata to your SAML IdP.
-   - The metadata contains all the necessary information for the IdP to establish a connection with Grafana.
-   - This can be provided as Base64-encoded value, a path to a file, or as a URL.
+    1. Provide IdP Metadata to Grafana.
+      - The metadata contains all the necessary information for Grafana to establish a connection with the IdP.
+      - This can be provided as Base64-encoded value, a path to a file, or as a URL.
 1. Click **Next: User mapping**.
 
 ### 4. User Mapping Section
