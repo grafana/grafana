@@ -54,7 +54,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       ? [
           {
             label: 'Time',
-            value: formattedValueToString(timeField!.display!(lastTimeValue)),
+            value: formattedValueToString(timeField?.display!(lastTimeValue)),
           },
         ]
       : []),
