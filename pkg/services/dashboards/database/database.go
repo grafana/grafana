@@ -211,8 +211,8 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 	}
 
 	r := result{}
-	if err := d.store.DB().WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE is_folder=%s", d.store.DB().GetDialect().BooleanStr(false))
+	if err := d.store.ReadReplica().WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE is_folder=%s", d.store.ReadReplica().GetDialect().BooleanStr(false))
 		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
 			return err
 		}
@@ -228,8 +228,8 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 	}
 
 	if scopeParams != nil && scopeParams.OrgID != 0 {
-		if err := d.store.DB().WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.DB().GetDialect().BooleanStr(false))
+		if err := d.store.ReadReplica().WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.ReadReplica().GetDialect().BooleanStr(false))
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
 				return err
 			}
@@ -942,7 +942,7 @@ func (d *dashboardStore) CountDashboardsInFolders(
 		return 0, nil
 	}
 	var count int64
-	err := d.store.DB().WithDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		s := strings.Builder{}
 		args := make([]any, 0, 3)
@@ -956,7 +956,7 @@ func (d *dashboardStore) CountDashboardsInFolders(
 			}
 		}
 		s.WriteString(" AND org_id = ? AND is_folder = ? AND deleted IS NULL")
-		args = append(args, req.OrgID, d.store.DB().GetDialect().BooleanStr(false))
+		args = append(args, req.OrgID, d.store.ReadReplica().GetDialect().BooleanStr(false))
 		sql := s.String()
 		_, err := sess.SQL(sql, args...).Get(&count)
 		return err
