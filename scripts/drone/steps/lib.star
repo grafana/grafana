@@ -1241,7 +1241,27 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
+def retry_command(command, attempts=5, delay=60):
+    return [
+        f"for i in $(seq 1 {attempts}); do",
+        f"    if {command}; then",
+        '        echo "Command succeeded on attempt $i"',
+        "        break",
+        "    else",
+        '        echo "Attempt $i failed"',
+        f"        if [ $i -eq {attempts} ]; then",
+        "            echo 'All attempts failed'",
+        "            exit 1",
+        "        fi",
+        f'        echo "Waiting {delay} seconds before next attempt..."',
+        f"        sleep {delay}",
+        "    fi",
+        "done"
+    ]
+
 def verify_linux_DEB_packages_step(depends_on = []):
+    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
+    
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
@@ -1256,14 +1276,8 @@ def verify_linux_DEB_packages_step(depends_on = []):
             "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null",
             'echo "Step 4: Adding Grafana repository..."',
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
-            "apt-get update >/dev/null 2>&1",
             'echo "Step 5: Installing Grafana..."',
-            "if DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1; then",
-            '    echo "Successfully installed Grafana version ${TAG}"',
-            "else",
-            '    echo "Failed to install Grafana version ${TAG}"',
-            "    exit 1",
-            "fi",
+        ] + retry_command(install_command) + [
             'echo "Step 6: Verifying Grafana installation..."',
             'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
@@ -1277,6 +1291,8 @@ def verify_linux_DEB_packages_step(depends_on = []):
     }
 
 def verify_linux_RPM_packages_step(depends_on = []):
+    install_command = "dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm >/dev/null 2>&1"
+    
     return {
         "name": "verify-linux-RPM-packages",
         "image": images["rocky"],
@@ -1289,12 +1305,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 3: Adding Grafana GPG key..."',
             "rpm --import https://packages.grafana.com/gpg.key",
             'echo "Step 4: Installing Grafana..."',
-            "if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm >/dev/null 2>&1; then",
-            '    echo "Successfully installed Grafana version ${TAG}"',
-            "else",
-            '    echo "Failed to install Grafana version ${TAG}"',
-            "    exit 1",
-            "fi",
+        ] + retry_command(install_command) + [
             'echo "Step 5: Verifying Grafana installation..."',
             'if rpm -q grafana | grep -q "${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
