@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -24,7 +25,7 @@ type PluginInstaller struct {
 	pluginStorageDirFunc storage.DirNameGeneratorFunc
 	pluginRegistry       registry.Service
 	pluginLoader         loader.Service
-	installing           map[string]bool
+	installing           sync.Map
 	log                  log.Logger
 	serviceRegistry      auth.ExternalServiceRegistry
 }
@@ -44,7 +45,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 		pluginRepo:           pluginRepo,
 		pluginStorage:        pluginStorage,
 		pluginStorageDirFunc: pluginStorageDirFunc,
-		installing:           map[string]bool{},
+		installing:           sync.Map{},
 		log:                  log.New("plugin.installer"),
 		serviceRegistry:      serviceRegistry,
 	}
@@ -56,12 +57,12 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		return err
 	}
 
-	if m.installing[pluginID] {
+	if ok, _ := m.installing.Load(pluginID); ok != nil {
 		return nil
 	}
-	m.installing[pluginID] = true
+	m.installing.Store(pluginID, true)
 	defer func() {
-		m.installing[pluginID] = false
+		m.installing.Delete(pluginID)
 	}()
 
 	archive, err := m.install(ctx, pluginID, version, compatOpts)
