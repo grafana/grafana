@@ -70,6 +70,27 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
 };
 
 function addLinks(elements: CanvasElementOptions[], links: DataLink[], fieldName?: string) {
+  const varsNamesRegex = /(\${__field.name})|(\${__field.labels.*?})|(\${__series.name})/g;
+
+  const linksCopy = [...links];
+  linksCopy.forEach((link) => {
+    const isFieldOrSeries = varsNamesRegex.test(link.url);
+    if (isFieldOrSeries) {
+      link.url = link.url.replace(varsNamesRegex, (match, fieldName1, fieldLabels1, seriesName1) => {
+        if (fieldName1 || seriesName1) {
+          return '${__data.fields["' + fieldName + '"]}';
+        }
+
+        if (fieldLabels1) {
+          const labels = fieldLabels1.match(new RegExp('.labels' + '(.*)' + '}'));
+          return '${__data.fields["' + fieldName + '"].labels' + labels[1] + '}';
+        }
+
+        return match;
+      });
+    }
+  });
+
   elements.forEach((element) => {
     let cfg = element.config as Record<string, any>;
 
@@ -79,7 +100,7 @@ function addLinks(elements: CanvasElementOptions[], links: DataLink[], fieldName
       // todo: getFieldDisplayName?
       if (dim.field === fieldName) {
         element.links ??= [];
-        element.links.push(...links);
+        element.links.push(...linksCopy);
       }
     }
   });
