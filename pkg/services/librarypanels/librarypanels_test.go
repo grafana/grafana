@@ -816,7 +816,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore, cfg := db.InitTestReplDBWithCfg(t)
+		replStore, cfg := db.InitTestReplDBWithCfg(t)
+		sqlStore := replStore.DB()
 		quotaService := quotatest.New(false, nil)
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -833,7 +834,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
 
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(replStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
 		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
@@ -886,6 +887,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			service:        &service,
 			elementService: elementService,
 			sqlStore:       sqlStore,
+			replStore:      replStore,
 			lps:            service,
 		}
 

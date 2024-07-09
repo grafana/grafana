@@ -65,7 +65,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 
 	setup := func() {
 		replStore, cfg = db.InitTestReplDBWithCfg(t, db.InitTestDBOpt{})
-		sqlStore := replStore.DB()
+		sqlStore = replStore.DB()
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(replStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
