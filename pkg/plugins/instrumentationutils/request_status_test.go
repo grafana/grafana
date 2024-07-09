@@ -174,7 +174,6 @@ func TestRequestStatusFromErrorString(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			status := RequestStatusFromErrorString(tc.err)
-			fmt.Print(tc.err)
 			require.Equal(t, tc.expectedStatus, status)
 		})
 	}
