@@ -76,7 +76,7 @@ interface StateVisualizationProps {
 }
 
 /**
- * This component fetches the state history for the given ruleUID and time range, and displays the state transitions and the log timeline.
+ * This component fetches the state history for the given ruleUID and time range, and displays the number of transitions and a State TimelineChart.
  * Fetching the state history for the alert rule uid, and labels,
  * makes the result to be more accurate, as it might be that we are not showing all the state transitions in the log records.
  * @param ruleUID
