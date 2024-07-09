@@ -15,7 +15,7 @@ replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.122.0
 
 require (
 	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1 // @grafana/observability-traces-and-profiling
-	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.33.0-20240414232344-9ca06271cb73.1 // @grafana/observability-traces-and-profiling
+	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.34.2-20240709085026-9e9036cb0d41.2 // @grafana/observability-traces-and-profiling
 	cloud.google.com/go/kms v1.15.7 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.38.0 // @grafana/grafana-backend-group
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
