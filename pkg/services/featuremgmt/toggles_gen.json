@@ -1219,15 +1219,15 @@
     {
       "metadata": {
         "name": "groupToNestedTableTransformation",
-        "resourceVersion": "1720568456872",
+        "resourceVersion": "1720568606781",
         "creationTimestamp": "2024-02-07T14:28:26Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-09 23:40:56.872644 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-07-09 23:43:26.781894 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the group to nested table transformation",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
