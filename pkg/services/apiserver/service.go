@@ -333,18 +333,18 @@ func (s *service) start(ctx context.Context) error {
 			client = entity.NewEntityStoreClientLocal(entityServer)
 		}
 
-		// ??? we could add a (short lived!) feature flag to pick which wrapper to use,
-		// or just jump to the new bridge
-		//
-		// serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
-		// 	client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
-
-		server, err := entitybridge.EntityAsResourceServer(client, entityServer, s.tracing)
-		if err != nil {
-			return err
+		if false {
+			// Use the entity bridge
+			server, err := entitybridge.EntityAsResourceServer(client, entityServer, s.tracing)
+			if err != nil {
+				return err
+			}
+			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
+				o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		} else {
+			serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
+				client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 		}
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
-			o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
