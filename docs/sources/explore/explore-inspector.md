@@ -13,7 +13,7 @@ weight: 40
 
 # Query inspector in Explore
 
-The Query inspector in Grafana Explore gives you detailed statistics regarding your query, which helps you understand and troubleshoot issues with your queries.  Query inspector also lets you inspect raw data, export data to a comma-separated values (CSV) file, export log results in TXT format, and view query requests.
+The Query inspector in Grafana Explore gives you detailed statistics regarding your query, which helps you understand and troubleshoot issues with your queries. Query inspector also lets you inspect raw data, export data to a comma-separated values (CSV) file, export log results in TXT format, and view query requests.
 
 ## Query inspector UI
 
@@ -60,10 +60,10 @@ View data results as JSON and as data frame JSON models in the **JSON tab**.
 
 ## Query inspector Data tab
 
-View, inspect and download raw query results in the **Data tab**. 
+View, inspect and download raw query results in the **Data tab**.
 
 1. Open the Query inspector and click the **Data** tab.
-1. Click **Data options** to to view options under **Show data frame**. 
+1. Click **Data options** to to view options under **Show data frame**.
 1. Select a data results set from the dropdown menu.
 1. Select **Series joined by time** from the dropdown to view the raw data from all of your queries at once, one result set per column. You can click any column heading to sort the data.
 1. Toggle **Formatted data** to match the format in the panel.
@@ -85,5 +85,3 @@ Based on the data source type (Tempo, for example), Grafana generates a JSON fil
 1. Click **Query inspector**.
 1. Click the **Data tab** to view traces results.
 1. Click **Download traces**.
-
-
