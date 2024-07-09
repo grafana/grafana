@@ -32,7 +32,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
-  template-and-variables:
+  variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
@@ -41,8 +41,25 @@ refs:
 
 # Dashboard URL variables
 
-Grafana can apply variable values passed as query parameters in dashboard URLs.
-For more information, refer to [Manage dashboard links](ref:manage-dashboard-links) and [Templates and variables](ref:template-and-variables).
+Dashboard URL [variables](<(ref:template-and-variables)>) allow you to provide more context when you share a dashboard URL.
+
+For example, you could share a basic URL to your dashboard that looks like this:
+
+```
+https://${your-domain}/path/to/your/dashboard
+```
+
+This allows someone to navigate to the dashboard, but doesn't provide any helpful context that might be available.
+
+Instead, you can add dashboard variables passed as query parameters in the dashboard URL, to provide a URL like this:
+
+```
+https://${your-domain}/path/to/your/dashboard?var-example=value
+```
+
+This allows you to provide added context to the dashboard when someone navigates to it.
+
+This page describes different ways that you can use this functionality.
 
 ## Variables as query parameters
 
@@ -100,4 +117,8 @@ To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window`
 
 ## Variables in dashboard links
 
-You can add variables to dashboard links that you create in a dashboard's settings. For more information and steps to add variables, refer to [Manage dashboard links](ref:manage-dashboard-links).
+You can add variables to dashboard links that you create in a dashboard's settings.
+
+<!-- screenshot here -->
+
+For steps to add variables to dashboard links, refer to [Manage dashboard links](ref:manage-dashboard-links).
