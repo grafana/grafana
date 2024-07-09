@@ -1,5 +1,6 @@
 const DEFAULT_UNIT = 'short';
 
+// Get unit from metric name (e.g. "go_gc_duration_seconds" -> "seconds")
 export function getUnitFromMetric(metric: string) {
   const metricParts = metric.split('_');
   const suffix = metricParts.at(-1) ?? '';
@@ -13,7 +14,7 @@ export function getUnitFromMetric(metric: string) {
   }
 }
 
-// Shows abbreviated units in a panel
+// Get Grafana unit for a panel (e.g. "go_gc_duration_seconds" -> "s")
 export function getUnit(metricPart: string | undefined) {
   return (metricPart && UNIT_MAP[metricPart]) || DEFAULT_UNIT;
 }
