@@ -2,7 +2,7 @@ import { interpolateRgbBasis } from 'd3-interpolate';
 import stringHash from 'string-hash';
 import tinycolor from 'tinycolor2';
 
-import { colorManipulator } from '../themes';
+import { getContrastRatio } from '../themes/colorManipulator';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
 import { Field } from '../types/dataFrame';
@@ -70,10 +70,8 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getColors: (theme: GrafanaTheme2) => {
         return theme.visualization.palette.filter(
           (color) =>
-            colorManipulator.getContrastRatio(
-              theme.visualization.getColorByName(color),
-              theme.colors.background.primary
-            ) >= theme.colors.contrastThreshold
+            getContrastRatio(theme.visualization.getColorByName(color), theme.colors.background.primary) >=
+            theme.colors.contrastThreshold
         );
       },
     }),

@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -292,39 +293,45 @@ func (s *service) start(ctx context.Context) error {
 
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
-	case grafanaapiserveroptions.StorageTypeUnified:
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+	case grafanaapiserveroptions.StorageTypeUnified, grafanaapiserveroptions.StorageTypeUnifiedGrpc:
+		var client entity.EntityStoreClient
+		var entityServer sqlstash.SqlEntityServer
+
+		if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeUnifiedGrpc {
+			conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return err
+			}
+			client = entity.NewEntityStoreClientGRPC(conn)
+		} else {
+			if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+				return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+			}
+
+			eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
+			if err != nil {
+				return err
+			}
+
+			entityServer, err = sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
+			if err != nil {
+				return err
+			}
+			client = entity.NewEntityStoreClientLocal(entityServer)
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
-		if err != nil {
-			return err
+		if false {
+			// Use the entity bridge
+			server, err := entitybridge.EntityAsResourceServer(client, entityServer, s.tracing)
+			if err != nil {
+				return err
+			}
+			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
+				o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		} else {
+			serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
+				client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 		}
-
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
-		if err != nil {
-			return err
-		}
-
-		store := entity.NewEntityStoreClientLocal(storeServer)
-
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
-
-	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
-		// Create a connection to the gRPC server
-		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return err
-		}
-
-		// TODO: determine when to close the connection, we cannot defer it here
-		// defer conn.Close()
-
-		// Create a client instance
-		store := entity.NewEntityStoreClientGRPC(conn)
-
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
