@@ -682,7 +682,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [logsContainerRef, topLogsRef]);
 
   const onPinToContentOutlineClick = (row: LogRowModel, allowUnPin = true) => {
-    if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
+    if (getPinnedLogsCount() === PINNED_LOGS_LIMIT && !allowUnPin) {
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'section',
         type: 'Logs:pinned:pinned-log-limit-reached',
@@ -724,9 +724,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         },
         onRemove: (id: string) => {
           unregister?.(id);
-          if (getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
-            setPinLineButtonTooltipTitle(PINNED_LOGS_MESSAGE);
-          }
           reportInteraction('explore_toolbar_contentoutline_clicked', {
             item: 'section',
             type: 'Logs:pinned:pinned-log-deleted',
