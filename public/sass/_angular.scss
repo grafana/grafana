@@ -2090,3 +2090,44 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
   word-break: break-word;
   flex-grow: 1;
 }
+
+// Alert List
+.alert-rule-item__body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.alert-rule-item__header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.alert-rule-item__name {
+  font-size: $font-size-base;
+  margin: 0;
+  font-weight: $font-weight-semi-bold;
+}
+
+.alert-rule-item__text {
+  font-weight: bold;
+  font-size: $font-size-sm;
+  margin: 0;
+}
+
+.alert-rule-item__time {
+  color: $text-color-weak;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.alert-rule-item__info {
+  //color: $text-color;
+  font-weight: normal;
+  flex-grow: 2;
+  display: flex;
+  align-items: flex-end;
+}
