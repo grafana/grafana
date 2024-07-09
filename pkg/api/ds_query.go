@@ -88,6 +88,7 @@ func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
 			statusCode = http.StatusBadRequest
+			break
 		}
 	}
 

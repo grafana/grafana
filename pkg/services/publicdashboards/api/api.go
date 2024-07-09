@@ -306,6 +306,7 @@ func toJsonStreamingResponse(ctx context.Context, features featuremgmt.FeatureTo
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
 			statusCode = http.StatusBadRequest
+			break
 		}
 	}
 
