@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import { createRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { FieldType, GrafanaTheme2, formattedValueToString, getFieldDisplayName } from '@grafana/data/src';
 import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -34,6 +34,12 @@ export const CanvasTooltip = ({ scene }: Props) => {
     return <></>;
   }
 
+  // Retrieve timestamp of the last data point if available
+  const timeField = scene.data?.series[0].fields?.find((field) => field.type === FieldType.time);
+  const lastTimeValue = timeField?.values[timeField.values.length - 1];
+  const shouldDisplayTimeContentItem =
+    timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
+
   const headerItem: VizTooltipItem | null = {
     label: element.getName(),
     value: '',
@@ -44,6 +50,14 @@ export const CanvasTooltip = ({ scene }: Props) => {
       label: element.data.field ?? 'Fixed',
       value: element.data.text,
     },
+    ...(shouldDisplayTimeContentItem
+      ? [
+          {
+            label: 'Time',
+            value: formattedValueToString(timeField!.display!(lastTimeValue)),
+          },
+        ]
+      : []),
   ];
 
   return (
