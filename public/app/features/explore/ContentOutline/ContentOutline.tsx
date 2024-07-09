@@ -89,6 +89,18 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   };
 
+  const handleItemClicked = (child: ContentOutlineItemContextProps) => {
+    scrollIntoView(child.ref, child.panelId, child.type, child.customTopOffset);
+    if (child.type === 'filter') {
+      activateFilter(child.id);
+    } else {
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'select_section',
+        type: child.panelId,
+      });
+    }
+  };
+
   const toggle = () => {
     toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
@@ -146,7 +158,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
 
     if (activeParent) {
-      scrollIntoView(activeParent.ref, activeParent.panelId, 'filter', activeParent.customTopOffset);
+      handleItemClicked(activeParent);
     }
   };
 
@@ -182,7 +194,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
                   })}
                   icon={item.icon}
-                  onClick={() => scrollIntoView(item.ref, item.panelId, item.type)}
+                  onClick={() => handleItemClicked(item)}
                   tooltip={item.title}
                   collapsible={isCollapsible(item)}
                   collapsed={!sectionsExpanded[item.id]}
@@ -217,9 +229,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                           })}
                           indentStyle={styles.indentChild}
                           onClick={(e) => {
-                            child.type === 'filter'
-                              ? activateFilter(child.id)
-                              : scrollIntoView(child.ref, child.panelId, child.type, child.customTopOffset);
+                            handleItemClicked(child);
                             child.onClick?.(e);
                           }}
                           tooltip={child.title}
