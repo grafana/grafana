@@ -339,7 +339,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		}
 	}
 	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
-		return ErrContactPointReferenced
+		return ErrContactPointReferenced.Errorf("")
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -354,7 +354,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 					uids = append(uids, key.UID)
 				}
 				ecp.log.Error("Cannot delete contact point because it is used in rule's notification settings", "receiverName", name, "rulesUid", strings.Join(uids, ","))
-				return fmt.Errorf("contact point '%s' is currently used in notification settings by one or many alert rules", name)
+				return ErrContactPointUsedInRule.Errorf("")
 			}
 		}
 
