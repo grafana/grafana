@@ -429,7 +429,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 	// Get the RV
 	rv := req.ResourceVersion
 	offset := int64(0)
-	if rv == 0 {
+	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return nil, fmt.Errorf("get continue token: %w", err)
