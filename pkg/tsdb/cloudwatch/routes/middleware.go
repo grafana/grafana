@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
@@ -17,7 +17,7 @@ func ResourceRequestMiddleware(handleFunc models.RouteHandlerFunc, logger log.Lo
 		}
 
 		ctx := req.Context()
-		pluginContext := httpadapter.PluginConfigFromContext(ctx)
+		pluginContext := backend.PluginConfigFromContext(ctx)
 		json, httpError := handleFunc(ctx, pluginContext, reqCtxFactory, req.URL.Query())
 		if httpError != nil {
 			logger.FromContext(ctx).Error("Error handling resource request", "error", httpError.Message)

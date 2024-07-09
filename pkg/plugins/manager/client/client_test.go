@@ -169,7 +169,7 @@ func TestCallResource(t *testing.T) {
 		}
 
 		responses := []*backend.CallResourceResponse{}
-		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			responses = append(responses, res)
 			return nil
 		})
@@ -232,7 +232,7 @@ func TestCallResource(t *testing.T) {
 		}
 
 		responses := []*backend.CallResourceResponse{}
-		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			responses = append(responses, res)
 			return nil
 		})
@@ -280,7 +280,7 @@ func TestCallResource(t *testing.T) {
 		}
 
 		responses := []*backend.CallResourceResponse{}
-		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			responses = append(responses, res)
 			return nil
 		})
@@ -348,7 +348,7 @@ func TestCallResource(t *testing.T) {
 				}
 
 				responses := []*backend.CallResourceResponse{}
-				sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+				sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 					responses = append(responses, res)
 					return nil
 				})

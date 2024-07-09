@@ -2,6 +2,6 @@ package clientmiddleware
 
 import "github.com/grafana/grafana-plugin-sdk-go/backend"
 
-var nopCallResourceSender = callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+var nopCallResourceSender = backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 	return nil
 })

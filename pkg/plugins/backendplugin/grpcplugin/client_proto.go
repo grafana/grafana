@@ -25,6 +25,7 @@ type ProtoClient interface {
 	pluginv2.ResourceClient
 	pluginv2.DiagnosticsClient
 	pluginv2.StreamClient
+	pluginv2.AdmissionControlClient
 
 	PID(context.Context) (string, error)
 	PluginID() string
@@ -183,4 +184,28 @@ func (r *protoClient) PublishStream(ctx context.Context, in *pluginv2.PublishStr
 		return nil, errClientNotStarted
 	}
 	return c.StreamClient.PublishStream(ctx, in, opts...)
+}
+
+func (r *protoClient) ValidateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.ValidationResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotStarted
+	}
+	return c.AdmissionClient.ValidateAdmission(ctx, in, opts...)
+}
+
+func (r *protoClient) MutateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.MutationResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotStarted
+	}
+	return c.AdmissionClient.MutateAdmission(ctx, in, opts...)
+}
+
+func (r *protoClient) ConvertObject(ctx context.Context, in *pluginv2.ConversionRequest, opts ...grpc.CallOption) (*pluginv2.ConversionResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotStarted
+	}
+	return c.AdmissionClient.ConvertObject(ctx, in, opts...)
 }
