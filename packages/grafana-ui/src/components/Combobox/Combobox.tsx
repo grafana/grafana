@@ -57,7 +57,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     overscan: 2,
   });
 
-  const { getInputProps, getMenuProps, getItemProps, isOpen } = useCombobox({
+  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex } = useCombobox({
     items,
     itemToString,
     selectedItem,
@@ -66,11 +66,6 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       setItems(options.filter(itemFilter(inputValue)));
     },
     onSelectedItemChange: ({ selectedItem }) => onChange(selectedItem),
-    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
-      }
-    },
   });
   return (
     <div>
@@ -87,7 +82,8 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                   ref={rowVirtualizer.measureElement}
                   className={cx(
                     styles.option,
-                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected
+                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                    highlightedIndex === virtualRow.index && styles.optionFocused
                   )}
                 >
                   <div className={styles.optionBody}>
