@@ -1241,32 +1241,49 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def verify_linux_DEB_packages_step(depends_on = []):
+def verify_linux_DEB_packages_step(depends_on=[]):
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
-        # JEV: remove this?
         "environment": {},
         "commands": [
-            'echo "Updating package lists..."',
-            # Redirect superfluous outputs.
+            # Step 1: Update package lists
+            'echo "Step 1: Updating package lists..."',
             "apt-get update >/dev/null 2>&1",
-            'echo "Installing prerequisites..."',
-            # Redirect superfluous outputs.
+
+            # Step 2: Install prerequisites
+            'echo "Step 2: Installing prerequisites..."',
             "DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1",
-            'echo "Adding Grafana repository..."',
+
+            # Step 3: Add Grafana GPG key
+            'echo "Step 3: Adding Grafana GPG key..."',
             "mkdir -p /etc/apt/keyrings/",
             "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null",
+
+            # Step 4: Add Grafana repository
+            'echo "Step 4: Adding Grafana repository..."',
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
-            # Redirect superfluous outputs.
             "apt-get update >/dev/null 2>&1",
-            'echo "Attempting to install Grafana version ${TAG}..."',
-            "if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then",
+
+            # Step 5: Install Grafana
+            'echo "Step 5: Installing Grafana..."',
+            "if DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1; then",
             '    echo "Successfully installed Grafana version ${TAG}"',
             "else",
             '    echo "Failed to install Grafana version ${TAG}"',
             "    exit 1",
             "fi",
+
+            # Step 6: Verify Grafana installation
+            'echo "Step 6: Verifying Grafana installation..."',
+            'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
+            '    echo "Successfully verified Grafana version ${TAG}"',
+            "else",
+            '    echo "Failed to verify Grafana version ${TAG}"',
+            "    exit 1",
+            "fi",
+
+            'echo "Verification complete."',
         ],
         "depends_on": depends_on,
     }

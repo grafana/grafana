@@ -3155,25 +3155,35 @@ platform:
 services: []
 steps:
 - commands:
-  - echo "Updating package lists..."
+  - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
-  - echo "Installing prerequisites..."
+  - 'echo "Step 2: Installing prerequisites..."'
   - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
     wget >/dev/null 2>&1
-  - echo "Adding Grafana repository..."
+  - 'echo "Step 3: Adding Grafana GPG key..."'
   - mkdir -p /etc/apt/keyrings/
   - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
     > /dev/null
+  - 'echo "Step 4: Adding Grafana repository..."'
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
   - apt-get update >/dev/null 2>&1
-  - echo "Attempting to install Grafana version ${TAG}..."
-  - if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then
+  - 'echo "Step 5: Installing Grafana..."'
+  - if DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null
+    2>&1; then
   - '    echo "Successfully installed Grafana version ${TAG}"'
   - else
   - '    echo "Failed to install Grafana version ${TAG}"'
   - '    exit 1'
   - fi
+  - 'echo "Step 6: Verifying Grafana installation..."'
+  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  - echo "Verification complete."
   depends_on: []
   environment: {}
   image: ubuntu:22.04
@@ -3284,25 +3294,35 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - commands:
-  - echo "Updating package lists..."
+  - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
-  - echo "Installing prerequisites..."
+  - 'echo "Step 2: Installing prerequisites..."'
   - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
     wget >/dev/null 2>&1
-  - echo "Adding Grafana repository..."
+  - 'echo "Step 3: Adding Grafana GPG key..."'
   - mkdir -p /etc/apt/keyrings/
   - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
     > /dev/null
+  - 'echo "Step 4: Adding Grafana repository..."'
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
   - apt-get update >/dev/null 2>&1
-  - echo "Attempting to install Grafana version ${TAG}..."
-  - if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then
+  - 'echo "Step 5: Installing Grafana..."'
+  - if DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null
+    2>&1; then
   - '    echo "Successfully installed Grafana version ${TAG}"'
   - else
   - '    echo "Failed to install Grafana version ${TAG}"'
   - '    exit 1'
   - fi
+  - 'echo "Step 6: Verifying Grafana installation..."'
+  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  - echo "Verification complete."
   depends_on:
   - publish-linux-packages-deb
   environment: {}
@@ -5312,6 +5332,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4dc4174d94e2c5ed9be83e5e4a66dec093d295b4662b5076cc13475f78839d24
+hmac: 0e55ce75f2135356d5e4295c648e40accdc66fdec994408f8008cf5918b72a5a
 
 ...
