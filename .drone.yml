@@ -3191,10 +3191,10 @@ steps:
 - commands:
   - 'echo "Step 1: Updating package lists..."'
   - dnf check-update -y >/dev/null 2>&1 || true
-  - 'echo "Step 2: Adding Grafana GPG key..."'
-  - rpm --import https://packages.grafana.com/gpg.key
-  - 'echo "Step 3: Installing prerequisites..."'
+  - 'echo "Step 2: Installing prerequisites..."'
   - dnf install -y dnf-utils >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
   - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
     >/dev/null 2>&1; then
@@ -3331,10 +3331,10 @@ steps:
 - commands:
   - 'echo "Step 1: Updating package lists..."'
   - dnf check-update -y >/dev/null 2>&1 || true
-  - 'echo "Step 2: Adding Grafana GPG key..."'
-  - rpm --import https://packages.grafana.com/gpg.key
-  - 'echo "Step 3: Installing prerequisites..."'
+  - 'echo "Step 2: Installing prerequisites..."'
   - dnf install -y dnf-utils >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
   - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
     >/dev/null 2>&1; then
@@ -5332,6 +5332,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0e55ce75f2135356d5e4295c648e40accdc66fdec994408f8008cf5918b72a5a
+hmac: 437a27d1a647d4969a6cd416fbc6cd66de6028ec1c6cff55ef56cfe8392c0070
 
 ...

@@ -1247,25 +1247,16 @@ def verify_linux_DEB_packages_step(depends_on = []):
         "image": images["ubuntu"],
         "environment": {},
         "commands": [
-            # Step 1: Update package lists
             'echo "Step 1: Updating package lists..."',
             "apt-get update >/dev/null 2>&1",
-
-            # Step 2: Install prerequisites
             'echo "Step 2: Installing prerequisites..."',
             "DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1",
-
-            # Step 3: Add Grafana GPG key
             'echo "Step 3: Adding Grafana GPG key..."',
             "mkdir -p /etc/apt/keyrings/",
             "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null",
-
-            # Step 4: Add Grafana repository
             'echo "Step 4: Adding Grafana repository..."',
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
             "apt-get update >/dev/null 2>&1",
-
-            # Step 5: Install Grafana
             'echo "Step 5: Installing Grafana..."',
             "if DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1; then",
             '    echo "Successfully installed Grafana version ${TAG}"',
@@ -1273,8 +1264,6 @@ def verify_linux_DEB_packages_step(depends_on = []):
             '    echo "Failed to install Grafana version ${TAG}"',
             "    exit 1",
             "fi",
-
-            # Step 6: Verify Grafana installation
             'echo "Step 6: Verifying Grafana installation..."',
             'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
@@ -1291,15 +1280,14 @@ def verify_linux_RPM_packages_step(depends_on = []):
     return {
         "name": "verify-linux-RPM-packages",
         "image": images["rocky"],
-        # JEV: remove this?
         "environment": {},
         "commands": [
             'echo "Step 1: Updating package lists..."',
             "dnf check-update -y >/dev/null 2>&1 || true",
-            'echo "Step 2: Adding Grafana GPG key..."',
-            "rpm --import https://packages.grafana.com/gpg.key",
-            'echo "Step 3: Installing prerequisites..."',
+            'echo "Step 2: Installing prerequisites..."',
             "dnf install -y dnf-utils >/dev/null 2>&1",
+            'echo "Step 3: Adding Grafana GPG key..."',
+            "rpm --import https://packages.grafana.com/gpg.key",
             'echo "Step 4: Installing Grafana..."',
             "if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm >/dev/null 2>&1; then",
             '    echo "Successfully installed Grafana version ${TAG}"',
