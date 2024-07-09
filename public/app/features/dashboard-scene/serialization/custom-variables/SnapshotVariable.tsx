@@ -23,6 +23,7 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
 
   public constructor(initialState: Partial<SnapshotVariableState>) {
     super({
+      name: '',
       type: 'snapshot',
       isReadOnly: true,
       query: '',
