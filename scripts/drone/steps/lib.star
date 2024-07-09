@@ -1260,6 +1260,20 @@ def retry_command(command, attempts = 5, delay = 60):
     ]
 
 def verify_linux_DEB_packages_step(depends_on = [], is_preview = False):
+    """
+    Verifies the installation of Grafana DEB packages.
+
+    This function creates a step that attempts to install and verify Grafana
+    Debian packages. It can check both stable and beta repositories based on
+    the is_preview flag.
+
+    Args:
+        depends_on: List of steps this step depends on.
+        is_preview: Boolean flag to indicate if beta packages should be included.
+
+    Returns:
+        A dictionary representing a Drone CI step for DEB package verification.
+    """
     install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
 
     repo_commands = [
@@ -1300,6 +1314,20 @@ def verify_linux_DEB_packages_step(depends_on = [], is_preview = False):
     }
 
 def verify_linux_RPM_packages_step(depends_on = [], is_preview = False):
+    """
+    Verifies the installation of Grafana RPM packages.
+
+    This function creates a step that attempts to install and verify Grafana
+    RPM packages. It can check both stable and beta repositories based on
+    the is_preview flag.
+
+    Args:
+        depends_on: List of steps this step depends on.
+        is_preview: Boolean flag to indicate if beta packages should be included.
+
+    Returns:
+        A dictionary representing a Drone CI step for RPM package verification.
+    """
     stable_repo_url = "https://rpm.grafana.com"
     beta_repo_url = "https://rpm-beta.grafana.com"
 
