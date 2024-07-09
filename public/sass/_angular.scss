@@ -4,6 +4,17 @@
 @use 'sass:map';
 @use 'sass:color';
 
+// Gradients
+@mixin gradient-vertical($startColor: #555, $endColor: #333) {
+  background-color: color.mix($startColor, $endColor, 60%);
+  background-image: linear-gradient(to bottom, $startColor, $endColor); // Standard, IE10
+  background-repeat: repeat-x;
+}
+
+@mixin font-family-monospace() {
+  font-family: $font-family-monospace;
+}
+
 .edit-tab-content {
   flex-grow: 1;
   min-width: 0;
@@ -75,7 +86,7 @@ input.invalid {
     font-size: $font-size-md;
     min-height: 50px; // Include space for horizontal scrollbar
 
-    @include border-radius($input-border-radius);
+    border-radius: $input-border-radius;
     border: $border-width solid $input-border-color;
   }
 
