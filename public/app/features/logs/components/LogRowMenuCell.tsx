@@ -142,19 +142,18 @@ export const LogRowMenuCell = memo(
                 tabIndex={0}
               />
             )}
-            {onPinLine && (
+            {!pinned && onPinLine && (
               <IconButton
                 className={styles.unPinButton}
                 size="md"
                 name="gf-pin"
                 onClick={() => onPinLine && onPinLine(row)}
-                tooltip={pinned ? 'Unpin line' : pinLineButtonTooltipTitle ?? 'Pin line'}
+                tooltip={pinLineButtonTooltipTitle ?? 'Pin line'}
                 tooltipPlacement="top"
                 aria-label="Pin line"
                 tabIndex={0}
               />
             )}
-
             {onPermalinkClick && row.rowId !== undefined && row.uid && (
               <IconButton
                 tooltip="Copy shortlink"

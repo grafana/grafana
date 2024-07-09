@@ -145,7 +145,7 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   return 'logs';
 };
 
-const PINNED_LOGS_LIMIT = 3;
+const PINNED_LOGS_LIMIT = 10;
 const PINNED_LOGS_TITLE = 'Pinned log';
 const PINNED_LOGS_MESSAGE = 'Pin to content outline';
 const PINNED_LOGS_PANELID = 'Logs';
@@ -986,6 +986,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   containerRendered={!!logsContainerRef}
                   onClickFilterString={props.onClickFilterString}
                   onClickFilterOutString={props.onClickFilterOutString}
+                  onUnpinLine={onPinToContentOutlineClick}
                   onPinLine={onPinToContentOutlineClick}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                 />
