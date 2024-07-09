@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -273,5 +272,5 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, authnService authn.Servic
 	t.Helper()
 
 	tracer := tracing.InitializeTracerForTest()
-	return contexthandler.ProvideService(cfg, tracer, featuremgmt.WithFeatures(), authnService)
+	return contexthandler.ProvideService(cfg, tracer, authnService)
 }
