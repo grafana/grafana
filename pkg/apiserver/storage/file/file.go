@@ -27,6 +27,8 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
+
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
 
 const MaxUpdateAttempts = 30
@@ -36,13 +38,6 @@ var _ storage.Interface = (*Storage)(nil)
 // Replace with: https://github.com/kubernetes/kubernetes/blob/v1.29.0-alpha.3/staging/src/k8s.io/apiserver/pkg/storage/errors.go#L28
 // When we upgrade to 1.29
 var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be set on objects to be created")
-
-type parsedKey struct {
-	group     string
-	resource  string
-	namespace string
-	name      string
-}
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
@@ -291,14 +286,14 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
 	}
 
-	parsedkey, err := s.convertToParsedKey(key, p)
+	parsedkey, err := grafanaregistry.ParseKey(key)
 	if err != nil {
 		return nil, err
 	}
 
 	var namespace *string
-	if parsedkey.namespace != "" {
-		namespace = &parsedkey.namespace
+	if parsedkey.Namespace != "" {
+		namespace = &parsedkey.Namespace
 	}
 
 	if (opts.SendInitialEvents == nil && requestedRV == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
@@ -391,10 +386,15 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	// No RV generation locking in single item get since its read from the disk
 	fpath := s.filePath(key)
 
+	rv, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+	if err != nil {
+		return err
+	}
+
 	// Since it's a get, check if the dir exists and return early as needed
 	dirname := filepath.Dir(fpath)
 	if !exists(dirname) {
-		return apierrors.NewNotFound(s.gr, s.nameFromKey(key))
+		return storage.NewKeyNotFoundError(key, int64(rv))
 	}
 
 	obj, err := readFile(s.codec, fpath, func() runtime.Object {
@@ -403,10 +403,6 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	if err != nil {
 		if opts.IgnoreNotFound {
 			return runtime.SetZeroValue(objPtr)
-		}
-		rv, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
-		if err != nil {
-			return err
 		}
 		return storage.NewKeyNotFoundError(key, int64(rv))
 	}
@@ -603,10 +599,6 @@ func (s *Storage) GuaranteedUpdate(
 
 	s.rvMutex.Lock()
 	generatedRV := s.getNewResourceVersion()
-	if err != nil {
-		s.rvMutex.Unlock()
-		return err
-	}
 	s.rvMutex.Unlock()
 
 	if err := s.versioner.UpdateObject(updatedObj, generatedRV); err != nil {
@@ -681,70 +673,6 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 
 func (s *Storage) nameFromKey(key string) string {
 	return strings.Replace(key, s.resourcePrefix+"/", "", 1)
-}
-
-// While this is an inefficient way to differentiate the ambiguous keys,
-// we only need it for initial namespace calculation in watch
-// This helps us with watcher tests that don't always set up requestcontext correctly
-func (s *Storage) convertToParsedKey(key string, p storage.SelectionPredicate) (*parsedKey, error) {
-	// NOTE: the following supports the watcher tests that run against v1/pods
-	// Other than that, there are ambiguities in the key format that only field selector
-	// when set to use metadata.name can be used to bring clarity in the 3-segment case
-
-	// Cases handled below:
-	// namespace scoped:
-	// /<group>/<resource>/[<namespace>]/[<name>]
-	// /<group>/<resource>/[<namespace>]
-	//
-	// cluster scoped:
-	// /<group>/<resource>/[<name>]
-	// /<group>/<resource>
-	parts := strings.SplitN(key, "/", 5)
-	if len(parts) < 3 && s.gr.Group != "" {
-		return nil, fmt.Errorf("invalid key (expecting at least 2 parts): %s", key)
-	}
-
-	if len(parts) < 2 && s.gr.Group == "" {
-		return nil, fmt.Errorf("invalid key (expecting at least 1 part): %s", key)
-	}
-
-	// beware this empty "" as the first separated part for the rest of the parsing below
-	if parts[0] != "" {
-		return nil, fmt.Errorf("invalid key (expecting leading slash): %s", key)
-	}
-
-	k := &parsedKey{}
-
-	// for v1/pods that tests use, Group is empty
-	if len(parts) > 1 && s.gr.Group == "" {
-		k.resource = parts[1]
-	}
-
-	if len(parts) > 2 {
-		// for v1/pods that tests use, Group is empty
-		if parts[1] == s.gr.Resource {
-			k.resource = parts[1]
-			if _, found := p.Field.RequiresExactMatch("metadata.name"); !found {
-				k.namespace = parts[2]
-			}
-		} else {
-			k.group = parts[1]
-			k.resource = parts[2]
-		}
-	}
-
-	if len(parts) > 3 {
-		// for v1/pods that tests use, Group is empty
-		if parts[1] == s.gr.Resource {
-			k.name = parts[3]
-		} else {
-			if _, found := p.Field.RequiresExactMatch("metadata.name"); !found {
-				k.namespace = parts[3]
-			}
-		}
-	}
-
-	return k, nil
 }
 
 func copyModifiedObjectToDestination(updatedObj runtime.Object, destination runtime.Object) error {
