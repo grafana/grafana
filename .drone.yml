@@ -3167,15 +3167,22 @@ steps:
   - 'echo "Step 4: Adding Grafana repository..."'
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
-  - apt-get update >/dev/null 2>&1
   - 'echo "Step 5: Installing Grafana..."'
-  - if DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null
-    2>&1; then
-  - '    echo "Successfully installed Grafana version ${TAG}"'
-  - else
-  - '    echo "Failed to install Grafana version ${TAG}"'
-  - '    exit 1'
-  - fi
+  - for i in $(seq 1 5); do
+  - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
+    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 5 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
   - 'echo "Step 6: Verifying Grafana installation..."'
   - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
   - '    echo "Successfully verified Grafana version ${TAG}"'
@@ -3196,13 +3203,21 @@ steps:
   - 'echo "Step 3: Adding Grafana GPG key..."'
   - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
-  - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
-    >/dev/null 2>&1; then
-  - '    echo "Successfully installed Grafana version ${TAG}"'
-  - else
-  - '    echo "Failed to install Grafana version ${TAG}"'
-  - '    exit 1'
-  - fi
+  - for i in $(seq 1 5); do
+  - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+    >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 5 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
   - 'echo "Step 5: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "${TAG}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
@@ -3306,15 +3321,22 @@ steps:
   - 'echo "Step 4: Adding Grafana repository..."'
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
-  - apt-get update >/dev/null 2>&1
   - 'echo "Step 5: Installing Grafana..."'
-  - if DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null
-    2>&1; then
-  - '    echo "Successfully installed Grafana version ${TAG}"'
-  - else
-  - '    echo "Failed to install Grafana version ${TAG}"'
-  - '    exit 1'
-  - fi
+  - for i in $(seq 1 5); do
+  - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
+    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 5 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
   - 'echo "Step 6: Verifying Grafana installation..."'
   - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
   - '    echo "Successfully verified Grafana version ${TAG}"'
@@ -3336,13 +3358,21 @@ steps:
   - 'echo "Step 3: Adding Grafana GPG key..."'
   - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
-  - if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
-    >/dev/null 2>&1; then
-  - '    echo "Successfully installed Grafana version ${TAG}"'
-  - else
-  - '    echo "Failed to install Grafana version ${TAG}"'
-  - '    exit 1'
-  - fi
+  - for i in $(seq 1 5); do
+  - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+    >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 5 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
   - 'echo "Step 5: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "${TAG}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
@@ -5332,6 +5362,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 437a27d1a647d4969a6cd416fbc6cd66de6028ec1c6cff55ef56cfe8392c0070
+hmac: 7c19d06b52e337ca60bbf21619d2d0bbecb0fe7792b2f821d96296e311fda1ae
 
 ...

@@ -1241,27 +1241,27 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def retry_command(command, attempts=5, delay=60):
+def retry_command(command, attempts = 5, delay = 60):
     return [
-        f"for i in $(seq 1 {attempts}); do",
-        f"    if {command}; then",
+        "for i in $(seq 1 %d); do" % attempts,
+        "    if %s; then" % command,
         '        echo "Command succeeded on attempt $i"',
         "        break",
         "    else",
         '        echo "Attempt $i failed"',
-        f"        if [ $i -eq {attempts} ]; then",
+        "        if [ $i -eq %d ]; then" % attempts,
         "            echo 'All attempts failed'",
         "            exit 1",
         "        fi",
-        f'        echo "Waiting {delay} seconds before next attempt..."',
-        f"        sleep {delay}",
+        '        echo "Waiting %d seconds before next attempt..."' % delay,
+        "        sleep %d" % delay,
         "    fi",
-        "done"
+        "done",
     ]
 
 def verify_linux_DEB_packages_step(depends_on = []):
     install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
-    
+
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
@@ -1292,7 +1292,7 @@ def verify_linux_DEB_packages_step(depends_on = []):
 
 def verify_linux_RPM_packages_step(depends_on = []):
     install_command = "dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm >/dev/null 2>&1"
-    
+
     return {
         "name": "verify-linux-RPM-packages",
         "image": images["rocky"],
