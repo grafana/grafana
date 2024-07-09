@@ -100,9 +100,9 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
       - The Assertion Consumer Service URL is the endpoint where the IdP sends the SAML assertion after the user has been authenticated.
    1. If you want to use the **Single Logout** feature, copy the **Single Logout Service URL** and provide it to your SAML IdP.
 1. Finish configuring Grafana using IdP data
-    1. Provide IdP Metadata to Grafana.
-      - The metadata contains all the necessary information for Grafana to establish a connection with the IdP.
-      - This can be provided as Base64-encoded value, a path to a file, or as a URL.
+   1. Provide IdP Metadata to Grafana.
+   - The metadata contains all the necessary information for Grafana to establish a connection with the IdP.
+   - This can be provided as Base64-encoded value, a path to a file, or as a URL.
 1. Click **Next: User mapping**.
 
 ### 4. User Mapping Section
