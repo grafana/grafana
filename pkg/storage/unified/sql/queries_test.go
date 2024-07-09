@@ -257,7 +257,7 @@ func TestQueries(t *testing.T) {
 		},
 		sqlResourceHistoryInsert: {
 			{
-				Name: "insert into entity_history",
+				Name: "insert into resource_history",
 				Data: &sqlResourceRequest{
 					SQLTemplate: new(sqltemplate.SQLTemplate),
 					WriteEvent: resource.WriteEvent{
