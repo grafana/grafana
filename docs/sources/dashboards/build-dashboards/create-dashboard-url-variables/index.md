@@ -51,15 +51,13 @@ https://${your-domain}/path/to/your/dashboard
 
 This allows someone to navigate to the dashboard, but doesn't provide any helpful context that might be available.
 
-Instead, you can add dashboard variables passed as query parameters in the dashboard URL, to provide a URL like this:
+Instead, you can add dashboard variables, passed as query parameters in the dashboard URL, to provide a URL like this:
 
 ```
 https://${your-domain}/path/to/your/dashboard?var-example=value
 ```
 
 This allows you to provide added context to the dashboard when someone navigates to it.
-
-This page describes different ways that you can use this functionality.
 
 ## Variables as query parameters
 
@@ -111,14 +109,12 @@ When sharing URLs with ad hoc filters, remember to encode the URL. In the above 
 
 ## Time range control using the URL
 
-To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window` query parameters. Because these are not variables, they do not require the `var-` prefix. For more information, see the [Linking overview](ref:linking-overview).
-
-<!-- add example here -->
+{{< docs/shared lookup="dashboards/time-range-URLs.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Variables in dashboard links
 
-You can add variables to dashboard links that you create in a dashboard's settings.
+When you create dashboard links the dashboard settings, you can have current dashboard variables included in the link:
 
-<!-- screenshot here -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-link-variables-11.1.png" max-width="500px" alt="Dashboard link page with variables option selected" >}}
 
 For steps to add variables to dashboard links, refer to [Manage dashboard links](ref:manage-dashboard-links).
