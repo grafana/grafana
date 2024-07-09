@@ -23,6 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type RuleStatus struct {
+	Health              string
+	LastError           error
+	EvaluationTimestamp time.Time
+	EvaluationDuration  time.Duration
+}
+
 type recordingRule struct {
 	key ngmodels.AlertRuleKey
 
@@ -68,6 +75,15 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAtte
 		metrics:             metrics,
 		tracer:              tracer,
 		writer:              writer,
+	}
+}
+
+func (r *recordingRule) Status() RuleStatus {
+	return RuleStatus{
+		Health:              r.health.Load(),
+		LastError:           r.lastError.Load(),
+		EvaluationTimestamp: r.evaluationTimestamp.Load(),
+		EvaluationDuration:  r.evaluationDuration.Load(),
 	}
 }
 
