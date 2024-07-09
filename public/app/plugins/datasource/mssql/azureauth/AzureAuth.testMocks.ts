@@ -9,7 +9,7 @@ export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
     userIdentityFallbackCredentialsEnabled: false,
-    clientPasswordCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   },
 };
 
@@ -20,7 +20,7 @@ export const configWithManagedIdentityDisabled: Partial<GrafanaBootConfig> = {
     userIdentityEnabled: false,
     cloud: 'AzureCloud',
     userIdentityFallbackCredentialsEnabled: false,
-    clientPasswordCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   },
 };
 

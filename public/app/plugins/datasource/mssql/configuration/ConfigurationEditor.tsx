@@ -48,7 +48,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const styles = useStyles2(getStyles);
   const jsonData = dsSettings.jsonData;
   const azureAuthIsSupported = config.azureAuthEnabled;
-  const azureclientPasswordCredentialsEnabled = config.azure.clientPasswordCredentialsEnabled;
 
   const azureAuthSettings: AzureAuthConfigType = {
     azureAuthIsSupported,

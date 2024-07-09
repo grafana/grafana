@@ -143,7 +143,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 			}
 		}
 
-		m[azsettings.ClientPasswordCredentialsEnabled] = strconv.FormatBool(azureSettings.ClientPasswordCredentialsEnabled)
+		m[azsettings.AzureEntraPasswordCredentialsEnabled] = strconv.FormatBool(azureSettings.AzureEntraPasswordCredentialsEnabled)
 	}
 
 	if s.cfg.UserFacingDefaultError != "" {

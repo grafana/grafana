@@ -72,7 +72,7 @@ type FrontendSettingsAzureDTO struct {
 	WorkloadIdentityEnabled                bool                        `json:"workloadIdentityEnabled,omitempty"`
 	UserIdentityEnabled                    bool                        `json:"userIdentityEnabled,omitempty"`
 	UserIdentityFallbackCredentialsEnabled bool                        `json:"userIdentityFallbackCredentialsEnabled,omitempty"`
-	ClientPasswordCredentialsEnabled       bool                        `json:"clientPasswordCredentialsEnabled,omitempty"`
+	AzureEntraPasswordCredentialsEnabled   bool                        `json:"azureEntraPasswordCredentialsEnabled,omitempty"`
 }
 
 type FrontendSettingsCachingDTO struct {

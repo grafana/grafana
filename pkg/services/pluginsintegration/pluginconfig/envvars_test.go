@@ -586,7 +586,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 					ClientSecret:      "mock_user_identity_client_secret",
 					UsernameAssertion: true,
 				},
-				ClientPasswordCredentialsEnabled: true,
+				AzureEntraPasswordCredentialsEnabled: true,
 			},
 		}
 
@@ -608,7 +608,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID=mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION=username",
-			"GFAZPL_CLIENT_PASSWORD_CREDENTIALS_ENABLED=true",
+			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED=true",
 		}, envVars)
 	})
 }

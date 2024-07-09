@@ -7,7 +7,7 @@ import { AzureCredentialsType, AzureAuthType } from '../types';
 
 export interface Props {
   managedIdentityEnabled: boolean;
-  clientPasswordCredentialsEnabled: boolean;
+  azureEntraPasswordCredentialsEnabled: boolean;
   credentials: AzureCredentialsType;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentialsType) => void;
@@ -17,7 +17,7 @@ export interface Props {
 export const AzureCredentialsForm = (props: Props) => {
   const {
     managedIdentityEnabled,
-    clientPasswordCredentialsEnabled,
+    azureEntraPasswordCredentialsEnabled,
     credentials,
     azureCloudOptions,
     onCredentialsChange,
@@ -46,7 +46,7 @@ export const AzureCredentialsForm = (props: Props) => {
       label: 'Managed Identity',
     });
   }
-  if (clientPasswordCredentialsEnabled) {
+  if (azureEntraPasswordCredentialsEnabled) {
     authTypeOptions.push({
       value: AzureAuthType.AD_PASSWORD,
       label: 'Password',

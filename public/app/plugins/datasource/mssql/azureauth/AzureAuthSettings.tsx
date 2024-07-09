@@ -13,7 +13,7 @@ import { AzureCredentialsForm } from './AzureCredentialsForm';
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig: dsSettings, onChange } = props;
   const managedIdentityEnabled = config.azure.managedIdentityEnabled;
-  const clientPasswordCredentialsEnabled = config.azure.clientPasswordCredentialsEnabled;
+  const azureEntraPasswordCredentialsEnabled = config.azure.azureEntraPasswordCredentialsEnabled;
 
   const credentials = useMemo(() => getCredentials(dsSettings, config), [dsSettings]);
 
@@ -31,7 +31,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   return (
     <AzureCredentialsForm
       managedIdentityEnabled={managedIdentityEnabled}
-      clientPasswordCredentialsEnabled={clientPasswordCredentialsEnabled}
+      azureEntraPasswordCredentialsEnabled={azureEntraPasswordCredentialsEnabled}
       credentials={credentials}
       azureCloudOptions={KnownAzureClouds}
       onCredentialsChange={onCredentialsChange}
