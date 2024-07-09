@@ -25,18 +25,18 @@ when investigating certain performance problems. It's _not_ recommended to have 
 ## Turn on profiling and collect profiles
 
 The `grafana-server` can be started with the command-line option `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
-`-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. Further, `-profile-contention` allows to control contention profiling (report of all goroutine blocking and mutex contention events) which when enabled adds more overhead and is more suitable to enable only when needed, default `true` for backward compatibility reasons. Running Grafana with profiling enabled and without contention profiling enabled should only add a fraction of overhead and is suitable for [continuous profiling](https://grafana.com/oss/pyroscope/).
+`-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. Further, `-profile-block-rate` controls the fraction of goroutine blocking events that are reported in the blocking profile, default `1` (100%) for backward compatibility reasons, and `-profile-mutex-rate` controls the fraction of mutex contention events that are reported in the mutex profile, default 0 (0%). The higher the fraction the more overhead it adds to normal operations. Running Grafana with profiling enabled and without block and mutex profiling enabled should only add a fraction of overhead and is suitable for [continuous profiling](https://grafana.com/oss/pyroscope/). Adding a small fraction of block and mutex profiling, such as 10-5 (10%-20%) should in general be fine.
 
-Enable profiling without contention profiling:
-
-```bash
-./grafana server -profile -profile-addr=0.0.0.0 -profile-port=8080 -profile-contention=false
-```
-
-Enable profiling with contention profiling:
+Enable profiling:
 
 ```bash
 ./grafana server -profile -profile-addr=0.0.0.0 -profile-port=8080
+```
+
+Enable profiling with block and mutex profiling enabled with a fraction of 20%:
+
+```bash
+./grafana server -profile -profile-addr=0.0.0.0 -profile-port=8080 -profile-block-rate=5 -profile-mutex-rate=5
 ```
 
 Note that `pprof` debugging endpoints are served on a different port than the Grafana HTTP server. Check what debugging endpoints are available by browsing `http://<profile-addr><profile-port>/debug/pprof`.
@@ -49,7 +49,8 @@ You can configure or override profiling settings using environment variables:
 export GF_DIAGNOSTICS_PROFILING_ENABLED=true
 export GF_DIAGNOSTICS_PROFILING_ADDR=0.0.0.0
 export GF_DIAGNOSTICS_PROFILING_PORT=8080
-export GF_DIAGNOSTICS_PROFILING_CONTENTION=false
+export GF_DIAGNOSTICS_PROFILING_BLOCK_RATE=5
+export GF_DIAGNOSTICS_PROFILING_MUTEX_RATE=5
 ```
 
 In general, you use the [Go command pprof](https://golang.org/cmd/pprof/) to both collect and analyze profiling data. You can also use [curl](https://curl.se/) or similar to collect profiles which could be convenient in environments where you don't have the Go/pprof command available. Next, some usage examples of using curl and pprof to collect and analyze memory and CPU profiles.

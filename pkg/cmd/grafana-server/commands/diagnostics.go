@@ -12,27 +12,30 @@ import (
 )
 
 const (
-	profilingEnabledEnvName    = "GF_DIAGNOSTICS_PROFILING_ENABLED"
-	profilingAddrEnvName       = "GF_DIAGNOSTICS_PROFILING_ADDR"
-	profilingPortEnvName       = "GF_DIAGNOSTICS_PROFILING_PORT"
-	profilingContentionEnvName = "GF_DIAGNOSTICS_PROFILING_CONTENTION"
-	tracingEnabledEnvName      = "GF_DIAGNOSTICS_TRACING_ENABLED"
-	tracingFileEnvName         = "GF_DIAGNOSTICS_TRACING_FILE"
+	profilingEnabledEnvName   = "GF_DIAGNOSTICS_PROFILING_ENABLED"
+	profilingAddrEnvName      = "GF_DIAGNOSTICS_PROFILING_ADDR"
+	profilingPortEnvName      = "GF_DIAGNOSTICS_PROFILING_PORT"
+	profilingBlockRateEnvName = "GF_DIAGNOSTICS_PROFILING_BLOCK_RATE"
+	profilingMutexRateEnvName = "GF_DIAGNOSTICS_PROFILING_MUTEX_RATE"
+	tracingEnabledEnvName     = "GF_DIAGNOSTICS_TRACING_ENABLED"
+	tracingFileEnvName        = "GF_DIAGNOSTICS_TRACING_FILE"
 )
 
 type profilingDiagnostics struct {
-	enabled    bool
-	addr       string
-	port       uint64
-	contention bool
+	enabled   bool
+	addr      string
+	port      uint64
+	blockRate uint64
+	mutexRate uint64
 }
 
-func newProfilingDiagnostics(enabled bool, addr string, port uint64, contention bool) *profilingDiagnostics {
+func newProfilingDiagnostics(enabled bool, addr string, port uint64, blockRate uint64, mutexRate uint64) *profilingDiagnostics {
 	return &profilingDiagnostics{
-		enabled:    enabled,
-		addr:       addr,
-		port:       port,
-		contention: contention,
+		enabled:   enabled,
+		addr:      addr,
+		port:      port,
+		blockRate: blockRate,
+		mutexRate: mutexRate,
 	}
 }
 
@@ -60,13 +63,22 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 		pd.port = port
 	}
 
-	contentionEnv := os.Getenv(profilingContentionEnvName)
-	if contentionEnv != "" {
-		contention, err := strconv.ParseBool(contentionEnv)
+	blockRateEnv := os.Getenv(profilingBlockRateEnvName)
+	if blockRateEnv != "" {
+		blockRate, err := strconv.ParseUint(blockRateEnv, 10, 64)
 		if err != nil {
-			return fmt.Errorf("failed to parse %s environment variable as bool", profilingContentionEnvName)
+			return fmt.Errorf("failed to parse %s environment variable as int", profilingBlockRateEnvName)
 		}
-		pd.contention = contention
+		pd.blockRate = blockRate
+	}
+
+	mutexFractionEnv := os.Getenv(profilingMutexRateEnvName)
+	if mutexFractionEnv != "" {
+		mutexProfileFraction, err := strconv.ParseUint(mutexFractionEnv, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s environment variable as int", profilingMutexRateEnvName)
+		}
+		pd.mutexRate = mutexProfileFraction
 	}
 
 	return nil
@@ -102,19 +114,16 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
-func setupProfiling(profile bool, profileAddr string, profilePort uint64, profileContention bool) error {
-	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, profileContention)
+func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockRate uint64, mutexFraction uint64) error {
+	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, blockRate, mutexFraction)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
 		return err
 	}
 
 	if profileDiagnostics.enabled {
-		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port, "contentionProfilingEnabled", profileDiagnostics.contention)
-
-		if profileDiagnostics.contention {
-			runtime.SetBlockProfileRate(1)
-			runtime.SetMutexProfileFraction(1)
-		}
+		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port, "blockProfileRate", profileDiagnostics.blockRate, "mutexProfileRate", profileDiagnostics.mutexRate)
+		runtime.SetBlockProfileRate(int(profileDiagnostics.blockRate))
+		runtime.SetMutexProfileFraction(int(profileDiagnostics.mutexRate))
 
 		go func() {
 			// TODO: We should enable the linter and fix G114 here.

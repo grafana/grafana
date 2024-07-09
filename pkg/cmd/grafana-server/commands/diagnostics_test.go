@@ -9,20 +9,21 @@ import (
 
 func TestProfilingDiagnostics(t *testing.T) {
 	tcs := []struct {
-		defaults      *profilingDiagnostics
-		enabledEnv    string
-		addrEnv       string
-		portEnv       string
-		contentionEnv string
-		expected      *profilingDiagnostics
+		defaults     *profilingDiagnostics
+		enabledEnv   string
+		addrEnv      string
+		portEnv      string
+		blockRateEnv string
+		mutexRateEnv string
+		expected     *profilingDiagnostics
 	}{
-		{defaults: newProfilingDiagnostics(false, "localhost", 6060, false), enabledEnv: "", addrEnv: "", portEnv: "", contentionEnv: "", expected: newProfilingDiagnostics(false, "localhost", 6060, false)},
-		{defaults: newProfilingDiagnostics(true, "0.0.0.0", 8080, false), enabledEnv: "", addrEnv: "", portEnv: "", contentionEnv: "", expected: newProfilingDiagnostics(true, "0.0.0.0", 8080, false)},
-		{defaults: newProfilingDiagnostics(false, "", 6060, false), enabledEnv: "false", addrEnv: "", portEnv: "8080", contentionEnv: "", expected: newProfilingDiagnostics(false, "", 8080, false)},
-		{defaults: newProfilingDiagnostics(false, "localhost", 6060, false), enabledEnv: "true", addrEnv: "0.0.0.0", contentionEnv: "", portEnv: "8080", expected: newProfilingDiagnostics(true, "0.0.0.0", 8080, false)},
-		{defaults: newProfilingDiagnostics(false, "127.0.0.1", 6060, false), enabledEnv: "true", addrEnv: "", portEnv: "", contentionEnv: "", expected: newProfilingDiagnostics(true, "127.0.0.1", 6060, false)},
-		{defaults: newProfilingDiagnostics(true, "localhost", 6060, true), enabledEnv: "", addrEnv: "", portEnv: "", contentionEnv: "false", expected: newProfilingDiagnostics(true, "localhost", 6060, false)},
-		{defaults: newProfilingDiagnostics(true, "localhost", 6060, false), enabledEnv: "", addrEnv: "", portEnv: "", contentionEnv: "true", expected: newProfilingDiagnostics(true, "localhost", 6060, true)},
+		{defaults: newProfilingDiagnostics(false, "localhost", 6060, 0, 0), enabledEnv: "", addrEnv: "", portEnv: "", expected: newProfilingDiagnostics(false, "localhost", 6060, 0, 0)},
+		{defaults: newProfilingDiagnostics(true, "0.0.0.0", 8080, 0, 0), enabledEnv: "", addrEnv: "", portEnv: "", expected: newProfilingDiagnostics(true, "0.0.0.0", 8080, 0, 0)},
+		{defaults: newProfilingDiagnostics(false, "", 6060, 0, 0), enabledEnv: "false", addrEnv: "", portEnv: "8080", expected: newProfilingDiagnostics(false, "", 8080, 0, 0)},
+		{defaults: newProfilingDiagnostics(false, "localhost", 6060, 0, 0), enabledEnv: "true", addrEnv: "0.0.0.0", portEnv: "8080", expected: newProfilingDiagnostics(true, "0.0.0.0", 8080, 0, 0)},
+		{defaults: newProfilingDiagnostics(false, "127.0.0.1", 6060, 0, 0), enabledEnv: "true", addrEnv: "", portEnv: "", expected: newProfilingDiagnostics(true, "127.0.0.1", 6060, 0, 0)},
+		{defaults: newProfilingDiagnostics(true, "localhost", 6060, 0, 0), enabledEnv: "", addrEnv: "", portEnv: "", blockRateEnv: "3", mutexRateEnv: "4", expected: newProfilingDiagnostics(true, "localhost", 6060, 3, 4)},
+		{defaults: newProfilingDiagnostics(true, "localhost", 6060, 0, 0), enabledEnv: "", addrEnv: "", portEnv: "", expected: newProfilingDiagnostics(true, "localhost", 6060, 0, 0)},
 	}
 
 	for i, tc := range tcs {
@@ -36,8 +37,11 @@ func TestProfilingDiagnostics(t *testing.T) {
 			if tc.portEnv != "" {
 				t.Setenv(profilingPortEnvName, tc.portEnv)
 			}
-			if tc.contentionEnv != "" {
-				t.Setenv(profilingContentionEnvName, tc.contentionEnv)
+			if tc.blockRateEnv != "" {
+				t.Setenv(profilingBlockRateEnvName, tc.blockRateEnv)
+			}
+			if tc.mutexRateEnv != "" {
+				t.Setenv(profilingMutexRateEnvName, tc.mutexRateEnv)
 			}
 			err := tc.defaults.overrideWithEnv()
 			assert.NoError(t, err)
