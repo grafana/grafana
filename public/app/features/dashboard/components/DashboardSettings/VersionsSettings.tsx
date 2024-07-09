@@ -3,12 +3,12 @@ import * as React from 'react';
 
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { VersionHistoryHeader, VersionsHistoryButtons } from 'app/features/dashboard-scene/settings/version-history';
 import {
-  DecoratedRevisionModel,
-  VersionModel,
-  getHistorySrv,
-} from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
+  historySrv,
+  RevisionsModel,
+  VersionHistoryHeader,
+  VersionsHistoryButtons,
+} from 'app/features/dashboard-scene/settings/version-history';
 
 import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
@@ -26,6 +26,11 @@ type State = {
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;
+};
+
+export type DecoratedRevisionModel = RevisionsModel & {
+  createdDateString: string;
+  ageString: string;
 };
 
 export const VERSIONS_FETCH_LIMIT = 10;
@@ -57,7 +62,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
   getVersions = (append = false) => {
     this.setState({ isAppending: append });
-    getHistorySrv()
+    historySrv
       .getHistoryList(this.props.dashboard.uid, { limit: this.limit, start: this.start })
       .then((res) => {
         this.setState({
@@ -79,8 +84,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
       isLoading: true,
     });
 
-    const lhs = await getHistorySrv().getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
-    const rhs = await getHistorySrv().getDashboardVersion(this.props.dashboard.uid, newInfo.version);
+    const lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
+    const rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.version);
 
     this.setState({
       baseInfo,
@@ -89,13 +94,13 @@ export class VersionsSettings extends PureComponent<Props, State> {
       newInfo,
       viewMode: 'compare',
       diffData: {
-        lhs: JSON.stringify(lhs),
-        rhs: JSON.stringify(rhs),
+        lhs: lhs.data,
+        rhs: rhs.data,
       },
     });
   };
 
-  decorateVersions = (versions: VersionModel[]) =>
+  decorateVersions = (versions: RevisionsModel[]) =>
     versions.map((version) => ({
       ...version,
       createdDateString: this.props.dashboard.formatDate(version.created),
@@ -110,7 +115,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
     this.setState({
       versions: this.state.versions.map((version) =>
-        version.version === versionId ? { ...version, checked: ev.currentTarget.checked } : version
+        version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
       ),
     });
   };

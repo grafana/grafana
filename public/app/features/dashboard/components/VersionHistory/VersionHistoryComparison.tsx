@@ -4,8 +4,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
-import { DecoratedRevisionModel } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
+
+import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
 

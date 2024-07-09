@@ -11,14 +11,20 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import {
+  RevisionsModel,
   VersionHistoryComparison,
   VersionHistoryHeader,
   VersionHistoryTable,
   VersionsHistoryButtons,
+  historySrv,
 } from './version-history';
-import { DecoratedRevisionModel, VersionModel, getHistorySrv } from './version-history/HistorySrv';
 
 export const VERSIONS_FETCH_LIMIT = 10;
+
+export type DecoratedRevisionModel = RevisionsModel & {
+  createdDateString: string;
+  ageString: string;
+};
 
 export interface VersionsEditViewState extends DashboardEditViewState {
   versions?: DecoratedRevisionModel[];
@@ -96,7 +102,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     this.setState({ isAppending: append });
 
-    getHistorySrv()
+    historySrv
       .getHistoryList(uid, { limit: this._limit, start: this._start })
       .then((result) => {
         this.setState({
@@ -122,8 +128,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       return;
     }
 
-    const lhs = await getHistorySrv().getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
-    const rhs = await getHistorySrv().getDashboardVersion(this._dashboard.state.uid, newInfo.version);
+    const lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
+    const rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
 
     this.setState({
       baseInfo,
@@ -132,8 +138,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       newInfo,
       viewMode: 'compare',
       diffData: {
-        lhs: JSON.stringify(lhs),
-        rhs: JSON.stringify(rhs),
+        lhs: lhs.data,
+        rhs: rhs.data,
       },
     });
   };
@@ -152,15 +158,15 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     });
   };
 
-  public onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number | string) => {
+  public onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
     this.setState({
       versions: this.versions.map((version) =>
-        version.version === versionId ? { ...version, checked: ev.currentTarget.checked } : version
+        version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
       ),
     });
   };
 
-  private decorateVersions(versions: VersionModel[]): DecoratedRevisionModel[] {
+  private decorateVersions(versions: RevisionsModel[]): DecoratedRevisionModel[] {
     const timeZone = this.getTimeRange().getTimeZone();
 
     return versions.map((version) => {

@@ -4,7 +4,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VERSIONS_FETCH_LIMIT, VersionsEditView } from './VersionsEditView';
-import { getHistorySrv } from './version-history';
+import { historySrv } from './version-history';
 
 jest.mock('./version-history/HistorySrv');
 
@@ -20,7 +20,7 @@ describe('VersionsEditView', () => {
     } as unknown as React.FormEvent<HTMLInputElement>;
 
     beforeEach(async () => {
-      jest.mocked(getHistorySrv().getHistoryList).mockResolvedValue(getVersions());
+      jest.mocked(historySrv.getHistoryList).mockResolvedValue(getVersions());
 
       const result = await buildTestScene();
       dashboard = result.dashboard;
@@ -81,7 +81,7 @@ describe('VersionsEditView', () => {
       versionsView.onCheck(mockEvent, 4);
 
       jest
-        .mocked(getHistorySrv().getDashboardVersion)
+        .mocked(historySrv.getDashboardVersion)
         .mockResolvedValueOnce({ data: 'lhs' })
         .mockResolvedValue({ data: 'rhs' });
 
@@ -100,7 +100,7 @@ describe('VersionsEditView', () => {
       versionsView.onCheck(mockEvent, 2);
 
       jest
-        .mocked(getHistorySrv().getDashboardVersion)
+        .mocked(historySrv.getDashboardVersion)
         .mockResolvedValueOnce({ data: 'lhs' })
         .mockResolvedValue({ data: 'rhs' });
 

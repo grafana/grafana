@@ -15,7 +15,6 @@ const (
 	NamespaceAnonymous      Namespace = "anonymous"
 	NamespaceRenderService  Namespace = "render"
 	NamespaceAccessPolicy   Namespace = "access-policy"
-	NamespaceProvisioning   Namespace = "provisioning"
 	NamespaceEmpty          Namespace = ""
 )
 

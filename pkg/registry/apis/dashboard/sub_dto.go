@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,7 +9,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -18,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // The DTO returns everything the UI needs in a single request
@@ -26,10 +23,8 @@ type DTOConnector struct {
 	builder *DashboardsAPIBuilder
 }
 
-var (
-	_ rest.Connecter       = (*DTOConnector)(nil)
-	_ rest.StorageMetadata = (*DTOConnector)(nil)
-)
+var _ = rest.Connecter(&DTOConnector{})
+var _ = rest.StorageMetadata(&DTOConnector{})
 
 func (r *DTOConnector) New() runtime.Object {
 	return &dashboard.DashboardWithAccessInfo{}
@@ -93,35 +88,10 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
-	key := &resource.ResourceKey{
-		Namespace: info.Value,
-		Group:     dashboard.GROUP,
-		Resource:  dashboard.DashboardResourceInfo.GroupResource().Resource,
-		Name:      name,
-	}
-	store := r.builder.legacy.access
-	rsp, err := store.Read(ctx, &resource.ReadRequest{Key: key})
+	dash, err := r.builder.access.GetDashboard(ctx, info.OrgID, name)
 	if err != nil {
 		return nil, err
 	}
-	dash := &dashboard.Dashboard{}
-	err = json.Unmarshal(rsp.Value, dash)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO, load the full spec from blob storage
-	if false {
-		blob, err := store.GetBlob(ctx, key, &utils.BlobInfo{UID: "dto"}, true)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(blob.Value, &dash.Spec)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))
 	access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
 

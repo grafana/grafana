@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { getHistorySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
+import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
 import { configureStore } from '../../../../store/configureStore';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
@@ -135,8 +135,8 @@ describe('VersionSettings', () => {
   });
 
   test('clicking show more appends results to the table', async () => {
-    getHistorySrv()
-      .getHistoryList // @ts-ignore
+    historySrv.getHistoryList
+      // @ts-ignore
       .mockImplementationOnce(() => Promise.resolve(versions.slice(0, VERSIONS_FETCH_LIMIT)))
       .mockImplementationOnce(
         () => new Promise((resolve) => setTimeout(() => resolve(versions.slice(VERSIONS_FETCH_LIMIT)), 1000))
@@ -144,7 +144,7 @@ describe('VersionSettings', () => {
 
     setup();
 
-    expect(getHistorySrv().getHistoryList).toBeCalledTimes(1);
+    expect(historySrv.getHistoryList).toBeCalledTimes(1);
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 
@@ -153,7 +153,7 @@ describe('VersionSettings', () => {
     const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
     await user.click(showMoreButton);
 
-    expect(getHistorySrv().getHistoryList).toBeCalledTimes(2);
+    expect(historySrv.getHistoryList).toBeCalledTimes(2);
     expect(screen.getByText(/Fetching more entries/i)).toBeInTheDocument();
     jest.advanceTimersByTime(1000);
 
@@ -166,14 +166,14 @@ describe('VersionSettings', () => {
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
-    getHistorySrv()
-      .getDashboardVersion // @ts-ignore
+    historySrv.getDashboardVersion
+      // @ts-ignore
       .mockImplementationOnce(() => Promise.resolve(diffs.lhs))
       .mockImplementationOnce(() => Promise.resolve(diffs.rhs));
 
     setup();
 
-    expect(getHistorySrv().getHistoryList).toBeCalledTimes(1);
+    expect(historySrv.getHistoryList).toBeCalledTimes(1);
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 

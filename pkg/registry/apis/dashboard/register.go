@@ -1,10 +1,6 @@
 package dashboard
 
 import (
-	"fmt"
-	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,22 +11,22 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
@@ -39,8 +35,11 @@ var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 
-	accessControl accesscontrol.AccessControl
-	legacy        *dashboardStorage
+	dashboardVersionService dashver.Service
+	accessControl           accesscontrol.AccessControl
+	namespacer              request.NamespaceMapper
+	access                  access.DashboardAccess
+	dashStore               dashboards.Store
 
 	log log.Logger
 }
@@ -48,12 +47,12 @@ type DashboardsAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
+	dashboardVersionService dashver.Service,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
 	reg prometheus.Registerer,
 	sql db.DB,
-	tracing *tracing.TracingService,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -61,42 +60,20 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
-		log: log.New("grafana-apiserver.dashboards"),
-
-		dashboardService: dashboardService,
-		accessControl:    accessControl,
-
-		legacy: &dashboardStorage{
-			resource: dashboard.DashboardResourceInfo,
-			access:   legacy.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
-			tableConverter: gapiutil.NewTableConverter(
-				dashboard.DashboardResourceInfo.GroupResource(),
-				[]metav1.TableColumnDefinition{
-					{Name: "Name", Type: "string", Format: "name"},
-					{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
-					{Name: "Created At", Type: "date"},
-				},
-				func(obj any) ([]interface{}, error) {
-					dash, ok := obj.(*dashboard.Dashboard)
-					if ok {
-						if dash != nil {
-							return []interface{}{
-								dash.Name,
-								dash.Spec.GetNestedString("title"),
-								dash.CreationTimestamp.UTC().Format(time.RFC3339),
-							}, nil
-						}
-					}
-					return nil, fmt.Errorf("expected dashboard or summary")
-				}),
-		},
+		dashboardService:        dashboardService,
+		dashboardVersionService: dashboardVersionService,
+		dashStore:               dashStore,
+		accessControl:           accessControl,
+		namespacer:              namespacer,
+		access:                  access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+		log:                     log.New("grafana-apiserver.dashboards"),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return dashboard.DashboardResourceInfo.GroupVersion()
+	return v0alpha1.DashboardResourceInfo.GroupVersion()
 }
 
 func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
@@ -106,18 +83,16 @@ func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap 
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&dashboard.Dashboard{},
-		&dashboard.DashboardList{},
-		&dashboard.DashboardWithAccessInfo{},
-		&dashboard.DashboardVersionList{},
-		&dashboard.VersionsQueryOptions{},
-		&metav1.PartialObjectMetadata{},
-		&metav1.PartialObjectMetadataList{},
+		&v0alpha1.Dashboard{},
+		&v0alpha1.DashboardList{},
+		&v0alpha1.DashboardWithAccessInfo{},
+		&v0alpha1.DashboardVersionList{},
+		&v0alpha1.VersionsQueryOptions{},
 	)
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	resourceInfo := dashboard.DashboardResourceInfo
+	resourceInfo := v0alpha1.DashboardResourceInfo
 	addKnownTypes(scheme, resourceInfo.GroupVersion())
 
 	// Link this version to the internal representation.
@@ -143,44 +118,44 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	desiredMode grafanarest.DualWriterMode,
 	reg prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboard.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	dash := b.legacy.resource
-	legacyStore, err := b.legacy.newStore(scheme, optsGetter)
+	resourceInfo := v0alpha1.DashboardResourceInfo
+	store, err := newStorage(scheme)
 	if err != nil {
 		return nil, err
 	}
 
+	legacyStore := &dashboardStorage{
+		resource:       resourceInfo,
+		access:         b.access,
+		tableConverter: store.TableConvertor,
+	}
+
 	storage := map[string]rest.Storage{}
-	storage[dash.StoragePath()] = legacyStore
-	storage[dash.StoragePath("dto")] = &DTOConnector{
+	storage[resourceInfo.StoragePath()] = legacyStore
+	storage[resourceInfo.StoragePath("dto")] = &DTOConnector{
 		builder: b,
 	}
-	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
-		b.legacy.server, // as client???
-		dashboard.DashboardResourceInfo.GroupResource(),
-	)
+	storage[resourceInfo.StoragePath("versions")] = &VersionsREST{
+		builder: b,
+	}
 
 	// Dual writes if a RESTOptionsGetter is provided
 	if desiredMode != grafanarest.Mode0 && optsGetter != nil {
-		store, err := newStorage(scheme)
-		if err != nil {
-			return nil, err
-		}
-
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[dash.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return dashboard.GetOpenAPIDefinitions
+	return v0alpha1.GetOpenAPIDefinitions
 }
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -191,8 +166,8 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
 	// Hide the ability to list or watch across all tenants
-	delete(oas.Paths.Paths, root+dashboard.DashboardResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+"watch/"+dashboard.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]

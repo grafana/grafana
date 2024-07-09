@@ -122,11 +122,8 @@ message DeleteResponse {
   // Status code
   StatusResult status = 1;
 
-  // The new resource version
+  // The resource version for the deletion marker
   int64 resource_version = 2;
-
-  // The deleted payload
-  bytes value = 3;
 }
 
 message ReadRequest {
@@ -159,14 +156,6 @@ message Requirement {
   repeated string values = 3; // typically one value, but depends on the operator
 }
 
-message Sort {
-  enum Order {
-    ASC = 0;
-    DESC = 1;
-  }
-  string field = 1;
-  Order order = 2;
-}
 
 message ListOptions {
   // Group+Namespace+Resource (not name)
@@ -270,77 +259,6 @@ message WatchEvent {
   Resource previous = 4;
 }
 
-message HistoryRequest {
-  // Starting from the requested page (other query parameters must match!)
-  string next_page_token = 1;
-
-  // Maximum number of items to return
-  int64 limit = 2;
-
-  // Resource identifier
-  ResourceKey key = 3;
-
-  // List the deleted values (eg, show trash)
-  bool show_deleted = 4;
-}
-
-message HistoryResponse {
-  repeated ResourceMeta items = 1;
-
-  // More results exist... pass this in the next request
-  string next_page_token = 2;
-
-  // ResourceVersion of the list response
-  int64 resource_version = 3;
-}
-
-message OriginRequest {
-  // Starting from the requested page (other query parameters must match!)
-  string next_page_token = 1;
-
-  // Maximum number of items to return
-  int64 limit = 2;
-
-  // Resource identifier
-  ResourceKey key = 3;
-
-  // List the deleted values (eg, show trash)
-  string origin = 4;
-}
-
-message ResourceOriginInfo {
-  // The resource
-  ResourceKey key = 1;
-
-  // Size of the full resource body
-  int32 resource_size = 2;
-
-  // Hash for the resource
-  string resource_hash = 3;
-
-  // The origin name
-  string origin = 4;
-
-  // Path on the origin
-  string path = 5;
-
-  // Verification hash from the origin
-  string hash = 6;
-
-  // Change time from the origin
-  int64 timestamp = 7;
-}
-
-message OriginResponse {
-  repeated ResourceOriginInfo items = 1;
-
-  // More results exist... pass this in the next request
-  string next_page_token = 2;
-
-  // ResourceVersion of the list response
-  int64 resource_version = 3;
-}
-
 message HealthCheckRequest {
   string service = 1;
 }
@@ -353,84 +271,6 @@ message HealthCheckResponse {
     SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
   }
   ServingStatus status = 1;
-}
-
-
-//----------------------------
-// Blob Support
-//----------------------------
-
-message PutBlobRequest {
-  enum Method {
-    // Use the inline raw []byte
-    GRPC = 0;
-
-    // Get a signed URL and PUT the value 
-    HTTP = 1;
-  }
-
-  // The resource that will use this blob
-  // NOTE: the name may not yet exist, but group+resource are required
-  ResourceKey resource = 1;
-
-  // How to upload
-  Method method = 2;
-
-  // Content type header
-  string content_type = 3;
-
-  // Raw value to write
-  // Not valid when method == HTTP
-  bytes value = 4;
-}
-
-message PutBlobResponse {
-  // Status code
-  StatusResult status = 1;
-
-  // The blob uid.  This must be saved into the resource to support access
-  string uid = 2;
-
-  // The URL where this value can be PUT
-  string url = 3;
-
-  // Size of the uploaded blob
-  int64 size = 4;
-
-  // Content hash used for an etag
-  string hash = 5;
-
-  // Validated mimetype (from content_type)
-  string mime_type = 6;
-
-  // Validated charset (from content_type)
-  string charset = 7;
-}
-
-message GetBlobRequest {
-  ResourceKey resource = 1;
-
-  // The new resource version
-  int64 resource_version = 2;
-
-  // Do not return a pre-signed URL (when possible)
-  bool must_proxy_bytes = 3;
-}
-
-message GetBlobResponse {
-  // Status code sent on errors
-  StatusResult status = 1;
-
-  // (optional) When possible, the system will return a presigned URL
-  // that can be used to actually read the full blob+metadata
-  // When this is set, neither info nor value will be set
-  string url = 2;
-
-  // Content type 
-  string content_type = 3;
-
-  // The raw object value
-  bytes value = 4;
 }
 
 
@@ -453,32 +293,6 @@ service ResourceStore {
   // This will perform best-effort filtering to increase performace. 
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
-}
-
-// Unlike the ResourceStore, this service can be exposed to clients directly
-// It should be implemented with efficient indexes and does not need read-after-write semantics
-service ResourceIndex {
-  // TODO: rpc Search(...) ... eventually a typed response
-
-  rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
-
-  // Show resource history (and trash)
-  rpc History(HistoryRequest) returns (HistoryResponse);
-
-  // Used for efficient provisioning
-  rpc Origin(OriginRequest) returns (OriginResponse);
-}
-
-service BlobStore {
-  // Upload a blob that will be saved in a resource
-  rpc PutBlob(PutBlobRequest) returns (PutBlobResponse);
-
-  // Get blob contents.  When possible, this will return a signed URL
-  // For large payloads, signed URLs are required to avoid protobuf message size limits
-  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
-
-  // NOTE: there is no direct access to delete blobs 
-  // >> cleanup will be managed via garbage collection or direct access to the underlying storage
 }
 
 // Clients can use this service directly

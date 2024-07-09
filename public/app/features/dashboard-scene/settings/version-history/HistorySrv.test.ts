@@ -1,6 +1,6 @@
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
-import { getHistorySrv } from './HistorySrv';
+import { HistorySrv } from './HistorySrv';
 import { restore, versions } from './__mocks__/dashboardHistoryMocks';
 
 const getMock = jest.fn().mockResolvedValue({});
@@ -27,7 +27,7 @@ describe('historySrv', () => {
   const versionsResponse = versions();
   const restoreResponse = restore;
 
-  let historySrv = getHistorySrv();
+  let historySrv = new HistorySrv();
 
   const dash = createDashboardModelFixture({ uid: '_U4zObQMz' });
   const emptyDash = createDashboardModelFixture();
@@ -40,7 +40,7 @@ describe('historySrv', () => {
   describe('getHistoryList', () => {
     it('should return a versions array for the given dashboard id', () => {
       getMock.mockImplementation(() => Promise.resolve(versionsResponse));
-      historySrv = getHistorySrv();
+      historySrv = new HistorySrv();
 
       return historySrv.getHistoryList(dash.uid, historyListOpts).then((versions) => {
         expect(versions).toEqual(versionsResponse);
@@ -63,7 +63,7 @@ describe('historySrv', () => {
   describe('getDashboardVersion', () => {
     it('should return a version object for the given dashboard id and version', () => {
       getMock.mockImplementation(() => Promise.resolve(versionsResponse[0]));
-      historySrv = getHistorySrv();
+      historySrv = new HistorySrv();
 
       return historySrv.getDashboardVersion(dash.uid, 4).then((version) => {
         expect(version).toEqual(versionsResponse[0]);
@@ -71,7 +71,7 @@ describe('historySrv', () => {
     });
 
     it('should return an empty object when not given an id', async () => {
-      historySrv = getHistorySrv();
+      historySrv = new HistorySrv();
 
       const rsp = await historySrv.getDashboardVersion(emptyDash.uid, 6);
       expect(rsp).toEqual({});
@@ -82,14 +82,14 @@ describe('historySrv', () => {
     it('should return a success response given valid parameters', () => {
       const version = 6;
       postMock.mockImplementation(() => Promise.resolve(restoreResponse(version)));
-      historySrv = getHistorySrv();
+      historySrv = new HistorySrv();
       return historySrv.restoreDashboard(dash.uid, version).then((response) => {
         expect(response).toEqual(restoreResponse(version));
       });
     });
 
     it('should return an empty object when not given an id', async () => {
-      historySrv = getHistorySrv();
+      historySrv = new HistorySrv();
       const rsp = await historySrv.restoreDashboard(emptyDash.uid, 6);
       expect(rsp).toEqual({});
     });
