@@ -155,8 +155,7 @@ describe('PanelRepeaterGridItem', () => {
       numberOfOptions: 5,
     });
 
-    // number of options is 5, total height is 4, max per row is 4, so item height should be 2 (2 rows)
-    scene.activate();
+    activateFullSceneTree(scene);
 
     expect(repeater.state.height).toBe(4);
   });
