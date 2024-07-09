@@ -63,10 +63,12 @@ export const MegaMenu = memo(
 
     const onPinItem = (id?: string) => {
       if (id && config.featureToggles.pinNavItems) {
-        const newItems = isPinned(id) ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
-        const interactionName = isPinned(id) ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
+        const navItem = navTree.find((item) => item.id === id);
+        const isSaved = isPinned(id);
+        const newItems = isSaved ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
+        const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
         reportInteraction(interactionName, {
-          itemId: id,
+          path: navItem?.url ?? id,
         });
         patchPreferences({
           patchPrefsCmd: {
