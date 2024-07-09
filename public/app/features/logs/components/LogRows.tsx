@@ -17,7 +17,6 @@ import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { withTheme2, Themeable2, PopoverContent } from '@grafana/ui';
 
-import { ContentOutlineItemContextProps } from '../../explore/ContentOutline/ContentOutlineContext';
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
@@ -64,7 +63,7 @@ export interface Props extends Themeable2 {
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
-  pinnedLogs?: ContentOutlineItemContextProps[];
+  pinnedLogs?: string[];
   containerRendered?: boolean;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
@@ -244,7 +243,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((log) => log.id === row.rowId)}
+                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}
@@ -267,7 +266,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((log) => log.id === row.rowId)}
+                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}

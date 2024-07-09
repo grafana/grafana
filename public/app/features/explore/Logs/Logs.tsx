@@ -148,6 +148,7 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
 const PINNED_LOGS_LIMIT = 3;
 const PINNED_LOGS_TITLE = 'Pinned log';
 const PINNED_LOGS_MESSAGE = 'Pin to content outline';
+const PINNED_LOGS_PANELID = 'Logs';
 
 const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const {
@@ -218,11 +219,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
   // Get pinned log lines
-  const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
-  const pinnedLogs = logsParent?.children?.filter((outlines) => outlines.title === PINNED_LOGS_TITLE);
+  const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
+  const pinnedLogs = logsParent?.children
+    ?.filter((outlines) => outlines.title === PINNED_LOGS_TITLE)
+    .map((pinnedLogs) => pinnedLogs.id);
 
   const getPinnedLogsCount = useCallback(() => {
-    const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
     return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
   }, [outlineItems]);
 
@@ -239,7 +242,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     // clean up all current log levels
     if (unregisterAllChildren) {
       unregisterAllChildren((items) => {
-        const logsParent = items?.find((item) => item.panelId === 'Logs' && item.level === 'root');
+        const logsParent = items?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
         return logsParent?.id;
       }, 'filter');
     }
@@ -267,7 +270,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           register({
             title: level.levelStr,
             icon: 'gf-logs',
-            panelId: 'Logs',
+            panelId: PINNED_LOGS_PANELID,
             level: 'child',
             type: 'filter',
             highlight: currentLevelSelected && !allLevelsSelected,
@@ -676,22 +679,22 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const onPinToContentOutlineClick = (row: LogRowModel, allowUnPin = true) => {
     // find the Logs parent item
-    const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
 
     //update the parent's expanded state
     if (logsParent && updateItem) {
       updateItem(logsParent.id, { expanded: true });
     }
 
-    const alreadyPinned = pinnedLogs?.find((pin) => pin.id === row.rowId);
+    const alreadyPinned = pinnedLogs?.find((pin) => pin === row.rowId);
     if (alreadyPinned && row.rowId && allowUnPin) {
       unregister?.(row.rowId);
-    } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT) {
+    } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT && !alreadyPinned) {
       register?.({
         id: row.rowId,
         icon: 'gf-logs',
         title: PINNED_LOGS_TITLE,
-        panelId: 'Logs',
+        panelId: PINNED_LOGS_PANELID,
         level: 'child',
         ref: null,
         color: LogLevelColor[row.logLevel],
