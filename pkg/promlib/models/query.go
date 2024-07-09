@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -194,13 +195,14 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 		return nil, err
 	}
 	span.SetAttributes(attribute.String("rawExpr", model.Expr))
-
+	spew.Dump(model.IntervalMS)
 	// Final step value for prometheus
 	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, int64(model.IntervalMS), model.IntervalFactor, query, intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
-
+	spew.Dump("!!!!!!!!!!!!")
+	spew.Dump(model.Interval)
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
 	expr := interpolateVariables(
@@ -310,6 +312,8 @@ func calculatePrometheusInterval(
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
 	}
+	spew.Dump(queryInterval)
+	spew.Dump(intervalMs)
 
 	minInterval, err := gtime.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
 	if err != nil {
@@ -346,6 +350,8 @@ func calculateRateInterval(
 	requestedMinStep string,
 ) time.Duration {
 	scrape := requestedMinStep
+	spew.Dump("###########")
+	spew.Dump(scrape)
 	if scrape == "" {
 		scrape = "15s"
 	}
