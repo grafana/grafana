@@ -509,6 +509,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/explore/metrics',
       chromeless: false,
       exact: false,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
