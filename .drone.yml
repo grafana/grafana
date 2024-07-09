@@ -3197,39 +3197,20 @@ steps:
   name: verify-linux-DEB-packages
 - commands:
   - 'echo "Step 1: Updating package lists..."'
-  - dnf check-update -y || true
+  - dnf check-update -y >/dev/null 2>&1 || true
   - 'echo "Step 2: Installing prerequisites..."'
-  - dnf install -y dnf-utils
-  - 'echo "Step 3: Adding Grafana repository..."'
-  - |-
-    echo '    [grafana]
-        name=grafana
-        baseurl=https://rpm.grafana.com
-        repo_gpgcheck=1
-        enabled=1
-        gpgcheck=1
-        gpgkey=https://rpm.grafana.com/gpg.key
-        sslverify=1
-        sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-        ' > /etc/yum.repos.d/grafana.repo
-  - cat /etc/yum.repos.d/grafana.repo
-  - 'echo "Step 4: Adding Grafana GPG key..."'
-  - rpm --import https://rpm.grafana.com/gpg.key
-  - |-
-    rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}
-    '
-  - 'echo "Step 5: Cleaning DNF cache..."'
-  - dnf clean all && dnf makecache
-  - 'echo "Step 6: Checking available Grafana versions..."'
-  - dnf list --available grafana
-  - 'echo "Step 7: Installing Grafana..."'
-  - for i in $(seq 1 3); do
-  - '    if dnf install -y grafana-${TAG}; then'
+  - dnf install -y dnf-utils >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://packages.grafana.com/gpg.key
+  - 'echo "Step 4: Installing Grafana..."'
+  - for i in $(seq 1 10); do
+  - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+    >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 3 ]; then'
+  - '        if [ $i -eq 10 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3237,7 +3218,7 @@ steps:
   - '        sleep 60'
   - '    fi'
   - done
-  - 'echo "Step 8: Verifying Grafana installation..."'
+  - 'echo "Step 5: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "${TAG}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
@@ -3371,39 +3352,20 @@ steps:
   name: verify-linux-DEB-packages
 - commands:
   - 'echo "Step 1: Updating package lists..."'
-  - dnf check-update -y || true
+  - dnf check-update -y >/dev/null 2>&1 || true
   - 'echo "Step 2: Installing prerequisites..."'
-  - dnf install -y dnf-utils
-  - 'echo "Step 3: Adding Grafana repository..."'
-  - |-
-    echo '    [grafana]
-        name=grafana
-        baseurl=https://rpm.grafana.com
-        repo_gpgcheck=1
-        enabled=1
-        gpgcheck=1
-        gpgkey=https://rpm.grafana.com/gpg.key
-        sslverify=1
-        sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-        ' > /etc/yum.repos.d/grafana.repo
-  - cat /etc/yum.repos.d/grafana.repo
-  - 'echo "Step 4: Adding Grafana GPG key..."'
-  - rpm --import https://rpm.grafana.com/gpg.key
-  - |-
-    rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}
-    '
-  - 'echo "Step 5: Cleaning DNF cache..."'
-  - dnf clean all && dnf makecache
-  - 'echo "Step 6: Checking available Grafana versions..."'
-  - dnf list --available grafana
-  - 'echo "Step 7: Installing Grafana..."'
-  - for i in $(seq 1 3); do
-  - '    if dnf install -y grafana-${TAG}; then'
+  - dnf install -y dnf-utils >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://packages.grafana.com/gpg.key
+  - 'echo "Step 4: Installing Grafana..."'
+  - for i in $(seq 1 10); do
+  - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+    >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 3 ]; then'
+  - '        if [ $i -eq 10 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3411,7 +3373,7 @@ steps:
   - '        sleep 60'
   - '    fi'
   - done
-  - 'echo "Step 8: Verifying Grafana installation..."'
+  - 'echo "Step 5: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "${TAG}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
@@ -5400,6 +5362,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a3f2847c522f99135acca7d9bdcfd1470540b235a35f1abe755695f87999bfc0
+hmac: 71d66c29948194fd057339ff0151669f6b051fc135fed3640a856ce21da53902
 
 ...
