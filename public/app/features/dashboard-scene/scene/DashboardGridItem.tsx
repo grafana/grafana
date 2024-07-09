@@ -190,20 +190,15 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
     const direction = this.getRepeatDirection();
     const stateChange: Partial<DashboardGridItemState> = { repeatedPanels: repeatedPanels };
-    const itemHeight = this.state.itemHeight ?? 10;
-    const prevHeight = this.state.height;
-    const maxPerRow = this.getMaxPerRow();
+    const prevHeight = this.state.height ?? 0;
+    const maxPerRow = direction === 'h' ? this.getMaxPerRow() : 1;
+    const prevRowCount = Math.ceil(prevRepeatCount / maxPerRow);
+    const newRowCount = Math.ceil(repeatedPanels.length / maxPerRow);
 
-    if (direction === 'h') {
-      // If the number of repeated panels has changed (i.e. the repeat var has more/fewer options selected)
-      // we still want the height of each panel to stay the same
-      const rowCount = Math.ceil(repeatedPanels.length / maxPerRow);
-      const prevRowCount = Math.ceil(prevRepeatCount / maxPerRow);
-      const prevItemHeight = (prevHeight ?? 0) / prevRowCount;
-      stateChange.height = Math.ceil(rowCount * prevItemHeight);
-    } else {
-      stateChange.height = repeatedPanels.length * itemHeight;
-    }
+    // If item height is not defined, calculate based on total height and row count
+    const itemHeight = this.state.itemHeight ?? prevHeight / prevRowCount;
+    stateChange.itemHeight = itemHeight;
+    stateChange.height = Math.ceil(newRowCount * itemHeight);
 
     this.setState(stateChange);
 
