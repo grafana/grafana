@@ -33,13 +33,16 @@ func WithRequester(handler http.Handler) http.Handler {
 					slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 					orgId := int64(1)
 					requester = &identity.StaticRequester{
-						Namespace:      identity.NamespaceServiceAccount, // system:apiserver
-						UserID:         1,
-						OrgID:          orgId,
-						Name:           info.GetName(),
-						Login:          info.GetName(),
-						OrgRole:        identity.RoleAdmin,
-						IsGrafanaAdmin: true,
+						Namespace: identity.NamespaceServiceAccount, // system:apiserver
+						UserID:    1,
+						OrgID:     orgId,
+						Name:      info.GetName(),
+						Login:     info.GetName(),
+						OrgRole:   identity.RoleAdmin,
+
+						IsGrafanaAdmin:             true,
+						AllowedKubernetesNamespace: "default",
+
 						Permissions: map[int64]map[string][]string{
 							orgId: {
 								"*": {"*"}, // all resources, all scopes

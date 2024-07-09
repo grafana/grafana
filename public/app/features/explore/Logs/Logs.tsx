@@ -276,6 +276,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             highlight: currentLevelSelected && !allLevelsSelected,
             onClick: (e: React.MouseEvent) => {
               toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
+              reportInteraction('explore_toolbar_contentoutline_clicked', {
+                item: 'section',
+                type: `Logs:filter:${level.levelStr}`,
+              });
             },
             ref: null,
             color: LogLevelColor[level.logLevel],
@@ -678,6 +682,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [logsContainerRef, topLogsRef]);
 
   const onPinToContentOutlineClick = (row: LogRowModel, allowUnPin = true) => {
+    if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'section',
+        type: 'Logs:pinned:pinned-log-limit-reached',
+      });
+      return;
+    }
+
     // find the Logs parent item
     const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
 
@@ -689,6 +701,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const alreadyPinned = pinnedLogs?.find((pin) => pin === row.rowId);
     if (alreadyPinned && row.rowId && allowUnPin) {
       unregister?.(row.rowId);
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'section',
+        type: 'Logs:pinned:pinned-log-deleted',
+      });
     } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT && !alreadyPinned) {
       register?.({
         id: row.rowId,
@@ -699,17 +715,37 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         ref: null,
         color: LogLevelColor[row.logLevel],
         childOnTop: true,
-        onClick: () => onOpenContext(row, () => {}),
+        onClick: () => {
+          onOpenContext(row, () => {});
+          reportInteraction('explore_toolbar_contentoutline_clicked', {
+            item: 'section',
+            type: 'Logs:pinned:pinned-log-clicked',
+          });
+        },
         onRemove: (id: string) => {
           unregister?.(id);
           if (getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
             setPinLineButtonTooltipTitle(PINNED_LOGS_MESSAGE);
           }
+          reportInteraction('explore_toolbar_contentoutline_clicked', {
+            item: 'section',
+            type: 'Logs:pinned:pinned-log-deleted',
+          });
         },
+      });
+
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'section',
+        type: 'Logs:pinned:pinned-log-added',
       });
     }
 
     props.onPinLineCallback?.();
+
+    reportInteraction('explore_toolbar_contentoutline_clicked', {
+      item: 'section',
+      type: 'Logs:pinned:pinned-log-added',
+    });
   };
 
   const hasUnescapedContent = checkUnescapedContent(logRows);
