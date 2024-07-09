@@ -99,7 +99,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         check = []
     else:
         check = [
-            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
+            'is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
             'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
         ]
 
