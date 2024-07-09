@@ -21,24 +21,24 @@ weight: 1150
 refs:
   flame-graph:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
+      destination: https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
   configure-tempo-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/
     - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/
+      destination: https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/
   provisioning-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
 ---
 
 # Grafana Pyroscope data source
@@ -73,9 +73,9 @@ For more information, refer to the [Traces to profile section](ref:configure-tem
 
 {{< youtube id="AG8VzfFMLxo" >}}
 
-## Provision the Grafana Pyroscope data source
+## Provision the Pyroscope data source
 
-You can modify the Grafana configuration files to provision the Grafana Pyroscope data source.
+You can modify the Grafana configuration files to provision the Pyroscope data source.
 To learn more, and to view the available provisioning settings, refer to [provisioning documentation](ref:provisioning-data-sources).
 
 Here is an example configuration:
