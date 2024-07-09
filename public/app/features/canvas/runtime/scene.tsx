@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
-import React, { createRef, CSSProperties, RefObject } from 'react';
+import { createRef, CSSProperties, RefObject } from 'react';
 import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
 import { AppEvents, PanelData } from '@grafana/data';
@@ -27,15 +26,9 @@ import {
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
-import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
-import {
-  Connections,
-  CONNECTION_VERTEX_ADD_ID,
-  CONNECTION_VERTEX_ID,
-} from 'app/plugins/panel/canvas/components/connections/Connections';
-import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
-import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
-import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
+import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
+import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
+import { getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -43,10 +36,11 @@ import { CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
 import { SceneTransformWrapper } from './SceneTransformWrapper';
-import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
+import { initMoveable } from './sceneAbleManagement';
+import { findElementByTarget } from './sceneElementManagement';
 
 export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;
@@ -176,7 +170,7 @@ export class Scene {
       if (this.div) {
         // If editing is enabled, clear selecto instance
         const destroySelecto = enableEditing;
-        this.initMoveable(destroySelecto, enableEditing);
+        initMoveable(destroySelecto, enableEditing, this);
         this.currentLayer = this.root;
         this.selection.next([]);
         this.connections.select(undefined);
@@ -210,92 +204,10 @@ export class Scene {
     }
   }
 
-  frameSelection() {
-    this.selection.pipe(first()).subscribe((currentSelectedElements) => {
-      const currentLayer = currentSelectedElements[0].parent!;
-
-      const newLayer = new FrameState(
-        {
-          type: 'frame',
-          name: this.getNextElementName(true),
-          elements: [],
-        },
-        this,
-        currentSelectedElements[0].parent
-      );
-
-      const framePlacement = this.generateFrameContainer(currentSelectedElements);
-
-      newLayer.options.placement = framePlacement;
-
-      currentSelectedElements.forEach((element: ElementState) => {
-        const elementContainer = element.div?.getBoundingClientRect();
-
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        element.setPlacementFromConstraint(elementContainer, framePlacement as DOMRect);
-        currentLayer.doAction(LayerActionID.Delete, element);
-        newLayer.doAction(LayerActionID.Duplicate, element, false, false);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      newLayer.setPlacementFromConstraint(framePlacement as DOMRect, currentLayer.div?.getBoundingClientRect());
-
-      currentLayer.elements.push(newLayer);
-
-      this.byName.set(newLayer.getName(), newLayer);
-
-      this.save();
-    });
-  }
-
-  private generateFrameContainer = (elements: ElementState[]): Placement => {
-    let minTop = Infinity;
-    let minLeft = Infinity;
-    let maxRight = 0;
-    let maxBottom = 0;
-
-    elements.forEach((element: ElementState) => {
-      const elementContainer = element.div?.getBoundingClientRect();
-
-      if (!elementContainer) {
-        return;
-      }
-
-      if (minTop > elementContainer.top) {
-        minTop = elementContainer.top;
-      }
-
-      if (minLeft > elementContainer.left) {
-        minLeft = elementContainer.left;
-      }
-
-      if (maxRight < elementContainer.right) {
-        maxRight = elementContainer.right;
-      }
-
-      if (maxBottom < elementContainer.bottom) {
-        maxBottom = elementContainer.bottom;
-      }
-    });
-
-    return {
-      top: minTop,
-      left: minLeft,
-      width: maxRight - minLeft,
-      height: maxBottom - minTop,
-    };
-  };
-
   clearCurrentSelection(skipNextSelectionBroadcast = false) {
     this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
     let event: MouseEvent = new MouseEvent('click');
     this.selecto?.clickTarget(event, this.div);
-  }
-
-  updateCurrentLayer(newLayer: FrameState) {
-    this.currentLayer = newLayer;
-    this.clearCurrentSelection();
-    this.save();
   }
 
   save = (updateMoveable = false) => {
@@ -304,30 +216,10 @@ export class Scene {
     if (updateMoveable) {
       setTimeout(() => {
         if (this.div) {
-          this.initMoveable(true, this.isEditingEnabled);
+          initMoveable(true, this.isEditingEnabled, this);
         }
       });
     }
-  };
-
-  findElementByTarget = (target: Element): ElementState | undefined => {
-    // We will probably want to add memoization to this as we are calling on drag / resize
-
-    const stack = [...this.root.elements];
-    while (stack.length > 0) {
-      const currentElement = stack.shift();
-
-      if (currentElement && currentElement.div && currentElement.div === target) {
-        return currentElement;
-      }
-
-      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
-      for (const nestedElement of nestedElements) {
-        stack.unshift(nestedElement);
-      }
-    }
-
-    return undefined;
   };
 
   setNonTargetPointerEvents = (target: Element, disablePointerEvents: boolean) => {
@@ -363,7 +255,7 @@ export class Scene {
     }
   };
 
-  private updateSelection = (selection: SelectionParams) => {
+  updateSelection = (selection: SelectionParams) => {
     this.moveable!.target = selection.targets;
     if (this.skipNextSelectionBroadcast) {
       this.skipNextSelectionBroadcast = false;
@@ -373,429 +265,9 @@ export class Scene {
     if (selection.frame) {
       this.selection.next([selection.frame]);
     } else {
-      const s = selection.targets.map((t) => this.findElementByTarget(t)!);
+      const s = selection.targets.map((t) => findElementByTarget(t, this.root.elements)!);
       this.selection.next(s);
     }
-  };
-
-  private generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
-    let targetElements: HTMLDivElement[] = [];
-
-    const stack = [...rootElements];
-    while (stack.length > 0) {
-      const currentElement = stack.shift();
-
-      if (currentElement && currentElement.div) {
-        targetElements.push(currentElement.div);
-      }
-
-      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
-      for (const nestedElement of nestedElements) {
-        stack.unshift(nestedElement);
-      }
-    }
-
-    return targetElements;
-  };
-
-  disableCustomables = () => {
-    this.moveable!.props = {
-      dimensionViewable: false,
-      constraintViewable: false,
-      settingsViewable: false,
-    };
-  };
-
-  enableCustomables = () => {
-    this.moveable!.props = {
-      dimensionViewable: true,
-      constraintViewable: true,
-      settingsViewable: true,
-    };
-  };
-
-  initMoveable = (destroySelecto = false, allowChanges = true) => {
-    const targetElements = this.generateTargetElements(this.root.elements);
-
-    if (destroySelecto && this.selecto) {
-      this.selecto.destroy();
-    }
-
-    this.selecto = new Selecto({
-      container: this.div,
-      rootContainer: getParent(this),
-      selectableTargets: targetElements,
-      toggleContinueSelect: 'shift',
-      selectFromInside: false,
-      hitRate: 0,
-    });
-
-    const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
-    const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
-
-    this.moveable = new Moveable(this.div!, {
-      draggable: allowChanges && !this.editModeEnabled.getValue(),
-      resizable: allowChanges,
-
-      // Setup rotatable
-      rotatable: allowChanges,
-      throttleRotate: 5,
-      rotationPosition: ['top', 'right'],
-
-      // Setup snappable
-      snappable: allowChanges,
-      snapDirections: snapDirections,
-      elementSnapDirections: elementSnapDirections,
-      elementGuidelines: targetElements,
-
-      ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
-      props: {
-        dimensionViewable: allowChanges,
-        constraintViewable: allowChanges,
-        settingsViewable: allowChanges,
-      },
-      origin: false,
-    })
-      .on('rotateStart', () => {
-        this.disableCustomables();
-      })
-      .on('rotate', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-
-        if (targetedElement) {
-          targetedElement.applyRotate(event);
-        }
-      })
-      .on('rotateGroup', (e) => {
-        for (let event of e.events) {
-          const targetedElement = this.findElementByTarget(event.target);
-          if (targetedElement) {
-            targetedElement.applyRotate(event);
-          }
-        }
-      })
-      .on('rotateEnd', () => {
-        this.enableCustomables();
-        // Update the editor with the new rotation
-        this.moved.next(Date.now());
-      })
-      .on('click', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-        let elementSupportsEditing = false;
-        if (targetedElement) {
-          elementSupportsEditing = targetedElement.item.hasEditMode ?? false;
-        }
-
-        if (event.isDouble && allowChanges && !this.editModeEnabled.getValue() && elementSupportsEditing) {
-          this.editModeEnabled.next(true);
-        }
-      })
-      .on('clickGroup', (event) => {
-        this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
-      })
-      .on('dragStart', (event) => {
-        this.ignoreDataUpdate = true;
-        this.setNonTargetPointerEvents(event.target, true);
-
-        // Remove the selected element from the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-          if (targetIndex > -1) {
-            this.moveable.elementGuidelines.splice(targetIndex, 1);
-          }
-        }
-      })
-      .on('dragGroupStart', (e) => {
-        this.ignoreDataUpdate = true;
-
-        // Remove the selected elements from the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          for (let event of e.events) {
-            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-            if (targetIndex > -1) {
-              this.moveable.elementGuidelines.splice(targetIndex, 1);
-            }
-          }
-        }
-      })
-      .on('drag', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-        if (targetedElement) {
-          targetedElement.applyDrag(event);
-
-          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
-            this.moveableActionCallback(true);
-          }
-        }
-      })
-      .on('dragGroup', (e) => {
-        let needsUpdate = false;
-        for (let event of e.events) {
-          const targetedElement = this.findElementByTarget(event.target);
-          if (targetedElement) {
-            targetedElement.applyDrag(event);
-            if (!needsUpdate) {
-              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
-            }
-          }
-        }
-
-        if (needsUpdate && this.moveableActionCallback) {
-          this.moveableActionCallback(true);
-        }
-      })
-      .on('dragGroupEnd', (e) => {
-        e.events.forEach((event) => {
-          const targetedElement = this.findElementByTarget(event.target);
-          if (targetedElement) {
-            if (targetedElement) {
-              targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-            }
-
-            // re-add the selected elements to the snappable guidelines
-            if (this.moveable && this.moveable.elementGuidelines) {
-              this.moveable.elementGuidelines.push(event.target);
-            }
-          }
-        });
-
-        this.moved.next(Date.now());
-        this.ignoreDataUpdate = false;
-      })
-      .on('dragEnd', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-        if (targetedElement) {
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-        }
-
-        this.moved.next(Date.now());
-        this.ignoreDataUpdate = false;
-        this.setNonTargetPointerEvents(event.target, false);
-
-        // re-add the selected element to the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          this.moveable.elementGuidelines.push(event.target);
-        }
-      })
-      .on('resizeStart', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-
-        if (targetedElement) {
-          // Remove the selected element from the snappable guidelines
-          if (this.moveable && this.moveable.elementGuidelines) {
-            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-            if (targetIndex > -1) {
-              this.moveable.elementGuidelines.splice(targetIndex, 1);
-            }
-          }
-
-          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
-          targetedElement.options.constraint = {
-            vertical: VerticalConstraint.Top,
-            horizontal: HorizontalConstraint.Left,
-          };
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-        }
-      })
-      .on('resizeGroupStart', (e) => {
-        // Remove the selected elements from the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          for (let event of e.events) {
-            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-            if (targetIndex > -1) {
-              this.moveable.elementGuidelines.splice(targetIndex, 1);
-            }
-          }
-        }
-      })
-      .on('resize', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-        if (targetedElement) {
-          targetedElement.applyResize(event, this.scale);
-
-          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
-            this.moveableActionCallback(true);
-          }
-        }
-        this.moved.next(Date.now()); // TODO only on end
-      })
-      .on('resizeGroup', (e) => {
-        let needsUpdate = false;
-        for (let event of e.events) {
-          const targetedElement = this.findElementByTarget(event.target);
-          if (targetedElement) {
-            targetedElement.applyResize(event);
-
-            if (!needsUpdate) {
-              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
-            }
-          }
-        }
-
-        if (needsUpdate && this.moveableActionCallback) {
-          this.moveableActionCallback(true);
-        }
-
-        this.moved.next(Date.now()); // TODO only on end
-      })
-      .on('resizeEnd', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
-
-        if (targetedElement) {
-          if (targetedElement.tempConstraint) {
-            targetedElement.options.constraint = targetedElement.tempConstraint;
-            targetedElement.tempConstraint = undefined;
-          }
-
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-
-          // re-add the selected element to the snappable guidelines
-          if (this.moveable && this.moveable.elementGuidelines) {
-            this.moveable.elementGuidelines.push(event.target);
-          }
-        }
-      })
-      .on('resizeGroupEnd', (e) => {
-        // re-add the selected elements to the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          for (let event of e.events) {
-            this.moveable.elementGuidelines.push(event.target);
-          }
-        }
-      });
-
-    let targets: Array<HTMLElement | SVGElement> = [];
-    this.selecto!.on('dragStart', (event) => {
-      const selectedTarget = event.inputEvent.target;
-
-      // If selected target is a connection control, eject to handle connection event
-      if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
-        this.connections.handleConnectionDragStart(selectedTarget, event.inputEvent.clientX, event.inputEvent.clientY);
-        event.stop();
-        return;
-      }
-
-      // If selected target is a vertex, eject to handle vertex event
-      if (selectedTarget.id === CONNECTION_VERTEX_ID) {
-        this.connections.handleVertexDragStart(selectedTarget);
-        event.stop();
-        return;
-      }
-
-      // If selected target is an add vertex point, eject to handle add vertex event
-      if (selectedTarget.id === CONNECTION_VERTEX_ADD_ID) {
-        this.connections.handleVertexAddDragStart(selectedTarget);
-        event.stop();
-        return;
-      }
-
-      const isTargetMoveableElement =
-        this.moveable!.isMoveableElement(selectedTarget) ||
-        targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
-
-      const isTargetAlreadySelected = this.selecto
-        ?.getSelectedTargets()
-        .includes(selectedTarget.parentElement.parentElement);
-
-      // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
-      if (
-        this.isEditingEnabled &&
-        !this.editModeEnabled.getValue() &&
-        isTargetMoveableElement &&
-        this.selecto?.getSelectedTargets().length
-      ) {
-        this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
-      }
-
-      if (isTargetMoveableElement || isTargetAlreadySelected || !this.isEditingEnabled) {
-        // Prevent drawing selection box when selected target is a moveable element or already selected
-        event.stop();
-      }
-    })
-      .on('select', () => {
-        this.editModeEnabled.next(false);
-
-        // Hide connection anchors on select
-        if (this.connections.connectionAnchorDiv) {
-          this.connections.connectionAnchorDiv.style.display = 'none';
-        }
-      })
-      .on('selectEnd', (event) => {
-        targets = event.selected;
-        this.updateSelection({ targets });
-
-        if (event.isDragStart) {
-          if (this.isEditingEnabled && !this.editModeEnabled.getValue() && this.selecto?.getSelectedTargets().length) {
-            this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
-          }
-          event.inputEvent.preventDefault();
-          event.data.timer = setTimeout(() => {
-            this.moveable!.dragStart(event.inputEvent);
-          });
-        }
-      })
-      .on('dragEnd', (event) => {
-        clearTimeout(event.data.timer);
-      });
-  };
-
-  reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
-    switch (dragToGap) {
-      case true:
-        switch (destPosition) {
-          case -1:
-            // top of the tree
-            if (src.parent instanceof FrameState) {
-              // move outside the frame
-              if (dest.parent) {
-                this.updateElements(src, dest.parent, dest.parent.elements.length);
-                src.updateData(dest.parent.scene.context);
-              }
-            } else {
-              dest.parent?.reorderTree(src, dest, true);
-            }
-            break;
-          default:
-            if (dest.parent) {
-              this.updateElements(src, dest.parent, dest.parent.elements.indexOf(dest));
-              src.updateData(dest.parent.scene.context);
-            }
-            break;
-        }
-        break;
-      case false:
-        if (dest instanceof FrameState) {
-          if (src.parent === dest) {
-            // same frame parent
-            src.parent?.reorderTree(src, dest, true);
-          } else {
-            this.updateElements(src, dest);
-            src.updateData(dest.scene.context);
-          }
-        } else if (src.parent === dest.parent) {
-          src.parent?.reorderTree(src, dest);
-        } else {
-          if (dest.parent) {
-            this.updateElements(src, dest.parent);
-            src.updateData(dest.parent.scene.context);
-          }
-        }
-        break;
-    }
-  };
-
-  private updateElements = (src: ElementState, dest: FrameState | RootElement, idx: number | null = null) => {
-    src.parent?.doAction(LayerActionID.Delete, src);
-    src.parent = dest;
-
-    const elementContainer = src.div?.getBoundingClientRect();
-    src.setPlacementFromConstraint(elementContainer, dest.div?.getBoundingClientRect());
-
-    const destIndex = idx ?? dest.elements.length - 1;
-    dest.elements.splice(destIndex, 0, src);
-    dest.scene.save();
-
-    dest.reinitializeMoveable();
   };
 
   addToSelection = () => {

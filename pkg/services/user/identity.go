@@ -5,20 +5,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
 	GlobalOrgID = int64(0)
 )
 
+var _ identity.Requester = &SignedInUser{}
+
 type SignedInUser struct {
 	UserID        int64  `xorm:"user_id"`
 	UserUID       string `xorm:"user_uid"`
 	OrgID         int64  `xorm:"org_id"`
 	OrgName       string
-	OrgRole       roletype.RoleType
+	OrgRole       identity.RoleType
 	Login         string
 	Name          string
 	Email         string
@@ -26,7 +27,9 @@ type SignedInUser struct {
 	// AuthID will be set if user signed in using external method
 	AuthID string
 	// AuthenticatedBy be set if user signed in using external method
-	AuthenticatedBy  string
+	AuthenticatedBy            string
+	AllowedKubernetesNamespace string
+
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
 	IsGrafanaAdmin   bool
@@ -57,7 +60,7 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
-func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
+func (u *SignedInUser) HasRole(role identity.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
 	}
@@ -88,6 +91,10 @@ func (u *SignedInUser) HasUniqueId() bool {
 	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
+func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
+	return u.AllowedKubernetesNamespace
+}
+
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
@@ -97,7 +104,7 @@ func (u *SignedInUser) GetCacheKey() string {
 		// e.g. anonymous and render key.
 		orgRole := u.GetOrgRole()
 		if orgRole == "" {
-			orgRole = roletype.RoleNone
+			orgRole = identity.RoleNone
 		}
 
 		id = string(orgRole)
@@ -161,7 +168,7 @@ func (u *SignedInUser) GetTeams() []int64 {
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
-func (u *SignedInUser) GetOrgRole() roletype.RoleType {
+func (u *SignedInUser) GetOrgRole() identity.RoleType {
 	return u.OrgRole
 }
 
@@ -172,7 +179,7 @@ func (u *SignedInUser) GetID() identity.NamespaceID {
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/services/auth/identity
+// The namespace is one of the constants defined in pkg/apimachinery/identity
 func (u *SignedInUser) GetNamespacedID() (identity.Namespace, string) {
 	switch {
 	case u.ApiKeyID != 0:

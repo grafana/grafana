@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes } from 'react';
+import { HTMLAttributes } from 'react';
 
 import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { TestingStatus, config } from '@grafana/runtime';
-import { AlertVariant, Alert, useTheme2, Link } from '@grafana/ui';
+import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
 import { trackCreateDashboardClicked } from '../tracking';
@@ -25,16 +25,16 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
 
 const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   return {
-    content: css`
-      color: ${theme.colors.text.secondary};
-      padding-top: ${hasTitle ? theme.spacing(1) : 0};
-      max-height: 50vh;
-      overflow-y: auto;
-    `,
-    disabled: css`
-      pointer-events: none;
-      color: ${theme.colors.text.secondary};
-    `,
+    content: css({
+      color: theme.colors.text.secondary,
+      paddingTop: hasTitle ? theme.spacing(1) : 0,
+      maxHeight: '50vh',
+      overflowY: 'auto',
+    }),
+    disabled: css({
+      pointerEvents: 'none',
+      color: theme.colors.text.secondary,
+    }),
   };
 };
 
@@ -95,10 +95,11 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
       path: location.pathname,
     });
   };
+  const styles = useStyles2(getTestingStatusStyles);
 
   if (message) {
     return (
-      <div className="gf-form-group p-t-2">
+      <div className={cx('gf-form-group', styles.container)}>
         <Alert severity={severity} title={message} data-testid={e2eSelectors.pages.DataSource.alert}>
           {testingStatus?.details && (
             <>
@@ -123,3 +124,9 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
 
   return null;
 }
+
+const getTestingStatusStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    paddingTop: theme.spacing(3),
+  }),
+});

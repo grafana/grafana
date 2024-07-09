@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { NavModel, NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';

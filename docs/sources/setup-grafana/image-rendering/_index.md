@@ -207,6 +207,47 @@ HTTP_PORT=0
 }
 ```
 
+#### HTTP protocol
+
+{{% admonition type="note" %}}
+HTTPS protocol is supported in the image renderer v3.11.0 and later.
+{{% /admonition %}}
+
+Change the protocol of the server, it can be `http` or `https`. Default is `http`.
+
+```json
+{
+  "service": {
+    "protocol": "http"
+  }
+}
+```
+
+#### HTTPS certificate and key file
+
+Path to the image renderer certificate and key file used to start an HTTPS server.
+
+```json
+{
+  "service": {
+    "certFile": "./path/to/cert",
+    "certKey": "./path/to/key"
+  }
+}
+```
+
+#### HTTPS min TLS version
+
+Minimum TLS version allowed. Accepted values are: `TLSv1.2`, `TLSv1.3`. Default is `TLSv1.2`.
+
+```json
+{
+  "service": {
+    "minTLSVersion": "TLSv1.2"
+  }
+}
+```
+
 #### Enable Prometheus metrics
 
 You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [Enable Prometheus metrics endpoint]({{< relref "./monitoring#enable-prometheus-metrics-endpoint" >}}) for details.

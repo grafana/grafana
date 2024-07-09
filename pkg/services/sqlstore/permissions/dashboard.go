@@ -2,12 +2,13 @@ package permissions
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -25,10 +26,12 @@ type clause struct {
 }
 
 type accessControlDashboardPermissionFilter struct {
-	user            identity.Requester
-	dashboardAction string
-	folderAction    string
-	features        featuremgmt.FeatureToggles
+	user                identity.Requester
+	dashboardAction     string
+	dashboardActionSets []string
+	folderAction        string
+	folderActionSets    []string
+	features            featuremgmt.FeatureToggles
 
 	where clause
 	// any recursive CTE queries (if supported)
@@ -53,30 +56,63 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 
 	var folderAction string
 	var dashboardAction string
+	var folderActionSets []string
+	var dashboardActionSets []string
 	if queryType == searchstore.TypeFolder {
 		folderAction = dashboards.ActionFoldersRead
-		//folderAction = append(folderAction, dashboards.ActionFoldersRead)
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
+			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+				folderActionSets = []string{"folders:edit", "folders:admin"}
+			}
 		}
 	} else if queryType == searchstore.TypeDashboard {
 		dashboardAction = dashboards.ActionDashboardsRead
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
+		}
 		if needEdit {
 			dashboardAction = dashboards.ActionDashboardsWrite
+			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+				folderActionSets = []string{"folders:edit", "folders:admin"}
+				dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
+			}
 		}
 	} else if queryType == searchstore.TypeAlertFolder {
 		folderAction = accesscontrol.ActionAlertingRuleRead
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		}
 		if needEdit {
 			folderAction = accesscontrol.ActionAlertingRuleCreate
+			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+				folderActionSets = []string{"folders:edit", "folders:admin"}
+			}
 		}
 	} else if queryType == searchstore.TypeAnnotation {
 		dashboardAction = accesscontrol.ActionAnnotationsRead
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
+		}
 	} else {
 		folderAction = dashboards.ActionFoldersRead
 		dashboardAction = dashboards.ActionDashboardsRead
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
+		}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
 			dashboardAction = dashboards.ActionDashboardsWrite
+			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+				folderActionSets = []string{"folders:edit", "folders:admin"}
+				dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
+			}
 		}
 	}
 
@@ -84,13 +120,13 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	if features.IsEnabledGlobally(featuremgmt.FlagPermissionsFilterRemoveSubquery) {
 		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
 			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{
-				user: user, folderAction: folderAction, dashboardAction: dashboardAction, features: features,
-				recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+				user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
+				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 			},
 		}
 	} else {
-		f = &accessControlDashboardPermissionFilter{user: user, folderAction: folderAction, dashboardAction: dashboardAction, features: features,
-			recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+		f = &accessControlDashboardPermissionFilter{user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
+			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 		}
 	}
 	f.buildClauses()
@@ -149,20 +185,24 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	// currently it's used for the extended JWT module (when the user is authenticated via a JWT token generated by Grafana)
 	useSelfContainedPermissions := f.user.IsAuthenticatedBy(login.ExtendedJWTModule)
 
-	if len(f.dashboardAction) > 0 {
-		toCheck := actionsToCheck(f.dashboardAction, f.user.GetPermissions(), dashWildcards, folderWildcards)
+	if f.dashboardAction != "" {
+		toCheckDashboards := actionsToCheck(f.dashboardAction, f.dashboardActionSets, f.user.GetPermissions(), dashWildcards, folderWildcards)
+		toCheckFolders := actionsToCheck(f.dashboardAction, f.folderActionSets, f.user.GetPermissions(), dashWildcards, folderWildcards)
 
-		if len(toCheck) > 0 {
+		if len(toCheckDashboards) > 0 {
 			if !useSelfContainedPermissions {
 				builder.WriteString("(dashboard.uid IN (SELECT identifier FROM permission WHERE kind = 'dashboards' AND attribute = 'uid'")
 				builder.WriteString(rolesFilter)
 				args = append(args, params...)
-				builder.WriteString(" AND action = ?) AND NOT dashboard.is_folder)")
-				args = append(args, toCheck[0])
+				if len(toCheckDashboards) == 1 {
+					builder.WriteString(" AND action = ?) AND NOT dashboard.is_folder)")
+					args = append(args, toCheckDashboards[0])
+				} else {
+					builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheckDashboards)-1) + ")) AND NOT dashboard.is_folder)")
+					args = append(args, toCheckDashboards...)
+				}
 			} else {
-				actions := parseStringSliceFromInterfaceSlice(toCheck)
-
-				args = getAllowedUIDs(actions, f.user, dashboards.ScopeDashboardsPrefix)
+				args = getAllowedUIDs(f.dashboardAction, f.user, dashboards.ScopeDashboardsPrefix)
 
 				// Only add the IN clause if we have any dashboards to check
 				if len(args) > 0 {
@@ -179,12 +219,15 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				permSelector.WriteString("(SELECT identifier FROM permission WHERE kind = 'folders' AND attribute = 'uid'")
 				permSelector.WriteString(rolesFilter)
 				permSelectorArgs = append(permSelectorArgs, params...)
-				permSelector.WriteString(" AND action = ?")
-				permSelectorArgs = append(permSelectorArgs, toCheck[0])
+				if len(toCheckDashboards) == 1 {
+					permSelector.WriteString(" AND action = ?")
+					permSelectorArgs = append(permSelectorArgs, toCheckDashboards[0])
+				} else {
+					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheckDashboards)-1) + ")")
+					permSelectorArgs = append(permSelectorArgs, toCheckFolders...)
+				}
 			} else {
-				actions := parseStringSliceFromInterfaceSlice(toCheck)
-
-				permSelectorArgs = getAllowedUIDs(actions, f.user, dashboards.ScopeFoldersPrefix)
+				permSelectorArgs = getAllowedUIDs(f.dashboardAction, f.user, dashboards.ScopeFoldersPrefix)
 
 				// Only add the IN clause if we have any folders to check
 				if len(permSelectorArgs) > 0 {
@@ -229,7 +272,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			builder.WriteString(") AND NOT dashboard.is_folder)")
 
 			// Include all the dashboards under the root if the user has the required permissions on the root (used to be the General folder)
-			if hasAccessToRoot(toCheck, f.user) {
+			if hasAccessToRoot(f.dashboardAction, f.user) {
 				builder.WriteString(" OR (dashboard.folder_id = 0 AND NOT dashboard.is_folder)")
 			}
 		} else {
@@ -241,23 +284,27 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	permSelector.Reset()
 	permSelectorArgs = permSelectorArgs[:0]
 
-	if len(f.folderAction) > 0 {
-		if len(f.dashboardAction) > 0 {
+	if f.folderAction != "" {
+		if f.dashboardAction != "" {
 			builder.WriteString(" OR ")
 		}
 
-		toCheck := actionsToCheck(f.folderAction, f.user.GetPermissions(), folderWildcards)
+		toCheck := actionsToCheck(f.folderAction, f.folderActionSets, f.user.GetPermissions(), folderWildcards)
+
 		if len(toCheck) > 0 {
 			if !useSelfContainedPermissions {
 				permSelector.WriteString("(SELECT identifier FROM permission WHERE kind = 'folders' AND attribute = 'uid'")
 				permSelector.WriteString(rolesFilter)
 				permSelectorArgs = append(permSelectorArgs, params...)
-				permSelector.WriteString(" AND action = ?")
-				permSelectorArgs = append(permSelectorArgs, toCheck[0])
+				if len(toCheck) == 1 {
+					permSelector.WriteString(" AND action = ?")
+					permSelectorArgs = append(permSelectorArgs, toCheck[0])
+				} else {
+					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ")")
+					permSelectorArgs = append(permSelectorArgs, toCheck...)
+				}
 			} else {
-				actions := parseStringSliceFromInterfaceSlice(toCheck)
-
-				permSelectorArgs = getAllowedUIDs(actions, f.user, dashboards.ScopeFoldersPrefix)
+				permSelectorArgs = getAllowedUIDs(f.folderAction, f.user, dashboards.ScopeFoldersPrefix)
 
 				if len(permSelectorArgs) > 0 {
 					permSelector.WriteString("(?" + strings.Repeat(", ?", len(permSelectorArgs)-1) + "")
@@ -342,7 +389,7 @@ func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whe
 	})
 }
 
-func actionsToCheck(action string, permissions map[string][]string, wildcards ...accesscontrol.Wildcards) []any {
+func actionsToCheck(action string, actionSets []string, permissions map[string][]string, wildcards ...accesscontrol.Wildcards) []any {
 	for _, scope := range permissions[action] {
 		for _, w := range wildcards {
 			if w.Contains(scope) {
@@ -351,7 +398,12 @@ func actionsToCheck(action string, permissions map[string][]string, wildcards ..
 		}
 	}
 
-	return []any{action}
+	toCheck := []any{action}
+	for _, a := range actionSets {
+		toCheck = append(toCheck, a)
+	}
+
+	return toCheck
 }
 
 func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTable string, leftCol string, rightTableCol string, orgID int64) (string, []any) {
@@ -382,46 +434,23 @@ func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSele
 	return strings.Join(wheres, ") OR "), args
 }
 
-func parseStringSliceFromInterfaceSlice(slice []any) []string {
-	result := make([]string, 0, len(slice))
-	for _, s := range slice {
-		result = append(result, s.(string))
-	}
-	return result
-}
+func getAllowedUIDs(action string, user identity.Requester, scopePrefix string) []any {
+	uidScopes := user.GetPermissions()[action]
 
-func getAllowedUIDs(actions []string, user identity.Requester, scopePrefix string) []any {
-	uidToActions := make(map[string]map[string]struct{})
-	for _, action := range actions {
-		for _, uidScope := range user.GetPermissions()[action] {
-			if !strings.HasPrefix(uidScope, scopePrefix) {
-				continue
-			}
-			uid := strings.TrimPrefix(uidScope, scopePrefix)
-			if _, exists := uidToActions[uid]; !exists {
-				uidToActions[uid] = make(map[string]struct{})
-			}
-			uidToActions[uid][action] = struct{}{}
+	args := make([]any, 0, len(uidScopes))
+	for _, uidScope := range uidScopes {
+		if !strings.HasPrefix(uidScope, scopePrefix) {
+			continue
 		}
+		uid := strings.TrimPrefix(uidScope, scopePrefix)
+		args = append(args, uid)
 	}
 
-	// args max capacity is the length of the different uids
-	args := make([]any, 0, len(uidToActions))
-	for uid, assignedActions := range uidToActions {
-		if len(assignedActions) == len(actions) {
-			args = append(args, uid)
-		}
-	}
 	return args
 }
 
 // Checks if the user has the required permissions on the root (used to be the General folder)
-func hasAccessToRoot(actionsToCheck []any, user identity.Requester) bool {
+func hasAccessToRoot(actionToCheck string, user identity.Requester) bool {
 	generalFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)
-	for _, action := range actionsToCheck {
-		if !slices.Contains(user.GetPermissions()[action.(string)], generalFolderScope) {
-			return false
-		}
-	}
-	return true
+	return slices.Contains(user.GetPermissions()[actionToCheck], generalFolderScope)
 }

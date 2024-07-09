@@ -181,7 +181,7 @@ func TestCloudMigrationAPI_GetMigrationList(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration",
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"migrations":[{"uid":"mock_uid_1","stack":"mock_stack_1","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"},{"uid":"mock_uid_2","stack":"mock_stack_2","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}]}`,
+			expectedBody:       `{"sessions":[{"uid":"mock_uid_1","slug":"mock_stack_1","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"},{"uid":"mock_uid_2","slug":"mock_stack_2","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}]}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",
@@ -216,7 +216,7 @@ func TestCloudMigrationAPI_CreateMigration(t *testing.T) {
 			requestBody:        `{"auth_token":"asdf"}`,
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"uid":"fake_uid","stack":"fake_stack","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}`,
+			expectedBody:       `{"uid":"fake_uid","slug":"fake_stack","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",
@@ -410,6 +410,240 @@ func TestCloudMigrationAPI_DeleteMigration(t *testing.T) {
 			desc:               "should return 400 if uid is invalid",
 			requestHttpMethod:  http.MethodDelete,
 			requestUrl:         "/api/cloudmigration/migration/****",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"uid":"fake_uid"}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/snapshot",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_GetSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"uid":"fake_uid","status":"UNKNOWN","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z","results":[]}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/***/snapshot/1",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+		{
+			desc:               "should return 400 if snapshot_uid is invalid",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/***",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_GetSnapshotList(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshots",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"snapshots":[{"uid":"fake_uid","status":"UNKNOWN","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z"},{"uid":"fake_uid","status":"UNKNOWN","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z"}]}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshots",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshots",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/***/snapshots",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_UploadSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1/upload",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1/upload",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1/upload",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/snapshot/1/upload",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+		{
+			desc:               "should return 400 if snapshot_uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/***/upload",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_CancelSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1/cancel",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1/cancel",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1/cancel",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/snapshot/1/cancel",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+		{
+			desc:               "should return 400 if snapshot_uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/***/cancel",
 			basicRole:          org.RoleAdmin,
 			serviceReturnError: true,
 			expectedHttpResult: http.StatusBadRequest,

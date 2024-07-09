@@ -33,16 +33,16 @@ refs:
 
 # Group alert notifications
 
-Grouping is an important feature of Grafana Alerting as it allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming and in some cases can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
+Grouping in Grafana Alerting allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming. In some cases, it can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
 
 ## Group notifications
 
 Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
 
-In the notification policy, you can configure how to group multiple alerts into a single notification:
+In the [notification policy](ref:notification-policies), you can configure how to group multiple alerts into a single notification:
 
 - The `Group by` option specifies the criteria for grouping incoming alerts within the policy. The default is by alert rule.
-- [Timing options](#timing-options) determine when to sent the notification.
+- [Timing options](#timing-options) determine when and how often to send the notification.
 
 {{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-with-labels-v3.png" max-width="750px" alt="A diagram about the components of a notification policy, including labels and groups" >}}
 
@@ -65,26 +65,121 @@ If you want to group all alerts handled by the notification policy in a single g
 
 ### Disable grouping
 
-If you want to receive every alert as a separate notification, you can do so by grouping by a special label called `...`.
+If you want to receive every alert as a separate notification, you can do so by grouping by a special label called `...`, ensuring that other labels are not present.
 
 ## Timing options
 
-The timing options decide how often notifications are sent for each group of alerts. There are three timers that you need to know about: Group wait, Group interval, and Repeat interval.
+In the notification policy, you can also configure how often notifications are sent for each [group of alerts](#group-notifications). There are three distinct timers applied to groups within the notification policy:
 
-#### Group wait
+- **[Group wait](#group-wait)**: the time to wait before sending the first notification for a new group of alerts.
+- **[Group interval](#group-interval)**: the time to wait before sending a notification about changes in the alert group.
+- **[Repeat interval](#repeat-interval)**: the time to wait before sending a notification if the group has not changed since the last notification.
 
-Group wait is the amount of time Grafana waits before sending the first notification for a new group of alerts. The longer Group wait is the more time you have for other alerts to arrive. The shorter Group wait is the earlier the first notification is sent, but at the risk of sending incomplete notifications. You should always choose a Group wait that makes the most sense for your use case.
+These timers reduce the number of notifications sent. By delaying the delivery of notifications, incoming alerts can be grouped into just one notification instead of many.
 
-**Default** 30 seconds
+{{< figure src="/media/docs/alerting/alerting-timing-options-flowchart-v2.png" max-width="750px" alt="A basic sequence diagram of the the notification policy timers" caption="A basic sequence diagram of the notification policy timers" >}}
 
-#### Group interval
+<!--
+flowchart LR
+    A((First alert)) -///-> B
+    B[Group wait <br/>  notification] -///-> C
+    B -- no changes -///-> D
+    C[Group interval <br/>  notification] -- no changes -///-> D
+    C -- group changes -///-> C
+    D[Repeat interval <br/>  notification]
+-->
 
-Once the first notification has been sent for a new group of alerts, the Group interval timer starts. This is the amount of wait time before notifications about changes to the group are sent. For example, another firing alert might have just been added to the group while an existing alert might have resolved. If an alert was too late to be included in the first notification due to Group wait, it is included in subsequent notifications after Group interval. Once Group interval has elapsed, Grafana resets the Group interval timer. This repeats until there are no more alerts in the group after which the group is deleted.
+### Group wait
 
-**Default** 5 minutes
+**Default**: 30 seconds
 
-#### Repeat interval
+Group wait is the duration Grafana waits before sending the first notification for a new group of alerts.
 
-Repeat interval decides how often notifications are repeated if the group has not changed since the last notification. You can think of these as reminders that some alerts are still firing. Repeat interval is closely related to Group interval, which means your Repeat interval must not only be greater than or equal to Group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of Group interval it is coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval is rounded up to the nearest multiple of 5 which is 10 minutes.
+The longer the group wait, the more time other alerts have to be included in the initial notification of the new group. The shorter the group wait, the earlier the first notification is sent, but at the risk of not including some alerts.
 
-**Default** 4 hours
+**Example**
+
+Consider a notification policy that:
+
+- Matches all alert instances with the `team` label—matching labels equals to `team=~.+`.
+- Groups notifications by the `team` label—one group for each distinct `team`.
+- Sets the Group wait timer to `30s`.
+
+| Time               | Incoming alert instance         | Notification policy group | Number of instances |                                                                         |
+| ------------------ | ------------------------------- | ------------------------- | ------------------- | ----------------------------------------------------------------------- |
+| 00:00              | `alert_name=f1` `team=frontend` | `frontend`                | 1                   | Starts the group wait timer of the `frontend` group.                    |
+| 00:10              | `alert_name=f2` `team=frontend` | `frontend`                | 2                   |                                                                         |
+| 00:20              | `alert_name=b1` `team=backend`  | `backend`                 | 1                   | Starts the group wait timer of the `backend` group.                     |
+| 00:30<sup>\*</sup> |                                 | `frontend`                | 2                   | Group wait elapsed. <br/> Send initial notification reporting 2 alerts. |
+| 00:35              | `alert_name=b2` `team=backend`  | `backend`                 | 2                   |                                                                         |
+| 00:40              | `alert_name=b3` `team=backend`  | `backend`                 | 3                   |                                                                         |
+| 00:50<sup>\*</sup> |                                 | `backend`                 | 3                   | Group wait elapsed. <br/> Send initial notification reporting 3 alerts. |
+
+### Group interval
+
+**Default**: 5 minutes
+
+If an alert was too late to be included in the first notification due to group wait, it is included in subsequent notifications after group interval.
+
+Group interval is the duration to wait before sending notifications about group changes. For instance, a group change may be adding a new firing alert to the group, or resolving an existing alert.
+
+**Example**
+
+Here are the related excerpts from the previous example:
+
+| Time               | Incoming alert instance | Notification policy group | Number of instances |                                                                                                         |
+| ------------------ | ----------------------- | ------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------- |
+| 00:30<sup>\*</sup> |                         | `frontend`                | 2                   | Group wait elapsed and starts Group interval timer. <br/> Send initial notification reporting 2 alerts. |
+| 00:50<sup>\*</sup> |                         | `backend`                 | 3                   | Group wait elapsed and starts Group interval timer. <br/> Send initial notification reporting 3 alerts. |
+
+And below is the continuation of the example setting the Group interval timer to 5 minutes:
+
+| Time               | Incoming alert instance         | Notification policy group | Number of instances |                                                                                                |
+| ------------------ | ------------------------------- | ------------------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
+| 01:30              | `alert_name=f3` `team=frontend` | `frontend`                | 3                   |                                                                                                |
+| 02:30              | `alert_name=f4` `team=frontend` | `frontend`                | 4                   |                                                                                                |
+| 05:30<sup>\*</sup> |                                 | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.       |
+| 05:50<sup>\*</sup> |                                 | `backend`                 | 3                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification. |
+| 08:00              | `alert_name=f4` `team=backend`  | `backend`                 | 4                   |                                                                                                |
+| 10:30<sup>\*</sup> |                                 | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification. |
+| 10:50<sup>\*</sup> |                                 | `backend`                 | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.       |
+
+**How it works**
+
+Once the first notification has been sent for a new group of alerts, the group interval timer starts.
+
+When the group interval timer elapses, the system resets the group interval timer and sends a notification only if there were group changes. This process repeats until there are no more alerts.
+
+It's important to note that an alert instance exits the group after being resolved and notified of its state change. When no alerts remain, the group is deleted, and then the group wait timer handles the first notification for the next incoming alert once again.
+
+### Repeat interval
+
+**Default**: 4 hours
+
+Repeat interval acts as a reminder that alerts in the group are still firing.
+
+The repeat interval timer decides how often notifications are sent (or repeated) if the group has not changed since the last notification.
+
+**How it works**
+
+Repeat interval is evaluated every time the group interval resets. If the alert group has not changed and the time since the last notification was longer than the repeat interval, then a notification is sent as a reminder that the alerts are still firing.
+
+Repeat interval must not only be greater than or equal to group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of group interval it is coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval is rounded up to the nearest multiple of 5 which is 10 minutes.
+
+**Example**
+
+Here are the related excerpts from the previous example:
+
+| Time               | Incoming alert instance | Notification policy group | Number of instances |                                                          |
+| ------------------ | ----------------------- | ------------------------- | ------------------- | -------------------------------------------------------- |
+| 05:30<sup>\*</sup> |                         | `frontend`                | 4                   | Group interval resets. <br/> Send the last notification. |
+| 10:50<sup>\*</sup> |                         | `backend`                 | 4                   | Group interval resets. <br/> Send the last notification. |
+
+And below is the continuation of the example setting the Repeat interval timer to 4 hours:
+
+| Time     | Incoming alert instance | Notification policy group | Number of instances |                                                                                                                                                             |
+| -------- | ----------------------- | ------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 04:05:30 |                         | `frontend`                | 4                   | Group interval resets. The time since the last notification was no longer than the repeat interval.                                                         |
+| 04:10:30 |                         | `frontend`                | 4                   | Group interval resets. The time since the last notification was longer than the repeat interval. <br/> Send one notification reminding the 4 firing alerts. |
+| 04:10:50 |                         | `backend`                 | 4                   | Group interval resets. The time since the last notification was no longer than the repeat interval.                                                         |
+| 04:15:50 |                         | `backend`                 | 4                   | Group interval resets. The time since the last notification was longer than the repeat interval. <br/> Send one notification reminding the 4 firing alerts. |

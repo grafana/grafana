@@ -13,13 +13,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
+func EntityToRuntimeObject(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
 
 	// Read the body first -- it includes old resourceVersion!
@@ -73,7 +73,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
 		grafanaAccessor.SetOriginInfo(&utils.ResourceOriginInfo{
 			Name: rsp.Origin.Source,
-			Key:  rsp.Origin.Key,
+			Path: rsp.Origin.Key, // Using "key" in the
 			// Path: rsp.Origin.Path,
 			Timestamp: &originTime,
 		})
@@ -98,7 +98,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	return nil
 }
 
-func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, codec runtime.Codec) (*entityStore.Entity, error) {
+func resourceToEntity(res runtime.Object, k grafanaregistry.Key, codec runtime.Codec) (*entityStore.Entity, error) {
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return nil, err
@@ -110,19 +110,13 @@ func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, code
 	}
 	rv, _ := strconv.ParseInt(metaAccessor.GetResourceVersion(), 10, 64)
 
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        metaAccessor.GetName(),
-		Subresource: requestInfo.Subresource,
-	}
+	// add the object's name to the provided key
+	k.Name = metaAccessor.GetName()
 
 	rsp := &entityStore.Entity{
 		Group:           k.Group,
-		GroupVersion:    requestInfo.APIVersion,
+		GroupVersion:    res.GetObjectKind().GroupVersionKind().Version,
 		Resource:        k.Resource,
-		Subresource:     k.Subresource,
 		Namespace:       k.Namespace,
 		Key:             k.String(),
 		Name:            k.Name,
@@ -136,8 +130,8 @@ func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, code
 		Title:           grafanaAccessor.FindTitle(metaAccessor.GetName()),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
-			Key:    grafanaAccessor.GetOriginKey(),
-			// Path: 	grafanaAccessor.GetOriginPath(),
+			// Deprecated: Keeping "key" in the protobuf to avoid migrations while a bigger one is in place
+			Key: grafanaAccessor.GetOriginPath(),
 		},
 		Labels: metaAccessor.GetLabels(),
 	}

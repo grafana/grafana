@@ -16,9 +16,10 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*ScopeAPIBuilder)(nil)
@@ -30,7 +31,7 @@ func NewScopeAPIBuilder() *ScopeAPIBuilder {
 	return &ScopeAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ScopeAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *ScopeAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -121,6 +122,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
 	_ grafanarest.DualWriterMode, // dual write desired mode (not relevant)
+	_ prometheus.Registerer, // prometheus registerer
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
 

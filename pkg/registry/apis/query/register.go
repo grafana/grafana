@@ -16,7 +16,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,7 +42,7 @@ type QueryAPIBuilder struct {
 	features               featuremgmt.FeatureToggles
 
 	tracer     tracing.Tracer
-	metrics    *metrics
+	metrics    *queryMetrics
 	parser     *queryParser
 	client     DataSourceClientSupplier
 	registry   query.DataSourceApiServerRegistry
@@ -81,7 +81,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		client:               client,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer),
-		metrics:              newMetrics(registerer),
+		metrics:              newQueryMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
@@ -151,6 +151,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 	_ grafanarest.DualWriterMode,
+	_ prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	gv := query.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
