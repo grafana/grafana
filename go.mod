@@ -491,3 +491,5 @@ replace github.com/google/cel-go => github.com/google/cel-go v0.17.7
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
+
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.237.1-0.20240709153849-5158e576deeb
