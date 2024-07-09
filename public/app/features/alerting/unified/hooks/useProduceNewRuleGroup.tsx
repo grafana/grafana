@@ -1,5 +1,6 @@
 import { Action } from '@reduxjs/toolkit';
 
+import { t } from 'app/core/internationalization';
 import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -77,10 +78,16 @@ export function usePauseRuleInGroup() {
     const action = pauseRuleAction({ uid, pause });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
+    const rulePauseMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
+    const ruleResumeMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
+
     return upsertRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
+      requestOptions: {
+        successMessage: pause ? rulePauseMessage : ruleResumeMessage,
+      },
     }).unwrap();
   });
 }
@@ -102,12 +109,15 @@ export function useDeleteRuleFromGroup() {
     const action = deleteRuleAction({ rule });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
+    const successMessage = t('alerting.rules.delete-rule.success', 'Rule successfully deleted');
+
     // if we have no more rules left after reducing, remove the entire group
     if (newRuleGroupDefinition.rules.length === 0) {
       return deleteRuleGroup({
         rulerConfig,
         namespace: namespaceName,
         group: groupName,
+        requestOptions: { successMessage },
       }).unwrap();
     }
 
@@ -116,6 +126,7 @@ export function useDeleteRuleFromGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
+      requestOptions: { successMessage },
     }).unwrap();
   });
 }
@@ -133,10 +144,13 @@ export function useUpdateRuleGroupConfiguration() {
     const action = updateRuleGroupAction({ interval });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
+    const successMessage = t('alerting.rule-group.update.success', 'Successfully updated rule group');
+
     return upsertRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
+      requestOptions: { successMessage },
     }).unwrap();
   });
 }
@@ -150,6 +164,9 @@ export function useMoveRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
+
+  // @TODO maybe add where we moved it from and to for additional peace of mind
+  const successMessage = t('alerting.rule-groups.move.success', 'Successfully moved rule group');
 
   return useAsync(
     async (ruleGroup: RuleGroupIdentifier, namespaceName: string, groupName?: string, interval?: string) => {
@@ -175,6 +192,8 @@ export function useMoveRuleGroup() {
           rulerConfig,
           namespace: targetNamespace,
           group: targetGroupName,
+          // since this could throw 404
+          requestOptions: { showErrorAlert: false },
         })
           .unwrap()
           .catch(notFoundToNullOrThrow);
@@ -185,16 +204,20 @@ export function useMoveRuleGroup() {
       }
 
       // create the new group in the target namespace
+      // ⚠️ it's important to do this before we remove the old group – better to have two groups than none if one of these requests fails
       await upsertRuleGroup({
         rulerConfig,
         namespace: targetNamespace,
         payload: newRuleGroupDefinition,
+        requestOptions: { successMessage },
       }).unwrap();
 
+      // now remove the old one
       const result = await deleteRuleGroup({
         rulerConfig,
         namespace: oldNamespace,
         group: oldGroupName,
+        requestOptions: { showSuccessAlert: false },
       }).unwrap();
 
       return result;
@@ -219,11 +242,15 @@ export function useRenameRuleGroup() {
     const newGroupName = action.payload.groupName;
     const namespaceName = ruleGroup.namespaceName;
 
+    const successMessage = t('alerting.rule-groups.rename.success', 'Successfully renamed rule group');
+
     // check if the target group exists
     const targetGroup = await fetchRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       group: newGroupName,
+      // since this could throw 404
+      requestOptions: { showErrorAlert: false },
     })
       .unwrap()
       .catch(notFoundToNullOrThrow);
@@ -233,10 +260,12 @@ export function useRenameRuleGroup() {
     }
 
     // if the target group does not exist, create the new group
+    // ⚠️ it's important to do this before we remove the old group – better to have two groups than none if one of these requests fails
     const result = await upsertRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
+      requestOptions: { successMessage },
     }).unwrap();
 
     // now delete the group we renamed
@@ -244,6 +273,7 @@ export function useRenameRuleGroup() {
       rulerConfig,
       namespace: namespaceName,
       group: oldGroupName,
+      requestOptions: { showSuccessAlert: false },
     }).unwrap();
 
     return result;

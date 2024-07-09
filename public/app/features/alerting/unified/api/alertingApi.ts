@@ -1,4 +1,5 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
+import { defaultsDeep } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
@@ -7,7 +8,7 @@ import appEvents from 'app/core/app_events';
 
 import { logMeasurement } from '../Analytics';
 
-type ExtendedBackendSrvRequest = BackendSrvRequest & {
+export type ExtendedBackendSrvRequest = BackendSrvRequest & {
   /**
    * Custom success message to show after completion of the request.
    *
@@ -23,6 +24,22 @@ type ExtendedBackendSrvRequest = BackendSrvRequest & {
    */
   errorMessage?: string;
 };
+
+// utility type for passing request options to endpoints
+export type WithRequestOptions<T> = T & {
+  requestOptions?: Partial<ExtendedBackendSrvRequest>;
+};
+
+export function withRequestOptions<T>(
+  options: BackendSrvRequest,
+  requestOptions: Partial<ExtendedBackendSrvRequest> = {},
+  defaults: Partial<ExtendedBackendSrvRequest> = {}
+): ExtendedBackendSrvRequest {
+  return {
+    ...options,
+    ...defaultsDeep(requestOptions, defaults),
+  };
+}
 
 export const backendSrvBaseQuery =
   (): BaseQueryFn<ExtendedBackendSrvRequest> =>
@@ -50,12 +67,12 @@ export const backendSrvBaseQuery =
         }
       );
 
-      if (successMessage) {
+      if (successMessage && requestOptions.showSuccessAlert !== false) {
         appEvents.emit(AppEvents.alertSuccess, [successMessage]);
       }
       return { data, meta };
     } catch (error) {
-      if (errorMessage) {
+      if (errorMessage && requestOptions.showErrorAlert !== false) {
         appEvents.emit(AppEvents.alertError, [errorMessage]);
       }
       return { error };

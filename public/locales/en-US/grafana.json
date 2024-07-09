@@ -61,6 +61,30 @@
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       }
+    },
+    "rule-group": {
+      "update": {
+        "success": "Successfully updated rule group"
+      }
+    },
+    "rule-groups": {
+      "move": {
+        "success": "Successfully moved rule group"
+      },
+      "rename": {
+        "success": "Successfully renamed rule group"
+      }
+    },
+    "rules": {
+      "delete-rule": {
+        "success": "Rule successfully deleted"
+      },
+      "pause-rule": {
+        "success": "Rule evaluation paused"
+      },
+      "resume-rule": {
+        "success": "Rule evaluation resumed"
+      }
     }
   },
   "annotations": {

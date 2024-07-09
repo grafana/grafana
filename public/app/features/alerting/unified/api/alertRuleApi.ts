@@ -21,7 +21,7 @@ import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } 
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { alertingApi } from './alertingApi';
+import { alertingApi, withRequestOptions, WithRequestOptions } from './alertingApi';
 import {
   FetchPromRulesFilter,
   groupRulesByFileName,
@@ -225,11 +225,11 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     // TODO This should be probably a separate ruler API file
     getRuleGroupForNamespace: build.query<
       RulerRuleGroupDTO,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
+      WithRequestOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
     >({
-      query: ({ rulerConfig, namespace, group }) => {
+      query: ({ rulerConfig, namespace, group, requestOptions }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
-        return { url: path, params };
+        return withRequestOptions({ url: path, params }, requestOptions);
       },
       providesTags: (_result, _error, { namespace, group }) => [
         {
@@ -242,11 +242,13 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
+      WithRequestOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
     >({
-      query: ({ rulerConfig, namespace, group }) => {
+      query: ({ rulerConfig, namespace, group, requestOptions }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
-        return { url: path, params, method: 'DELETE' };
+        return withRequestOptions({ url: path, params, method: 'DELETE' }, requestOptions, {
+          successMessage: 'Successfully deleted rule group',
+        });
       },
       invalidatesTags: (_result, _error, { namespace, group }) => [
         {
@@ -259,17 +261,25 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     upsertRuleGroupForNamespace: build.mutation<
       AlertGroupUpdated,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; payload: PostableRulerRuleGroupDTO }
+      WithRequestOptions<{
+        rulerConfig: RulerDataSourceConfig;
+        namespace: string;
+        payload: PostableRulerRuleGroupDTO;
+      }>
     >({
-      query: ({ payload, namespace, rulerConfig }) => {
+      query: ({ payload, namespace, rulerConfig, requestOptions }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
 
-        return {
-          url: path,
-          params,
-          data: payload,
-          method: 'POST',
-        };
+        return withRequestOptions(
+          {
+            url: path,
+            params,
+            data: payload,
+            method: 'POST',
+          },
+          requestOptions,
+          { successMessage: 'Successfully updated rule group' }
+        );
       },
       invalidatesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
     }),
