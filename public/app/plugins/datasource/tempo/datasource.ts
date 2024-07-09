@@ -280,7 +280,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       config.featureToggles.traceQLStreaming &&
       this.isFeatureAvailable(FeatureName.streaming) &&
       config.liveEnabled &&
-      this.streamingEnabled?.search
+      this.streamingEnabled?.search !== false
     );
   }
 
