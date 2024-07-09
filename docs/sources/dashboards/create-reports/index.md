@@ -54,16 +54,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/
-  configuration:
+  configuration-filters:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
-  image-rendering:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
   role-based-access-control:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
@@ -347,7 +342,7 @@ Currently, the API does not allow for the simultaneous upload of files with iden
 
 ## Troubleshoot reporting
 
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration](ref:configuration) for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration](ref:configuration-filters) for more information.
 
 ```bash
 [log]
