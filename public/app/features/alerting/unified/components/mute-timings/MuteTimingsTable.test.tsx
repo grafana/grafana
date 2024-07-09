@@ -1,7 +1,6 @@
 import { render, screen, userEvent, within } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
 import { defaultConfig } from 'app/features/alerting/unified/MuteTimings.test';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
@@ -117,10 +116,6 @@ describe('MuteTimingsTable', () => {
 
   describe('using alertingApiServer feature toggle', () => {
     beforeEach(() => {
-      // Set orgId to 1 as this ensures we test we're calling the API with the correct namespace
-      // (should be default, not org-1)
-      // If that logic is incorrect, the API would reject our call with a 403, so its implicitly tested here
-      contextSrv.user.orgId = 1;
       config.featureToggles.alertingApiServer = true;
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,

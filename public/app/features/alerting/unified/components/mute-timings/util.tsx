@@ -3,7 +3,6 @@ import { Fragment } from 'react';
 
 import { config } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
@@ -88,15 +87,8 @@ export function renderTimeIntervals(muteTiming: MuteTimeInterval) {
 
 /**
  * Get the correct namespace to use when using the K8S API.
- *
- * If the user is in org 1, the namespace should be `default`,
- * as the K8S API has a special case for this
  */
-export const getNamespace = () => {
-  const { orgId } = contextSrv.user;
-  const isOrg1 = orgId === 1;
-  return isOrg1 ? 'default' : `org-${String(orgId)}`;
-};
+export const getNamespace = () => config.namespace;
 
 /**
  * Should we call the kubernetes-style API for managing the time intervals?
