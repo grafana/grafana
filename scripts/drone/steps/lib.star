@@ -1241,7 +1241,7 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def verify_linux_DEB_packages_step(depends_on=[]):
+def verify_linux_DEB_packages_step(depends_on = []):
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
@@ -1282,7 +1282,6 @@ def verify_linux_DEB_packages_step(depends_on=[]):
             '    echo "Failed to verify Grafana version ${TAG}"',
             "    exit 1",
             "fi",
-
             'echo "Verification complete."',
         ],
         "depends_on": depends_on,
