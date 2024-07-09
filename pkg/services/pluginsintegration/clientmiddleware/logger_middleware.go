@@ -64,7 +64,8 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	var resp *backend.QueryDataResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
 		resp, innerErr = m.next.QueryData(ctx, req)
 
 		if innerErr != nil {
@@ -95,8 +96,8 @@ func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallRe
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
-		innerErr = m.next.CallResource(ctx, req, sender)
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.next.CallResource(ctx, req, sender)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
@@ -109,7 +110,8 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	}
 
 	var resp *backend.CheckHealthResult
-	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
 		resp, innerErr = m.next.CheckHealth(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
@@ -123,13 +125,58 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := m.logRequest(ctx, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
 		resp, innerErr = m.next.CollectMetrics(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
 	return resp, err
 }
+
+func (m *LoggerMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if req == nil {
+		return m.next.SubscribeStream(ctx, req)
+	}
+
+	var resp *backend.SubscribeStreamResponse
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.SubscribeStream(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return resp, err
+}
+
+func (m *LoggerMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if req == nil {
+		return m.next.PublishStream(ctx, req)
+	}
+
+	var resp *backend.PublishStreamResponse
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.PublishStream(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return resp, err
+}
+
+func (m *LoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if req == nil {
+		return m.next.RunStream(ctx, req, sender)
+	}
+
+	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.next.RunStream(ctx, req, sender)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return err
+}
+
 func (m *LoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if req == nil {
 		return m.next.ValidateAdmission(ctx, req)

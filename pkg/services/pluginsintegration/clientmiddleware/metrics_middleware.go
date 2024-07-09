@@ -152,7 +152,8 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	}
 
 	var resp *backend.QueryDataResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
 		resp, innerErr = m.next.QueryData(ctx, req)
 		return instrumentationutils.RequestStatusFromQueryDataResponse(resp, innerErr), innerErr
 	})
@@ -171,50 +172,83 @@ func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallR
 }
 
 func (m *MetricsMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	var result *backend.CheckHealthResult
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
-		result, innerErr = m.next.CheckHealth(ctx, req)
+	var resp *backend.CheckHealthResult
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.CheckHealth(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }
 
 func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	var result *backend.CollectMetricsResult
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
-		result, innerErr = m.next.CollectMetrics(ctx, req)
+	var resp *backend.CollectMetricsResult
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.CollectMetrics(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
-	return result, err
+	return resp, err
+}
+
+func (m *MetricsMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	var resp *backend.SubscribeStreamResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.SubscribeStream(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+	return resp, err
+}
+
+func (m *MetricsMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	var resp *backend.PublishStreamResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.PublishStream(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+	return resp, err
+}
+
+func (m *MetricsMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.next.RunStream(ctx, req, sender)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+	return err
 }
 
 func (m *MetricsMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	var result *backend.ValidationResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
-		result, innerErr = m.next.ValidateAdmission(ctx, req)
+	var resp *backend.ValidationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.ValidateAdmission(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }
 
 func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	var result *backend.MutationResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
-		result, innerErr = m.next.MutateAdmission(ctx, req)
+	var resp *backend.MutationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.MutateAdmission(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }
 
 func (m *MetricsMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	var result *backend.ConversionResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (status instrumentationutils.RequestStatus, innerErr error) {
-		result, innerErr = m.next.ConvertObject(ctx, req)
+	var resp *backend.ConversionResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.next.ConvertObject(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }
