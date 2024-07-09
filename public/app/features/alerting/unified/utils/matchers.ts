@@ -75,6 +75,11 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
   return parsePromQLStyleMatcherLoose(matcher);
 }
 
+/**
+ * This function behaves the same as "parsePromQLStyleMatcher" but does not check if the matcher is formatted with { }
+ * In other words; it accepts both "{ foo=bar, bar=baz }" and "foo=bar,bar=baz"
+ * @throws
+ */
 export function parsePromQLStyleMatcherLoose(matcher: string): Matcher[] {
   // split by `,` but not when it's used as a label value
   const commaUnlessQuoted = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
@@ -89,6 +94,10 @@ export function parsePromQLStyleMatcherLoose(matcher: string): Matcher[] {
     }));
 }
 
+/**
+ * This function behaves the same as "parsePromQLStyleMatcherLoose" but instead of throwing an error for incorrect syntax
+ * it returns an empty Array of matchers instead.
+ */
 export function parsePromQLStyleMatcherLooseSafe(matcher: string): Matcher[] {
   try {
     return parsePromQLStyleMatcherLoose(matcher);

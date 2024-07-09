@@ -28,7 +28,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
   );
 
   const searchIcon = <Icon name={'search'} />;
-  let inputValid = Boolean(defaultQueryString && defaultQueryString.length > 3);
+  let inputValid = Boolean(defaultQueryString && defaultQueryString.length >= 3);
   try {
     if (!defaultQueryString) {
       inputValid = true;
