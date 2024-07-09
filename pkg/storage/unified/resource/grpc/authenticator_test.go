@@ -23,7 +23,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 	auth := &Authenticator{}
 
 	md := encodeIdentityInMetadata(before)
-	after, err := auth.DecodeMetadata(context.Background(), md)
+	after, err := auth.decodeMetadata(context.Background(), md)
 	require.NoError(t, err)
 	require.Equal(t, before.GetID(), after.GetID())
 	require.Equal(t, before.GetUID(), after.GetUID())

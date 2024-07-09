@@ -655,6 +655,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		rvSubQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
 	}
 
+	// nolint:staticcheck
 	if len(r.OriginKeys) > 0 {
 		entityQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
 		rvMaxQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))

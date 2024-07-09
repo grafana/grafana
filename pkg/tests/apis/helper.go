@@ -25,6 +25,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -158,14 +159,11 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	if anno["grafana.app/originHash"] != "" {
 		anno["grafana.app/originHash"] = "${originHash}"
 	}
-	if anno["grafana.app/updatedTimestamp"] != "" {
-		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
-	}
 	// Remove annotations that are not added by legacy storage
-	delete(anno, "grafana.app/originTimestamp")
-	delete(anno, "grafana.app/createdBy")
-	delete(anno, "grafana.app/updatedBy")
-	delete(anno, "grafana.app/action")
+	delete(anno, utils.AnnoKeyOriginTimestamp)
+	delete(anno, utils.AnnoKeyCreatedBy)
+	delete(anno, utils.AnnoKeyUpdatedBy)
+	delete(anno, utils.AnnoKeyUpdatedTimestamp)
 
 	deep.SetAnnotations(anno)
 	copy := deep.Object
