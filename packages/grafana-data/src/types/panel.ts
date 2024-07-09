@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { EventBus } from '../events';
+import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
 import { Registry } from '../utils/Registry';
 

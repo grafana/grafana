@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { StandardEditorContext, StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
-import { GrafanaTheme2 } from '../themes';
+import { GrafanaTheme2 } from '../themes/types';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { ScopedVars } from './ScopedVars';

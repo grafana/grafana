@@ -1,7 +1,8 @@
 import { map } from 'rxjs/operators';
 
 import { getDisplayProcessor } from '../../field/displayProcessor';
-import { createTheme, GrafanaTheme2 } from '../../themes';
+import { createTheme } from '../../themes/createTheme';
+import { GrafanaTheme2 } from '../../themes/types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { DataFrameType } from '../../types/dataFrameTypes';
 import { DataTransformContext, SynchronousDataTransformerInfo } from '../../types/transformations';

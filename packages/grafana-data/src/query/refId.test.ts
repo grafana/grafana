@@ -1,6 +1,6 @@
 import { DataQuery } from '@grafana/schema';
 
-import { getNextRefId } from '.';
+import { getNextRefId } from './refId';
 
 export interface TestQuery extends DataQuery {
   name?: string;
