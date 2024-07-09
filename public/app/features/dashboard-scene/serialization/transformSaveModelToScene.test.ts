@@ -112,7 +112,7 @@ describe('transformSaveModelToScene', () => {
       };
       const oldModel = new DashboardModel(dash);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
       const dashboardControls = scene.state.controls!;
 
       expect(scene.state.title).toBe('test');
@@ -139,11 +139,13 @@ describe('transformSaveModelToScene', () => {
     it('should apply cursor sync behavior', () => {
       const dash = {
         ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
         graphTooltip: DashboardCursorSync.Crosshair,
       };
       const oldModel = new DashboardModel(dash);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
 
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
@@ -151,8 +153,13 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('should apply live now timer behavior', () => {
-      const oldModel = new DashboardModel(defaultDashboard);
-      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const dash = {
+        ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
+      };
+      const oldModel = new DashboardModel(dash);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
 
       const liveNowTimer = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
       expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
@@ -173,7 +180,7 @@ describe('transformSaveModelToScene', () => {
       };
       const oldModel = new DashboardModel(dash);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
       expect(scene.state.$variables?.state.variables).toBeDefined();
     });
   });
@@ -317,12 +324,14 @@ describe('transformSaveModelToScene', () => {
 
       const dashboard = {
         ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
         panels: [row],
       };
 
       const oldModel = new DashboardModel(dashboard);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
       const body = scene.state.body as SceneGridLayout;
 
       expect(body.state.children).toHaveLength(1);
@@ -409,12 +418,14 @@ describe('transformSaveModelToScene', () => {
 
       const dashboard = {
         ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
         panels: [panelOutOfRow, libPanelOutOfRow, rowWithPanel, panelInRow, libPanelInRow, emptyRow],
       };
 
       const oldModel = new DashboardModel(dashboard);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
       const body = scene.state.body as SceneGridLayout;
 
       expect(body.state.children).toHaveLength(4);

@@ -754,6 +754,9 @@ type Spec struct {
 	// List of dashboard panels
 	Panels []any `json:"panels,omitempty"`
 
+	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
+	Preload *bool `json:"preload,omitempty"`
+
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *string `json:"refresh,omitempty"`
 

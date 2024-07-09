@@ -46,6 +46,9 @@ type FeatureSpec struct {
 
 	// Do not show the value in docs
 	HideFromDocs bool `json:"hideFromDocs,omitempty"`
+
+	// Expression to determine if the flag is enabled by default
+	Expression string `json:"expression,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

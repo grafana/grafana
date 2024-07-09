@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../../field';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { KeyValue } from '../../types/data';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo, FieldMatcher, MatcherConfig } from '../../types/transformations';

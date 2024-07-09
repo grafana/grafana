@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -71,7 +70,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 
 func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceInfo, error) {
 	ctx := req.Context()
-	pluginContext := httpadapter.PluginConfigFromContext(ctx)
+	pluginContext := backend.PluginConfigFromContext(ctx)
 	i, err := s.im.Get(ctx, pluginContext)
 	if err != nil {
 		return types.DatasourceInfo{}, err

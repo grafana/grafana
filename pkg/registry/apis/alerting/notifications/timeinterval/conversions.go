@@ -6,6 +6,7 @@ import (
 	"hash/fnv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
@@ -19,7 +20,7 @@ func getIntervalUID(t definitions.MuteTimeInterval) string {
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper) (*model.TimeIntervalList, error) {
+func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
 	data, err := json.Marshal(intervals)
 	if err != nil {
 		return nil, err
@@ -30,23 +31,15 @@ func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 		return nil, err
 	}
 	result := &model.TimeIntervalList{}
+
 	for idx := range specs {
 		interval := intervals[idx]
 		spec := specs[idx]
-		uid := getIntervalUID(interval) // TODO replace to stable UID when we switch to normal storage
-		result.Items = append(result.Items, model.TimeInterval{
-			TypeMeta: resourceInfo.TypeMeta(),
-			ObjectMeta: metav1.ObjectMeta{
-				UID:       types.UID(uid), // TODO This is needed to make PATCH work
-				Name:      uid,            // TODO replace to stable UID when we switch to normal storage
-				Namespace: namespacer(orgID),
-				Annotations: map[string]string{ // TODO find a better place for provenance?
-					"grafana.com/provenance": string(interval.Provenance),
-				},
-				ResourceVersion: interval.Version,
-			},
-			Spec: spec,
-		})
+		item := buildTimeInterval(orgID, interval, spec, namespacer)
+		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableTimeIntervalsFields(&item)) {
+			continue
+		}
+		result.Items = append(result.Items, item)
 	}
 	return result, nil
 }
@@ -61,21 +54,24 @@ func convertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 	if err != nil {
 		return nil, err
 	}
+	result := buildTimeInterval(orgID, interval, spec, namespacer)
+	return &result, nil
+}
 
+func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
 	uid := getIntervalUID(interval) // TODO replace to stable UID when we switch to normal storage
-	return &model.TimeInterval{
+	i := model.TimeInterval{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			UID:       types.UID(uid), // TODO This is needed to make PATCH work
-			Name:      uid,            // TODO replace to stable UID when we switch to normal storage
-			Namespace: namespacer(orgID),
-			Annotations: map[string]string{ // TODO find a better place for provenance?
-				"grafana.com/provenance": string(interval.Provenance),
-			},
+			UID:             types.UID(uid), // TODO This is needed to make PATCH work
+			Name:            uid,            // TODO replace to stable UID when we switch to normal storage
+			Namespace:       namespacer(orgID),
 			ResourceVersion: interval.Version,
 		},
 		Spec: spec,
-	}, nil
+	}
+	i.SetProvenanceStatus(string(interval.Provenance))
+	return i
 }
 
 func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInterval, error) {
