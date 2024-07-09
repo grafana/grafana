@@ -63,6 +63,12 @@
           "message": "Unable to fetch alert state history",
           "title": "Error fetching the state history"
         },
+        "header": {
+          "alert-rule": "Alert rule",
+          "instance": "Instance",
+          "state": "State",
+          "timestamp": "Timestamp"
+        },
         "loading": "Loading...",
         "no-recognized-state": "No recognized state",
         "no-values": "No values",

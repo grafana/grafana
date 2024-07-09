@@ -124,6 +124,7 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   return (
     <Stack direction="column" gap={0}>
+      <ListHeader />
       <ul>
         {pageItems.map((record) => {
           return (
@@ -139,6 +140,36 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
       {/* This paginations improves the performance considerably , making the page load faster */}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </Stack>
+  );
+}
+
+function ListHeader() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.headerWrapper}>
+      <div className={styles.mainHeader}>
+        <div className={styles.timeCol}>
+          <Text variant="body">
+            <Trans i18nKey="alerting.central-alert-history.details.header.timestamp">Timestamp</Trans>
+          </Text>
+        </div>
+        <div className={styles.transitionCol}>
+          <Text variant="body">
+            <Trans i18nKey="alerting.central-alert-history.details.header.state">State</Trans>
+          </Text>
+        </div>
+        <div className={styles.alertNameCol}>
+          <Text variant="body">
+            <Trans i18nKey="alerting.central-alert-history.details.header.alert-rule">Alert rule</Trans>
+          </Text>
+        </div>
+        <div className={styles.labelsCol}>
+          <Text variant="body">
+            <Trans i18nKey="alerting.central-alert-history.details.header.instance">Instance</Trans>
+          </Text>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -455,6 +486,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
         opacity: 0.8,
         cursor: 'pointer',
       },
+    }),
+    headerWrapper: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    mainHeader: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'nowrap',
+      marginLeft: '30px',
+      padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+      gap: theme.spacing(0.5),
     }),
   };
 };
