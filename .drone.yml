@@ -3200,11 +3200,11 @@ steps:
   - dnf check-update -y >/dev/null 2>&1 || true
   - 'echo "Step 2: Installing prerequisites..."'
   - dnf install -y dnf-utils >/dev/null 2>&1
-  - 'echo "Step 3: Adding Grafana GPG key(s)..."'
-  - rpm --import https://rpm.grafana.com/gpg.key
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
   - for i in $(seq 1 10); do
-  - '    if dnf install -y https://rpm.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+  - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
     >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
@@ -3355,11 +3355,11 @@ steps:
   - dnf check-update -y >/dev/null 2>&1 || true
   - 'echo "Step 2: Installing prerequisites..."'
   - dnf install -y dnf-utils >/dev/null 2>&1
-  - 'echo "Step 3: Adding Grafana GPG key(s)..."'
-  - rpm --import https://rpm.grafana.com/gpg.key
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
   - for i in $(seq 1 10); do
-  - '    if dnf install -y https://rpm.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
+  - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
     >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
@@ -5362,6 +5362,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9d4dfd9ff43dbd4c6f7aa545fa8c77c28cc626490f01fcef302471fb0157c45e
+hmac: 71d66c29948194fd057339ff0151669f6b051fc135fed3640a856ce21da53902
 
 ...
