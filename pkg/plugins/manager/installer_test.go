@@ -232,6 +232,53 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{p1Zip, p2Zip, p3Zip}, loadedPaths)
 	})
+
+	t.Run("Livelock prevented when two plugins depend on each other", func(t *testing.T) {
+		const (
+			p1, p1Zip = "foo-panel", "foo-panel.zip"
+			p2, p2Zip = "foo-datasource", "foo-datasource.zip"
+		)
+
+		var loadedPaths []string
+		loader := &fakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				return []*plugins.Plugin{}, nil
+			},
+		}
+
+		pluginRepo := &fakes.FakePluginRepo{
+			GetPluginArchiveFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				return &repo.PluginArchive{File: &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+					FileHeader: zip.FileHeader{Name: fmt.Sprintf("%s.zip", id)},
+				}}}}}, nil
+			},
+		}
+
+		fs := &fakes.FakePluginStorage{
+			ExtractFunc: func(_ context.Context, id string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+				switch id {
+				case p1:
+					return &storage.ExtractedPluginArchive{
+						Dependencies: []*storage.Dependency{{ID: p2}},
+						Path:         p1Zip,
+					}, nil
+				case p2:
+					return &storage.ExtractedPluginArchive{
+						Dependencies: []*storage.Dependency{{ID: p1}},
+						Path:         p2Zip,
+					}, nil
+				default:
+					return nil, fmt.Errorf("unknown plugin %s", id)
+				}
+			},
+		}
+
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err := inst.Add(context.Background(), p1, "", testCompatOpts())
+		require.NoError(t, err)
+		require.Equal(t, []string{p2Zip, p1Zip}, loadedPaths)
+	})
 }
 
 func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {

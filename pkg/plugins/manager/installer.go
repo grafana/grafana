@@ -24,6 +24,7 @@ type PluginInstaller struct {
 	pluginStorageDirFunc storage.DirNameGeneratorFunc
 	pluginRegistry       registry.Service
 	pluginLoader         loader.Service
+	installing           map[string]bool
 	log                  log.Logger
 	serviceRegistry      auth.ExternalServiceRegistry
 }
@@ -43,6 +44,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 		pluginRepo:           pluginRepo,
 		pluginStorage:        pluginStorage,
 		pluginStorageDirFunc: pluginStorageDirFunc,
+		installing:           map[string]bool{},
 		log:                  log.New("plugin.installer"),
 		serviceRegistry:      serviceRegistry,
 	}
@@ -53,6 +55,14 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	if err != nil {
 		return err
 	}
+
+	if m.installing[pluginID] {
+		return nil
+	}
+	m.installing[pluginID] = true
+	defer func() {
+		m.installing[pluginID] = false
+	}()
 
 	archive, err := m.install(ctx, pluginID, version, compatOpts)
 	if err != nil {

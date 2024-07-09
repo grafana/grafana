@@ -101,6 +101,20 @@ func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, o pluginInstallOpts) error {
+	return doInstallPlugin(ctx, pluginID, version, o, map[string]bool{})
+}
+
+// doInstallPlugin is a recursive function that installs a plugin and its dependencies.
+// installing is a map that keeps track of which plugins are currently being installed to avoid infinite loops.
+func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInstallOpts, installing map[string]bool) error {
+	if installing[pluginID] {
+		return nil
+	}
+	installing[pluginID] = true
+	defer func() {
+		installing[pluginID] = false
+	}()
+
 	// If a version is specified, check if it is already installed
 	if version != "" {
 		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
@@ -137,12 +151,12 @@ func installPlugin(ctx context.Context, pluginID, version string, o pluginInstal
 	}
 
 	for _, dep := range extractedArchive.Dependencies {
-		services.Logger.Infof("Fetching %s dependency...", dep.ID)
-		return installPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
+		services.Logger.Infof("Fetching %s dependency %s...", pluginID, dep.ID)
+		return doInstallPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
 			insecure:  o.insecure,
 			repoURL:   o.repoURL,
 			pluginDir: o.pluginDir,
-		})
+		}, installing)
 	}
 	return nil
 }
