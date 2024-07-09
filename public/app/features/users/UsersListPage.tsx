@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { renderMarkdown } from '@grafana/data';
+import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { OrgUser, OrgRole, StoreState } from 'app/types';
@@ -104,7 +105,9 @@ export const UsersListPageUnconnected = ({
     <Page.Contents isLoading={!isLoading}>
       <UsersActionBar onShowInvites={onShowInvites} showInvites={showInvites} />
       {externalUserMngInfoHtml && (
-        <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+        <Alert severity="info" title="">
+          <div dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+        </Alert>
       )}
       {isLoading && renderTable()}
     </Page.Contents>
