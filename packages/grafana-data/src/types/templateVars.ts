@@ -183,5 +183,4 @@ export interface BaseVariableModel {
 export interface SnapshotVariableModel extends VariableWithOptions {
   type: 'snapshot';
   query: string;
-  filters: AdHocVariableFilter[];
 }
