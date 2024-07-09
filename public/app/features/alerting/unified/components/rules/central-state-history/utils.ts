@@ -3,7 +3,8 @@ import { groupBy } from 'lodash';
 import { DataFrame, Field as DataFrameField, DataFrameJSON, Field, FieldType } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 
-import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { labelsMatchMatchers } from '../../../utils/alertmanager';
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
@@ -61,7 +62,7 @@ function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[]): DataFr
   const filterValue = getFilterInQueryParams();
   const dataframesFiltered = dataFrames.filter((frame) => {
     const labels = JSON.parse(frame.name ?? ''); // in name we store the labels stringified
-    const matchers = Boolean(filterValue) ? parseMatchers(filterValue) : [];
+    const matchers = Boolean(filterValue) ? parsePromQLStyleMatcherLooseSafe(filterValue) : [];
     return labelsMatchMatchers(labels, matchers);
   });
   // Extract time fields from filtered data frames

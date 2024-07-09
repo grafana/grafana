@@ -21,7 +21,6 @@ import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtim
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
-import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertManagerCortexConfig,
@@ -63,6 +62,8 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
+
+import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 let nextDataSourceId = 1;
 
@@ -328,12 +329,12 @@ export const mockSilences = [
   mockSilence({ id: MOCK_SILENCE_ID_EXISTING, comment: 'Happy path silence' }),
   mockSilence({
     id: 'ce031625-61c7-47cd-9beb-8760bccf0ed7',
-    matchers: parseMatchers('foo!=bar'),
+    matchers: parsePromQLStyleMatcherLooseSafe('foo!=bar'),
     comment: 'Silence with negated matcher',
   }),
   mockSilence({
     id: MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
-    matchers: parseMatchers(`__alert_rule_uid__=${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}`),
+    matchers: parsePromQLStyleMatcherLooseSafe(`__alert_rule_uid__=${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}`),
     comment: 'Silence with alert rule UID matcher',
     metadata: {
       rule_title: MOCK_GRAFANA_ALERT_RULE_TITLE,
@@ -341,7 +342,7 @@ export const mockSilences = [
   }),
   mockSilence({
     id: MOCK_SILENCE_ID_LACKING_PERMISSIONS,
-    matchers: parseMatchers('something=else'),
+    matchers: parsePromQLStyleMatcherLooseSafe('something=else'),
     comment: 'Silence without permissions to edit',
     accessControl: {},
   }),

@@ -18,8 +18,9 @@ import {
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { usePagination } from '../../../hooks/usePagination';
-import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
@@ -412,7 +413,7 @@ function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
       return { historyRecords: [] };
     }
 
-    const filterMatchers = filter ? parseMatchers(filter) : [];
+    const filterMatchers = filter ? parsePromQLStyleMatcherLooseSafe(filter) : [];
 
     const [tsValues, lines] = stateHistory.data.values;
     const timestamps = isNumbers(tsValues) ? tsValues : [];
