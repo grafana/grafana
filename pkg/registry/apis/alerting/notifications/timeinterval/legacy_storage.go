@@ -59,7 +59,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, res, s.namespacer)
+	return convertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
