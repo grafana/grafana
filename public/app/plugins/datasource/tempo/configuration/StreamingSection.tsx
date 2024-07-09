@@ -1,12 +1,14 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
+  GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { InlineFieldRow, InlineField, InlineSwitch, Alert } from '@grafana/ui';
+import { InlineFieldRow, InlineField, InlineSwitch, Alert, Stack, useStyles2 } from '@grafana/ui';
 
 import { FeatureName, featuresToTempoVersion } from '../datasource';
 
@@ -18,16 +20,29 @@ interface StreamingOptions extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<StreamingOptions> {}
 
 export const StreamingSection = ({ options, onOptionsChange }: Props) => {
+  const styles = useStyles2(getStyles);
   return (
     <ConfigSection
       title="Streaming"
-      description={`Enable streaming for different Tempo features. 
-        Currently supported only for search queries and from Tempo version ${featuresToTempoVersion[FeatureName.streaming]} onwards.`}
       isCollapsible={false}
+      description={
+        <Stack gap={0.5}>
+          <div>{`Enable streaming for different Tempo features.
+        Currently supported only for search queries and from Tempo version ${featuresToTempoVersion[FeatureName.streaming]} onwards.`}</div>
+          <a
+            href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}
+            target={'_blank'}
+            rel="noreferrer"
+            className={styles.a}
+          >
+            Learn more
+          </a>
+        </Stack>
+      }
     >
-      <Alert severity="info" title="Streaming and on-premise Tempo instances">
-        If your Tempo instance is on-premise and behind a load balancer or proxy that does not supporting gRPC or HTTP2,
-        streaming will probably not work and should be disabled.
+      <Alert severity="info" title="Streaming and self-managed Tempo instances">
+        If your Tempo instance is behind a load balancer or proxy that does not supporting gRPC or HTTP2, streaming will
+        probably not work and should be disabled.
       </Alert>
       <InlineFieldRow>
         <InlineField
@@ -51,4 +66,16 @@ export const StreamingSection = ({ options, onOptionsChange }: Props) => {
       </InlineFieldRow>
     </ConfigSection>
   );
+};
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    a: css({
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+      marginLeft: '5px',
+      '&:hover': {
+        textDecoration: 'none',
+      },
+    }),
+  };
 };

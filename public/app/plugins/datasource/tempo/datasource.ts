@@ -1,4 +1,4 @@
-import { groupBy, startCase } from 'lodash';
+import { groupBy } from 'lodash';
 import { EMPTY, forkJoin, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';

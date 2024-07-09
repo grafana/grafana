@@ -49,8 +49,11 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           onChange: onOptionsChange,
         })}
       />
-
       <Divider spacing={4} />
+
+      <StreamingSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
+
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
       <Divider spacing={4} />
 
@@ -58,9 +61,6 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       <Divider spacing={4} />
 
       <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
-      <Divider spacing={4} />
-
-      <StreamingSection options={options} onOptionsChange={onOptionsChange} />
       <Divider spacing={4} />
 
       <ConfigSection
