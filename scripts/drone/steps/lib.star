@@ -1303,7 +1303,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     """
 
-    install_command = "dnf install -y grafana-${TAG} >/dev/null 2>&1"
+    install_command = "dnf install -y grafana-${TAG}"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1311,16 +1311,22 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "environment": {},
         "commands": [
             'echo "Step 1: Updating package lists..."',
-            "dnf check-update -y >/dev/null 2>&1 || true",
+            "dnf check-update -y || true",
             'echo "Step 2: Installing prerequisites..."',
-            "dnf install -y dnf-utils >/dev/null 2>&1",
+            "dnf install -y dnf-utils",
             'echo "Step 3: Adding Grafana repository..."',
             "echo '{}' > /etc/yum.repos.d/grafana.repo".format(repo_config),
+            "cat /etc/yum.repos.d/grafana.repo",
             'echo "Step 4: Adding Grafana GPG key..."',
             "rpm --import https://rpm.grafana.com/gpg.key",
-            'echo "Step 5: Installing Grafana..."',
-        ] + retry_command(install_command, attempts = 10) + [
-            'echo "Step 6: Verifying Grafana installation..."',
+            "rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'",
+            'echo "Step 5: Cleaning DNF cache..."',
+            "dnf clean all && dnf makecache",
+            'echo "Step 6: Checking available Grafana versions..."',
+            "dnf list --available grafana",
+            'echo "Step 7: Installing Grafana..."',
+        ] + retry_command(install_command, attempts = 3) + [
+            'echo "Step 8: Verifying Grafana installation..."',
             'if rpm -q grafana | grep -q "${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
             "else",
