@@ -7,6 +7,7 @@ import (
 	"time"
 
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
@@ -16,7 +17,11 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
-	key, err := entity.ParseKey(r.Key)
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
+	key, err := grafanaregistry.ParseKey(r.Key)
 	if err != nil {
 		return nil, fmt.Errorf("delete entity: parse entity key: %w", err)
 	}

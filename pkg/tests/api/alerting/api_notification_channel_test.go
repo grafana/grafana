@@ -1031,33 +1031,29 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
-		t.Run("Receiver "+*rcv.Name, func(t *testing.T) {
+		t.Run("Receiver "+rcv.Name, func(t *testing.T) {
 			var expActive bool
-			if _, ok := expInactiveReceivers[*rcv.Name]; !ok {
+			if _, ok := expInactiveReceivers[rcv.Name]; !ok {
 				expActive = true
 			}
 			var expErr bool
-			if _, ok := expNotificationErrors[*rcv.Name]; ok {
+			if _, ok := expNotificationErrors[rcv.Name]; ok {
 				expErr = true
 			}
 
-			require.NotNil(t, rcv.Name)
-			require.NotNil(t, rcv.Active)
 			require.NotEmpty(t, rcv.Integrations)
 			if expActive {
-				require.True(t, *rcv.Active)
+				require.True(t, rcv.Active)
 			}
 
 			// We don't have test alerts for the default notifier, continue iterating.
-			if *rcv.Name == "grafana-default-email" {
+			if rcv.Name == "grafana-default-email" {
 				return
 			}
 
 			for _, integration := range rcv.Integrations {
 				require.NotNil(t, integration.Name)
-				t.Run("Integration "+*integration.Name, func(t *testing.T) {
-					require.NotNil(t, integration.SendResolved)
-
+				t.Run("Integration "+integration.Name, func(t *testing.T) {
 					// If the receiver is not active, no attempts to send notifications should be registered.
 					if expActive {
 						// Prometheus' durations get rounded down, so we might end up with "0s" if we have values smaller than 1ms.
@@ -1070,7 +1066,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 					// Check whether we're expecting an error on this integration.
 					if expErr {
 						for _, integration := range rcv.Integrations {
-							require.Equal(t, expNotificationErrors[*rcv.Name], integration.LastNotifyAttemptError)
+							require.Equal(t, expNotificationErrors[rcv.Name], integration.LastNotifyAttemptError)
 						}
 					} else {
 						require.Equal(t, "", integration.LastNotifyAttemptError)
@@ -1245,7 +1241,7 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	fmt.Fprint(res, nc.responses[paths[0]])
+	_, _ = fmt.Fprint(res, nc.responses[paths[0]])
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {

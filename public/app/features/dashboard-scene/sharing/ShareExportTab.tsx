@@ -1,5 +1,4 @@
 import saveAs from 'file-saver';
-import React from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -13,10 +12,11 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
-interface ShareExportTabState extends SceneShareTabState {
+export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isViewingJSON?: boolean;
 }
@@ -55,9 +55,9 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     return;
   }
 
-  public async getExportableDashboardJson() {
-    const { dashboardRef, isSharingExternally } = this.state;
-    const saveModel = transformSceneToSaveModel(dashboardRef.resolve());
+  public getExportableDashboardJson = async () => {
+    const { isSharingExternally } = this.state;
+    const saveModel = transformSceneToSaveModel(getDashboardSceneFor(this));
 
     const exportable = isSharingExternally
       ? await this._exporter.makeExportable(
@@ -70,9 +70,9 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
       : saveModel;
 
     return exportable;
-  }
+  };
 
-  public async onSaveAsFile() {
+  public onSaveAsFile = async () => {
     const dashboardJson = await this.getExportableDashboardJson();
     const dashboardJsonPretty = JSON.stringify(dashboardJson, null, 2);
     const { isSharingExternally } = this.state;
@@ -90,7 +90,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     DashboardInteractions.exportDownloadJsonClicked({
       externally: isSharingExternally,
     });
-  }
+  };
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {

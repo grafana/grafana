@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { FilterInput, InlineField } from '@grafana/ui';
 
 interface Props {

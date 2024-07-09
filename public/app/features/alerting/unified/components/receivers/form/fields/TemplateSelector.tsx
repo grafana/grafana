@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PropsWithChildren, useEffect, useMemo } from 'react';
+import { useState, PropsWithChildren, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
@@ -37,7 +37,7 @@ interface TemplatesPickerProps {
   valueInForm: string;
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
-  const [showTemplates, setShowTemplates] = React.useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -117,14 +117,14 @@ interface TemplateSelectorProps {
 function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
   const useGetDefaultTemplatesQuery = templatesApi.endpoints.getDefaultTemplates.useQuery;
-  const [template, setTemplate] = React.useState<Template | undefined>(undefined);
-  const [inputToUpdate, setInputToUpdate] = React.useState<string>('');
-  const [inputToUpdateCustom, setInputToUpdateCustom] = React.useState<string>(valueInForm);
+  const [template, setTemplate] = useState<Template | undefined>(undefined);
+  const [inputToUpdate, setInputToUpdate] = useState<string>('');
+  const [inputToUpdateCustom, setInputToUpdateCustom] = useState<string>(valueInForm);
 
   const { selectedAlertmanager } = useAlertmanager();
   const { data, error } = useAlertmanagerConfig(selectedAlertmanager);
   const { data: defaultTemplates } = useGetDefaultTemplatesQuery();
-  const [templateOption, setTemplateOption] = React.useState<TemplateFieldOption>('Existing');
+  const [templateOption, setTemplateOption] = useState<TemplateFieldOption>('Existing');
   const [_, copyToClipboard] = useCopyToClipboard();
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
@@ -163,14 +163,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
 
   // if we are using only one template, we should settemplate to that template
   useEffect(() => {
-    if (matchesOnlyOneTemplate(valueInForm)) {
-      const name = getTemplateName(valueInForm);
-      setTemplate({
-        name,
-        content: getContentFromOptions(name, options),
-      });
-    } else {
-      if (Boolean(valueInForm)) {
+    if (Boolean(valueInForm)) {
+      if (matchesOnlyOneTemplate(valueInForm)) {
+        const name = getTemplateName(valueInForm);
+        setTemplate({
+          name,
+          content: getContentFromOptions(name, options),
+        });
+      } else {
         // if it's empty we default to select existing template
         setTemplateOption('Custom');
       }
@@ -303,20 +303,16 @@ export function WrapWithTemplateSelection({
   name,
   children,
 }: WrapWithTemplateSelectionProps) {
-  const { getValues } = useFormContext();
-  const value: string = getValues(name) ?? '';
-  const emptyValue = value === '' || value === undefined;
-  const onlyOneTemplate = value ? matchesOnlyOneTemplate(value) : false;
   const styles = useStyles2(getStyles);
-
+  const { getValues } = useFormContext();
+  const value = getValues(name) ?? '';
   // if the placeholder does not contain a template, we don't need to show the template picker
-  if (!option.placeholder.includes('{{ template ')) {
+  if (!option.placeholder.includes('{{ template ') || typeof value !== 'string') {
     return <>{children}</>;
   }
   // Otherwise, we can use templates on this field
-
   // if the value is empty, we only show the template picker
-  if (emptyValue) {
+  if (!value) {
     return (
       <div className={styles.inputContainer}>
         <Stack direction="row" gap={1} alignItems="center">
@@ -327,6 +323,7 @@ export function WrapWithTemplateSelection({
       </div>
     );
   }
+  const onlyOneTemplate = value ? matchesOnlyOneTemplate(value) : false;
   if (onlyOneTemplate) {
     return (
       <div className={styles.inputContainer}>

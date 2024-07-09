@@ -45,6 +45,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return s.lib.CheckHealth(ctx, req)
 }
 
+func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	return s.lib.ValidateAdmission(ctx, req)
+}
+
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	return s.lib.MutateAdmission(ctx, req)
+}
+func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	return s.lib.ConvertObject(ctx, req)
+}
+
 func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
 	// Set SigV4 service namespace
 	if clientOpts.SigV4 != nil {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
@@ -17,7 +18,11 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
-	key, err := entity.ParseKey(r.Entity.Key)
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
+	key, err := grafanaregistry.ParseKey(r.Entity.Key)
 	if err != nil {
 		return nil, fmt.Errorf("update entity: parse entity key: %w", err)
 	}

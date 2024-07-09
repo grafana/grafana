@@ -1,11 +1,9 @@
 package user
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
@@ -217,27 +215,6 @@ type StartVerifyEmailCommand struct {
 type CompleteEmailVerifyCommand struct {
 	User identity.Requester
 	Code string
-}
-
-type ErrCaseInsensitiveLoginConflict struct {
-	Users []User
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
-	return ErrCaseInsensitive
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Error() string {
-	n := len(e.Users)
-
-	userStrings := make([]string, 0, n)
-	for _, v := range e.Users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.ID))
-	}
-
-	return fmt.Sprintf(
-		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
-		n, strings.Join(userStrings, ", "))
 }
 
 type Filter interface {

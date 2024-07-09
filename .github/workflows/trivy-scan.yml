@@ -1,0 +1,54 @@
+name: Trivy Scan
+on:
+  pull_request:
+    # only run on PRs where go.mod/go.sum/etc have been updated
+    paths:
+      - go.*
+  push:
+    branches:
+      - main
+    paths:
+      - go.*
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run Trivy vulnerability scanner (table output)
+      uses: aquasecurity/trivy-action@0.22.0
+      with:
+        # scan the filesystem, rather than building a Docker image prior - the
+        # downside is we won't catch dependencies that are only installed in the
+        # image, but the upside is we'll only catch vulnerabilities that are
+        # explicitly in the our dependencies
+        scan-type: 'fs'
+        scanners: 'vuln'
+        format: 'table'
+        exit-code: 1
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
+        trivyignores: .trivyignore
+        # for the PR check, ignore JS-related issues
+        skip-files: 'yarn.lock,package.json'
+    - name: Run Trivy vulnerability scanner (SARIF)
+      uses: aquasecurity/trivy-action@0.22.0
+      with:
+        scan-type: 'fs'
+        scanners: 'vuln'
+        # Note: The SARIF format ignores severity and uploads all vulns for
+        # later triage. The table-format step above is used to fail the build
+        # if there are any critical or high vulnerabilities.
+        # See https://github.com/aquasecurity/trivy-action/issues/95
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        trivyignores: .trivyignore
+      if: always() && github.repository == 'grafana/grafana'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+      if: always() && github.repository == 'grafana/grafana'

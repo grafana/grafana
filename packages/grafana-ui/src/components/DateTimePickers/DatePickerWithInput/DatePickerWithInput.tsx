@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import React, { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
 

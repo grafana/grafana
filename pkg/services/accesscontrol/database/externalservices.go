@@ -18,7 +18,7 @@ func extServiceRoleName(externalServiceID string) string {
 
 func (s *AccessControlStore) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
 	uid := accesscontrol.PrefixedRoleUID(extServiceRoleName(externalServiceID))
-	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	return s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		stored, errGet := getRoleByUID(ctx, sess, uid)
 		if errGet != nil {
 			// Role not found, nothing to do
@@ -55,7 +55,7 @@ func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd ac
 	role := genExternalServiceRole(cmd)
 	assignment := genExternalServiceAssignment(cmd)
 
-	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	return s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		// Create or update the role
 		existingRole, errSaveRole := s.saveRole(ctx, sess, &role)
 		if errSaveRole != nil {

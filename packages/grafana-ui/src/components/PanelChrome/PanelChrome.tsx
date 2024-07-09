@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode, useId } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId } from 'react';
+import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -135,6 +136,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
+  const panelTitleId = useId().replace(/:/g, '_');
 
   const hasHeader = !hoverHeader;
 
@@ -179,7 +181,13 @@ export function PanelChrome({
       {/* Non collapsible title */}
       {!collapsible && title && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6" truncate title={typeof title === 'string' ? title : undefined}>
+          <Text
+            element="h2"
+            variant="h6"
+            truncate
+            title={typeof title === 'string' ? title : undefined}
+            id={panelTitleId}
+          >
             {title}
           </Text>
         </div>
@@ -206,7 +214,7 @@ export function PanelChrome({
                 aria-hidden={!!title}
                 aria-label={!title ? 'toggle collapse panel' : undefined}
               />
-              <Text variant="h6" truncate>
+              <Text variant="h6" truncate id={panelTitleId}>
                 {title}
               </Text>
             </button>
@@ -249,6 +257,7 @@ export function PanelChrome({
     <section
       className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
       style={containerStyles}
+      aria-labelledby={!!title ? panelTitleId : undefined}
       data-testid={testid}
       tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
       onFocus={onFocus}
@@ -415,6 +424,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
+      // this is to force the loading bar container to create a new stacking context
+      // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
+      // see https://github.com/grafana/grafana/issues/88104
+      zIndex: 1,
     }),
     containNone: css({
       contain: 'none',

@@ -3,21 +3,37 @@ package sqlstash
 import (
 	"testing"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
+	traceNoop "go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func newTestSQLEntityServer(t *testing.T) (*sqlEntityServer, sqlmock.Sqlmock) {
+	db, mock := newMockDBMatchWords(t)
+
+	return &sqlEntityServer{
+		log:    log.NewNopLogger(),
+		tracer: traceNoop.NewTracerProvider().Tracer("test-tracer"),
+
+		sess: new(session.SessionDB), // FIXME
+
+		sqlDB:      db,
+		sqlDialect: sqltemplate.MySQL,
+	}, mock
+}
 
 func TestIsHealthy(t *testing.T) {
 	t.Parallel()
 
 	// test declarations
 	ctx := testutil.NewDefaultTestContext(t)
-	db, mock := newMockDBNopSQL(t)
-	s := &sqlEntityServer{
-		sqlDB: db,
-	}
+	s, mock := newTestSQLEntityServer(t)
 
 	// setup expectations
 	mock.ExpectPing()
