@@ -60,7 +60,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       body: state.body ?? new MetricGraphScene({}),
       autoQuery,
       queryDef: state.queryDef ?? autoQuery.main,
-      layout: layout as LayoutType,
+      layout: isLayoutType(layout) ? layout : 'grid',
       ...state,
     });
 
