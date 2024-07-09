@@ -234,6 +234,10 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultPage
 	if err == nil {
 		snapshot.Resources = resources
 	}
+	stats, err := ss.GetSnapshotResourceStats(ctx, uid)
+	if err == nil {
+		snapshot.StatsRollup = stats
+	}
 
 	return &snapshot, err
 }

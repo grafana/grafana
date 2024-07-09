@@ -48,6 +48,8 @@ type CloudMigrationSnapshot struct {
 
 	// Stored in the cloud_migration_resource table
 	Resources []CloudMigrationResource `xorm:"-"`
+	// Derived by querying the cloud_migration_resource table
+	StatsRollup *SnapshotResourceStats `xorm:"-"`
 }
 
 type SnapshotStatus string
