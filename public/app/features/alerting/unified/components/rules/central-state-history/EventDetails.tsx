@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { capitalize, max, min, uniqBy } from 'lodash';
+import { capitalize } from 'lodash';
 import { useMemo } from 'react';
 
-import { FieldType, GrafanaTheme2, LoadingState, PanelData, TimeRange, dateTime, makeTimeRange } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Alert, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -108,23 +108,26 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
     stateHistory,
     labels
       ? Object.entries(labels)
-        .map(([key, value]) => `${key}=${value}`)
-        .join(',')
+          .map(([key, value]) => `${key}=${value}`)
+          .join(',')
       : ''
   );
 
   const { frameSubset, frameTimeRange } = useFrameSubset(dataFrames);
 
   if (isLoading) {
-    return <div>
-      <Trans i18nKey="alerting.central-alert-history.details.loading">
-        Loading...
-      </Trans>
-    </div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.central-alert-history.details.loading">Loading...</Trans>
+      </div>
+    );
   }
   if (isError) {
     return (
-      <Alert title={t('alerting.central-alert-history.details.error-fetching.title', 'Error fetching the state history')} severity="error">
+      <Alert
+        title={t('alerting.central-alert-history.details.error-fetching.title', 'Error fetching the state history')}
+        severity="error"
+      >
         {error instanceof Error
           ? error.message
           : t('alerting.central-alert-history.details.error-fetching.message', 'Unable to fetch alert state history')}
@@ -189,46 +192,6 @@ const Annotations = ({ rule }: AnnotationsProps) => {
     </>
   );
 };
-
-/**
- * This function returns the time series panel data for the condtion values of the rule, within the selected time range.
- * The values are extracted from the log records already fetched from the history api.
- * @param ruleUID
- * @param logRecords
- * @param condition
- * @returns PanelData
- */
-export function getPanelDataForRule(ruleUID: string, logRecords: LogRecord[], condition: string) {
-  const ruleLogRecords = logRecords
-    .filter((record) => record.line.ruleUID === ruleUID)
-    // sort by timestamp as time series data is expected to be sorted by time
-    .sort((a, b) => a.timestamp - b.timestamp);
-
-  // get unique records by timestamp, as timeseries data should have unique timestamps, and it might be possible to have multiple records with the same timestamp
-  const uniqueRecords = uniqBy(ruleLogRecords, (record) => record.timestamp);
-
-  const timestamps = uniqueRecords.map((record) => record.timestamp);
-  const values = uniqueRecords.map((record) => (record.line.values ? record.line.values[condition] : 0));
-  const minTimestamp = min(timestamps);
-  const maxTimestamp = max(timestamps);
-
-  const PanelDataObj: PanelData = {
-    series: [
-      {
-        name: 'Rule condition history',
-        fields: [
-          { name: 'Time', values: timestamps, config: {}, type: FieldType.time },
-          { name: 'values', values: values, type: FieldType.number, config: {} },
-        ],
-        length: timestamps.length,
-      },
-    ],
-    state: LoadingState.Done,
-    timeRange: makeTimeRange(dateTime(minTimestamp), dateTime(maxTimestamp)),
-  };
-  return PanelDataObj;
-}
-
 interface ValueInTransitionProps {
   record: LogRecord;
 }

@@ -2,7 +2,7 @@ import { dateTime } from '@grafana/data';
 
 import { LogRecord } from '../state-history/common';
 
-import { getPanelDataForRule } from './EventDetails';
+import { getPanelDataForRule } from './utils';
 
 const initialTimeStamp = 1000000;
 const instanceLabels = { foo: 'bar', severity: 'critical', cluster: 'dev-us' }; // actually, it doesn't matter what is here
