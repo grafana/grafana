@@ -4,7 +4,7 @@ import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { MetricScene } from '../MetricScene';
 import { reportExploreMetrics } from '../interactions';
-import { RECENT_TRAILS_KEY, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
+import { TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
 import { LayoutType } from './types';
 
