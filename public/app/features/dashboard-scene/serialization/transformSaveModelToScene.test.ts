@@ -279,9 +279,9 @@ describe('transformSaveModelToScene', () => {
       expect(customSnapshot.state.text).toBe('a');
       expect(customSnapshot.state.isReadOnly).toBe(true);
       // adhoc snapshot
-      const adhocSnapshot = scene.state.$variables?.getByName('CoolFilters') as SnapshotVariable;
+      const adhocSnapshot = scene.state.$variables?.getByName('CoolFilters') as AdHocFiltersVariable;
       expect(adhocSnapshot.state.filters).toEqual(adHocVariable.filters);
-      expect(adhocSnapshot.state.isReadOnly).toBe(true);
+      expect(adhocSnapshot.state.readOnly).toBe(true);
 
       // interval snapshot
       const intervalSnapshot = scene.state.$variables?.getByName('interval0') as SnapshotVariable;

@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { AdHocVariableFilter, DataFrameDTO, DataFrameJSON, MetricFindValue, TypedVariableModel } from '@grafana/data';
+import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -51,6 +51,7 @@ import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
 import {
+  createVariableForSnapshots,
   getCurrentValueForOldIntervalModel,
   getDashboardSceneFor,
   getIntervalsFromQueryString,
@@ -59,7 +60,6 @@ import {
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
-import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -333,46 +333,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   });
 
   return dashboardScene;
-}
-
-export function createVariableForSnapshots(variable: TypedVariableModel): SceneVariable {
-  let snapshotVariable: SnapshotVariable;
-  let current: { value: string | string[]; text: string | string[] };
-  if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
-    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
-    snapshotVariable = new SnapshotVariable({
-      name: variable.name,
-      label: variable.label,
-      description: variable.description,
-      value: currentInterval,
-      text: currentInterval,
-      hide: variable.hide,
-    });
-    return snapshotVariable;
-  }
-
-  if (variable.type === 'system' || variable.type === 'constant' || variable.type === 'adhoc') {
-    current = {
-      value: '',
-      text: '',
-    };
-  } else {
-    current = {
-      value: variable.current?.value ?? '',
-      text: variable.current?.text ?? '',
-    };
-  }
-
-  snapshotVariable = new SnapshotVariable({
-    name: variable.name,
-    label: variable.label,
-    description: variable.description,
-    value: current?.value ?? '',
-    text: current?.text ?? '',
-    hide: variable.hide,
-  });
-  return snapshotVariable;
 }
 
 export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
