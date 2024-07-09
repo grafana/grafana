@@ -1277,7 +1277,7 @@ def verify_linux_DEB_packages_step(depends_on = []):
             'echo "Step 4: Adding Grafana repository..."',
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
             'echo "Step 5: Installing Grafana..."',
-        ] + retry_command(install_command) + [
+        ] + retry_command(install_command, attempts = 10) + [
             'echo "Step 6: Verifying Grafana installation..."',
             'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
@@ -1305,7 +1305,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 3: Adding Grafana GPG key..."',
             "rpm --import https://packages.grafana.com/gpg.key",
             'echo "Step 4: Installing Grafana..."',
-        ] + retry_command(install_command) + [
+        ] + retry_command(install_command, attempts = 10) + [
             'echo "Step 5: Verifying Grafana installation..."',
             'if rpm -q grafana | grep -q "${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',

@@ -3168,14 +3168,14 @@ steps:
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
   - 'echo "Step 5: Installing Grafana..."'
-  - for i in $(seq 1 5); do
+  - for i in $(seq 1 10); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
     install -yq grafana=${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 5 ]; then'
+  - '        if [ $i -eq 10 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3203,14 +3203,14 @@ steps:
   - 'echo "Step 3: Adding Grafana GPG key..."'
   - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
-  - for i in $(seq 1 5); do
+  - for i in $(seq 1 10); do
   - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
     >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 5 ]; then'
+  - '        if [ $i -eq 10 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3322,14 +3322,14 @@ steps:
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
   - 'echo "Step 5: Installing Grafana..."'
-  - for i in $(seq 1 5); do
+  - for i in $(seq 1 10); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
     install -yq grafana=${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 5 ]; then'
+  - '        if [ $i -eq 10 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3358,14 +3358,14 @@ steps:
   - 'echo "Step 3: Adding Grafana GPG key..."'
   - rpm --import https://packages.grafana.com/gpg.key
   - 'echo "Step 4: Installing Grafana..."'
-  - for i in $(seq 1 5); do
+  - for i in $(seq 1 10); do
   - '    if dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm
     >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 5 ]; then'
+  - '        if [ $i -eq 10 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -5362,6 +5362,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7c19d06b52e337ca60bbf21619d2d0bbecb0fe7792b2f821d96296e311fda1ae
+hmac: 71d66c29948194fd057339ff0151669f6b051fc135fed3640a856ce21da53902
 
 ...
