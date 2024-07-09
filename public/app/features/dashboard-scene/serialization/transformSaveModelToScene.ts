@@ -203,6 +203,23 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       const variableObjects = oldModel.templating.list
         .map((v) => {
           try {
+            if (v.type === 'adhoc' && v.filters) {
+              const snapshotVariable = new AdHocFiltersVariable({
+                name: v.name,
+                label: v.label,
+                readOnly: true,
+                description: v.description,
+                skipUrlSync: v.skipUrlSync,
+                hide: v.hide,
+                datasource: v.datasource,
+                applyMode: 'auto',
+                filters: v.filters ?? [],
+                baseFilters: v.baseFilters ?? [],
+                defaultKeys: v.defaultKeys,
+                useQueriesAsFilterForOptions: true,
+              });
+              return snapshotVariable;
+            }
             return createVariableForSnapshots(v);
           } catch (err) {
             console.error(err);
@@ -323,9 +340,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
 export function createVariableForSnapshots(variable: TypedVariableModel): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
-  let filters: AdHocVariableFilter[];
-  let baseFilters: AdHocVariableFilter[];
-  let defaultKeys: MetricFindValue[];
   if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
@@ -340,25 +354,7 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
     return snapshotVariable;
   }
 
-  if (variable.type === 'adhoc' && variable.filters) {
-    snapshotVariable = new AdHocFiltersVariable({
-      name: variable.name,
-      label: variable.label,
-      readOnly: true,
-      description: variable.description,
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-      datasource: variable.datasource,
-      applyMode: 'auto',
-      filters: variable.filters ?? [],
-      baseFilters: variable.baseFilters ?? [],
-      defaultKeys: variable.defaultKeys,
-      useQueriesAsFilterForOptions: true,
-    });
-    return snapshotVariable;
-  }
-
-  if (variable.type === 'system' || variable.type === 'constant') {
+  if (variable.type === 'system' || variable.type === 'constant' || variable.type === 'adhoc') {
     current = {
       value: '',
       text: '',
