@@ -25,7 +25,7 @@ func Test_GetAllCloudMigrationSessions(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("get all cloud_migration_session entries", func(t *testing.T) {
-		value, err := s.GetAllCloudMigrationSessions(ctx)
+		value, err := s.GetCloudMigrationSessionList(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 3, len(value))
 		for _, m := range value {

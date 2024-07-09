@@ -78,9 +78,12 @@ func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudm
 	return &migration, nil
 }
 
-func (ss *sqlStore) GetAllCloudMigrationSessions(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error) {
 	var migrations = make([]*cloudmigration.CloudMigrationSession, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error { return sess.Find(&migrations) })
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		sess.OrderBy("created DESC")
+		return sess.Find(&migrations)
+	})
 	if err != nil {
 		return nil, err
 	}
