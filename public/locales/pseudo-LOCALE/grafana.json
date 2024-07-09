@@ -59,10 +59,6 @@
     "central-alert-history": {
       "details": {
         "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
-        "error-fetching": {
-          "message": "Ůŉäþľę ŧő ƒęŧčĥ äľęřŧ şŧäŧę ĥįşŧőřy",
-          "title": "Ēřřőř ƒęŧčĥįŉģ ŧĥę şŧäŧę ĥįşŧőřy"
-        },
         "header": {
           "alert-rule": "Åľęřŧ řūľę",
           "instance": "Ĩŉşŧäŉčę",

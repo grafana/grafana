@@ -3,7 +3,7 @@ import { capitalize } from 'lodash';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Alert, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -18,6 +18,7 @@ import { LogRecord } from '../state-history/common';
 import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
 import { EventState, FilterType, LIMIT_EVENTS } from './EventListSceneObject';
+import { HistoryErrorMessage } from './HistoryErrorMessage';
 
 interface EventDetailsProps {
   record: LogRecord;
@@ -123,16 +124,7 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
     );
   }
   if (isError) {
-    return (
-      <Alert
-        title={t('alerting.central-alert-history.details.error-fetching.title', 'Error fetching the state history')}
-        severity="error"
-      >
-        {error instanceof Error
-          ? error.message
-          : t('alerting.central-alert-history.details.error-fetching.message', 'Unable to fetch alert state history')}
-      </Alert>
-    );
+    return <HistoryErrorMessage error={error} />;
   }
   if (!frameSubset || frameSubset.length === 0) {
     return null;

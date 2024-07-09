@@ -4,7 +4,6 @@ import { useLocation } from 'react-router';
 import { useMeasure } from 'react-use';
 
 import { DataFrameJSON, GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
 import {
   CustomVariable,
   SceneComponentProps,
@@ -14,7 +13,6 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import {
   GrafanaAlertStateWithReason,
@@ -28,7 +26,6 @@ import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { stringifyErrorLike } from '../../../utils/misc';
 import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
@@ -37,6 +34,7 @@ import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
+import { HistoryErrorMessage } from './HistoryErrorMessage';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -171,20 +169,6 @@ function ListHeader() {
       </div>
     </div>
   );
-}
-
-interface HistoryErrorMessageProps {
-  error: unknown;
-}
-
-function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
-  if (isFetchError(error) && error.status === 404) {
-    return <EntityNotFound entity="History" />;
-  }
-  const title = t('alerting.central-alert-history.error', 'Something went wrong loading the alert state history');
-  const errorStr = stringifyErrorLike(error);
-
-  return <Alert title={title}>{errorStr}</Alert>;
 }
 
 interface EventRowProps {

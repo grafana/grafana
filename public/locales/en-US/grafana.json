@@ -59,10 +59,6 @@
     "central-alert-history": {
       "details": {
         "error": "Error loading rule for this event.",
-        "error-fetching": {
-          "message": "Unable to fetch alert state history",
-          "title": "Error fetching the state history"
-        },
         "header": {
           "alert-rule": "Alert rule",
           "instance": "Instance",
