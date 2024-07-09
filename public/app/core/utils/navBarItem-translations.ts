@@ -75,7 +75,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'silences':
       return t('nav.alerting-silences.title', 'Silences');
     case 'groups':
-      return t('nav.alerting-groups.title', 'Groups');
+      return t('nav.alerting-groups.title', 'Active notifications');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
     case 'cfg':
