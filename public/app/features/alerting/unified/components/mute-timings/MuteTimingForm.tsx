@@ -146,13 +146,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
                 <Trans i18nKey="alerting.mute-timings.save">Save mute timing</Trans>
               )}
             </Button>
-            <LinkButton
-              type="button"
-              variant="secondary"
-              fill="outline"
-              href={makeAMLink(returnLink)}
-              disabled={updating}
-            >
+            <LinkButton type="button" variant="secondary" fill="outline" href={returnLink} disabled={updating}>
               <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
             </LinkButton>
           </FieldSet>
