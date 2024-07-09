@@ -71,8 +71,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const { loading: labelsLoading } = variable.useState();
     const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
 
-    // Get unit name from the second to last part of the metric name
-    debugger;
+    // Get unit name from the metric name
     const metricScene = getMetricSceneFor(model);
     const metric = metricScene.state.metric;
     const unit = getUnitFromMetric(metric);

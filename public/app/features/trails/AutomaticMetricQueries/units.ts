@@ -2,13 +2,18 @@ const DEFAULT_UNIT = 'short';
 
 export function getUnitFromMetric(metric: string) {
   const metricParts = metric.split('_');
-  if (metricParts.at(-1) === 'bytes' || metricParts.at(-1) === 'seconds') {
-    return getUnit(metricParts.at(-1));
+  const suffix = metricParts.at(-1) ?? '';
+  const secondToLastSuffix = metricParts.at(-2) ?? '';
+  if (UNIT_LIST.includes(suffix)) {
+    return suffix;
+  } else if (UNIT_LIST.includes(secondToLastSuffix)) {
+    return secondToLastSuffix;
   } else {
-    return getUnit(metricParts.at(-2));
+    return null;
   }
 }
 
+// Shows abbreviated units in a panel
 export function getUnit(metricPart: string | undefined) {
   return (metricPart && UNIT_MAP[metricPart]) || DEFAULT_UNIT;
 }
@@ -17,6 +22,8 @@ const UNIT_MAP: Record<string, string> = {
   bytes: 'bytes',
   seconds: 's',
 };
+
+const UNIT_LIST = ['bytes', 'seconds'];
 
 const RATE_UNIT_MAP: Record<string, string> = {
   bytes: 'Bps', // bytes per second
