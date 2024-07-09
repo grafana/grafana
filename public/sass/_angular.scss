@@ -2029,3 +2029,64 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
   position: relative;
   top: -9px;
 }
+
+//
+// Alerts
+// --------------------------------------------------
+
+// Base styles
+// -------------------------
+
+.alert {
+  padding: 15px 20px;
+  margin-bottom: $space-xs;
+  border-left: 3px solid $alert-error-bg;
+  background: $layer2;
+  position: relative;
+  border-radius: $border-radius;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+// Alternate styles
+// -------------------------
+
+.alert-success {
+  border-color: $alert-success-bg;
+}
+
+.alert-danger,
+.alert-error {
+  border-color: $alert-error-bg;
+}
+
+.alert-info {
+  border-color: $alert-info-bg;
+}
+
+.alert-warning {
+  border-color: $alert-warning-bg;
+}
+
+.alert-title {
+  font-weight: $font-weight-semi-bold;
+}
+
+.alert-icon {
+  padding: 0 $space-md 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+
+  .fa {
+    font-size: 21px;
+  }
+}
+
+.alert-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  flex-grow: 1;
+}
