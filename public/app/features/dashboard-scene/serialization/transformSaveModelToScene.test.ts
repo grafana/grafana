@@ -195,7 +195,7 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('When creating a snapshot dashboard scene', () => {
-    it('should initialize a dashboar scene with SnapshotVariables', () => {
+    it('should initialize a dashboard scene with SnapshotVariables', () => {
       const customVariable = {
         current: {
           selected: false,
@@ -259,6 +259,8 @@ describe('transformSaveModelToScene', () => {
 
       const snapshot = {
         ...defaultDashboard,
+        title: 'snapshot dash',
+        uid: 'test-uid',
         time: { from: 'now-10h', to: 'now' },
         weekStart: 'saturday',
         fiscalYearStartMonth: 2,
@@ -272,13 +274,14 @@ describe('transformSaveModelToScene', () => {
           list: [customVariable, adHocVariable, intervalVariable],
         },
       };
+
       const oldModel = new DashboardModel(snapshot, { isSnapshot: true });
-      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, snapshot);
 
       // check variables were converted to snapshot variables
       expect(scene.state.$variables?.state.variables).toHaveLength(3);
       expect(scene.state.$variables?.getByName('custom0')).toBeInstanceOf(SnapshotVariable);
-      expect(scene.state.$variables?.getByName('CoolFilters')).toBeInstanceOf(SnapshotVariable);
+      expect(scene.state.$variables?.getByName('CoolFilters')).toBeInstanceOf(AdHocFiltersVariable);
       expect(scene.state.$variables?.getByName('interval0')).toBeInstanceOf(SnapshotVariable);
       // custom snapshot
       const customSnapshot = scene.state.$variables?.getByName('custom0') as SnapshotVariable;
