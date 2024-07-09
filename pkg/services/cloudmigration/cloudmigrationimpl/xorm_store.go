@@ -20,6 +20,10 @@ type sqlStore struct {
 	secretsService secrets.Service
 }
 
+const (
+	tableName = "cloud_migration_resource"
+)
+
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	var cm cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -310,6 +314,46 @@ func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string
 		return nil, err
 	}
 	return resources, nil
+}
+
+func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid string) (*cloudmigration.SnapshotResourceStats, error) {
+	typeCounts := make([]struct {
+		Count int    `json:"count"`
+		Type  string `json:"type"`
+	}, 0)
+	statusCounts := make([]struct {
+		Count  int    `json:"count"`
+		Status string `json:"status"`
+	}, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		sess.Select("count(uid) as 'count', resource_type as 'type'").
+			Table(tableName).
+			GroupBy("type").
+			Where("snapshot_uid = ?", snapshotUid)
+		if err := sess.Find(&typeCounts); err != nil {
+			return err
+		}
+		sess.Select("count(uid) as 'count', status").
+			Table(tableName).
+			GroupBy("status").
+			Where("snapshot_uid = ?", snapshotUid)
+		return sess.Find(&statusCounts)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &cloudmigration.SnapshotResourceStats{
+		CountsByType:   make(map[string]int, len(typeCounts)),
+		CountsByStatus: make(map[string]int, len(statusCounts)),
+	}
+	for _, c := range typeCounts {
+		stats.CountsByType[c.Type] = c.Count
+	}
+	for _, c := range statusCounts {
+		stats.CountsByStatus[c.Status] = c.Count
+	}
+	return stats, nil
 }
 
 func (ss *sqlStore) DeleteSnapshotResources(ctx context.Context, snapshotUid string) error {

@@ -245,6 +245,19 @@ func Test_SnapshotResources(t *testing.T) {
 			}
 		}
 
+		// check stats
+		stats, err := s.GetSnapshotResourceStats(ctx, "poiuy")
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]int{
+			"DATASOURCE": 2,
+			"DASHBOARD":  1,
+			"FOLDER":     1,
+		}, stats.CountsByType)
+		assert.Equal(t, map[string]int{
+			"OK":      3,
+			"PENDING": 1,
+		}, stats.CountsByStatus)
+
 		// delete snapshot resources
 		err = s.DeleteSnapshotResources(ctx, "poiuy")
 		assert.NoError(t, err)

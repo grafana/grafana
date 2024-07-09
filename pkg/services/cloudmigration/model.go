@@ -17,6 +17,8 @@ var (
 )
 
 // CloudMigration domain structs
+
+// CloudMigrationSession represents a configured migration token
 type CloudMigrationSession struct {
 	ID          int64  `xorm:"pk autoincr 'id'"`
 	UID         string `xorm:"uid"`
@@ -29,6 +31,7 @@ type CloudMigrationSession struct {
 	Updated     time.Time
 }
 
+// CloudMigrationSnapshot contains all of the metadata about a snapshot
 type CloudMigrationSnapshot struct {
 	ID             int64  `xorm:"pk autoincr 'id'"`
 	UID            string `xorm:"uid"`
@@ -71,6 +74,28 @@ type CloudMigrationResource struct {
 	Error  string          `xorm:"error_string"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
+}
+
+type MigrateDataType string
+
+const (
+	DashboardDataType  MigrateDataType = "DASHBOARD"
+	DatasourceDataType MigrateDataType = "DATASOURCE"
+	FolderDataType     MigrateDataType = "FOLDER"
+)
+
+type ItemStatus string
+
+const (
+	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusError   ItemStatus = "ERROR"
+	ItemStatusPending ItemStatus = "PENDING"
+	ItemStatusUnknown ItemStatus = "UNKNOWN"
+)
+
+type SnapshotResourceStats struct {
+	CountsByType   map[string]int
+	CountsByStatus map[string]int
 }
 
 // Deprecated, use GetSnapshotResult for the async workflow
@@ -154,14 +179,6 @@ type Base64HGInstance struct {
 
 // GMS domain structs
 
-type MigrateDataType string
-
-const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
-)
-
 type MigrateDataRequest struct {
 	Items []MigrateDataRequestItem
 }
@@ -172,15 +189,6 @@ type MigrateDataRequestItem struct {
 	Name  string
 	Data  interface{}
 }
-
-type ItemStatus string
-
-const (
-	ItemStatusOK      ItemStatus = "OK"
-	ItemStatusError   ItemStatus = "ERROR"
-	ItemStatusPending ItemStatus = "PENDING"
-	ItemStatusUnknown ItemStatus = "UNKNOWN"
-)
 
 type MigrateDataResponse struct {
 	RunUID string
