@@ -19,7 +19,7 @@ import { getExploreUrl } from '../../core/utils/explore';
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
-import { LayoutType } from './ActionTabs/types';
+import { isLayoutType, LayoutType } from './ActionTabs/types';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
@@ -54,7 +54,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery' | 'layout'>) {
     const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
-    const layout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY) ?? 'grid';
+    const layout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),
