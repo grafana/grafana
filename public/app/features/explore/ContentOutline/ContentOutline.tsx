@@ -79,24 +79,22 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       top: scrollValue + customOffsetTop,
       behavior: 'smooth',
     });
-
-    // don't report for filters as they have their own interaction tracking setup in the onClick handler
-    if (itemType !== 'filter') {
-      reportInteraction('explore_toolbar_contentoutline_clicked', {
-        item: 'select_section',
-        type: itemPanelId,
-      });
-    }
   };
 
-  const handleItemClicked = (child: ContentOutlineItemContextProps) => {
-    scrollIntoView(child.ref, child.panelId, child.type, child.customTopOffset);
-    if (child.type === 'filter') {
-      activateFilter(child.id);
+  const handleItemClicked = (item: ContentOutlineItemContextProps) => {
+    if (item.level === 'child' && item.type === 'filter') {
+      const activeParent = outlineItems.find((parent) => {
+        return parent.children?.find((child) => child.id === item.id);
+      });
+
+      if (activeParent) {
+        scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.type, activeParent.customTopOffset);
+      }
     } else {
+      scrollIntoView(item.ref, item.panelId, item.type, item.customTopOffset);
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'select_section',
-        type: child.panelId,
+        type: item.panelId,
       });
     }
   };
@@ -151,16 +149,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       }
     }
   }, [outlineItems, verticalScroll]);
-
-  const activateFilter = (filterId: string) => {
-    const activeParent = outlineItems.find((item) => {
-      return item.children?.find((child) => child.id === filterId);
-    });
-
-    if (activeParent) {
-      handleItemClicked(activeParent);
-    }
-  };
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
