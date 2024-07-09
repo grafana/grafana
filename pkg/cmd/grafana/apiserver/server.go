@@ -110,6 +110,10 @@ func (o *APIServerOptions) Config(tracer tracing.Tracer) (*genericapiserver.Reco
 		}
 	}
 
+	if o.Options.ExtraOptions.DevMode {
+		o.factory.EnableDevMode()
+	}
+
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 

@@ -34,6 +34,9 @@ type APIServerFactory interface {
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
+	// Set dev mode
+	EnableDevMode()
+
 	// Any optional middlewares this factory wants configured via apiserver's BuildHandlerChain facility
 	GetOptionalMiddlewares(tracer tracing.Tracer) []web.Middleware
 
@@ -49,6 +52,9 @@ func GetDummyAPIFactory() APIServerFactory {
 }
 
 type DummyAPIFactory struct{}
+
+func (p *DummyAPIFactory) EnableDevMode() {
+}
 
 func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
 	return nil
