@@ -86,3 +86,11 @@ export const hasQueryExportSupport = <TQuery extends SchemaDataQuery>(
   }
   return 'exportToAbstractQueries' in datasource;
 };
+
+/**
+ * Unknown query represents a query extended by plugins with unkown properties
+ * for migration purposes
+ */
+export interface UnknownQuery extends SchemaDataQuery {
+  [key: string]: any;
+}

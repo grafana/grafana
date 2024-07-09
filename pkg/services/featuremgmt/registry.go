@@ -1372,6 +1372,12 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:        "queryMigrations",
+			Description: "Run query migrations before executing queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",
 			Description:  "Enables cross account observability for Cloudwatch Metric Insights",
 			Stage:        FeatureStageExperimental,

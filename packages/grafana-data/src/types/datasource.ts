@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
-import { DataSourceRef } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
@@ -13,11 +13,11 @@ import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
-import { DataQuery } from './query';
 import { Scope } from './scopes';
 import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+import { UnknownQuery } from './query';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -373,6 +373,13 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
+
+  /**
+   * Optionally, you can implement migrateQuery to handle query migrations when the query structure changes.
+   * Currently behind the feature flag: queryMigrations
+   * @alpha -- experimental
+   */
+  migrateQuery?(query: UnknownQuery): TQuery | Promise<TQuery>;
 }
 
 /**

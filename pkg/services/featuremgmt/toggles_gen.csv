@@ -181,4 +181,5 @@ alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
 dashboardRestoreUI,experimental,@grafana/grafana-frontend-platform,false,false,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 bodyScrolling,experimental,@grafana/grafana-frontend-platform,false,false,true
+queryMigrations,experimental,@grafana/plugins-platform-backend,false,false,false
 cloudwatchMetricInsightsCrossAccount,experimental,@grafana/aws-datasources,false,false,true

@@ -1,7 +1,7 @@
 // Libraries
 import { isString, map as isArray } from 'lodash';
-import { from, merge, Observable, of, timer } from 'rxjs';
-import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
+import { combineLatest, from, merge, Observable, of, timer } from 'rxjs';
+import { catchError, concatAll, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
 
 // Utils & Services
 // Types
@@ -186,6 +186,41 @@ export function runRequest(
   return merge(timer(200).pipe(mapTo(state.panelData), takeUntil(dataObservable)), dataObservable);
 }
 
+function migrateQueries(request: DataQueryRequest, datasource: DataSourceApi, queryFunction?: typeof datasource.query) {
+  const migratedQueries = request.targets.map((t) => {
+    try {
+      const migrated = datasource.migrateQuery!(t);
+      // Check if migrated is a Promise
+      if ('then' in migrated) {
+        return from(migrated);
+      } else {
+        // Check if migrated is a valid query
+        if ('refId' in migrated) {
+          return from(Promise.resolve(migrated));
+        }
+        console.error(`Query migration did not return a valid query for ${t.refId}, skipping migration`);
+        return from(Promise.resolve(t));
+      }
+    } catch (error) {
+      // Sync errors are caught here
+      console.error('Error migrating query, skipping migration:', error);
+      return from(Promise.resolve(t));
+    }
+  });
+  return combineLatest(migratedQueries).pipe(
+    catchError((error) => {
+      // Async errors are caught here
+      console.error('Error migrating query, skipping migration:', error);
+      return of(request.targets);
+    }),
+    map((targets) => {
+      request.targets = targets;
+      return queryFunction ? queryFunction(request) : datasource.query(request);
+    }),
+    concatAll()
+  );
+}
+
 export function callQueryMethod(
   datasource: DataSourceApi,
   request: DataQueryRequest,
@@ -219,6 +254,10 @@ export function callQueryMethod(
 
   if (request.targets.length === 0) {
     return of<DataQueryResponse>({ data: [] });
+  }
+
+  if (config.featureToggles.queryMigrations && datasource.migrateQuery) {
+    return migrateQueries(request, datasource, queryFunction);
   }
 
   // Otherwise it is a standard datasource request

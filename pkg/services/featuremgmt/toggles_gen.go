@@ -735,6 +735,10 @@ const (
 	// Adjusts Page to make body the scrollable element
 	FlagBodyScrolling = "bodyScrolling"
 
+	// FlagQueryMigrations
+	// Run query migrations before executing queries
+	FlagQueryMigrations = "queryMigrations"
+
 	// FlagCloudwatchMetricInsightsCrossAccount
 	// Enables cross account observability for Cloudwatch Metric Insights
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"

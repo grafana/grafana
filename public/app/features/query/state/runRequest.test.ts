@@ -11,7 +11,7 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
-import { setEchoSrv } from '@grafana/runtime';
+import { config, setEchoSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DataQuery } from '@grafana/schema';
 
@@ -410,6 +410,7 @@ describe('callQueryMethod', () => {
   let filterQuerySpy: jest.SpyInstance;
   let querySpy: jest.SpyInstance;
   let defaultQuerySpy: jest.SpyInstance;
+  let migrateQuerySpy: jest.SpyInstance;
   let ds: DataSourceApi;
 
   const setup = ({
@@ -417,11 +418,13 @@ describe('callQueryMethod', () => {
     filterQuery,
     getDefaultQuery,
     queryFunction,
+    migrateQuery,
   }: {
     targets: TestQuery[];
     getDefaultQuery?: (app: CoreApp) => Partial<TestQuery>;
     filterQuery?: typeof ds.filterQuery;
     queryFunction?: typeof ds.query;
+    migrateQuery?: typeof ds.migrateQuery;
   }) => {
     request = {
       range: {
@@ -448,12 +451,17 @@ describe('callQueryMethod', () => {
       ds.getDefaultQuery = getDefaultQuery;
       defaultQuerySpy = jest.spyOn(ds, 'getDefaultQuery');
     }
+    if (migrateQuery) {
+      ds.migrateQuery = migrateQuery;
+      migrateQuerySpy = jest.spyOn(ds, 'migrateQuery');
+    }
     querySpy = jest.spyOn(ds, 'query');
-    callQueryMethod(ds, request, queryFunction);
+    return callQueryMethod(ds, request, queryFunction);
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles.queryMigrations = undefined;
   });
 
   it('Should call filterQuery and exclude them from the request', async () => {
@@ -589,6 +597,102 @@ describe('callQueryMethod', () => {
         ],
       })
     );
+  });
+
+  it('Should migrate a query synchronously', async () => {
+    config.featureToggles.queryMigrations = true;
+    const s = setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+      ],
+      migrateQuery: (query) => {
+        return { ...query, q: 'SUM(foo2)' };
+      },
+    });
+    // Wait for the observable to complete
+    await new Promise((d) => s.subscribe(() => d(undefined)));
+    expect(migrateQuerySpy).toHaveBeenCalledTimes(1);
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [{ q: 'SUM(foo2)', refId: 'A' }],
+      })
+    );
+  });
+
+  it('Should migrate a query asynchronously', async () => {
+    config.featureToggles.queryMigrations = true;
+    const s = setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+      ],
+      migrateQuery: (query) => {
+        return Promise.resolve({ ...query, q: 'SUM(foo2)' });
+      },
+    });
+    // Wait for the observable to complete
+    await new Promise((d) => s.subscribe(() => d(undefined)));
+    expect(migrateQuerySpy).toHaveBeenCalledTimes(1);
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [{ q: 'SUM(foo2)', refId: 'A' }],
+      })
+    );
+  });
+
+  it('Should catch an error in synchronous migration code', async () => {
+    console.error = jest.fn();
+    config.featureToggles.queryMigrations = true;
+    const s = setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+      ],
+      migrateQuery: (query) => {
+        throw new Error('Oh no');
+      },
+    });
+    // Wait for the observable to complete
+    await new Promise((d) => s.subscribe(() => d(undefined)));
+    expect(migrateQuerySpy).toHaveBeenCalledTimes(1);
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [{ q: 'SUM(foo)', refId: 'A' }],
+      })
+    );
+    expect(console.error).toHaveBeenCalledWith('Error migrating query, skipping migration:', expect.any(Error));
+  });
+
+  it('Should catch an error in asynchronous migration code', async () => {
+    console.error = jest.fn();
+    config.featureToggles.queryMigrations = true;
+    const s = setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+      ],
+      migrateQuery: (query) => {
+        return Promise.reject(new Error('Oh no'));
+      },
+    });
+    // Wait for the observable to complete
+    await new Promise((d) => s.subscribe(() => d(undefined)));
+    expect(migrateQuerySpy).toHaveBeenCalledTimes(1);
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [{ q: 'SUM(foo)', refId: 'A' }],
+      })
+    );
+    expect(console.error).toHaveBeenCalledWith('Error migrating query, skipping migration:', expect.any(Error));
   });
 });
 
