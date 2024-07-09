@@ -918,6 +918,16 @@
     }
   },
   "migrate-to-cloud": {
+    "build-snapshot": {
+      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
+      "title": "No snapshot exists",
+      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
+    },
+    "building-snapshot": {
+      "description": "We're creating a point-in-time snapshot of the current state of this installation. Once the snapshot is complete. you'll be able to upload it to Grafana Cloud.",
+      "description-eta": "Creating a snapshot typically takes less than two minutes.",
+      "title": "Building installation snapshot"
+    },
     "can-i-move": {
       "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
       "link-title": "Learn about migrating other settings",
@@ -1020,14 +1030,20 @@
       "unknown": "Unknown"
     },
     "summary": {
+      "cancel-snapshot": "Cancel snapshot",
       "disconnect": "Disconnect",
       "disconnect-error-description": "See the Grafana server logs for more details",
       "disconnect-error-title": "There was an error disconnecting",
+      "errored-resource-count": "Errors",
       "run-migration-error-description": "See the Grafana server logs for more details",
       "run-migration-error-title": "There was an error migrating your resources",
+      "snapshot-date": "Snapshot timestamp",
+      "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
+      "successful-resource-count": "Successfully migrated",
       "target-stack-title": "Uploading to",
-      "upload-migration": "Upload & migrate snapshot"
+      "total-resource-count": "Total resources",
+      "upload-migration": "Upload snapshot"
     },
     "token-status": {
       "active": "Token created and active",
