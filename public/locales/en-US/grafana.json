@@ -56,10 +56,61 @@
     "pause": "Pause evaluation"
   },
   "alerting": {
+    "central-alert-history": {
+      "details": {
+        "annotations": "Annotations",
+        "error": "Error loading rule for this event.",
+        "loading": "Loading...",
+        "no-annotations": "No annotations",
+        "no-recognized-state": "No recognized state",
+        "no-values": "No values",
+        "not-found": "Rule not found for this event.",
+        "not-grafana-rule": "Rule is not a Grafana rule",
+        "number-transitions": "State transitions for selected period",
+        "state": {
+          "alerting": "Alerting",
+          "error": "Error",
+          "no-data": "No data",
+          "normal": "Normal",
+          "pending": "Pending"
+        },
+        "state-transitions": "State transition",
+        "unknown-event-state": "Unknown",
+        "unknown-rule": "Unknown",
+        "value-in-transition": "Value in transition"
+      },
+      "error": "Something went wrong loading the alert state history",
+      "filter": {
+        "info": {
+          "label1": "Filter events using label querying without spaces, ex:",
+          "label2": "Invalid use of spaces:",
+          "label3": "Valid use of spaces:",
+          "label4": "Filter alerts using label querying without braces, ex:"
+        }
+      }
+    },
     "contact-points": {
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
+      }
+    },
+    "policies": {
+      "metadata": {
+        "timingOptions": {
+          "groupInterval": {
+            "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
+            "label": "Wait <1></1> before sending updates"
+          },
+          "groupWait": {
+            "description": "How long to initially wait to send a notification for a group of alert instances.",
+            "label": "Wait <1></1> to group instances"
+          },
+          "repeatInterval": {
+            "description": "How often notifications are sent if the group of alerts has not changed since the last notification.",
+            "label": "Repeated every <1></1>"
+          }
+        }
       }
     }
   },
@@ -153,17 +204,6 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
-    }
-  },
-  "central-alert-history": {
-    "error": "Something went wrong loading the alert state history",
-    "filter": {
-      "info": {
-        "label1": "Filter events using label querying without spaces, ex:",
-        "label2": "Invalid use of spaces:",
-        "label3": "Valid use of spaces:",
-        "label4": "Filter alerts using label querying without braces, ex:"
-      }
     }
   },
   "clipboard-button": {
@@ -446,6 +486,8 @@
       "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
       "panel-options-graph-tooltip-label": "Graph tooltip",
       "panel-options-label": "Panel options",
+      "panels-preload-description": "When enabled all panels will start loading as soon as the dashboard has been loaded.",
+      "panels-preload-label": "Preload panels",
       "tags-label": "Tags",
       "title": "General",
       "title-label": "Title"
@@ -859,6 +901,16 @@
     }
   },
   "migrate-to-cloud": {
+    "build-snapshot": {
+      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
+      "title": "No snapshot exists",
+      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
+    },
+    "building-snapshot": {
+      "description": "We're creating a point-in-time snapshot of the current state of this installation. Once the snapshot is complete. you'll be able to upload it to Grafana Cloud.",
+      "description-eta": "Creating a snapshot typically takes less than two minutes.",
+      "title": "Building installation snapshot"
+    },
     "can-i-move": {
       "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
       "link-title": "Learn about migrating other settings",
@@ -902,7 +954,7 @@
       "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
       "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
       "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
-      "title": "How to get started"
+      "title": "Performing a migration"
     },
     "is-it-secure": {
       "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
@@ -910,12 +962,11 @@
       "title": "Is it secure?"
     },
     "migrate-to-this-stack": {
-      "body": "Some configuration from your self-managed Grafana instance can be automatically copied to this cloud stack.",
+      "body": "You can migrate some resources from your self-managed Grafana installation to this cloud stack. To do this securely, you'll need to generate a migration token. Your self-managed instance will use the token to authenticate with this cloud stack.",
       "link-title": "View the full migration guide",
-      "title": "Migrate configuration to this stack"
+      "title": "Let us help you migrate to this stack"
     },
     "migration-token": {
-      "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
       "delete-modal-cancel": "Cancel",
       "delete-modal-confirm": "Delete",
@@ -931,8 +982,7 @@
       "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
       "modal-field-label": "Token",
       "modal-title": "Migration token created",
-      "status": "Current status: <1></1>",
-      "title": "Migration token"
+      "status": "Current status: <1></1>"
     },
     "pdc": {
       "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
@@ -963,14 +1013,20 @@
       "unknown": "Unknown"
     },
     "summary": {
+      "cancel-snapshot": "Cancel snapshot",
       "disconnect": "Disconnect",
       "disconnect-error-description": "See the Grafana server logs for more details",
       "disconnect-error-title": "There was an error disconnecting",
+      "errored-resource-count": "Errors",
       "run-migration-error-description": "See the Grafana server logs for more details",
       "run-migration-error-title": "There was an error migrating your resources",
+      "snapshot-date": "Snapshot timestamp",
+      "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
+      "successful-resource-count": "Successfully migrated",
       "target-stack-title": "Uploading to",
-      "upload-migration": "Upload & migrate snapshot"
+      "total-resource-count": "Total resources",
+      "upload-migration": "Upload snapshot"
     },
     "token-status": {
       "active": "Token created and active",
@@ -1636,7 +1692,7 @@
     "restore-modal": {
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
