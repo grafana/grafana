@@ -14,9 +14,15 @@ export interface Props {
   disabled?: boolean;
 }
 
-
 export const AzureCredentialsForm = (props: Props) => {
-  const { managedIdentityEnabled, clientPasswordCredentialsEnabled, credentials, azureCloudOptions, onCredentialsChange, disabled } = props;
+  const {
+    managedIdentityEnabled,
+    clientPasswordCredentialsEnabled,
+    credentials,
+    azureCloudOptions,
+    onCredentialsChange,
+    disabled,
+  } = props;
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
@@ -35,17 +41,16 @@ export const AzureCredentialsForm = (props: Props) => {
     },
   ];
   if (managedIdentityEnabled) {
-    authTypeOptions.push(  {
+    authTypeOptions.push({
       value: AzureAuthType.MSI,
       label: 'Managed Identity',
-    })
+    });
   }
   if (clientPasswordCredentialsEnabled) {
-    authTypeOptions.push(  
-      {
-        value: AzureAuthType.AD_PASSWORD,
-        label: 'Password'
-      })
+    authTypeOptions.push({
+      value: AzureAuthType.AD_PASSWORD,
+      label: 'Password',
+    });
   }
 
   const onInputChange = ({ property, value }: { property: keyof AzureCredentialsType; value: string }) => {
@@ -178,87 +183,81 @@ export const AzureCredentialsForm = (props: Props) => {
       )}
       {credentials.authType === AzureAuthType.AD_PASSWORD && (
         <>
-        <Field
-          label="User Id"
-          required
-          htmlFor="user-id"
-          invalid={!credentials.userId}
-          error={'User ID is required'}
-        >
-          <Input
-            width={45}
-            value={credentials.userId || ''}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              const value = event.target.value;
-              onInputChange({ property: 'userId', value });
-            }}
-            disabled={disabled}
-            aria-label="User ID"
-          />
-        </Field>
-        <Field
-          label="Application Client ID"
-          required
-          htmlFor="application-client-id"
-          invalid={!credentials.clientId}
-          error={'Application Client ID is required'}
-        >
-          <Input
-            width={45}
-            value={credentials.clientId || ''}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              const value = event.target.value;
-              onInputChange({ property: 'clientId', value });
-            }}
-            disabled={disabled}
-            aria-label="Application Client ID"
-          />
-        </Field>
-        {!disabled &&
-          (typeof credentials.password === 'symbol' ? (
-            <Field label="Password" htmlFor="password" required>
-              <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
+          <Field label="User Id" required htmlFor="user-id" invalid={!credentials.userId} error={'User ID is required'}>
+            <Input
+              width={45}
+              value={credentials.userId || ''}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const value = event.target.value;
+                onInputChange({ property: 'userId', value });
+              }}
+              disabled={disabled}
+              aria-label="User ID"
+            />
+          </Field>
+          <Field
+            label="Application Client ID"
+            required
+            htmlFor="application-client-id"
+            invalid={!credentials.clientId}
+            error={'Application Client ID is required'}
+          >
+            <Input
+              width={45}
+              value={credentials.clientId || ''}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const value = event.target.value;
+                onInputChange({ property: 'clientId', value });
+              }}
+              disabled={disabled}
+              aria-label="Application Client ID"
+            />
+          </Field>
+          {!disabled &&
+            (typeof credentials.password === 'symbol' ? (
+              <Field label="Password" htmlFor="password" required>
+                <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
+                  <Input
+                    aria-label="Password"
+                    placeholder="configured"
+                    disabled={true}
+                    data-testid={'password'}
+                    width={45}
+                  />
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() => {
+                      onInputChange({ property: 'password', value: '' });
+                    }}
+                    disabled={disabled}
+                  >
+                    Reset
+                  </Button>
+                </div>
+              </Field>
+            ) : (
+              <Field
+                label="Password"
+                required
+                htmlFor="password"
+                invalid={!credentials.password}
+                error={'Password is required'}
+              >
                 <Input
-                  aria-label="Password"
-                  placeholder="configured"
-                  disabled={true}
-                  data-testid={'password'}
                   width={45}
-                />
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={() => {
-                    onInputChange({ property: 'password', value: '' });
+                  aria-label="Password"
+                  value={credentials.password || ''}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const value = event.target.value;
+                    onInputChange({ property: 'password', value });
                   }}
+                  id="password"
                   disabled={disabled}
-                >
-                  Reset
-                </Button>
-              </div>
-            </Field>
-          ) : (
-            <Field
-              label="Password"
-              required
-              htmlFor="password"
-              invalid={!credentials.password}
-              error={'Password is required'}
-            >
-              <Input
-                width={45}
-                aria-label="Password"
-                value={credentials.password || ''}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                  const value = event.target.value;
-                  onInputChange({ property: 'password', value });
-                }}
-                id="password"
-                disabled={disabled}
-              />
-            </Field>
-          ))}
-      </>
+                />
+              </Field>
+            ))}
+        </>
       )}
     </div>
   );

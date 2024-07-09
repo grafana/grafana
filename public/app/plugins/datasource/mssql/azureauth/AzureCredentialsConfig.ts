@@ -76,13 +76,13 @@ export const getCredentials = (
         clientId: credentials.clientId,
         clientSecret: getSecret(clientSecretStoredServerSide, clientSecret),
       };
-      case AzureAuthType.AD_PASSWORD:
-        return {
-          authType: AzureAuthType.AD_PASSWORD,
-          userId: credentials.userId,
-          clientId: credentials.clientId,
-          password: getSecret(passwordStoredServerSide, password)
-        }
+    case AzureAuthType.AD_PASSWORD:
+      return {
+        authType: AzureAuthType.AD_PASSWORD,
+        userId: credentials.userId,
+        clientId: credentials.clientId,
+        password: getSecret(passwordStoredServerSide, password),
+      };
   }
 };
 
@@ -163,6 +163,5 @@ export const updateCredentials = (
           password: typeof credentials.password === 'symbol',
         },
       };
-
   }
 };

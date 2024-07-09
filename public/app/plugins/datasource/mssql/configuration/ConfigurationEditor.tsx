@@ -48,7 +48,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const styles = useStyles2(getStyles);
   const jsonData = dsSettings.jsonData;
   const azureAuthIsSupported = config.azureAuthEnabled;
-  const azureclientPasswordCredentialsEnabled = config.azure.clientPasswordCredentialsEnabled
+  const azureclientPasswordCredentialsEnabled = config.azure.clientPasswordCredentialsEnabled;
 
   const azureAuthSettings: AzureAuthConfigType = {
     azureAuthIsSupported,
@@ -109,7 +109,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     if (azureAuthIsSupported) {
       return [
         ...basicAuthenticationOptions,
-        { value: MSSQLAuthenticationType.azureAuth, label: MSSQLAuthenticationType.azureAuth},
+        { value: MSSQLAuthenticationType.azureAuth, label: MSSQLAuthenticationType.azureAuth },
       ];
     }
 
