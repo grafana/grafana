@@ -163,6 +163,8 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
+    // Needed to calculate item height
+    const prevRepeatCount = this._prevRepeatValues?.length ?? values.length;
     this._prevRepeatValues = values;
     const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const repeatedPanels: VizPanel[] = [];
@@ -188,16 +190,15 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
     const direction = this.getRepeatDirection();
     const stateChange: Partial<DashboardGridItemState> = { repeatedPanels: repeatedPanels };
-    const itemHeight = this.state.itemHeight ?? 10;
-    const prevHeight = this.state.height;
-    const maxPerRow = this.getMaxPerRow();
+    const prevHeight = this.state.height ?? 0;
+    const maxPerRow = direction === 'h' ? this.getMaxPerRow() : 1;
+    const prevRowCount = Math.ceil(prevRepeatCount / maxPerRow);
+    const newRowCount = Math.ceil(repeatedPanels.length / maxPerRow);
 
-    if (direction === 'h') {
-      const rowCount = Math.ceil(repeatedPanels.length / maxPerRow);
-      stateChange.height = rowCount * itemHeight;
-    } else {
-      stateChange.height = repeatedPanels.length * itemHeight;
-    }
+    // If item height is not defined, calculate based on total height and row count
+    const itemHeight = this.state.itemHeight ?? prevHeight / prevRowCount;
+    stateChange.itemHeight = itemHeight;
+    stateChange.height = Math.ceil(newRowCount * itemHeight);
 
     this.setState(stateChange);
 
