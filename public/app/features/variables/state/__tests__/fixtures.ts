@@ -204,7 +204,6 @@ export function createSnapshotVariable(input: Partial<SnapshotVariableModel> = {
   return {
     ...createBaseVariableModel('snapshot'),
     query: '',
-    multi: false,
     current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
     options: [],
     ...input,
