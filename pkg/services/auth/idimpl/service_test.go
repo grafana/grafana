@@ -63,7 +63,7 @@ func TestService_SignIdentity(t *testing.T) {
 		},
 	}
 
-	t.Run("should sing identity", func(t *testing.T) {
+	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
@@ -74,13 +74,13 @@ func TestService_SignIdentity(t *testing.T) {
 		require.NotEmpty(t, token)
 	})
 
-	t.Run("should sing identity with authenticated by if user is externally authenticated", func(t *testing.T) {
+	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), AuthenticatedBy: login.AzureADAuthModule})
+		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), AuthenticatedBy: login.AzureADAuthModule, Login: "U1"})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
@@ -89,5 +89,6 @@ func TestService_SignIdentity(t *testing.T) {
 		claims := &auth.IDClaims{}
 		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
 		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
+		assert.Equal(t, "U1", claims.Rest.Login)
 	})
 }
