@@ -96,6 +96,8 @@ When sharing URLs with ad hoc filters, remember to encode the URL. In the above 
 
 To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window` query parameters. Because these are not variables, they do not require the `var-` prefix. For more information, see the [Linking overview](ref:linking-overview).
 
+<!-- add example here -->
+
 ## Variables in dashboard links
 
-Grafana can add variables to dashboard links when you generate them from a dashboard's settings. For more information and steps to add variables, refer to [Manage dashboard links](ref:manage-dashboard-links).
+You can add variables to dashboard links that you create in a dashboard's settings. For more information and steps to add variables, refer to [Manage dashboard links](ref:manage-dashboard-links).
