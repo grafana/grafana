@@ -45,7 +45,6 @@ func TestBackendHappyPath(t *testing.T) {
 		rv, err = writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(3), rv)
-
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
