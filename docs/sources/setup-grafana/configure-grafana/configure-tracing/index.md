@@ -25,7 +25,9 @@ when investigating certain performance problems. It's _not_ recommended to have 
 ## Turn on profiling and collect profiles
 
 The `grafana-server` can be started with the command-line option `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
-`-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. Further, `-profile-block-rate` controls the fraction of goroutine blocking events that are reported in the blocking profile, default `1` (100%) for backward compatibility reasons, and `-profile-mutex-rate` controls the fraction of mutex contention events that are reported in the mutex profile, default 0 (0%). The higher the fraction the more overhead it adds to normal operations. Running Grafana with profiling enabled and without block and mutex profiling enabled should only add a fraction of overhead and is suitable for [continuous profiling](https://grafana.com/oss/pyroscope/). Adding a small fraction of block and mutex profiling, such as 10-5 (10%-20%) should in general be fine.
+`-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. Further, [`-profile-block-rate`](https://pkg.go.dev/runtime#SetBlockProfileRate) controls the fraction of goroutine blocking events that are reported in the blocking profile, default `1` (i.e. track every event) for backward compatibility reasons, and [`-profile-mutex-rate`](https://pkg.go.dev/runtime#SetMutexProfileFraction) controls the fraction of mutex contention events that are reported in the mutex profile, default 0 (0%). The higher the fraction (that is, the smaller this value) the more overhead it adds to normal operations.
+
+Running Grafana with profiling enabled and without block and mutex profiling enabled should only add a fraction of overhead and is suitable for [continuous profiling](https://grafana.com/oss/pyroscope/). Adding a small fraction of block and mutex profiling, such as 10-5 (10%-20%) should in general be fine.
 
 Enable profiling:
 
@@ -41,7 +43,7 @@ Enable profiling with block and mutex profiling enabled with a fraction of 20%:
 
 Note that `pprof` debugging endpoints are served on a different port than the Grafana HTTP server. Check what debugging endpoints are available by browsing `http://<profile-addr><profile-port>/debug/pprof`.
 
-There's some additional [godeltaprof](https://github.com/grafana/pyroscope-go/tree/main/godeltaprof) endpoints available which is more suitable in a continuous profiling scenario. These endpoints are `/debug/pprof/delta_heap`, `/debug/pprof/delta_block`, `/debug/pprof/delta_mutex`.
+There are some additional [godeltaprof](https://github.com/grafana/pyroscope-go/tree/main/godeltaprof) endpoints available which are more suitable in a continuous profiling scenario. These endpoints are `/debug/pprof/delta_heap`, `/debug/pprof/delta_block`, `/debug/pprof/delta_mutex`.
 
 You can configure or override profiling settings using environment variables:
 
