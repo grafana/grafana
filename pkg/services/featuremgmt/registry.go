@@ -1079,6 +1079,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
+			Expression:   "true", // enabled by default,
 		},
 		{
 			Name:        "newPDFRendering",
