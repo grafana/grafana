@@ -69,7 +69,7 @@ func (db *ResourceDB) init() error {
 
 	// TODO: This should be renamed resource_api
 	getter := &sectionGetter{
-		DynamicSection: db.cfg.SectionWithEnvOverrides("entity_api"),
+		DynamicSection: db.cfg.SectionWithEnvOverrides("resource_api"),
 	}
 
 	dbType := getter.Key("db_type").MustString("")

@@ -278,7 +278,6 @@ func TestQueries(t *testing.T) {
 				Name: "single path",
 				Data: &sqlResourceVersionRequest{
 					SQLTemplate:     new(sqltemplate.SQLTemplate),
-					Key:             &resource.ResourceKey{},
 					resourceVersion: new(resourceVersion),
 				},
 				Expected: expected{
@@ -295,7 +294,6 @@ func TestQueries(t *testing.T) {
 				Name: "increment resource version",
 				Data: &sqlResourceVersionRequest{
 					SQLTemplate: new(sqltemplate.SQLTemplate),
-					Key:         &resource.ResourceKey{},
 				},
 				Expected: expected{
 					"resource_version_inc_mysql_sqlite.sql": dialects{
@@ -311,7 +309,6 @@ func TestQueries(t *testing.T) {
 				Name: "single path",
 				Data: &sqlResourceVersionRequest{
 					SQLTemplate: new(sqltemplate.SQLTemplate),
-					Key:         &resource.ResourceKey{},
 				},
 				Expected: expected{
 					"resource_version_insert_mysql_sqlite.sql": dialects{

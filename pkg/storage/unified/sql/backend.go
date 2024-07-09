@@ -105,8 +105,6 @@ func (b *backend) Init() error {
 	b.sess = sess
 	b.dialect = migrator.NewDialect(engine.DriverName())
 
-	// TODO.... set up the broadcaster
-
 	return nil
 }
 
@@ -178,16 +176,18 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		newVersion = rv
 
 		// 5. Update the RV in both resource and resource_history
-		rvReq := sqlResourceUpdateRVRequest{
+		if _, err = exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
 			SQLTemplate:     sqltemplate.New(b.sqlDialect),
 			GUID:            guid,
 			ResourceVersion: newVersion,
-		}
-
-		if _, err = exec(ctx, tx, sqlResourceHistoryUpdateRV, rvReq); err != nil {
+		}); err != nil {
 			return fmt.Errorf("update history rv: %w", err)
 		}
-		if _, err = exec(ctx, tx, sqlResourceUpdateRV, rvReq); err != nil {
+		if _, err = exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
+			SQLTemplate:     sqltemplate.New(b.sqlDialect),
+			GUID:            guid,
+			ResourceVersion: newVersion,
+		}); err != nil {
 			return fmt.Errorf("update resource rv: %w", err)
 		}
 		return nil
@@ -239,17 +239,20 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			return err
 		}
 		newVersion = rv
-		rvReq := sqlResourceUpdateRVRequest{
+
+		// 5. Update the RV in both resource and resource_history
+		if _, err = exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
 			SQLTemplate:     sqltemplate.New(b.sqlDialect),
 			GUID:            guid,
 			ResourceVersion: newVersion,
-		}
-
-		// 5. Update the RV in both resource and resource_history
-		if _, err = exec(ctx, tx, sqlResourceHistoryUpdateRV, rvReq); err != nil {
+		}); err != nil {
 			return fmt.Errorf("update history rv: %w", err)
 		}
-		if _, err = exec(ctx, tx, sqlResourceUpdateRV, rvReq); err != nil {
+		if _, err = exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
+			SQLTemplate:     sqltemplate.New(b.sqlDialect),
+			GUID:            guid,
+			ResourceVersion: newVersion,
+		}); err != nil {
 			return fmt.Errorf("update resource rv: %w", err)
 		}
 
@@ -364,7 +367,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 		ResourceVersion: 0,
 	}
 
-	err := b.sqlDB.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+	err := b.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		var err error
 
 		// TODO: Here the lastest RV might be lower than the actual latest RV
@@ -379,34 +382,38 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 		if req.Limit > 0 {
 			req.Limit++
 		}
-		readReq := sqlResourceListRequest{
+		listReq := sqlResourceListRequest{
 			SQLTemplate: sqltemplate.New(b.sqlDialect),
 			Request:     req,
 			Response:    new(resource.ResourceWrapper),
 		}
-		query, err := sqltemplate.Execute(sqlResourceList, readReq)
+		query, err := sqltemplate.Execute(sqlResourceList, listReq)
 		if err != nil {
 			return fmt.Errorf("execute SQL template to list resources: %w", err)
 		}
-		rows, err := tx.QueryContext(ctx, query, readReq.GetArgs()...)
+
+		rows, err := tx.QueryContext(ctx, query, listReq.GetArgs()...)
 		if err != nil {
-			return fmt.Errorf("list resources: %w", err)
+			return fmt.Errorf("list latest resources: %w", err)
 		}
+		defer rows.Close()
 		for i := int64(1); rows.Next(); i++ {
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			if err := rows.Scan(readReq.GetScanDest()...); err != nil {
+			if err := rows.Scan(listReq.GetScanDest()...); err != nil {
 				return fmt.Errorf("scan row #%d: %w", i, err)
 			}
-			rw := *readReq.Response
 
 			if lim > 0 && i > lim {
 				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: lim}
 				out.NextPageToken = continueToken.String()
 				break
 			}
-			out.Items = append(out.Items, &rw)
+			out.Items = append(out.Items, &resource.ResourceWrapper{
+				ResourceVersion: listReq.Response.ResourceVersion,
+				Value:           listReq.Response.Value,
+			})
 		}
 
 		return nil
@@ -434,7 +441,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 		ResourceVersion: rv,
 	}
 
-	err := b.sqlDB.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+	err := b.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		var err error
 
 		// Fetch one extra row for Limit
@@ -442,7 +449,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 		if lim > 0 {
 			req.Limit++
 		}
-		readReq := sqlResourceHistoryListRequest{
+		listReq := sqlResourceHistoryListRequest{
 			SQLTemplate: sqltemplate.New(b.sqlDialect),
 			Request: &historyListRequest{
 				ResourceVersion: rv,
@@ -452,29 +459,32 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 			},
 			Response: new(resource.ResourceWrapper),
 		}
-		query, err := sqltemplate.Execute(sqlResourceHistoryList, readReq)
+		query, err := sqltemplate.Execute(sqlResourceHistoryList, listReq)
 		if err != nil {
 			return fmt.Errorf("execute SQL template to list resources at revision: %w", err)
 		}
-		rows, err := tx.QueryContext(ctx, query, readReq.GetArgs()...)
+		rows, err := tx.QueryContext(ctx, query, listReq.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("list resources at revision: %w", err)
 		}
+		defer rows.Close()
 		for i := int64(1); rows.Next(); i++ {
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			if err := rows.Scan(readReq.GetScanDest()...); err != nil {
+			if err := rows.Scan(listReq.GetScanDest()...); err != nil {
 				return fmt.Errorf("scan row #%d: %w", i, err)
 			}
-			rw := *readReq.Response
 
 			if lim > 0 && i > lim {
 				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: offset + lim}
 				out.NextPageToken = continueToken.String()
 				break
 			}
-			out.Items = append(out.Items, &rw)
+			out.Items = append(out.Items, &resource.ResourceWrapper{
+				ResourceVersion: listReq.Response.ResourceVersion,
+				Value:           listReq.Response.Value,
+			})
 		}
 
 		return nil
@@ -527,6 +537,7 @@ func fetchLatestRV(ctx context.Context, db db.ContextExecer) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("fetch latest rv: %w", err)
 	}
+	defer rows.Close()
 	if rows.Next() {
 		rv := new(int64)
 		if err := rows.Scan(&rv); err != nil {
@@ -555,6 +566,7 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 	if err != nil {
 		return 0, fmt.Errorf("poll for resource history: %w", err)
 	}
+	defer rows.Close()
 	next := since
 	for i := 1; rows.Next(); i++ {
 		// check if the context is done
@@ -593,12 +605,11 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
 
 	// 1. Increment the resource version
-	req := sqlResourceVersionRequest{
-		SQLTemplate:     sqltemplate.New(d),
-		Key:             key,
-		resourceVersion: new(resourceVersion),
-	}
-	res, err := exec(ctx, x, sqlResourceVersionInc, req)
+	res, err := exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
+		SQLTemplate: sqltemplate.New(d),
+		Group:       key.Group,
+		Resource:    key.Resource,
+	})
 	if err != nil {
 		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
@@ -621,7 +632,11 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 		// complexity to the code. That would be preferrable to changing
 		// Dialect, though. The current alternative, just retrying, seems to be
 		// enough for now.
-		if _, err = exec(ctx, x, sqlResourceVersionInsert, req); err != nil {
+		if _, err = exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
+			SQLTemplate: sqltemplate.New(d),
+			Group:       key.Group,
+			Resource:    key.Resource,
+		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
 
@@ -629,8 +644,14 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 	}
 
 	// 2. Get the new version
+	req := sqlResourceVersionRequest{
+		SQLTemplate:     sqltemplate.New(d),
+		Group:           key.Group,
+		Resource:        key.Resource,
+		resourceVersion: new(resourceVersion),
+	}
 	if _, err = queryRow(ctx, x, sqlResourceVersionGet, req); err != nil {
-		return 0, fmt.Errorf("get resource version: %w", err)
+		return 0, fmt.Errorf("get the new resource version: %w", err)
 	}
 
 	return req.ResourceVersion, nil

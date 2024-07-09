@@ -64,17 +64,17 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
-	tables = append(tables, migrator.Table{
-		Name: "resource_label_set",
-		Columns: []*migrator.Column{
-			{Name: "label_set", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
-			{Name: "label", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "value", Type: migrator.DB_Text, Nullable: false},
-		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"label_set", "label"}, Type: migrator.UniqueIndex},
-		},
-	})
+	// tables = append(tables, migrator.Table{
+	// 	Name: "resource_label_set",
+	// 	Columns: []*migrator.Column{
+	// 		{Name: "label_set", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+	// 		{Name: "label", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+	// 		{Name: "value", Type: migrator.DB_Text, Nullable: false},
+	// 	},
+	// 	Indices: []*migrator.Index{
+	// 		{Cols: []string{"label_set", "label"}, Type: migrator.UniqueIndex},
+	// 	},
+	// })
 
 	tables = append(tables, migrator.Table{
 		Name: "resource_version",

@@ -182,7 +182,7 @@ func (r *resourceVersion) Results() (*resourceVersion, error) {
 
 type sqlResourceVersionRequest struct {
 	*sqltemplate.SQLTemplate
-	Key *resource.ResourceKey
+	Group, Resource string
 	*resourceVersion
 }
 

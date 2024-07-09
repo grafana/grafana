@@ -6,8 +6,8 @@ INSERT INTO {{ .Ident "resource_version" }}
     )
 
     VALUES (
-        {{ .Arg .Key.Group }},
-        {{ .Arg .Key.Resource }},
+        {{ .Arg .Group }},
+        {{ .Arg .Resource }},
         1
     )
 ;
