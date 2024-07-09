@@ -144,7 +144,7 @@ export function useUpdateRuleGroupConfiguration() {
     const action = updateRuleGroupAction({ interval });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-    const successMessage = t('alerting.rule-group.update.success', 'Successfully updated rule group');
+    const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
 
     return upsertRuleGroup({
       rulerConfig,

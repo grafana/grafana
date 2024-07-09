@@ -113,17 +113,15 @@
         }
       }
     },
-    "rule-group": {
-      "update": {
-        "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
-      }
-    },
     "rule-groups": {
       "move": {
         "success": "Ŝūččęşşƒūľľy mővęđ řūľę ģřőūp"
       },
       "rename": {
         "success": "Ŝūččęşşƒūľľy řęŉämęđ řūľę ģřőūp"
+      },
+      "update": {
+        "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
       }
     },
     "rules": {

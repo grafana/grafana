@@ -113,17 +113,15 @@
         }
       }
     },
-    "rule-group": {
-      "update": {
-        "success": "Successfully updated rule group"
-      }
-    },
     "rule-groups": {
       "move": {
         "success": "Successfully moved rule group"
       },
       "rename": {
         "success": "Successfully renamed rule group"
+      },
+      "update": {
+        "success": "Successfully updated rule group"
       }
     },
     "rules": {
