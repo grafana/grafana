@@ -78,7 +78,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/reporting/
   smtp:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#smtp
