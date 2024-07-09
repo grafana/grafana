@@ -87,6 +87,9 @@ func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider 
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracer,
+			Settings: ResultConverterSettings{
+				ForceUniqueLabels: cfg.ExpressionsForceUniqueLabelsDatasourceTypes,
+			},
 		},
 	}
 }

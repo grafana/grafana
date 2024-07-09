@@ -411,7 +411,8 @@ type Cfg struct {
 	OAuthSkipOrgRoleUpdateSync bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
-	ExpressionsEnabled bool
+	ExpressionsEnabled                          bool
+	ExpressionsForceUniqueLabelsDatasourceTypes []string
 
 	ImageUploadProvider string
 
@@ -742,6 +743,15 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
+	data := strings.Split(expressions.Key("force_unique_labels").MustString(""), ",")
+	cfg.ExpressionsForceUniqueLabelsDatasourceTypes = make([]string, 0, len(data))
+	for _, datasourceType := range data {
+		d := strings.ToLower(strings.TrimSpace(datasourceType))
+		if d == "" {
+			continue
+		}
+		cfg.ExpressionsForceUniqueLabelsDatasourceTypes = append(cfg.ExpressionsForceUniqueLabelsDatasourceTypes, d)
+	}
 }
 
 type AnnotationCleanupSettings struct {

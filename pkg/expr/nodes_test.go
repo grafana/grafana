@@ -154,7 +154,7 @@ func TestCheckIfSeriesNeedToBeFixed(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, datasource := range supportedDatasources {
-				fixer := checkIfSeriesNeedToBeFixed(tc.frames, datasource)
+				fixer := checkIfSeriesNeedToBeFixed(tc.frames, datasource, nil)
 				if tc.expectedName == "" {
 					require.Nil(t, fixer)
 				} else {

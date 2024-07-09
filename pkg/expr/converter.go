@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -14,9 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+type ResultConverterSettings struct {
+	ForceUniqueLabels []string
+}
+
 type ResultConverter struct {
 	Features featuremgmt.FeatureToggles
 	Tracer   tracing.Tracer
+	Settings ResultConverterSettings
 }
 
 func (c *ResultConverter) Convert(ctx context.Context,
@@ -90,7 +96,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 		return "no data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frames[0]}}}, nil
 	}
 
-	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, datasourceType)
+	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, datasourceType, c.Settings.ForceUniqueLabels)
 
 	dataType := "single frame series"
 	if len(filtered) > 1 {
@@ -297,8 +303,8 @@ func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueFi
 // needs to be updated so each series could be identifiable by labels.
 // NOTE: applicable only to only datasources.DS_GRAPHITE and datasources.DS_TESTDATA data sources
 // returns a function that patches the mathexp.Series with information from data.Field from which it was created if the all series need to be fixed. Otherwise, returns nil
-func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string) func(series mathexp.Series, valueField *data.Field) {
-	if !(datasourceType == datasources.DS_GRAPHITE || datasourceType == datasources.DS_TESTDATA) {
+func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string, allowed []string) func(series mathexp.Series, valueField *data.Field) {
+	if !(datasourceType == datasources.DS_GRAPHITE || datasourceType == datasources.DS_TESTDATA || slices.Contains(allowed, datasourceType)) {
 		return nil
 	}
 
