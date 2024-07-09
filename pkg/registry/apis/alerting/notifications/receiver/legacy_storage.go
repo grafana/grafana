@@ -211,13 +211,9 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
 		version = *options.Preconditions.ResourceVersion
 	}
-	p, ok := old.(*notifications.Receiver)
-	if !ok {
-		return nil, false, fmt.Errorf("expected receiver but got %s", old.GetObjectKind().GroupVersionKind())
-	}
 
-	err = s.service.DeleteReceiver(ctx, p.Spec.Title, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                                // false - will be deleted async
+	err = s.service.DeleteReceiver(ctx, uid, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
+	return old, false, err                                                                                       // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
