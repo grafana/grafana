@@ -4,7 +4,8 @@ import { DataFrame, Field as DataFrameField, DataFrameJSON, Field, FieldType } f
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { isGrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { labelsMatchMatchers } from '../../../utils/alertmanager';
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
@@ -90,7 +91,8 @@ function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[]): DataFr
   const labelsFilterValue = getLabelsFilterInQueryParams();
   const dataframesFiltered = dataFrames.filter((frame) => {
     const labels = JSON.parse(frame.name ?? ''); // in name we store the labels stringified
-    const matchers = Boolean(labelsFilterValue) ? parseMatchers(labelsFilterValue) : [];
+
+    const matchers = Boolean(labelsFilterValue) ? parsePromQLStyleMatcherLooseSafe(labelsFilterValue) : [];
     return labelsMatchMatchers(labels, matchers);
   });
   // Extract time fields from filtered data frames
