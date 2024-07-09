@@ -350,6 +350,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 					}
 					vars[refId] = res
 				} else {
+
 					// This should error in the parsing phase
 					err := fmt.Errorf("missing variable %s for %s", refId, expression.RefID)
 					qdr.Responses[refId] = backend.DataResponse{
