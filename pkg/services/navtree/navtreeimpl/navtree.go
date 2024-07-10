@@ -354,7 +354,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) && c.SignedInUser.GetOrgRole() == org.RoleAdmin {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && c.SignedInUser.GetOrgRole() == org.RoleAdmin {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
