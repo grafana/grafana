@@ -10,6 +10,7 @@ import {
 import { Stack, Text, TextLink } from '@grafana/ui';
 
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
+import { getUnitFromMetric } from '../AutomaticMetricQueries/units';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
@@ -17,7 +18,6 @@ import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
 
 import { getLabelOptions } from './utils';
-import { getUnit, getUnitFromMetric } from '../AutomaticMetricQueries/units';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
   metadata?: PromMetricsMetadataItem;
