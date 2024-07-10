@@ -94,6 +94,8 @@ Click a column title to change the sort order from default to descending to asce
 
 The table panel visualization will display a dropdown list at the bottom if the data queried contains multiple data sets.
 
+![Table Panel with multiple data sets](/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png 'Table Panel with multiple data sets')
+
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
