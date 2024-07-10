@@ -20,6 +20,7 @@ import { SearchStreamingState } from './dataquery.gen';
 import { DEFAULT_SPSS, TempoDatasource } from './datasource';
 import { formatTraceQLResponse } from './resultTransformer';
 import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
+
 function getLiveStreamKey(): string {
   return uuidv4();
 }
