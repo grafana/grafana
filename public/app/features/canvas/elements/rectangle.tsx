@@ -81,6 +81,7 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
 
     const data: TextData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,
