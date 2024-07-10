@@ -299,7 +299,13 @@ type GetSnapshotResponse struct {
 
 type GetSnapshotResponseDTO struct {
 	SnapshotDTO
-	Results []MigrateDataResponseItemDTO `json:"results"`
+	Results     []MigrateDataResponseItemDTO `json:"results"`
+	StatsRollup SnapshotResourceStats        `json:"stats"`
+}
+
+type SnapshotResourceStats struct {
+	Types    map[MigrateDataType]int `json:"types"`
+	Statuses map[ItemStatus]int      `json:"statuses"`
 }
 
 // swagger:parameters getShapshotList
