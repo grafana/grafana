@@ -4,6 +4,7 @@ import { size } from 'lodash';
 import { QueryFix, QueryHint } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PromMetricsMetadata, RuleQueryMapping } from './types';
 
 /**
@@ -209,15 +210,44 @@ export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
 
 export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): QueryHint[] {
   const hints: QueryHint[] = [];
-  const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
-    if (query.search(ruleName) > -1) {
+  const mappingForQuery = Object.keys(mapping).reduce<Record<string, any>>((acc, ruleName) => {
+    if (query.search(ruleName) === -1) {
+      return acc;
+    }
+
+    if (mapping[ruleName].length > 1) {
+      const mappingRuleIdx = getRecordingRuleIdentifierIdx(query, ruleName, mapping[ruleName]);
+
+      // No identifier detected add warning
+      if (mappingRuleIdx === -1) {
+        hints.push({
+          type: 'EXPAND_RULES_WARNING',
+          label:
+            'Query contains a recording rule but we need an identifier to properly expand it. Please add an identifier label. ',
+          fix: {
+            label: 'Expand rules',
+            action: {
+              type: 'EXPAND_RULES_WARNING',
+              query,
+            },
+          },
+        });
+        return acc;
+      } else {
+        // Identifier found.
+        return {
+          ...acc,
+          [ruleName]: mapping[ruleName][mappingRuleIdx],
+        };
+      }
+    } else {
       return {
         ...acc,
         [ruleName]: mapping[ruleName],
       };
     }
-    return acc;
   }, {});
+
   if (size(mappingForQuery) > 0) {
     const label = 'Query contains recording rules.';
     hints.push({
@@ -233,7 +263,18 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
       },
     });
   }
+
   return hints;
+}
+
+export function getRecordingRuleIdentifierIdx(
+  query: string,
+  ruleName: string,
+  mapping: RuleQueryMapping[string]
+): number {
+  const { query: visQuery } = buildVisualQueryFromString(query ?? '');
+  console.log(visQuery);
+  return -1;
 }
 
 function getQueryTokens(query: string) {

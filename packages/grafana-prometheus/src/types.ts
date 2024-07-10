@@ -180,3 +180,4 @@ export type RuleQueryMapping = {
     labels?: Record<string, string>;
   }>;
 };
+

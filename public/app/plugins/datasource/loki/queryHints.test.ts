@@ -1,4 +1,6 @@
-import { DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType, QueryHint } from '@grafana/data';
+import { getExpandRulesHints, getRecordingRuleIdentifierIdx } from '@grafana/prometheus/src/query_hints';
+import { RuleQueryMapping } from '@grafana/prometheus/src/types';
 
 import { getQueryHints } from './queryHints';
 
@@ -236,5 +238,149 @@ describe('getQueryHints', () => {
         expect.arrayContaining([expect.objectContaining({ type: 'ADD_NO_PIPELINE_ERROR' })])
       );
     });
+  });
+});
+
+describe('getExpandRulesHints', () => {
+  it('should return no hint when no rule is present in query', () => {
+    const extractedMapping: RuleQueryMapping = {};
+    const hints = getExpandRulesHints('metric_5m', extractedMapping);
+    const expected: QueryHint[] = [];
+    expect(hints).toEqual(expected);
+  });
+
+  it('should return expand rule hint, single rules', () => {
+    const extractedMapping: RuleQueryMapping = {
+      metric_5m: [
+        {
+          query: 'expanded_metric_query[5m]',
+          labels: {},
+        },
+      ],
+      metric_15m: [
+        {
+          query: 'expanded_metric_query[15m]',
+          labels: {},
+        },
+      ],
+    };
+    const hints = getExpandRulesHints('metric_5m', extractedMapping);
+    const expected = expect.arrayContaining([expect.objectContaining({ type: 'EXPAND_RULES' })]);
+    expect(hints).toEqual(expected);
+  });
+
+  it('should return no expand rule hint, if the given query does not have a label', () => {
+    const extractedMapping: RuleQueryMapping = {
+      metric_5m: [
+        {
+          query: 'expanded_metric_query_111[5m]',
+          labels: {
+            uuid: '111',
+          },
+        },
+        {
+          query: 'expanded_metric_query_222[5m]',
+          labels: {
+            uuid: '222',
+          },
+        },
+      ],
+      metric_15m: [
+        {
+          query: 'expanded_metric_query[15m]',
+          labels: {},
+        },
+      ],
+    };
+    const hints = getExpandRulesHints(
+      `sum(metric_5m{uuid="5m"} + metric_10m{uuid="10m"}) + metric_66m{uuid="66m"}`,
+      extractedMapping
+    );
+    expect(hints).toEqual([]);
+  });
+
+  it('should return expand rule warning hint, if the given query *does* have a label', () => {
+    const extractedMapping: RuleQueryMapping = {
+      metric_5m: [
+        {
+          query: 'expanded_metric_query_111[5m]',
+          labels: {
+            uuid: '111',
+          },
+        },
+        {
+          query: 'expanded_metric_query_222[5m]',
+          labels: {
+            uuid: '222',
+          },
+        },
+      ],
+      metric_15m: [
+        {
+          query: 'expanded_metric_query[15m]',
+          labels: {},
+        },
+      ],
+    };
+    const query = `metric_5m{uuid="111"}`;
+    const hints = getExpandRulesHints('metric_5m{uuid="111"}', extractedMapping);
+    expect(hints).toEqual([
+      {
+        type: 'EXPAND_RULES',
+        label: 'Query contains recording rules.',
+        fix: {
+          label: 'Expand rules',
+          action: {
+            type: 'EXPAND_RULES',
+            query,
+            options: { query: 'expanded_metric_query_111[5m]', labels: { uuid: '111' } },
+          },
+        },
+      },
+    ]);
+  });
+});
+
+describe('checkRecordingRuleIdentifier', () => {
+  it('should return the matching identifier', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+    ];
+    const ruleName = `metric_5m`;
+    const query = `metric_5m{uuid="111"}`;
+    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(0);
+  });
+
+  it('should return the matching identifier for a complex query', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+    ];
+    const ruleName = `metric_55m`;
+    const query = `metric_5m{uuid="111"} + metric_55m{uuid="222"}`;
+    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(1);
   });
 });
