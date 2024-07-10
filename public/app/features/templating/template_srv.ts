@@ -250,7 +250,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     // Scenes compatability (primary method) is via SceneObject inside scopedVars. This way we get a much more accurate "local" scope for the evaluation
     if (scopedVars && scopedVars.__sceneObject) {
       return sceneGraph.interpolate(
-        scopedVars.__sceneObject.value,
+        scopedVars.__sceneObject.value.__proxiedObject,
         target,
         scopedVars,
         format as string | VariableCustomFormatterFn | undefined,
