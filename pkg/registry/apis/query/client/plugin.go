@@ -81,8 +81,10 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	}
 
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
-	code := query.GetResponseCode(rsp)
-	return code, rsp, err
+	if err != nil {
+		return http.StatusInternalServerError, rsp, err
+	}
+	return query.GetResponseCode(rsp), rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.
