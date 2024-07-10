@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 )
 
 const (
 	ServiceAccounts AuthProvider = "ServiceAccounts"
 
-	TmpOrgID int64 = 1
+	// TmpOrgID is the orgID we use while global service accounts are not supported.
+	TmpOrgIDStr string = "1"
+	TmpOrgID    int64  = 1
 )
 
 type AuthProvider string
@@ -44,8 +45,6 @@ type ExternalServiceRegistration struct {
 	Name string
 	// Self access configuration
 	Self SelfCfg
-	// ActionSets
-	ActionSets []resourcepermissions.ActionSet
 	// Auth Provider that the client will use to connect to Grafana
 	AuthProvider AuthProvider
 	// Auth Provider specific config

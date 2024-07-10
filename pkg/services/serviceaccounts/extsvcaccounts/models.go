@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -54,7 +53,6 @@ type saveCmd struct {
 	ExtSvcSlug  string
 	OrgID       int64
 	Permissions []ac.Permission
-	ActionSets  []resourcepermissions.ActionSet
 	SaID        int64
 }
 
