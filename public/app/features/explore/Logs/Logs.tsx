@@ -262,6 +262,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             highlight: currentLevelSelected && !allLevelsSelected,
             onClick: (e: React.MouseEvent) => {
               toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
+              reportInteraction('explore_toolbar_contentoutline_clicked', {
+                item: 'section',
+                type: `Logs:filter:${level.levelStr}`,
+              });
             },
             ref: null,
             color: LogLevelColor[level.logLevel],
@@ -658,6 +662,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           </Trans>
         </span>
       );
+
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'section',
+        type: 'Logs:pinned:pinned-log-limit-reached',
+      });
       return;
     }
 
@@ -677,16 +686,31 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       ref: null,
       color: LogLevelColor[row.logLevel],
       childOnTop: true,
-      onClick: () => onOpenContext(row, () => {}),
+      onClick: () => {
+        onOpenContext(row, () => {});
+        reportInteraction('explore_toolbar_contentoutline_clicked', {
+          item: 'section',
+          type: 'Logs:pinned:pinned-log-clicked',
+        });
+      },
       onRemove: (id: string) => {
         unregister?.(id);
         if (getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
           setPinLineButtonTooltipTitle('Pin to content outline');
         }
+        reportInteraction('explore_toolbar_contentoutline_clicked', {
+          item: 'section',
+          type: 'Logs:pinned:pinned-log-deleted',
+        });
       },
     });
 
     props.onPinLineCallback?.();
+
+    reportInteraction('explore_toolbar_contentoutline_clicked', {
+      item: 'section',
+      type: 'Logs:pinned:pinned-log-added',
+    });
   };
 
   const getPinnedLogsCount = () => {

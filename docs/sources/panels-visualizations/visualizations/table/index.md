@@ -209,6 +209,10 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 {{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
 
+Use the **Alt text** option to set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded.
+
+Use the **Title text** option to set the text that's displayed when the image is hovered over with a cursor.
+
 #### Sparkline
 
 Shows values rendered as a sparkline. You can show sparklines using the [Time series to table transformation](ref:time-series-to-table-transformation) on data with multiple time series to process it into a format the table can show.

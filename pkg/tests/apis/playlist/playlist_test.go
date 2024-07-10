@@ -47,7 +47,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 		// The accepted verbs will change when dual write is enabled
 		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
-		// fmt.Printf("%s", string(disco))
+		// fmt.Printf("%s", disco)
 		require.JSONEq(t, `[
 			{
 			  "version": "v0alpha1",
@@ -361,8 +361,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			"metadata": {
 			  "annotations": {
 				"grafana.app/originPath": "${originPath}",
-				"grafana.app/originName": "SQL",
-				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
+				"grafana.app/originName": "SQL"
 			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
