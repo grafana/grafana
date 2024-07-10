@@ -65,14 +65,14 @@ View, inspect and download raw query results in the **Data tab**.
 1. Open the Query inspector and click the **Data** tab.
 1. Click **Data options** to to view options under **Show data frame**.
 1. Select a data results set from the dropdown menu.
-1. Select **Series joined by time** from the dropdown to view the raw data from all of your queries at once, one result set per column. You can click any column heading to sort the data.
+1. For multiple queries or for queries multiple nodes, you can select **Series joined by time** from the dropdown to view the raw data from all of your queries at once, one result set per column. You can click any column heading to sort the data.
 1. Toggle **Formatted data** to match the format in the panel.
 1. Toggle **Download for Excel** to download a CSV file specifically formatted for Excel.
 1. To download the results to a CSV file click **Download CSV** in the upper right of the Query inspector pane.
 
 ### Download log results as TXT
 
-Based on the type of data source (Loki, for example), Grafana generates a TXT file of log raw data results in your default browser download location. You can open it in the viewer of your choice.
+Based on the type of data source (Loki, for example), or when logs are present in the results set, Grafana generates a TXT file of log raw data results in your default browser download location. You can open it in the viewer of your choice.
 
 1. Click **Query inspector**.
 1. Click the **Data tab** to view log query results.
@@ -80,7 +80,7 @@ Based on the type of data source (Loki, for example), Grafana generates a TXT fi
 
 ### Download trace results
 
-Based on the data source type (Tempo, for example), Grafana generates a JSON file for the trace results in one of these supported formats: Jaeger, Zipkin, or OTLP.
+Based on the data source type (Tempo, for example), Grafana generates a JSON file for trace results in one of these supported formats: Jaeger, Zipkin, or OTLP.
 
 1. Click **Query inspector**.
 1. Click the **Data tab** to view traces results.
