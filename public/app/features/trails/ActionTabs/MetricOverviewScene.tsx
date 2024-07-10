@@ -74,7 +74,10 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     // Get unit name from the metric name
     const metricScene = getMetricSceneFor(model);
     const metric = metricScene.state.metric;
-    const unit = getUnitFromMetric(metric);
+    let unit = getUnitFromMetric(metric);
+    if (unit === null) {
+      unit = 'Unknown';
+    }
     return (
       <StatusWrapper isLoading={labelsLoading || metadataLoading}>
         <Stack gap={6}>
