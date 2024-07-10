@@ -261,7 +261,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	}
 	defer func() {
 		if closeErr := indexFile.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("closing index file: %w", closeErr))
+			s.log.Error("closing index file", "err", closeErr.Error())
 		}
 	}()
 
