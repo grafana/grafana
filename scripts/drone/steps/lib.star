@@ -1291,7 +1291,19 @@ def verify_linux_DEB_packages_step(depends_on = []):
     }
 
 def verify_linux_RPM_packages_step(depends_on = []):
-    install_command = "dnf install -y https://dl.grafana.com/oss/release/grafana-${TAG}-1.x86_64.rpm >/dev/null 2>&1"
+    repo_config = (
+        "[grafana]\n" +
+        "name=grafana\n" +
+        "baseurl=https://rpm.grafana.com\n" +
+        "repo_gpgcheck=1\n" +
+        "enabled=1\n" +
+        "gpgcheck=1\n" +
+        "gpgkey=https://rpm.grafana.com/gpg.key\n" +
+        "sslverify=1\n" +
+        "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
+    )
+
+    repo_install_command = "dnf install -y grafana-${TAG} >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1303,10 +1315,19 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 2: Installing prerequisites..."',
             "dnf install -y dnf-utils >/dev/null 2>&1",
             'echo "Step 3: Adding Grafana GPG key..."',
-            "rpm --import https://packages.grafana.com/gpg.key",
-            'echo "Step 4: Installing Grafana..."',
-        ] + retry_command(install_command, attempts = 10) + [
-            'echo "Step 5: Verifying Grafana installation..."',
+            "rpm --import https://rpm.grafana.com/gpg.key",
+            'echo "Step 4: Configuring Grafana repository..."',
+            "echo '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
+            'echo "Step 5: Checking RPM repository..."',
+            "dnf list available grafana-${TAG} >/dev/null 2>&1",
+            "if [ $? -eq 0 ]; then",
+            '    echo "Grafana package found in repository. Installing from repo..."',
+        ] + retry_command(repo_install_command, attempts = 10) + [
+            "else",
+            '    echo "Grafana package version ${TAG} not found in repository."',
+            "    exit 1",
+            "fi",
+            'echo "Step 6: Verifying Grafana installation..."',
             'if rpm -q grafana | grep -q "${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
             "else",
