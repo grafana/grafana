@@ -240,7 +240,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 	// TODO: This is missing dedicated logic for NoData. If NoData we can skip the write.
 
-	logger.Info("Recording rule query completed", "resultCount", len(result.Responses), "duration", evalDur)
+	logger.Debug("Recording rule query completed", "resultCount", len(result.Responses), "duration", evalDur)
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent("query succeeded", trace.WithAttributes(
 		attribute.Int64("results", int64(len(result.Responses))),
