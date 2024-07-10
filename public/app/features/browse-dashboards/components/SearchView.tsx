@@ -118,7 +118,7 @@ export function SearchView({
   }
 
   const props: SearchResultsProps = {
-    response: value ?? initialLoadingView,
+    response: searchState.result ?? initialLoadingView,
     selection: canSelect ? selectionChecker : undefined,
     selectionToggle: canSelect ? handleItemSelectionChange : undefined,
     clearSelection,
