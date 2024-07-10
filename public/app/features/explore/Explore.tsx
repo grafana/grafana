@@ -359,7 +359,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
+    const { graphResult, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
       <ContentOutlineItem panelId="Graph" title="Graph" icon="graph-bar">
@@ -367,7 +367,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           data={graphResult!}
           height={showFlameGraph ? 180 : 400}
           width={width}
-          absoluteRange={absoluteRange}
+          timeRange={queryResponse.timeRange}
           timeZone={timeZone}
           onChangeTime={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
