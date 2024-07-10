@@ -277,27 +277,27 @@ export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string
   }
 
   let uuidLabel = '';
-  // let uuidLabelValue = '';
+  let uuidLabelValue = '';
   let uuidLabelIdx = -1;
+
+  queryMetricLabels.forEach((qml) => {
+    if (uuidLabelIdx === -1 && qml.label.search('uuid') !== -1) {
+      uuidLabel = qml.label;
+      uuidLabelValue = qml.value;
+    }
+  });
 
   mapping.forEach((mp, idx) => {
     if (mp.labels) {
       Object.entries(mp.labels).forEach(([key, value]) => {
-        if (uuidLabelIdx === -1 && key.search('uuid') > -1) {
-          uuidLabel = key;
-          // uuidLabelValue = value;
+        if (uuidLabelIdx === -1 && key === uuidLabel && value === uuidLabelValue) {
           uuidLabelIdx = idx;
         }
       });
     }
   });
 
-  const queryLabelUuidIdx = queryMetricLabels.findIndex((qml) => qml.label === uuidLabel);
-  if (queryLabelUuidIdx > -1) {
-    return uuidLabelIdx;
-  }
-
-  return -1;
+  return uuidLabelIdx;
 }
 
 // returns the labels of matching metric

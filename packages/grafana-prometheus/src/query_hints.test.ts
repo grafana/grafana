@@ -365,7 +365,28 @@ describe('getRecordingRuleIdentifierIdx', () => {
     expect(idx).toEqual(0);
   });
 
-  it('should return the matching identifier for a complex query', () => {
+  it('should not return the matching identifier', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+    ];
+    const ruleName = `metric_5m`;
+    const query = `metric_5m{uuid="999"}`;
+    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(-1);
+  });
+
+  it('should return the matching identifier inex for a complex query', () => {
     const mapping: RuleQueryMapping[string] = [
       {
         query: 'expanded_metric_query_111[5m]',
@@ -384,6 +405,33 @@ describe('getRecordingRuleIdentifierIdx', () => {
     const query = `metric_5m{uuid="111"} + metric_55m{uuid="222"}`;
     const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
     expect(idx).toEqual(1);
+  });
+
+  it('should return the matching identifier index for a complex query with binary operators', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+      {
+        query: 'expanded_metric_query_333[5m]',
+        labels: {
+          uuid: '333',
+        },
+      },
+    ];
+    const ruleName = `metric_5m`;
+    const query = `metric_7n{} + (metric_5m{uuid="333"} + metric_55m{uuid="222"})`;
+    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(2);
   });
 });
 
