@@ -41,7 +41,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
                 <Trans i18nKey="browse-dashboards.action.delete-modal-restore-dashboards-text">
                   This action will delete the selected folders immediately but the selected dashboards will be marked
                   for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the
-                  30 days expires. Folders cannot be restored.
+                  30 days expire. Folders cannot be restored.
                 </Trans>
               </Text>
               <Space v={2} />
