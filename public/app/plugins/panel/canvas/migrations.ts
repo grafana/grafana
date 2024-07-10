@@ -92,7 +92,8 @@ function addLinks(elements: CanvasElementOptions[], links: DataLink[], fieldName
   });
 
   elements.forEach((element) => {
-    let cfg = element.config as Record<string, any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let cfg: Record<string, any> = element.config;
 
     for (let k in cfg) {
       let dim = cfg[k];
