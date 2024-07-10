@@ -332,7 +332,7 @@ func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.C
 }
 
 func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
-	values, err := s.store.GetAllCloudMigrationSessions(ctx)
+	values, err := s.store.GetCloudMigrationSessionList(ctx)
 	if err != nil {
 		return nil, err
 	}

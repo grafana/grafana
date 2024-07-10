@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
@@ -66,8 +66,13 @@ export const MegaMenu = memo(
     const onPinItem = (item: NavModelItem) => {
       const id = item.id;
       if (id && config.featureToggles.pinNavItems) {
+        const navItem = navTree.find((item) => item.id === id);
         const isSaved = isPinned(id);
         const newItems = isSaved ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
+        const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
+        reportInteraction(interactionName, {
+          path: navItem?.url ?? id,
+        });
         patchPreferences({
           patchPrefsCmd: {
             navbar: {
