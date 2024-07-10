@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { useCallback, useMemo, useState, Fragment } from 'react';
+import { useCallback, useMemo, useState, Fragment, useEffect } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -70,6 +70,18 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const hasQueryLibrary = config.featureToggles.queryLibrary || false;
 
+  useEffect(() => {
+    RowActionComponents.addExtraRenderAction((props) =>
+      hasQueryLibrary ? (
+        <QueryOperationAction
+          title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+          icon="save"
+          onClick={() => onBeginQLSave(props.query?.refId)}
+        />
+      ) : null
+    );
+  }, [hasQueryLibrary]);
+
   const onQueryCopied = () => {
     reportInteraction('grafana_explore_query_row_copy');
   };
@@ -87,16 +99,6 @@ export const QueryRows = ({ exploreId }: Props) => {
       setOpenAddQLRefId(refId);
     }
   };
-
-  RowActionComponents.addExtraRenderAction((props) =>
-    hasQueryLibrary ? (
-      <QueryOperationAction
-        title={t('query-operation.header.save-to-query-library', 'Save to query library')}
-        icon="save"
-        onClick={() => onBeginQLSave(props.query?.refId)}
-      />
-    ) : null
-  );
 
   return (
     <QueryEditorRows
