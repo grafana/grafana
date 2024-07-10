@@ -27,27 +27,17 @@ type QueryDataResponse struct {
 	backend.QueryDataResponse `json:",inline"`
 }
 
-// If errors exist, return multi-status
+// GetResponseCode return the right status code for the response by checking the responses.
 func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	if rsp == nil {
-		return http.StatusInternalServerError
+		return http.StatusBadRequest
 	}
-
-	if len(rsp.Responses) == 0 {
-		return http.StatusOK
-	}
-
-	var code int
-	for _, v := range rsp.Responses {
-		if code == 0 {
-			code = int(v.Status)
-		} else if code != int(v.Status) {
-			code = http.StatusMultiStatus
-			break
+	for _, res := range rsp.Responses {
+		if res.Error != nil {
+			return http.StatusBadRequest
 		}
 	}
-
-	return code
+	return http.StatusOK
 }
 
 // Defines a query behavior in a datasource.  This is a similar model to a CRD where the

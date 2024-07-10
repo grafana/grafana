@@ -2,6 +2,7 @@ package v0alpha1_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -80,35 +81,35 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 }
 
 func TestGetResponseCode(t *testing.T) {
-	t.Run("return the code if consistent throughout", func(t *testing.T) {
+	t.Run("return 200 if no errors in responses", func(t *testing.T) {
 		assert.Equal(t, 200, query.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
-					Status: 200,
+					Error: nil,
 				},
 				"B": {
-					Status: 200,
+					Error: nil,
 				},
 			},
 		}))
 	})
-	t.Run("return error if returned by query", func(t *testing.T) {
+	t.Run("return 400 if there is an error in the responses", func(t *testing.T) {
 		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
-					Status: 400,
+					Error: fmt.Errorf("some wild error"),
 				},
 			},
 		}))
 	})
-	t.Run("return 207 if different", func(t *testing.T) {
-		assert.Equal(t, 207, query.GetResponseCode(&backend.QueryDataResponse{
+	t.Run("return 400 if there is a partial error", func(t *testing.T) {
+		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
-					Status: 200,
+					Error: nil,
 				},
 				"B": {
-					Status: 404,
+					Error: fmt.Errorf("some partial error"),
 				},
 			},
 		}))
