@@ -3215,7 +3215,7 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG} >/dev/null 2>&1
+  - dnf list available grafana-${TAG}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 10); do
@@ -3388,7 +3388,7 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG} >/dev/null 2>&1
+  - dnf list available grafana-${TAG}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 10); do
@@ -5398,6 +5398,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a573fe30078cd7d6f761c00279266094c1b39dd9ff20b2bde8523030996bb1af
+hmac: 24aa4dbad92d31b1a6686c7bfa3eb07d4c6a302df0f4a3e64af977545968d508
 
 ...
