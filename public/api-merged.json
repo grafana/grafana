@@ -15589,7 +15589,7 @@
           "type": "string"
         },
         "stats": {
-          "$ref": "#/definitions/SnapshotResponseStats"
+          "$ref": "#/definitions/SnapshotResourceStats"
         },
         "status": {
           "type": "string",
@@ -20390,7 +20390,7 @@
         }
       }
     },
-    "SnapshotResponseStats": {
+    "SnapshotResourceStats": {
       "type": "object",
       "properties": {
         "statuses": {

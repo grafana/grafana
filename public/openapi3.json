@@ -5686,7 +5686,7 @@
             "type": "string"
           },
           "stats": {
-            "$ref": "#/components/schemas/SnapshotResponseStats"
+            "$ref": "#/components/schemas/SnapshotResourceStats"
           },
           "status": {
             "enum": [
@@ -10487,7 +10487,7 @@
         },
         "type": "object"
       },
-      "SnapshotResponseStats": {
+      "SnapshotResourceStats": {
         "properties": {
           "statuses": {
             "additionalProperties": {

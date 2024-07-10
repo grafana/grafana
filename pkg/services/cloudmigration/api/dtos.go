@@ -300,10 +300,10 @@ type GetSnapshotResponse struct {
 type GetSnapshotResponseDTO struct {
 	SnapshotDTO
 	Results     []MigrateDataResponseItemDTO `json:"results"`
-	StatsRollup SnapshotResponseStats        `json:"stats"`
+	StatsRollup SnapshotResourceStats        `json:"stats"`
 }
 
-type SnapshotResponseStats struct {
+type SnapshotResourceStats struct {
 	Types    map[MigrateDataType]int `json:"types"`
 	Statuses map[ItemStatus]int      `json:"statuses"`
 }
