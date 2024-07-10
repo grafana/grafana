@@ -33,8 +33,9 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  if ((element.options.links?.length ?? 0) > 0 && element.getLinks != null) {
-    element.getLinks({}).forEach((link) => {
+  const elementHasLinks = (element.options.links?.length ?? 0) > 0 && element.getLinks;
+  if (elementHasLinks) {
+    element.getLinks!({}).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);

@@ -370,7 +370,7 @@ export class ElementState implements LayerElement {
     }
 
     const scene = this.getScene();
-    const frames = scene?.context.getPanelData()?.series;
+    const frames = scene?.data?.series;
 
     if (frames) {
       const defaultField = {
@@ -634,10 +634,8 @@ export class ElementState implements LayerElement {
   };
 
   onElementClick = (event: React.MouseEvent) => {
-    const scene = this.getScene();
-
     // If one-link access is enabled, open the primary link
-    if (!scene?.isEditingEnabled && this.options.oneClickLinks) {
+    if (this.options.oneClickLinks) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         window.open(primaryDataLink.href, primaryDataLink.target);

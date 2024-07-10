@@ -101,16 +101,16 @@ export const DataLinksInlineEditor = ({
         <Droppable droppableId="sortable-links" direction="vertical">
           {(provided) => (
             <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
-              {linksSafe.map((l, i) => {
-                const key = `${l.title}/${i}`;
+              {linksSafe.map((link, idx) => {
+                const key = `${link.title}/${idx}`;
                 return (
                   <DataLinksListItem
                     key={key}
-                    index={i}
-                    link={l}
+                    index={idx}
+                    link={link}
                     onChange={onDataLinkChange}
-                    onEdit={() => setEditIndex(i)}
-                    onRemove={() => onDataLinkRemove(i)}
+                    onEdit={() => setEditIndex(idx)}
+                    onRemove={() => onDataLinkRemove(idx)}
                     data={data}
                     itemKey={key}
                     oneClickEnabled={oneClickEnabled}
