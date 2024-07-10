@@ -39,9 +39,12 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> origin/resource-store-bridge
+=======
+>>>>>>> origin/main
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
 	store, err := NewCDKBackend(ctx, CDKBackendOptions{

@@ -86,9 +86,9 @@ func getKey(val string) (*resource.ResourceKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	if k.Group == "" {
-		return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
-	}
+	// if k.Group == "" {
+	// 	return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
+	// }
 	if k.Resource == "" {
 		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 	}
@@ -164,9 +164,9 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 		return err
 	}
 
-	if validateDeletion != nil {
-		return fmt.Errorf("not supported (validate deletion)")
-	}
+	// if validateDeletion != nil {
+	// 	return fmt.Errorf("not supported (validate deletion)")
+	// }
 
 	cmd := &resource.DeleteRequest{Key: k}
 	if preconditions != nil {

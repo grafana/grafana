@@ -276,24 +276,13 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 	}
 	obj.SetOriginInfo(origin)
 
-	// Make sure old values do not mutate things they should not
+	// Ensure old values do not mutate things they should not
 	if event.OldMeta != nil {
 		old := event.OldMeta
 
-		if obj.GetUID() != event.OldMeta.GetUID() {
-			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("UIDs do not match (old: %s, new: %s)", old.GetUID(), obj.GetUID()))
-		}
-
-		// Can not change creation timestamps+user
-		if obj.GetCreatedBy() != event.OldMeta.GetCreatedBy() {
-			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("created by changed (old: %s, new: %s)", old.GetCreatedBy(), obj.GetCreatedBy()))
-		}
-		if obj.GetCreationTimestamp() != event.OldMeta.GetCreationTimestamp() {
-			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("creation timestamp changed (old:%v, new:%v)", old.GetCreationTimestamp(), obj.GetCreationTimestamp()))
-		}
+		obj.SetUID(old.GetUID())
+		obj.SetCreatedBy(old.GetCreatedBy())
+		obj.SetCreationTimestamp(old.GetCreationTimestamp())
 	}
 	return event, nil
 }
@@ -431,7 +420,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	if err != nil {
 		return nil, err
 	}
-	if latest.ResourceVersion != req.ResourceVersion {
+	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
 		return nil, ErrOptimisticLockingFailed
 	}
 
@@ -481,10 +470,10 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		return nil, err
 	}
 
-	if req.Key.Group == "" {
-		status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
-		return &ReadResponse{Status: status}, nil
-	}
+	// if req.Key.Group == "" {
+	// 	status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
+	// 	return &ReadResponse{Status: status}, nil
+	// }
 	if req.Key.Resource == "" {
 		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
 		return &ReadResponse{Status: status}, nil
@@ -533,8 +522,6 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
-
-	fmt.Printf("WATCH %v\n", req.Options.Key)
 
 	ctx := srv.Context()
 

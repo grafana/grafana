@@ -122,11 +122,8 @@ message DeleteResponse {
   // Status code
   StatusResult status = 1;
 
-  // The new resource version
+  // The resource version for the deletion marker
   int64 resource_version = 2;
-
-  // The deleted payload
-  bytes value = 3;
 }
 
 message ReadRequest {

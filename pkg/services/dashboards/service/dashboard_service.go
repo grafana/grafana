@@ -700,16 +700,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 	hitList := make([]*model.Hit, 0)
 	hits := make(map[int64]*model.Hit)
 
-	requesterIsSvcAccount := query.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
-
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			// Don't list k6 items for users, we don't want users to interact with k6 folders directly through folder UI
-			if (item.UID == accesscontrol.K6FolderUID || item.FolderUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
-				continue
-			}
-
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 			hit = &model.Hit{
 				ID:          item.ID,
