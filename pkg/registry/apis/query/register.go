@@ -38,7 +38,6 @@ type QueryAPIBuilder struct {
 	log                    log.Logger
 	concurrentQueryLimit   int
 	userFacingDefaultError string
-	returnMultiStatus      bool // from feature toggle
 	features               featuremgmt.FeatureToggles
 
 	tracer     tracing.Tracer
@@ -77,7 +76,6 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
-		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
 		client:               client,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer),

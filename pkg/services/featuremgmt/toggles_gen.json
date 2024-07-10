@@ -825,7 +825,8 @@
       "metadata": {
         "name": "datasourceQueryMultiStatus",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-05-03T16:02:20Z"
+        "creationTimestamp": "2022-05-03T16:02:20Z",
+        "deletionTimestamp": "2024-07-08T14:46:08Z"
       },
       "spec": {
         "description": "Introduce HTTP 207 Multi Status for api/ds/query",
