@@ -300,9 +300,12 @@ func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueFi
 // returns a function that patches the mathexp.Series with information from data.Field from which it was created if the all series need to be fixed. Otherwise, returns nil
 func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string) func(series mathexp.Series, valueField *data.Field) {
 	supportedDatasources := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA, datasources.DS_DYNATRACE}
-	if !slices.ContainsFunc(supportedDatasources, func(ds string) bool {return datasourceType == ds} ) {
+	checkdatasourceType := func(ds string) bool {
+		return datasourceType == ds
+	}
+	if !slices.ContainsFunc(supportedDatasources, checkdatasourceType) {
 		return nil
-	} 
+	}
 
 	// get all value fields
 	var valueFields []*data.Field
