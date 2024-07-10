@@ -779,6 +779,10 @@ export class PrometheusDatasource
         }
         break;
       }
+      case 'EXPAND_RULES_WARNING': {
+        console.log(action);
+        break;
+      }
       default:
         break;
     }

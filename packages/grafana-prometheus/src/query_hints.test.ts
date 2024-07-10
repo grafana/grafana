@@ -266,9 +266,24 @@ describe('getExpandRulesHints', () => {
         },
       ],
     };
+    const query = `metric_5m`;
     const hints = getExpandRulesHints('metric_5m', extractedMapping);
     const expected = expect.arrayContaining([expect.objectContaining({ type: 'EXPAND_RULES' })]);
     expect(hints).toEqual(expected);
+    expect(hints).toEqual([
+      {
+        type: 'EXPAND_RULES',
+        label: 'Query contains recording rules.',
+        fix: {
+          label: 'Expand rules',
+          action: {
+            type: 'EXPAND_RULES',
+            query,
+            options: { metric_5m: 'expanded_metric_query[5m]' },
+          },
+        },
+      },
+    ]);
   });
 
   it('should return no expand rule hint, if the given query does not have a label', () => {
@@ -336,7 +351,7 @@ describe('getExpandRulesHints', () => {
           action: {
             type: 'EXPAND_RULES',
             query,
-            options: { metric_5m: { query: 'expanded_metric_query_111[5m]', labels: { uuid: '111' } } },
+            options: { metric_5m: 'expanded_metric_query_111[5m]' },
           },
         },
       },

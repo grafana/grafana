@@ -239,13 +239,13 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
         // Identifier found.
         return {
           ...acc,
-          [ruleName]: mapping[ruleName][mappingRuleIdx],
+          [ruleName]: mapping[ruleName][mappingRuleIdx].query,
         };
       }
     } else {
       return {
         ...acc,
-        [ruleName]: mapping[ruleName],
+        [ruleName]: mapping[ruleName][0].query,
       };
     }
   }, {});
