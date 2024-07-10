@@ -505,7 +505,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    {
+    config.featureToggles.exploreMetrics && {
       path: '/explore/metrics',
       chromeless: false,
       exact: false,
