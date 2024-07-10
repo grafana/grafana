@@ -21,16 +21,16 @@ type HistoryConnector interface {
 	rest.StorageMetadata
 }
 
-func NewHistoryConnector(search resource.ResourceIndexServer, gr schema.GroupResource) HistoryConnector {
+func NewHistoryConnector(index resource.ResourceIndexServer, gr schema.GroupResource) HistoryConnector {
 	return &historyREST{
-		search: search,
-		gr:     gr,
+		index: index,
+		gr:    gr,
 	}
 }
 
 type historyREST struct {
-	search resource.ResourceIndexServer // should be a client!
-	gr     schema.GroupResource
+	index resource.ResourceIndexServer // should be a client!
+	gr    schema.GroupResource
 }
 
 func (r *historyREST) New() runtime.Object {
@@ -71,7 +71,7 @@ func (r *historyREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		query := req.URL.Query()
-		rsp, err := r.search.History(ctx, &resource.HistoryRequest{
+		rsp, err := r.index.History(ctx, &resource.HistoryRequest{
 			NextPageToken: query.Get("token"),
 			Limit:         100, // TODO, from query
 			Key:           key,

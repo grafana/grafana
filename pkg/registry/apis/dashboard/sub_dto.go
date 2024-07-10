@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -109,7 +110,14 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	// TODO, load the full spec from blob storage
+	obj, err := utils.MetaAccessor(dash)
+	if err != nil {
+		return nil, err
+	}
+	blobInfo := obj.GetBlob()
+	if blobInfo != nil {
+		fmt.Printf("TODO, load full blob from storage %+v\n", blobInfo)
+	}
 
 	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))
 	access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
