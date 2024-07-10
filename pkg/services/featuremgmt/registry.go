@@ -100,12 +100,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:        "datasourceQueryMultiStatus",
-			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "autoMigrateOldPanels",
 			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
 			Stage:        FeatureStagePublicPreview,
