@@ -76,9 +76,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
   send-report:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/reporting/#send-a-report
   configuration:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
