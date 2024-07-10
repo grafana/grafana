@@ -39,7 +39,7 @@ function itemFilter(inputValue: string) {
 }
 
 function estimateSize() {
-  return 30;
+  return 60;
 }
 
 export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
