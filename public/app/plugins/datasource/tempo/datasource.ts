@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { EMPTY, from, lastValueFrom, merge, Observable, of } from 'rxjs';
+import { EMPTY, forkJoin, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
 
@@ -41,7 +41,7 @@ import {
 } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
-import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
   durationMetric,
@@ -69,7 +69,7 @@ import { TempoVariableSupport } from './variables';
 export const DEFAULT_LIMIT = 20;
 export const DEFAULT_SPSS = 3; // spans per span set
 
-enum FeatureName {
+export enum FeatureName {
   streaming = 'streaming',
 }
 
@@ -77,7 +77,7 @@ enum FeatureName {
  ** feature available. If the running Tempo instance on the user's backend is older than the
  ** target version, the feature is disabled in Grafana (frontend).
  */
-const featuresToTempoVersion = {
+export const featuresToTempoVersion = {
   [FeatureName.streaming]: '2.2.0',
 };
 
@@ -115,6 +115,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
 
+  streamingEnabled?: {
+    search?: boolean;
+  };
+
   // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
   tempoVersion?: string | null;
 
@@ -129,6 +133,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
+    this.streamingEnabled = instanceSettings.jsonData.streamingEnabled;
+
     this.languageProvider = new TempoLanguageProvider(this);
 
     if (!this.search?.filters) {
@@ -259,6 +265,25 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
+  /**
+   * Check if streaming for search queries is enabled (and available).
+   *
+   * We need to check:
+   * - the `traceQLStreaming` feature toggle, to disable streaming if customer support turned off the toggle in the past, which usually means that streaming does not work properly for the customer
+   * - the recently created Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
+   * - whether streaming is actually available based on the Tempo version, just as a sanity check
+   *
+   * @return true if streaming for search queries is enabled, false otherwise
+   */
+  isStreamingSearchEnabled() {
+    return (
+      config.featureToggles.traceQLStreaming &&
+      this.isFeatureAvailable(FeatureName.streaming) &&
+      config.liveEnabled &&
+      this.streamingEnabled?.search !== false
+    );
+  }
+
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
@@ -317,7 +342,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: config.featureToggles.traceQLStreaming,
+              streaming: this.streamingEnabled,
             });
             subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
@@ -351,14 +376,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValueFromFilters ?? '',
-            streaming: config.featureToggles.traceQLStreaming,
+            streaming: this.streamingEnabled,
           });
 
-          if (
-            config.featureToggles.traceQLStreaming &&
-            this.isFeatureAvailable(FeatureName.streaming) &&
-            config.liveEnabled
-          ) {
+          if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
@@ -603,11 +624,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    if (
-      config.featureToggles.traceQLStreaming &&
-      this.isFeatureAvailable(FeatureName.streaming) &&
-      config.liveEnabled
-    ) {
+    if (this.isStreamingSearchEnabled()) {
       return this.handleStreamingSearch(options, targets.traceql, queryValue);
     } else {
       return this._request('/api/search', {
@@ -717,23 +734,85 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async testDatasource(): Promise<TestDataSourceResponse> {
+    const observables = [];
+
     const options: BackendSrvRequest = {
       headers: {},
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-
-    return await lastValueFrom(
+    observables.push(
       getBackendSrv()
         .fetch(options)
         .pipe(
           mergeMap(() => {
-            return of({ status: 'success', message: 'Data source successfully connected.' });
+            return of({ status: 'success', message: 'Health check succeeded' });
           }),
           catchError((err) => {
-            return of({ status: 'error', message: getErrorMessage(err.data.message, 'Unable to connect with Tempo') });
+            return of({
+              status: 'error',
+              message: getErrorMessage(err.data.message, 'Unable to connect with Tempo'),
+            });
           })
         )
+    );
+
+    if (this.streamingEnabled?.search) {
+      const now = new Date();
+      const from = new Date(now);
+      from.setMinutes(from.getMinutes() - 15);
+      observables.push(
+        this.handleStreamingSearch(
+          {
+            range: {
+              from: dateTime(from),
+              to: dateTime(now),
+              raw: { from: 'now-15m', to: 'now' },
+            },
+            requestId: '',
+            interval: '',
+            intervalMs: 0,
+            scopedVars: {},
+            targets: [],
+            timezone: '',
+            app: '',
+            startTime: 0,
+          },
+          [
+            {
+              datasource: this.instanceSettings,
+              limit: 1,
+              query: '{}',
+              queryType: 'traceql',
+              refId: 'A',
+              tableType: SearchTableType.Traces,
+              filters: [],
+            },
+          ],
+          '{}'
+        ).pipe(
+          mergeMap(() => {
+            return of({ status: 'success', message: 'Streaming test succeeded.' });
+          }),
+          catchError((err) => {
+            return of({
+              status: 'error',
+              message: getErrorMessage(err.data.message, 'Test for streaming failed, consider disabling streaming'),
+            });
+          })
+        )
+      );
+    }
+
+    return await lastValueFrom(
+      forkJoin(observables).pipe(
+        mergeMap((observableResults) => {
+          const erroredResult = observableResults.find((result) => result.status !== 'success');
+          return erroredResult
+            ? of(erroredResult)
+            : of({ status: 'success', message: 'Successfully connected to Tempo data source.' });
+        })
+      )
     );
   }
 
