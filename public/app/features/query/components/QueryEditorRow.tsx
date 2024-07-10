@@ -24,7 +24,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, config, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -67,7 +67,6 @@ export interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
-  onBeginQuerySave?: (refId: string) => void;
   collapsable?: boolean;
 }
 
@@ -364,10 +363,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }));
   };
 
-  onClickSave = () => {
-    this.props.onBeginQuerySave!(this.props.query.refId);
-  };
-
   onClickExample = (query: TQuery) => {
     if (query.datasource === undefined) {
       query.datasource = getDataSourceRef(this.props.dataSource);
@@ -456,17 +451,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const hasQueryLibrary = this.props.app === CoreApp.Explore && (config.featureToggles.queryLibrary || false);
 
     return (
       <>
-        {hasQueryLibrary && this.props.onBeginQuerySave !== undefined && (
-          <QueryOperationAction
-            title={t('query-operation.header.save-to-query-library', 'Save to query library')}
-            icon="save"
-            onClick={this.onClickSave}
-          />
-        )}
         {hasEditorHelp && (
           <QueryOperationToggleAction
             title={t('query-operation.header.datasource-help', 'Show data source help')}

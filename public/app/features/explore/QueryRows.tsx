@@ -2,13 +2,15 @@ import { createSelector } from '@reduxjs/toolkit';
 import { useCallback, useMemo, useState, Fragment } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Modal } from '@grafana/ui';
 import { t } from '@grafana/ui/src/utils/i18n';
+import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
+import { RowActionComponents } from '../query/components/QueryActionComponent';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
@@ -66,6 +68,8 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
+  const hasQueryLibrary = config.featureToggles.queryLibrary || false;
+
   const onQueryCopied = () => {
     reportInteraction('grafana_explore_query_row_copy');
   };
@@ -78,9 +82,21 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
-  const onBeginQLSave = (refId: string) => {
-    setOpenAddQLRefId(refId);
+  const onBeginQLSave = (refId?: string) => {
+    if (refId !== undefined) {
+      setOpenAddQLRefId(refId);
+    }
   };
+
+  RowActionComponents.addExtraRenderAction((props) =>
+    hasQueryLibrary ? (
+      <QueryOperationAction
+        title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+        icon="save"
+        onClick={() => onBeginQLSave(props.query?.refId)}
+      />
+    ) : null
+  );
 
   return (
     <QueryEditorRows
@@ -92,7 +108,6 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueryCopied={onQueryCopied}
       onQueryRemoved={onQueryRemoved}
       onQueryToggled={onQueryToggled}
-      onBeginQuerySave={onBeginQLSave}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}
