@@ -49,7 +49,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
-    temp-data-lifetime:
+  temp-data-lifetime:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
     - pattern: /docs/grafana-cloud/
@@ -64,6 +64,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+    send-report:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/reporting/#send-a-report
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
@@ -79,11 +84,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#set-dashboard-time-range
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#set-dashboard-time-range
-  send-report:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/reporting/#send-a-report
   repeat-panels-or-rows:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
