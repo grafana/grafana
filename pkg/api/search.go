@@ -33,6 +33,10 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
 
+	if deleted == "true" && c.SignedInUser.GetOrgRole() != org.RoleAdmin {
+		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
+	}
+
 	if limit > 5000 {
 		return response.Error(http.StatusUnprocessableEntity, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
@@ -80,7 +84,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
-		IsDeleted:     deleted == "true" && c.SignedInUser.GetOrgRole() == org.RoleAdmin,
+		IsDeleted:     deleted == "true",
 		OrgId:         c.SignedInUser.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
