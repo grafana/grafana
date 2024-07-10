@@ -281,7 +281,8 @@ export class Scene {
   };
 
   render() {
-    const canShowElementTooltip = !this.isEditingEnabled;
+    const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0 || this.tooltip?.element?.data?.field;
+    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
