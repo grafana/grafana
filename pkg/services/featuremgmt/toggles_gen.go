@@ -51,10 +51,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagDatasourceQueryMultiStatus
-	// Introduce HTTP 207 Multi Status for api/ds/query
-	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"

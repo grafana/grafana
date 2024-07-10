@@ -1,11 +1,12 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { Alert, Box, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
   SnapshotDto,
+  useCancelSnapshotMutation,
   useCreateSnapshotMutation,
   useDeleteSessionMutation,
   useGetSessionListQuery,
@@ -16,22 +17,25 @@ import {
 
 import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
-import { MigrationInfo } from './MigrationInfo';
+import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
+import { BuildSnapshotCTA, CreatingSnapshotCTA } from './SnapshotCTAs';
 
 /**
  * Here's how migrations work:
  *
- * A single on-prem instance can be configured to be migrated to multiple cloud instances.
- *  - GetMigrationList returns this the list of migration targets for the on prem instance
- *  - If GetMigrationList returns an empty list, then the empty state with a prompt to enter a token should be shown
+ * A single on-prem instance can be configured to be migrated to multiple cloud instances. We call these 'sessions'.
+ *  - GetSessionList returns this the list of migration targets for the on prem instance
+ *  - If GetMigrationList returns an empty list, then an empty state to prompt for token should be shown
  *  - The UI (at the moment) only shows the most recently created migration target (the last one returned from the API)
  *    and doesn't allow for others to be created
  *
- * A single on-prem migration 'target' (CloudMigrationResponse) can have multiple migration runs (CloudMigrationRun)
- *  - To list the migration resources:
- *      1. call GetCloudMigratiopnRunList to list all runs
- *      2. call GetCloudMigrationRun with the ID from first step to list the result of that migration
+ * A single on-prem migration 'target' (CloudMigrationSession) can have multiple snapshots.
+ * A snapshot represents a copy of all migratable resources at a fixed point in time.
+ * A snapshots are created asynchronously in the background, so GetSnapshot must be polled to get the current status.
+ *
+ * After a snapshot has been created, it will be PENDING_UPLOAD. UploadSnapshot is then called which asynchronously
+ * uploads and migrates the snapshot to the cloud instance.
  */
 
 function useGetLatestSession() {
@@ -51,6 +55,10 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
   'PENDING_PROCESSING',
   'PROCESSING',
 ];
+
+const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
+
+const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
 
 const STATUS_POLL_INTERVAL = 5 * 1000;
 
@@ -91,23 +99,27 @@ export const Page = () => {
   const snapshot = useGetLatestSnapshot(session.data?.uid);
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
+  const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
 
   const sessionUid = session.data?.uid;
   const snapshotUid = snapshot.data?.uid;
-  const migrationMeta = session.data;
   const isInitialLoading = session.isLoading;
+  const status = snapshot.data?.status;
 
   // isBusy is not a loading state, but indicates that the system is doing *something*
   // and all buttons should be disabled
   const isBusy =
     createSnapshotResult.isLoading ||
     uploadSnapshotResult.isLoading ||
+    cancelSnapshotResult.isLoading ||
     session.isLoading ||
     snapshot.isLoading ||
     disconnectResult.isLoading;
 
-  const resources = snapshot.data?.results;
+  const showBuildSnapshot = !snapshot.isLoading && !snapshot.data;
+  const showBuildingSnapshot = SNAPSHOT_BUILDING_STATUSES.includes(status);
+  const showUploadSnapshot = status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status);
 
   const handleDisconnect = useCallback(async () => {
     if (sessionUid) {
@@ -127,16 +139,23 @@ export const Page = () => {
     }
   }, [performUploadSnapshot, sessionUid, snapshotUid]);
 
+  const handleCancelSnapshot = useCallback(() => {
+    if (sessionUid && snapshotUid) {
+      performCancelSnapshot({ uid: sessionUid, snapshotUid: snapshotUid });
+    }
+  }, [performCancelSnapshot, sessionUid, snapshotUid]);
+
   if (isInitialLoading) {
     // TODO: better loading state
     return <div>Loading...</div>;
-  } else if (!migrationMeta) {
+  } else if (!session.data) {
     return <EmptyState />;
   }
 
   return (
     <>
       <Stack direction="column" gap={4}>
+        {/* TODO: show errors from all mutation's in a... modal? */}
         {createSnapshotResult.isError && (
           <Alert
             severity="error"
@@ -162,55 +181,45 @@ export const Page = () => {
           </Alert>
         )}
 
-        {migrationMeta.slug && (
-          <Box
-            borderColor="weak"
-            borderStyle="solid"
-            padding={2}
-            display="flex"
-            gap={4}
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <MigrationInfo
-              title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
-              value={
-                <>
-                  {migrationMeta.slug}{' '}
-                  <Button
-                    disabled={isBusy}
-                    onClick={() => setDisconnectModalOpen(true)}
-                    variant="secondary"
-                    size="sm"
-                    icon={disconnectResult.isLoading ? 'spinner' : undefined}
-                  >
-                    <Trans i18nKey="migrate-to-cloud.summary.disconnect">Disconnect</Trans>
-                  </Button>
-                </>
-              }
-            />
+        {session.data && (
+          <MigrationSummary
+            session={session.data}
+            snapshot={snapshot.data}
+            isBusy={isBusy}
+            disconnectIsLoading={disconnectResult.isLoading}
+            onDisconnect={handleDisconnect}
+            showBuildSnapshot={showBuildSnapshot}
+            buildSnapshotIsLoading={createSnapshotResult.isLoading}
+            onBuildSnapshot={handleCreateSnapshot}
+            showUploadSnapshot={showUploadSnapshot}
+            uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || SNAPSHOT_UPLOADING_STATUSES.includes(status)}
+            onUploadSnapshot={handleUploadSnapshot}
+          />
+        )}
 
-            <MigrationInfo title="Status" value={snapshot?.data?.status ?? 'no snapshot yet'} />
+        {(showBuildSnapshot || showBuildingSnapshot) && (
+          <Box display="flex" justifyContent="center" paddingY={10}>
+            {showBuildSnapshot && (
+              <BuildSnapshotCTA
+                disabled={isBusy}
+                isLoading={createSnapshotResult.isLoading}
+                onClick={handleCreateSnapshot}
+              />
+            )}
 
-            <Button
-              disabled={isBusy || Boolean(snapshot.data)}
-              onClick={handleCreateSnapshot}
-              icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
-            >
-              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
-            </Button>
-
-            <Button
-              disabled={isBusy || !(snapshot.data?.status === 'PENDING_UPLOAD')}
-              onClick={handleUploadSnapshot}
-              icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
-            >
-              <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload & migrate snapshot</Trans>
-            </Button>
+            {showBuildingSnapshot && (
+              <CreatingSnapshotCTA
+                disabled={isBusy}
+                isLoading={cancelSnapshotResult.isLoading}
+                onClick={handleCancelSnapshot}
+              />
+            )}
           </Box>
         )}
 
-        {resources && <ResourcesTable resources={resources} />}
+        {snapshot.data?.results && snapshot.data.results.length > 0 && (
+          <ResourcesTable resources={snapshot.data.results} />
+        )}
       </Stack>
 
       <DisconnectModal
