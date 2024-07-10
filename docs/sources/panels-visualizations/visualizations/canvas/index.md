@@ -166,21 +166,20 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
-1. Click on the element you want to add a data link to while inline editing is enabled.
+1. Enable inline editing.
+1. Click the element you to which you want to add the data link.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. In the selected element pane, scroll down to the **Data links** section and expand it.
+1. Scroll down to the **Data links** section and expand it.
 1. Click **Add link**.
 1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
 1. Enter the **URL** or variable to which you want to link.
 
    To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
-1. If you want the link to open in a new tab, then toggle the **Open in a new tab** switch.
+1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. Click **Save** to save changes and close the dialog box.
 
-{{% admonition type="note" %}}
-You can rearrange your data links to determine the order they appear in the visualization. To do this, click and drag the data link to the desired position.
-{{% /admonition %}}
+If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
 
 #### One-click data link
 

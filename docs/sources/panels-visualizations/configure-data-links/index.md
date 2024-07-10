@@ -253,6 +253,4 @@ If you want to add all of the current dashboard's variables to the URL, then use
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
-{{% admonition type="note" %}}
-You can rearrange your data links to determine the order they appear in the visualization. To do this, click and drag the data link to the desired position.
-{{% /admonition %}}
+If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
