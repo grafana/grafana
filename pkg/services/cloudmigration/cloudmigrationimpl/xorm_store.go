@@ -236,7 +236,7 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultPage
 	}
 	stats, err := ss.GetSnapshotResourceStats(ctx, uid)
 	if err == nil {
-		snapshot.StatsRollup = stats
+		snapshot.StatsRollup = *stats
 	}
 
 	return &snapshot, err
@@ -259,6 +259,12 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	for i, snapshot := range snapshots {
 		if err := ss.decryptKey(ctx, &snapshot); err != nil {
 			return nil, err
+		}
+
+		if stats, err := ss.GetSnapshotResourceStats(ctx, snapshot.UID); err != nil {
+			return nil, err
+		} else {
+			snapshot.StatsRollup = *stats
 		}
 		snapshots[i] = snapshot
 	}

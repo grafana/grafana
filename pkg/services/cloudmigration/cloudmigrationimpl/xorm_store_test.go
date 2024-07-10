@@ -248,14 +248,14 @@ func Test_SnapshotResources(t *testing.T) {
 		// check stats
 		stats, err := s.GetSnapshotResourceStats(ctx, "poiuy")
 		assert.NoError(t, err)
-		assert.Equal(t, map[string]int{
-			"DATASOURCE": 2,
-			"DASHBOARD":  1,
-			"FOLDER":     1,
+		assert.Equal(t, map[cloudmigration.MigrateDataType]int{
+			cloudmigration.DatasourceDataType: 2,
+			cloudmigration.DashboardDataType:  1,
+			cloudmigration.FolderDataType:     1,
 		}, stats.CountsByType)
-		assert.Equal(t, map[string]int{
-			"OK":      3,
-			"PENDING": 1,
+		assert.Equal(t, map[cloudmigration.ItemStatus]int{
+			cloudmigration.ItemStatusOK:      3,
+			cloudmigration.ItemStatusPending: 1,
 		}, stats.CountsByStatus)
 
 		// delete snapshot resources
