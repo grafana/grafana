@@ -298,7 +298,8 @@ describe('getExpandRulesHints', () => {
       `sum(metric_5m{uuid="5m"} + metric_10m{uuid="10m"}) + metric_66m{uuid="66m"}`,
       extractedMapping
     );
-    expect(hints).toEqual([]);
+    const expected = expect.arrayContaining([expect.objectContaining({ type: 'EXPAND_RULES_WARNING' })]);
+    expect(hints).toEqual(expected);
   });
 
   it('should return expand rule warning hint, if the given query *does* have a label', () => {
@@ -335,7 +336,7 @@ describe('getExpandRulesHints', () => {
           action: {
             type: 'EXPAND_RULES',
             query,
-            options: { query: 'expanded_metric_query_111[5m]', labels: { uuid: '111' } },
+            options: { metric_5m: { query: 'expanded_metric_query_111[5m]', labels: { uuid: '111' } } },
           },
         },
       },
