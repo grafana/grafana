@@ -55,7 +55,7 @@ View data results as JSON and as data frame JSON models in the **JSON tab**.
 
 1. Open the Query inspector and click the **JSON tab**.
 1. Choose one of the following options from the **Select source** dropdown menu:
-   - **Panel data -** Displays a JSON object representing the data retrieved from Explore.
+   - **Panel data -** Displays a JSON object representing the data retrieved by the visualization from Explore.
    - **DataFrame JSON (from query) -** Displays the raw data result set without transformations and field configuration applied.
 
 ## Query inspector Data tab
