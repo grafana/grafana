@@ -191,7 +191,7 @@ export function logRecordsToDataFrameForState(records: LogRecord[], theme: Grafa
   const timeField: DataFrameField = {
     name: 'time',
     type: FieldType.time,
-    values: [...records.map((record) => record.timestamp)],
+    values: [...records.map((record) => record.timestamp), Date.now()],
     config: { displayName: 'Time', custom: { fillOpacity: 100 } },
   };
 
