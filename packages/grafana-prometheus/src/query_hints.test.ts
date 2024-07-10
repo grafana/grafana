@@ -390,10 +390,37 @@ describe('checkRecordingRuleIdentifier', () => {
 describe('getQueryLabelsForRuleName', () => {
   it('should return labels for the metric name', () => {
     const metricName = `metric_5m`;
-    const query = `metric_55m{uuid="222"} + metric_5m{uuid="111"}`;
+    const query = `metric_5m{uuid="111"}`;
     const { query: visualQuery } = buildVisualQueryFromString(query);
     const result = getQueryLabelsForRuleName(metricName, visualQuery);
     const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '111' }];
+    expect(result).toEqual(expected);
+  });
+
+  it('should return labels from a query with binary operations', () => {
+    const metricName = `metric_5m`;
+    const query = `metric_55m{uuid="222"} + metric_33m{uuid="333"} + metric_5m{uuid="111"}`;
+    const { query: visualQuery } = buildVisualQueryFromString(query);
+    const result = getQueryLabelsForRuleName(metricName, visualQuery);
+    const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '111' }];
+    expect(result).toEqual(expected);
+  });
+
+  it('should return labels from a query with binary operations with parentheses', () => {
+    const metricName = `metric_5m`;
+    const query = `(metric_55m{uuid="222"} + metric_33m{uuid="333"}) + metric_5m{uuid="111"}`;
+    const { query: visualQuery } = buildVisualQueryFromString(query);
+    const result = getQueryLabelsForRuleName(metricName, visualQuery);
+    const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '111' }];
+    expect(result).toEqual(expected);
+  });
+
+  it('should return labels from a query for the first metricName match', () => {
+    const metricName = `metric_5m`;
+    const query = `(metric_55m{uuid="222"} + metric_33m{uuid="333"}) + metric_5m{uuid="999"} + metric_5m{uuid="555"}`;
+    const { query: visualQuery } = buildVisualQueryFromString(query);
+    const result = getQueryLabelsForRuleName(metricName, visualQuery);
+    const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '999' }];
     expect(result).toEqual(expected);
   });
 });

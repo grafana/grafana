@@ -280,9 +280,22 @@ export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string
   return -1;
 }
 
+// returns the labels of matching metric
 // metricName is the ruleName in query
 export function getQueryLabelsForRuleName(metricName: string, query: PromVisualQuery): QueryBuilderLabelFilter[] {
-  return [];
+  if (query.metric === metricName) {
+    return query.labels;
+  } else {
+    if (query.binaryQueries) {
+      for (let i = 0; i < query.binaryQueries.length; i++) {
+        const labels = getQueryLabelsForRuleName(metricName, query.binaryQueries[i].query);
+        if (labels && labels.length > 0) {
+          return labels;
+        }
+      }
+    }
+    return [];
+  }
 }
 
 function getQueryTokens(query: string) {
