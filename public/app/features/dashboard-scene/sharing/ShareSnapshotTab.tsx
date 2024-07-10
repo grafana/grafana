@@ -1,4 +1,3 @@
-import React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
@@ -60,7 +59,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshotTabRenderer;
 
-  public constructor(state: Omit<ShareSnapshotTabState, 'snapshotName' | 'selectedExpireOption'>) {
+  public constructor(
+    state: Omit<ShareSnapshotTabState, 'snapshotName' | 'selectedExpireOption' | 'snapshotSharingOptions'>
+  ) {
     super({
       ...state,
       snapshotName: state.dashboardRef.resolve().state.title,

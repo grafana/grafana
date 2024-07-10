@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { PanelProps, VizOrientation } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';

@@ -179,7 +179,7 @@
           "items": {
             "type": "object",
             "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
-            "required": ["id", "name", "type", "version"],
+            "required": ["id", "name", "type"],
             "properties": {
               "id": {
                 "type": "string",
@@ -193,7 +193,8 @@
                 "type": "string"
               },
               "version": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
               }
             }
           }
@@ -582,11 +583,6 @@
         },
         "required": ["extensionPointId", "title", "type"]
       }
-    },
-    "apiVersion": {
-      "type": "string",
-      "description": "[internal only] The API version for the plugin. Used for Datasource API servers. This metadata is temporary and will be removed in the future.",
-      "pattern": "^v([\\d]+)(?:(alpha|beta)([\\d]+))?$"
     }
   }
 }

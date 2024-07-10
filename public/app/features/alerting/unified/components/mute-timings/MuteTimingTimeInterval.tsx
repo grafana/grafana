@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { concat, uniq, upperFirst, without } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';

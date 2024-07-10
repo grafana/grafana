@@ -161,6 +161,12 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     this.setStateAndDoSearch({ starred: false });
   };
 
+  onSetStarred = (starred: boolean) => {
+    if (starred !== this.state.starred) {
+      this.setStateAndDoSearch({ starred });
+    }
+  };
+
   onSortChange = (sort: string | undefined) => {
     if (sort) {
       localStorage.setItem(SEARCH_SELECTED_SORT, sort);

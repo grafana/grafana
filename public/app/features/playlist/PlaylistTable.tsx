@@ -1,4 +1,3 @@
-import React from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { FieldSet } from '@grafana/ui';

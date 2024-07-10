@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -289,7 +290,7 @@ func TestService_RegisterActionSets(t *testing.T) {
 			if tt.actionSetsEnabled {
 				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
 			}
-			ac := acimpl.ProvideAccessControl(features)
+			ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 			actionSets := NewActionSetService()
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
@@ -335,8 +336,8 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	features := featuremgmt.WithFeatures()
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),

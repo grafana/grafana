@@ -247,6 +247,43 @@ The `grafana.explore.richHistory.activeDatasourceOnly` local storage key is depr
 - **GrafanaUI:** Add `tabular` prop to Text component for tabular numbers. [#87440](https://github.com/grafana/grafana/issues/87440), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
 
 <!-- 11.1.0 END -->
+<!-- 11.0.1 START -->
+
+# 11.0.1 (2024-06-21)
+
+### Bug fixes
+
+- **Echo:** Suppress errors from frontend-metrics API call failing. [#89493](https://github.com/grafana/grafana/issues/89493), [@joshhunt](https://github.com/joshhunt)
+- **Fix:** Portuguese Brazilian wasn't loading translations. [#89374](https://github.com/grafana/grafana/issues/89374), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **Analytics:** Fix ApplicationInsights integration. [#89300](https://github.com/grafana/grafana/issues/89300), [@ashharrison90](https://github.com/ashharrison90)
+- **DashboardScene:** Fixes issue removing override rule. [#89134](https://github.com/grafana/grafana/issues/89134), [@torkelo](https://github.com/torkelo)
+- **BrowseDashboards:** Prepend subpath to New Browse Dashboard actions. [#89130](https://github.com/grafana/grafana/issues/89130), [@joshhunt](https://github.com/joshhunt)
+- **Alerting:** Fix rule storage to filter by group names using case-sensitive comparison. [#89063](https://github.com/grafana/grafana/issues/89063), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **RBAC:** List only the folders that the user has access to. [#89015](https://github.com/grafana/grafana/issues/89015), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **DashboardScene:** Fixes lack of re-render when updating field override properties. [#88985](https://github.com/grafana/grafana/issues/88985), [@torkelo](https://github.com/torkelo)
+- **DashboardScene:** Fixes inspect with transforms issue. [#88862](https://github.com/grafana/grafana/issues/88862), [@torkelo](https://github.com/torkelo)
+- **AzureMonitor:** Fix bug detecting app insights queries. [#88787](https://github.com/grafana/grafana/issues/88787), [@aangelisc](https://github.com/aangelisc)
+- **Access Control:** Clean up permissions for deprovisioned data sources. [#88700](https://github.com/grafana/grafana/issues/88700), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Loki:** Fix editor history in wrong order. [#88669](https://github.com/grafana/grafana/issues/88669), [@svennergr](https://github.com/svennergr)
+- **SSE:** Fix threshold unmarshal to avoid panic. [#88651](https://github.com/grafana/grafana/issues/88651), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **LibraryPanels/RBAC:** Ignore old folder permission check when deleting/patching lib panel. [#88493](https://github.com/grafana/grafana/issues/88493), [@kaydelaney](https://github.com/kaydelaney)
+- **Dashboards:** Correctly display Admin access to dashboards in the UI. [#88473](https://github.com/grafana/grafana/issues/88473), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **LogsTable:** Fix default sort by time. [#88434](https://github.com/grafana/grafana/issues/88434), [@svennergr](https://github.com/svennergr)
+- **Alerting:** Fix rules deleting when reordering whilst filtered. [#88285](https://github.com/grafana/grafana/issues/88285), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix typo in JSON response for rule export. [#88090](https://github.com/grafana/grafana/issues/88090), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **CloudMonitoring:** Fix query type selection issue. [#88024](https://github.com/grafana/grafana/issues/88024), [@aangelisc](https://github.com/aangelisc)
+- **Alerting:** Fix scheduler to sort rules before evaluation. [#88021](https://github.com/grafana/grafana/issues/88021), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **DashboardScene:** Skip panel repeats when values are the same. [#87896](https://github.com/grafana/grafana/issues/87896), [@torkelo](https://github.com/torkelo)
+- **Alerting:** Do not store series values from past evaluations in state manager for no reason. [#87845](https://github.com/grafana/grafana/issues/87845), [@alexweav](https://github.com/alexweav)
+- **DashboardScene:** Fixing major row repeat issues. [#87800](https://github.com/grafana/grafana/issues/87800), [@torkelo](https://github.com/torkelo)
+- **DashboardScene:** Fixes checkbox orienation in save forms. [#86490](https://github.com/grafana/grafana/issues/86490), [@torkelo](https://github.com/torkelo)
+- **Provisioning:** Add override option to role provisioning. (Enterprise)
+
+### Breaking changes
+
+If you had selected your language as "Português Brasileiro" previously, this will be reset. You have to select it again in your Preferences for the fix to be applied and the translations will then be shown. Issue [#89374](https://github.com/grafana/grafana/issues/89374)
+
+<!-- 11.0.1 END -->
 <!-- 11.0.0 START -->
 
 # 11.0.0 (2024-05-14)
@@ -599,6 +636,16 @@ The deprecated `email` field to send a report via `/api/reports/email` endpoint 
 - **Grafana UI:** Add code variant to Text component. [#82318](https://github.com/grafana/grafana/issues/82318), [@tskarhed](https://github.com/tskarhed)
 
 <!-- 11.0.0-preview END -->
+<!-- 10.4.5 START -->
+
+# 10.4.5 (2024-06-21)
+
+### Bug fixes
+
+- **Echo:** Suppress errors from frontend-metrics API call failing. [#89498](https://github.com/grafana/grafana/issues/89498), [@joshhunt](https://github.com/joshhunt)
+- **Azure Monitor:** Add validation for namespace field in AdvancedResourcePicker when entering a forward slash. [#89313](https://github.com/grafana/grafana/issues/89313), [@adamyeats](https://github.com/adamyeats)
+
+<!-- 10.4.5 END -->
 <!-- 10.4.4 START -->
 
 # 10.4.4 (2024-06-13)
@@ -900,6 +947,15 @@ Any consumers of the specific API should be appropriately adapted. Issue [#74600
 - **Grafana/UI:** Add new Splitter component . [#82357](https://github.com/grafana/grafana/issues/82357), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.4.0 END -->
+<!-- 10.3.7 START -->
+
+# 10.3.7 (2024-06-21)
+
+### Bug fixes
+
+- **Echo:** Suppress errors from frontend-metrics API call failing. [#89497](https://github.com/grafana/grafana/issues/89497), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 10.3.7 END -->
 <!-- 10.3.6 START -->
 
 # 10.3.6 (2024-05-13)
@@ -1076,6 +1132,15 @@ Users who have InfluxDB datasource configured with SQL querying language must up
 Removes `NamespaceID` from responses of all GET routes underneath the path `/api/ruler/grafana/api/v1/rules` - 3 affected endpoints. All affected routes are not in the publicly documented or `stable` marked portion of the ngalert API. This only breaks clients who are directly using the unstable portion of the API. Such clients should use `NamespaceUID` rather than `NamespaceID` to identify namespaces. Issue [#79359](https://github.com/grafana/grafana/issues/79359)
 
 <!-- 10.3.0 END -->
+<!-- 10.2.8 START -->
+
+# 10.2.8 (2024-06-21)
+
+### Bug fixes
+
+- **Elasticsearch:** Fix URL creation and allowlist for `/_mapping` requests. [#87711](https://github.com/grafana/grafana/issues/87711), [@svennergr](https://github.com/svennergr)
+
+<!-- 10.2.8 END -->
 <!-- 10.2.7 START -->
 
 # 10.2.7 (2024-05-13)
@@ -2899,6 +2964,11 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.20 START -->
+
+# 9.5.20 (2024-06-21)
+
+<!-- 9.5.20 END -->
 <!-- 9.5.19 START -->
 
 # 9.5.19 (2024-05-13)

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';

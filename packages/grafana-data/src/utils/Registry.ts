@@ -1,4 +1,4 @@
-import { PluginState } from '../types';
+import { PluginState } from '../types/plugin';
 import { SelectableValue } from '../types/select';
 
 export interface RegistryItem {
