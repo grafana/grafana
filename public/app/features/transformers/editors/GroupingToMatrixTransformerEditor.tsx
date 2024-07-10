@@ -79,13 +79,23 @@ export const GroupingToMatrixTransformerEditor = ({
     <>
       <InlineFieldRow>
         <InlineField label="Column" labelWidth={8}>
-          <Select options={[...fieldNames, ...variables]} value={options.columnField} onChange={onSelectColumn} isClearable />
+          <Select
+            options={[...fieldNames, ...variables]}
+            value={options.columnField}
+            onChange={onSelectColumn}
+            isClearable
+          />
         </InlineField>
         <InlineField label="Row" labelWidth={8}>
           <Select options={[...fieldNames, ...variables]} value={options.rowField} onChange={onSelectRow} isClearable />
         </InlineField>
         <InlineField label="Cell Value" labelWidth={10}>
-          <Select options={[...fieldNames, ...variables]} value={options.valueField} onChange={onSelectValue} isClearable />
+          <Select
+            options={[...fieldNames, ...variables]}
+            value={options.valueField}
+            onChange={onSelectValue}
+            isClearable
+          />
         </InlineField>
         <InlineField label="Empty Value">
           <Select options={specialValueOptions} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />

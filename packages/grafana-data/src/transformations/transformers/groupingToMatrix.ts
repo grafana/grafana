@@ -2,7 +2,12 @@ import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { SpecialValue, DataTransformerInfo, TransformationApplicabilityLevels, DataTransformContext} from '../../types/transformations';
+import {
+  SpecialValue,
+  DataTransformerInfo,
+  TransformationApplicabilityLevels,
+  DataTransformContext,
+} from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
