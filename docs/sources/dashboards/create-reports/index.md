@@ -64,16 +64,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/
-    send-report:
+  send-report:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/reporting/#send-a-report
-  grafana-enterprise:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   configuration-filters:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
