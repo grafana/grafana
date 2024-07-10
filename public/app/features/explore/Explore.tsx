@@ -147,7 +147,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      contentOutlineVisible: false,
+      contentOutlineVisible: true,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });

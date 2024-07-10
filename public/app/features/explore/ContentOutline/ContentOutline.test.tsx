@@ -73,15 +73,15 @@ const setup = (mergeSingleChild = false) => {
 describe('<ContentOutline />', () => {
   it('toggles content on button click', async () => {
     setup();
-    let showContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
+    let showContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
     expect(showContentOutlineButton).toBeInTheDocument();
 
     await userEvent.click(showContentOutlineButton);
-    const hideContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
+    const hideContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
     expect(hideContentOutlineButton).toBeInTheDocument();
 
     await userEvent.click(hideContentOutlineButton);
-    showContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
+    showContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
     expect(showContentOutlineButton).toBeInTheDocument();
   });
 

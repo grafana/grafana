@@ -36,7 +36,7 @@ function shouldBeActive(
 }
 
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
-  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
+  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(true);
   const styles = useStyles2(getStyles, contentOutlineExpanded);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
