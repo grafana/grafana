@@ -32,7 +32,8 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 
 		target.RequestsCount += 1
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{}`))
+		_, err := w.Write([]byte(`{}`))
+		require.NoError(t, err)
 	}
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	target.srv = server
