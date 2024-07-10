@@ -138,8 +138,6 @@ function printAffectedPluginsSection(data) {
         markdown += `<h4>Changes</h4>`;
         markdown += createLinks(changes, affectingProperties).join('<br>\n');
       }
-    } else {
-      markdown += '<h4>No affected plugins found</h4>';
     }
   } catch (error) {
     markdown += `<h4>Error generating detailed report ${error}</h4>`;
