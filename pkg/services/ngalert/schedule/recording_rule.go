@@ -2,6 +2,7 @@ package schedule
 
 import (
 	context "context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -255,6 +256,11 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	writeStart := r.clock.Now()
 	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.Labels)
 	writeDur := r.clock.Now().Sub(writeStart)
+
+	if err != nil {
+		framesSer, _ := json.Marshal(frames)
+		panic(string(framesSer) + err.Error())
+	}
 
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to write metrics")
