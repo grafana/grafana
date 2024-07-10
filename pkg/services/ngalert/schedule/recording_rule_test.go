@@ -270,7 +270,6 @@ func TestRecordingRule_Integration(t *testing.T) {
 			require.Zero(t, writeTarget.RequestsCount)
 		})
 	})
-
 }
 
 func withQueryForHealth(t *testing.T, health string) models.AlertRuleMutator {
