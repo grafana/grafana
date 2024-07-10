@@ -330,7 +330,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		if s.cfg.SnapshotEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
-				SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
+				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
 				Id:       "dashboards/snapshots",
 				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
 				Icon:     "camera",
@@ -354,9 +354,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) && c.SignedInUser.GetOrgRole() == org.RoleAdmin {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Recently Deleted",
+				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
 				Id:       "dashboards/recently-deleted",
 				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
