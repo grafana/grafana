@@ -28,7 +28,7 @@ jobs:
       latest: ${{ steps.output.outputs.latest }}
     runs-on: ubuntu-latest
     steps:
-    - if: ${{ github.event_name == 'workflow_dispatch' }}
+    - if: github.event_name == 'workflow_dispatch'
       run: |
         echo setting up GITHUB_ENV for ${{ github.event_name }}
         echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
@@ -40,6 +40,7 @@ jobs:
         echo "DRY_RUN=true" >> $GITHUB_ENV
         echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') }}" >> $GITHUB_ENV
     - id: output
+      if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/'))
       run: |
         echo "dry_run: $DRY_RUN"
         echo "latest: $LATEST"
