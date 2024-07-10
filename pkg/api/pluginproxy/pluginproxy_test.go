@@ -455,7 +455,13 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			Path:      "projects",
 			Method:    "GET",
 			URL:       "http://localhost/api/projects",
-			ReqAction: "plugin-id.projects:read", // Protected by RBAC action
+			ReqAction: "test-app.projects:read", // Protected by RBAC action
+		},
+		{
+			Path:      "home",
+			Method:    "GET",
+			URL:       "http://localhost/api/home",
+			ReqAction: "plugins.app:access", // Protected by RBAC action with plugin scope
 		},
 	}
 
@@ -480,7 +486,7 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 		},
 		{
 			proxyPath:       "/projects",
-			usrPerms:        map[string][]string{"plugin-id.projects:read": {}},
+			usrPerms:        map[string][]string{"test-app.projects:read": {}},
 			expectedURLPath: "/api/projects",
 			expectedStatus:  http.StatusOK,
 		},
@@ -489,6 +495,18 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			usrPerms:        map[string][]string{},
 			expectedURLPath: "/api/projects",
 			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			proxyPath:       "/home",
+			usrPerms:        map[string][]string{"plugins.app:access": {"plugins:id:not-the-test-app"}},
+			expectedURLPath: "/api/home",
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			proxyPath:       "/home",
+			usrPerms:        map[string][]string{"plugins.app:access": {"plugins:id:test-app"}},
+			expectedURLPath: "/api/home",
+			expectedStatus:  http.StatusOK,
 		},
 	}
 
@@ -534,6 +552,7 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 				},
 			}
 			ps := &pluginsettings.DTO{
+				PluginID:       "test-app",
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
