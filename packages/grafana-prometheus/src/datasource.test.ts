@@ -34,7 +34,14 @@ import {
   fetchMockCalledWith,
   getMockTimeRange,
 } from './test/__mocks__/datasource';
-import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest, RuleMapping } from './types';
+import {
+  PromApplication,
+  PrometheusCacheLevel,
+  PromOptions,
+  PromQuery,
+  PromQueryRequest,
+  RawRecordingRules,
+} from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -395,7 +402,7 @@ describe('PrometheusDatasource', () => {
     });
 
     it('returns a mapping for recording rules only', () => {
-      const groups: RuleMapping[] = [
+      const groups: RawRecordingRules[] = [
         {
           rules: [
             {
@@ -421,7 +428,7 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should extract rules with same name respecting its labels', () => {
-      const groups: RuleMapping[] = [
+      const groups: RawRecordingRules[] = [
         {
           name: 'nameOfTheGroup:uid11',
           file: 'the_file_123',
@@ -457,6 +464,8 @@ describe('PrometheusDatasource', () => {
       expect(mapping['metric_5m'].length).toEqual(2);
       expect(mapping['metric_5m'][0].query).toEqual('super_duper_query');
       expect(mapping['metric_5m'][0].labels).toEqual({ uuid: 'uuid111' });
+      expect(mapping['metric_5m'][1].query).toEqual('another_super_duper_query');
+      expect(mapping['metric_5m'][1].labels).toEqual({ uuid: 'uuid222' });
     });
   });
 

@@ -142,7 +142,8 @@ export type StandardPromVariableQuery = {
   refId: string;
 };
 
-export type RuleMapping = {
+// Rules that we fetch from Prometheus
+export type RawRecordingRules = {
   name: string;
   file: string;
   rules: Rule[];
@@ -150,7 +151,8 @@ export type RuleMapping = {
   limit?: number;
 };
 
-// There may be other fields in the data but those are the ones we care for now
+// A single recording rule with its labels and the query it represents
+// In this object, there may be other fields but those are the ones we care for now
 export type Rule = {
   name: string;
   query: string;
@@ -161,7 +163,6 @@ export type Rule = {
   type: 'alerting' | 'recording';
 };
 
-// we don't need this type at all but having no type for alerts looks bad
 export type AlertInfo = {
   labels: Record<string, string>;
   annotations: Record<string, string>;
@@ -170,6 +171,9 @@ export type AlertInfo = {
   value: string;
 };
 
+// Extracted recording rules with labels
+// We parse and extract the rules because
+// there might be multiple rules with same name but different labels and queries
 export type RuleQueryMapping = {
   [key: string]: Array<{
     query: string;

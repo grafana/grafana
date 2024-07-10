@@ -4,7 +4,7 @@ import { size } from 'lodash';
 import { QueryFix, QueryHint } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
-import { PromMetricsMetadata } from './types';
+import { PromMetricsMetadata, RuleQueryMapping } from './types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
@@ -168,31 +168,8 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
 
   // Check for recording rules expansion
   if (datasource && datasource.ruleMappings) {
-    const mapping = datasource.ruleMappings;
-    const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
-      if (query.search(ruleName) > -1) {
-        return {
-          ...acc,
-          [ruleName]: mapping[ruleName],
-        };
-      }
-      return acc;
-    }, {});
-    if (size(mappingForQuery) > 0) {
-      const label = 'Query contains recording rules.';
-      hints.push({
-        type: 'EXPAND_RULES',
-        label,
-        fix: {
-          label: 'Expand rules',
-          action: {
-            type: 'EXPAND_RULES',
-            query,
-            options: mappingForQuery,
-          },
-        },
-      });
-    }
+    const expandQueryHints = getExpandRulesHints(query, datasource.ruleMappings);
+    hints.push(...expandQueryHints);
   }
 
   if (series && series.length >= SUM_HINT_THRESHOLD_COUNT) {
@@ -227,6 +204,35 @@ export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
     });
   }
 
+  return hints;
+}
+
+export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): QueryHint[] {
+  const hints: QueryHint[] = [];
+  const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
+    if (query.search(ruleName) > -1) {
+      return {
+        ...acc,
+        [ruleName]: mapping[ruleName],
+      };
+    }
+    return acc;
+  }, {});
+  if (size(mappingForQuery) > 0) {
+    const label = 'Query contains recording rules.';
+    hints.push({
+      type: 'EXPAND_RULES',
+      label,
+      fix: {
+        label: 'Expand rules',
+        action: {
+          type: 'EXPAND_RULES',
+          query,
+          options: mappingForQuery,
+        },
+      },
+    });
+  }
   return hints;
 }
 

@@ -68,7 +68,7 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
-  RuleMapping,
+  RawRecordingRules,
   RuleQueryMapping,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
@@ -971,7 +971,7 @@ export function alignRange(
   };
 }
 
-export function extractRuleMappingFromGroups(groups: RuleMapping[]): RuleQueryMapping {
+export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {
   return groups.reduce<RuleQueryMapping>(
     (mapping, group) =>
       group.rules
