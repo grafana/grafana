@@ -1,24 +1,27 @@
 import { css } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, groupBy } from 'lodash';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { useCombinedRule } from '../../../hooks/useCombinedRule';
+import { labelsMatchMatchers } from '../../../utils/alertmanager';
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { parse } from '../../../utils/rule-id';
 import { MetaText } from '../../MetaText';
 import { AnnotationValue } from '../../rule-viewer/tabs/Details';
 import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
 import { useFrameSubset } from '../state-history/LokiStateHistory';
 import { LogRecord } from '../state-history/common';
-import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
+import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
 import { EventState, FilterType, LIMIT_EVENTS } from './EventListSceneObject';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
+import { logRecordsToDataFrameForState } from './utils';
 
 interface EventDetailsProps {
   record: LogRecord;
@@ -69,6 +72,47 @@ export function EventDetails({ record, addFilter, timeRange }: EventDetailsProps
   );
 }
 
+function useRuleHistoryRecordsForTheInstance(labelsForTheInstance: string, stateHistory?: DataFrameJSON) {
+  const theme = useTheme2();
+
+  return useMemo(() => {
+    // merge timestamp with "line"
+    const tsValues = stateHistory?.data?.values[0] ?? [];
+    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
+    const lines = stateHistory?.data?.values[1] ?? [];
+
+    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+      const line = lines[index];
+      // values property can be undefined for some instance states (e.g. NoData)
+      if (isLine(line)) {
+        acc.push({ timestamp, line });
+      }
+
+      return acc;
+    }, []);
+
+    // group all records by alert instance (unique set of labels)
+    const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
+      return JSON.stringify(record.line.labels);
+    });
+
+    // filter by instance labels
+    const filterMatchers = parsePromQLStyleMatcherLooseSafe(labelsForTheInstance);
+    const filteredGroupedLines = Object.entries(logRecordsByInstance).filter(([key]) => {
+      const labels = JSON.parse(key);
+      return labelsMatchMatchers(labels, filterMatchers);
+    });
+    // Convert each group of log records to a DataFrame
+    const dataFrames: DataFrame[] = Object.values(filteredGroupedLines).map<DataFrame>((records) => {
+      // first element is the linstance labels, the second is the records list
+      return logRecordsToDataFrameForState(records[1], theme);
+    });
+    return {
+      dataFrames,
+    };
+  }, [stateHistory, labelsForTheInstance, theme]);
+}
+
 interface StateVisualizationProps {
   ruleUID: string;
   timeRange: TimeRange;
@@ -105,13 +149,13 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
     }
   );
 
-  const { dataFrames } = useRuleHistoryRecords(
-    stateHistory,
+  const { dataFrames } = useRuleHistoryRecordsForTheInstance(
     labels
       ? Object.entries(labels)
           .map(([key, value]) => `${key}=${value}`)
           .join(',')
-      : ''
+      : '',
+    stateHistory
   );
 
   const { frameSubset, frameTimeRange } = useFrameSubset(dataFrames);

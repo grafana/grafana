@@ -1,6 +1,16 @@
 import { groupBy } from 'lodash';
 
-import { DataFrame, Field as DataFrameField, DataFrameJSON, Field, FieldType } from '@grafana/data';
+import {
+  DataFrame,
+  Field as DataFrameField,
+  DataFrameJSON,
+  Field,
+  FieldType,
+  GrafanaTheme2,
+  MappingType,
+  ThresholdsMode,
+  getDisplayProcessor,
+} from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { isGrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
@@ -164,6 +174,80 @@ function logRecordsToDataFrame(instanceLabels: string, records: LogRecord[]): Da
     length: timeField.values.length,
     name: instanceLabels,
   };
+
+  return frame;
+}
+
+/*
+ * This function is used to convert the log records to a DataFrame.
+ * The DataFrame has two fields: time and value.
+ * The time field is the timestamp of the log record.
+ * The value field is the state of the log record.
+ * The state is converted to a string and color is assigned based on the state.
+ * The state can be Alerting, Pending, Normal, or NoData.
+ *
+ * */
+export function logRecordsToDataFrameForState(records: LogRecord[], theme: GrafanaTheme2): DataFrame {
+  const timeField: DataFrameField = {
+    name: 'time',
+    type: FieldType.time,
+    values: [...records.map((record) => record.timestamp)],
+    config: { displayName: 'Time', custom: { fillOpacity: 100 } },
+  };
+
+  // Sort time field values
+  const timeIndex = timeField.values.map((_, index) => index);
+  timeIndex.sort(fieldIndexComparer(timeField));
+
+  const stateValues = [...records.map((record) => record.line.current), records.at(-1)?.line.current];
+
+  // Create DataFrame with time and value fields
+  const frame: DataFrame = {
+    fields: [
+      {
+        ...timeField,
+        values: timeField.values.map((_, i) => timeField.values[timeIndex[i]]),
+      },
+      {
+        name: 'State',
+        type: FieldType.string,
+        values: stateValues.map((_, i) => stateValues[timeIndex[i]]),
+        config: {
+          displayName: 'State',
+          color: { mode: 'thresholds' },
+          custom: { fillOpacity: 100 },
+          mappings: [
+            {
+              type: MappingType.ValueToText,
+              options: {
+                Alerting: {
+                  color: theme.colors.error.main,
+                },
+                Pending: {
+                  color: theme.colors.warning.main,
+                },
+                Normal: {
+                  color: theme.colors.success.main,
+                },
+                NoData: {
+                  color: theme.colors.info.main,
+                },
+              },
+            },
+          ],
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [],
+          },
+        },
+      },
+    ],
+    length: timeField.values.length,
+    name: '',
+  };
+  frame.fields.forEach((field) => {
+    field.display = getDisplayProcessor({ field, theme });
+  });
 
   return frame;
 }
