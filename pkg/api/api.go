@@ -477,8 +477,8 @@ func (hs *HTTPServer) registerRoutes() {
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
 
 				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-					dashUidRoute.Patch("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDeletedDashboard))
-					dashUidRoute.Delete("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.HardDeleteDashboardByUID))
+					dashUidRoute.Patch("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDeletedDashboard))
+					dashUidRoute.Delete("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.HardDeleteDashboardByUID))
 				}
 
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
