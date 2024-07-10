@@ -1,7 +1,6 @@
 import { uniqueId } from 'lodash';
 import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
-
-import { MakeOptional } from '../../trails/shared';
+import { SetOptional } from 'type-fest';
 
 import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 
@@ -12,7 +11,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
   children?: ContentOutlineItemContextProps[];
 }
 
-type RegisterFunction = (outlineItem: MakeOptional<ContentOutlineItemContextProps, 'id'>) => string;
+type RegisterFunction = (outlineItem: SetOptional<ContentOutlineItemContextProps, 'id'>) => string;
 
 export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];

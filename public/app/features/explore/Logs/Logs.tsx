@@ -61,6 +61,14 @@ import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/l
 import { getState } from 'app/store/store';
 import { ExploreItemState, useDispatch } from 'app/types';
 
+import {
+  contentOutlineTrackLevelFilter,
+  contentOutlineTrackPinAdded,
+  contentOutlineTrackPinClicked,
+  contentOutlineTrackPinLimitReached,
+  contentOutlineTrackPinRemoved,
+  contentOutlineTrackUnpinClicked,
+} from '../ContentOutline/ContentOutlineAnalyticEvents';
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
@@ -276,10 +284,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             highlight: currentLevelSelected && !allLevelsSelected,
             onClick: (e: React.MouseEvent) => {
               toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
-              reportInteraction('explore_toolbar_contentoutline_clicked', {
-                item: 'section',
-                type: `Logs:filter:${level.levelStr}`,
-              });
+              contentOutlineTrackLevelFilter(level);
             },
             ref: null,
             color: LogLevelColor[level.logLevel],
@@ -683,10 +688,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const onPinToContentOutlineClick = (row: LogRowModel, allowUnPin = true) => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT && !allowUnPin) {
-      reportInteraction('explore_toolbar_contentoutline_clicked', {
-        item: 'section',
-        type: 'Logs:pinned:pinned-log-limit-reached',
-      });
+      contentOutlineTrackPinLimitReached();
       return;
     }
 
@@ -701,10 +703,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const alreadyPinned = pinnedLogs?.find((pin) => pin === row.rowId);
     if (alreadyPinned && row.rowId && allowUnPin) {
       unregister?.(row.rowId);
-      reportInteraction('explore_toolbar_contentoutline_clicked', {
-        item: 'section',
-        type: 'Logs:pinned:pinned-log-deleted',
-      });
+      contentOutlineTrackPinRemoved();
     } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT && !alreadyPinned) {
       register?.({
         id: row.rowId,
@@ -717,32 +716,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         childOnTop: true,
         onClick: () => {
           onOpenContext(row, () => {});
-          reportInteraction('explore_toolbar_contentoutline_clicked', {
-            item: 'section',
-            type: 'Logs:pinned:pinned-log-clicked',
-          });
+          contentOutlineTrackPinClicked();
         },
         onRemove: (id: string) => {
           unregister?.(id);
-          reportInteraction('explore_toolbar_contentoutline_clicked', {
-            item: 'section',
-            type: 'Logs:pinned:pinned-log-deleted',
-          });
+          contentOutlineTrackUnpinClicked();
         },
       });
-
-      reportInteraction('explore_toolbar_contentoutline_clicked', {
-        item: 'section',
-        type: 'Logs:pinned:pinned-log-added',
-      });
+      contentOutlineTrackPinAdded();
     }
 
     props.onPinLineCallback?.();
-
-    reportInteraction('explore_toolbar_contentoutline_clicked', {
-      item: 'section',
-      type: 'Logs:pinned:pinned-log-added',
-    });
   };
 
   const hasUnescapedContent = checkUnescapedContent(logRows);
