@@ -1,6 +1,8 @@
 const fs = require('fs');
 
-const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
+const printAffectedPluginsSection = require('./levitate-show-affected-plugins');
+
+const data = JSON.parse(fs.readFileSync('data-test.json', 'utf8'));
 
 function stripAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*m/g, '');
@@ -27,5 +29,7 @@ if (data.removals.length > 0) {
 if (data.changes.length > 0) {
   markdown += printSection('Changes', data.changes);
 }
+
+markdown += printAffectedPluginsSection(data);
 
 console.log(markdown);
