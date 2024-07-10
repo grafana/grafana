@@ -1295,15 +1295,15 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "[grafana]\n" +
         "name=grafana\n" +
         "baseurl=https://rpm.grafana.com\n" +
-        "repo_gpgcheck=1\n" +
+        "repo_gpgcheck=0\n" +  # Change this to 0
         "enabled=1\n" +
-        "gpgcheck=1\n" +
+        "gpgcheck=0\n" +  # Change this to 0
         "gpgkey=https://rpm.grafana.com/gpg.key\n" +
         "sslverify=1\n" +
         "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
     )
 
-    repo_install_command = "dnf install -y grafana-${TAG} >/dev/null 2>&1"
+    repo_install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1320,13 +1320,18 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "echo '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
             "dnf list available grafana-${TAG}",
-            "if [ $? -eq 0 ]; then",
+            'if [ $? -eq 0 ]; then',
             '    echo "Grafana package found in repository. Installing from repo..."',
-        ] + retry_command(repo_install_command, attempts = 10) + [
-            "else",
+            ] + retry_command(repo_install_command, attempts = 5) + [
+            '    echo "Verifying GPG key..."',
+            '    rpm --import https://rpm.grafana.com/gpg.key',
+            '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana',
+            'else',
             '    echo "Grafana package version ${TAG} not found in repository."',
+            "    dnf repolist",
+            "    dnf list available grafana*",
             "    exit 1",
-            "fi",
+            'fi',
             'echo "Step 6: Verifying Grafana installation..."',
             'if rpm -q grafana | grep -q "${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',

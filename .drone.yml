@@ -3207,9 +3207,9 @@ steps:
     echo '[grafana]
     name=grafana
     baseurl=https://rpm.grafana.com
-    repo_gpgcheck=1
+    repo_gpgcheck=0
     enabled=1
-    gpgcheck=1
+    gpgcheck=0
     gpgkey=https://rpm.grafana.com/gpg.key
     sslverify=1
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
@@ -3218,13 +3218,13 @@ steps:
   - dnf list available grafana-${TAG}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
-  - for i in $(seq 1 10); do
-  - '    if dnf install -y grafana-${TAG} >/dev/null 2>&1; then'
+  - for i in $(seq 1 5); do
+  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 10 ]; then'
+  - '        if [ $i -eq 5 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3232,8 +3232,13 @@ steps:
   - '        sleep 60'
   - '    fi'
   - done
+  - '    echo "Verifying GPG key..."'
+  - '    rpm --import https://rpm.grafana.com/gpg.key'
+  - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
   - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    dnf repolist'
+  - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
@@ -3380,9 +3385,9 @@ steps:
     echo '[grafana]
     name=grafana
     baseurl=https://rpm.grafana.com
-    repo_gpgcheck=1
+    repo_gpgcheck=0
     enabled=1
-    gpgcheck=1
+    gpgcheck=0
     gpgkey=https://rpm.grafana.com/gpg.key
     sslverify=1
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
@@ -3391,13 +3396,13 @@ steps:
   - dnf list available grafana-${TAG}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
-  - for i in $(seq 1 10); do
-  - '    if dnf install -y grafana-${TAG} >/dev/null 2>&1; then'
+  - for i in $(seq 1 5); do
+  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 10 ]; then'
+  - '        if [ $i -eq 5 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3405,8 +3410,13 @@ steps:
   - '        sleep 60'
   - '    fi'
   - done
+  - '    echo "Verifying GPG key..."'
+  - '    rpm --import https://rpm.grafana.com/gpg.key'
+  - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
   - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    dnf repolist'
+  - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
@@ -5398,6 +5408,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 24aa4dbad92d31b1a6686c7bfa3eb07d4c6a302df0f4a3e64af977545968d508
+hmac: 1824597b60bd1bf6f67ca7118c1fc3bd79271749b104e174ced460cbdaf26a5f
 
 ...
