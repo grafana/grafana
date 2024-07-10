@@ -276,7 +276,27 @@ export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string
     return -1;
   }
 
-  // FIXME compare labels
+  let uuidLabel = '';
+  // let uuidLabelValue = '';
+  let uuidLabelIdx = -1;
+
+  mapping.forEach((mp, idx) => {
+    if (mp.labels) {
+      Object.entries(mp.labels).forEach(([key, value]) => {
+        if (uuidLabelIdx === -1 && key.search('uuid') > -1) {
+          uuidLabel = key;
+          // uuidLabelValue = value;
+          uuidLabelIdx = idx;
+        }
+      });
+    }
+  });
+
+  const queryLabelUuidIdx = queryMetricLabels.findIndex((qml) => qml.label === uuidLabel);
+  if (queryLabelUuidIdx > -1) {
+    return uuidLabelIdx;
+  }
+
   return -1;
 }
 

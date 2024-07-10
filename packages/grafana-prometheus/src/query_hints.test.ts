@@ -343,7 +343,7 @@ describe('getExpandRulesHints', () => {
   });
 });
 
-describe('checkRecordingRuleIdentifier', () => {
+describe('getRecordingRuleIdentifierIdx', () => {
   it('should return the matching identifier', () => {
     const mapping: RuleQueryMapping[string] = [
       {
