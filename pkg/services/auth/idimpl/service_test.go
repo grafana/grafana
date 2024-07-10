@@ -80,7 +80,11 @@ func TestService_SignIdentity(t *testing.T) {
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), AuthenticatedBy: login.AzureADAuthModule, Login: "U1"})
+		token, err := s.SignIdentity(context.Background(), &authn.Identity{
+			ID:              authn.MustParseNamespaceID("user:1"),
+			AuthenticatedBy: login.AzureADAuthModule,
+			Login:           "U1",
+			UID:             authn.NewNamespaceIDString(authn.NamespaceUser, "edpu3nnt61se8e")})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
@@ -89,6 +93,7 @@ func TestService_SignIdentity(t *testing.T) {
 		claims := &auth.IDClaims{}
 		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
 		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
-		assert.Equal(t, "U1", claims.Rest.Login)
+		assert.Equal(t, "U1", claims.Rest.Username)
+		assert.Equal(t, "user:edpu3nnt61se8e", claims.Rest.UID)
 	})
 }
