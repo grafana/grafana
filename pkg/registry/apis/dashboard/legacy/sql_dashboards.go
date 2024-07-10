@@ -75,8 +75,8 @@ func NewDashboardAccess(sql db.DB,
 const selector = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid, dashboard.folder_uid,
-	dashboard.created,dashboard.created_by,CreatedUSER.uid as created_uid,
-	dashboard.updated,dashboard.updated_by,UpdatedUSER.uid as updated_uid,
+	dashboard.created,CreatedUSER.uid as created_by,
+	dashboard.updated,UpdatedUSER.uid as updated_by,
 	plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
@@ -86,14 +86,14 @@ const selector = `SELECT
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
   LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.created_by = UpdatedUSER.id
+  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.updated_by = UpdatedUSER.id
   WHERE dashboard.is_folder = false`
 
 const history = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid, dashboard.folder_uid,
-	dashboard_version.created,dashboard_version.created_by,CreatedUSER.uid as created_uid,
-	dashboard_version.created,dashboard_version.created_by,CreatedUSER.uid as updated_uid,
+	dashboard_version.created,CreatedUSER.uid as created_by,
+	dashboard_version.created,CreatedUSER.uid as updated_by,
 	plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
@@ -235,12 +235,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var orgId int64
 	var folder_uid sql.NullString
 	var updated time.Time
-	var updatedByID int64
-	var updatedByUID sql.NullString
+	var updatedBy sql.NullString
 
 	var created time.Time
-	var createdByID int64
-	var createdByUID sql.NullString
+	var createdBy sql.NullString
 	var message sql.NullString
 
 	var plugin_id string
@@ -252,8 +250,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var version int64
 
 	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &folder_uid,
-		&created, &createdByID, &createdByUID,
-		&updated, &updatedByID, &updatedByUID,
+		&created, &createdBy,
+		&updated, &updatedBy,
 		&plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&version, &message, &data,
@@ -271,25 +269,18 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			return nil, err
 		}
 		meta.SetUpdatedTimestamp(&updated)
-		if createdByID > 0 {
-			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceUser, createdByID).String())
-		} else if createdByID < 0 {
-			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceProvisioning, 0).String())
-		}
-		if updatedByID > 0 {
-			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceUser, updatedByID).String())
-		} else if updatedByID < 0 {
-			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceProvisioning, 0).String())
-		}
-		if message.Valid && message.String != "" {
+		meta.SetCreatedBy(getUserID(createdBy))
+		meta.SetUpdatedBy(getUserID(updatedBy))
+
+		if message.String != "" {
 			meta.SetMessage(message.String)
 		}
-		if folder_uid.Valid {
+		if folder_uid.String != "" {
 			meta.SetFolder(folder_uid.String)
 			row.FolderUID = folder_uid.String
 		}
 
-		if origin_name.Valid {
+		if origin_name.String != "" {
 			ts := time.Unix(origin_ts.Int64, 0)
 
 			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
@@ -324,6 +315,13 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		}
 	}
 	return row, err
+}
+
+func getUserID(v sql.NullString) string {
+	if v.String == "" {
+		return identity.NewNamespaceIDString(identity.NamespaceProvisioning, "").String()
+	}
+	return identity.NewNamespaceIDString(identity.NamespaceUser, v.String).String()
 }
 
 // DeleteDashboard implements DashboardAccess.
