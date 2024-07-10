@@ -36,24 +36,6 @@ const RecentlyDeletedPage = memo(() => {
     );
   }, [dispatch, stateManager]);
 
-  // if (
-  //   searchState.loading === false &&
-  //   searchState.query.length === 0 &&
-  //   searchState.tag.length === 0 &&
-  //   searchState.result?.totalRows === 0
-  // ) {
-  //   return (
-  //     <Page navId="dashboards/recently-deleted">
-  //       <Page.Contents>
-  //         <EmptyState
-  //           variant="completed"
-  //           message={t('recently-deleted.page.empty-state', "You haven't deleted any dashboards recently.")}
-  //         />
-  //       </Page.Contents>
-  //     </Page>
-  //   );
-  // }
-
   return (
     <Page navId="dashboards/recently-deleted">
       <Page.Contents>
@@ -107,8 +89,12 @@ const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyStatePro
   const userIsSearching = Boolean(searchState.query || searchState.tag.length);
   return (
     <EmptyState
-      message={userIsSearching ? 'no search result' : 'You have not deleted any dashboards recently.'}
-      variant="not-found"
+      message={
+        userIsSearching
+          ? t('recently-deleted.page.no-search-result', 'No results found for your query')
+          : t('recently-deleted.page.no-deleted-dashboards', "You haven't deleted any dashboards recently.")
+      }
+      variant={userIsSearching ? 'not-found' : 'completed'}
       role="alert"
     />
   );

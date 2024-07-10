@@ -1679,7 +1679,8 @@
       "restore": "Ŗęşŧőřę"
     },
     "page": {
-      "empty-state": "Ÿőū ĥävęŉ'ŧ đęľęŧęđ äŉy đäşĥþőäřđş řęčęŉŧľy."
+      "no-deleted-dashboards": "Ÿőū ĥävęŉ'ŧ đęľęŧęđ äŉy đäşĥþőäřđş řęčęŉŧľy.",
+      "no-search-result": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
     },
     "permanently-delete-modal": {
       "confirm-text": "Đęľęŧę",

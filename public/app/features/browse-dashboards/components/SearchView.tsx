@@ -96,7 +96,7 @@ export function SearchView({
     [selectionChecker, dispatch]
   );
 
-  if (value.totalRows === 0) {
+  if (value?.totalRows === 0) {
     if (emptyState) {
       return <div style={{ width }}>{emptyState}</div>;
     } else {
@@ -118,7 +118,7 @@ export function SearchView({
   }
 
   const props: SearchResultsProps = {
-    response: value,
+    response: value ?? initialLoadingView,
     selection: canSelect ? selectionChecker : undefined,
     selectionToggle: canSelect ? handleItemSelectionChange : undefined,
     clearSelection,

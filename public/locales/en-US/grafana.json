@@ -1679,7 +1679,8 @@
       "restore": "Restore"
     },
     "page": {
-      "empty-state": "You haven't deleted any dashboards recently."
+      "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
+      "no-search-result": "No results found for your query"
     },
     "permanently-delete-modal": {
       "confirm-text": "Delete",
