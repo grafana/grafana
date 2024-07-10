@@ -296,6 +296,16 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 	})
 }
 
+func (rs *ReceiverService) CreateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) {
+	// TODO: Stub
+	panic("not implemented")
+}
+
+func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) {
+	// TODO: Stub
+	panic("not implemented")
+}
+
 func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, name, fallback string) func(value string) string {
 	return func(value string) string {
 		if !decrypt {
