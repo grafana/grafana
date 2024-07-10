@@ -57,7 +57,7 @@ jobs:
         echo dry run: ${{ needs.setup.outputs.dry_run }}
   create_github_release:
     # a github release requires a git tag
-    needs: [setup, mirror_tag]
+    needs: setup
     uses: ./.github/workflows/github-release.yml
     with:
       version: ${{ needs.setup.outputs.version }}
