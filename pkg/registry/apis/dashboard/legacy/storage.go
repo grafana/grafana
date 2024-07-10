@@ -255,12 +255,16 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	}
 
 	query := &DashboardQuery{
-		OrgID:       info.OrgID,
-		Limit:       int(req.Limit),
-		MaxBytes:    2 * 1024 * 1024, // 2MB,
-		MinID:       token.id,
-		FromHistory: true,
-		UID:         req.Key.Name,
+		OrgID:    info.OrgID,
+		Limit:    int(req.Limit),
+		MaxBytes: 2 * 1024 * 1024, // 2MB,
+		MinID:    token.id,
+		UID:      req.Key.Name,
+	}
+	if req.ShowDeleted {
+		query.GetTrash = true
+	} else {
+		query.GetHistory = true
 	}
 
 	rows, limit, err := a.getRows(ctx, query)

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -77,7 +78,7 @@ const selector = `SELECT
 	dashboard.uid, dashboard.folder_uid,
 	dashboard.created,CreatedUSER.uid as created_by,
 	dashboard.updated,UpdatedUSER.uid as updated_by,
-	plugin_id,
+	dashboard.deleted, plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
 	dashboard_provisioning.check_sum as origin_key,
@@ -94,7 +95,7 @@ const history = `SELECT
 	dashboard.uid, dashboard.folder_uid,
 	dashboard_version.created,CreatedUSER.uid as created_by,
 	dashboard_version.created,CreatedUSER.uid as updated_by,
-	plugin_id,
+	'', plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
 	dashboard_provisioning.check_sum as origin_key,
@@ -123,7 +124,11 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		limit = 15 //
 	}
 
-	if query.FromHistory {
+	if query.GetHistory {
+		if query.GetTrash {
+			return nil, 0, fmt.Errorf("trash not included in history table")
+		}
+
 		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", history, len(args))
 
 		if query.UID == "" {
@@ -152,6 +157,11 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		} else if query.MinID > 0 {
 			args = append(args, query.MinID)
 			sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
+		}
+		if query.GetTrash {
+			sqlcmd = sqlcmd + " AND dashboard.deleted IS NOT NULL"
+		} else {
+			sqlcmd = sqlcmd + " AND dashboard.deleted IS NULL"
 		}
 
 		args = append(args, (limit + 2)) // add more so we can include a next token
@@ -236,6 +246,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var folder_uid sql.NullString
 	var updated time.Time
 	var updatedBy sql.NullString
+	var deleted sql.NullTime
 
 	var created time.Time
 	var createdBy sql.NullString
@@ -252,7 +263,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &folder_uid,
 		&created, &createdBy,
 		&updated, &updatedBy,
-		&plugin_id,
+		&deleted, &plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&version, &message, &data,
 	)
@@ -271,6 +282,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetCreatedBy(getUserID(createdBy))
 		meta.SetUpdatedBy(getUserID(updatedBy))
+
+		if deleted.Valid {
+			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
+		}
 
 		if message.String != "" {
 			meta.SetMessage(message.String)

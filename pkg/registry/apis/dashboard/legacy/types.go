@@ -16,8 +16,12 @@ type DashboardQuery struct {
 	MaxBytes int
 	MinID    int64 // from continue token
 
-	FromHistory bool
-	Version     int64
+	// List dashboards with a deletion timestamp
+	GetTrash bool
+
+	// Get dashboards from the history table
+	GetHistory bool
+	Version    int64
 
 	// The label requirements
 	Labels []*resource.Requirement
