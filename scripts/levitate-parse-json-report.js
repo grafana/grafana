@@ -2,7 +2,7 @@ const fs = require('fs');
 
 const printAffectedPluginsSection = require('./levitate-show-affected-plugins');
 
-const data = JSON.parse(fs.readFileSync('data-test.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
 function stripAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*m/g, '');

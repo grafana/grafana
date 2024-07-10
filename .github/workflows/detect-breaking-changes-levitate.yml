@@ -150,27 +150,15 @@ jobs:
           project_id: 'grafanalabs-global'
           install_components: 'bq'
 
-
-      - name: Run BigQuery query
+        # This is step is needed to generate a detailed levitate report
+      - name: Set up gcloud project
         run: |
           unset CLOUDSDK_CORE_PROJECT
           unset GCLOUD_PROJECT
           unset GCP_PROJECT
           unset GOOGLE_CLOUD_PROJECT
+
           gcloud config set project grafanalabs-global
-          bq query --nouse_legacy_sql "
-          SELECT
-            property_name,
-            package_name,
-            COUNT(property_name) as cnt
-          FROM
-            \`grafanalabs-global.plugins_data.plugin_imports\`
-          WHERE
-            package_name IN ('@grafana/ui','@grafana/runtime','@grafana/experimental','@grafana/schema','@grafana/data')
-          GROUP BY
-            property_name, package_name
-          ORDER BY cnt DESC
-          "
 
       - name: Get link for the Github Action job
         id: job
