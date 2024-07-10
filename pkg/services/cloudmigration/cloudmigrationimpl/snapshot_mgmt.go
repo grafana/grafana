@@ -3,7 +3,6 @@ package cloudmigrationimpl
 import (
 	"context"
 	cryptoRand "crypto/rand"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -310,7 +309,7 @@ func (s *Service) uploadUsingPresignedURL(ctx context.Context, uploadURL, key st
 	}
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("closing file: path=%s %w", filePath, closeErr))
+			s.log.Error("closing file", "path", filePath, "err", closeErr)
 		}
 	}()
 
