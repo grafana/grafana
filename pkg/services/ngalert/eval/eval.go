@@ -430,6 +430,24 @@ type NumberValueCapture struct {
 	Value *float64
 }
 
+func IsNoData(res backend.DataResponse) bool {
+	// There are two possible frame formats for No Data:
+	//
+	// 1. A response with no frames
+	// 2. A response with 1 frame but no fields
+	//
+	// The first format is not documented in the data plane contract but needs to be
+	// supported for older datasource plugins. The second format is documented in
+	// https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/contract_docs/contract.md
+	// and is what datasource plugins should use going forward.
+	if len(res.Frames) <= 1 {
+		hasNoFrames := len(res.Frames) == 0
+		hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
+		return hasNoFrames && hasNoFields
+	}
+	return false
+}
+
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// captures contains the values of all instant queries and expressions for each dimension
 	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
@@ -459,27 +477,15 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	result.Error = FindConditionError(execResp, c.Condition)
 
 	for refID, res := range execResp.Responses {
-		// There are two possible frame formats for No Data:
-		//
-		// 1. A response with no frames
-		// 2. A response with 1 frame but no fields
-		//
-		// The first format is not documented in the data plane contract but needs to be
-		// supported for older datasource plugins. The second format is documented in
-		// https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/contract_docs/contract.md
-		// and is what datasource plugins should use going forward.
-		if len(res.Frames) <= 1 {
+
+		if IsNoData(res) {
 			// To make sure NoData is nil when Results are also nil we wait to initialize
 			// NoData until there is at least one query or expression that returned no data
 			if result.NoData == nil {
 				result.NoData = make(map[string]string)
 			}
-			hasNoFrames := len(res.Frames) == 0
-			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
-			if hasNoFrames || hasNoFields {
-				if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
-					result.NoData[refID] = s
-				}
+			if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
+				result.NoData[refID] = s
 			}
 		}
 

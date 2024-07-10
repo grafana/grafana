@@ -217,11 +217,12 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		if r.maxAttempts > 0 {
 			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
 		}
-	} else {
-		logger.Debug("Recording rule evaluation succeeded")
-		r.lastError.Store(nil)
-		r.health.Store("ok")
+		return
 	}
+	logger.Debug("Recording rule evaluation succeeded")
+	span.AddEvent("rule evaluated")
+	r.lastError.Store(nil)
+	r.health.Store("ok")
 }
 
 func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {
@@ -239,17 +240,19 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 	// TODO: This is missing dedicated logic for NoData. If NoData we can skip the write.
 
-	logger.Info("Recording rule evaluated", "results", result, "duration", evalDur)
+	logger.Info("Recording rule query completed", "resultCount", len(result.Responses), "duration", evalDur)
 	span := trace.SpanFromContext(ctx)
-	span.AddEvent("rule evaluated", trace.WithAttributes(
+	span.AddEvent("query succeeded", trace.WithAttributes(
 		attribute.Int64("results", int64(len(result.Responses))),
 	))
 
 	frames, err := r.frameRef(ev.rule.Record.From, result)
 	if err != nil {
-		span.SetStatus(codes.Error, "failed to extract frames from rule evaluation")
-		span.RecordError(err)
-		return fmt.Errorf("failed to extract frames from rule evaluation: %w", err)
+		span.AddEvent("query returned no data, nothing to write", trace.WithAttributes(
+			attribute.String("reason", err.Error()),
+		))
+		logger.Debug("Query returned no data", "reason", err)
+		return nil
 	}
 
 	writeStart := r.clock.Now()
@@ -292,16 +295,20 @@ func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
 	r.evalAppliedHook(r.key, ev.scheduledAt)
 }
 
+// frameRef gets frames from a QueryDataResponse for a particular refID. It returns an error if the frames do not exist or have no data.
 func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) (data.Frames, error) {
 	if len(resp.Responses) == 0 {
 		return nil, fmt.Errorf("no responses returned from rule evaluation")
 	}
 
-	for ref, resp := range resp.Responses {
-		if ref == refID {
-			return resp.Frames, nil
-		}
+	targetNode, ok := resp.Responses[refID]
+	if !ok {
+		return nil, fmt.Errorf("no response with refID %s found in rule evaluation", refID)
 	}
 
-	return nil, fmt.Errorf("no response with refID %s found in rule evaluation", refID)
+	if eval.IsNoData(targetNode) {
+		return nil, fmt.Errorf("response with refID %s has no data", refID)
+	}
+
+	return targetNode.Frames, nil
 }
