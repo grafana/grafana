@@ -48,9 +48,7 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": false,
-      "tags": [
-        "azure-infra-monitor"
-      ],
+      "tags": ["azure-infra-monitor"],
       "targetBlank": false,
       "title": "Azure Infra Monitoring Dashboards",
       "tooltip": "",
@@ -81,7 +79,7 @@
         "content": "<p style=\"font-size:24px;color:rgb(87, 148, 242);\">Azure Infrastructure Monitoring Dashboard (Data)</p>\r\n\r\nSelect a data source, workspace scope, workspace(s) and resource scope.   \r\nExamine the key performance indicators for your resources by expanding the row for a resource type.  \r\nRecommended KPIs and thresholds used in this dashboard come from [Azure Monitor Baseline Alerts](https://azure.github.io/azure-monitor-baseline-alerts/).  \r\nSee dashboard description for more details on linking to other Infrastructure Monitor dashboards.\r\n",
         "mode": "markdown"
       },
-              "transparent": true,
+      "transparent": true,
       "type": "text"
     },
     {
@@ -105,7 +103,7 @@
         "content": "<br>\r\n\r\nKey:\r\n- Green\\Healthy &nbsp;- None of the resources of that resource type have KPIs that are exceeding thresholds.\r\n- Yellow\\Warning - At least one resource of that resource type has one KPI exceeding a threshold.\r\n- Red\\Unhealthy &nbsp;- At least one resource of that resource type has two or more KPIs exceeding a threshold.",
         "mode": "markdown"
       },
-              "transparent": true,
+      "transparent": true,
       "type": "text"
     },
     {
@@ -173,9 +171,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "fields": "",
           "values": false
         },
@@ -183,14 +179,12 @@
         "textMode": "auto",
         "wideLayout": true
       },
-              "targets": [
+      "targets": [
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
             "query": "AzureMetrics\r\n| where _ResourceId has '/microsoft.documentdb/databaseaccounts/'\r\n| where SubscriptionId has_any ($subsRESScope)\r\n| where MetricName in('ServerSideLatency', 'ReplicationLatency', 'ServiceAvailability', 'OfflineRegion' )\r\n| summarize\r\n  kpi1 = avgif(Average, MetricName == 'ServerSideLatency'),\r\n  kpi2 = avgif(Average, MetricName == 'ReplicationLatency'),\r\n  kpi3 = avgif(Average, MetricName == 'ServiceAvailability'),\r\n  kpi4 = avgif(Count, MetricName == 'OfflineRegion') by _ResourceId, Resource\r\n|extend kpi1 = iff(isnan(kpi1), 0.0, kpi1)\r\n|extend kpi2 = iff(isnan(kpi2), 0.0, kpi2) \r\n|extend kpi3 = iff(isnan(kpi3), 0.0, kpi3) \r\n|extend kpi4 = iff(isnan(kpi4), 0.0, kpi4)\r\n|extend health1 = iff(kpi1>$amba_cosmosDB_ServerSideLatency, 1, 0)\r\n|extend health2 = iff(kpi2>$amba_cosmosDB_ReplicationLatency, 1, 0)\r\n|extend health3 = iff(kpi3<$amba_cosmosDB_ServiceAvailability, 1, 0)\r\n|extend health4 = iff(kpi4>$amba_cosmosDB_OfflineRegion, 1, 0)\r\n|extend h1color = iff(tobool(health1), $unhealthy_color, $healthy_color)\r\n|extend h2color = iff(tobool(health2), $unhealthy_color, $healthy_color)\r\n|extend h3color = iff(tobool(health3), $unhealthy_color, $healthy_color)\r\n|extend h4color = iff(tobool(health4), $unhealthy_color, $healthy_color)\r\n|extend health = health1 + health2 + health3 + health4\r\n|extend hcolor = iff(health>1, $unhealthy_color, iff(health==1, $warning_color, $healthy_color))\r\n| order by health desc",
-            "resources": [
-              "$laws"
-            ],
+            "resources": ["$laws"],
             "resultFormat": "logs",
             "timeColumn": "TimeGenerated"
           },
@@ -200,9 +194,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscriptions": [
-            "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
-          ]
+          "subscriptions": ["ebb79bc0-aa86-44a7-8111-cabbe0c43993"]
         }
       ],
       "title": "CosmosDB",
@@ -316,9 +308,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "fields": "",
           "values": false
         },
@@ -326,14 +316,12 @@
         "textMode": "auto",
         "wideLayout": true
       },
-              "targets": [
+      "targets": [
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
             "query": "AzureMetrics\r\n| where _ResourceId has '/microsoft.sql/servers/'\r\n| where SubscriptionId has_any ($subsRESScope)\r\n| where MetricName in('cpu_percent', 'sqlserver_process_memory_percent', 'storage_percent', 'physical_data_read_percent' )\r\n| summarize\r\n  kpi1 = avgif(Average, MetricName == 'cpu_percent'),\r\n  kpi2 = avgif(Average, MetricName == 'sqlserver_process_memory_percent'),\r\n  kpi3 = avgif(Average, MetricName == 'storage_percent'),\r\n  kpi4 = avgif(Average, MetricName == 'physical_data_read_percent') by _ResourceId, Resource\r\n|extend kpi1 = iff(isnan(kpi1), 0.0, kpi1)\r\n|extend kpi2 = iff(isnan(kpi2), 0.0, kpi2) \r\n|extend kpi3 = iff(isnan(kpi3), 0.0, kpi3) \r\n|extend kpi4 = iff(isnan(kpi4), 0.0, kpi4)\r\n|extend health1 = iff(kpi1>$amba_SQL_cpu_percent, 1, 0)\r\n|extend health2 = iff(kpi2>$amba_SQL_sqlserver_process_memory_percent, 1, 0)\r\n|extend health3 = iff(kpi3>$amba_SQL_storage_percent, 1, 0)\r\n|extend health4 = iff(kpi4>$amba_SQL_physical_data_read_percent, 1, 0)\r\n|extend h1color = iff(tobool(health1), $unhealthy_color, $healthy_color)\r\n|extend h2color = iff(tobool(health2), $unhealthy_color, $healthy_color)\r\n|extend h3color = iff(tobool(health3), $unhealthy_color, $healthy_color)\r\n|extend h4color = iff(tobool(health4), $unhealthy_color, $healthy_color)\r\n|extend health = health1 + health2 + health3 + health4\r\n|extend hcolor = iff(health>1, $unhealthy_color, iff(health==1, $warning_color, $healthy_color))\r\n| order by health desc",
-            "resources": [
-              "$laws"
-            ],
+            "resources": ["$laws"],
             "resultFormat": "logs",
             "timeColumn": "TimeGenerated"
           },
@@ -343,9 +331,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscriptions": [
-            "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
-          ]
+          "subscriptions": ["ebb79bc0-aa86-44a7-8111-cabbe0c43993"]
         }
       ],
       "title": "SQL",
@@ -459,9 +445,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "fields": "",
           "values": false
         },
@@ -469,14 +453,12 @@
         "textMode": "auto",
         "wideLayout": true
       },
-              "targets": [
+      "targets": [
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
             "query": "AzureMetrics\r\n| where _ResourceId has '/microsoft.dbformysql/flexibleservers/'\r\n| where SubscriptionId has_any ($subsRESScope)\r\n| where MetricName in('cpu_percent', 'memory_percent', 'storage_percent', 'replication_lag' )\r\n| summarize\r\n  kpi1 = avgif(Average, MetricName == 'cpu_percent'),\r\n  kpi2 = avgif(Average, MetricName == 'memory_percent'),\r\n  kpi3 = avgif(Average, MetricName == 'storage_percent'),\r\n  kpi4 = avgif(Maximum, MetricName == 'replication_lag') by _ResourceId, Resource\r\n|extend kpi1 = iff(isnan(kpi1), 0.0, kpi1)\r\n|extend kpi2 = iff(isnan(kpi2), 0.0, kpi2) \r\n|extend kpi3 = iff(isnan(kpi3), 0.0, kpi3) \r\n|extend kpi4 = iff(isnan(kpi4), 0.0, kpi4)\r\n|extend health1 = iff(kpi1>$amba_MySQL_cpu_percent, 1, 0)\r\n|extend health2 = iff(kpi2>$amba_MySQL_memory_percent, 1, 0)\r\n|extend health3 = iff(kpi3>$amba_MySQL_storage_percent, 1, 0)\r\n|extend health4 = iff(kpi4>$amba_MySQL_replication_lag, 1, 0)\r\n|extend h1color = iff(tobool(health1), $unhealthy_color, $healthy_color)\r\n|extend h2color = iff(tobool(health2), $unhealthy_color, $healthy_color)\r\n|extend h3color = iff(tobool(health3), $unhealthy_color, $healthy_color)\r\n|extend h4color = iff(tobool(health4), $unhealthy_color, $healthy_color)\r\n|extend health = health1 + health2 + health3 + health4\r\n|extend hcolor = iff(health>1, $unhealthy_color, iff(health==1, $warning_color, $healthy_color))\r\n| order by health desc",
-            "resources": [
-              "$laws"
-            ],
+            "resources": ["$laws"],
             "resultFormat": "logs",
             "timeColumn": "TimeGenerated"
           },
@@ -486,9 +468,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscriptions": [
-            "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
-          ]
+          "subscriptions": ["ebb79bc0-aa86-44a7-8111-cabbe0c43993"]
         }
       ],
       "title": "MySQL",
@@ -602,9 +582,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "fields": "",
           "values": false
         },
@@ -612,14 +590,12 @@
         "textMode": "auto",
         "wideLayout": true
       },
-              "targets": [
+      "targets": [
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
             "query": "AzureMetrics\r\n| where _ResourceId has '/microsoft.dbforpostgresql/flexibleservers/'\r\n| where SubscriptionId has_any ($subsRESScope)\r\n| where MetricName in('cpu_percent', 'memory_percent', 'storage_percent', 'is_db_alive' )\r\n| summarize\r\n  kpi1 = avgif(Average, MetricName == 'cpu_percent'),\r\n  kpi2 = avgif(Average, MetricName == 'memory_percent'),\r\n  kpi3 = avgif(Average, MetricName == 'storage_percent'),\r\n  kpi4 = avgif(Maximum, MetricName == 'is_db_alive') by _ResourceId, Resource\r\n|extend kpi1 = iff(isnan(kpi1), 0.0, kpi1)\r\n|extend kpi2 = iff(isnan(kpi2), 0.0, kpi2) \r\n|extend kpi3 = iff(isnan(kpi3), 0.0, kpi3) \r\n|extend kpi4 = iff(isnan(kpi4), 0.0, kpi4)\r\n|extend health1 = iff(kpi1>$amba_PostgreSQL_cpu_percent, 1, 0)\r\n|extend health2 = iff(kpi2>$amba_PostgreSQL_memory_percent, 1, 0)\r\n|extend health3 = iff(kpi3>$amba_PostgreSQL_storage_percent, 1, 0)\r\n|extend health4 = iff(kpi4<$amba_PostgreSQL_is_db_alive, 1, 0)\r\n|extend h1color = iff(tobool(health1), $unhealthy_color, $healthy_color)\r\n|extend h2color = iff(tobool(health2), $unhealthy_color, $healthy_color)\r\n|extend h3color = iff(tobool(health3), $unhealthy_color, $healthy_color)\r\n|extend h4color = iff(tobool(health4), $unhealthy_color, $healthy_color)\r\n|extend health = health1 + health2 + health3 + health4\r\n|extend hcolor = iff(health>1, $unhealthy_color, iff(health==1, $warning_color, $healthy_color))\r\n| order by health desc",
-            "resources": [
-              "$laws"
-            ],
+            "resources": ["$laws"],
             "resultFormat": "logs",
             "timeColumn": "TimeGenerated"
           },
@@ -629,9 +605,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscriptions": [
-            "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
-          ]
+          "subscriptions": ["ebb79bc0-aa86-44a7-8111-cabbe0c43993"]
         }
       ],
       "title": "PostgreSQL",
@@ -745,9 +719,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "fields": "",
           "values": false
         },
@@ -755,14 +727,12 @@
         "textMode": "auto",
         "wideLayout": true
       },
-              "targets": [
+      "targets": [
         {
           "azureLogAnalytics": {
             "dashboardTime": true,
             "query": "AzureDiagnostics\r\n| where _ResourceId has '/microsoft.eventhub/namespaces/'\r\n| where SubscriptionId has_any ($subsRESScope)\r\n| where Category == \"DiagnosticErrorLogs\"\r\n| summarize\r\n  kpi1 = countif(OperationResult_s =~ \"ClientError\"), \r\n  kpi2 = countif(OperationResult_s =~ \"ServerBusy\"),\r\n  kpi3 = countif(OperationResult_s =~ \"QuotaExceeded\") by _ResourceId, Resource\r\n|extend kpi1 = iff(isnan(toreal(kpi1)), 0.0, toreal(kpi1))\r\n|extend kpi2 = iff(isnan(toreal(kpi2)), 0.0, toreal(kpi2)) \r\n|extend kpi3 = iff(isnan(toreal(kpi3)), 0.0, toreal(kpi3))\r\n|extend health1 = iff(kpi1>$amba_eventhub_UserErrors, 1, 0)\r\n|extend health2 = iff(kpi2>$amba_eventhub_ServerErrors, 1, 0)\r\n|extend health3 = iff(kpi3>$amba_eventhub_ThrottledRequests, 1, 0)\r\n|extend h1color = iff(tobool(health1), $unhealthy_color, $healthy_color)\r\n|extend h2color = iff(tobool(health2), $unhealthy_color, $healthy_color)\r\n|extend h3color = iff(tobool(health3), $unhealthy_color, $healthy_color)\r\n|extend health = health1 + health2 + health3\r\n|extend hcolor = iff(health>1, $unhealthy_color, iff(health==1, $warning_color, $healthy_color))\r\n| order by health desc",
-            "resources": [
-              "$laws"
-            ],
+            "resources": ["$laws"],
             "resultFormat": "logs",
             "timeColumn": "TimeGenerated"
           },
@@ -772,9 +742,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscriptions": [
-            "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
-          ]
+          "subscriptions": ["ebb79bc0-aa86-44a7-8111-cabbe0c43993"]
         }
       ],
       "title": "Event Hubs",
@@ -844,7 +812,7 @@
         "content": "",
         "mode": "markdown"
       },
-              "transparent": true,
+      "transparent": true,
       "type": "text"
     },
     {
@@ -897,9 +865,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -907,7 +873,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1018,9 +984,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1028,7 +992,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1139,9 +1103,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1149,7 +1111,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1260,9 +1222,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1270,7 +1230,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1395,9 +1355,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1405,7 +1363,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1516,9 +1474,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1526,7 +1482,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1637,9 +1593,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1647,7 +1601,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1758,9 +1712,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1768,7 +1720,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -1893,9 +1845,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -1903,7 +1853,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2014,9 +1964,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2024,7 +1972,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2135,9 +2083,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2145,7 +2091,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2256,9 +2202,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2266,7 +2210,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2391,9 +2335,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2401,7 +2343,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2512,9 +2454,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2522,7 +2462,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2633,9 +2573,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2643,7 +2581,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2754,9 +2692,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2764,7 +2700,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -2889,9 +2825,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -2899,7 +2833,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -3010,9 +2944,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -3020,7 +2952,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -3131,9 +3063,7 @@
             "namePlacement": "auto",
             "orientation": "horizontal",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": ["lastNotNull"],
               "fields": "",
               "values": true
             },
@@ -3141,7 +3071,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-                      "targets": [
+          "targets": [
             {
               "datasource": {
                 "type": "datasource",
@@ -3219,9 +3149,7 @@
   ],
   "refresh": "",
   "schemaVersion": 39,
-  "tags": [
-    "azure-infra-monitor"
-  ],
+  "tags": ["azure-infra-monitor"],
   "templating": {
     "list": [
       {
@@ -3305,9 +3233,7 @@
           },
           "queryType": "Azure Resource Graph",
           "refId": "A",
-          "subscriptions": [
-            "$subsWSScope"
-          ]
+          "subscriptions": ["$subsWSScope"]
         },
         "refresh": 1,
         "regex": "",
