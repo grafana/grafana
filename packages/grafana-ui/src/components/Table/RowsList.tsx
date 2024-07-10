@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { Cell, Row, TableState, HeaderGroup } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
@@ -285,7 +286,8 @@ export const RowsList = (props: RowsListProps) => {
 
       // If there's a text wrapping field we set the height of it here
       if (textWrapField) {
-        const seriesIndex = data.fields.findIndex((field) => field.name === textWrapField.name);
+        const visibleFields = data.fields.filter((field) => !Boolean(field.config.custom?.hidden));
+        const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
         const bbox = guessTextBoundingBox(
           textWrapField.values[index],
@@ -368,7 +370,8 @@ export const RowsList = (props: RowsListProps) => {
     }
 
     if (textWrapField) {
-      const seriesIndex = data.fields.findIndex((field) => field.name === textWrapField.name);
+      const visibleFields = data.fields.filter((field) => !Boolean(field.config.custom?.hidden));
+      const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
       return guessTextBoundingBox(
         textWrapField.values[index],

@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
 
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -17,7 +17,7 @@ interface State {
 }
 
 class BaseUserSessions extends PureComponent<Props, State> {
-  forceAllLogoutButton = React.createRef<HTMLButtonElement>();
+  forceAllLogoutButton = createRef<HTMLButtonElement>();
   state: State = {
     showLogoutModal: false,
   };

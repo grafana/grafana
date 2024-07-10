@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useCallback, useId } from 'react';
+import { useState, useCallback, useId } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes';
+import { Alert } from '../Alert/Alert';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
@@ -38,9 +39,8 @@ const DEFAULT_ACCESS_OPTION = {
 };
 
 const HttpAccessHelp = () => {
-  const styles = useStyles2(getAccessStyles);
   return (
-    <div className={cx('grafana-info-box', styles.infoBox)}>
+    <Alert severity="info" title="" topSpacing={3}>
       <p>
         Access mode controls how requests to the data source will be handled.
         <strong>
@@ -60,15 +60,9 @@ const HttpAccessHelp = () => {
         Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access
         mode.
       </p>
-    </div>
+    </Alert>
   );
 };
-
-const getAccessStyles = (theme: GrafanaTheme2) => ({
-  infoBox: css({
-    marginTop: theme.spacing(3),
-  }),
-});
 
 const LABEL_WIDTH = 26;
 

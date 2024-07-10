@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -15,6 +14,7 @@ import {
   sceneGraph,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  CancelActivationHandler,
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
@@ -74,6 +74,20 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
       ...state,
+    });
+
+    this.addActivationHandler(() => {
+      let refreshPickerDeactivation: CancelActivationHandler | undefined;
+
+      if (this.state.hideTimeControls) {
+        refreshPickerDeactivation = this.state.refreshPicker.activate();
+      }
+
+      return () => {
+        if (refreshPickerDeactivation) {
+          refreshPickerDeactivation();
+        }
+      };
     });
   }
 

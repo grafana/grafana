@@ -4,10 +4,13 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	apistore "k8s.io/apiserver/pkg/storage"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -61,7 +64,9 @@ func NewStorage(
 		s := &genericregistry.Store{
 			NewFunc:                   resourceInfo.NewFunc,
 			NewListFunc:               resourceInfo.NewListFunc,
-			PredicateFunc:             grafanaregistry.Matcher,
+			KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+			KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
+			PredicateFunc:             Matcher,
 			DefaultQualifiedResource:  resourceInfo.GroupResource(),
 			SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 			TableConvertor:            legacyStore.tableConverter,
@@ -69,11 +74,27 @@ func NewStorage(
 			UpdateStrategy:            strategy,
 			DeleteStrategy:            strategy,
 		}
-		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
+		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 		if err := s.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
 		return grafanarest.NewDualWriter(desiredMode, legacyStore, storage{Store: s}, reg), nil
 	}
 	return legacyStore, nil
+}
+
+func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
+	if s, ok := obj.(*model.TimeInterval); ok {
+		return s.Labels, model.SelectableTimeIntervalsFields(s), nil
+	}
+	return nil, nil, fmt.Errorf("object of type %T is not supported", obj)
+}
+
+// Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
+func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPredicate {
+	return apistore.SelectionPredicate{
+		Label:    label,
+		Field:    field,
+		GetAttrs: GetAttrs,
+	}
 }

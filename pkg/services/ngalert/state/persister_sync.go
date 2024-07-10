@@ -33,15 +33,18 @@ func NewSyncStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
 func (a *SyncStatePersister) Async(_ context.Context, _ *cache) {
 	a.log.Debug("Async: No-Op")
 }
-func (a *SyncStatePersister) Sync(ctx context.Context, span trace.Span, states, staleStates []StateTransition) {
-	a.deleteAlertStates(ctx, staleStates)
+
+// Sync persists the state transitions to the database. It deletes stale states and saves the current states.
+func (a *SyncStatePersister) Sync(ctx context.Context, span trace.Span, allStates StateTransitions) {
+	staleStates := allStates.StaleStates()
 	if len(staleStates) > 0 {
+		a.deleteAlertStates(ctx, staleStates)
 		span.AddEvent("deleted stale states", trace.WithAttributes(
 			attribute.Int64("state_transitions", int64(len(staleStates))),
 		))
 	}
 
-	a.saveAlertStates(ctx, states...)
+	a.saveAlertStates(ctx, allStates...)
 	span.AddEvent("updated database")
 }
 
@@ -75,6 +78,12 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 
 	saveState := func(ctx context.Context, idx int) error {
 		s := states[idx]
+
+		// Do not save stale state to database.
+		if s.IsStale() {
+			return nil
+		}
+
 		// Do not save normal state to database and remove transition to Normal state but keep mapped states
 		if a.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
 			return nil

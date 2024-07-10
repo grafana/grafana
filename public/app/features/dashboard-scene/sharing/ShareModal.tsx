@@ -1,4 +1,4 @@
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, SceneObjectRef } from '@grafana/scenes';
@@ -91,7 +91,10 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
-    DashboardInteractions.sharingTabChanged({ item: tab.value, shareResource: getTrackingSource(this.state.panelRef) });
+    DashboardInteractions.sharingCategoryClicked({
+      item: tab.value,
+      shareResource: getTrackingSource(this.state.panelRef),
+    });
     this.setState({ activeTab: tab.value });
   };
 }

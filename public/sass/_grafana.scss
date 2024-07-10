@@ -1,17 +1,13 @@
 // MIXINS
 @import 'mixins/mixins';
-@import 'mixins/buttons';
 @import 'mixins/breakpoints';
-@import 'mixins/grid';
-@import 'mixins/grid-framework';
-@import 'mixins/hover';
-@import 'mixins/forms';
 
 // BASE
 @import 'base/reboot';
 @import 'base/type';
 @import 'base/forms';
 @import 'base/grid';
+@import 'base/font_awesome';
 
 // UTILS
 @import 'utils/utils';
@@ -20,14 +16,10 @@
 // COMPONENTS
 @import 'components/buttons';
 @import 'components/alerts';
-@import 'components/tags';
 @import 'components/gf-form';
-@import 'components/filter-table';
 @import 'components/modals';
 @import 'components/dropdown';
-@import 'components/infobox';
 @import 'components/query_editor';
-@import 'components/query_part';
 @import 'components/dashboard_grid';
 
 // PAGES

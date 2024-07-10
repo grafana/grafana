@@ -76,11 +76,6 @@ list-mode = "lax"
 allow = [
   "github.com/grafana/grafana/pkg/apimachinery",
   "github.com/grafana/grafana/pkg/apiserver",
-  "github.com/grafana/grafana/pkg/services/apiserver/utils",
-  "github.com/grafana/grafana/pkg/services/featuremgmt",
-  "github.com/grafana/grafana/pkg/infra/kvstore",
-  "github.com/grafana/grafana/pkg/services/apiserver/options",
-  "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1",
 ]
 deny = [
   { pkg = "github.com/grafana/grafana/pkg", desc = "apiserver is not allowed to import grafana core" }
@@ -155,7 +150,6 @@ enable = [
   "revive",
   "staticcheck",
   "stylecheck",
-  "typecheck",
   "unconvert",
   "unused",
   "whitespace",

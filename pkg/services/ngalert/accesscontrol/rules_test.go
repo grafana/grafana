@@ -453,3 +453,54 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		require.ErrorIs(t, result, ErrAuthorizationBase)
 	})
 }
+
+func TestCanReadAllRules(t *testing.T) {
+	ac := &recordingAccessControlFake{}
+	svc := RuleService{
+		genericService{ac: ac},
+	}
+
+	testCases := []struct {
+		permissions map[string][]string
+		expected    bool
+	}{
+		{
+			permissions: map[string][]string{
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+			expected: true,
+		},
+		{
+			permissions: make(map[string][]string),
+		},
+		{
+			permissions: map[string][]string{
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceScopeUID("test")},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+		},
+		{
+			permissions: map[string][]string{
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("test")},
+			},
+		},
+		{
+			permissions: map[string][]string{
+				ruleRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+		},
+		{
+			permissions: map[string][]string{
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		result, err := svc.CanReadAllRules(context.Background(), createUserWithPermissions(tc.permissions))
+		assert.NoError(t, err)
+		assert.Equalf(t, tc.expected, result, "permissions: %v", tc.permissions)
+	}
+}

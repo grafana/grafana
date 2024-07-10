@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -302,7 +303,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return nil, fmt.Errorf("missing key")
 	}
 
-	key, err := entity.ParseKey(r.Key)
+	key, err := grafanaregistry.ParseKey(r.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +396,7 @@ func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRe
 	entityQuery.AddFields(fields...)
 
 	if r.Key != "" {
-		key, err := entity.ParseKey(r.Key)
+		key, err := grafanaregistry.ParseKey(r.Key)
 		if err != nil {
 			return nil, err
 		}
@@ -629,7 +630,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		where := []string{}
 		args := []any{}
 		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
+			key, err := grafanaregistry.ParseKey(k)
 			if err != nil {
 				return nil, err
 			}
@@ -654,6 +655,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		rvSubQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
 	}
 
+	// nolint:staticcheck
 	if len(r.OriginKeys) > 0 {
 		entityQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
 		rvMaxQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
@@ -868,7 +870,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 		where := []string{}
 		args := []any{}
 		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
+			key, err := grafanaregistry.ParseKey(k)
 			if err != nil {
 				ctxLogger.Error("error parsing key", "error", err, "key", k)
 				return lastRv, err
@@ -1153,7 +1155,7 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 	if len(r.Key) > 0 {
 		matched := false
 		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
+			key, err := grafanaregistry.ParseKey(k)
 			if err != nil {
 				return false
 			}

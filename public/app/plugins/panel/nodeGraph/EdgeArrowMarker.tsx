@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { defaultEdgeColor } from './Edge';
 
 /**
