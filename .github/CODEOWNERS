@@ -720,6 +720,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/run-scenes-e2e.yml @grafana/dashboards-squad
 /.github/workflows/go_lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
+/.github/workflows/changelog.yml @zserge
+/.github/workflows/actions/changelog @zserge
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
