@@ -508,6 +508,7 @@
       "text-1": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
       "text-2": "See grafana documentation for more information about provisioning. ",
       "text-3": "File path: {{provisionedId}}",
+      "text-link": "Go to docs page",
       "title": "Cannot delete provisioned dashboard"
     },
     "settings": {

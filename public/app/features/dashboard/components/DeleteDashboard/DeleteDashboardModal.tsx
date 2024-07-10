@@ -82,7 +82,7 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
         See grafana documentation for more information about provisioning.&nbsp;
       </Trans>
       <TextLink href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards" external>
-        Go to docs page
+        {t('dashboard-settings.provisioned-delete-modal.text-link', 'Go to docs page')}
       </TextLink>
     </Text>
     <Space v={2} />
