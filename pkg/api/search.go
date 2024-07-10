@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/org"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -78,7 +80,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
-		IsDeleted:     deleted == "true",
+		IsDeleted:     deleted == "true" && c.SignedInUser.GetOrgRole() == org.RoleAdmin,
 		OrgId:         c.SignedInUser.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
