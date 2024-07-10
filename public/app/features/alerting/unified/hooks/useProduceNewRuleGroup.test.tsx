@@ -18,7 +18,12 @@ import {
   mockRulerRecordingRule,
   mockRulerRuleGroup,
 } from '../mocks';
-import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import {
+  grafanaRulerGroupName,
+  grafanaRulerGroupName2,
+  grafanaRulerNamespace,
+  grafanaRulerRule,
+} from '../mocks/grafanaRulerApi';
 import { GROUP_1, NAMESPACE_1, NAMESPACE_2, namespace2 } from '../mocks/mimirRulerApi';
 import {
   mimirDataSource,
@@ -223,6 +228,12 @@ describe('useUpdateRuleGroupConfiguration', () => {
     expect(serializedRequests).toMatchSnapshot();
   });
 
+  it('should throw if we are trying to merge rule groups', async () => {
+    render(<RenameRuleGroupComponent group={grafanaRulerGroupName2} />);
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/error:.+not supported.+/i).find()).toBeInTheDocument();
+  });
+
   it('should not be able to move a Grafana managed rule group', async () => {
     render(<MoveGrafanaManagedRuleGroupComponent />);
     await userEvent.click(byRole('button').get());
@@ -270,7 +281,7 @@ const UpdateRuleGroupComponent = () => {
   );
 };
 
-const RenameRuleGroupComponent = () => {
+const RenameRuleGroupComponent = ({ group = 'another-group-name' }: { group?: string }) => {
   const [requestState, renameRuleGroup] = useRenameRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
@@ -281,7 +292,7 @@ const RenameRuleGroupComponent = () => {
 
   return (
     <>
-      <button onClick={() => renameRuleGroup.execute(ruleGroupID, 'another-group-name', '2m')} />
+      <button onClick={() => renameRuleGroup.execute(ruleGroupID, group, '2m')} />
       <SerializeState state={requestState} />
     </>
   );
