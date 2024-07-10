@@ -8,4 +8,5 @@ JOIN (
 ) AS maxkv ON maxkv."guid" = kv."guid"
 WHERE kv."action" != 3
 ORDER BY kv."resource_version" ASC
-LIMIT ?, ?;
+LIMIT ?, ?
+;

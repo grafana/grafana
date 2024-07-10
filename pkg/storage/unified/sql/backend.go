@@ -136,8 +136,9 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 		return b.update(ctx, event)
 	case resource.WatchEvent_DELETED:
 		return b.delete(ctx, event)
+	default:
+		return 0, fmt.Errorf("unsupported event type")
 	}
-	return 0, fmt.Errorf("unsupported event type")
 }
 
 func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
