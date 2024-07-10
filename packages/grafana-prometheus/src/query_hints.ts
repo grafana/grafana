@@ -5,6 +5,8 @@ import { QueryFix, QueryHint } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
+import { PromVisualQuery } from './querybuilder/types';
 import { PromMetricsMetadata, RuleQueryMapping } from './types';
 
 /**
@@ -267,14 +269,20 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
   return hints;
 }
 
-export function getRecordingRuleIdentifierIdx(
-  query: string,
-  ruleName: string,
-  mapping: RuleQueryMapping[string]
-): number {
-  const { query: visQuery } = buildVisualQueryFromString(query ?? '');
-  console.log(visQuery);
+export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string, mapping: RuleQueryMapping[string]): number {
+  const { query } = buildVisualQueryFromString(queryStr);
+  const queryMetricLabels: QueryBuilderLabelFilter[] = getQueryLabelsForRuleName(ruleName, query);
+  if (queryMetricLabels.length === 0) {
+    return -1;
+  }
+
+  // FIXME compare labels
   return -1;
+}
+
+// metricName is the ruleName in query
+export function getQueryLabelsForRuleName(metricName: string, query: PromVisualQuery): QueryBuilderLabelFilter[] {
+  return [];
 }
 
 function getQueryTokens(query: string) {
