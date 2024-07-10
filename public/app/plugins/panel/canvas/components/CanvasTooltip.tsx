@@ -70,9 +70,12 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  const elementHasLinks = (element.options.links?.length ?? 0) > 0 && element.getLinks;
-  if (elementHasLinks) {
-    element.getLinks!({}).forEach((link) => {
+  const field = scene.data?.series[0].fields?.find((field) => field.name === element.data.field);
+  const rowIndex = field ? field.values.length - 1 : undefined;
+
+  const elementHasLinks = (element.options.links?.length ?? 0) > 0;
+  if (elementHasLinks && element.getLinks) {
+    element.getLinks({ valueRowIndex: rowIndex }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);
