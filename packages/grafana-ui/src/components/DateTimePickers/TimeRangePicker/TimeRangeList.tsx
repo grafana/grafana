@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { useRef, ReactNode } from 'react';
 
 import { TimeOption } from '@grafana/data';
 
@@ -45,7 +45,7 @@ export const TimeRangeList = (props: Props) => {
 const Options = ({ options, value, onChange, title }: Props) => {
   const styles = useStyles2(getOptionsStyles);
 
-  const localRef = React.useRef<HTMLUListElement>(null);
+  const localRef = useRef<HTMLUListElement>(null);
   const [handleKeys] = useListFocus({ localRef, options });
 
   return (

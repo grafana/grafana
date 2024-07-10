@@ -6,6 +6,7 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
+  VariableValueOption,
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -93,6 +94,24 @@ describe('RowRepeaterBehavior', () => {
     });
   });
 
+  describe('Should not repeat row', () => {
+    it('Should ignore repeat process if the variable is not a multi select variable', async () => {
+      const { scene, grid, repeatBehavior } = buildScene({ variableQueryTime: 0 }, undefined, { isMulti: false });
+      const gridStateUpdates = [];
+      grid.subscribeToState((state) => gridStateUpdates.push(state));
+
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+
+      // trigger another repeat cycle by changing the variable
+      repeatBehavior.performRepeat();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(gridStateUpdates.length).toBe(0);
+    });
+  });
+
   describe('Given scene empty row', () => {
     let scene: DashboardScene;
     let grid: SceneGridLayout;
@@ -117,6 +136,18 @@ describe('RowRepeaterBehavior', () => {
       expect(row2.state.y).toBe(11);
     });
   });
+
+  describe('Given a scene with empty variable', () => {
+    it('Should preserve repeat row', async () => {
+      const { scene, grid } = buildScene({ variableQueryTime: 0 }, []);
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+
+      // Should have 3 rows, two without repeat and one with the dummy row
+      expect(grid.state.children.length).toBe(3);
+      expect(grid.state.children[1].state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
+    });
+  });
 });
 
 interface SceneOptions {
@@ -126,7 +157,11 @@ interface SceneOptions {
   repeatDirection?: RepeatDirection;
 }
 
-function buildScene(options: SceneOptions) {
+function buildScene(
+  options: SceneOptions,
+  variableOptions?: VariableValueOption[],
+  variableStateOverrides?: { isMulti: boolean }
+) {
   const repeatBehavior = new RowRepeaterBehavior({ variableName: 'server' });
 
   const grid = new SceneGridLayout({
@@ -203,13 +238,14 @@ function buildScene(options: SceneOptions) {
           isMulti: true,
           includeAll: true,
           delayMs: options.variableQueryTime,
-          optionsToReturn: [
+          optionsToReturn: variableOptions ?? [
             { label: 'A', value: 'A1' },
             { label: 'B', value: 'B1' },
             { label: 'C', value: 'C1' },
             { label: 'D', value: 'D1' },
             { label: 'E', value: 'E1' },
           ],
+          ...variableStateOverrides,
         }),
       ],
     }),

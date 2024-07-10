@@ -1,4 +1,4 @@
-import React, { HTMLProps } from 'react';
+import { forwardRef, useRef, HTMLProps } from 'react';
 
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
 
@@ -14,9 +14,9 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
   escapeRegex?: boolean;
 }
 
-export const FilterInput = React.forwardRef<HTMLInputElement, Props>(
+export const FilterInput = forwardRef<HTMLInputElement, Props>(
   ({ value, width, onChange, escapeRegex = true, ...restProps }, ref) => {
-    const innerRef = React.useRef<HTMLInputElement | null>(null);
+    const innerRef = useRef<HTMLInputElement | null>(null);
     const combinedRef = useCombinedRefs<HTMLInputElement>(ref, innerRef);
 
     const suffix =

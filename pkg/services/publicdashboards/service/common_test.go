@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -29,7 +30,7 @@ func newPublicDashboardServiceImpl(
 	db, cfg := db.InitTestDBWithCfg(t)
 	tagService := tagimpl.ProvideService(db)
 	if annotationsRepo == nil {
-		annotationsRepo = annotationsimpl.ProvideService(db, cfg, featuremgmt.WithFeatures(), tagService)
+		annotationsRepo = annotationsimpl.ProvideService(db, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest())
 	}
 
 	if publicDashboardStore == nil {

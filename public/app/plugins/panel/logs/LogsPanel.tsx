@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
 
 import {
   CoreApp,
@@ -249,7 +250,7 @@ export const LogsPanel = ({
     [scrollElement]
   );
 
-  const defaultOnClickFilterLabel = useCallback(
+  const handleOnClickFilterLabel = useCallback(
     (key: string, value: string) => {
       onAddAdHocFilter?.({
         key,
@@ -260,7 +261,7 @@ export const LogsPanel = ({
     [onAddAdHocFilter]
   );
 
-  const defaultOnClickFilterOutLabel = useCallback(
+  const handleOnClickFilterOutLabel = useCallback(
     (key: string, value: string) => {
       onAddAdHocFilter?.({
         key,
@@ -284,6 +285,10 @@ export const LogsPanel = ({
       />
     </div>
   );
+
+  // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.
+  const defaultOnClickFilterLabel = onAddAdHocFilter ? handleOnClickFilterLabel : undefined;
+  const defaultOnClickFilterOutLabel = onAddAdHocFilter ? handleOnClickFilterOutLabel : undefined;
 
   return (
     <>

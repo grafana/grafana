@@ -28,8 +28,8 @@ import (
 
 	"github.com/go-kit/log/level"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -99,36 +99,18 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 	return ots, nil
 }
 
+func NewNoopTracerService() *TracingService {
+	tp := &noopTracerProvider{TracerProvider: noop.NewTracerProvider()}
+	otel.SetTracerProvider(tp)
+
+	cfg := NewEmptyTracingConfig()
+	ots := &TracingService{cfg: cfg, tracerProvider: tp}
+	_ = ots.initOpentelemetryTracer()
+	return ots
+}
+
 func (ots *TracingService) GetTracerProvider() tracerProvider {
 	return ots.tracerProvider
-}
-
-func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
-	spanCtx := trace.SpanContextFromContext(ctx)
-	if !spanCtx.HasTraceID() || !spanCtx.IsValid() || (requireSampled && !spanCtx.IsSampled()) {
-		return ""
-	}
-
-	return spanCtx.TraceID().String()
-}
-
-// Error sets the status to error and record the error as an exception in the provided span.
-func Error(span trace.Span, err error) error {
-	attr := []attribute.KeyValue{}
-	grafanaErr := errutil.Error{}
-	if errors.As(err, &grafanaErr) {
-		attr = append(attr, attribute.String("message_id", grafanaErr.MessageID))
-	}
-
-	span.SetStatus(codes.Error, err.Error())
-	span.RecordError(err, trace.WithAttributes(attr...))
-	return err
-}
-
-// Errorf wraps fmt.Errorf and also sets the status to error and record the error as an exception in the provided span.
-func Errorf(span trace.Span, format string, args ...any) error {
-	err := fmt.Errorf(format, args...)
-	return Error(span, err)
 }
 
 type noopTracerProvider struct {
@@ -272,7 +254,9 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 		}
 	}
 
-	tp = NewProfilingTracerProvider(tp)
+	if ots.cfg.ProfilingIntegration {
+		tp = NewProfilingTracerProvider(tp)
+	}
 
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
@@ -387,3 +371,31 @@ func (rl *rateLimiter) ShouldSample(p tracesdk.SamplingParameters) tracesdk.Samp
 }
 
 func (rl *rateLimiter) Description() string { return rl.description }
+
+func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
+	spanCtx := trace.SpanContextFromContext(ctx)
+	if !spanCtx.HasTraceID() || !spanCtx.IsValid() || (requireSampled && !spanCtx.IsSampled()) {
+		return ""
+	}
+
+	return spanCtx.TraceID().String()
+}
+
+// Error sets the status to error and record the error as an exception in the provided span.
+func Error(span trace.Span, err error) error {
+	attr := []attribute.KeyValue{}
+	grafanaErr := errutil.Error{}
+	if errors.As(err, &grafanaErr) {
+		attr = append(attr, attribute.String("message_id", grafanaErr.MessageID))
+	}
+
+	span.SetStatus(codes.Error, err.Error())
+	span.RecordError(err, trace.WithAttributes(attr...))
+	return err
+}
+
+// Errorf wraps fmt.Errorf and also sets the status to error and record the error as an exception in the provided span.
+func Errorf(span trace.Span, format string, args ...any) error {
+	err := fmt.Errorf(format, args...)
+	return Error(span, err)
+}

@@ -51,14 +51,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagExploreContentOutline
-	// Content outline sidebar
-	FlagExploreContentOutline = "exploreContentOutline"
-
-	// FlagDatasourceQueryMultiStatus
-	// Introduce HTTP 207 Multi Status for api/ds/query
-	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -94,10 +86,6 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
-
-	// FlagScenes
-	// Experimental framework to build interactive dashboards
-	FlagScenes = "scenes"
 
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
@@ -263,10 +251,6 @@ const (
 	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 
-	// FlagPrometheusIncrementalQueryInstrumentation
-	// Adds RudderStack events to incremental queries
-	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
@@ -382,6 +366,10 @@ const (
 	// FlagEnableNativeHTTPHistogram
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
 	// FlagFormatString
 	// Enable format string transformer
@@ -611,10 +599,6 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
-	// FlagBetterPageScrolling
-	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
-	FlagBetterPageScrolling = "betterPageScrolling"
-
 	// FlagAuthAPIAccessTokenAuth
 	// Enables the use of Auth API access tokens for authentication
 	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
@@ -655,10 +639,6 @@ const (
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
 
-	// FlagAutofixDSUID
-	// Automatically migrates invalid datasource UIDs
-	FlagAutofixDSUID = "autofixDSUID"
-
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
@@ -676,7 +656,7 @@ const (
 	FlagNotificationBanner = "notificationBanner"
 
 	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature
+	// Enables deleted dashboard restore feature (backend only)
 	FlagDashboardRestore = "dashboardRestore"
 
 	// FlagDatasourceProxyDisableRBAC
@@ -706,4 +686,52 @@ const (
 	// FlagPinNavItems
 	// Enables pinning of nav items
 	FlagPinNavItems = "pinNavItems"
+
+	// FlagAuthZGRPCServer
+	// Enables the gRPC server for authorization
+	FlagAuthZGRPCServer = "authZGRPCServer"
+
+	// FlagOpenSearchBackendFlowEnabled
+	// Enables the backend query flow for Open Search datasource plugin
+	FlagOpenSearchBackendFlowEnabled = "openSearchBackendFlowEnabled"
+
+	// FlagSsoSettingsLDAP
+	// Use the new SSO Settings API to configure LDAP
+	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
+
+	// FlagFailWrongDSUID
+	// Throws an error if a datasource has an invalid UIDs
+	FlagFailWrongDSUID = "failWrongDSUID"
+
+	// FlagDatabaseReadReplica
+	// Use a read replica for some database queries.
+	FlagDatabaseReadReplica = "databaseReadReplica"
+
+	// FlagZanzana
+	// Use openFGA as authorization engine.
+	FlagZanzana = "zanzana"
+
+	// FlagPassScopeToDashboardApi
+	// Enables the passing of scopes to dashboards fetching in Grafana
+	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
+
+	// FlagAlertingApiServer
+	// Register Alerting APIs with the K8s API server
+	FlagAlertingApiServer = "alertingApiServer"
+
+	// FlagDashboardRestoreUI
+	// Enables the frontend to be able to restore a recently deleted dashboard
+	FlagDashboardRestoreUI = "dashboardRestoreUI"
+
+	// FlagCloudWatchRoundUpEndTime
+	// Round up end time for metric queries to the next minute to avoid missing data
+	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
+
+	// FlagBodyScrolling
+	// Adjusts Page to make body the scrollable element
+	FlagBodyScrolling = "bodyScrolling"
+
+	// FlagCloudwatchMetricInsightsCrossAccount
+	// Enables cross account observability for Cloudwatch Metric Insights
+	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 )

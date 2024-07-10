@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
@@ -13,6 +13,7 @@ import {
   LogsDedupStrategy,
   EventBusSrv,
 } from '@grafana/data';
+import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 
@@ -347,7 +348,7 @@ describe('LogsPanel', () => {
       }),
     ];
 
-    it('allow to filter for a value or filter out a value', async () => {
+    it('allows to filter for a value or filter out a value', async () => {
       const filterForMock = jest.fn();
       const filterOutMock = jest.fn();
       const isFilterLabelActiveMock = jest.fn();
@@ -373,12 +374,56 @@ describe('LogsPanel', () => {
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
       await userEvent.click(screen.getByText('logline text'));
-      await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+      await userEvent.click(screen.getByLabelText('Filter for value'));
       expect(filterForMock).toHaveBeenCalledTimes(1);
-      await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+      await userEvent.click(screen.getByLabelText('Filter out value'));
       expect(filterOutMock).toHaveBeenCalledTimes(1);
 
       expect(isFilterLabelActiveMock).toHaveBeenCalledTimes(1);
+    });
+
+    describe('invalid handlers', () => {
+      it('does not show the controls if onAddAdHocFilter is not defined', async () => {
+        jest.spyOn(grafanaUI, 'usePanelContext').mockReturnValue({
+          eventsScope: 'global',
+          eventBus: new EventBusSrv(),
+        });
+
+        setup({
+          data: {
+            series,
+          },
+        });
+
+        expect(await screen.findByRole('row')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('logline text'));
+
+        expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
+      });
+      it('shows the controls if onAddAdHocFilter is defined', async () => {
+        jest.spyOn(grafanaUI, 'usePanelContext').mockReturnValue({
+          eventsScope: 'global',
+          eventBus: new EventBusSrv(),
+          onAddAdHocFilter: jest.fn(),
+        });
+
+        setup({
+          data: {
+            series,
+          },
+        });
+
+        expect(await screen.findByRole('row')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('logline text'));
+
+        expect(await screen.findByText('common_app')).toBeInTheDocument();
+
+        expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
+        expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
+      });
     });
   });
 });
@@ -414,7 +459,7 @@ const setup = (propsOverrides?: {}) => {
       prettifyLogMessage: false,
       sortOrder: LogsSortOrder.Descending,
       dedupStrategy: LogsDedupStrategy.none,
-      enableLogDetails: false,
+      enableLogDetails: true,
       showLogContextToggle: false,
     },
     title: 'Logs panel',

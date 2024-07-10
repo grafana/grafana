@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var logger = log.New("ngalert.eval")
@@ -52,6 +52,7 @@ type conditionEvaluator struct {
 	expressionService expressionService
 	condition         models.Condition
 	evalTimeout       time.Duration
+	evalResultLimit   int
 }
 
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
@@ -74,7 +75,21 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 		execCtx = timeoutCtx
 	}
 	logger.FromContext(ctx).Debug("Executing pipeline", "commands", strings.Join(r.pipeline.GetCommandTypes(), ","), "datasources", strings.Join(r.pipeline.GetDatasourceTypes(), ","))
-	return r.expressionService.ExecutePipeline(execCtx, now, r.pipeline)
+	result, err := r.expressionService.ExecutePipeline(execCtx, now, r.pipeline)
+
+	// Check if the result of the condition evaluation is too large
+	if err == nil && result != nil && r.evalResultLimit > 0 {
+		conditionResultLength := 0
+		if conditionResponse, ok := result.Responses[r.condition.Condition]; ok {
+			conditionResultLength = len(conditionResponse.Frames)
+		}
+		if conditionResultLength > r.evalResultLimit {
+			logger.FromContext(ctx).Error("Query evaluation returned too many results", "limit", r.evalResultLimit, "actual", conditionResultLength)
+			return nil, fmt.Errorf("query evaluation returned too many results: %d (limit: %d)", conditionResultLength, r.evalResultLimit)
+		}
+	}
+
+	return result, err
 }
 
 // Evaluate evaluates the condition and converts the response to Results
@@ -87,10 +102,11 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 }
 
 type evaluatorImpl struct {
-	evaluationTimeout time.Duration
-	dataSourceCache   datasources.CacheService
-	expressionService *expr.Service
-	pluginsStore      pluginstore.Store
+	evaluationTimeout     time.Duration
+	evaluationResultLimit int
+	dataSourceCache       datasources.CacheService
+	expressionService     *expr.Service
+	pluginsStore          pluginstore.Store
 }
 
 func NewEvaluatorFactory(
@@ -100,10 +116,11 @@ func NewEvaluatorFactory(
 	pluginsStore pluginstore.Store,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
-		evaluationTimeout: cfg.EvaluationTimeout,
-		dataSourceCache:   datasourceCache,
-		expressionService: expressionService,
-		pluginsStore:      pluginsStore,
+		evaluationTimeout:     cfg.EvaluationTimeout,
+		evaluationResultLimit: cfg.EvaluationResultLimit,
+		dataSourceCache:       datasourceCache,
+		expressionService:     expressionService,
+		pluginsStore:          pluginsStore,
 	}
 }
 
@@ -849,6 +866,7 @@ func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (C
 				expressionService: e.expressionService,
 				condition:         condition,
 				evalTimeout:       e.evaluationTimeout,
+				evalResultLimit:   e.evaluationResultLimit,
 			}, nil
 		}
 		conditions = append(conditions, node.RefID())

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Cell } from 'react-table';
 
 import { TimeRange, DataFrame } from '@grafana/data';
@@ -16,6 +15,7 @@ export interface Props {
   userProps?: object;
   frame: DataFrame;
   rowStyled?: boolean;
+  rowExpanded?: boolean;
   textWrapped?: boolean;
   height?: number;
 }
@@ -28,6 +28,7 @@ export const TableCell = ({
   userProps,
   frame,
   rowStyled,
+  rowExpanded,
   textWrapped,
   height,
 }: Props) => {
@@ -57,6 +58,7 @@ export const TableCell = ({
         userProps,
         frame,
         rowStyled,
+        rowExpanded,
         textWrapped,
         height,
       })}

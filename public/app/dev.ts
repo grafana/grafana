@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 export async function initDevFeatures() {
   // if why-render is in url enable why did you render react extension

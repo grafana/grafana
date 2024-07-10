@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -97,7 +98,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			features:             features,
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 			db:                   db,
-			accessControl:        acimpl.ProvideAccessControl(features),
+			accessControl:        acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
 			metrics:              newFoldersMetrics(nil),
 			registry:             make(map[string]folder.RegistryService),
 		}
@@ -395,6 +396,21 @@ func TestIntegrationFolderService(t *testing.T) {
 					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
 			}
 		})
+
+		t.Run("Returns root folder", func(t *testing.T) {
+			t.Run("When the folder UID is blank should return the root folder", func(t *testing.T) {
+				emptyString := ""
+				actual, err := service.Get(context.Background(), &folder.GetFolderQuery{
+					UID:          &emptyString,
+					OrgID:        1,
+					SignedInUser: usr,
+				})
+
+				assert.NoError(t, err)
+				assert.Equal(t, folder.GeneralFolder.UID, actual.UID)
+				assert.Equal(t, folder.GeneralFolder.Title, actual.Title)
+			})
+		})
 	})
 }
 
@@ -412,7 +428,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	nestedFolderStore := ProvideStore(db)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	serviceWithFlagOn := &Service{
 		log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
@@ -788,7 +804,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		dashboardStore:       &dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 	}
 	t.Run("create folder", func(t *testing.T) {
@@ -824,7 +840,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		dashboardStore:       dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
@@ -888,7 +904,7 @@ func TestNestedFolderService(t *testing.T) {
 			features := featuremgmt.WithFeatures()
 
 			db, _ := sqlstore.InitTestDB(t)
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features), db)
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), db)
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        dash.Title,
@@ -922,7 +938,7 @@ func TestNestedFolderService(t *testing.T) {
 			features := featuremgmt.WithFeatures("nestedFolders")
 
 			db, _ := sqlstore.InitTestDB(t)
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features), db)
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), db)
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        dash.Title,
@@ -954,7 +970,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, dashStore, nil, nil, features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			folderSvc := setup(t, dashStore, nil, nil, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        dash.Title,
@@ -990,7 +1006,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderStore := NewFakeStore()
 			db, _ := sqlstore.InitTestDB(t)
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features), db)
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), db)
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        dash.Title,
@@ -1126,7 +1142,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("wrong_uid")}}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 		})
@@ -1147,7 +1163,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("newFolder")}}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
 			// the folder is set inside InTransaction() but the fake one is called
@@ -1159,7 +1175,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceAllScope()}}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), NewFakeStore(), features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), NewFakeStore(), features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: accesscontrol.K6FolderUID, NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.Error(t, err, folder.ErrBadRequest)
 		})
@@ -1177,7 +1193,7 @@ func TestNestedFolderService(t *testing.T) {
 			}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), nestedFolderStore, features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: childUID, NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.Error(t, err, folder.ErrBadRequest)
 		})
@@ -1193,7 +1209,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("")}}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.Error(t, err, dashboards.ErrFolderAccessDenied)
 		})
@@ -1214,7 +1230,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {}}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
 			// the folder is set inside InTransaction() but the fake one is called
@@ -1372,7 +1388,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	nestedFolderStore := ProvideStore(db)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	ac := acimpl.ProvideAccessControl(featuresFlagOn)
+	ac := acimpl.ProvideAccessControl(featuresFlagOn, zanzana.NewNoopClient())
 
 	serviceWithFlagOn := &Service{
 		log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
@@ -1792,7 +1808,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 		nestedFolderStore := ProvideStore(db)
 
 		b := bus.ProvideBus(tracing.InitializeTracerForTest())
-		ac := acimpl.ProvideAccessControl(featuresFlagOff)
+		ac := acimpl.ProvideAccessControl(featuresFlagOff, zanzana.NewNoopClient())
 
 		return Service{
 			log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
@@ -1874,7 +1890,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	nestedFolderStore := ProvideStore(db)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	ac := acimpl.ProvideAccessControl(featuresFlagOff)
+	ac := acimpl.ProvideAccessControl(featuresFlagOff, zanzana.NewNoopClient())
 
 	serviceWithFlagOff := &Service{
 		log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
@@ -1958,7 +1974,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	nestedFolderStore := ProvideStore(db)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	ac := acimpl.ProvideAccessControl(featuresFlagOff)
+	ac := acimpl.ProvideAccessControl(featuresFlagOff, zanzana.NewNoopClient())
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 

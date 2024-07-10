@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import React from 'react';
 import { render } from 'test/test-utils';
 
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
@@ -51,6 +50,16 @@ export const mocksScopes: Scope[] = [
     },
   },
   {
+    metadata: { name: 'slothClusterEast' },
+    spec: {
+      title: 'slothClusterEast',
+      type: 'cluster',
+      description: 'slothClusterEast',
+      category: 'clusters',
+      filters: [{ key: 'cluster', value: 'slothClusterEast', operator: 'equals' }],
+    },
+  },
+  {
     metadata: { name: 'slothPictureFactory' },
     spec: {
       title: 'slothPictureFactory',
@@ -88,6 +97,30 @@ export const mocksScopeDashboardBindings: ScopeDashboardBinding[] = [
   {
     metadata: { name: 'binding4' },
     spec: { dashboard: '4', dashboardTitle: 'My Dashboard 4', scope: 'slothVoteTracker' },
+  },
+  {
+    metadata: { name: 'binding5' },
+    spec: { dashboard: '5', dashboardTitle: 'My Dashboard 5', scope: 'slothClusterNorth' },
+  },
+  {
+    metadata: { name: 'binding6' },
+    spec: { dashboard: '6', dashboardTitle: 'My Dashboard 6', scope: 'slothClusterNorth' },
+  },
+  {
+    metadata: { name: 'binding7' },
+    spec: { dashboard: '7', dashboardTitle: 'My Dashboard 7', scope: 'slothClusterNorth' },
+  },
+  {
+    metadata: { name: 'binding8' },
+    spec: { dashboard: '5', dashboardTitle: 'My Dashboard 5', scope: 'slothClusterSouth' },
+  },
+  {
+    metadata: { name: 'binding9' },
+    spec: { dashboard: '6', dashboardTitle: 'My Dashboard 6', scope: 'slothClusterSouth' },
+  },
+  {
+    metadata: { name: 'binding10' },
+    spec: { dashboard: '8', dashboardTitle: 'My Dashboard 8', scope: 'slothClusterSouth' },
   },
 ] as const;
 
@@ -192,6 +225,17 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
   {
     parent: 'clusters',
+    metadata: { name: 'clusters-slothClusterEast' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'slothClusterEast',
+      description: 'slothClusterEast',
+      linkType: 'scope',
+      linkId: 'slothClusterEast',
+    },
+  },
+  {
+    parent: 'clusters',
     metadata: { name: 'clusters.applications' },
     spec: {
       nodeType: 'container',
@@ -225,82 +269,141 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
 
 export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
 export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
-export const fetchScopesSpy = jest.spyOn(api, 'fetchScopes');
-export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
+export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
+export const fetchSuggestedDashboardsSpy = jest.spyOn(api, 'fetchSuggestedDashboards');
+
+export const getMock = jest
+  .fn()
+  .mockImplementation((url: string, params: { parent: string; scope: string[]; query?: string }) => {
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
+      return {
+        items: mocksNodes.filter(
+          ({ parent, spec: { title } }) => parent === params.parent && title.includes(params.query ?? '')
+        ),
+      };
+    }
+
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
+      const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
+
+      return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
+    }
+
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
+      return {
+        items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
+          params.scope.includes(bindingScope)
+        ),
+      };
+    }
+
+    if (url.startsWith('/api/dashboards/uid/')) {
+      return {};
+    }
+
+    if (url.startsWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/')) {
+      return {
+        metadata: {
+          name: '1',
+        },
+      };
+    }
+
+    return {};
+  });
 
 const selectors = {
-  root: {
-    expand: 'scopes-root-expand',
-  },
   tree: {
-    search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
-    select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
-    expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
-    title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
+    search: 'scopes-tree-search',
+    headline: 'scopes-tree-headline',
+    select: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-checkbox`,
+    radio: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-radio`,
+    expand: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-expand`,
+    title: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-title`,
   },
-  basicSelector: {
-    container: 'scopes-basic-container',
-    innerContainer: 'scopes-basic-inner-container',
-    loading: 'scopes-basic-loading',
-    openAdvanced: 'scopes-basic-open-advanced',
-    input: 'scopes-basic-input',
-  },
-  advancedSelector: {
-    container: 'scopes-advanced-container',
-    loading: 'scopes-advanced-loading',
-    apply: 'scopes-advanced-apply',
-    cancel: 'scopes-advanced-cancel',
+  filters: {
+    input: 'scopes-filters-input',
+    container: 'scopes-filters-container',
+    loading: 'scopes-filters-loading',
+    apply: 'scopes-filters-apply',
+    cancel: 'scopes-filters-cancel',
   },
   dashboards: {
+    expand: 'scopes-dashboards-expand',
     container: 'scopes-dashboards-container',
     search: 'scopes-dashboards-search',
     loading: 'scopes-dashboards-loading',
     dashboard: (uid: string) => `scopes-dashboards-${uid}`,
+    notFoundNoScopes: 'scopes-dashboards-notFoundNoScopes',
+    notFoundForScope: 'scopes-dashboards-notFoundForScope',
+    notFoundForFilter: 'scopes-dashboards-notFoundForFilter',
+    notFoundForFilterClear: 'scopes-dashboards-notFoundForFilter-clear',
   },
 };
 
-export const queryRootExpand = () => screen.queryByTestId(selectors.root.expand);
-export const getRootExpand = () => screen.getByTestId(selectors.root.expand);
+export const getFiltersInput = () => screen.getByTestId<HTMLInputElement>(selectors.filters.input);
+export const queryFiltersApply = () => screen.queryByTestId(selectors.filters.apply);
+export const getFiltersApply = () => screen.getByTestId(selectors.filters.apply);
+export const getFiltersCancel = () => screen.getByTestId(selectors.filters.cancel);
 
-export const queryBasicInnerContainer = () => screen.queryByTestId(selectors.basicSelector.innerContainer);
-export const getBasicInnerContainer = () => screen.getByTestId(selectors.basicSelector.innerContainer);
-export const getBasicInput = () => screen.getByTestId<HTMLInputElement>(selectors.basicSelector.input);
-export const getBasicOpenAdvanced = () => screen.getByTestId(selectors.basicSelector.openAdvanced);
-
-export const queryAdvancedApply = () => screen.queryByTestId(selectors.advancedSelector.apply);
-export const getAdvancedApply = () => screen.getByTestId(selectors.advancedSelector.apply);
-export const getAdvancedCancel = () => screen.getByTestId(selectors.advancedSelector.cancel);
-
+export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashboards.expand);
+export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
-export const getDashboardsSearch = () => screen.getByTestId(selectors.dashboards.search);
+export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
+export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
+export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
+export const getNotFoundNoScopes = () => screen.getByTestId(selectors.dashboards.notFoundNoScopes);
+export const getNotFoundForScope = () => screen.getByTestId(selectors.dashboards.notFoundForScope);
+export const getNotFoundForFilter = () => screen.getByTestId(selectors.dashboards.notFoundForFilter);
+export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dashboards.notFoundForFilterClear);
 
-export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
-export const getApplicationsSearch = () => screen.getByTestId(selectors.tree.search('applications'));
-export const queryApplicationsSlothPictureFactoryTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory'));
-export const getApplicationsSlothPictureFactoryTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory'));
-export const getApplicationsSlothPictureFactorySelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory'));
-export const queryApplicationsSlothVoteTrackerTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker'));
-export const getApplicationsSlothVoteTrackerSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothVoteTracker'));
-export const queryApplicationsClustersTitle = () => screen.queryByTestId(selectors.tree.title('applications.clusters'));
-export const getApplicationsClustersSelect = () => screen.getByTestId(selectors.tree.select('applications.clusters'));
-export const getApplicationsClustersExpand = () => screen.getByTestId(selectors.tree.expand('applications.clusters'));
-export const queryApplicationsClustersSlothClusterNorthTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications.clusters-slothClusterNorth'));
+export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
+export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
+export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications', 'result'));
+export const queryResultApplicationsSlothPictureFactoryTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory', 'result'));
+export const getResultApplicationsSlothPictureFactoryTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory', 'result'));
+export const getResultApplicationsSlothPictureFactorySelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory', 'result'));
+export const queryPersistedApplicationsSlothPictureFactoryTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory', 'persisted'));
+export const getPersistedApplicationsSlothPictureFactoryTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory', 'persisted'));
+export const getPersistedApplicationsSlothPictureFactorySelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory', 'persisted'));
+export const queryResultApplicationsSlothVoteTrackerTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker', 'result'));
+export const getResultApplicationsSlothVoteTrackerTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'result'));
+export const getResultApplicationsSlothVoteTrackerSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-slothVoteTracker', 'result'));
+export const queryPersistedApplicationsSlothVoteTrackerTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
+export const getPersistedApplicationsSlothVoteTrackerTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
+export const queryResultApplicationsClustersTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications.clusters', 'result'));
+export const getResultApplicationsClustersSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters', 'result'));
+export const getResultApplicationsClustersExpand = () =>
+  screen.getByTestId(selectors.tree.expand('applications.clusters', 'result'));
+export const getResultApplicationsClustersSlothClusterNorthSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterNorth', 'result'));
+export const getResultApplicationsClustersSlothClusterSouthSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterSouth', 'result'));
 
-export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
-export const getClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters'));
-export const getClustersSlothClusterNorthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterNorth'));
-export const getClustersSlothClusterSouthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterSouth'));
+export const getResultClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters', 'result'));
+export const getResultClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters', 'result'));
+export const getResultClustersSlothClusterNorthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth', 'result'));
+export const getResultClustersSlothClusterSouthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth', 'result'));
+export const getResultClustersSlothClusterEastRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterEast', 'result'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({

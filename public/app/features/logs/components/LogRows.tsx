@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, MouseEvent, createRef } from 'react';
+import { PureComponent, MouseEvent, createRef } from 'react';
 
 import {
   TimeZone,
@@ -105,7 +105,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   popoverMenuSupported() {
-    if (!config.featureToggles.logRowsPopoverMenu || this.props.app !== CoreApp.Explore) {
+    if (!config.featureToggles.logRowsPopoverMenu) {
       return false;
     }
     return Boolean(this.props.onClickFilterOutString || this.props.onClickFilterString);
@@ -147,6 +147,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
+    this.closePopoverMenu();
   };
 
   closePopoverMenu = () => {

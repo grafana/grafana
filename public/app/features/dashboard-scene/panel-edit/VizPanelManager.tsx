@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import {
   DataSourceApi,
@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   PanelModel,
   filterFieldConfigOverrides,
+  getDataSourceRef,
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from '@grafana/data';
@@ -159,8 +160,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
             this.queryRunner.setState({
               datasource: {
+                ...getDataSourceRef(dsSettings),
                 uid: lastUsedDatasource?.datasourceUid,
-                type: dsSettings.type,
               },
             });
           }
@@ -173,12 +174,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       if (datasource && dsSettings) {
         this.setState({ datasource, dsSettings });
 
-        storeLastUsedDataSourceInLocalStorage(
-          {
-            type: dsSettings.type,
-            uid: dsSettings.uid,
-          } || { default: true }
-        );
+        storeLastUsedDataSourceInLocalStorage(getDataSourceRef(dsSettings) || { default: true });
       }
     } catch (err) {
       //set default datasource if we fail to load the datasource
@@ -192,10 +188,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         });
 
         this.queryRunner.setState({
-          datasource: {
-            uid: dsSettings.uid,
-            type: dsSettings.type,
-          },
+          datasource: getDataSourceRef(dsSettings),
         });
       }
 
@@ -267,8 +260,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     };
 
     const newOptions = newPlugin?.onPanelTypeChanged?.(panel, prevPluginId, prevOptions, prevFieldConfig);
+
     if (newOptions) {
-      newPanel.onOptionsChange(newOptions, true);
+      newPanel.onOptionsChange(newOptions, true, true);
     }
 
     if (newPlugin?.onPanelMigration) {
@@ -295,10 +289,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
 
     queryRunner.setState({
-      datasource: {
-        type: newSettings.type,
-        uid: newSettings.uid,
-      },
+      datasource: getDataSourceRef(newSettings),
       queries,
     });
     if (defaultQueries) {

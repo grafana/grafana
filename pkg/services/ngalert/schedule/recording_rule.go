@@ -8,20 +8,23 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type recordingRule struct {
+	key ngmodels.AlertRuleKey
+
 	ctx    context.Context
 	evalCh chan *Evaluation
 	stopFn util.CancelCauseFunc
@@ -39,12 +42,13 @@ type recordingRule struct {
 	metrics *metrics.Scheduler
 	tracer  tracing.Tracer
 
-	writer writer.Writer
+	writer RecordingWriter
 }
 
-func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer writer.Writer) *recordingRule {
-	ctx, stop := util.WithCancelCause(parent)
+func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter) *recordingRule {
+	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
 	return &recordingRule{
+		key:            key,
 		ctx:            ctx,
 		evalCh:         make(chan *Evaluation),
 		stopFn:         stop,
@@ -52,7 +56,7 @@ func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clo
 		evalFactory:    evalFactory,
 		featureToggles: ft,
 		maxAttempts:    maxAttempts,
-		logger:         logger,
+		logger:         logger.FromContext(ctx),
 		metrics:        metrics,
 		tracer:         tracer,
 		writer:         writer,
@@ -85,9 +89,8 @@ func (r *recordingRule) Stop(reason error) {
 	}
 }
 
-func (r *recordingRule) Run(key ngmodels.AlertRuleKey) error {
-	ctx := ngmodels.WithRuleKey(r.ctx, key)
-	logger := r.logger.FromContext(ctx)
+func (r *recordingRule) Run() error {
+	ctx := r.ctx
 	logger.Debug("Recording rule routine started")
 
 	for {
@@ -216,13 +219,13 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, writeStart, frames, ev.rule.Labels)
+	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.Labels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to write metrics")
 		span.RecordError(err)
-		return fmt.Errorf("metric remote write failed: %w", err)
+		return fmt.Errorf("remote write failed: %w", err)
 	}
 
 	logger.Debug("Metrics written", "duration", writeDur)
@@ -252,7 +255,7 @@ func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
 		return
 	}
 
-	r.evalAppliedHook(ev.rule.GetKey(), ev.scheduledAt)
+	r.evalAppliedHook(r.key, ev.scheduledAt)
 }
 
 func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) (data.Frames, error) {
