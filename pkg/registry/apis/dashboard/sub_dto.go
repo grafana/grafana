@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // The DTO returns everything the UI needs in a single request
@@ -23,8 +25,10 @@ type DTOConnector struct {
 	builder *DashboardsAPIBuilder
 }
 
-var _ = rest.Connecter(&DTOConnector{})
-var _ = rest.StorageMetadata(&DTOConnector{})
+var (
+	_ rest.Connecter       = (*DTOConnector)(nil)
+	_ rest.StorageMetadata = (*DTOConnector)(nil)
+)
 
 func (r *DTOConnector) New() runtime.Object {
 	return &dashboard.DashboardWithAccessInfo{}
@@ -88,10 +92,25 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
-	dash, err := r.builder.access.GetDashboard(ctx, info.OrgID, name)
+	key := &resource.ResourceKey{
+		Namespace: info.Value,
+		Group:     dashboard.GROUP,
+		Resource:  dashboard.DashboardResourceInfo.GroupResource().Resource,
+		Name:      name,
+	}
+	store := r.builder.legacy.access
+	rsp, err := store.Read(ctx, &resource.ReadRequest{Key: key})
 	if err != nil {
 		return nil, err
 	}
+	dash := &dashboard.Dashboard{}
+	err = json.Unmarshal(rsp.Value, dash)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO, load the full spec from blob storage
+
 	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))
 	access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
 
