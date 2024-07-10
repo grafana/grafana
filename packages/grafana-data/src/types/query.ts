@@ -92,5 +92,5 @@ export const hasQueryExportSupport = <TQuery extends SchemaDataQuery>(
  * for migration purposes
  */
 export interface UnknownQuery extends SchemaDataQuery {
-  [key: string]: any;
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
