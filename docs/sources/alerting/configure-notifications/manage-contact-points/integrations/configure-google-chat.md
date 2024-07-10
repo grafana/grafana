@@ -25,7 +25,7 @@ Use the Grafana Alerting - Google Chat integration to receive alert notification
 Create a Webhook to enable Grafana to send alert notifications to a Google Chat space.
 To create a Webhook in Google Chat space, complete the following steps.
 
-1. Follow the steps in [Google's chat app guide](https://developers.google.com/workspace/chat/quickstart/webhooks#create_a_webhook).
+1. Follow the steps in [Google's Chat app guide](https://developers.google.com/workspace/chat/quickstart/webhooks#create_a_webhook).
 1. Copy the Webhook URL.
 
 ## Procedure
