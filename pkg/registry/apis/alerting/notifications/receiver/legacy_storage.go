@@ -93,9 +93,8 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	q := models.GetReceiverQuery{
+	q := models.GetReceiversQuery{
 		OrgID: info.OrgID,
-		Name:  uid, // TODO: Name/UID mapping or change signature of service.
 		//Decrypt: ctx.QueryBool("decrypt"), // TODO: Query params.
 	}
 
@@ -104,12 +103,18 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	res, err := s.service.GetReceiver(ctx, q, user)
+	res, err := s.service.GetReceivers(ctx, q, user)
 	if err != nil {
 		return nil, err
 	}
 
-	return convertToK8sResource(info.OrgID, res, s.namespacer)
+	for _, r := range res {
+		if getUID(r) == uid {
+			return convertToK8sResource(info.OrgID, r, s.namespacer)
+		}
+	}
+
+	return nil, errors.NewNotFound(resourceInfo.GroupResource(), uid)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
