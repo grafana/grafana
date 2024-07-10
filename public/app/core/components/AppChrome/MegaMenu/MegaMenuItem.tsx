@@ -19,7 +19,7 @@ interface Props {
   activeItem?: NavModelItem;
   onClick?: () => void;
   level?: number;
-  onPin: (id?: string) => void;
+  onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
 }
 
@@ -105,7 +105,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             target={link.target}
             url={link.url}
             id={link.id}
-            onPin={onPin}
+            onPin={() => onPin(link)}
             isPinned={isPinned(link.id)}
           >
             <div

@@ -163,6 +163,20 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
+		savedItems := s.buildSavedItemsNavLinks(prefs, treeRoot)
+
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:           "Saved pages",
+			Id:             "saved",
+			Icon:           "star",
+			SortWeight:     navtree.WeightSavedItems,
+			Children:       savedItems,
+			EmptyMessageId: "saved-empty",
+			Url:            s.cfg.AppSubURL + "/dashboards?starred",
+		})
+	}
+
 	return treeRoot, nil
 }
 
@@ -315,6 +329,38 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 	}
 
 	return starredItemsChildNavs, nil
+}
+func (s *ServiceImpl) buildSavedItemsNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
+	savedItemsChildNavs := []*navtree.NavLink{}
+
+	savedItemIds := prefs.JSONData.Navbar.SavedItemIds
+
+	if len(savedItemIds) > 0 {
+		for _, savedItem := range savedItemIds {
+			item := treeRoot.FindById(savedItem)
+			if item != nil {
+				savedItemsChildNavs = append(savedItemsChildNavs, &navtree.NavLink{
+					Id:             item.Id,
+					Text:           item.Text,
+					SubTitle:       item.SubTitle,
+					Icon:           item.Icon,
+					Img:            item.Img,
+					Url:            item.Url,
+					Target:         item.Target,
+					HideFromTabs:   item.HideFromTabs,
+					RoundIcon:      item.RoundIcon,
+					IsSection:      item.IsSection,
+					HighlightText:  item.HighlightText,
+					HighlightID:    item.HighlightID,
+					PluginID:       item.PluginID,
+					IsCreateAction: item.IsCreateAction,
+					Keywords:       item.Keywords,
+				})
+			}
+		}
+	}
+
+	return savedItemsChildNavs
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {

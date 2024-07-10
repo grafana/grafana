@@ -51,6 +51,29 @@ const navTreeSlice = createSlice({
         }
       }
     },
+    setSavedPage: (state, action: PayloadAction<{ item: NavModelItem; isSaved: boolean }>) => {
+      const savedPages = state.find((navItem) => navItem.id === 'saved');
+      const { item, isSaved } = action.payload;
+      if (savedPages && config.featureToggles.pinNavItems) {
+        if (isSaved) {
+          if (!savedPages.children) {
+            savedPages.children = [];
+          }
+          const newSavedPage: NavModelItem = {
+            ...item,
+            // Clear the children and sortWeight of the item
+            children: [],
+            sortWeight: 0,
+          };
+          savedPages.children.push(newSavedPage);
+        } else {
+          const index = savedPages.children?.findIndex((i) => i.id === item.id) ?? -1;
+          if (index > -1) {
+            savedPages?.children?.splice(index, 1);
+          }
+        }
+      }
+    },
     updateDashboardName: (state, action: PayloadAction<{ id: string; title: string; url: string }>) => {
       const { id, title, url } = action.payload;
       const starredItems = state.find((navItem) => navItem.id === 'starred');
@@ -73,5 +96,5 @@ const navTreeSlice = createSlice({
   },
 });
 
-export const { setStarred, removePluginFromNavTree, updateDashboardName } = navTreeSlice.actions;
+export const { setStarred, removePluginFromNavTree, updateDashboardName, setSavedPage } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;
