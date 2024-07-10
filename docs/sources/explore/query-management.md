@@ -8,17 +8,19 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Query management
+title: Query management in Explore
 weight: 10
 ---
 
 # Query management in Explore
 
-To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
+Refer to the newly updated doc - rewrite but should not be at the top of the doc
+
+<!-- To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
 This functionality is similar to the panel inspector tasks [Inspect query performance]({{< relref "../panels-visualizations/panel-inspector/#inspect-query-performance" >}}) and
 [Inspect query request and response data]({{< relref "../panels-visualizations/panel-inspector/#inspect-query-request-and-response-data" >}}).
 
-{{< figure src="/static/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" max-width= "550px" caption="Screenshot of the query inspector button in Explore" >}}
+{{< figure src="/static/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" max-width= "550px" caption="Screenshot of the query inspector button in Explore" >}} -->
 
 ## Query history
 
