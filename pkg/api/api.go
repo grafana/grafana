@@ -466,7 +466,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
 
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-				dashboardRoute.Delete("/uid/:uid", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.SoftDeleteDashboard))
+				dashboardRoute.Delete("/uid/:uid", reqOrgAdmin, routing.Wrap(hs.SoftDeleteDashboard))
 			} else {
 				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
 			}
@@ -477,8 +477,8 @@ func (hs *HTTPServer) registerRoutes() {
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
 
 				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-					dashUidRoute.Patch("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDeletedDashboard))
-					dashUidRoute.Delete("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.HardDeleteDashboardByUID))
+					dashUidRoute.Patch("/trash", reqOrgAdmin, routing.Wrap(hs.RestoreDeletedDashboard))
+					dashUidRoute.Delete("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.HardDeleteDashboardByUID))
 				}
 
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
