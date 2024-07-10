@@ -43,7 +43,9 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
       body={
         <>
           <Text element="p">
-            <Trans i18nKey="dashboard-settings.dashboard-delete-modal">Do you want to delete this dashboard?</Trans>
+            <Trans i18nKey="dashboard-settings.dashboard-delete-modal.text">
+              Do you want to delete this dashboard?
+            </Trans>
           </Text>
           <Space v={1} />
           <Text element="p">{dashboard.title}</Text>
@@ -52,7 +54,7 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
       }
       onConfirm={onConfirm}
       onDismiss={hideModal}
-      title="Delete"
+      title={t('dashboard-settings.dashboard-delete-modal.title', 'Delete')}
       icon="trash-alt"
       confirmText="Delete"
       confirmationText="Delete"
