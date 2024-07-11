@@ -28,7 +28,7 @@ import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search
 import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { grafanaRulerEmptyGroup, grafanaRulerNamespace2, grafanaRulerRule } from '../../../../mocks/alertRuleApi';
+import { grafanaRulerEmptyGroup, grafanaRulerNamespace2, grafanaRulerRule } from '../../../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../../../testSetup/datasources';
 import { RECEIVER_META_KEY } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';

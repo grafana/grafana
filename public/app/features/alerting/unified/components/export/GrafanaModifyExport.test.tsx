@@ -7,7 +7,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
 import { mockDashboardSearchItem, mockDataSource } from '../../mocks';
-import { grafanaRulerRule } from '../../mocks/alertRuleApi';
+import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 
 import GrafanaModifyExport from './GrafanaModifyExport';

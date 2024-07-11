@@ -17,7 +17,7 @@ import {
   mockDataSource,
   mockPluginLinkExtension,
 } from '../../mocks';
-import { grafanaRulerRule } from '../../mocks/alertRuleApi';
+import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';

@@ -17,7 +17,7 @@ import { discoverFeatures } from './api/buildInfo';
 import * as ruler from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { grantUserPermissions, mockDataSource } from './mocks';
-import { grafanaRulerGroup, grafanaRulerRule } from './mocks/alertRuleApi';
+import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';

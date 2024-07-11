@@ -242,5 +242,13 @@ export function stringifyErrorLike(error: unknown): string {
     return String(error.status) || 'Unknown error';
   }
 
-  return isErrorLike(error) ? error.message : String(error);
+  if (!isErrorLike(error)) {
+    return String(error);
+  }
+
+  if (error.cause) {
+    return `${error.message}, cause: ${stringifyErrorLike(error.cause)}`;
+  }
+
+  return error.message;
 }

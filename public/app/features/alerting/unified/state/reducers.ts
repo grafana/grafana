@@ -14,7 +14,6 @@ import {
   saveRuleFormAction,
   testReceiversAction,
   updateAlertManagerConfigAction,
-  updateLotexNamespaceAndGroupAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -39,8 +38,6 @@ export const reducer = combineReducers({
     (alertManagerSourceName) => alertManagerSourceName
   ).reducer,
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
-  updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)
-    .reducer,
   managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
 });
 

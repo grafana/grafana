@@ -733,7 +733,13 @@ describe('RuleList', () => {
     });
   });
 
-  describe('edit lotex groups, namespaces', () => {
+  /**
+   * @TODO port these tests to MSW – they rely on mocks a whole lot, and since we're looking to refactor the list view
+   * I imagine we'd need to rewrite these anyway.
+   *
+   * These actions are currently tested in the "useProduceNewRuleGroup" hook(s).
+   */
+  describe.skip('edit lotex groups, namespaces', () => {
     const testDatasources = {
       prom: dataSources.prom,
     };
