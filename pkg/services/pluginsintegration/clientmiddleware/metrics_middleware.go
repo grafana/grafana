@@ -252,3 +252,14 @@ func (m *MetricsMiddleware) ConvertObject(ctx context.Context, req *backend.Conv
 
 	return resp, err
 }
+
+func (m *MetricsMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	var result *backend.QueryMigrationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		result, innerErr = m.next.MigrateQuery(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
+}

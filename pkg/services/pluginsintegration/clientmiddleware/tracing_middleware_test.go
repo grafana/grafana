@@ -402,6 +402,10 @@ func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *back
 	return nil, m.f()
 }
 
+func (m *alwaysErrorFuncMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	return nil, m.f()
+}
+
 // newAlwaysErrorMiddleware returns a new middleware that always returns the specified error.
 func newAlwaysErrorMiddleware(err error) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {

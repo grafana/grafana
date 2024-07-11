@@ -58,3 +58,7 @@ func (m *baseMiddleware) MutateAdmission(ctx context.Context, req *backend.Admis
 func (m *baseMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return m.next.ConvertObject(ctx, req)
 }
+
+func (m *baseMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	return m.next.MigrateQuery(ctx, req)
+}

@@ -162,3 +162,11 @@ func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.Conv
 	resp, err := m.next.ConvertObject(ctx, req)
 	return resp, err
 }
+
+func (m *TracingMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
+	defer func() { end(err) }()
+	resp, err := m.next.MigrateQuery(ctx, req)
+	return resp, err
+}

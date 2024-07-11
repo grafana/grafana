@@ -76,6 +76,7 @@ var (
 	_ = backend.CallResourceHandler(&Plugin{})
 	_ = backend.StreamHandler(&Plugin{})
 	_ = backend.AdmissionHandler(&Plugin{})
+	_ = backend.QueryMigrationHandler(&Plugin{})
 )
 
 type AngularMeta struct {
@@ -393,6 +394,14 @@ func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionReque
 	return pluginClient.ConvertObject(ctx, req)
 }
 
+func (p *Plugin) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MigrateQuery(ctx, req)
+}
+
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
@@ -453,6 +462,7 @@ type PluginClient interface {
 	backend.CallResourceHandler
 	backend.AdmissionHandler
 	backend.StreamHandler
+	backend.QueryMigrationHandler
 }
 
 func (p *Plugin) StaticRoute() *StaticRoute {

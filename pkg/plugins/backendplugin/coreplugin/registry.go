@@ -149,6 +149,9 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	if storageHandler, ok := svc.(backend.AdmissionHandler); ok {
 		opts.AdmissionHandler = storageHandler
 	}
+	if migrationHandler, ok := svc.(backend.QueryMigrationHandler); ok {
+		opts.QueryMigrationHandler = migrationHandler
+	}
 
 	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||
 		opts.CheckHealthHandler != nil || opts.StreamHandler != nil {

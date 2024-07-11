@@ -209,3 +209,11 @@ func (r *protoClient) ConvertObject(ctx context.Context, in *pluginv2.Conversion
 	}
 	return c.AdmissionClient.ConvertObject(ctx, in, opts...)
 }
+
+func (r *protoClient) MigrateQuery(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotStarted
+	}
+	return c.DataClient.QueryData(ctx, in, opts...)
+}

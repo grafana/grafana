@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -44,6 +46,7 @@ func ProvideService(
 	pluginRequestValidator validations.PluginRequestValidator,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
+	features featuremgmt.FeatureToggles,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                    cfg,
@@ -52,6 +55,7 @@ func ProvideService(
 		pluginRequestValidator: pluginRequestValidator,
 		pluginClient:           pluginClient,
 		pCtxProvider:           pCtxProvider,
+		features:               features,
 		log:                    log.New("query_data"),
 		concurrentQueryLimit:   cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	}
@@ -77,6 +81,7 @@ type ServiceImpl struct {
 	pCtxProvider           *plugincontext.Provider
 	log                    log.Logger
 	concurrentQueryLimit   int
+	features               featuremgmt.FeatureToggles
 }
 
 // Run ServiceImpl.
@@ -266,6 +271,31 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagQueryMigrations) {
+		migReq := &backend.QueryMigrationRequest{
+			PluginContext: pCtx,
+			Queries:       req.Queries,
+		}
+
+		migrated, err := s.pluginClient.MigrateQuery(ctx, migReq)
+		if err != nil {
+			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				// If the plugin does not implement the migration method, use the original queries
+				migrated = &backend.QueryMigrationResponse{
+					Queries: migReq.Queries,
+				}
+			} else {
+				return nil, err
+			}
+		}
+
+		req = &backend.QueryDataRequest{
+			PluginContext: pCtx,
+			Headers:       map[string]string{},
+			Queries:       migrated.Queries,
+		}
 	}
 
 	return s.pluginClient.QueryData(ctx, req)

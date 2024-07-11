@@ -199,5 +199,6 @@ export interface FeatureToggles {
   dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   bodyScrolling?: boolean;
+  queryMigrations?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
 }

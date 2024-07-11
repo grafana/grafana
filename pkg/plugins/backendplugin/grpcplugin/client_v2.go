@@ -25,6 +25,7 @@ type ClientV2 struct {
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
 	grpcplugin.AdmissionClient
+	grpcplugin.QueryMigrationClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
@@ -46,6 +47,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawAdmission, err := rpcClient.Dispense("admission")
+	if err != nil {
+		return nil, err
+	}
+
+	rawQueryMigration, err := rpcClient.Dispense("migration")
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +93,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	if rawAdmission != nil {
 		if admissionClient, ok := rawAdmission.(grpcplugin.AdmissionClient); ok {
 			c.AdmissionClient = admissionClient
+		}
+	}
+
+	if rawQueryMigration != nil {
+		if queryMigrationClient, ok := rawQueryMigration.(grpcplugin.QueryMigrationClient); ok {
+			c.QueryMigrationClient = queryMigrationClient
 		}
 	}
 
@@ -325,4 +337,21 @@ func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionReq
 	}
 
 	return backend.FromProto().ConversionResponse(protoResp), nil
+}
+
+func (c *ClientV2) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	if c.QueryMigrationClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().QueryMigrationRequest(req)
+	protoResp, err := c.QueryMigrationClient.MigrateQuery(ctx, protoReq)
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+		return nil, fmt.Errorf("%v: %w", "Failed to ConvertObject", err)
+	}
+
+	return backend.FromProto().QueryMigrationResponse(protoResp), nil
 }

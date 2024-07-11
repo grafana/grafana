@@ -180,6 +180,10 @@ func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.Convers
 	return res, err
 }
 
+func (m *TestMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	return m.next.MigrateQuery(ctx, req)
+}
+
 func (m *TestMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	m.sCtx.CheckHealthCallChain = append(m.sCtx.CheckHealthCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.CheckHealth(ctx, req)

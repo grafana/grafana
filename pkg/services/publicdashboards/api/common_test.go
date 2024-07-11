@@ -160,6 +160,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		&fakePluginRequestValidator{},
 		fpc,
 		pCtxProvider,
+		featuremgmt.WithFeatures(),
 	)
 }
 

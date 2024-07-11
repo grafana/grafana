@@ -246,4 +246,8 @@ func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.Convers
 	return res, err
 }
 
+func (m *TestMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	return m.next.MigrateQuery(ctx, req)
+}
+
 var _ plugins.Client = &TestClient{}

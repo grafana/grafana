@@ -484,7 +484,7 @@ func setup(t *testing.T) *testContext {
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
 		featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
-	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider) // provider belonging to this package
+	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider, featuremgmt.WithFeatures()) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,

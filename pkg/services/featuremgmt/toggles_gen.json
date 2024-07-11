@@ -2168,6 +2168,18 @@
     },
     {
       "metadata": {
+        "name": "queryMigrations",
+        "resourceVersion": "1720710015696",
+        "creationTimestamp": "2024-07-11T15:00:15Z"
+      },
+      "spec": {
+        "description": "Run query migrations before executing queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryOverLive",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-01-26T17:44:20Z"

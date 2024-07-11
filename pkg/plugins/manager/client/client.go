@@ -259,6 +259,19 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 	return plugin.ValidateAdmission(ctx, req)
 }
 
+func (s *Service) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.MigrateQuery(ctx, req)
+}
+
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pluginID, pluginVersion string) (*plugins.Plugin, bool) {
 	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, pluginVersion)

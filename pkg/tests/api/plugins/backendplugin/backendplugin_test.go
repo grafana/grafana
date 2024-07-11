@@ -847,6 +847,7 @@ type testPlugin struct {
 	backend.QueryDataHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
+	backend.QueryMigrationHandler
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -956,6 +957,14 @@ func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.Admissio
 func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if tp.AdmissionHandler != nil {
 		return tp.AdmissionHandler.ConvertObject(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	if tp.QueryMigrationHandler != nil {
+		return tp.QueryMigrationHandler.MigrateQuery(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented

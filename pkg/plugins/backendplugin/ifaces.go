@@ -25,6 +25,7 @@ type Plugin interface {
 	backend.CallResourceHandler
 	backend.AdmissionHandler
 	backend.StreamHandler
+	backend.QueryMigrationHandler
 }
 
 type Target string

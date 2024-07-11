@@ -169,6 +169,15 @@ func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRe
 	return client.ConvertObject(ctx, req)
 }
 
+func (d *Decorator) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.MigrateQuery(ctx, req)
+}
+
 func clientFromMiddlewares(middlewares []plugins.ClientMiddleware, finalClient plugins.Client) plugins.Client {
 	if len(middlewares) == 0 {
 		return finalClient

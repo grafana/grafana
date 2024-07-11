@@ -85,3 +85,8 @@ func (m *PluginRequestMetaMiddleware) ConvertObject(ctx context.Context, req *ba
 	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.ConvertObject(ctx, req)
 }
+
+func (m *PluginRequestMetaMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	ctx = m.withDefaultPluginRequestMeta(ctx)
+	return m.next.MigrateQuery(ctx, req)
+}

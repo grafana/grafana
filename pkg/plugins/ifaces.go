@@ -93,6 +93,7 @@ type Client interface {
 	backend.AdmissionHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
+	backend.QueryMigrationHandler
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.

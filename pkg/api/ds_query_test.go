@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -77,6 +78,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			},
 		}, &fakeDatasources.FakeCacheService{}, &fakeDatasources.FakeDataSourceService{},
 			pluginSettings.ProvideService(dbtest.NewFakeDB(), secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
+		featuremgmt.WithFeatures(),
 	)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -126,6 +128,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 			},
 		},
 		pcp,
+		featuremgmt.WithFeatures(),
 	)
 	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -287,6 +290,7 @@ func TestDataSourceQueryError(t *testing.T) {
 						&fakeDatasources.FakeCacheService{}, ds,
 						pluginSettings.ProvideService(dbtest.NewFakeDB(),
 							secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
+					featuremgmt.WithFeatures(),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})

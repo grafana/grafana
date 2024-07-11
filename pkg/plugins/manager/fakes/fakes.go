@@ -73,6 +73,7 @@ type FakePluginClient struct {
 	backend.MutateAdmissionFunc
 	backend.ValidateAdmissionFunc
 	backend.ConvertObjectFunc
+	backend.MigrateQueryFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -188,6 +189,14 @@ func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.Ad
 func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if pc.ConvertObjectFunc != nil {
 		return pc.ConvertObjectFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	if pc.MigrateQueryFunc != nil {
+		return pc.MigrateQueryFunc(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented

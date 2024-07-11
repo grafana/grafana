@@ -21,6 +21,7 @@ type pluginClient interface {
 	backend.CallResourceHandler
 	backend.AdmissionHandler
 	backend.StreamHandler
+	backend.QueryMigrationHandler
 }
 
 type grpcPlugin struct {
@@ -223,4 +224,12 @@ func (p *grpcPlugin) ConvertObject(ctx context.Context, request *backend.Convers
 		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.ConvertObject(ctx, request)
+}
+
+func (p *grpcPlugin) MigrateQuery(ctx context.Context, request *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pluginClient.MigrateQuery(ctx, request)
 }

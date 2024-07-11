@@ -95,3 +95,8 @@ func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *bac
 	ctx = instrumentContext(ctx, req.PluginContext)
 	return m.next.ConvertObject(ctx, req)
 }
+
+func (m *ContextualLoggerMiddleware) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.next.MigrateQuery(ctx, req)
+}

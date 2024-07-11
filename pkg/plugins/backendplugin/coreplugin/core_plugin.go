@@ -19,19 +19,21 @@ type corePlugin struct {
 	backend.QueryDataHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
+	backend.QueryMigrationHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
-			pluginID:            pluginID,
-			logger:              logger,
-			CheckHealthHandler:  opts.CheckHealthHandler,
-			CallResourceHandler: opts.CallResourceHandler,
-			QueryDataHandler:    opts.QueryDataHandler,
-			AdmissionHandler:    opts.AdmissionHandler,
-			StreamHandler:       opts.StreamHandler,
+			pluginID:              pluginID,
+			logger:                logger,
+			CheckHealthHandler:    opts.CheckHealthHandler,
+			CallResourceHandler:   opts.CallResourceHandler,
+			QueryDataHandler:      opts.QueryDataHandler,
+			AdmissionHandler:      opts.AdmissionHandler,
+			StreamHandler:         opts.StreamHandler,
+			QueryMigrationHandler: opts.QueryMigrationHandler,
 		}, nil
 	}
 }
@@ -147,6 +149,14 @@ func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.Conversion
 	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.AdmissionHandler.ConvertObject(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) MigrateQuery(ctx context.Context, req *backend.QueryMigrationRequest) (*backend.QueryMigrationResponse, error) {
+	if cp.QueryMigrationHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.QueryMigrationHandler.MigrateQuery(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
 }
