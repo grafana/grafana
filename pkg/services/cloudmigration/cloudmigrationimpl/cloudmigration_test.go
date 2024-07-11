@@ -382,7 +382,6 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, i+1, gmsClientMock.getStatusCalled)
 	}
-
 }
 
 func ctxWithSignedInUser() context.Context {
