@@ -13,7 +13,7 @@ import {
   Placement,
   VerticalConstraint,
 } from 'app/plugins/panel/canvas/panelcfg.gen';
-import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
+import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
@@ -601,7 +601,7 @@ export class ElementState implements LayerElement {
 
   getPrimaryDataLink = () => {
     if (this.getLinks) {
-      const links = this.getLinks({});
+      const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
       const primaryDataLink = links.find((link: LinkModel) => link.sortIndex === 0);
       return primaryDataLink ?? links[0];
     }
@@ -634,7 +634,7 @@ export class ElementState implements LayerElement {
   };
 
   onElementClick = (event: React.MouseEvent) => {
-    // If one-link access is enabled, open the primary link
+    // If one-click access is enabled, open the primary link
     if (this.options.oneClickLinks) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {

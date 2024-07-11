@@ -19,6 +19,8 @@ import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButton';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
+import { getRowIndex } from '../utils';
+
 interface Props {
   scene: Scene;
 }
@@ -70,12 +72,9 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  const field = scene.data?.series[0].fields?.find((field) => field.name === element.data.field);
-  const rowIndex = field ? field.values.length - 1 : undefined;
-
   const elementHasLinks = (element.options.links?.length ?? 0) > 0;
   if (elementHasLinks && element.getLinks) {
-    element.getLinks({ valueRowIndex: rowIndex }).forEach((link) => {
+    element.getLinks({ valueRowIndex: getRowIndex(element.data.field, scene) }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);

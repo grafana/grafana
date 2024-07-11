@@ -234,8 +234,8 @@ export const calculateDistance = (x1: number, y1: number, x2: number, y2: number
 // @TODO revisit, currently returning last row index for field
 export const getRowIndex = (fieldName: string | undefined, scene: Scene) => {
   if (fieldName) {
-    const series = scene.context.getPanelData()?.series[0];
-    const field = series?.fields.find((f) => (f.name = fieldName));
+    const series = scene.data?.series[0];
+    const field = series?.fields.find((field) => field.name === fieldName);
     const data = field?.values;
     return data ? data.length - 1 : 0;
   }
