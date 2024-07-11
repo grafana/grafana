@@ -324,22 +324,24 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
-func buildDatasourceHeaders(ctx context.Context) map[string]string {
-	headers := map[string]string{
-		// Many data sources check this in query method as sometimes alerting needs special considerations.
-		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
-		//
-		// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
-		// When sent over a network, the key of this header is canonicalized to "Fromalert".
-		// However, some datasources still compare against the string "FromAlert".
-		models.FromAlertHeaderName: "true",
+func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {
+	headers := make(map[string]string, len(metadata)+3)
 
-		models.CacheSkipHeaderName: "true",
+	for key, value := range metadata {
+		headers[fmt.Sprintf("X-Rule-%s", key)] = value
 	}
+
+	// Many data sources check this in query method as sometimes alerting needs special considerations.
+	// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
+	//
+	// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
+	// When sent over a network, the key of this header is canonicalized to "Fromalert".
+	// However, some datasources still compare against the string "FromAlert".
+	headers[models.FromAlertHeaderName] = "true"
+	headers[models.CacheSkipHeaderName] = "true"
 
 	key, ok := models.RuleKeyFromContext(ctx)
 	if ok {
-		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
 	}
 
@@ -350,7 +352,7 @@ func buildDatasourceHeaders(ctx context.Context) map[string]string {
 func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheService datasources.CacheService, reader AlertingResultsReader) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.GetOrgID(),
-		Headers: buildDatasourceHeaders(ctx.Ctx),
+		Headers: buildDatasourceHeaders(ctx.Ctx, condition.Metadata),
 		User:    ctx.User,
 	}
 	datasources := make(map[string]*datasources.DataSource, len(condition.Data))

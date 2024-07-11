@@ -367,13 +367,20 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	meta := map[string]string{
+		"Name": alertRule.Title,
+		"Uid":  alertRule.UID,
+		"Type": string(alertRule.Type()),
+	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
+			Metadata:  meta,
 			Condition: alertRule.Record.From,
 			Data:      alertRule.Data,
 		}
 	}
 	return Condition{
+		Metadata:  meta,
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
 	}
@@ -712,6 +719,8 @@ type UpdateRule struct {
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
+	// Additional information provided to the evaluation to include to the request as headers in format `X-Rule-{Key}`
+	Metadata map[string]string
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
