@@ -46,9 +46,9 @@ func TestSetDualWritingMode(t *testing.T) {
 		kvStore := &fakeNamespacedKV{data: make(map[string]string), namespace: "storage.dualwriting." + tt.stackID}
 
 		p := prometheus.NewRegistry()
-		dw, err := SetDualWritingMode(context.Background(), kvStore, ls, us, "playlist.grafana.app/v0alpha1", tt.desiredMode, p)
+		dwMode, err := SetDualWritingMode(context.Background(), kvStore, ls, us, "playlist.grafana.app/v0alpha1", tt.desiredMode, p)
 		assert.NoError(t, err)
-		assert.Equal(t, tt.expectedMode, dw.Mode())
+		assert.Equal(t, tt.expectedMode, dwMode)
 
 		// check kv store
 		val, ok, err := kvStore.Get(context.Background(), "playlist.grafana.app/v0alpha1")

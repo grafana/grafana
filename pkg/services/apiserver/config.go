@@ -59,6 +59,11 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.DualWriterDesiredModes = map[string]grafanarest.DualWriterMode{
 		playlist.GROUPRESOURCE: grafanarest.DualWriterMode(unifiedStorageModeCfg.Key(playlist.GROUPRESOURCE).MustInt(0)),
 	}
+
+	// TODO: ensure backwards compatibility with production
+	// remove this after changing the unified_storage_mode key format in HGAPI
+	o.StorageOptions.DualWriterDesiredModes[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.DualWriterDesiredModes[playlist.GROUPRESOURCE]
+
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL
