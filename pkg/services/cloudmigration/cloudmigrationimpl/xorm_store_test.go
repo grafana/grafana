@@ -25,7 +25,7 @@ func Test_GetAllCloudMigrationSessions(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("get all cloud_migration_session entries", func(t *testing.T) {
-		value, err := s.GetAllCloudMigrationSessions(ctx)
+		value, err := s.GetCloudMigrationSessionList(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 3, len(value))
 		for _, m := range value {
@@ -244,6 +244,19 @@ func Test_SnapshotResources(t *testing.T) {
 				break
 			}
 		}
+
+		// check stats
+		stats, err := s.GetSnapshotResourceStats(ctx, "poiuy")
+		assert.NoError(t, err)
+		assert.Equal(t, map[cloudmigration.MigrateDataType]int{
+			cloudmigration.DatasourceDataType: 2,
+			cloudmigration.DashboardDataType:  1,
+			cloudmigration.FolderDataType:     1,
+		}, stats.CountsByType)
+		assert.Equal(t, map[cloudmigration.ItemStatus]int{
+			cloudmigration.ItemStatusOK:      3,
+			cloudmigration.ItemStatusPending: 1,
+		}, stats.CountsByStatus)
 
 		// delete snapshot resources
 		err = s.DeleteSnapshotResources(ctx, "poiuy")

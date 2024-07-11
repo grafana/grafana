@@ -281,7 +281,7 @@ export class Scene {
   };
 
   render() {
-    const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
+    const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0 || this.tooltip?.element?.data?.field;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
