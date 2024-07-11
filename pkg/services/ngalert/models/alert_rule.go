@@ -367,12 +367,12 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	return labels
 }
 
-func (alertRule *AlertRule) GetEvalCondition(additionalMetadata map[string]string) Condition {
-	meta := make(map[string]string, len(additionalMetadata)+3)
-	maps.Copy(meta, additionalMetadata)
-	meta["Name"] = alertRule.Title
-	meta["Uid"] = alertRule.UID
-	meta["Type"] = string(alertRule.Type())
+func (alertRule *AlertRule) GetEvalCondition() Condition {
+	meta := map[string]string{
+		"Name": alertRule.Title,
+		"Uid":  alertRule.UID,
+		"Type": string(alertRule.Type()),
+	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Metadata:  meta,
@@ -728,6 +728,25 @@ type Condition struct {
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
+}
+
+func (c Condition) withMetadata(key, value string) Condition {
+	meta := make(map[string]string, len(c.Metadata)+1)
+	maps.Copy(meta, c.Metadata)
+	meta[key] = value
+	return Condition{
+		Metadata:  meta,
+		Condition: c.Condition,
+		Data:      c.Data,
+	}
+}
+
+func (c Condition) WithFolder(folderTitle string) Condition {
+	return c.withMetadata("Folder", folderTitle)
+}
+
+func (c Condition) WithSource(source string) Condition {
+	return c.withMetadata("Source", source)
 }
 
 // IsValid checks the condition's validity.
