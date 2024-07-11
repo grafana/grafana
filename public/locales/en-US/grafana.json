@@ -123,6 +123,9 @@
       }
     },
     "rule-groups": {
+      "delete": {
+        "success": "Successfully deleted rule group"
+      },
       "move": {
         "success": "Successfully moved rule group"
       },

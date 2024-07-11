@@ -1,6 +1,7 @@
 import { set } from 'lodash';
 
 import { RelativeTimeRange } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
@@ -245,10 +246,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       WithRequestOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
     >({
       query: ({ rulerConfig, namespace, group, requestOptions }) => {
+        const successMessage = t('alerting.rule-groups.delete.success', 'Successfully deleted rule group');
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
-        return withRequestOptions({ url: path, params, method: 'DELETE' }, requestOptions, {
-          successMessage: 'Successfully deleted rule group',
-        });
+
+        return withRequestOptions({ url: path, params, method: 'DELETE' }, requestOptions, { successMessage });
       },
       invalidatesTags: (_result, _error, { namespace, group }) => [
         {
@@ -270,6 +271,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       query: ({ payload, namespace, rulerConfig, requestOptions }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
 
+        const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
+
         return withRequestOptions(
           {
             url: path,
@@ -278,7 +281,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
             method: 'POST',
           },
           requestOptions,
-          { successMessage: 'Successfully updated rule group' }
+          { successMessage }
         );
       },
       invalidatesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
