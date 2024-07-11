@@ -263,7 +263,8 @@ func TestRecordingRule_Integration(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
 			require.Equal(t, "error", status.Health)
-			// TODO
+			require.NotNil(t, status.LastError)
+			require.ErrorContains(t, status.LastError, "unable to find dependent node")
 		})
 
 		t.Run("no write was performed", func(t *testing.T) {
