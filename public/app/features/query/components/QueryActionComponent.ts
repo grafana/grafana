@@ -20,7 +20,7 @@ class QueryActionComponents {
     this.extraRenderActions = this.extraRenderActions.concat(extra);
   }
 
-  // for adding actions that need to be unique, but also need component context that may be fired multiple times
+  // for adding actions that will need to be unique, even if the add function is ran multiple times
   addKeyedExtraRenderAction(key: string, extra: QueryActionComponent) {
     this.keyedExtraRenderActions.set(key, extra);
   }
