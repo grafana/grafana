@@ -133,18 +133,7 @@ export const DataLinksInlineEditor = ({
                   return renderFirstLink(linkJSX);
                 }
 
-                return (
-                  <DataLinksListItem
-                    key={key}
-                    index={idx}
-                    link={link}
-                    onChange={onDataLinkChange}
-                    onEdit={() => setEditIndex(idx)}
-                    onRemove={() => onDataLinkRemove(idx)}
-                    data={data}
-                    itemKey={key}
-                  />
-                );
+                return linkJSX;
               })}
               {provided.placeholder}
             </div>
