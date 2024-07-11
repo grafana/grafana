@@ -77,7 +77,9 @@ export function RecentlyDeletedActions() {
 
   const showRestoreModal = () => {
     reportInteraction('grafana_restore_clicked', {
-      num_selected: selectedDashboards.length,
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
     });
     appEvents.publish(
       new ShowModalReactEvent({
@@ -93,7 +95,9 @@ export function RecentlyDeletedActions() {
 
   const showDeleteModal = () => {
     reportInteraction('grafana_delete_permanently_clicked', {
-      num_selected: selectedDashboards.length,
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
     });
     appEvents.publish(
       new ShowModalReactEvent({
