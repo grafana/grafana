@@ -128,4 +128,15 @@ function trackAction(action: keyof typeof actionMap, selectedItems: Omit<Dashboa
     },
     source: 'tree_actions',
   });
+
+  if (action === 'delete') {
+    reportInteraction('grafana_manage_dashboards_delete_clicked', {
+      num_selected: selectedDashboards.length + selectedFolders.length,
+      items_selected: {
+        folder: selectedFolders.length,
+        dashboard: selectedDashboards.length,
+      },
+      ft_enabled: config.featureToggles.dashboardRestoreUI,
+    });
+  }
 }
