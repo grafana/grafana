@@ -16,7 +16,7 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoadi
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
-      num_selected: selectedDashboards.length,
+      num_selected: numberOfDashboards,
     });
     await onConfirm();
     onDismiss();

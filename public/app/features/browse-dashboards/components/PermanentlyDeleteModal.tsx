@@ -16,7 +16,7 @@ export const PermanentlyDeleteModal = ({
 
   const onDelete = async () => {
     reportInteraction('grafana_delete_permanently_confirm_clicked', {
-      num_selected: selectedDashboards.length,
+      num_selected: numberOfDashboards,
     });
     await onConfirm();
     onDismiss();
