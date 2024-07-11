@@ -551,6 +551,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
+/scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 
 /scripts/**/generate-transformations* @grafana/dataviz-squad
