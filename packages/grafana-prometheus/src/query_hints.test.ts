@@ -281,7 +281,7 @@ describe('getExpandRulesHints', () => {
             query,
             options: {
               metric_5m: {
-                query: 'expanded_metric_query[5m]',
+                expandedQuery: 'expanded_metric_query[5m]',
               },
             },
           },
@@ -357,7 +357,7 @@ describe('getExpandRulesHints', () => {
             query,
             options: {
               metric_5m: {
-                query: 'expanded_metric_query_111[5m]',
+                expandedQuery: 'expanded_metric_query_111[5m]',
                 identifier: 'uuid',
                 identifierValue: '111',
               },

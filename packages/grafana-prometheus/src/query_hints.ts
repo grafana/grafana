@@ -218,14 +218,14 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
     }
 
     if (mapping[ruleName].length > 1) {
-      const { expandedQuery, identifier, identifierValue } = getRecordingRuleIdentifierIdx(
+      const { idx, expandedQuery, identifier, identifierValue } = getRecordingRuleIdentifierIdx(
         query,
         ruleName,
         mapping[ruleName]
       );
 
       // No identifier detected add warning
-      if (expandedQuery === '') {
+      if (idx === -1) {
         hints.push({
           type: 'EXPAND_RULES_WARNING',
           label: 'Query contains a recording rule. To be able to expand it please add an identifier label/value.',
@@ -282,11 +282,11 @@ export function getRecordingRuleIdentifierIdx(
   queryStr: string,
   ruleName: string,
   mapping: RuleQueryMapping[string]
-): RecordingRuleIdentifier {
+): RecordingRuleIdentifier & { idx: number } {
   const { query } = buildVisualQueryFromString(queryStr);
   const queryMetricLabels: QueryBuilderLabelFilter[] = getQueryLabelsForRuleName(ruleName, query);
   if (queryMetricLabels.length === 0) {
-    return { identifier: '', identifierValue: '', expandedQuery: '' };
+    return { idx: -1, identifier: '', identifierValue: '', expandedQuery: '' };
   }
 
   let uuidLabel = '';
@@ -311,6 +311,7 @@ export function getRecordingRuleIdentifierIdx(
   });
 
   return {
+    idx: uuidLabelIdx,
     identifier: uuidLabel,
     identifierValue: uuidLabelValue,
     expandedQuery: mapping[uuidLabelIdx]?.query ?? '',
