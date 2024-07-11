@@ -99,7 +99,7 @@ export const DataLinksInlineEditor = ({
     if (oneClickEnabled) {
       return (
         <div className={styles.oneClickOverlay}>
-          <span>One-click</span>
+          <span className={styles.oneClickSpan}>One-click</span>
           {linkJSX}
         </div>
       );
@@ -175,8 +175,14 @@ const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
   oneClickOverlay: css({
     height: 'auto',
     border: `1px dashed ${theme.colors.border.medium}`,
-    padding: 10,
+    paddingBottom: 10,
     fontSize: 10,
     color: theme.colors.text.link,
+  }),
+  oneClickSpan: css({
+    padding: 10,
+    // Negates the padding on the span from moving the underlying link
+    marginBottom: -10,
+    display: 'inline-block',
   }),
 });
