@@ -165,7 +165,8 @@ const SearchField = ({
             placeholder="Select tag"
             isClearable
             aria-label={`select ${filter.id} tag`}
-            allowCustomValue={true}
+            allowCustomValue
+            virtualized
           />
         )}
         <Select

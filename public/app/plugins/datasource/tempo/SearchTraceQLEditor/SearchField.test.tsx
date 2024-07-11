@@ -130,14 +130,18 @@ describe('SearchField', () => {
     if (select) {
       // Select tag22 as the tag
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const tag22 = await screen.findByText('tag22');
       await user.click(tag22);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag22', value: [] });
 
       // Select tag1 as the tag
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const tag1 = await screen.findByText('tag1');
       await user.click(tag1);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1', value: [] });
