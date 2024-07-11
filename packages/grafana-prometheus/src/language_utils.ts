@@ -202,12 +202,13 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: R
 
     // check if the mapping is there
     if (mapping[tsp]) {
-      const recordingRule = mapping[tsp].expandedQuery;
+      const { expandedQuery: recordingRule, identifierValue, identifier } = mapping[tsp];
       // it is a recording rule. if the following is a label then apply it
       if (i + 1 !== tmpSplitParts.length && tmpSplitParts[i + 1].match(labelRegexp)) {
         // the next value in the loop is label. Let's apply labels to the metric
         labelFound = true;
-        const labels = tmpSplitParts[i + 1];
+        const regexp = new RegExp(`(,)?(\\s)?(${identifier}=\\"${identifierValue}\\")(,)?(\\s)?`, 'g');
+        const labels = tmpSplitParts[i + 1].replace(regexp, '');
         const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
         return addLabelsToExpression(recordingRule + labels, invalidLabelsRegex);
       } else {

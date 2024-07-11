@@ -229,6 +229,39 @@ describe('expandRecordingRules()', () => {
     const result = expandRecordingRules(query, mapping);
     expect(result).toBe(expected);
   });
+
+  it('when there is an identifier, identifier must be removed from expanded query', () => {
+    const query = `ins:metric:per{uuid="111", comp="api"}`;
+    const mapping = {
+      'ins:metric:per': {
+        expandedQuery: 'targetMetric{device="some_device"}',
+        identifier: 'uuid',
+        identifierValue: '111',
+      },
+    };
+    const expected = `targetMetric{device="some_device", comp="api"}`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
+
+  it('when there is an identifier, identifier must be removed from complex expanded query', () => {
+    const query = `instance_path:requests:rate5m{uuid="111", four="tops"} + instance_path:requests:rate15m{second="album", uuid="222"}`;
+    const mapping = {
+      'instance_path:requests:rate5m': {
+        expandedQuery: `rate(prometheus_http_requests_total{job="prometheus"}`,
+        identifier: 'uuid',
+        identifierValue: '111',
+      },
+      'instance_path:requests:rate15m': {
+        expandedQuery: `prom_http_requests_sum{job="prometheus"}`,
+        identifier: 'uuid',
+        identifierValue: '222',
+      },
+    };
+    const expected = `rate(prometheus_http_requests_total{job="prometheus", four="tops"} + prom_http_requests_sum{job="prometheus", second="album"}`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
 });
 
 describe('escapeLabelValueInExactSelector()', () => {

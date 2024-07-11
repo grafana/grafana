@@ -775,7 +775,7 @@ export class PrometheusDatasource
       }
       case 'EXPAND_RULES': {
         if (action.options) {
-          expression = expandRecordingRules(expression, action.options);
+          expression = expandRecordingRules(expression, action.options as any);
         }
         break;
       }
