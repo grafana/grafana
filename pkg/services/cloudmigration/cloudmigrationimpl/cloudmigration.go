@@ -101,11 +101,13 @@ func ProvideService(
 
 	if !cfg.CloudMigration.IsDeveloperMode {
 		// get GMS path from the config
-		domain, err := s.parseCloudMigrationConfig()
-		if err != nil {
-			return nil, fmt.Errorf("config parse error: %w", err)
+		section := cfg.Raw.Section("cloud_migration")
+		domain := section.Key("domain").MustString("")
+		if domain == "" {
+			return nil, fmt.Errorf("cloudmigration domain not set")
 		}
-		s.gmsClient = gmsclient.NewGMSClient(domain)
+		minPollingPeriod := section.Key("minimum_gms_polling_period").MustDuration(time.Second)
+		s.gmsClient = gmsclient.NewGMSClient(domain, minPollingPeriod)
 
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
 	} else {
@@ -533,29 +535,29 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 
 		var localStatus cloudmigration.SnapshotStatus
 		switch snapshotMeta.State {
+		case cloudmigration.SnapshotStateUnknown:
+			fallthrough
+		default:
+			// If a status from Grafana Migration Service is unavailable, return the snapshot as-is
+			return snapshot, nil
 		case cloudmigration.SnapshotStateInitialized:
-			// Grafana Migration Service has not yet received a notification for the data
+			// GMS has not yet received a notification for the data
 			localStatus = cloudmigration.SnapshotStatusPendingProcessing
-
 		case cloudmigration.SnapshotStateProcessing:
 			// GMS has received a notification and is migrating the data
 			localStatus = cloudmigration.SnapshotStatusProcessing
-
 		case cloudmigration.SnapshotStateFinished:
 			// GMS has completed the migration - all resources were attempted to be migrated
 			localStatus = cloudmigration.SnapshotStatusFinished
-
 		case cloudmigration.SnapshotStateCanceled:
 			// GMS has processed a cancelation request. Snapshot cancelation is not supported yet.
 			localStatus = cloudmigration.SnapshotStatusCanceled
-
 		case cloudmigration.SnapshotStateError:
+			// Something unrecoverable has occurred in the migration process.
 			localStatus = cloudmigration.SnapshotStatusError
-		default:
-			localStatus = cloudmigration.SnapshotStatusUnknown
 		}
 
-		// we need to update the snapshot in our db before reporting anything
+		// We need to update the snapshot in our db before reporting anything
 		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       snapshot.UID,
 			Status:    localStatus,
@@ -602,16 +604,4 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
 	panic("not implemented")
-}
-
-func (s *Service) parseCloudMigrationConfig() (string, error) {
-	if s.cfg == nil {
-		return "", fmt.Errorf("cfg cannot be nil")
-	}
-	section := s.cfg.Raw.Section("cloud_migration")
-	domain := section.Key("domain").MustString("")
-	if domain == "" {
-		return "", fmt.Errorf("cloudmigration domain not set")
-	}
-	return domain, nil
 }

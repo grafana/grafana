@@ -6,22 +6,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
 // NewGMSClient returns an implementation of Client that queries GrafanaMigrationService
-func NewGMSClient(domain string) Client {
+func NewGMSClient(domain string, minPollingPeriod time.Duration) Client {
+	if minPollingPeriod < time.Second {
+		minPollingPeriod = time.Second // ensure we can't spam GMS
+	}
 	return &gmsClientImpl{
-		domain: domain,
-		log:    log.New(logPrefix),
+		domain:                    domain,
+		log:                       log.New(logPrefix),
+		minGetStatusPollingPeriod: minPollingPeriod,
 	}
 }
 
 type gmsClientImpl struct {
-	domain string
-	log    *log.ConcreteLogger
+	domain                    string
+	minGetStatusPollingPeriod time.Duration
+	log                       *log.ConcreteLogger
+
+	getStatusMux         sync.Mutex
+	getStatusLastQueried time.Time
 }
 
 func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
@@ -151,7 +161,17 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 }
 
 func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+	c.getStatusMux.Lock()
+	defer c.getStatusMux.Unlock()
 	logger := c.log.FromContext(ctx)
+
+	// Ensure we can't send requests more frequently than supported
+	if !c.getStatusLastQueried.IsZero() && time.Since(c.getStatusLastQueried) < c.minGetStatusPollingPeriod {
+		logger.Debug("skipping query to Grafana Migration Service because this request was made too soon after the previous one")
+		return &cloudmigration.GetSnapshotStatusResponse{
+			State: cloudmigration.SnapshotStateUnknown,
+		}, nil
+	}
 
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/snapshot-status/%s", session.ClusterSlug, c.domain, snapshot.GMSSnapshotUID)
 
@@ -165,6 +185,7 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
 
 	client := &http.Client{}
+	c.getStatusLastQueried = time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request to get snapshot status", "err", err.Error())

@@ -64,7 +64,6 @@ const (
 	SnapshotStatusFinished          SnapshotStatus = "finished"
 	SnapshotStatusCanceled          SnapshotStatus = "canceled"
 	SnapshotStatusError             SnapshotStatus = "error"
-	SnapshotStatusUnknown           SnapshotStatus = "unknown"
 )
 
 type CloudMigrationResource struct {
@@ -230,4 +229,5 @@ const (
 	SnapshotStateFinished    SnapshotState = "FINISHED"
 	SnapshotStateCanceled    SnapshotState = "CANCELED"
 	SnapshotStateError       SnapshotState = "ERROR"
+	SnapshotStateUnknown     SnapshotState = "UNKNOWN"
 )
