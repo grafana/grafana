@@ -200,4 +200,5 @@ export interface FeatureToggles {
   cloudWatchRoundUpEndTime?: boolean;
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
+  prometheusAzureOverrideAudience?: boolean;
 }
