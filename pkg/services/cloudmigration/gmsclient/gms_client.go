@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,11 +37,11 @@ type gmsClientImpl struct {
 	getStatusLastQueried time.Time
 }
 
-func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
+func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) (err error) {
 	logger := c.log.FromContext(ctx)
 
 	// TODO update service url to gms
-	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, c.domain)
+	path := fmt.Sprintf("%s/api/v1/validate-key", buildBasePath(c.domain, cm.ClusterSlug))
 
 	// validation is an empty POST to GMS with the authorization header included
 	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))
@@ -55,30 +58,25 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 		logger.Error("error sending http request for token validation", "err", err.Error())
 		return fmt.Errorf("http request error: %w", err)
 	}
-
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Error("closing request body", "err", err.Error())
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
 		}
 	}()
 
 	if resp.StatusCode != 200 {
-		var errResp map[string]any
-		if err := json.NewDecoder(resp.Body).Decode(&errResp); err != nil {
-			logger.Error("decoding error response", "err", err.Error())
-		} else {
-			return fmt.Errorf("token validation failure: %v", errResp)
-		}
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("token validation failure: %v", body)
 	}
 
 	return nil
 }
 
-func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequest) (*cloudmigration.MigrateDataResponse, error) {
+func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequest) (result *cloudmigration.MigrateDataResponse, err error) {
 	logger := c.log.FromContext(ctx)
 
 	// TODO update service url to gms
-	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", cm.ClusterSlug, c.domain)
+	path := fmt.Sprintf("%s/api/v1/migrate-data", buildBasePath(c.domain, cm.ClusterSlug))
 
 	reqDTO := convertRequestToDTO(request)
 	body, err := json.Marshal(reqDTO)
@@ -100,16 +98,17 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 	if err != nil {
 		c.log.Error("error sending http request for cloud migration run", "err", err.Error())
 		return nil, fmt.Errorf("http request error: %w", err)
-	} else if resp.StatusCode >= 400 {
+	}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
+		}
+	}()
+
+	if resp.StatusCode >= 400 {
 		c.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
 		return nil, fmt.Errorf("http request error: %w", err)
 	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Error("closing request body: %w", err)
-		}
-	}()
 
 	var respDTO MigrateDataResponseDTO
 	if err := json.NewDecoder(resp.Body).Decode(&respDTO); err != nil {
@@ -117,14 +116,12 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
 	}
 
-	result := convertResponseFromDTO(respDTO)
-	return &result, nil
+	res := convertResponseFromDTO(respDTO)
+	return &res, nil
 }
 
-func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
-	logger := c.log.FromContext(ctx)
-
-	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/start-snapshot", session.ClusterSlug, c.domain)
+func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession) (out *cloudmigration.StartSnapshotResponse, err error) {
+	path := fmt.Sprintf("%s/api/v1/start-snapshot", buildBasePath(c.domain, session.ClusterSlug))
 
 	// Send the request to cms with the associated auth token
 	req, err := http.NewRequest(http.MethodPost, path, nil)
@@ -140,20 +137,21 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 	if err != nil {
 		c.log.Error("error sending http request to start snapshot", "err", err.Error())
 		return nil, fmt.Errorf("http request error: %w", err)
-	} else if resp.StatusCode >= 400 {
-		c.log.Error("received error response to start snapshot", "statusCode", resp.StatusCode)
-		return nil, fmt.Errorf("http request error: %w", err)
 	}
-
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Error("closing request body: %w", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
 		}
 	}()
 
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		c.log.Error("received error response to start snapshot", "statusCode", resp.StatusCode)
+		return nil, fmt.Errorf("http request error: body=%s %w", string(body), err)
+	}
+
 	var result cloudmigration.StartSnapshotResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		logger.Error("unmarshalling response body: %w", err)
 		return nil, fmt.Errorf("unmarshalling start snapshot response: %w", err)
 	}
 
@@ -242,4 +240,11 @@ func convertResponseFromDTO(result MigrateDataResponseDTO) cloudmigration.Migrat
 		RunUID: result.RunUID,
 		Items:  items,
 	}
+}
+
+func buildBasePath(domain, clusterSlug string) string {
+	if strings.HasPrefix(domain, "http://localhost") {
+		return domain
+	}
+	return fmt.Sprintf("https://cms-%s.%s/cloud-migrations", clusterSlug, domain)
 }

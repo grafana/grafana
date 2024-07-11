@@ -205,13 +205,11 @@ type CreateSessionResponse struct {
 }
 
 type StartSnapshotResponse struct {
-	SnapshotID           string            `json:"snapshotID"`
-	MaxItemsPerPartition uint32            `json:"maxItemsPerPartition"`
-	Algo                 string            `json:"algo"`
-	UploadURL            string            `json:"uploadURL"`
-	PresignedURLFormData map[string]string `json:"presignedURLFormData"`
-	EncryptionKey        string            `json:"encryptionKey"`
-	Nonce                string            `json:"nonce"`
+	SnapshotID           string `json:"snapshotID"`
+	MaxItemsPerPartition uint32 `json:"maxItemsPerPartition"`
+	Algo                 string `json:"algo"`
+	UploadURL            string `json:"uploadURL"`
+	EncryptionKey        string `json:"encryptionKey"`
 }
 
 // Based on Grafana Migration Service DTOs
