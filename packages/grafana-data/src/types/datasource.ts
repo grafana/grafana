@@ -376,7 +376,9 @@ abstract class DataSourceApi<
 
   /**
    * Optionally, you can implement migrateQuery to handle query migrations when the query structure changes.
-   * Currently behind the feature flag: queryMigrations
+   * Currently behind the feature flag: queryMigrations.
+   * This function is run before executing a query, the results are not persisted.
+   * QueryEditors need to manually call this function before rendering the editor.
    * @alpha -- experimental
    */
   migrateQuery?(query: UnknownQuery): TQuery | Promise<TQuery>;
