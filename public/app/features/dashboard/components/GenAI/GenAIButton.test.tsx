@@ -288,7 +288,7 @@ describe('GenAIButton', () => {
       await userEvent.hover(tooltip);
       expect(tooltip).toBeVisible();
       expect(tooltip).toHaveTextContent(
-        'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+        'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
       );
     });
 
