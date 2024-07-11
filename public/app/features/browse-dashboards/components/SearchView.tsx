@@ -50,7 +50,7 @@ export function SearchView({
   canSelect,
   searchState,
   searchStateManager: stateManager,
-  emptyState,
+  emptyState: emptyStateProp,
 }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
@@ -97,24 +97,20 @@ export function SearchView({
   );
 
   if (value?.totalRows === 0) {
-    if (emptyState) {
-      return <div style={{ width }}>{emptyState}</div>;
-    } else {
-      return (
-        <div style={{ width }}>
-          <EmptyState
-            button={
-              <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
-                <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
-              </Button>
-            }
-            message={t('browse-dashboards.no-results.text', 'No results found for your query')}
-            variant="not-found"
-            role="alert"
-          />
-        </div>
-      );
-    }
+    const emptyState = emptyStateProp ?? (
+      <EmptyState
+        button={
+          <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
+            <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
+          </Button>
+        }
+        message={t('browse-dashboards.no-results.text', 'No results found for your query')}
+        variant="not-found"
+        role="alert"
+      />
+    );
+
+    return <div style={{ width }}>{emptyState}</div>;
   }
 
   const props: SearchResultsProps = {
