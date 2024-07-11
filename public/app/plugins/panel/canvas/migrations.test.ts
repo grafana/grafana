@@ -75,7 +75,7 @@ describe('Canvas data links migration', () => {
           ],
         },
       },
-      pluginVersion: '11.2.0',
+      pluginVersion: '11.1.0',
     } as unknown as PanelModel;
     panel.options = canvasMigrationHandler(panel);
 
