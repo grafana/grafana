@@ -171,12 +171,30 @@ func TestRecordingRule_Integration(t *testing.T) {
 	go func() {
 		_ = process.Run()
 	}()
+
+	t.Run("status shows no evaluations", func(t *testing.T) {
+		status := process.(*recordingRule).Status()
+
+		require.Equal(t, "unknown", status.Health)
+		require.Nil(t, status.LastError)
+		require.Zero(t, status.EvaluationTimestamp)
+		require.Zero(t, status.EvaluationDuration)
+	})
+
 	process.Eval(&Evaluation{
 		scheduledAt: now,
 		rule:        rule,
 		folderTitle: folderTitle,
 	})
 	_ = waitForTimeChannel(t, evalDoneChan)
+
+	t.Run("status shows evaluation", func(t *testing.T) {
+		status := process.(*recordingRule).Status()
+
+		// TODO: Due to the randomness in the test, the rule randomly succeeds or fails.
+		// TODO: Solve this in a future PR, and assert something more strict here.
+		require.NotEqual(t, "unknown", status.Health)
+	})
 
 	t.Run("reports basic evaluation metrics", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
