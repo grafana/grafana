@@ -49,7 +49,7 @@ func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, s
 		sql.WriteString(" AND (")
 		sql.WriteString("(query_history.datasource_uid IN (" + q + "))")
 		sql.WriteString(" OR ")
-		sql.WriteString("(query_history.uid IN (SELECT i.query_history_item_uid from query_history_datasource_index i WHERE i.datasource_uid IN (" + q + ")))")
+		sql.WriteString("(query_history.uid IN (SELECT i.query_history_item_uid from query_history_details i WHERE i.datasource_uid IN (" + q + ")))")
 		sql.WriteString(")")
 	}
 	builder.Write(sql.String(), params...)

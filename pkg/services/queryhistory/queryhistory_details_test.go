@@ -14,7 +14,7 @@ var mixedQueryMissingDatasource = []byte(`[{"alias":"","bucketAggs":[{"field":"@
 var mixedQueryMissingUID = []byte(`[{"alias":"","bucketAggs":[{"field":"@timestamp","id":"2","settings":{"interval":"auto"},"type":"date_histogram"}],"datasource":{"type":"elasticsearch"},"key":"Q-15d3139f-a942-491c-8fb6-46982475ab07-0","metrics":[{"id":"1","type":"count"}],"query":"test","refId":"A","timeField":"@timestamp"},{"datasource":{"type":"loki","uid":"PDDA8E780A17E7EF1"},"editorMode":"code","expr":"test","key":"Q-67b4a119-37dd-4276-beac-4ec76b089f10-0","queryType":"range","refId":"B"}]`)
 var invalidJSON = []byte(`{`)
 
-func TestQueryHistoryDatasourceIndex(t *testing.T) {
+func TestQueryHistoryDetails(t *testing.T) {
 	t.Run("should return error when json is invalid", func(t *testing.T) {
 		json, _ := simplejson.NewJson(invalidJSON)
 		_, err := FindDataSourceUIDs(json)

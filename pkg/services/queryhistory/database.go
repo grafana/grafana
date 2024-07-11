@@ -13,7 +13,7 @@ type Datasource struct {
 	UID string `json:"uid"`
 }
 
-type QueryHistoryDatasourceIndex struct {
+type QueryHistoryDetails struct {
 	ID                  int64  `xorm:"pk autoincr 'id'"`
 	DatasourceUID       string `xorm:"datasource_uid"`
 	QueryHistoryItemUID string `xorm:"query_history_item_uid"`
@@ -42,17 +42,17 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 	dsUids, err := FindDataSourceUIDs(cmd.Queries)
 
 	if err == nil {
-		var indexItems []QueryHistoryDatasourceIndex
+		var queryHistoryDetailsItems []QueryHistoryDetails
 		for _, uid := range dsUids {
-			indexItems = append(indexItems, QueryHistoryDatasourceIndex{
+			queryHistoryDetailsItems = append(queryHistoryDetailsItems, QueryHistoryDetails{
 				QueryHistoryItemUID: queryHistory.UID,
 				DatasourceUID:       uid,
 			})
 		}
 
 		err = s.store.WithDbSession(ctx, func(session *db.Session) error {
-			for _, indexItem := range indexItems {
-				_, err = session.Insert(indexItem)
+			for _, queryHistoryDetailsItem := range queryHistoryDetailsItems {
+				_, err = session.Insert(queryHistoryDetailsItem)
 			}
 			return nil
 		})
@@ -145,10 +145,10 @@ func (s QueryHistoryService) deleteQuery(ctx context.Context, user *user.SignedI
 			s.log.Error("Failed to unstar query while deleting it from query history", "query", UID, "user", user.UserID, "error", err)
 		}
 
-		// remove the index
-		_, err = session.Table("query_history_datasource_index").Where("query_history_item_uid = ?", UID).Delete(QueryHistoryDatasourceIndex{})
+		// remove the details
+		_, err = session.Table("query_history_details").Where("query_history_item_uid = ?", UID).Delete(QueryHistoryDetails{})
 		if err != nil {
-			s.log.Error("Failed to remove the index for the query item", "query", UID, "user", user.UserID, "error", err)
+			s.log.Error("Failed to remove the details for the query item", "query", UID, "user", user.UserID, "error", err)
 		}
 
 		// Then delete it
@@ -319,15 +319,15 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 			LIMIT 10000
 		) AS q`
 
-		index_sql := `DELETE
-			FROM query_history_datasource_index
+		details_sql := `DELETE
+			FROM query_history_details
 			WHERE query_history_item_uid IN (` + uids_sql + `)`
 
 		sql := `DELETE
 			FROM query_history
 			WHERE uid IN (` + uids_sql + `)`
 
-		_, err := session.Exec(index_sql, strconv.FormatInt(olderThan, 10))
+		_, err := session.Exec(details_sql, strconv.FormatInt(olderThan, 10))
 		if err != nil {
 			return err
 		}

@@ -47,7 +47,7 @@ func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			// all indices are added
 			err := sc.sqlStore.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-				count, err := dbSession.Table("query_history_datasource_index").Count()
+				count, err := dbSession.Table("query_history_details").Count()
 				require.NoError(t, err)
 				require.Equal(t, int64(3), count)
 				return err
@@ -59,9 +59,9 @@ func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 1, rowsDeleted)
 
-			// one index is removed
+			// only one details row is removed
 			err = sc.sqlStore.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-				count, err := dbSession.Table("query_history_datasource_index").Count()
+				count, err := dbSession.Table("query_history_details").Count()
 				require.NoError(t, err)
 				require.Equal(t, int64(2), count)
 				return err
