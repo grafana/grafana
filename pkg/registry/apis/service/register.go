@@ -46,11 +46,6 @@ func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return service.SchemeGroupVersion
 }
 
-func (b *ServiceAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&service.ExternalName{},

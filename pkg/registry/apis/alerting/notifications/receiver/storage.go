@@ -72,7 +72,7 @@ func NewStorage(
 		if err := s.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		return dualWriteBuilder(legacyStore, storage{Store: s})
+		return dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, storage{Store: s})
 	}
 	return legacyStore, nil
 }

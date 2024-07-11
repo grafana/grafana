@@ -44,11 +44,6 @@ type APIGroupBuilder interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
-// When implemented (and enabled), this will override any user defined setting
-type DualWriteModeOverrider interface {
-	GetDesiredDualWriterMode() grafanarest.DualWriterMode
-}
-
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
 type OpenAPIPostProcessor interface {
 	PostProcessOpenAPI(*spec3.OpenAPI) (*spec3.OpenAPI, error)

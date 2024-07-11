@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/version"
@@ -26,6 +26,8 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/grafana/pkg/web"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -156,27 +158,32 @@ func InstallAPIs(
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
-	dualWriteEnabled := storageOpts.StorageType != options.StorageTypeLegacy
+	var dualWrite grafanarest.DualWriteBuilder
+	if storageOpts.StorageType != options.StorageTypeLegacy {
+		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
+
+			// Get the option from custom.ini/command line
+			// when missing this will default to mode zero (legacy only)
+			mode := storageOpts.DualWriterDesiredModes[key]
+
+			// Moving from one version to the next can only happen after the previous step has
+			// successfully synchronized.
+			currentMode, err := grafanarest.SetDualWritingMode(context.Background(), kvStore, legacy, storage, key, mode, reg)
+			if err != nil {
+				return nil, err
+			}
+			switch currentMode {
+			case grafanarest.Mode0:
+				return legacy, nil
+			case grafanarest.Mode4:
+				return storage, nil
+			}
+			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg), nil
+		}
+	}
 
 	for _, b := range builders {
-		var dualWrite grafanarest.DualWriteBuilder
-		if dualWriteEnabled {
-			mode := storageOpts.DualWriterDesiredModes[b.GetGroupVersion().Group] // defaults to 0
-			over, ok := b.(DualWriteModeOverrider)
-			if ok {
-				mode = over.GetDesiredDualWriterMode()
-			}
-			if mode != grafanarest.Mode0 {
-				dualWrite = func(legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.DualWriter, error) {
-					currentMode, err := grafanarest.SetDualWritingMode(context.Background(), kvStore, legacy, storage, b.GetGroupVersion().Group, mode, reg)
-					if err != nil {
-						return nil, err
-					}
-					return grafanarest.NewDualWriter(currentMode, legacy, storage, reg), nil
-				}
-			}
-		}
-
 		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
 		if err != nil {
 			return err

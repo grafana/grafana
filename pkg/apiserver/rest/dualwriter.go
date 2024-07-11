@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -26,7 +27,7 @@ var (
 )
 
 // Function that will create a dual writer
-type DualWriteBuilder func(legacy LegacyStorage, storage Storage) (DualWriter, error)
+type DualWriteBuilder func(gr schema.GroupResource, legacy LegacyStorage, storage Storage) (Storage, error)
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
