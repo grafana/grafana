@@ -252,6 +252,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 			attribute.String("reason", err.Error()),
 		))
 		logger.Debug("Query returned no data", "reason", err)
+		r.health.Store("nodata")
 		return nil
 	}
 
