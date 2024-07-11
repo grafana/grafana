@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
@@ -143,46 +143,46 @@ VisualizationSelectPane.displayName = 'VisualizationSelectPane';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      color: ${theme.v1.palette.gray33};
-    `,
-    wrapper: css`
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 0;
-      height: 100%;
-    `,
-    vizButton: css`
-      text-align: left;
-    `,
-    scrollWrapper: css`
-      flex-grow: 1;
-      min-height: 0;
-    `,
-    scrollContent: css`
-      padding: ${theme.spacing(1)};
-    `,
-    openWrapper: css`
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 100%;
-      height: 100%;
-      background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.weak};
-    `,
-    searchRow: css`
-      display: flex;
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    closeButton: css`
-      margin-left: ${theme.spacing(1)};
-    `,
-    customFieldMargin: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    formBox: css`
-      padding: ${theme.spacing(1)};
-      padding-bottom: 0;
-    `,
+    icon: css({
+      color: theme.v1.palette.gray33,
+    }),
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 0',
+      height: '100%',
+    }),
+    vizButton: css({
+      textAlign: 'left',
+    }),
+    scrollWrapper: css({
+      flexGrow: 1,
+      minHeight: 0,
+    }),
+    scrollContent: css({
+      padding: theme.spacing(1),
+    }),
+    openWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 100%',
+      height: '100%',
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+    searchRow: css({
+      display: 'flex',
+      marginBottom: theme.spacing(1),
+    }),
+    closeButton: css({
+      marginLeft: theme.spacing(1),
+    }),
+    customFieldMargin: css({
+      marginBottom: theme.spacing(1),
+    }),
+    formBox: css({
+      padding: theme.spacing(1),
+      paddingBottom: 0,
+    }),
   };
 };

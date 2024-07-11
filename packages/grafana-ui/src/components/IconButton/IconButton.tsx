@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
 
@@ -7,8 +7,7 @@ import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types';
 import { IconName, IconSize, IconType } from '../../types/icon';
-import { handleReducedMotion } from '../../utils/handleReducedMotion';
-import { Icon } from '../Icon/Icon';
+import { IconRenderer } from '../Button';
 import { getSvgSize } from '../Icon/utils';
 import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
 
@@ -81,7 +80,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
           className={cx(styles.button, className)}
           type="button"
         >
-          <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
+          <IconRenderer icon={name} size={limitedIconSize} className={styles.icon} iconType={iconType} />
         </button>
       </Tooltip>
     );
@@ -95,7 +94,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
         className={cx(styles.button, className)}
         type="button"
       >
-        <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
+        <IconRenderer icon={name} size={limitedIconSize} className={styles.icon} iconType={iconType} />
       </button>
     );
   }
@@ -144,11 +143,11 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         height: `${hoverSize}px`,
         borderRadius: theme.shape.radius.default,
         content: '""',
-        ...handleReducedMotion({
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transitionDuration: '0.2s',
           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
           transitionProperty: 'opacity',
-        }),
+        },
       },
 
       '&:focus, &:focus-visible': getFocusStyles(theme),

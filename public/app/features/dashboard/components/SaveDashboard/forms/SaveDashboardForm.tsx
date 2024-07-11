@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -135,11 +135,11 @@ export const SaveDashboardForm = ({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    message: css`
-      display: flex;
-      align-items: end;
-      flex-direction: column;
-      width: 100%;
-    `,
+    message: css({
+      display: 'flex',
+      alignItems: 'end',
+      flexDirection: 'column',
+      width: '100%',
+    }),
   };
 }

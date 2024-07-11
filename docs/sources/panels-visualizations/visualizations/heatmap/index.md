@@ -15,6 +15,12 @@ labels:
     - oss
 title: Heatmap
 weight: 100
+refs:
+  introduction-to-histograms-and-heatmaps:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
 ---
 
 # Heatmap
@@ -24,6 +30,8 @@ Heatmaps allow you to view [histograms](https://grafana.com/docs/grafana/latest/
 For example, if you want to understand the temperature changes for the past few years, you can use a heatmap visualization to identify trends in your data:
 
 {{< figure src="/static/img/docs/heatmap-panel/temperature_heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
+
+{{< docs/play title="Grafana Heatmaps" url="https://play.grafana.org/d/heatmap-calculate-log/" >}}
 
 You can use a heatmap visualization if you need to:
 
@@ -59,6 +67,10 @@ The table below is a simplified output of random walk distribution over time:
 The data is converted as follows:
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Heatmap options
 
@@ -117,7 +129,7 @@ This setting configures the axis value.
 
 When selected, the axis appears in reverse order.
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
 ## Colors
 
@@ -150,19 +162,38 @@ Use these settings to refine your visualization.
 
 ### Tooltip
 
-- **Show tooltip -** Show heatmap tooltip.
-- **Show Histogram -** Show a Y-axis histogram on the tooltip. A histogram represents the distribution of the bucket values for a specific timestamp.
-- **Show color scale -** Show a color scale on the tooltip. The color scale represents the mapping between bucket value and color.
+#### Tooltip mode
+
+When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
+
+- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
+- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+- **Hidden -** Do not display the tooltip when you interact with the visualization.
+
+Use an override to hide individual series from the tooltip.
+
+#### Show histogram (Y axis)
+
+When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
+
+#### Show color scale
+
+When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
+
+![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
 
 ### Legend
 
-Choose whether you want to display the heatmap legend on the visualization.
+Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
+
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Exemplars
 
 Set the color used to show exemplar data.
-
-{{% docs/reference %}}
-[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
-[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
-{{% /docs/reference %}}

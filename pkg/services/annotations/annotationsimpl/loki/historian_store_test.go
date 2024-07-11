@@ -7,9 +7,10 @@ import (
 	"math/rand"
 	"net/url"
 	"strconv"
-	"sync"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -28,7 +29,6 @@ import (
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/stretchr/testify/require"
 )
@@ -42,8 +42,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql := db.InitTestDB(t)
-	cfg := sql.Cfg
+	sql, cfg := db.InitTestDBWithCfg(t)
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
@@ -60,21 +59,15 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			"title": "Dashboard 2",
 		}),
 	})
-
-	knownUIDs := &sync.Map{}
-	generator := ngmodels.AlertRuleGen(
-		ngmodels.WithUniqueUID(knownUIDs),
-		ngmodels.WithUniqueID(),
-		ngmodels.WithOrgID(1),
-	)
+	gen := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(1))
 
 	dashboardRules := map[string][]*ngmodels.AlertRule{
 		dashboard1.UID: {
-			createAlertRuleFromDashboard(t, sql, "Test Rule 1", *dashboard1, generator),
-			createAlertRuleFromDashboard(t, sql, "Test Rule 2", *dashboard1, generator),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 1", *dashboard1, gen),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 2", *dashboard1, gen),
 		},
 		dashboard2.UID: {
-			createAlertRuleFromDashboard(t, sql, "Test Rule 3", *dashboard2, generator),
+			createAlertRuleFromDashboard(t, sql, "Test Rule 3", *dashboard2, gen),
 		},
 	}
 
@@ -344,7 +337,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 			stream1 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			rule = createAlertRule(t, sql, "Test rule", generator)
+			rule = createAlertRule(t, sql, "Test rule", gen)
 			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
 			stream := historian.Stream{
@@ -592,14 +585,15 @@ func createTestLokiStore(t *testing.T, sql db.DB, client lokiQueryClient) *LokiH
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRule(t *testing.T, sql db.DB, title string, generator func() *ngmodels.AlertRule) *ngmodels.AlertRule {
+func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	if generator == nil {
-		generator = ngmodels.AlertRuleGen(ngmodels.WithTitle(title), withDashboardUID(nil), withPanelID(nil), ngmodels.WithOrgID(1))
+		g := ngmodels.RuleGen
+		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(nil, nil), g.WithOrgID(1))
 	}
 
-	rule := generator()
+	rule := generator.GenerateRef()
 	// ensure rule has correct values
 	if rule.Title != title {
 		rule.Title = title
@@ -633,17 +627,18 @@ func createAlertRule(t *testing.T, sql db.DB, title string, generator func() *ng
 
 // createAlertRuleFromDashboard creates an alert rule with a linked dashboard and panel in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboard dashboards.Dashboard, generator func() *ngmodels.AlertRule) *ngmodels.AlertRule {
+func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	panelID := new(int64)
 	*panelID = 123
 
 	if generator == nil {
-		generator = ngmodels.AlertRuleGen(ngmodels.WithTitle(title), ngmodels.WithOrgID(1), withDashboardUID(&dashboard.UID), withPanelID(panelID))
+		g := ngmodels.RuleGen
+		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(&dashboard.UID, panelID), g.WithOrgID(1))
 	}
 
-	rule := generator()
+	rule := generator.GenerateRef()
 	// ensure rule has correct values
 	if rule.Title != title {
 		rule.Title = title
@@ -742,18 +737,6 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 	return transitions
 }
 
-func withDashboardUID(dashboardUID *string) ngmodels.AlertRuleMutator {
-	return func(rule *ngmodels.AlertRule) {
-		rule.DashboardUID = dashboardUID
-	}
-}
-
-func withPanelID(panelID *int64) ngmodels.AlertRuleMutator {
-	return func(rule *ngmodels.AlertRule) {
-		rule.PanelID = panelID
-	}
-}
-
 func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) {
 	require.Equal(t, expected.AlertID, actual.AlertID)
 	require.Equal(t, expected.AlertName, actual.AlertName)
@@ -795,6 +778,7 @@ func NewFakeLokiClient() *FakeLokiClient {
 			ReadPathURL:    url,
 			Encoder:        historian.JsonEncoder{},
 			MaxQueryLength: 721 * time.Hour,
+			MaxQuerySize:   65536,
 		},
 		metrics: metrics,
 		log:     log.New("ngalert.state.historian", "backend", "loki"),
@@ -827,6 +811,10 @@ func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to,
 	// reset expected streams on read
 	c.rangeQueryRes = []historian.Stream{}
 	return res, nil
+}
+
+func (c *FakeLokiClient) MaxQuerySize() int {
+	return c.cfg.MaxQuerySize
 }
 
 func TestUseStore(t *testing.T) {

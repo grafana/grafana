@@ -1,6 +1,6 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
-import { FieldType, getFieldDisplayName, TimeRange } from '@grafana/data';
+import { FieldType, TimeRange } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
 import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -12,6 +12,7 @@ import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineCha
 
 import { getDataLinks } from '../status-history/utils';
 import { TimeSeriesTooltipProps, getStyles } from '../timeseries/TimeSeriesTooltip';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
@@ -19,13 +20,11 @@ interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
 }
 
 export const StateTimelineTooltip2 = ({
-  frames,
-  seriesFrame,
+  series,
   dataIdxs,
   seriesIdx,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
-  scrollable = false,
   isPinned,
   annotate,
   timeRange,
@@ -34,7 +33,7 @@ export const StateTimelineTooltip2 = ({
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
 
-  const xField = seriesFrame.fields[0];
+  const xField = series.fields[0];
 
   const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
 
@@ -42,11 +41,11 @@ export const StateTimelineTooltip2 = ({
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
-  const contentItems = getContentItems(seriesFrame.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
 
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {
-    const field = seriesFrame.fields[seriesIdx!];
+    const field = series.fields[seriesIdx!];
     const nextStateIdx = findNextStateIndex(field, dataIdx!);
     let nextStateTs;
     if (nextStateIdx) {
@@ -69,7 +68,7 @@ export const StateTimelineTooltip2 = ({
   let footer: ReactNode;
 
   if (isPinned && seriesIdx != null) {
-    const field = seriesFrame.fields[seriesIdx];
+    const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
 
@@ -77,14 +76,19 @@ export const StateTimelineTooltip2 = ({
   }
 
   const headerItem: VizTooltipItem = {
-    label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
+    label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
     value: xVal,
   };
 
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight} />
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      />
       {footer}
     </div>
   );

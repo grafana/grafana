@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
@@ -13,6 +13,7 @@ import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaCont
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -457,8 +458,22 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
+  if (props.route.routeName === DashboardRoutes.Path) {
+    sectionNav = getRootContentNavModel();
+    const pageNav = getPageNavFromSlug(props.match.params.slug!);
+    if (pageNav?.parentItem) {
+      pageNav.parentItem = pageNav.parentItem;
+    }
+  } else {
+    sectionNav = getNavModel(
+      props.navIndex,
+      ID_PREFIX + dashboard.uid,
+      getNavModel(props.navIndex, 'dashboards/browse')
+    );
+  }
+
   const { folderUid } = dashboard.meta;
-  if (folderUid && pageNav) {
+  if (folderUid && pageNav && sectionNav.main.id !== 'starred') {
     const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
     // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
     // don't show the "page not found" breadcrumb
@@ -468,16 +483,6 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
         parentItem: folderNavModel,
       };
     }
-  }
-
-  if (props.route.routeName === DashboardRoutes.Path) {
-    sectionNav = getRootContentNavModel();
-    const pageNav = getPageNavFromSlug(props.match.params.slug!);
-    if (pageNav?.parentItem) {
-      pageNav.parentItem = pageNav.parentItem;
-    }
-  } else {
-    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
   }
 
   if (state.editPanel || state.viewPanel) {

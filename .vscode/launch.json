@@ -9,7 +9,7 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"]
     },
     {
       "name": "Run API Server (testdata)",
@@ -19,9 +19,7 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["apiserver", 
-          "--secure-port=8443", 
-          "--runtime-config=testdata.datasource.grafana.app/v0alpha1=true"]
+      "args": ["apiserver", "--secure-port=8443", "--runtime-config=testdata.datasource.grafana.app/v0alpha1=true"]
     },
     {
       "name": "Run API Server (query-localhost)",
@@ -31,12 +29,34 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["apiserver", 
-          "--secure-port=8443", 
-          "--runtime-config=query.grafana.app/v0alpha1=true",
-          "--grafana.authn.signing-keys-url=http://localhost:3000/api/signing-keys/keys",
-          "--hg-url=http://localhost:3000",
-          "--hg-key=$HGAPIKEY"]
+      "args": [
+        "apiserver",
+        "--secure-port=8443",
+        "--runtime-config=query.grafana.app/v0alpha1=true",
+        "--grafana.authn.signing-keys-url=http://localhost:3000/api/signing-keys/keys",
+        "--hg-url=http://localhost:3000",
+        "--hg-key=$HGAPIKEY"
+      ]
+    },
+    {
+      "name": "Run Server (query GRPC Storage Server)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": { "GF_GRAFANA_APISERVER_STORAGE_TYPE": "unified-grpc" },
+      "cwd": "${workspaceFolder}",
+      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    },
+    {
+      "name": "Run Storage Server",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": { "GF_DEFAULT_TARGET": "storage-server", "GF_SERVER_HTTP_PORT": "3001" },
+      "cwd": "${workspaceFolder}",
+      "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {
       "name": "Attach to Chrome",
@@ -46,14 +66,16 @@
       "webRoot": "${workspaceFolder}"
     },
     {
-      "name": "Debug Jest test",
+      "name": "Debug UI test",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["run", "jest", "--runInBand", "${file}"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "port": 9229
+      "env": {
+        "NODE_ENV": "test"
+      }
     },
     {
       "name": "Debug Go test",

@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -26,6 +26,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
+import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -211,21 +212,19 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
-          config.featureToggles.exploreContentOutline && (
-            <ToolbarButton
-              key="content-outline"
-              variant="canvas"
-              tooltip="Content outline"
-              icon="list-ui-alt"
-              iconOnly={splitted}
-              onClick={onContentOutlineToogle}
-              aria-expanded={isContentOutlineOpen}
-              aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
-              className={styles.toolbarButton}
-            >
-              Outline
-            </ToolbarButton>
-          ),
+          <ToolbarButton
+            key="content-outline"
+            variant="canvas"
+            tooltip="Content outline"
+            icon="list-ui-alt"
+            iconOnly={splitted}
+            onClick={onContentOutlineToogle}
+            aria-expanded={isContentOutlineOpen}
+            aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+            className={styles.toolbarButton}
+          >
+            Outline
+          </ToolbarButton>,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed={!isCorrelationsEditorMode}
@@ -238,6 +237,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
         forceShowLeftItems
       >
         {[
+          <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
           !splitted ? (
             <ToolbarButton
               variant="canvas"

@@ -1,9 +1,9 @@
 import {
-  AnyObject,
   BasicConfig,
   Config,
   JsonTree,
   Operator,
+  OperatorOptionsI,
   Settings,
   SimpleField,
   SqlFormatOperator,
@@ -13,7 +13,6 @@ import {
 } from '@react-awesome-query-builder/ui';
 import { List } from 'immutable';
 import { isString } from 'lodash';
-import React from 'react';
 
 import { dateTime, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -80,7 +79,7 @@ export const widgets: Widgets = {
       return (
         <DateTimePicker
           onChange={(e) => {
-            props?.setValue(e.format(BasicConfig.widgets.datetime.valueFormat));
+            props?.setValue(e?.format(BasicConfig.widgets.datetime.valueFormat));
           }}
           date={dateValue}
         />
@@ -262,7 +261,7 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: AnyObject,
+    operatorOptions: OperatorOptionsI,
     fieldDef: SimpleField
   ) => {
     return sqlFormatInOpOrNoop()(
@@ -292,7 +291,7 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: AnyObject,
+    operatorOptions: OperatorOptionsI,
     fieldDef: SimpleField
   ) => {
     return sqlFormatNotInOpOrNoop()(

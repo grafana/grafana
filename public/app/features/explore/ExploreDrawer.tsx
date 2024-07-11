@@ -1,7 +1,7 @@
 // Libraries
 import { css, cx, keyframes } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import React from 'react';
+import * as React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,18 +10,21 @@ import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 export interface Props {
   children: React.ReactNode;
   onResize?: ResizeCallback;
+  initialHeight?: string;
 }
 
 export function ExploreDrawer(props: Props) {
-  const { children, onResize } = props;
+  const { children, onResize, initialHeight } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const dragStyles = getDragStyles(theme);
 
+  const height = initialHeight || `${theme.components.horizontalDrawer.defaultHeight}px`;
+
   return (
     <Resizable
       className={cx(styles.fixed, styles.container, styles.drawerActive)}
-      defaultSize={{ width: '100%', height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
+      defaultSize={{ width: '100%', height }}
       handleClasses={{ top: dragStyles.dragHandleHorizontal }}
       enable={{
         top: true,
@@ -65,6 +68,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   drawerActive: css({
     opacity: 1,
-    animation: `0.5s ease-out ${drawerSlide(theme)}`,
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `0.5s ease-out ${drawerSlide(theme)}`,
+    },
   }),
 });

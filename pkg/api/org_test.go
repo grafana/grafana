@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -220,7 +221,7 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 			expectedIdentity := &authn.Identity{
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
-					1: accesscontrol.GroupScopesByAction(tt.permission),
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permission),
 				},
 			}
 
@@ -266,11 +267,11 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			expectedIdentity := &authn.Identity{
-				ID:    "user:1",
+				ID:    authn.MustParseNamespaceID("user:1"),
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
-					0: accesscontrol.GroupScopesByAction(tt.permissions),
-					1: accesscontrol.GroupScopesByAction(tt.permissions),
+					0: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions),
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions),
 				},
 			}
 

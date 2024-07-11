@@ -1,6 +1,5 @@
 import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -93,7 +92,9 @@ describe('AlertGroups', () => {
 
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
-    expect(groups[1]).toHaveTextContent('severitywarning regionUS-Central');
+    const labels = byTestId('label-value').getAll();
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('regionUS-Central');
 
     await userEvent.click(ui.groupCollapseToggle.get(groups[0]));
     expect(ui.groupTable.get()).toBeDefined();
@@ -187,6 +188,8 @@ describe('AlertGroups', () => {
     renderAmNotifications();
     await waitForElementToBeRemoved(ui.loadingIndicator.query());
 
+    // reset the input of the MultiSelect component
+    await user.type(ui.groupByInput.get(), '{backspace}');
     await user.type(ui.groupByInput.get(), 'appName{enter}');
 
     const groups = await ui.group.findAll();

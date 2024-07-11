@@ -1,6 +1,6 @@
-import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 
-import { isEmptyObject } from '@grafana/data';
+import { TextBoxVariableModel, isEmptyObject } from '@grafana/data';
 import { Input } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
@@ -10,7 +10,6 @@ import { VARIABLE_PREFIX } from '../constants';
 import { VariablePickerProps } from '../pickers/types';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { changeVariableProp } from '../state/sharedReducer';
-import { TextBoxVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}

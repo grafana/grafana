@@ -18,12 +18,28 @@ labels:
 menuTitle: Query editor
 title: Amazon CloudWatch query editor
 weight: 300
+refs:
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  query-transform-data-navigate-the-query-tab:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
 ---
 
 # Amazon CloudWatch query editor
 
 This topic explains querying specific to the CloudWatch data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
 ## Choose a query editing mode
 
@@ -65,7 +81,7 @@ This can help you monitor metrics for AWS resources, like EC2 instances or conta
 When an auto-scaling event creates new instances, they automatically appear in the graph without you having to track the new instance IDs.
 This capability is currently limited to retrieving up to 100 metrics.
 
-You can expand the [Query inspector][query-transform-data-navigate-the-query-tab] button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
+You can expand the [Query inspector](ref:query-transform-data-navigate-the-query-tab) button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
 
 To learn more about search expressions, refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 The search expression is defined by default in such a way that the queried metrics must match the defined dimension names exactly.
@@ -221,7 +237,7 @@ The logs query editor helps you write CloudWatch Logs Query Language queries acr
 1. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html).
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
-When making `stats` queries in [Explore][explore], make sure you are in Metrics Explore mode.
+When making `stats` queries in [Explore](ref:explore), make sure you are in Metrics Explore mode.
 
 {{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
@@ -259,14 +275,3 @@ To view your query in the CloudWatch Logs Insights console, click the `CloudWatc
 If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
 The provided link is valid for any account, but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
-
-{{% docs/reference %}}
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[query-transform-data-navigate-the-query-tab]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#navigate-the-query-tab"
-[query-transform-data-navigate-the-query-tab]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#navigate-the-query-tab"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-{{% /docs/reference %}}

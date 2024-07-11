@@ -74,7 +74,7 @@ describe('JaegerDatasource', () => {
       ],
     };
     await lastValueFrom(ds.query(query));
-    expect(mock).toBeCalledWith({ url: `${defaultSettings.url}/api/traces/a%2Fb` });
+    expect(mock).toHaveBeenCalledWith({ url: `${defaultSettings.url}/api/traces/a%2Fb` });
   });
 
   it('returns empty response if trace id is not specified', async () => {
@@ -127,7 +127,7 @@ describe('JaegerDatasource', () => {
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: '/api/services' }],
       })
     );
-    expect(mock).toBeCalledWith({
+    expect(mock).toHaveBeenCalledWith({
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&operation=%2Fapi%2Fservices&start=1704085200000000&end=1704106800000000&lookback=custom`,
     });
     expect(response.data[0].meta.preferredVisualisationType).toBe('table');
@@ -156,7 +156,7 @@ describe('JaegerDatasource', () => {
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: ALL_OPERATIONS_KEY }],
       })
     );
-    expect(mock).toBeCalledWith({
+    expect(mock).toHaveBeenCalledWith({
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&start=1704085200000000&end=1704106800000000&lookback=custom`,
     });
   });
@@ -170,7 +170,7 @@ describe('JaegerDatasource', () => {
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', tags: 'error=true' }],
       })
     );
-    expect(mock).toBeCalledWith({
+    expect(mock).toHaveBeenCalledWith({
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1704085200000000&end=1704106800000000&lookback=custom`,
     });
   });
@@ -196,7 +196,7 @@ describe('JaegerDatasource', () => {
         ],
       })
     );
-    expect(mock).toBeCalledWith({
+    expect(mock).toHaveBeenCalledWith({
       url: `${defaultSettings.url}/api/traces/5311b0dd0ca8df3463df93c99cb805a6`,
     });
   });
@@ -216,7 +216,7 @@ describe('JaegerDatasource', () => {
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', tags: 'error=$error' }],
       })
     );
-    expect(mock).toBeCalledWith({
+    expect(mock).toHaveBeenCalledWith({
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1704085200000000&end=1704106800000000&lookback=custom`,
     });
   });
@@ -246,7 +246,7 @@ describe('JaegerDatasource', () => {
         ],
       })
     );
-    expect(mock).toBeCalledWith({
+    expect(mock).toHaveBeenCalledWith({
       url: `${defaultSettings.url}/api/traces?service=interpolationText&operation=interpolationText&minDuration=interpolationText&maxDuration=interpolationText&start=1704085200000000&end=1704106800000000&lookback=custom`,
     });
   });

@@ -50,6 +50,10 @@ func (m legacyStoreMock) List(ctx context.Context, options *metainternalversion.
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
+func (m legacyStoreMock) NewList() runtime.Object {
+	return nil
+}
+
 func (m legacyStoreMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if name == "object-fail" {
@@ -110,6 +114,10 @@ func (m storageMock) List(ctx context.Context, options *metainternalversion.List
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
+func (m storageMock) NewList() runtime.Object {
+	return nil
+}
+
 func (m storageMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if name == "object-fail" {
@@ -133,3 +141,12 @@ func (m storageMock) DeleteCollection(ctx context.Context, deleteValidation rest
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
+
+type updatedObjInfoObj struct{}
+
+func (u updatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) { // nolint:staticcheck
+	// nolint:staticcheck
+	oldObj = exampleObj
+	return oldObj, nil
+}
+func (u updatedObjInfoObj) Preconditions() *metav1.Preconditions { return &metav1.Preconditions{} }

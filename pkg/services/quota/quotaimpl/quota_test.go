@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -33,13 +36,14 @@ import (
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	storesrv "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -65,8 +69,8 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
-	sqlStore.Cfg.Quota = setting.QuotaSettings{
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg.Quota = setting.QuotaSettings{
 		Enabled: true,
 
 		Org: setting.OrgQuota{
@@ -92,12 +96,15 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	}
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
-	quotaService := ProvideService(sqlStore, sqlStore.Cfg)
-	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	quotaService := ProvideService(sqlStore, cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	userService, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	userService, err := userimpl.ProvideService(
+		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
-	setupEnv(t, sqlStore, sqlStore.Cfg, b, quotaService)
+	setupEnv(t, sqlStore, cfg, b, quotaService)
 
 	u, err := userService.Create(context.Background(), &user.CreateUserCommand{
 		Name:         "TestUser",
@@ -126,28 +133,28 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	}
 	tag, err := quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgQuotaTarget), scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.Org, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.Org, defaultGlobalLimits[tag])
 	tag, err = quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.User, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.User, defaultGlobalLimits[tag])
 	tag, err = quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.Dashboard, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.Dashboard, defaultGlobalLimits[tag])
 	tag, err = quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.DataSource, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.DataSource, defaultGlobalLimits[tag])
 	tag, err = quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.ApiKey, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.ApiKey, defaultGlobalLimits[tag])
 	tag, err = quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.Session, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.Session, defaultGlobalLimits[tag])
 	tag, err = quota.NewTag(ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.AlertRule, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.AlertRule, defaultGlobalLimits[tag])
 	tag, err = quota.NewTag(storesrv.QuotaTargetSrv, storesrv.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Global.File, defaultGlobalLimits[tag])
+	require.Equal(t, cfg.Quota.Global.File, defaultGlobalLimits[tag])
 
 	// fetch default limit/usage for org
 	defaultOrgLimits := make(map[quota.Tag]int64)
@@ -163,19 +170,19 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	}
 	tag, err = quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Org.User, defaultOrgLimits[tag])
+	require.Equal(t, cfg.Quota.Org.User, defaultOrgLimits[tag])
 	tag, err = quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Org.Dashboard, defaultOrgLimits[tag])
+	require.Equal(t, cfg.Quota.Org.Dashboard, defaultOrgLimits[tag])
 	tag, err = quota.NewTag(datasources.QuotaTargetSrv, datasources.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Org.DataSource, defaultOrgLimits[tag])
+	require.Equal(t, cfg.Quota.Org.DataSource, defaultOrgLimits[tag])
 	tag, err = quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Org.ApiKey, defaultOrgLimits[tag])
+	require.Equal(t, cfg.Quota.Org.ApiKey, defaultOrgLimits[tag])
 	tag, err = quota.NewTag(ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.Org.AlertRule, defaultOrgLimits[tag])
+	require.Equal(t, cfg.Quota.Org.AlertRule, defaultOrgLimits[tag])
 
 	// fetch default limit/usage for user
 	defaultUserLimits := make(map[quota.Tag]int64)
@@ -191,7 +198,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	}
 	tag, err = quota.NewTag(quota.TargetSrv(org.QuotaTargetSrv), quota.Target(org.OrgUserQuotaTarget), scope)
 	require.NoError(t, err)
-	require.Equal(t, sqlStore.Cfg.Quota.User.Org, defaultUserLimits[tag])
+	require.Equal(t, cfg.Quota.User.Org, defaultUserLimits[tag])
 
 	t.Run("Given saved org quota for users", func(t *testing.T) {
 		// update quota for the created org and limit users to 1
@@ -225,10 +232,13 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get zero used org alert quota when table does not exist (ngalert is not enabled - default case)", func(t *testing.T) {
 			// disable Grafana Alerting
-			cfg := *sqlStore.Cfg
+			alertingCfg := cfg.UnifiedAlerting
+			defer func() {
+				cfg.UnifiedAlerting = alertingCfg
+			}()
 			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: util.Pointer(false)}
 
-			quotaSrv := ProvideService(sqlStore, &cfg)
+			quotaSrv := ProvideService(sqlStore, cfg)
 			q, err := getQuotaBySrvTargetScope(t, quotaSrv, ngalertmodels.QuotaTargetSrv, ngalertmodels.QuotaTarget, quota.OrgScope, &quota.ScopeParameters{OrgID: o.ID})
 
 			require.NoError(t, err)
@@ -479,17 +489,19 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	require.NoError(t, err)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(),
+		quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, plugincontext.
+			ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
 	require.NoError(t, err)
 	_, err = ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(),
 	)
 	require.NoError(t, err)
 	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), cfg, quotaService, storesrv.ProvideSystemUsersService())

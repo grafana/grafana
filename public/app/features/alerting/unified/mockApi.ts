@@ -4,11 +4,13 @@ import { setupServer, SetupServer } from 'msw/node';
 
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { AlertRuleUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
   PromRulesResponse,
+  RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -27,7 +29,6 @@ import {
 import { DashboardSearchItem } from '../../search/types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
-import { AlertingQueryResponse } from './state/AlertingQueryRunner';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -202,13 +203,6 @@ export function mockApi(server: SetupServer) {
       );
     },
 
-    eval: (response: AlertingQueryResponse) => {
-      server.use(
-        http.post('/api/v1/eval', () => {
-          return HttpResponse.json(response);
-        })
-      );
-    },
     grafanaNotifiers: (response: NotifierDTO[]) => {
       server.use(http.get(`api/alert-notifiers`, () => HttpResponse.json(response)));
     },
@@ -282,13 +276,16 @@ export function mockAlertRuleApi(server: SetupServer) {
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
     },
-    updateRule: (dsName: string, response: AlertRuleUpdated) => {
+    updateRule: (dsName: string, response: AlertGroupUpdated) => {
       server.use(http.post(`/api/ruler/${dsName}/api/v1/rules/:namespaceUid`, () => HttpResponse.json(response)));
     },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
       server.use(
         http.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, () => HttpResponse.json(response))
       );
+    },
+    getAlertRule: (uid: string, response: RulerGrafanaRuleDTO) => {
+      server.use(http.get(`/api/ruler/grafana/api/v1/rule/${uid}`, () => HttpResponse.json(response)));
     },
   };
 }
@@ -424,10 +421,12 @@ export function mockDashboardApi(server: SetupServer) {
   };
 }
 
-// Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
-export function setupMswServer() {
-  const server = setupServer();
+const server = setupServer(...allHandlers);
 
+/**
+ * Sets up beforeAll, afterAll and beforeEach handlers for mock server
+ */
+export function setupMswServer() {
   beforeAll(() => {
     setBackendSrv(backendSrv);
     server.listen({ onUnhandledRequest: 'error' });
@@ -443,3 +442,5 @@ export function setupMswServer() {
 
   return server;
 }
+
+export default server;

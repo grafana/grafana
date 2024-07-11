@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import LoginCtrl from '../Login/LoginCtrl';

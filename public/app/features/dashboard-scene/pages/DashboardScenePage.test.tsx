@@ -1,7 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -11,9 +10,11 @@ import { config, getPluginLinkExtensions, locationService, setPluginImportUtils 
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
+import { DashboardRoutes } from 'app/types';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
@@ -24,22 +25,37 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+  getBackendSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: { url: '' } }),
+    };
+  },
   getDataSourceSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({}),
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
+  getAppEvents: () => ({
+    publish: jest.fn(),
+  }),
 }));
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
-function setup() {
+function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
   const context = getGrafanaContextMock();
+  const defaultRouteProps = getRouteComponentProps();
   const props: Props = {
-    ...getRouteComponentProps(),
+    ...defaultRouteProps,
+    match: {
+      ...defaultRouteProps.match,
+      params: {
+        uid: 'my-dash-uid',
+      },
+    },
+    ...routeProps,
   };
-  props.match.params.uid = 'my-dash-uid';
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
@@ -124,7 +140,7 @@ describe('DashboardScenePage', () => {
     locationService.push('/');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
-    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: {} });
+    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
@@ -241,7 +257,7 @@ describe('DashboardScenePage', () => {
   });
 
   it('is in edit mode when coming from explore to an existing dashboard', async () => {
-    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard });
+    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard, meta: { slug: '123' } });
 
     setup();
 
@@ -252,6 +268,43 @@ describe('DashboardScenePage', () => {
     await userEvent.click(panelAMenu);
     const editMenuItem = await screen.findAllByText('Edit');
     expect(editMenuItem).toHaveLength(1);
+  });
+
+  describe('home page', () => {
+    it('should render the dashboard when the route is home', async () => {
+      setup({
+        routeProps: {
+          route: {
+            ...getRouteComponentProps().route,
+            routeName: DashboardRoutes.Home,
+          },
+          match: {
+            ...getRouteComponentProps().match,
+            path: '/',
+            params: {},
+          },
+        },
+      });
+
+      await waitForDashbordToRender();
+
+      expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+      expect(await screen.findByText('Content A')).toBeInTheDocument();
+
+      expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+      expect(await screen.findByText('Content B')).toBeInTheDocument();
+    });
+
+    it('should show controls', async () => {
+      getDashboardScenePageStateManager().clearDashboardCache();
+      loadDashboardMock.mockClear();
+      loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+
+      setup();
+
+      await waitFor(() => expect(screen.queryByText('Refresh')).toBeInTheDocument());
+      await waitFor(() => expect(screen.queryByText('Last 6 hours')).toBeInTheDocument());
+    });
   });
 });
 

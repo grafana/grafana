@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 )
 
 var (
@@ -136,12 +137,21 @@ func (s *dashboardStorage) List(ctx context.Context, options *internalversion.Li
 
 	// fmt.Printf("LIST: %s\n", options.Continue)
 
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &access.DashboardQuery{
 		OrgID:         orgId,
 		Limit:         int(options.Limit),
 		MaxBytes:      2 * 1024 * 1024, // 2MB,
 		ContinueToken: options.Continue,
+		Requirements:  requirements,
+		Labels:        newSelector,
 	}
+
 	return s.access.GetDashboards(ctx, query)
 }
 
@@ -152,4 +162,9 @@ func (s *dashboardStorage) Get(ctx context.Context, name string, options *metav1
 	}
 
 	return s.access.GetDashboard(ctx, info.OrgID, name)
+}
+
+// GracefulDeleter
+func (s *dashboardStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("DeleteCollection for dashboards not implemented")
 }

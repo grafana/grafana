@@ -1,7 +1,14 @@
-import React, { FormEvent, PureComponent } from 'react';
+import { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  getDataSourceRef,
+  QueryVariableModel,
+  SelectableValue,
+  VariableRefresh,
+  VariableSort,
+} from '@grafana/data';
 import { QueryVariableEditorForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableForm';
 
 import { StoreState } from '../../../types';
@@ -11,7 +18,6 @@ import { getQueryVariableEditorState } from '../editor/selectors';
 import { VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getVariablesState } from '../state/selectors';
-import { QueryVariableModel, VariableRefresh, VariableSort } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
@@ -125,7 +131,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   render() {
     const { extended, variable } = this.props;
-    if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
+    if (!extended || !extended.dataSource) {
       return null;
     }
 

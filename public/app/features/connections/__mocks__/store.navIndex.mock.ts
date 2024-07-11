@@ -150,8 +150,15 @@ export const navIndex: NavIndex = {
         url: '/alerting/groups',
       },
       {
+        id: 'history',
+        text: 'History',
+        subTitle: 'Alert state history',
+        icon: 'history',
+        url: '/alerting/history',
+      },
+      {
         id: 'alerting-admin',
-        text: 'Admin',
+        text: 'Settings',
         icon: 'cog',
         url: '/alerting/admin',
       },
@@ -209,7 +216,7 @@ export const navIndex: NavIndex = {
   },
   'alerting-admin': {
     id: 'alerting-admin',
-    text: 'Admin',
+    text: 'Settings',
     icon: 'cog',
     url: '/alerting/admin',
   },

@@ -68,6 +68,11 @@ export function mockResizeObserver() {
 export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
   const deactivationHandlers: SceneDeactivationHandler[] = [];
 
+  // Important that variables are activated before other children
+  if (scene.state.$variables) {
+    deactivationHandlers.push(activateFullSceneTree(scene.state.$variables));
+  }
+
   scene.forEachChild((child) => {
     // For query runners which by default use the container width for maxDataPoints calculation we are setting a width.
     // In real life this is done by the React component when VizPanel is rendered.
@@ -91,6 +96,7 @@ interface SceneOptions {
   variableQueryTime: number;
   maxPerRow?: number;
   itemHeight?: number;
+  height?: number;
   repeatDirection?: RepeatDirection;
   x?: number;
   y?: number;
@@ -108,6 +114,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     repeatDirection: options.repeatDirection,
     maxPerRow: options.maxPerRow,
     itemHeight: options.itemHeight,
+    height: options.height,
     body:
       source ??
       new VizPanel({
@@ -130,18 +137,9 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     }),
   });
 
-  const rowChildren = defaults.usePanelRepeater ? withRepeat : withoutRepeat;
-
   const row = new SceneGridRow({
-    $behaviors: defaults.useRowRepeater
-      ? [
-          new RowRepeaterBehavior({
-            variableName: 'handler',
-            sources: [rowChildren],
-          }),
-        ]
-      : [],
-    children: defaults.useRowRepeater ? [] : [rowChildren],
+    $behaviors: defaults.useRowRepeater ? [new RowRepeaterBehavior({ variableName: 'handler' })] : [],
+    children: [defaults.usePanelRepeater ? withRepeat : withoutRepeat],
   });
 
   const panelRepeatVariable = new TestVariable({

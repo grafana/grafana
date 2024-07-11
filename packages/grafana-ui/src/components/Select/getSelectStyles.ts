@@ -17,6 +17,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     option: css({
       label: 'grafana-select-option',
       padding: '8px',
+      position: 'relative',
       display: 'flex',
       alignItems: 'center',
       flexDirection: 'row',
@@ -64,6 +65,17 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     optionSelected: css({
       background: theme.colors.action.selected,
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        transform: 'translateX(-50%)',
+        width: theme.spacing(0.5),
+        left: 0,
+      },
     }),
     optionDisabled: css({
       label: 'grafana-select-option-disabled',
@@ -97,7 +109,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     valueContainerMultiNoWrap: css({
-      flexWrap: 'nowrap',
+      display: 'grid',
+      gridAutoFlow: 'column',
     }),
     loadingMessage: css({
       label: 'grafana-select-loading-message',
@@ -135,6 +148,19 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       cursor: 'pointer',
       '&:hover': {
         color: theme.colors.text.primary,
+      },
+    }),
+    groupHeader: css({
+      padding: theme.spacing(1, 1, 1, 0.75),
+      borderLeft: '2px solid transparent',
+    }),
+    group: css({
+      '&:not(:first-child)': {
+        borderTop: `1px solid ${theme.colors.border.weak}`,
+      },
+      // ensure there's a bottom border if there are options following the group
+      ':has(+ [role="option"])': {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
       },
     }),
   };

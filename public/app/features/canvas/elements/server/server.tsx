@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
@@ -173,7 +172,9 @@ export const getServerStyles = (data: ServerData | undefined) => (theme: Grafana
     fill: data?.statusColor ?? 'transparent',
   }),
   circle: css({
-    animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    },
     fill: data?.bulbColor,
     stroke: 'none',
   }),

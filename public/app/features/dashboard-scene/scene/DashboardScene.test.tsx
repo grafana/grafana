@@ -1,4 +1,5 @@
-import { CoreApp, LoadingState, getDefaultTimeRange } from '@grafana/data';
+import { CoreApp, LoadingState, getDefaultTimeRange, store } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -11,8 +12,9 @@ import {
   behaviors,
   SceneDataTransformer,
 } from '@grafana/scenes';
-import { Dashboard, DashboardCursorSync } from '@grafana/schema';
+import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
@@ -71,6 +73,12 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     stop: jest.fn(),
   },
 }));
+
+jest.mock('app/features/manage-dashboards/state/actions', () => ({
+  ...jest.requireActual('app/features/manage-dashboards/state/actions'),
+  deleteDashboard: jest.fn().mockResolvedValue({}),
+}));
+
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
 
@@ -191,6 +199,20 @@ describe('DashboardScene', () => {
         scene.exitEditMode({ skipConfirm: true });
         const resoredLayout = sceneGraph.findObject(scene, (p) => p instanceof SceneGridLayout) as SceneGridLayout;
         expect(resoredLayout.state.children.map((c) => c.state.key)).toEqual(originalPanelOrder);
+      });
+
+      it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1');
+        const editPanel = buildPanelEditScene(panel!);
+        scene.setState({
+          editPanel,
+        });
+
+        expect(scene.state.editPanel!['_discardChanges']).toBe(false);
+
+        scene.exitEditMode({ skipConfirm: true });
+
+        expect(scene.state.editPanel!['_discardChanges']).toBe(true);
       });
 
       it.each`
@@ -599,7 +621,7 @@ describe('DashboardScene', () => {
 
         scene.copyPanel(vizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
@@ -617,14 +639,14 @@ describe('DashboardScene', () => {
 
         scene.copyPanel(libVizPanel.state.panel as VizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should copy a panel', () => {
         const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body;
         scene.copyPanel(vizPanel as VizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(true);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(true);
       });
 
       it('Should copy a library viz panel', () => {
@@ -633,11 +655,11 @@ describe('DashboardScene', () => {
 
         scene.copyPanel(libVizPanel.state.panel as VizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(true);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(true);
       });
 
       it('Should paste a panel', () => {
-        scene.setState({ hasCopiedPanel: true });
+        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
         jest.spyOn(JSON, 'parse').mockReturnThis();
         jest.mocked(buildGridItemForPanel).mockReturnValue(
           new DashboardGridItem({
@@ -659,11 +681,11 @@ describe('DashboardScene', () => {
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should paste a library viz panel', () => {
-        scene.setState({ hasCopiedPanel: true });
+        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
         jest.spyOn(JSON, 'parse').mockReturnValue({ libraryPanel: { uid: 'uid', name: 'libraryPanel' } });
         jest.mocked(buildGridItemForLibPanel).mockReturnValue(
           new DashboardGridItem({
@@ -688,7 +710,7 @@ describe('DashboardScene', () => {
         expect(libVizPanel.state.panelKey).toBe('panel-7');
         expect(libVizPanel.state.panel?.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should remove a panel', () => {
@@ -744,6 +766,20 @@ describe('DashboardScene', () => {
 
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
+      });
+
+      it('Should maintain size of duplicated panel', () => {
+        const gItem = (scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem;
+        gItem.setState({ height: 1 });
+        const vizPanel = gItem.state.body;
+        scene.duplicatePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const newGridItem = body.state.children[5] as DashboardGridItem;
+
+        expect(body.state.children.length).toBe(6);
+        expect(newGridItem.state.body!.state.key).toBe('panel-7');
+        expect(newGridItem.state.height).toBe(1);
       });
 
       it('Should duplicate a library panel', () => {
@@ -881,6 +917,92 @@ describe('DashboardScene', () => {
         expect(body.state.children.length).toBe(1);
         expect(gridItem.state.body).toBeInstanceOf(VizPanel);
       });
+
+      it('Should create a library panel', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
+        const gridItem = new DashboardGridItem({
+          key: 'griditem-1',
+          body: vizPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [gridItem],
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
+
+        const layout = scene.state.body as SceneGridLayout;
+        const newGridItem = layout.state.children[0] as DashboardGridItem;
+
+        expect(layout.state.children.length).toBe(1);
+        expect(newGridItem.state.body).toBeInstanceOf(LibraryVizPanel);
+        expect((newGridItem.state.body as LibraryVizPanel).state.uid).toBe('uid');
+        expect((newGridItem.state.body as LibraryVizPanel).state.name).toBe('name');
+      });
+
+      it('Should create a library panel under a row', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
+        const gridItem = new DashboardGridItem({
+          key: 'griditem-1',
+          body: vizPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [
+              new SceneGridRow({
+                key: 'row-1',
+                children: [gridItem],
+              }),
+            ],
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
+
+        const layout = scene.state.body as SceneGridLayout;
+        const newGridItem = (layout.state.children[0] as SceneGridRow).state.children[0] as DashboardGridItem;
+
+        expect(layout.state.children.length).toBe(1);
+        expect((layout.state.children[0] as SceneGridRow).state.children.length).toBe(1);
+        expect(newGridItem.state.body).toBeInstanceOf(LibraryVizPanel);
+        expect((newGridItem.state.body as LibraryVizPanel).state.uid).toBe('uid');
+        expect((newGridItem.state.body as LibraryVizPanel).state.name).toBe('name');
+      });
+    });
+  });
+
+  describe('Deleting dashboard', () => {
+    it('Should mark it non dirty before navigating to root', async () => {
+      const scene = buildTestScene();
+      scene.setState({ isDirty: true });
+
+      locationService.push('/d/adsdas');
+      await scene.deleteDashboard();
+
+      expect(scene.state.isDirty).toBe(false);
     });
   });
 

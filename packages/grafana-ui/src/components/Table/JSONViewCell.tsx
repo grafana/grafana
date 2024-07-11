@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { flip, shift, autoUpdate } from '@floating-ui/dom';
 import { useFloating } from '@floating-ui/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -85,7 +86,7 @@ export const AnnotationMarker2 = ({
     >
       {contents &&
         createPortal(
-          <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles}>
+          <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
             {contents}
           </div>,
           portalRoot

@@ -20,124 +20,125 @@ labels:
     - oss
 title: Labels and annotations
 weight: 105
+refs:
+  alert-instances:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals#alert-instances
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals#alert-instances
+  create-alerts-from-panel:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels
+  templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/templates/
+  alert-rule-evaluation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
+  silences:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
+  notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
 ---
 
 # Labels and annotations
 
-Labels and annotations contain information about an alert. Labels are used to differentiate an alert from all other alerts, while annotations are used to add additional information to an existing alert.
+Labels and annotations add additional information about an alert using key/value pairs:
+
+- [Labels](#labels) are used to differentiate an alert from all other alerts.
+- [Annotations](#annotations) are used to provide extra detail on an existing alert.
 
 ## Labels
 
-Labels contain information that identifies an alert. An example of a label might be `server=server1` or `team=backend`. Each alert can have more than one label, and the complete set of labels for an alert is called its label set. It is this label set that identifies the alert.
+**Labels** are unique identifiers of an [alert instance](ref:alert-instances). You can use them for searching, silencing, and routing notifications.
 
-For example, an alert might have the label set `{alertname="High CPU usage",server="server1"}` while another alert might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alerts because although their `alertname` labels are the same, their `server` labels are different.
+Examples of labels are `server=server1` or `team=backend`. Each alert rule can have more than one label and the complete set of labels for an alert rule is called its label set. It is this label set that identifies the alert.
+
+For example, an alert instance might have the label set `{alertname="High CPU usage",server="server1"}` while another alert instance might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alert instances because although their `alertname` labels are the same, their `server` labels are different.
+
+{{< figure alt="Image shows an example of an alert instance and its labels" src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" >}}
 
 Labels are a fundamental component of alerting:
 
-- The complete set of labels for an alert is what uniquely identifies an alert within Grafana alerts.
+- The complete set of labels for an alert is what uniquely identifies an alert instance.
 - The alerting UI shows labels for every alert instance generated during evaluation of that rule.
-- Contact points can access labels to send notification messages that contain specific alert information.
-- The Alertmanager uses labels to match alerts for silences and alert groups in notification policies.
+- [Notification policies](ref:notification-policies) and [silences](ref:silences) use labels to match alert instances and route them to contact points or stop their notifications.
+- Contact points can include information from labels in notification messages.
 
-Note that two alert rules cannot have the same labels. If two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the alerts will be discarded.
-
-### How label matching works
-
-Use labels and label matchers to link alert rules to notification policies and silences. This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
-
-A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
-
-- The **Label** field is the name of the label to match. It must exactly match the label name.
-
-- The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Operator** value.
-
-- The **Operator** field is the operator to match against the label value. The available operators are:
-
-  | Operator | Description                                        |
-  | -------- | -------------------------------------------------- |
-  | `=`      | Select labels that are exactly equal to the value. |
-  | `!=`     | Select labels that are not equal to the value.     |
-  | `=~`     | Select labels that regex-match the value.          |
-  | `!~`     | Select labels that do not regex-match the value.   |
-
-If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
-
-{{< collapse title="Label matching example" >}}
-
-If you define the following set of labels for your alert:
-
-`{ foo=bar, baz=qux, id=12 }`
-
-then:
-
-- A label matcher defined as `foo=bar` matches this alert rule.
-- A label matcher defined as `foo!=bar` does _not_ match this alert rule.
-- A label matcher defined as `id=~[0-9]+` matches this alert rule.
-- A label matcher defined as `baz!~[0-9]+` matches this alert rule.
-- Two label matchers defined as `foo=bar` and `id=~[0-9]+` match this alert rule.
-
-**Exclude labels**
-
-You can also write label matchers to exclude labels.
-
-Here is an example that shows how to exclude the label `Team`. You can choose between any of the values below to exclude labels.
-
-| Label  | Operator | Value |
-| ------ | -------- | ----- |
-| `team` | `=`      | `""`  |
-| `team` | `!~`     | `.+`  |
-| `team` | `=~`     | `^$`  |
-
-{{< /collapse >}}
-
-## Label types
+### Label types
 
 An alert's label set can contain three types of labels:
 
-- Labels from the datasource,
-- Custom labels specified in the alert rule,
-- A series of reserved labels, such as `alertname` or `grafana_folder`.
+**User-configured labels**
 
-### Custom Labels
+Labels that you manually configure in the alert rule to identify the generated alert instances or group them.
 
-Custom labels are additional labels configured manually in the alert rule.
+You can also use a [template](ref:templates) to customize the label value and generate dynamic values when the rule is evaluated.
 
-Ensure the label set for an alert does not have two or more labels with the same name. If a custom label has the same name as a label from the datasource then it will replace that label. However, should a custom label have the same name as a reserved label then the custom label will be omitted from the alert.
+**Data source query labels**
 
-{{< collapse title="Key format" >}}
+For example, if you are monitoring temperature readings and each time series for these readings has a `sensor_id`, and a `location` label, an alert instance might have the labels `{sensor_id="1",location="NY"}`, while another alert instance might have `{sensor_id="2",location="WA"}`.
 
-Grafana's built-in Alertmanager supports both Unicode label keys and values. If you are using an external Prometheus Alertmanager, label keys must be compatible with their [data model](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
-This means that label keys must only contain **ASCII letters**, **numbers**, as well as **underscores** and match the regex `[a-zA-Z_][a-zA-Z0-9_]*`.
-Any invalid characters will be removed or replaced by the Grafana alerting engine before being sent to the external Alertmanager according to the following rules:
+Data source query labels labels are also used to generate multiple alert instances from the same alert rule, helping to distinguish alerts from different data.
 
-- `Whitespace` will be removed.
-- `ASCII characters` will be replaced with `_`.
-- `All other characters` will be replaced with their lower-case hex representation. If this is the first character it will be prefixed with `_`.
+**Reserved labels**
 
-Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514="🔥"`.
+Reserved labels are automatically added by Grafana:
 
-If multiple label keys are sanitized to the same value, the duplicates will have a short hash of the original label appended as a suffix.
-
-{{< /collapse >}}
-
-### Reserved labels
-
-Reserved labels can be used in the same way as manually configured custom labels. The current list of available reserved labels are:
-
-| Label          | Description                               |
-| -------------- | ----------------------------------------- |
-| alert_name     | The name of the alert rule.               |
-| grafana_folder | Title of the folder containing the alert. |
+- `alert_name`: the name of the alert rule.
+- `grafana_folder`: the title of the folder containing the alert.
 
 Labels prefixed with `grafana_` are reserved by Grafana for special use. To stop Grafana Alerting from adding a reserved label, you can disable it via the `disabled_labels` option in [unified_alerting.reserved_labels](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels) configuration.
 
+{{<admonition type="note">}}
+
+Two alert rules cannot produce alert instances with the same labels. If two alert rules have the same labels such as `foo=bar,bar=baz` and `foo=bar,bar=baz` then one of the generated alert instances is discarded.
+
+Ensure the label set for an alert does not have two or more labels with the same name.
+
+- If a configured label has the same name as a data source query label, it replaces the data source label.
+- If a configured label has the same name as a reserved label, it is omitted.
+  {{</admonition>}}
+
+{{< collapse title="Label key format" >}}
+
+Grafana has a built-in Alertmanager that supports both Unicode label keys and values. If you are using an external Prometheus Alertmanager, label keys must be compatible with their [data model](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+This means that label keys must only contain _ASCII letters_, _numbers_, and _underscores_.
+Label keys must also be matched by the regular expression `[a-zA-Z_][a-zA-Z0-9_]*`.
+Any invalid characters are removed or replaced by the Grafana alerting engine before being sent to the external Alertmanager according to the following rules:
+
+- Whitespace is removed.
+- ASCII characters are replaced with `_`.
+- All other characters are replaced with their lower-case hex representation.
+  If this is the first character it's prefixed with `_`.
+
+Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514="🔥"`.
+
+If multiple label keys are sanitized to the same value, the duplicates have a short hash of the original label appended as a suffix.
+
+{{< /collapse >}}
+
 ## Annotations
 
-Both labels and annotations have the same structure: a set of named values; however their intended uses are different. The purpose of annotations is to add additional information to existing alerts.
+The purpose of annotations is to add additional information to alert instances, such as extra details for notification messages.
 
-There are a number of suggested annotations in Grafana such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`. Like custom labels, annotations must have a name, and their value can contain a combination of text and template code that is evaluated when an alert is fired.
+Grafana provides several optional annotations that you can edit for use in notification messages and within Grafana.
 
-{{% docs/reference %}}
-[variables-label-annotation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations"
-[variables-label-annotation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations"
-{{% /docs/reference %}}
+- `summary`: A short summary of what the alert has detected and why.
+- `description`: A detailed description of what happened and what the alert does.
+- `runbook_url`: The runbook page to guide operators managing a potential incident.
+- `dashboardUId` and `panelId`: Link the alert to a dashboard and panel. These are automatically set when [creating an alert from panels](ref:create-alerts-from-panel).
+
+Like labels, annotations can use a [template](ref:templates) to customize the label value and generate dynamic values when the rule is evaluated.

@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import { useId } from 'react';
 
 import { Modal, Button, Input, Stack, ClipboardButton, Field } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
@@ -6,14 +6,15 @@ import { Trans, t } from 'app/core/internationalization';
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
 interface Props {
+  isOpen: boolean;
   hideModal: () => void;
   migrationToken?: string;
 }
 
-export const MigrationTokenModal = ({ hideModal, migrationToken }: Props) => {
+export const MigrationTokenModal = ({ isOpen, hideModal, migrationToken }: Props) => {
   return (
     <Modal
-      isOpen
+      isOpen={isOpen}
       title={t('migrate-to-cloud.migration-token.modal-title', 'Migration token created')}
       onDismiss={hideModal}
     >

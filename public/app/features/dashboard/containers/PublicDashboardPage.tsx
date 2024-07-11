@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
@@ -69,8 +69,7 @@ const PublicDashboardPage = (props: Props) => {
         keybindingSrv: context.keybindings,
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [route.routeName, match.params.accessToken, context.keybindings, dispatch]);
 
   useEffect(() => {
     if (prevProps?.location.search !== location.search) {
@@ -89,7 +88,7 @@ const PublicDashboardPage = (props: Props) => {
         getTimeSrv().setAutoRefresh(urlParams.refresh);
       }
     }
-  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden]);
+  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden, match.params.accessToken]);
 
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;

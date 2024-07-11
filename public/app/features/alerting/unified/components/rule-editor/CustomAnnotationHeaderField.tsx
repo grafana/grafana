@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Input, useStyles2 } from '@grafana/ui';
@@ -25,15 +24,15 @@ const CustomAnnotationHeaderField = ({ field }: CustomAnnotationHeaderFieldProps
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  annotationTitle: css`
-    color: ${theme.colors.text.primary};
-    margin-bottom: 3px;
-  `,
+  annotationTitle: css({
+    color: theme.colors.text.primary,
+    marginBottom: '3px',
+  }),
 
-  customAnnotationInput: css`
-    margin-top: 5px;
-    width: 100%;
-  `,
+  customAnnotationInput: css({
+    marginTop: '5px',
+    width: '100%',
+  }),
 });
 
 export default CustomAnnotationHeaderField;

@@ -43,9 +43,9 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     itemButton: (title: string) => `data-testid ${title}`,
-    addNewPanel: 'Add new panel',
-    addNewRow: 'Add new row',
-    addNewPanelLibrary: 'Add new panel from panel library',
+    addNewPanel: 'data-testid Add new panel',
+    addNewRow: 'data-testid Add new row',
+    addNewPanelLibrary: 'data-testid Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
@@ -57,12 +57,33 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      scrollContainer: 'data-testid Dashboard canvas scroll container',
+      newShareButton: {
+        container: 'data-testid new share button',
+        shareLink: 'data-testid new share link-button',
+        arrowMenu: 'data-testid new share button arrow menu',
+        menu: {
+          container: 'data-testid new share button menu',
+          shareInternally: 'data-testid new share button share internally',
+          shareExternally: 'data-testid new share button share externally',
+          shareSnapshot: 'data-testid new share button share snapshot',
+        },
+      },
+      NewExportButton: {
+        container: 'data-testid new export button',
+        arrowMenu: 'data-testid new export button arrow menu',
+        Menu: {
+          container: 'data-testid new export button menu',
+          exportAsJson: 'data-testid new export button export as json',
+        },
+      },
       playlistControls: {
         prev: 'data-testid playlist previous dashboard button',
         stop: 'data-testid playlist stop dashboard button',
         next: 'data-testid playlist next dashboard button',
       },
     },
+    Controls: 'data-testid dashboard controls',
     SubMenu: {
       submenu: 'Dashboard submenu',
       submenuItem: 'data-testid template variable',
@@ -83,7 +104,7 @@ export const Pages = {
         close: 'data-testid dashboard-settings-close',
       },
       General: {
-        deleteDashBoard: 'Dashboard settings page delete dashboard button',
+        deleteDashBoard: 'data-testid Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
@@ -91,7 +112,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Tab General',
+        title: 'General',
       },
       Annotations: {
         List: {
@@ -103,11 +124,11 @@ export const Pages = {
           annotations: 'data-testid list-annotations',
         },
         Settings: {
-          name: 'Annotations settings name input',
+          name: 'data-testid Annotations settings name input',
         },
         NewAnnotation: {
           panelFilterSelect: 'data-testid annotations-panel-filter',
-          showInLabel: 'show-in-label',
+          showInLabel: 'data-testid show-in-label',
           previewInDashboard: 'data-testid annotations-preview',
           delete: 'data-testid annotations-delete',
           apply: 'data-testid annotations-apply',
@@ -233,7 +254,6 @@ export const Pages = {
   },
   ShareDashboardModal: {
     PublicDashboard: {
-      Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
@@ -257,6 +277,32 @@ export const Pages = {
         DeleteEmail: 'data-testid public dashboard delete email button',
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
+    },
+    SnapshotScene: {
+      url: (key: string) => `/dashboard/snapshot/${key}`,
+      PublishSnapshot: 'data-testid publish snapshot button',
+      CopyUrlButton: 'data-testid snapshot copy url button',
+      CopyUrlInput: 'data-testid snapshot copy url input',
+    },
+  },
+  ShareDashboardDrawer: {
+    ShareExternally: {
+      container: 'data-testid share externally drawer container',
+      copyUrlButton: 'data-testid share externally copy url button',
+      shareTypeSelect: 'data-testid share externally share type select',
+    },
+    ShareSnapshot: {
+      container: 'data-testid share snapshot drawer container',
+    },
+  },
+  ExportDashboardDrawer: {
+    ExportAsJson: {
+      container: 'data-testid export as Json drawer container',
+      codeEditor: 'data-testid export as Json code editor',
+      exportExternallyToggle: 'data-testid export externally toggle type select',
+      saveToFileButton: 'data-testid save to file button',
+      copyToClipboardButton: 'data-testid copy to clipboard button',
+      cancelButton: 'data-testid cancel button',
     },
   },
   PublicDashboard: {

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,10 +9,11 @@ import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import LabelsField from './LabelsField';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
+import { LabelsEditorModal } from './labels/LabelsEditorModal';
+import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
 type NotificationsStepProps = {
@@ -25,22 +26,35 @@ enum RoutingOptions {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
   const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
+  const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
 
+  function onCloseLabelsEditor(
+    labelsToUpdate?: Array<{
+      key: string;
+      value: string;
+    }>
+  ) {
+    if (labelsToUpdate) {
+      setValue('labels', labelsToUpdate);
+    }
+    setShowLabelsEditor(false);
+  }
+
   return (
     <RuleEditorSection
       stepNo={4}
       title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
       description={
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           {type === RuleFormType.cloudRecording ? (
             <Text variant="bodySmall" color="secondary">
               Add labels to help you better manage your recording rules
@@ -56,7 +70,13 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       }
       fullWidth
     >
-      <LabelsField dataSourceName={dataSourceName} />
+      <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
+      <LabelsEditorModal
+        isOpen={showLabelsEditor}
+        onClose={onCloseLabelsEditor}
+        dataSourceName={dataSourceName}
+        initialLabels={getValues('labels')}
+      />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
           <Text element="h5">Notifications</Text>
@@ -102,7 +122,7 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   };
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={2}>
       <Stack direction="column">
         <RadioButtonGroup
           options={routingOptions}
@@ -153,20 +173,9 @@ function NeedHelpInfoForNotificationPolicy() {
         <Stack gap={1} direction="column">
           <Stack direction="column" gap={0}>
             <>
-              Firing alert rule instances are routed to notification policies based on matching labels. All alert rules
-              and instances, irrespective of their labels, match the default notification policy. If there are no nested
-              policies, or no nested policies match the labels in the alert rule or alert instance, then the default
-              notification policy is the matching policy.
+              Firing alert instances are routed to notification policies based on matching labels. The default
+              notification policy matches all alert instances.
             </>
-            <a
-              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Text color="link">
-                Read about notification routing. <Icon name="external-link-alt" />
-              </Text>
-            </a>
           </Stack>
           <Stack direction="column" gap={0}>
             <>
@@ -174,12 +183,12 @@ function NeedHelpInfoForNotificationPolicy() {
               connect them to your notification policy by adding label matchers.
             </>
             <a
-              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/`}
+              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/`}
               target="_blank"
               rel="noreferrer"
             >
               <Text color="link">
-                Read about Labels and annotations. <Icon name="external-link-alt" />
+                Read about notification policies. <Icon name="external-link-alt" />
               </Text>
             </a>
           </Stack>
@@ -200,20 +209,18 @@ function NeedHelpInfoForContactpoint() {
           <br />
           Notifications for firing alert instances are grouped based on folder and alert rule name.
           <br />
-          The waiting time until the initial notification is sent for a new group created by an incoming alert is 30
-          seconds.
+          The wait time before sending the first notification for a new group of alerts is 30 seconds.
           <br />
-          The waiting time to send a batch of new alerts for that group after the first notification was sent is 5
-          minutes.
+          The waiting time before sending a notification about changes in the alert group after the first notification
+          has been sent is 5 minutes.
           <br />
-          The waiting time to resend an alert after they have successfully been sent is 4 hours.
+          The wait time before resending a notification that has already been sent successfully is 4 hours.
           <br />
           Grouping and wait time values are defined in your default notification policy.
         </>
       }
-      // todo: update the link with the new documentation about simplified routing
-      externalLink="`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`"
-      linkText="Read more about notifiying contact points"
+      externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
+      linkText="Read more about notifications"
       title="Notify contact points"
     />
   );
@@ -223,35 +230,25 @@ interface NotificationsStepDescriptionProps {
 }
 
 export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
-  const styles = useStyles2(getStyles);
   return (
-    <div className={styles.notificationsOptionDescription}>
+    <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">
         {manualRouting
           ? 'Notifications for firing alerts are routed to a selected contact point.'
           : 'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
-    </div>
+    </Stack>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   routingOptions: css({
-    marginTop: theme.spacing(2),
     width: 'fit-content',
   }),
   configureNotifications: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
     marginTop: theme.spacing(2),
-  }),
-  notificationsOptionDescription: css({
-    marginTop: theme.spacing(1),
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: theme.spacing(0.5),
   }),
 });

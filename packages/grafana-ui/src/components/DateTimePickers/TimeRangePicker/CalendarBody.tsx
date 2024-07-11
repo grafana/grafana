@@ -1,15 +1,25 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import Calendar from 'react-calendar';
+import { CalendarType } from 'react-calendar/dist/cjs/shared/types';
 
-import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone, getZone } from '@grafana/data';
+import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
+import { WeekStart } from '../WeekStartPicker';
+import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 
-export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) {
+const weekStartMap: Record<WeekStart, CalendarType> = {
+  saturday: 'islamic',
+  sunday: 'gregory',
+  monday: 'iso8601',
+};
+
+export function Body({ onChange, from, to, timeZone, weekStart = 'monday' }: TimePickerCalendarProps) {
   const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
@@ -23,9 +33,12 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
       tileClassName={styles.title}
       value={value}
       nextLabel={<Icon name="angle-right" />}
+      nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
       prevLabel={<Icon name="angle-left" />}
+      prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
       onChange={onCalendarChange}
       locale="en"
+      calendarType={weekStartMap[weekStart]}
     />
   );
 }
@@ -42,7 +55,8 @@ export function inputToValue(
   let toAsDate = to.isValid() ? to.toDate() : invalidDateDefault;
 
   if (timezone) {
-    [fromAsDate, toAsDate] = adjustDateForReactCalendar(fromAsDate, toAsDate, timezone);
+    fromAsDate = adjustDateForReactCalendar(fromAsDate, timezone);
+    toAsDate = adjustDateForReactCalendar(toAsDate, timezone);
   }
 
   if (fromAsDate > toAsDate) {
@@ -50,39 +64,6 @@ export function inputToValue(
   }
 
   return [fromAsDate, toAsDate];
-}
-
-/**
- * React calendar doesn't support showing ranges in other time zones, so attempting to show
- * 10th midnight - 11th midnight in another time zone than your browsers will span three days
- * instead of two.
- *
- * This function adjusts the dates by "moving" the time to appear as if it's local.
- * e.g. make 5 PM New York "look like" 5 PM in the user's local browser time.
- * See also https://github.com/wojtekmaj/react-calendar/issues/511#issuecomment-835333976
- */
-function adjustDateForReactCalendar(from: Date, to: Date, timeZone: string): [Date, Date] {
-  const zone = getZone(timeZone);
-  if (!zone) {
-    return [from, to];
-  }
-
-  // get utc offset for timezone preference
-  const timezonePrefFromOffset = zone.utcOffset(from.getTime());
-  const timezonePrefToOffset = zone.utcOffset(to.getTime());
-
-  // get utc offset for local timezone
-  const localFromOffset = from.getTimezoneOffset();
-  const localToOffset = to.getTimezoneOffset();
-
-  // calculate difference between timezone preference and local timezone
-  // we keep these as separate variables in case one of them crosses a daylight savings boundary
-  const fromDiff = timezonePrefFromOffset - localFromOffset;
-  const toDiff = timezonePrefToOffset - localToOffset;
-
-  const newFromDate = new Date(from.getTime() - fromDiff * 1000 * 60);
-  const newToDate = new Date(to.getTime() - toDiff * 1000 * 60);
-  return [newFromDate, newToDate];
 }
 
 function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {

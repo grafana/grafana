@@ -3,12 +3,10 @@ import {
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
-  getFieldDisplayName,
   identityOverrideProcessor,
   PanelPlugin,
   VizOrientation,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
@@ -19,7 +17,6 @@ import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
-import { prepareBarChartDisplayValues } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
@@ -109,21 +106,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       commonOptionsBuilder.addHideFrom(builder);
     },
   })
-  .setPanelOptions((builder, context) => {
-    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as Options));
-    let xaxisPlaceholder = 'First string or time field';
-    const viz = 'viz' in disp ? disp.viz[0] : undefined;
-    if (viz?.fields?.length) {
-      const first = viz.fields[0];
-      xaxisPlaceholder += ` (${getFieldDisplayName(first, viz)})`;
-    }
-
+  .setPanelOptions((builder) => {
     builder
       .addFieldNamePicker({
         path: 'xField',
         name: 'X Axis',
         settings: {
-          placeholderText: xaxisPlaceholder,
+          placeholderText: 'First string or time field',
         },
       })
       .addRadio({

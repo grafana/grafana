@@ -4,6 +4,7 @@
 const modifyJSX = (jsx) => {
   jsx.openingElement.name.name = 'IconBase';
   jsx.openingElement.attributes = [
+    ...jsx.openingElement.attributes,
     {
       type: 'JSXSpreadAttribute',
       argument: {
@@ -25,7 +26,7 @@ const comments = `
 // Run "yarn generate" to update.
 `;
 const imports = `
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 import { IconBase, IconProps } from '../IconBase';
 `;

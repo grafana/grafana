@@ -1,5 +1,5 @@
 // Libraries
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
@@ -9,6 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 // Components, enums
+import { useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import {
   deleteRichHistory,
   initRichHistory,
@@ -19,7 +20,7 @@ import {
   updateHistorySearchFilters,
 } from '../state/history';
 
-import { RichHistory, Tabs } from './RichHistory';
+import { RichHistory } from './RichHistory';
 
 //Actions
 
@@ -28,11 +29,9 @@ function mapStateToProps(state: StoreState) {
   const richHistorySearchFilters = explore.richHistorySearchFilters;
   const { richHistorySettings, richHistory, richHistoryTotal } = explore;
 
-  const firstTab = richHistorySettings?.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory;
   return {
     richHistory,
     richHistoryTotal,
-    firstTab,
     richHistorySettings,
     richHistorySearchFilters,
   };
@@ -61,7 +60,6 @@ export function RichHistoryContainer(props: Props) {
   const {
     richHistory,
     richHistoryTotal,
-    firstTab,
     deleteRichHistory,
     initRichHistory,
     loadRichHistory,
@@ -76,12 +74,22 @@ export function RichHistoryContainer(props: Props) {
 
   useEffect(() => {
     initRichHistory();
-    reportInteraction('grafana_explore_query_history_opened', {
-      queryHistoryEnabled: config.queryHistoryEnabled,
-    });
   }, [initRichHistory]);
 
-  if (!richHistorySettings) {
+  const { selectedTab } = useQueriesDrawerContext();
+  const [tracked, setTracked] = useState(false);
+
+  useEffect(() => {
+    if (!tracked) {
+      setTracked(true);
+      reportInteraction('grafana_explore_query_history_opened', {
+        queryHistoryEnabled: config.queryHistoryEnabled,
+        selectedTab,
+      });
+    }
+  }, [tracked, selectedTab]);
+
+  if (!richHistorySettings || !selectedTab) {
     return (
       <span>
         <Trans i18nKey="explore.rich-history-container.loading">Loading...</Trans>
@@ -93,7 +101,7 @@ export function RichHistoryContainer(props: Props) {
     <RichHistory
       richHistory={richHistory}
       richHistoryTotal={richHistoryTotal}
-      firstTab={firstTab}
+      firstTab={selectedTab}
       onClose={onClose}
       height={theme.components.horizontalDrawer.defaultHeight}
       deleteRichHistory={deleteRichHistory}

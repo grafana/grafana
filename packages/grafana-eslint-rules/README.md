@@ -24,8 +24,147 @@ Avoid direct use of `animation*` or `transition*` properties.
 
 To account for users with motion sensitivities, these should always be wrapped in a [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) media query.
 
-`@grafana/ui` exposes a `handledReducedMotion` utility function that can be used to handle this.
+There is a `handleMotion` utility function exposed on the theme that can help with this.
+
+#### Examples
+
+```tsx
+// Bad ❌
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    animationName: rotate,
+    animationDuration: '2s',
+    animationIterationCount: 'infinite',
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    [theme.transitions.handleMotion('no-preference')]: {
+      animationName: rotate,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animationName: pulse,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    '@media (prefers-reduced-motion: no-preference)': {
+      animationName: rotate,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      animationName: pulse,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+  }),
+});
+```
+
+Note we've switched the potentially sensitive rotating animation to a less intense pulse animation when `prefers-reduced-motion` is set.
+
+Animations that involve only non-moving properties, like opacity, color, and blurs, are unlikely to be problematic. In those cases, you still need to wrap the animation in a `prefers-reduced-motion` media query, but you can use the same animation for both cases:
+
+```tsx
+// Bad ❌
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    transition: theme.transitions.create(['background-color'], {
+      duration: theme.transitions.duration.short,
+    }),
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['background-color'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    '@media (prefers-reduced-motion: no-preference), @media (prefers-reduced-motion: reduce)': {
+      transition: theme.transitions.create(['background-color'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  }),
+});
+```
 
 ### `theme-token-usage`
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
+
+### `no-untranslated-strings`
+
+Check if strings are marked for translation.
+
+```tsx
+// Bad ❌
+<InlineToast placement="top" referenceElement={buttonRef.current}>
+  Copied
+</InlineToast>
+
+// Good ✅
+<InlineToast placement="top" referenceElement={buttonRef.current}>
+  <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+</InlineToast>
+
+```
+
+#### Passing variables to translations
+
+```tsx
+// Bad ❌
+const SearchTitle = ({ term }) => <div>Results for {term}</div>;
+
+// Good ✅
+const SearchTitle = ({ term }) => <Trans i18nKey="search-page.results-title">Results for {{ term }}</Trans>;
+
+// Good ✅ (if you need to interpolate variables inside nested components)
+const SearchTerm = ({ term }) => <Text color="success">{term}</Text>;
+const SearchTitle = ({ term }) => (
+  <Trans i18nKey="search-page.results-title">
+    Results for <SearchTerm term={term} />
+  </Trans>
+);
+
+// Good ✅ (if you need to interpolate variables and additional translated strings inside nested components)
+const SearchTitle = ({ term }) => (
+  <Trans i18nKey="search-page.results-title" values={{ myVariable: term }}>
+    Results for <Text color="success">{'{{ myVariable }}'} and this translated text is also in green</Text>
+  </Trans>
+);
+```
+
+#### How to translate props or attributes
+
+Right now, we only check if a string is wrapped up by the `Trans` tag. We currently do not apply this rule to props, attributes or similar, but we also ask for them to be translated with the `t()` function.
+
+```tsx
+// Bad ❌
+<input type="value" placeholder={'Username'} />;
+
+// Good ✅
+const placeholder = t('form.username-placeholder', 'Username');
+return <input type="value" placeholder={placeholder} />;
+```
+
+Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)

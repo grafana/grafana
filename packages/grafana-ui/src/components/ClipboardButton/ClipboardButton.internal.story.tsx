@@ -1,5 +1,4 @@
-import { Story, Meta } from '@storybook/react';
-import React from 'react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
@@ -25,7 +24,7 @@ interface StoryProps extends Partial<Props> {
   buttonText: string;
 }
 
-export const ClipboardButton: Story<StoryProps> = (args) => {
+export const ClipboardButton: StoryFn<StoryProps> = (args) => {
   const shareUrl = 'https://grafana.com/d/abcDEF-34t';
 
   return (
@@ -35,7 +34,7 @@ export const ClipboardButton: Story<StoryProps> = (args) => {
   );
 };
 
-export const AsInputFieldAddon: Story<StoryProps> = (args) => {
+export const AsInputFieldAddon: StoryFn<StoryProps> = (args) => {
   const shareUrl = 'https://grafana.com/d/abcDEF-34t';
 
   return (

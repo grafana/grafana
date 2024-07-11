@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -33,9 +32,9 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db := sqlstore.InitTestDB(t)
-	statsService := &sqlStatsService{db: db}
-	populateDB(t, db, db.Cfg)
+	store, cfg := db.InitTestReplDBWithCfg(t)
+	statsService := &sqlStatsService{db: store}
+	populateDB(t, store, cfg)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
 		query := stats.GetSystemStatsQuery{}
@@ -50,7 +49,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
 		assert.NotNil(t, result.DatabaseCreatedTime)
-		assert.Equal(t, db.Dialect.DriverName(), result.DatabaseDriver)
+		assert.Equal(t, store.GetDialect().DriverName(), result.DatabaseDriver)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -88,7 +87,10 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
 	t.Helper()
 
 	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
-	userSvc, _ := userimpl.ProvideService(db, orgService, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+	userSvc, _ := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(),
+	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	correlationsSvc := correlationstest.New(db, cfg, bus)
@@ -155,8 +157,8 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db := sqlstore.InitTestDB(t)
-	statsService := ProvideService(&setting.Cfg{}, db)
+	store, cfg := db.InitTestReplDBWithCfg(t)
+	statsService := ProvideService(cfg, store)
 
 	query := stats.GetAdminStatsQuery{}
 	_, err := statsService.GetAdminStats(context.Background(), &query)

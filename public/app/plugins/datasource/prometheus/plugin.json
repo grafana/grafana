@@ -7,52 +7,62 @@
     {
       "method": "POST",
       "path": "api/v1/query",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "datasources:query"
     },
     {
       "method": "POST",
       "path": "api/v1/query_range",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "datasources:query"
     },
     {
       "method": "POST",
       "path": "api/v1/series",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "datasources:query"
     },
     {
       "method": "POST",
       "path": "api/v1/labels",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "datasources:query"
     },
     {
       "method": "POST",
       "path": "api/v1/query_exemplars",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "datasources:query"
     },
     {
       "method": "GET",
       "path": "/rules",
-      "reqRole": "Viewer"
+      "reqRole": "Viewer",
+      "reqAction": "datasources:query"
     },
     {
       "method": "POST",
       "path": "/rules",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "datasources:write"
     },
     {
       "method": "DELETE",
       "path": "/rules",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "datasources:write"
     },
     {
       "method": "DELETE",
       "path": "/config/v1/rules",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "datasources:write"
     },
     {
       "method": "POST",
       "path": "/config/v1/rules",
-      "reqRole": "Editor"
+      "reqRole": "Editor",
+      "reqAction": "datasources:write"
     }
   ],
   "includes": [

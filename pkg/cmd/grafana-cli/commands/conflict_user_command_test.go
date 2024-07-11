@@ -12,6 +12,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -109,9 +110,9 @@ func TestBuildConflictBlock(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					u := user.User{
 						Email:   u.Email,
@@ -217,9 +218,9 @@ conflict: test2
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					u := user.User{
 						Email:   u.Email,
@@ -398,9 +399,9 @@ func TestGetConflictingUsers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					u := user.User{
 						Email:            u.Email,
@@ -510,9 +511,9 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					cmd := user.User{
 						Email:   u.Email,
@@ -580,7 +581,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 				rawSQL := fmt.Sprintf(
 					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,\"2024-03-18T15:25:32\",\"2024-03-18T15:25:32\")",
 					sqlStore.Quote("user"),
-					sqlStore.Dialect.BooleanStr(false),
+					sqlStore.GetDialect().BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, dupUserLogincmd.Email, dupUserLogincmd.Login, dupUserLogincmd.OrgID)
 				if err != nil {
@@ -636,9 +637,9 @@ func TestIntegrationMergeUser(t *testing.T) {
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
-		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg())
+		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg(), tracing.InitializeTracerForTest())
 		require.NoError(t, err)
-		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
+		team1, err := teamSvc.CreateTeam(context.Background(), "team1 name", "", 1)
 		require.NoError(t, err)
 		const testOrgID int64 = 1
 
@@ -660,7 +661,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 				rawSQL := fmt.Sprintf(
 					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 					sqlStore.Quote("user"),
-					sqlStore.Dialect.BooleanStr(false),
+					sqlStore.GetDialect().BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 				if err != nil {
@@ -692,7 +693,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 				rawSQL := fmt.Sprintf(
 					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 					sqlStore.Quote("user"),
-					sqlStore.Dialect.BooleanStr(false),
+					sqlStore.GetDialect().BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 				if err != nil {
@@ -705,14 +706,12 @@ func TestIntegrationMergeUser(t *testing.T) {
 					return user.ErrUserNotFound
 				}
 				require.NoError(t, err)
-				return nil
+				// this is the user we want to update to another team
+				return teamimpl.AddOrUpdateTeamMemberHook(sess, 1, testOrgID, team1.ID, false, 0)
 			})
 			if err != nil {
 				t.Error(err)
 			}
-			// this is the user we want to update to another team
-			err = teamSvc.AddTeamMember(context.Background(), 1, testOrgID, team1.ID, false, 0)
-			require.NoError(t, err)
 
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -860,7 +859,7 @@ conflict: test2
 						rawSQL := fmt.Sprintf(
 							"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 							sqlStore.Quote("user"),
-							sqlStore.Dialect.BooleanStr(false),
+							sqlStore.GetDialect().BooleanStr(false),
 						)
 						result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 						if err != nil {

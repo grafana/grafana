@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
 import { PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinkExtensions } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -16,13 +16,13 @@ import { ToolbarExtensionPoint } from './ToolbarExtensionPoint';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv');
 
 const contextSrvMock = jest.mocked(contextSrv);
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
 
 type storeOptions = {
   targets: DataQuery[];
@@ -54,7 +54,7 @@ function renderWithExploreStore(
 describe('ToolbarExtensionPoint', () => {
   describe('with extension points', () => {
     beforeAll(() => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      usePluginLinkExtensionsMock.mockReturnValue({
         extensions: [
           {
             pluginId: 'grafana',
@@ -74,6 +74,7 @@ describe('ToolbarExtensionPoint', () => {
             path: '/a/grafana-ml-ap/forecast',
           },
         ],
+        isLoading: false,
       });
     });
 
@@ -99,7 +100,9 @@ describe('ToolbarExtensionPoint', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
       await userEvent.click(screen.getByRole('menuitem', { name: 'Add to dashboard' }));
 
-      const { extensions } = getPluginLinkExtensions({ extensionPointId: PluginExtensionPoints.ExploreToolbarAction });
+      const { extensions } = usePluginLinkExtensionsMock({
+        extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+      });
       const [extension] = extensions;
 
       expect(jest.mocked(extension.onClick)).toBeCalledTimes(1);
@@ -125,7 +128,7 @@ describe('ToolbarExtensionPoint', () => {
         data,
       });
 
-      const [options] = getPluginLinkExtensionsMock.mock.calls[0];
+      const [options] = usePluginLinkExtensionsMock.mock.calls[0];
       const { context } = options;
 
       expect(context).toEqual({
@@ -150,7 +153,7 @@ describe('ToolbarExtensionPoint', () => {
         data,
       });
 
-      const [options] = getPluginLinkExtensionsMock.mock.calls[0];
+      const [options] = usePluginLinkExtensionsMock.mock.calls[0];
       const { context } = options;
 
       expect(context).toHaveProperty('timeZone', 'browser');
@@ -159,7 +162,7 @@ describe('ToolbarExtensionPoint', () => {
     it('should correct extension point id when fetching extensions', async () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" />);
 
-      const [options] = getPluginLinkExtensionsMock.mock.calls[0];
+      const [options] = usePluginLinkExtensionsMock.mock.calls[0];
       const { extensionPointId } = options;
 
       expect(extensionPointId).toBe(PluginExtensionPoints.ExploreToolbarAction);
@@ -168,7 +171,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('with extension points without categories', () => {
     beforeAll(() => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      usePluginLinkExtensionsMock.mockReturnValue({
         extensions: [
           {
             pluginId: 'grafana',
@@ -187,6 +190,7 @@ describe('ToolbarExtensionPoint', () => {
             path: '/a/grafana-ml-ap/forecast',
           },
         ],
+        isLoading: false,
       });
     });
 
@@ -211,7 +215,7 @@ describe('ToolbarExtensionPoint', () => {
   describe('without extension points', () => {
     beforeAll(() => {
       contextSrvMock.hasPermission.mockReturnValue(true);
-      getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+      usePluginLinkExtensionsMock.mockReturnValue({ extensions: [], isLoading: false });
     });
 
     it('should render "add to dashboard" action button if one pane is visible', async () => {
@@ -229,7 +233,7 @@ describe('ToolbarExtensionPoint', () => {
   describe('with insufficient permissions', () => {
     beforeAll(() => {
       contextSrvMock.hasPermission.mockReturnValue(false);
-      getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+      usePluginLinkExtensionsMock.mockReturnValue({ extensions: [], isLoading: false });
     });
 
     it('should not render "add to dashboard" action button', async () => {

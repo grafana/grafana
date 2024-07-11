@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,33 @@ import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
+import { ITEM_TYPES } from './ContentOutlineItem';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
+
+function scrollableChildren(item: ContentOutlineItemContextProps) {
+  return item.children?.filter((child) => child.type !== 'filter') || [];
+}
+
+type SectionsExpanded = Record<string, boolean>;
+
+function shouldBeActive(
+  item: ContentOutlineItemContextProps,
+  activeSectionId: string,
+  activeSectionChildId: string | undefined,
+  sectionsExpanded: SectionsExpanded
+) {
+  const isAnActiveParent = activeSectionId === item.id;
+  const isAnActiveChild = activeSectionChildId === item.id;
+  const isCollapsed = !sectionsExpanded[item.id];
+  const containsScrollableChildren = scrollableChildren(item).length > 0;
+  const anyChildActive = isChildActive(item, activeSectionChildId) && !sectionsExpanded[item.id];
+
+  if (containsScrollableChildren) {
+    return isCollapsed && (isAnActiveParent || anyChildActive);
+  } else {
+    return isAnActiveParent || isAnActiveChild;
+  }
+}
 
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
@@ -22,31 +48,55 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
   );
 
+  const outlineItemsHaveDeleteButton = outlineItems.some((item) => item.children?.some((child) => child.onRemove));
+
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
-      acc[item.id] = false;
+      acc[item.id] = !!item.expanded;
       return acc;
     }, {});
   });
 
-  const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
+  const scrollIntoView = (
+    ref: HTMLElement | null,
+    itemPanelId: string,
+    itemType: ITEM_TYPES | undefined,
+    customOffsetTop = 0
+  ) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
 
+    if (!el) {
+      return;
+    }
+
     do {
       scrollValue += el?.offsetTop || 0;
-      el = el?.offsetParent as HTMLElement;
+      el = el?.offsetParent instanceof HTMLElement ? el.offsetParent : undefined;
     } while (el && el !== scroller);
 
     scroller?.scroll({
       top: scrollValue + customOffsetTop,
       behavior: 'smooth',
     });
+  };
 
-    reportInteraction('explore_toolbar_contentoutline_clicked', {
-      item: 'select_section',
-      type: itemPanelId,
-    });
+  const handleItemClicked = (item: ContentOutlineItemContextProps) => {
+    if (item.level === 'child' && item.type === 'filter') {
+      const activeParent = outlineItems.find((parent) => {
+        return parent.children?.find((child) => child.id === item.id);
+      });
+
+      if (activeParent) {
+        scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.type, activeParent.customTopOffset);
+      }
+    } else {
+      scrollIntoView(item.ref, item.panelId, item.type, item.customTopOffset);
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'select_section',
+        type: item.panelId,
+      });
+    }
   };
 
   const toggle = () => {
@@ -80,7 +130,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       }
 
       // Check children
-      const activeChild = item.children?.find((child) => {
+      const activeChild = scrollableChildren(item).find((child) => {
         const offsetTop = child.customTopOffset || 0;
         let childTop = child?.ref?.getBoundingClientRect().top;
         return childTop && childTop >= offsetTop;
@@ -95,10 +145,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       if (activeItem) {
         setActiveSectionId(activeItem.id);
         setActiveSectionChildId(undefined);
-        setSectionsExpanded((prev) => ({
-          ...prev,
-          [item.id]: false,
-        }));
         break;
       }
     }
@@ -119,67 +165,73 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             aria-expanded={contentOutlineExpanded}
           />
 
-          {outlineItems.map((item) => (
-            <React.Fragment key={item.id}>
-              <ContentOutlineItemButton
-                key={item.id}
-                title={contentOutlineExpanded ? item.title : undefined}
-                contentOutlineExpanded={contentOutlineExpanded}
-                className={cx(styles.buttonStyles, {
-                  [styles.justifyCenter]: !contentOutlineExpanded,
-                  [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
-                })}
-                indentStyle={cx({
-                  [styles.indentRoot]: outlineItemsShouldIndent && item.children?.length === 0,
-                  [styles.sectionHighlighter]:
-                    isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
-                })}
-                icon={item.icon}
-                onClick={() => scrollIntoView(item.ref, item.panelId)}
-                tooltip={item.title}
-                collapsible={isCollapsible(item)}
-                collapsed={!sectionsExpanded[item.id]}
-                toggleCollapsed={() => toggleSection(item.id)}
-                isActive={
-                  (isChildActive(item, activeSectionChildId) && !sectionsExpanded[item.id]) ||
-                  (activeSectionId === item.id && !sectionsExpanded[item.id])
-                }
-                sectionId={item.id}
-              />
-              <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
-                {item.children &&
-                  (!item.mergeSingleChild || item.children.length !== 1) &&
-                  sectionsExpanded[item.id] &&
-                  item.children.map((child, i) => (
-                    <div key={child.id} className={styles.itemWrapper}>
-                      {contentOutlineExpanded && (
-                        <div
-                          className={cx(styles.itemConnector, {
-                            [styles.firstItemConnector]: i === 0,
-                            [styles.lastItemConnector]: i === (item.children?.length || 0) - 1,
+          {outlineItems.map((item) => {
+            return (
+              <Fragment key={item.id}>
+                <ContentOutlineItemButton
+                  key={item.id}
+                  title={contentOutlineExpanded ? item.title : undefined}
+                  contentOutlineExpanded={contentOutlineExpanded}
+                  className={cx(styles.buttonStyles, {
+                    [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
+                    [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
+                  })}
+                  indentStyle={cx({
+                    [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
+                    [styles.sectionHighlighter]:
+                      isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
+                  })}
+                  icon={item.icon}
+                  onClick={() => handleItemClicked(item)}
+                  tooltip={item.title}
+                  collapsible={isCollapsible(item)}
+                  collapsed={!sectionsExpanded[item.id]}
+                  toggleCollapsed={() => toggleSection(item.id)}
+                  isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, sectionsExpanded)}
+                  sectionId={item.id}
+                  color={item.color}
+                />
+                <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
+                  {item.children &&
+                    isCollapsible(item) &&
+                    sectionsExpanded[item.id] &&
+                    item.children.map((child, i) => (
+                      <div key={child.id} className={styles.itemWrapper}>
+                        {contentOutlineExpanded && (
+                          <div
+                            className={cx(styles.itemConnector, {
+                              [styles.firstItemConnector]: i === 0,
+                              [styles.lastItemConnector]: i === (item.children?.length || 0) - 1,
+                            })}
+                          />
+                        )}
+                        <ContentOutlineItemButton
+                          key={child.id}
+                          title={contentOutlineExpanded ? child.title : undefined}
+                          contentOutlineExpanded={contentOutlineExpanded}
+                          icon={contentOutlineExpanded ? undefined : item.icon}
+                          className={cx(styles.buttonStyles, {
+                            [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
+                            [styles.sectionHighlighter]:
+                              isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                           })}
+                          indentStyle={styles.indentChild}
+                          onClick={(e) => {
+                            handleItemClicked(child);
+                            child.onClick?.(e);
+                          }}
+                          tooltip={child.title}
+                          isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}
+                          extraHighlight={child.highlight}
+                          color={child.color}
+                          onRemove={child.onRemove ? () => child.onRemove?.(child.id) : undefined}
                         />
-                      )}
-                      <ContentOutlineItemButton
-                        key={child.id}
-                        title={contentOutlineExpanded ? child.title : undefined}
-                        contentOutlineExpanded={contentOutlineExpanded}
-                        icon={contentOutlineExpanded ? undefined : item.icon}
-                        className={cx(styles.buttonStyles, {
-                          [styles.justifyCenter]: !contentOutlineExpanded,
-                          [styles.sectionHighlighter]:
-                            isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
-                        })}
-                        indentStyle={styles.indentChild}
-                        onClick={() => scrollIntoView(child.ref, child.panelId, child.customTopOffset)}
-                        tooltip={child.title}
-                        isActive={activeSectionChildId === child.id}
-                      />
-                    </div>
-                  ))}
-              </div>
-            </React.Fragment>
-          ))}
+                      </div>
+                    ))}
+                </div>
+              </Fragment>
+            );
+          })}
         </div>
       </CustomScrollbar>
     </PanelContainer>
@@ -219,10 +271,10 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       marginRight: expanded ? theme.spacing(0.5) : undefined,
     }),
     indentRoot: css({
-      paddingLeft: theme.spacing(4),
+      paddingLeft: theme.spacing(3),
     }),
     indentChild: css({
-      paddingLeft: expanded ? theme.spacing(7) : theme.spacing(4),
+      paddingLeft: expanded ? theme.spacing(5) : theme.spacing(2.75),
     }),
     itemWrapper: css({
       display: 'flex',
@@ -237,7 +289,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
         borderRight: `1px solid ${theme.colors.border.medium}`,
         content: '""',
         height: '100%',
-        left: 48,
+        left: theme.spacing(4.75),
         position: 'absolute',
         transform: 'translateX(50%)',
       },

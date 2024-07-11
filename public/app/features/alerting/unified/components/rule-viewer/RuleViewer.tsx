@@ -1,19 +1,23 @@
 import { css } from '@emotion/css';
-import { isEmpty, truncate } from 'lodash';
-import React, { useState } from 'react';
+import { chain, isEmpty, truncate } from 'lodash';
+import { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
-import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
+import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 import {
+  RulePluginOrigin,
+  getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
   isGrafanaRulerRule,
@@ -28,8 +32,6 @@ import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
-import { useAlertRulePageActions } from './Actions';
-import { useDeleteModal } from './DeleteModal';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
@@ -40,7 +42,7 @@ import { InstancesList } from './tabs/Instances';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 
-enum ActiveTab {
+export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
   History = 'history',
@@ -57,12 +59,6 @@ const RuleViewer = () => {
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
 
-  const [deleteModal, showDeleteModal] = useDeleteModal();
-  const actions = useAlertRulePageActions({
-    handleDuplicateRule: setDuplicateRuleIdentifier,
-    handleDelete: showDeleteModal,
-  });
-
   const { annotations, promRule } = rule;
   const hasError = isErrorHealth(rule.promRule?.health);
 
@@ -73,6 +69,7 @@ const RuleViewer = () => {
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const showError = hasError && !isPaused;
+  const ruleOrigin = getRulePluginOrigin(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -88,9 +85,10 @@ const RuleViewer = () => {
           state={isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
+          ruleOrigin={ruleOrigin}
         />
       )}
-      actions={actions}
+      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
@@ -123,7 +121,6 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
         </TabContent>
       </Stack>
-      {deleteModal}
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
           redirectTo={true}
@@ -223,15 +220,19 @@ interface TitleProps {
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   ruleType?: PromRuleType;
+  ruleOrigin?: RulePluginOrigin;
 }
 
-export const Title = ({ name, paused = false, state, health, ruleType }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
+  const [queryParams] = useQueryParams();
   const isRecordingRule = ruleType === PromRuleType.Recording;
+  const returnTo = queryParams.returnTo ? String(queryParams.returnTo) : '/alerting/list';
 
   return (
     <div className={styles.title}>
-      <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
+      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
       <Text variant="h1" truncate>
         {name}
       </Text>
@@ -250,7 +251,7 @@ export const Title = ({ name, paused = false, state, health, ruleType }: TitlePr
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
-function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
+export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
   const tabFromQuery = queryParams['tab'];
 
@@ -276,7 +277,7 @@ function usePageNav(rule: CombinedRule) {
 
   const summary = annotations[Annotation.summary];
   const isAlertType = isAlertingRule(promRule);
-  const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
+  const numberOfInstance = isAlertType ? calculateTotalInstances(rule.instanceTotals) : undefined;
 
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
@@ -341,6 +342,14 @@ function usePageNav(rule: CombinedRule) {
     activeTab,
   };
 }
+
+const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
+  return chain(stats)
+    .pick([AlertInstanceTotalState.Alerting, AlertInstanceTotalState.Pending, AlertInstanceTotalState.Normal])
+    .values()
+    .sum()
+    .value();
+};
 
 const getStyles = () => ({
   title: css({

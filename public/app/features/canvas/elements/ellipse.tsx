@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -115,6 +114,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
 
     const data: CanvasElementData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,
@@ -190,6 +190,24 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
         },
       });
   },
+
+  customConnectionAnchors: [
+    // points along the left edge
+    { x: -1, y: 0 }, // middle left
+    { x: -0.7, y: 0.7 },
+
+    // points along the top edge
+    { x: 0, y: 1 }, // top
+    { x: 0.7, y: 0.7 },
+
+    // points along the right edge
+    { x: 1, y: 0 }, // middle right
+    { x: 0.7, y: -0.7 },
+
+    // points along the bottom edge
+    { x: 0, y: -1 }, // bottom
+    { x: -0.7, y: -0.7 },
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {

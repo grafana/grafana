@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -300,14 +300,14 @@ function ActionsAndBadge({ muteTiming, alertManagerSourceName, setMuteTimingName
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-flow: column nowrap;
-  `,
-  muteTimingsButtons: css`
-    margin-bottom: ${theme.spacing(2)};
-    align-self: flex-end;
-  `,
+  container: css({
+    display: 'flex',
+    flexFlow: 'column nowrap',
+  }),
+  muteTimingsButtons: css({
+    marginBottom: theme.spacing(2),
+    alignSelf: 'flex-end',
+  }),
   disabledBadge: css({
     height: 'fit-content',
   }),

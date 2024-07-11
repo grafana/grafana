@@ -54,13 +54,25 @@ type Session = sqlstore.DBSession
 type InitTestDBOpt = sqlstore.InitTestDBOpt
 
 var SetupTestDB = sqlstore.SetupTestDB
-var InitTestDB = sqlstore.InitTestDB
 var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
 
-func InitTestDBwithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
-	store := InitTestDB(t, opts...)
-	return store, store.Cfg
+func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
+	db, _ := InitTestDBWithCfg(t, opts...)
+	return db
+}
+
+func InitTestReplDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.ReplStore, *setting.Cfg) {
+	return sqlstore.InitTestReplDB(t, opts...)
+}
+
+func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.ReplStore {
+	db, _ := InitTestReplDBWithCfg(t, opts...)
+	return db
+}
+
+func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
+	return sqlstore.InitTestDB(t, opts...)
 }
 
 func IsTestDbSQLite() bool {

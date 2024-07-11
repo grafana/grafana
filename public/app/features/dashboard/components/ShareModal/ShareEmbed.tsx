@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { RawTimeRange, TimeRange } from '@grafana/data';
@@ -9,7 +9,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
-import { buildIframeHtml } from './utils';
+import { buildIframeHtml, getTrackingSource } from './utils';
 
 interface Props extends Omit<ShareModalTabProps, 'panel' | 'dashboard'> {
   panel?: { timeFrom?: string; id: number };
@@ -24,7 +24,7 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
   const [iframeHtml, setIframeHtml] = useState('');
 
   useEffectOnce(() => {
-    reportInteraction('grafana_dashboards_embed_share_viewed');
+    reportInteraction('grafana_dashboards_embed_share_viewed', { shareResource: getTrackingSource(panel) });
   });
 
   useEffect(() => {
@@ -85,6 +85,7 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
             DashboardInteractions.embedSnippetCopy({
               currentTimeRange: useCurrentTimeRange,
               theme: selectedTheme,
+              shareResource: getTrackingSource(panel),
             });
           }}
         >

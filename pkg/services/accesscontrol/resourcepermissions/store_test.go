@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -527,7 +528,10 @@ func seedResourcePermissions(
 	orgID, err := orgService.GetOrCreate(context.Background(), "test")
 	require.NoError(t, err)
 
-	usrSvc, err := userimpl.ProvideService(sql, orgService, cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	create := func(login string, isServiceAccount bool) {
@@ -558,9 +562,8 @@ func seedResourcePermissions(
 }
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
-	sql := db.InitTestDB(t)
-	asService := NewActionSetService()
-	return NewStore(sql, featuremgmt.WithFeatures(), &asService), sql, sql.Cfg
+	sql, cfg := db.InitTestDBWithCfg(t)
+	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -755,49 +758,175 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	return permissions
 }
 
-func TestStore_ResourcePermissionsActionSets(t *testing.T) {
+func TestStore_StoreActionSet(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	type actionSetTest struct {
-		desc      string
-		orgID     int64
-		actionSet ActionSet
+		desc     string
+		resource string
+		action   string
+		actions  []string
 	}
 
 	tests := []actionSetTest{
 		{
-			desc:  "should be able to store actionset",
-			orgID: 1,
-			actionSet: ActionSet{
-				Actions: []string{"folders:read", "folders:write"},
+			desc:     "should be able to store action set",
+			resource: "folders",
+			action:   "edit",
+			actions:  []string{"folders:read", "folders:write"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			asService := NewActionSetService()
+			asService.StoreActionSet(tt.resource, tt.action, tt.actions)
+
+			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSet := asService.ResolveActionSet(actionSetName)
+			require.Equal(t, tt.actions, actionSet)
+		})
+	}
+}
+
+func TestStore_ResolveActionSet(t *testing.T) {
+	actionSetService := NewActionSetService()
+	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+
+	type actionSetTest struct {
+		desc               string
+		action             string
+		expectedActionSets []string
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:               "should return empty list for an action that is not a part of any action sets",
+			action:             "datasources:query",
+			expectedActionSets: []string{},
+		},
+		{
+			desc:               "should be able to resolve one action set for the resource of the same type",
+			action:             "folders:write",
+			expectedActionSets: []string{"folders:edit"},
+		},
+		{
+			desc:               "should be able to resolve multiple action sets for the resource of the same type",
+			action:             "folders:read",
+			expectedActionSets: []string{"folders:view", "folders:edit"},
+		},
+		{
+			desc:               "should be able to resolve multiple action sets for the resource of a different type",
+			action:             "dashboards:read",
+			expectedActionSets: []string{"folders:view", "folders:edit", "dashboards:view"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			actionSets := actionSetService.ResolveAction(tt.action)
+			require.ElementsMatch(t, tt.expectedActionSets, actionSets)
+		})
+	}
+}
+
+func TestStore_ExpandActions(t *testing.T) {
+	actionSetService := NewActionSetService()
+	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+
+	type actionSetTest struct {
+		desc                string
+		permissions         []accesscontrol.Permission
+		expectedPermissions []accesscontrol.Permission
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:                "should return empty list if no permissions are passed in",
+			permissions:         []accesscontrol.Permission{},
+			expectedPermissions: []accesscontrol.Permission{},
+		},
+		{
+			desc: "should return unchanged permissions if none of actions are part of any action sets",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+		},
+		{
+			desc: "should return unchanged permissions if none of actions are part of any action sets",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+		},
+		{
+			desc: "should be able to expand one permission and leave others unchanged",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "dashboards:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, _, _ := setupTestEnv(t)
-			store.features = featuremgmt.WithFeatures([]any{featuremgmt.FlagAccessActionSets})
-
-			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
-				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           tt.actionSet.Actions,
-						Resource:          "folders",
-						Permission:        "edit",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
-				},
-			}, ResourceHooks{})
-			require.NoError(t, err)
-
-			actionname := fmt.Sprintf("%s:%s", "folders", "edit")
-			actionSet := store.actionSetService.GetActionSet(actionname)
-			require.Equal(t, tt.actionSet.Actions, actionSet)
+			permissions := actionSetService.ExpandActionSets(tt.permissions)
+			require.ElementsMatch(t, tt.expectedPermissions, permissions)
 		})
 	}
 }

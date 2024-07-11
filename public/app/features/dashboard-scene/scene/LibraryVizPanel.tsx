@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -19,7 +17,7 @@ import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
 
-interface LibraryVizPanelState extends SceneObjectState {
+export interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
   title: string;
   uid: string;
@@ -65,6 +63,9 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       pluginVersion: libPanelModel.pluginVersion,
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
+      // To be replaced with it's own option persisted option instead derived
+      hoverHeader: !libPanelModel.title && !libPanelModel.timeFrom && !libPanelModel.timeShift,
+      hoverHeaderOffset: 0,
       $data: createPanelDataProvider(libPanelModel),
       menu: new VizPanelMenu({ $behaviors: [panelMenuBehavior] }),
       titleItems: [

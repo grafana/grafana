@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -27,6 +26,7 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
       </p>
       <a
         href="https://grafana.com/docs/grafana/next/dashboards/dashboard-public/"
+        target="blank"
         className={cx('text-link', styles.unsupportedDataSourceDescription)}
       >
         <Trans i18nKey="public-dashboard.modal-alerts.unsupport-data-source-alert-readmore-link">
@@ -38,8 +38,8 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  unsupportedDataSourceDescription: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(1)};
-  `,
+  unsupportedDataSourceDescription: css({
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(1),
+  }),
 });

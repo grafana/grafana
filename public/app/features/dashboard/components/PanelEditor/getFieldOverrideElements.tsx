@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import {
   FieldConfigOptionsRegistry,
@@ -105,7 +105,7 @@ export function getFieldOverrideCategories(
       },
     });
 
-    const onMatcherConfigChange = (options: any) => {
+    const onMatcherConfigChange = (options: unknown) => {
       override.matcher.options = options;
       onOverrideChange(idx, override);
     };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PopValueActionMeta, RemoveValueActionMeta } from 'react-select';
 
 import {
@@ -10,7 +10,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, DataSourcePickerState, DataSourcePickerProps } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, MultiSelect } from '@grafana/ui';
+import { ActionMeta, Stack, PluginSignatureBadge, MultiSelect } from '@grafana/ui';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
 
@@ -168,9 +168,9 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
         getOptionLabel={(o) => {
           if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
             return (
-              <HorizontalGroup align="center" justify="space-between" height="auto">
+              <Stack alignItems="center" justifyContent="space-between">
                 <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-              </HorizontalGroup>
+              </Stack>
             );
           }
           return o.label || '';

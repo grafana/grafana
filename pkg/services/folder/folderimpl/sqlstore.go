@@ -9,13 +9,14 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,14 +25,13 @@ const DEFAULT_BATCH_SIZE = 999
 type sqlStore struct {
 	db  db.DB
 	log log.Logger
-	cfg *setting.Cfg
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg}
+func ProvideStore(db db.DB) *sqlStore {
+	return &sqlStore{db: db, log: log.New("folder-store")}
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -321,6 +321,13 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			}
 			sql.WriteString(")")
 		}
+
+		// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
+		if q.SignedInUser == nil || q.SignedInUser.GetID().Namespace() != identity.NamespaceServiceAccount {
+			sql.WriteString(" AND uid != ?")
+			args = append(args, accesscontrol.K6FolderUID)
+		}
+
 		sql.WriteString(" ORDER BY title ASC")
 
 		if q.Limit != 0 {
@@ -474,6 +481,12 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 				for _, uid := range partialUIDs {
 					args = append(args, uid)
 				}
+			}
+
+			// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
+			if q.SignedInUser == nil || q.SignedInUser.GetID().Namespace() != identity.NamespaceServiceAccount {
+				s.WriteString(" AND f0.uid != ? AND (f0.parent_uid != ? OR f0.parent_uid IS NULL)")
+				args = append(args, accesscontrol.K6FolderUID, accesscontrol.K6FolderUID)
 			}
 
 			if len(q.ancestorUIDs) == 0 {
