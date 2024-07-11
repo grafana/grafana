@@ -75,7 +75,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'silences':
       return t('nav.alerting-silences.title', 'Silences');
     case 'groups':
-      return t('nav.alerting-groups.title', 'Groups');
+      return t('nav.alerting-groups.title', 'Active notifications');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
     case 'cfg':
@@ -234,7 +234,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'silences':
       return t('nav.alerting-silences.subtitle', 'Stop notifications from one or more alerting rules');
     case 'groups':
-      return t('nav.alerting-groups.subtitle', 'See grouped alerts from an Alertmanager instance');
+      return t('nav.alerting-groups.subtitle', 'See grouped alerts with active notifications');
     case 'datasources':
       return t('nav.datasources.subtitle', 'Add and configure data sources');
     case 'correlations':
