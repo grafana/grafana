@@ -229,10 +229,9 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
       if (mappingRuleIdx === -1) {
         hints.push({
           type: 'EXPAND_RULES_WARNING',
-          label:
-            'Query contains a recording rule but we need an identifier to properly expand it. Please add an identifier label. ',
+          label: 'Query contains a recording rule. To be able to expand it please add an identifier label/value.',
           fix: {
-            label: 'Expand rules',
+            label: 'Add identifier label',
             action: {
               type: 'EXPAND_RULES_WARNING',
               query,
