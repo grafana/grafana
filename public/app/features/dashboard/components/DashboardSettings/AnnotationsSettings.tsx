@@ -48,10 +48,7 @@ function getSubPageNav(
   if (editItem) {
     return {
       text: editItem.name,
-      parentItem: parentItem && {
-        ...parentItem,
-        url: node.url,
-      },
+      parentItem,
     };
   }
 

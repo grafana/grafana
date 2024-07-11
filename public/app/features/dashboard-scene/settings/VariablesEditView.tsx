@@ -261,13 +261,11 @@ function VariableEditorSettingsView({
   onDelete,
   onValidateVariableName,
 }: VariableEditorSettingsEditViewProps) {
-  const parentTab = pageNav.children!.find((p) => p.active)!;
-  parentTab.parentItem = pageNav;
   const { name } = variable.useState();
 
   const editVariablePageNav = {
     text: name,
-    parentItem: parentTab,
+    parentItem: pageNav,
   };
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
