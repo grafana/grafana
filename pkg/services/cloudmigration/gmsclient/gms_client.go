@@ -171,7 +171,7 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 		}, nil
 	}
 
-	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/snapshots/%s/status", session.ClusterSlug, c.domain, snapshot.GMSSnapshotUID)
+	path := fmt.Sprintf("%s/api/v1/status/%s/status", buildBasePath(c.domain, session.ClusterSlug), snapshot.GMSSnapshotUID)
 
 	// Send the request to gms with the associated auth token
 	req, err := http.NewRequest(http.MethodGet, path, nil)
