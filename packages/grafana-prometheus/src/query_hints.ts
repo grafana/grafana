@@ -7,7 +7,7 @@ import { PrometheusDatasource } from './datasource';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
 import { PromVisualQuery } from './querybuilder/types';
-import { PromMetricsMetadata, RuleQueryMapping } from './types';
+import { PromMetricsMetadata, RecordingRuleIdentifier, RuleQueryMapping } from './types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
@@ -218,15 +218,14 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
     }
 
     if (mapping[ruleName].length > 1) {
-      const {
-        idx: mappingRuleIdx,
-        expandedQuery,
-        identifier,
-        identifierValue,
-      } = getRecordingRuleIdentifierIdx(query, ruleName, mapping[ruleName]);
+      const { expandedQuery, identifier, identifierValue } = getRecordingRuleIdentifierIdx(
+        query,
+        ruleName,
+        mapping[ruleName]
+      );
 
       // No identifier detected add warning
-      if (mappingRuleIdx === -1) {
+      if (expandedQuery === '') {
         hints.push({
           type: 'EXPAND_RULES_WARNING',
           label: 'Query contains a recording rule. To be able to expand it please add an identifier label/value.',
@@ -244,7 +243,7 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
         return {
           ...acc,
           [ruleName]: {
-            query: expandedQuery,
+            expandedQuery,
             identifier,
             identifierValue,
           },
@@ -254,7 +253,7 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
       return {
         ...acc,
         [ruleName]: {
-          query: mapping[ruleName][0].query,
+          expandedQuery: mapping[ruleName][0].query,
         },
       };
     }
@@ -279,11 +278,15 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
   return hints;
 }
 
-export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string, mapping: RuleQueryMapping[string]) {
+export function getRecordingRuleIdentifierIdx(
+  queryStr: string,
+  ruleName: string,
+  mapping: RuleQueryMapping[string]
+): RecordingRuleIdentifier {
   const { query } = buildVisualQueryFromString(queryStr);
   const queryMetricLabels: QueryBuilderLabelFilter[] = getQueryLabelsForRuleName(ruleName, query);
   if (queryMetricLabels.length === 0) {
-    return { idx: -1, identifier: '', identifierValue: '', expandedQuery: '' };
+    return { identifier: '', identifierValue: '', expandedQuery: '' };
   }
 
   let uuidLabel = '';
@@ -308,7 +311,6 @@ export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string
   });
 
   return {
-    idx: uuidLabelIdx,
     identifier: uuidLabel,
     identifierValue: uuidLabelValue,
     expandedQuery: mapping[uuidLabelIdx]?.query ?? '',

@@ -181,3 +181,8 @@ export type RuleQueryMapping = {
   }>;
 };
 
+export type RecordingRuleIdentifier = {
+  expandedQuery: string;
+  identifier?: string;
+  identifierValue?: string;
+};
