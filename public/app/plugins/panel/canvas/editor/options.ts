@@ -216,7 +216,7 @@ export const optionBuilder: OptionSuppliers = {
         id: 'enableOneClick',
         path: 'oneClickLinks',
         name: 'One-click',
-        description: 'When enabled, the top action or link in the list below works with a single click',
+        description: 'When enabled, the top link in the list below works with a single click',
         editor: standardEditorsRegistry.get('boolean').editor,
       })
       .addCustomEditor({
