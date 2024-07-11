@@ -1,12 +1,11 @@
-import { StandardEditorProps, DataLink } from '@grafana/data';
+import { StandardEditorProps, DataLink, VariableSuggestionsScope } from '@grafana/data';
 import { DataLinksInlineEditor } from '@grafana/ui';
-import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { CanvasElementOptions } from '../../panelcfg.gen';
 
 type Props = StandardEditorProps<DataLink[], CanvasElementOptions>;
 
-export function DataLinksEditor({ value, onChange, item }: Props) {
+export function DataLinksEditor({ value, onChange, item, context }: Props) {
   if (!value) {
     value = [];
   }
@@ -17,7 +16,7 @@ export function DataLinksEditor({ value, onChange, item }: Props) {
     <DataLinksInlineEditor
       links={value}
       onChange={onChange}
-      getSuggestions={getPanelLinksVariableSuggestions}
+      getSuggestions={() => (context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [])}
       data={[]}
       oneClickEnabled={settings?.oneClickLinks}
     />
