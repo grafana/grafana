@@ -1,22 +1,16 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { components } from 'react-select';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { components, MultiValueRemoveProps } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { TagBadge } from './TagBadge';
-import { TagOption } from './TagOption';
+import { TagBadge, getStyles as getTagBadgeStyles } from './TagBadge';
+import { TagOption, TagSelectOption } from './TagOption';
 
 export interface TermCount {
   term: string;
-  count: number;
-}
-
-interface TagSelectOption {
-  value: string;
-  label: string;
   count: number;
 }
 
@@ -146,7 +140,7 @@ export const TagFilter = ({
       MultiValueLabel: () => {
         return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
-      MultiValueRemove(props: any) {
+      MultiValueRemove(props: MultiValueRemoveProps<TagSelectOption>) {
         const { data } = props;
 
         return (
@@ -173,31 +167,35 @@ export const TagFilter = ({
 
 TagFilter.displayName = 'TagFilter';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  tagFilter: css`
-    position: relative;
-    min-width: 180px;
-    flex-grow: 1;
+const getStyles = (theme: GrafanaTheme2) => {
+  const tagBadgeStyles = getTagBadgeStyles(theme);
 
-    .label-tag {
-      margin-left: 6px;
-      cursor: pointer;
-    }
-  `,
-  clear: css`
-    background: none;
-    border: none;
-    text-decoration: underline;
-    font-size: 12px;
-    padding: none;
-    position: absolute;
-    top: -17px;
-    right: 0;
-    cursor: pointer;
-    color: ${theme.colors.text.secondary};
+  return {
+    tagFilter: css({
+      position: 'relative',
+      minWidth: '180px',
+      flexGrow: 1,
 
-    &:hover {
-      color: ${theme.colors.text.primary};
-    }
-  `,
-});
+      [`.${tagBadgeStyles.badge}`]: {
+        marginLeft: '6px',
+        cursor: 'pointer',
+      },
+    }),
+    clear: css({
+      background: 'none',
+      border: 'none',
+      textDecoration: 'underline',
+      fontSize: '12px',
+      padding: 'none',
+      position: 'absolute',
+      top: '-17px',
+      right: 0,
+      cursor: 'pointer',
+      color: theme.colors.text.secondary,
+
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+  };
+};

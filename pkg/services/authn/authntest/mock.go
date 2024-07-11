@@ -3,8 +3,8 @@ package authntest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
@@ -46,11 +46,15 @@ func (m *MockService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority
 	panic("unimplemented")
 }
 
+func (m *MockService) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {
+	panic("unimplemented")
+}
+
 func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
 	panic("unimplemented")
 }
 
-func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	panic("unimplemented")
 }
 

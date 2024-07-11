@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -221,12 +221,12 @@ function validateMuteTiming(
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  input: css`
-    width: 400px;
-  `,
-  submitButton: css`
-    margin-right: ${theme.spacing(1)};
-  `,
+  input: css({
+    width: '400px',
+  }),
+  submitButton: css({
+    marginRight: theme.spacing(1),
+  }),
 });
 
 export default MuteTimingForm;

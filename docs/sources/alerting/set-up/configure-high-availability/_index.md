@@ -26,7 +26,7 @@ Grafana Alerting uses the Prometheus model of separating the evaluation of alert
 
 {{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 
-When running multiple instances of Grafana, all alert rules are evaluated on all instances. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules will still be evaluated and notifications for alerts will still be sent.
+When running multiple instances of Grafana, all alert rules are evaluated on all instances. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules are still be evaluated and notifications for alerts are still sent.
 
 You can find this duplication in state history and it is a good way to confirm if you are using high availability.
 
@@ -36,8 +36,8 @@ The Alertmanager uses a gossip protocol to share information about notifications
 
 {{% admonition type="note" %}}
 
-If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` will not show any alert status.
-This is because the HA settings (`ha_peers`, etc), only apply to the alert notification delivery (i.e. de-duplication of alert notifications, and silences, as mentioned above).
+If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` do not show any alert status.
+This is because the HA settings (`ha_peers`, etc) only apply to the alert notification delivery (i.e. de-duplication of alert notifications, and silences, as mentioned above).
 
 {{% /admonition %}}
 
@@ -61,13 +61,14 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
 As an alternative to Memberlist, you can use Redis for high availability. This is useful if you want to have a central
 database for HA and cannot support the meshing of all Grafana servers.
 
-1. Make sure you have a redis server that supports pub/sub. If you use a proxy in front of your redis cluster, make sure the proxy supports pub/sub.
-1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified_alerting] section.
-1. Set `ha_redis_address` to the redis server address Grafana should connect to.
-1. [Optional] Set the username and password if authentication is enabled on the redis server using `ha_redis_username` and `ha_redis_password`.
-1. [Optional] Set `ha_redis_prefix` to something unique if you plan to share the redis server with multiple Grafana instances.
+1. Make sure you have a Redis server that supports pub/sub. If you use a proxy in front of your Redis cluster, make sure the proxy supports pub/sub.
+1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
+1. Set `ha_redis_address` to the Redis server address Grafana should connect to.
+1. Optional: Set the username and password if authentication is enabled on the Redis server using `ha_redis_username` and `ha_redis_password`.
+1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
+1. Optional: Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
 
-The following metrics can be used for meta monitoring, exposed by Grafana's `/metrics` endpoint:
+The following metrics can be used for meta monitoring, exposed by the `/metrics` endpoint in Grafana:
 
 | Metric                                               | Description                                                                                                    |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -83,7 +84,7 @@ The following metrics can be used for meta monitoring, exposed by Grafana's `/me
 
 ## Enable alerting high availability using Kubernetes
 
-1. You can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition.
+1. You can expose the Pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition.
 
    ```yaml
    env:
@@ -115,7 +116,7 @@ The following metrics can be used for meta monitoring, exposed by Grafana's `/me
            fieldPath: status.podIP
    ```
 
-1. Create a headless service that returns the pod IP instead of the service IP, which is what the `ha_peers` need:
+1. Create a headless service that returns the Pod IP instead of the service IP, which is what the `ha_peers` need:
 
    ```yaml
    apiVersion: v1
@@ -146,4 +147,5 @@ The following metrics can be used for meta monitoring, exposed by Grafana's `/me
    ha_peers = "grafana-alerting.grafana:9094"
    ha_advertise_address = "${POD_IP}:9094"
    ha_peer_timeout = 15s
+   ha_reconnect_timeout = 2m
    ```

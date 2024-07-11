@@ -34,7 +34,7 @@ import (
 
 func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, numFolders, nestingLevel int) {
 	usr := user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{
-		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+		1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 			{
 				Action: dashboards.ActionFoldersCreate,
 			},
@@ -84,7 +84,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store), quotaService)
 	require.NoError(b, err)
 
-	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})

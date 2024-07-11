@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Input, useStyles2 } from '@grafana/ui';
@@ -94,14 +94,14 @@ export const KeyValueMapInput = ({ value, onChange, readOnly = false }: Props) =
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addButton: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  table: css`
-    tbody td {
-      padding: 0 ${theme.spacing(1)} ${theme.spacing(1)} 0;
-    }
-  `,
+  addButton: css({
+    marginTop: theme.spacing(1),
+  }),
+  table: css({
+    'tbody td': {
+      padding: `0 ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+    },
+  }),
 });
 
 const pairsToRecord = (pairs: Array<[string, string]>): Record<string, string> => {

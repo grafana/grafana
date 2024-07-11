@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { ConnectionDirection } from 'app/features/canvas';
+import { ConnectionDirection } from 'app/features/canvas/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionCoordinates } from '../../panelcfg.gen';
@@ -128,7 +128,7 @@ export const ConnectionSVG = ({
         // Render selected connection last, ensuring it is above other connections
         .sort((_a, b) => (selectedConnection === b && scene.panel.context.instanceState.selectedConnection ? -1 : 0))
         .map((v, idx) => {
-          const { source, target, info, vertices } = v;
+          const { source, target, info, vertices, index } = v;
           const sourceRect = source.div?.getBoundingClientRect();
           const parent = source.div?.parentElement;
           const transformScale = scene.scale;
@@ -146,6 +146,15 @@ export const ConnectionSVG = ({
             yStart = v.sourceOriginal.y;
             xEnd = v.targetOriginal.x;
             yEnd = v.targetOriginal.y;
+          } else if (source.options.connections) {
+            // If original source or target coordinates are not set for the current connection, set them
+            if (
+              !source.options.connections[index].sourceOriginal ||
+              !source.options.connections[index].targetOriginal
+            ) {
+              source.options.connections[index].sourceOriginal = { x: x1, y: y1 };
+              source.options.connections[index].targetOriginal = { x: x2, y: y2 };
+            }
           }
 
           const midpoint = calculateMidpoint(x1, y1, x2, y2);
@@ -208,14 +217,15 @@ export const ConnectionSVG = ({
                   }
                 } else {
                   // Last vertex
-                  let previousVertex = { x: 0, y: 0 };
                   if (index > 0) {
                     // Not also the first vertex
-                    previousVertex = vertices[index - 1];
+                    const previousVertex = vertices[index - 1];
+                    const Xp = previousVertex.x * xDist + xStart;
+                    const Yp = previousVertex.y * yDist + yStart;
+                    angle1 = calculateAngle(Xp, Yp, X, Y);
+                  } else {
+                    angle1 = calculateAngle(x1, y1, X, Y);
                   }
-                  const Xp = previousVertex.x * xDist + xStart;
-                  const Yp = previousVertex.y * yDist + yStart;
-                  angle1 = calculateAngle(Xp, Yp, X, Y);
                   angle2 = calculateAngle(X, Y, x2, y2);
                 }
 
@@ -250,8 +260,8 @@ export const ConnectionSVG = ({
                   if (index < vertices.length - 1) {
                     // Not also the last point
                     const nextVertex = vertices[index + 1];
-                    Xn = nextVertex.x * xDist + x1;
-                    Yn = nextVertex.y * yDist + y1;
+                    Xn = nextVertex.x * xDist + xStart;
+                    Yn = nextVertex.y * yDist + yStart;
                   }
 
                   // Length of next segment
@@ -262,10 +272,10 @@ export const ConnectionSVG = ({
                   }
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + x1;
-                  ya = lDelta * Math.sin(angle1) + y1;
-                  xb = lHalfArc * Math.cos(angle2) + X;
-                  yb = lHalfArc * Math.sin(angle2) + Y;
+                  xa = Math.round(lDelta * Math.cos(angle1) + x1);
+                  ya = Math.round(lDelta * Math.sin(angle1) + y1);
+                  xb = Math.round(lHalfArc * Math.cos(angle2) + X);
+                  yb = Math.round(lHalfArc * Math.sin(angle2) + Y);
 
                   // Check if arc control points are inside of segment, otherwise swap sign
                   if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
@@ -311,10 +321,10 @@ export const ConnectionSVG = ({
 
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + Xp;
-                  ya = lDelta * Math.sin(angle1) + Yp;
-                  xb = lHalfArc * Math.cos(angle2) + X;
-                  yb = lHalfArc * Math.sin(angle2) + Y;
+                  xa = Math.round(lDelta * Math.cos(angle1) + Xp);
+                  ya = Math.round(lDelta * Math.sin(angle1) + Yp);
+                  xb = Math.round(lHalfArc * Math.cos(angle2) + X);
+                  yb = Math.round(lHalfArc * Math.sin(angle2) + Y);
 
                   // Check if arc control points are inside of segment, otherwise swap sign
                   if ((xa > X && xa > Xp) || (xa < X && xa < Xp)) {

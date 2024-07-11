@@ -224,13 +224,16 @@ export function setMetricName(query: CloudWatchMetricsQuery, metricName: string)
     name: metricName,
   };
 
-  return setSql(query, {
-    select: {
-      type: QueryEditorExpressionType.Function,
-      ...(query.sql?.select ?? {}),
-      parameters: [param],
-    },
-  });
+  return setSql(
+    { ...query, metricName },
+    {
+      select: {
+        type: QueryEditorExpressionType.Function,
+        ...(query.sql?.select ?? {}),
+        parameters: [param],
+      },
+    }
+  );
 }
 
 export function removeMetricName(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {

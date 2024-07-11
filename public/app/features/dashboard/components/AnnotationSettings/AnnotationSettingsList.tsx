@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -154,8 +154,8 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
 };
 
 const getStyles = () => ({
-  table: css`
-    width: 100%;
-    overflow-x: scroll;
-  `,
+  table: css({
+    width: '100%',
+    overflowX: 'scroll',
+  }),
 });

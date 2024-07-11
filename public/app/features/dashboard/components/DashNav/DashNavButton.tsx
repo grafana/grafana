@@ -1,6 +1,7 @@
 // Libraries
 import { css } from '@emotion/css';
-import React, { MouseEvent } from 'react';
+import { MouseEvent } from 'react';
+import * as React from 'react';
 
 // Components
 import { GrafanaTheme2 } from '@grafana/data';
@@ -37,8 +38,8 @@ export const DashNavButton = ({ icon, iconType, iconSize, tooltip, onClick, chil
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  noBorderContainer: css`
-    padding: 0 ${theme.spacing(0.5)};
-    display: flex;
-  `,
+  noBorderContainer: css({
+    padding: `0 ${theme.spacing(0.5)}`,
+    display: 'flex',
+  }),
 });

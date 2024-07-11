@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -17,19 +18,24 @@ var (
 	errSyncPermissionsForbidden = errutil.Forbidden("permissions.sync.forbidden")
 )
 
-func ProvideRBACSync(acService accesscontrol.Service) *RBACSync {
+func ProvideRBACSync(acService accesscontrol.Service, tracer tracing.Tracer) *RBACSync {
 	return &RBACSync{
-		ac:  acService,
-		log: log.New("permissions.sync"),
+		ac:     acService,
+		log:    log.New("permissions.sync"),
+		tracer: tracer,
 	}
 }
 
 type RBACSync struct {
-	ac  accesscontrol.Service
-	log log.Logger
+	ac     accesscontrol.Service
+	log    log.Logger
+	tracer tracing.Tracer
 }
 
 func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identity, _ *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "rbac.sync.SyncPermissionsHook")
+	defer span.End()
+
 	if !ident.ClientParams.SyncPermissions {
 		return nil
 	}
@@ -43,7 +49,8 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 	if ident.Permissions == nil {
 		ident.Permissions = make(map[int64]map[string][]string, 1)
 	}
-	grouped := accesscontrol.GroupScopesByAction(permissions)
+
+	grouped := accesscontrol.GroupScopesByActionContext(ctx, permissions)
 
 	// Restrict access to the list of actions
 	actionsLookup := ident.ClientParams.FetchPermissionsParams.ActionsLookup
@@ -56,12 +63,15 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 		}
 		grouped = filtered
 	}
-
 	ident.Permissions[ident.OrgID] = grouped
+
 	return nil
 }
 
 func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) ([]accesscontrol.Permission, error) {
+	ctx, span := s.tracer.Start(ctx, "rbac.sync.fetchPermissions")
+	defer span.End()
+
 	permissions := make([]accesscontrol.Permission, 0, 8)
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	if len(roles) > 0 {
@@ -71,7 +81,9 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 				s.log.FromContext(ctx).Error("Failed to fetch role from db", "error", err, "role", role)
 				return nil, errSyncPermissionsForbidden
 			}
-			permissions = append(permissions, roleDTO.Permissions...)
+			if roleDTO != nil {
+				permissions = append(permissions, roleDTO.Permissions...)
+			}
 		}
 
 		return permissions, nil
@@ -92,6 +104,9 @@ var fixedCloudRoles = map[org.RoleType]string{
 }
 
 func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "rbac.sync.SyncCloudRoles")
+	defer span.End()
+
 	// we only want to run this hook during login and if the module used is grafana com
 	if r.GetMeta(authn.MetaKeyAuthModule) != login.GrafanaComAuthModule {
 		return nil

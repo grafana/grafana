@@ -13,7 +13,7 @@ import (
 )
 
 func TestLoadedResultsFromRuleState(t *testing.T) {
-	rule := ngmodels.AlertRuleGen()()
+	rule := ngmodels.RuleGen.GenerateRef()
 	p := &FakeRuleStateProvider{
 		map[ngmodels.AlertRuleKey][]*state.State{
 			rule.GetKey(): {

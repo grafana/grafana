@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { PanelData, CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -115,7 +115,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  vizWrapper: css`
-    margin: ${theme.spacing(1, 0)};
-  `,
+  vizWrapper: css({
+    margin: theme.spacing(1, 0),
+  }),
 });

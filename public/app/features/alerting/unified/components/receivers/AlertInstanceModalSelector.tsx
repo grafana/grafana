@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
@@ -283,101 +283,100 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    container: css`
-      display: grid;
-      grid-template-columns: 1fr 1.5fr;
-      grid-template-rows: min-content auto;
-      gap: ${theme.spacing(2)};
-      flex: 1;
-    `,
+    container: css({
+      display: 'grid',
+      gridTemplateColumns: '1fr 1.5fr',
+      gridTemplateRows: 'min-content auto',
+      gap: theme.spacing(2),
+      flex: 1,
+    }),
 
-    tag: css`
-      margin: 5px;
-    `,
+    tag: css({
+      margin: '5px',
+    }),
 
-    column: css`
-      flex: 1 1 auto;
-    `,
+    column: css({
+      flex: '1 1 auto',
+    }),
 
-    alertLabels: css`
-      overflow-x: auto;
-      height: 32px;
-    `,
-    ruleTitle: css`
-      height: 22px;
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
-    rowButton: css`
-      ${clearButton};
-      padding: ${theme.spacing(0.5)};
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: left;
-      white-space: nowrap;
-      cursor: pointer;
-      border: 2px solid transparent;
+    alertLabels: css({
+      overflowX: 'auto',
+      height: '32px',
+    }),
+    ruleTitle: css({
+      height: '22px',
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    rowButton: css(clearButton, {
+      padding: theme.spacing(0.5),
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      textAlign: 'left',
+      whiteSpace: 'nowrap',
+      cursor: 'pointer',
+      border: '2px solid transparent',
 
-      &:disabled {
-        cursor: not-allowed;
-        color: ${theme.colors.text.disabled};
-      }
-    `,
-    rowButtonTitle: css`
-      overflow-x: auto;
-    `,
-    rowSelected: css`
-      border-color: ${theme.colors.primary.border};
-    `,
-    rowOdd: css`
-      background-color: ${theme.colors.background.secondary};
-    `,
-    instanceButton: css`
-      display: flex;
-      gap: ${theme.spacing(1)};
-      justify-content: space-between;
-      align-items: center;
-    `,
-    loadingPlaceholder: css`
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    `,
-    selectedRulePlaceholder: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      text-align: center;
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
-    modal: css`
-      height: 100%;
-    `,
-    modalContent: css`
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    `,
-    modalAlert: css`
-      flex-grow: 0;
-    `,
-    warnIcon: css`
-      fill: ${theme.colors.warning.main};
-    `,
-    labels: css`
-      justify-content: flex-start;
-    `,
-    alertFolder: css`
-      height: 20px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-      column-gap: ${theme.spacing(1)};
-      align-items: center;
-    `,
+      '&:disabled': {
+        cursor: 'not-allowed',
+        color: theme.colors.text.disabled,
+      },
+    }),
+    rowButtonTitle: css({
+      overflowX: 'auto',
+    }),
+    rowSelected: css({
+      borderColor: theme.colors.primary.border,
+    }),
+    rowOdd: css({
+      backgroundColor: theme.colors.background.secondary,
+    }),
+    instanceButton: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    loadingPlaceholder: css({
+      height: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }),
+    selectedRulePlaceholder: css({
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      textAlign: 'center',
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    modal: css({
+      height: '100%',
+    }),
+    modalContent: css({
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    modalAlert: css({
+      flexGrow: 0,
+    }),
+    warnIcon: css({
+      fill: theme.colors.warning.main,
+    }),
+    labels: css({
+      justifyContent: 'flex-start',
+    }),
+    alertFolder: css({
+      height: '20px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      columnGap: theme.spacing(1),
+      alignItems: 'center',
+    }),
   };
 };

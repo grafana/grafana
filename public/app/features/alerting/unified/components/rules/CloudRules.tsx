@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
@@ -98,20 +98,20 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  loader: css`
-    margin-bottom: 0;
-  `,
-  sectionHeader: css`
-    display: flex;
-    justify-content: space-between;
-  `,
-  wrapper: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-  spinner: css`
-    text-align: center;
-    padding: ${theme.spacing(2)};
-  `,
+  loader: css({
+    marginBottom: 0,
+  }),
+  sectionHeader: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  wrapper: css({
+    marginBottom: theme.spacing(4),
+  }),
+  spinner: css({
+    textAlign: 'center',
+    padding: theme.spacing(2),
+  }),
   pagination: getPaginationStyles(theme),
   headerRow: css({
     display: 'flex',

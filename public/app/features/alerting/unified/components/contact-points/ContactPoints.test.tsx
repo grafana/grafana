@@ -1,7 +1,7 @@
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import React, { ComponentProps, PropsWithChildren } from 'react';
+import { ComponentProps, PropsWithChildren } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -21,6 +21,7 @@ import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimi
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './__mocks__/vanillaAlertmanagerServer';
+import { RouteReference } from './utils';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -129,7 +130,7 @@ describe('contact points', () => {
         expect(button).not.toBeDisabled();
       });
 
-      const moreActionsButtons = screen.getAllByRole('button', { name: 'more-actions' });
+      const moreActionsButtons = screen.getAllByRole('button', { name: /More/ });
       expect(moreActionsButtons).toHaveLength(5);
       moreActionsButtons.forEach((button) => {
         expect(button).not.toBeDisabled();
@@ -157,7 +158,7 @@ describe('contact points', () => {
       expect(viewButtons).toHaveLength(5);
 
       // delete should be disabled in the "more" actions
-      const moreButtons = screen.queryAllByRole('button', { name: 'more-actions' });
+      const moreButtons = screen.queryAllByRole('button', { name: /More/ });
       expect(moreButtons).toHaveLength(5);
 
       // check if all of the delete buttons are disabled
@@ -170,7 +171,7 @@ describe('contact points', () => {
       }
 
       // check buttons in Notification Templates
-      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await userEvent.click(notificationTemplatesTab);
       expect(screen.getByRole('link', { name: 'Add notification template' })).toHaveAttribute('aria-disabled', 'true');
     });
@@ -182,7 +183,7 @@ describe('contact points', () => {
         wrapper,
       });
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       await userEvent.click(moreActions);
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -196,7 +197,7 @@ describe('contact points', () => {
         wrapper,
       });
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       expect(moreActions).not.toBeDisabled();
 
       const editAction = screen.getByTestId('edit-action');
@@ -216,7 +217,7 @@ describe('contact points', () => {
       const viewAction = screen.getByRole('link', { name: /view/i });
       expect(viewAction).toBeInTheDocument();
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       expect(moreActions).not.toBeDisabled();
       await userEvent.click(moreActions);
 
@@ -224,21 +225,48 @@ describe('contact points', () => {
       expect(deleteButton).toBeDisabled();
     });
 
-    it('should disable delete when contact point is linked to at least one notification policy', async () => {
-      render(
-        <ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} policies={1} onDelete={noop} />,
+    it('should disable delete when contact point is linked to at least one normal notification policy', async () => {
+      const policies: RouteReference[] = [
         {
-          wrapper,
-        }
-      );
+          receiver: 'my-contact-point',
+          route: {
+            type: 'normal',
+          },
+        },
+      ];
 
-      expect(screen.getByRole('link', { name: 'is used by 1 notification policy' })).toBeInTheDocument();
+      render(<ContactPoint name={'my-contact-point'} receivers={[]} policies={policies} onDelete={noop} />, {
+        wrapper,
+      });
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      expect(screen.getByRole('link', { name: /1 notification policy/ })).toBeInTheDocument();
+
+      const moreActions = screen.getByRole('button', { name: /More/ });
       await userEvent.click(moreActions);
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
       expect(deleteButton).toBeDisabled();
+    });
+
+    it('should not disable delete when contact point is linked only to auto-generated notification policy', async () => {
+      const policies: RouteReference[] = [
+        {
+          receiver: 'my-contact-point',
+          route: {
+            type: 'auto-generated',
+          },
+        },
+      ];
+
+      render(<ContactPoint name={'my-contact-point'} receivers={[]} policies={policies} onDelete={noop} />, {
+        wrapper,
+      });
+
+      const moreActions = screen.getByRole('button', { name: /More/ });
+      await userEvent.click(moreActions);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).not.toBeDisabled();
     });
 
     it('should be able to search', async () => {
@@ -306,7 +334,7 @@ describe('contact points', () => {
         expect(button).not.toBeDisabled();
       });
 
-      const moreActionsButtons = screen.getAllByRole('button', { name: 'more-actions' });
+      const moreActionsButtons = screen.getAllByRole('button', { name: /More/ });
       expect(moreActionsButtons).toHaveLength(2);
       moreActionsButtons.forEach((button) => {
         expect(button).not.toBeDisabled();
@@ -360,7 +388,7 @@ describe('contact points', () => {
       expect(viewProvisioned).not.toBeDisabled();
 
       // check buttons in Notification Templates
-      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await userEvent.click(notificationTemplatesTab);
       expect(screen.queryByRole('link', { name: 'Add notification template' })).not.toBeInTheDocument();
     });

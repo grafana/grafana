@@ -1,6 +1,6 @@
 // Wrap the DocsContainer for storybook-dark-mode theme switching support.
 import { DocsContainer, DocsContextProps } from '@storybook/addon-docs';
-import React from 'react';
+import * as React from 'react';
 import { useDarkMode } from 'storybook-dark-mode';
 
 import { GrafanaLight, GrafanaDark } from '../../../.storybook/storybookTheme';

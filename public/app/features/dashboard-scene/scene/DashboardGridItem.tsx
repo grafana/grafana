@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { isEqual } from 'lodash';
+import { useMemo } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';
@@ -18,6 +19,7 @@ import {
   CustomVariable,
   VizPanelMenu,
   VizPanelState,
+  VariableValueSingle,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -28,7 +30,7 @@ import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
-interface DashboardGridItemState extends SceneGridItemStateLike {
+export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
   repeatedPanels?: VizPanel[];
   variableName?: string;
@@ -41,6 +43,8 @@ export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _libPanelSubscription: Unsubscribable | undefined;
+  private _prevRepeatValues?: VariableValueSingle[];
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
@@ -153,8 +157,16 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
-    let panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const { values, texts } = getMultiVariableValues(variable);
+
+    if (isEqual(this._prevRepeatValues, values)) {
+      return;
+    }
+
+    // Needed to calculate item height
+    const prevRepeatCount = this._prevRepeatValues?.length ?? values.length;
+    this._prevRepeatValues = values;
+    const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
     // Loop through variable values and create repeats
@@ -178,16 +190,15 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
     const direction = this.getRepeatDirection();
     const stateChange: Partial<DashboardGridItemState> = { repeatedPanels: repeatedPanels };
-    const itemHeight = this.state.itemHeight ?? 10;
-    const prevHeight = this.state.height;
-    const maxPerRow = this.getMaxPerRow();
+    const prevHeight = this.state.height ?? 0;
+    const maxPerRow = direction === 'h' ? this.getMaxPerRow() : 1;
+    const prevRowCount = Math.ceil(prevRepeatCount / maxPerRow);
+    const newRowCount = Math.ceil(repeatedPanels.length / maxPerRow);
 
-    if (direction === 'h') {
-      const rowCount = Math.ceil(repeatedPanels.length / maxPerRow);
-      stateChange.height = rowCount * itemHeight;
-    } else {
-      stateChange.height = repeatedPanels.length * itemHeight;
-    }
+    // If item height is not defined, calculate based on total height and row count
+    const itemHeight = this.state.itemHeight ?? prevHeight / prevRowCount;
+    stateChange.itemHeight = itemHeight;
+    stateChange.height = Math.ceil(newRowCount * itemHeight);
 
     this.setState(stateChange);
 

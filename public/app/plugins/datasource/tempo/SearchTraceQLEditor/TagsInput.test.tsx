@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -126,6 +125,7 @@ describe('TagsInput', () => {
         staticTags={[]}
         isTagsLoading={false}
         query={''}
+        addVariablesToOptions={true}
       />
     );
   };

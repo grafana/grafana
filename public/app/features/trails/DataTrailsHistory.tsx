@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -21,6 +21,10 @@ import { getTrailFor, isSceneTimeRangeState } from './utils';
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
   steps: DataTrailHistoryStep[];
+}
+
+export function isDataTrailsHistoryState(state: SceneObjectState): state is DataTrailsHistoryState {
+  return 'currentStep' in state && 'steps' in state;
 }
 
 export interface DataTrailHistoryStep {
@@ -127,7 +131,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     const step = this.state.steps[stepIndex];
     const type = step.type === 'metric' && step.trailState.metric === undefined ? 'metric-clear' : step.type;
 
-    reportExploreMetrics('history_step_clicked', { type });
+    reportExploreMetrics('history_step_clicked', { type, step: stepIndex, numberOfSteps: this.state.steps.length });
 
     this.stepTransitionInProgress = true;
     this.setState({ currentStep: stepIndex });
@@ -196,7 +200,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
                   // Specifics per step type
                   styles.stepTypes[stepType],
                   // To highlight selected step
-                  model.state.currentStep === index ? styles.stepSelected : '',
+                  currentStep === index ? styles.stepSelected : '',
                   // To alter the look of steps with distant non-directly preceding parent
                   alternatePredecessorStyle.get(index) ?? '',
                   // To remove direct link for steps that don't have a direct parent

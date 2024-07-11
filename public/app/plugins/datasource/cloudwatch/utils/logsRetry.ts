@@ -1,7 +1,7 @@
 import { Observable, Subscription } from 'rxjs';
 
-import { DataFrame, DataFrameJSON, DataQueryError } from '@grafana/data';
-import { FetchError, toDataQueryResponse } from '@grafana/runtime';
+import { DataFrame, DataFrameJSON, DataQueryError, DataQueryResponse } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 
 import { StartQueryRequest } from '../types';
 
@@ -21,16 +21,16 @@ type Result = { frames: DataFrameJSON[]; error?: string };
  * @param options
  */
 export function runWithRetry(
-  queryFun: (targets: StartQueryRequest[]) => Observable<DataFrame[]>,
+  queryFun: (targets: StartQueryRequest[]) => Observable<DataQueryResponse>,
   targets: StartQueryRequest[],
   timeoutFunc: (retry: number, startTime: number) => boolean
-): Observable<{ frames: DataFrame[]; error?: DataQueryError }> {
+): Observable<DataQueryResponse> {
   const startTime = new Date();
   let retries = 0;
   let timerID: ReturnType<typeof setTimeout>;
   let subscription: Subscription;
-  let collected = {};
-
+  let collected: { data: DataFrame[]; errors: DataQueryError[] } = { data: [], errors: [] };
+  // This function is used to calculate the time to wait before retrying the query.
   const retryWaitFunction = (retry: number) => {
     return Math.pow(2, retry) * 1000 + Math.random() * 100;
   };
@@ -39,83 +39,47 @@ export function runWithRetry(
     // Run function is where the logic takes place. We have it in a function so we can call it recursively.
     function run(currentQueryParams: StartQueryRequest[]) {
       subscription = queryFun(currentQueryParams).subscribe({
-        next(frames) {
-          // In case we successfully finished, merge the current response with whatever we already collected.
-          const collectedPreviously = toDataQueryResponse({ data: { results: collected } }).data || [];
-          observer.next({ frames: [...collectedPreviously, ...frames] });
+        next(response: DataQueryResponse) {
+          if (response.errors) {
+            const { refIdsForRequestsToRetry, errorsNotToRetry } = splitErrorsData(response.errors);
+            if (refIdsForRequestsToRetry.length > 0) {
+              if (!timeoutFunc(retries, startTime.valueOf())) {
+                // store the responses we are not retrying
+                collected.data = [...collected.data, ...response.data];
+                collected.errors = [...collected.errors, ...errorsNotToRetry];
+
+                // We retry only the failed queries
+                timerID = setTimeout(
+                  () => {
+                    retries++;
+                    run(currentQueryParams.filter((query) => refIdsForRequestsToRetry.includes(query.refId)));
+                  },
+                  // We want to know how long to wait for the next retry. First time this will be 0.
+                  retryWaitFunction(retries + 1)
+                );
+
+                // we return early. The observer.next will be called whenever the timeout finisies or there are no errors.
+                return;
+              }
+            }
+          }
+
+          // if the timeout is done or it was never called we take what we have from past retries and the current round
+          collected.data = [...collected.data, ...response.data];
+          collected.errors = [
+            ...collected.errors,
+            ...(response.errors && response.errors.length > 0 ? response.errors : []),
+          ];
+          observer.next(collected);
           observer.complete();
         },
+        // if the server returns a raw string 5xx error, something is very unexpectedly wrong and we just forward it
         error(error: FetchError<{ results?: Record<string, Result> }> | string) {
-          // In case of error we first try to figure out what kind of error it is
-
-          // This means it was a generic 500 error probably so we just pass it on
-          if (typeof error === 'string') {
-            observer.error(error);
-            return;
-          }
-
-          // In case of multiple queries this some can error while some may be ok
-          const errorData = splitErrorData(error);
-
-          if (!errorData) {
-            // Not sure what happened but the error structure wasn't what we expected
-            observer.error(error);
-            return;
-          }
-
-          if (!errorData!.errors.length) {
-            // So there is no limit error but some other errors so nothing to retry so we just pass it as it would be
-            // otherwise.
-            observer.error(error);
-            return;
-          }
-
-          if (timeoutFunc(retries, startTime.valueOf())) {
-            // We timed out but we could have started some queries
-            if (Object.keys(collected).length || Object.keys(errorData.good).length) {
-              const dataResponse = toDataQueryResponse({
-                data: {
-                  results: {
-                    ...(errorData.good ?? {}),
-                    ...(collected ?? {}),
-                  },
-                },
-              });
-              dataResponse.error = {
-                ...(dataResponse.error ?? {}),
-                message: `Some queries timed out: ${errorData.errorMessage}`,
-              };
-              // So we consider this a partial success and pass the data forward but also with error to be shown to
-              // the user.
-              observer.next({
-                error: dataResponse.error,
-                frames: dataResponse.data,
-              });
-              observer.complete();
-            } else {
-              // So we timed out and there was no data to pass forward so we just pass the error
-              const dataResponse = toDataQueryResponse({ data: { results: error.data?.results ?? {} } });
-              observer.error(dataResponse.error);
-            }
-            return;
-          }
-
-          collected = {
-            ...collected,
-            ...errorData!.good,
-          };
-
-          timerID = setTimeout(
-            () => {
-              retries++;
-              run(errorData!.errors);
-            },
-            // We want to know how long to wait for the next retry. First time this will be 0.
-            retryWaitFunction(retries + 1)
-          );
+          observer.error(error);
         },
       });
     }
+
     run(targets);
     return () => {
       // We clear only the latest timer and subscription but the observable should complete after one response so
@@ -126,25 +90,15 @@ export function runWithRetry(
   });
 }
 
-function splitErrorData(error: FetchError<{ results?: Record<string, Result> }>) {
-  const results = error.data?.results;
-  if (!results) {
-    return undefined;
-  }
-  return Object.keys(results).reduce<{
-    errors: StartQueryRequest[];
-    good: Record<string, Result>;
-    errorMessage: string;
-  }>(
-    (acc, refId) => {
-      if (results[refId].error?.startsWith('LimitExceededException')) {
-        acc.errorMessage = results[refId].error!;
-        acc.errors.push(error.config.data.queries.find((q: any) => q.refId === refId));
-      } else {
-        acc.good[refId] = results[refId];
-      }
-      return acc;
-    },
-    { errors: [], good: {}, errorMessage: '' }
-  );
+function splitErrorsData(errors: DataQueryError[]) {
+  const refIdsForRequestsToRetry: string[] = [];
+  const errorsNotToRetry: DataQueryError[] = [];
+  errors.map((err) => {
+    if (err?.message?.includes('LimitExceededException') && err.refId) {
+      refIdsForRequestsToRetry.push(err.refId);
+    } else {
+      errorsNotToRetry.push(err);
+    }
+  });
+  return { refIdsForRequestsToRetry, errorsNotToRetry };
 }

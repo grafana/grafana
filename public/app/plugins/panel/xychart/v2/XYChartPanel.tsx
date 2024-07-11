@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { PanelProps } from '@grafana/data';
+import { FALLBACK_COLOR, PanelProps } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
@@ -12,8 +12,10 @@ import {
   VizLegend,
   VizLegendItem,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options } from './panelcfg.gen';
@@ -24,6 +26,7 @@ type Props2 = PanelProps<Options>;
 
 export const XYChartPanel2 = (props: Props2) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   let { mapping, series: mappedSeries } = props.options;
 
@@ -38,7 +41,7 @@ export const XYChartPanel2 = (props: Props2) => {
   let { builder, prepData } = useMemo(
     () => prepConfig(series, config.theme2),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig]
+    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig, props.options.tooltip]
   );
 
   // generate data struct for uPlot mode: 2
@@ -53,6 +56,10 @@ export const XYChartPanel2 = (props: Props2) => {
 
   // TODO: React.memo()
   const renderLegend = () => {
+    if (!props.options.legend.showLegend) {
+      return null;
+    }
+
     const items: VizLegendItem[] = [];
 
     series.forEach((s, idx) => {
@@ -64,21 +71,28 @@ export const XYChartPanel2 = (props: Props2) => {
         items.push({
           yAxis: 1, // TODO: pull from y field
           label: s.name.value,
-          color: alpha(s.color.fixed!, 1),
+          color: alpha(s.color.fixed ?? FALLBACK_COLOR, 1),
           getItemKey: () => `${idx}-${s.name.value}`,
           fieldName: yField.state?.displayName ?? yField.name,
           disabled: yField.state?.hideFrom?.viz ?? false,
+          getDisplayValues: () => getDisplayValuesForCalcs(props.options.legend.calcs, yField, theme),
         });
       }
     });
 
-    // sort series by calcs? table mode?
-
-    const { placement, displayMode, width } = props.options.legend;
+    const { placement, displayMode, width, sortBy, sortDesc } = props.options.legend;
 
     return (
       <VizLayout.Legend placement={placement} width={width}>
-        <VizLegend className={styles.legend} placement={placement} items={items} displayMode={displayMode} />
+        <VizLegend
+          className={styles.legend}
+          placement={placement}
+          items={items}
+          displayMode={displayMode}
+          sortBy={sortBy}
+          sortDesc={sortDesc}
+          isSortable={true}
+        />
       </VizLayout.Legend>
     );
   };

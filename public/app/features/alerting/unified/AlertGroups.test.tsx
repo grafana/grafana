@@ -1,6 +1,5 @@
 import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -189,6 +188,8 @@ describe('AlertGroups', () => {
     renderAmNotifications();
     await waitForElementToBeRemoved(ui.loadingIndicator.query());
 
+    // reset the input of the MultiSelect component
+    await user.type(ui.groupByInput.get(), '{backspace}');
     await user.type(ui.groupByInput.get(), 'appName{enter}');
 
     const groups = await ui.group.findAll();

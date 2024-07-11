@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
@@ -17,7 +17,7 @@ type Props = {
   sandwichedLabel?: string;
 };
 
-const FlameGraphMetadata = React.memo(
+const FlameGraphMetadata = memo(
   ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick }: Props) => {
     const styles = useStyles2(getStyles);
     const parts: ReactNode[] = [];
@@ -82,7 +82,7 @@ const FlameGraphMetadata = React.memo(
       );
     }
 
-    return <>{<div className={styles.metadata}>{parts}</div>}</>;
+    return <div className={styles.metadata}>{parts}</div>;
   }
 );
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useFocusRing } from '@react-aria/focus';
-import React from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -80,9 +80,11 @@ const getStyles = (
       boxShadow: isSelected
         ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${theme.colors.getContrastText(color)}`
         : 'none',
-      transition: theme.transitions.create(['transform'], {
-        duration: theme.transitions.duration.short,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['transform'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
       '&:hover': {
         transform: 'scale(1.1)',
       },

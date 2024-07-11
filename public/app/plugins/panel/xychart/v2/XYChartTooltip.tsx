@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { DataFrame } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
@@ -24,7 +24,7 @@ export interface Props {
 }
 
 function stripSeriesName(fieldName: string, seriesName: string) {
-  if (fieldName.includes(' ')) {
+  if (fieldName !== seriesName && fieldName.includes(' ')) {
     fieldName = fieldName.replace(seriesName, '').trim();
   }
 
@@ -40,6 +40,9 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   const xField = series.x.field;
   const yField = series.y.field;
 
+  const sizeField = series.size.field;
+  const colorField = series.color.field;
+
   let label = series.name.value;
 
   let seriesColor = series.color.fixed;
@@ -53,7 +56,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   const headerItem: VizTooltipItem = {
     label,
     value: '',
-    color: alpha(seriesColor!, 0.5),
+    color: alpha(seriesColor ?? '#fff', 0.5),
     colorIndicator: ColorIndicator.marker_md,
   };
 
@@ -67,6 +70,21 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
       value: fmt(yField, yField.values[rowIndex]),
     },
   ];
+
+  // mapped fields for size/color
+  if (sizeField != null && sizeField !== yField) {
+    contentItems.push({
+      label: stripSeriesName(sizeField.state?.displayName ?? sizeField.name, label),
+      value: fmt(sizeField, sizeField.values[rowIndex]),
+    });
+  }
+
+  if (colorField != null && colorField !== yField) {
+    contentItems.push({
+      label: stripSeriesName(colorField.state?.displayName ?? colorField.name, label),
+      value: fmt(colorField, colorField.values[rowIndex]),
+    });
+  }
 
   series._rest.forEach((field) => {
     contentItems.push({

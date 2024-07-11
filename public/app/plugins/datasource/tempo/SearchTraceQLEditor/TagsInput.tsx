@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -40,6 +40,7 @@ interface Props {
   hideValues?: boolean;
   requireTagAndValue?: boolean;
   query: string;
+  addVariablesToOptions?: boolean;
 }
 const TagsInput = ({
   updateFilter,
@@ -52,6 +53,7 @@ const TagsInput = ({
   hideValues,
   requireTagAndValue,
   query,
+  addVariablesToOptions,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const handleOnAdd = useCallback(
@@ -88,6 +90,7 @@ const TagsInput = ({
             isTagsLoading={isTagsLoading}
             hideValue={hideValues}
             query={query}
+            addVariablesToOptions={addVariablesToOptions}
           />
           {(validInput(f) || filters.length > 1) && (
             <AccessoryButton

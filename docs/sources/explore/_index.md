@@ -25,6 +25,8 @@ If you just want to explore your data and do not want to create a dashboard, the
 - [Query management in Explore]({{< relref "query-management/" >}})
 - [Logs integration in Explore]({{< relref "logs-integration/" >}})
 - [Trace integration in Explore]({{< relref "trace-integration/" >}})
+- [Explore metrics]({{< relref "explore-metrics/" >}})
+- [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
 - [Inspector in Explore]({{< relref "explore-inspector/" >}})
 
 ## Start exploring

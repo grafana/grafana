@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
@@ -60,9 +59,9 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
     title="Cannot delete provisioned dashboard"
     icon="trash-alt"
     onDismiss={hideModal}
-    className={css`
-      width: 500px;
-    `}
+    className={css({
+      width: '500px',
+    })}
   >
     <p>
       This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file

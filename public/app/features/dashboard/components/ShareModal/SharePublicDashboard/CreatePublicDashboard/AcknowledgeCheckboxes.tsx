@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -110,7 +109,7 @@ export const AcknowledgeCheckboxes = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  title: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
+  title: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
 });

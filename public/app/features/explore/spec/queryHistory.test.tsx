@@ -1,11 +1,12 @@
-import React from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import store from 'app/core/store';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import * as localStorage from '../../../core/history/RichHistoryLocalStorage';
 
 import {
   assertDataSourceFilterVisibility,
@@ -136,6 +137,55 @@ describe('Explore: Query History', () => {
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
+
+    await inputQuery('query #2');
+    await runQuery();
+    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
+  });
+
+  it('does not add query if quota exceeded error is reached', async () => {
+    const urlParams = {
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: 'query #1' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+    };
+
+    const { datasources } = setupExplore({ urlParams });
+    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+    await waitForExplore();
+    await openQueryHistory();
+
+    const storeSpy = jest.spyOn(store, 'setObject').mockImplementation(() => {
+      const error = new Error('QuotaExceededError');
+      error.name = 'QuotaExceededError';
+      throw error;
+    });
+
+    await inputQuery('query #2');
+    await runQuery();
+    await assertQueryHistory(['{"expr":"query #1"}']);
+    storeSpy.mockRestore();
+  });
+
+  it('does add query if limit exceeded error is reached', async () => {
+    const urlParams = {
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: 'query #1' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+    };
+
+    const { datasources } = setupExplore({ urlParams });
+    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+    await waitForExplore();
+    await openQueryHistory();
+
+    jest.spyOn(localStorage, 'checkLimits').mockImplementationOnce((queries) => {
+      return { queriesToKeep: queries, limitExceeded: true };
+    });
 
     await inputQuery('query #2');
     await runQuery();

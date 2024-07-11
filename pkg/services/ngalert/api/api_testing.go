@@ -17,9 +17,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -67,7 +67,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		srv.cfg.BaseInterval,
 		c.SignedInUser.GetOrgID(),
 		folder.UID,
-		RuleLimitsFromConfig(srv.cfg),
+		RuleLimitsFromConfig(srv.cfg, srv.featureManager),
 	)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -112,6 +112,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		rule,
 		results,
 		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder),
+		nil,
 	)
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))

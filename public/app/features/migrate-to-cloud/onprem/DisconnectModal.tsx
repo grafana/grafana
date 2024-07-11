@@ -1,25 +1,15 @@
-import React, { useCallback } from 'react';
-
 import { Alert, ConfirmModal, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   isOpen: boolean;
+  isError: boolean;
+  isLoading: boolean;
+  onDisconnectConfirm: () => Promise<void>;
   onDismiss: () => void;
 }
 
-export const DisconnectModal = ({ isOpen, onDismiss }: Props) => {
-  const disconnectStack = useCallback(() => ({}), []);
-  const isLoading = false;
-  const isError = false;
-
-  const handleConfirm = useCallback(async () => {
-    const resp = await disconnectStack();
-    if (!('error' in resp)) {
-      onDismiss();
-    }
-  }, [disconnectStack, onDismiss]);
-
+export const DisconnectModal = ({ isOpen, isError, isLoading, onDisconnectConfirm, onDismiss }: Props) => {
   const confirmBody = (
     <Stack direction="column">
       {isError && (
@@ -49,7 +39,7 @@ export const DisconnectModal = ({ isOpen, onDismiss }: Props) => {
           : t('migrate-to-cloud.disconnect-modal.disconnect', 'Disconnect')
       }
       dismissText={t('migrate-to-cloud.disconnect-modal.cancel', 'Cancel')}
-      onConfirm={handleConfirm}
+      onConfirm={onDisconnectConfirm}
       onDismiss={onDismiss}
     />
   );

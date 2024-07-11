@@ -1,12 +1,13 @@
-import { css } from '@emotion/css';
-import { Property } from 'csstype';
-import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
+import { css, cx } from '@emotion/css';
+import { ElementType, forwardRef, PropsWithChildren } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { AlignItems, Direction, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
+import { getSizeStyles, SizeProps } from '../utils/styles';
 
 type Display = 'flex' | 'block' | 'inline' | 'inline-block' | 'none';
 export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';
@@ -15,7 +16,7 @@ export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 's
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
@@ -58,15 +59,6 @@ interface BoxProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 'c
   direction?: ResponsiveProp<Direction>;
   justifyContent?: ResponsiveProp<JustifyContent>;
   gap?: ResponsiveProp<ThemeSpacingTokens>;
-
-  // Size props
-  minWidth?: ResponsiveProp<Property.MinWidth<number>>;
-  maxWidth?: ResponsiveProp<Property.MaxWidth<number>>;
-  width?: ResponsiveProp<Property.Width<number>>;
-
-  minHeight?: ResponsiveProp<Property.MinHeight<number>>;
-  maxHeight?: ResponsiveProp<Property.MaxHeight<number>>;
-  height?: ResponsiveProp<Property.Height<number>>;
 
   // Other props
   backgroundColor?: ResponsiveProp<BackgroundColor>;
@@ -145,18 +137,13 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     justifyContent,
     alignItems,
     boxShadow,
-    gap,
-    width,
-    minWidth,
-    maxWidth,
-    height,
-    minHeight,
-    maxHeight
+    gap
   );
+  const sizeStyles = useStyles2(getSizeStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
   const Element = element ?? 'div';
 
   return (
-    <Element ref={ref} className={styles.root} {...rest}>
+    <Element ref={ref} className={cx(styles.root, sizeStyles)} {...rest}>
       {children}
     </Element>
   );
@@ -217,13 +204,7 @@ const getStyles = (
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
   boxShadow: BoxProps['boxShadow'],
-  gap: BoxProps['gap'],
-  width: BoxProps['width'],
-  minWidth: BoxProps['minWidth'],
-  maxWidth: BoxProps['maxWidth'],
-  height: BoxProps['height'],
-  minHeight: BoxProps['minHeight'],
-  maxHeight: BoxProps['maxHeight']
+  gap: BoxProps['gap']
 ) => {
   return {
     root: css([
@@ -317,24 +298,6 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, gap, (val) => ({
         gap: theme.spacing(val),
-      })),
-      getResponsiveStyle(theme, width, (val) => ({
-        width: theme.spacing(val),
-      })),
-      getResponsiveStyle(theme, minWidth, (val) => ({
-        minWidth: theme.spacing(val),
-      })),
-      getResponsiveStyle(theme, maxWidth, (val) => ({
-        maxWidth: theme.spacing(val),
-      })),
-      getResponsiveStyle(theme, height, (val) => ({
-        height: theme.spacing(val),
-      })),
-      getResponsiveStyle(theme, minHeight, (val) => ({
-        minHeight: theme.spacing(val),
-      })),
-      getResponsiveStyle(theme, maxHeight, (val) => ({
-        maxHeight: theme.spacing(val),
       })),
     ]),
   };

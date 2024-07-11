@@ -1,20 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
-import {
-  Button,
-  DeleteButton,
-  EmptyState,
-  HorizontalGroup,
-  Icon,
-  IconButton,
-  Stack,
-  TagList,
-  TextLink,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, DeleteButton, EmptyState, Icon, IconButton, Stack, TagList, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 interface DashboardLinkListProps {
@@ -80,12 +68,12 @@ export function DashboardLinkList({
               <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                 <Icon name="external-link-alt" /> &nbsp; {link.type}
               </td>
-              <td role="gridcell">
-                <HorizontalGroup>
+              <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
+                <Stack>
                   {link.title && <span className={styles.titleWrapper}>{link.title}</span>}
                   {link.type === 'link' && <span className={styles.urlWrapper}>{link.url}</span>}
                   {link.type === 'dashboards' && <TagList tags={link.tags ?? []} />}
-                </HorizontalGroup>
+                </Stack>
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 {idx !== 0 && (

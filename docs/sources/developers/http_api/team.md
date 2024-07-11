@@ -53,7 +53,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 GET /api/teams/search?perpage=10&page=1&query=mytestteam HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 ```
 
 **Example Response**:
@@ -119,7 +119,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 GET /api/teams/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 ```
 
 **Example Response**:
@@ -165,7 +165,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 POST /api/teams HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 
 {
   "name": "MyTestTeam",
@@ -210,7 +210,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 PUT /api/teams/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 
 {
   "name": "MyTestTeam",
@@ -253,7 +253,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 DELETE /api/teams/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 ```
 
 **Example Response**:
@@ -290,7 +290,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 GET /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 ```
 
 **Example Response**:
@@ -343,7 +343,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 POST /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 
 {
   "userId": 2
@@ -385,7 +385,7 @@ See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 DELETE /api/teams/2/members/3 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 ```
 
 **Example Response**:

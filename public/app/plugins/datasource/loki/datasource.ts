@@ -40,6 +40,8 @@ import {
   DataSourceWithQueryModificationSupport,
   LogsVolumeOption,
   LogsSampleOptions,
+  QueryVariableModel,
+  CustomVariableModel,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -680,16 +682,10 @@ export class LokiDatasource
       return [];
     }
 
-    // If we have stream selector, use /series endpoint
-    if (query.stream) {
-      const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
-      if (!result[query.label]) {
-        return [];
-      }
-      return result[query.label].map((value: string) => ({ text: value }));
-    }
-
-    const result = await this.languageProvider.fetchLabelValues(query.label, { timeRange });
+    const result = await this.languageProvider.fetchLabelValues(query.label, {
+      streamSelector: query.stream,
+      timeRange,
+    });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -747,7 +743,11 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
    */
   async getTagKeys(options?: DataSourceGetTagKeysOptions<LokiQuery>): Promise<MetricFindValue[]> {
-    const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange });
+    let streamSelector = '{}';
+    for (const filter of options?.filters ?? []) {
+      streamSelector = addLabelToQuery(streamSelector, filter.key, filter.operator, filter.value);
+    }
+    const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange, streamSelector });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -756,7 +756,14 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
   async getTagValues(options: DataSourceGetTagValuesOptions<LokiQuery>): Promise<MetricFindValue[]> {
-    const result = await this.languageProvider.fetchLabelValues(options.key, { timeRange: options.timeRange });
+    let streamSelector = '{}';
+    for (const filter of options?.filters ?? []) {
+      streamSelector = addLabelToQuery(streamSelector, filter.key, filter.operator, filter.value);
+    }
+    const result = await this.languageProvider.fetchLabelValues(options.key, {
+      timeRange: options.timeRange,
+      streamSelector,
+    });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -765,7 +772,7 @@ export class LokiDatasource
    * Handles escaping of special characters based on variable type and value.
    * @returns The interpolated value with appropriate character escaping.
    */
-  interpolateQueryExpr(value: any, variable: any) {
+  interpolateQueryExpr(value: any, variable: QueryVariableModel | CustomVariableModel) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return lokiRegularEscape(value);
@@ -1082,8 +1089,6 @@ export class LokiDatasource
     // alerting/ML queries and we want to have consistent interpolation for all queries
     const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
-    const exprWithAdHoc = this.addAdHocFilters(target.expr, adhocFilters);
-
     const variables = {
       ...rest,
 
@@ -1095,10 +1100,16 @@ export class LokiDatasource
         value: '$__interval_ms',
       },
     };
+
+    const exprWithAdHoc = this.addAdHocFilters(
+      this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
+      adhocFilters
+    );
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(exprWithAdHoc, variables, this.interpolateQueryExpr),
+      expr: exprWithAdHoc,
     };
   }
 

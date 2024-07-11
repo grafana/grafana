@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -12,6 +12,7 @@ import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSel
 import { fetchRulerRulesIfNotFetchedYet } from '../../../state/actions';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { RuleFormValues } from '../../../types/rule-form';
+import { isPrivateLabelKey } from '../../../utils/labels';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -146,6 +147,9 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
     </FormProvider>
   );
 }
+
+const isKeyAllowed = (labelKey: string) => !isPrivateLabelKey(labelKey);
+
 export function useCombinedLabels(
   dataSourceName: string,
   labelsPluginInstalled: boolean,
@@ -169,12 +173,12 @@ export function useCombinedLabels(
 
   //------- Convert the keys from the ops labels to options for the dropdown
   const keysFromGopsLabels = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyOps), labelsInSubform);
+    return mapLabelsToOptions(Object.keys(labelsByKeyOps).filter(isKeyAllowed), labelsInSubform);
   }, [labelsByKeyOps, labelsInSubform]);
 
   //------- Convert the keys from the existing alerts to options for the dropdown
   const keysFromExistingAlerts = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyFromExisingAlerts), labelsInSubform);
+    return mapLabelsToOptions(Object.keys(labelsByKeyFromExisingAlerts).filter(isKeyAllowed), labelsInSubform);
   }, [labelsByKeyFromExisingAlerts, labelsInSubform]);
 
   // create two groups of labels, one for ops and one for custom
@@ -238,6 +242,10 @@ export function useCombinedLabels(
 
   const getValuesForLabel = useCallback(
     (key: string) => {
+      if (!isKeyAllowed(key)) {
+        return [];
+      }
+
       // values from existing alerts will take precedence over values from ops
       if (selectedKeyIsFromAlerts || !labelsPluginInstalled) {
         return mapLabelsToOptions(labelsByKeyFromExisingAlerts[key]);
@@ -254,6 +262,7 @@ export function useCombinedLabels(
     getValuesForLabel,
   };
 }
+
 /*
   We will suggest labels from two sources: existing alerts and ops labels.
   We only will suggest labels from ops if the grafana-labels-app plugin is installed
@@ -262,6 +271,7 @@ export function useCombinedLabels(
 export interface LabelsWithSuggestionsProps {
   dataSourceName: string;
 }
+
 export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsProps) {
   const styles = useStyles2(getStyles);
   const {

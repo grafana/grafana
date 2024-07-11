@@ -1,5 +1,4 @@
-import { Story } from '@storybook/react';
-import React from 'react';
+import { StoryFn } from '@storybook/react';
 
 import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
@@ -97,7 +96,7 @@ interface StoryProps extends GraphWithLegendProps {
   displayMode: string;
 }
 
-export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, legendDisplayMode, ...args }) => {
+export const WithLegend: StoryFn<StoryProps> = ({ rightAxisSeries, displayMode, legendDisplayMode, ...args }) => {
   const props: Partial<GraphWithLegendProps> = {
     series: series.map((s) => {
       if (

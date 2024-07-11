@@ -12,14 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -125,7 +124,7 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 	}
 
 	return &authn.Identity{
-		ID:    authn.NewNamespaceIDUnchecked(authn.NamespaceUser, uid),
+		ID:    authn.NewNamespaceID(authn.NamespaceUser, uid),
 		OrgID: r.OrgID,
 		// FIXME: This does not match the actual auth module used, but should not have any impact
 		// Maybe caching the auth module used with the user ID would be a good idea
@@ -150,14 +149,13 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		return nil
 	}
 
-	namespace, identifier := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !identity.ID.IsNamespace(authn.NamespaceUser) {
 		return nil
 	}
 
-	id, err := authidentity.IntIdentifier(namespace, identifier)
+	id, err := identity.ID.ParseInt()
 	if err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identifier, "err", err)
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identity.ID.ID(), "err", err)
 		return nil
 	}
 

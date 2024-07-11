@@ -143,15 +143,16 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 }
 
 func Test_containsProvisionedAlerts(t *testing.T) {
+	gen := models2.RuleGen
 	t.Run("should return true if at least one rule is provisioned", func(t *testing.T) {
-		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(4)+2, models2.AlertRuleGen())
+		rules := gen.GenerateManyRef(2, 6)
 		provenance := map[string]models2.Provenance{
 			rules[rand.Intn(len(rules))].UID: []models2.Provenance{models2.ProvenanceAPI, models2.ProvenanceFile}[rand.Intn(2)],
 		}
 		require.Truef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is expected to be considered as provisioned but it isn't. Provenances: %v", provenance)
 	})
 	t.Run("should return false if map does not contain or has ProvenanceNone", func(t *testing.T) {
-		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(5)+1, models2.AlertRuleGen())
+		rules := gen.GenerateManyRef(1, 6)
 		provenance := make(map[string]models2.Provenance)
 		numProvenanceNone := rand.Intn(len(rules))
 		for i := 0; i < numProvenanceNone; i++ {

@@ -1,16 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePrevious } from 'react-use';
 
-import {
-  DisplayProcessor,
-  DisplayValue,
-  fieldReducers,
-  PanelProps,
-  reduceField,
-  ReducerID,
-  getDisplayProcessor,
-} from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
@@ -18,12 +10,14 @@ import {
   TooltipPlugin2,
   UPlotChart,
   UPlotConfigBuilder,
+  useTheme2,
   VizLayout,
   VizLegend,
   VizLegendItem,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
+import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options, SeriesMapping } from './panelcfg.gen';
@@ -33,6 +27,8 @@ import { ScatterSeries } from './types';
 type Props = PanelProps<Options>;
 
 export const XYChartPanel = (props: Props) => {
+  const theme = useTheme2();
+
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
@@ -70,76 +66,14 @@ export const XYChartPanel = (props: Props) => {
 
   const renderLegend = () => {
     const items: VizLegendItem[] = [];
-    const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
-    const theme = config.theme2;
 
     for (let si = 0; si < series.length; si++) {
       const s = series[si];
       const frame = s.frame(props.data.series);
       if (frame) {
         for (const item of s.legend()) {
-          item.getDisplayValues = () => {
-            const calcs = props.options.legend.calcs;
-
-            if (!calcs?.length) {
-              return [];
-            }
-
-            const field = s.y(frame);
-
-            const fmt = field.display ?? defaultFormatter;
-            let countFormatter: DisplayProcessor | null = null;
-
-            const fieldCalcs = reduceField({
-              field,
-              reducers: calcs,
-            });
-
-            return calcs.map<DisplayValue>((reducerId) => {
-              const fieldReducer = fieldReducers.get(reducerId);
-              let formatter = fmt;
-
-              if (fieldReducer.id === ReducerID.diffperc) {
-                formatter = getDisplayProcessor({
-                  field: {
-                    ...field,
-                    config: {
-                      ...field.config,
-                      unit: 'percent',
-                    },
-                  },
-                  theme,
-                });
-              }
-
-              if (
-                fieldReducer.id === ReducerID.count ||
-                fieldReducer.id === ReducerID.changeCount ||
-                fieldReducer.id === ReducerID.distinctCount
-              ) {
-                if (!countFormatter) {
-                  countFormatter = getDisplayProcessor({
-                    field: {
-                      ...field,
-                      config: {
-                        ...field.config,
-                        unit: 'none',
-                      },
-                    },
-                    theme,
-                  });
-                }
-                formatter = countFormatter;
-              }
-
-              return {
-                ...formatter(fieldCalcs[reducerId]),
-                title: fieldReducer.name,
-                description: fieldReducer.description,
-              };
-            });
-          };
-
+          const field = s.y(frame);
+          item.getDisplayValues = () => getDisplayValuesForCalcs(props.options.legend.calcs, field, theme);
           item.disabled = !(s.show ?? true);
 
           if (props.options.seriesMapping === SeriesMapping.Manual) {

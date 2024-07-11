@@ -1,13 +1,14 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { AlignItems, Direction, FlexProps, JustifyContent, Wrap } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
+import { getSizeStyles, SizeProps } from '../utils/styles';
 
-interface StackProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
@@ -17,11 +18,29 @@ interface StackProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 
 }
 
 export const Stack = React.forwardRef<HTMLDivElement, StackProps>((props, ref) => {
-  const { gap = 1, alignItems, justifyContent, direction, wrap, children, grow, shrink, basis, flex, ...rest } = props;
+  const {
+    gap = 1,
+    alignItems,
+    justifyContent,
+    direction,
+    wrap,
+    children,
+    grow,
+    shrink,
+    basis,
+    flex,
+    width,
+    minWidth,
+    maxWidth,
+    height,
+    minHeight,
+    maxHeight,
+    ...rest
+  } = props;
   const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap, grow, shrink, basis, flex);
-
+  const sizeStyles = useStyles2(getSizeStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
   return (
-    <div ref={ref} className={styles.flex} {...rest}>
+    <div ref={ref} className={cx(styles.flex, sizeStyles)} {...rest}>
       {children}
     </div>
   );
@@ -50,7 +69,7 @@ const getStyles = (
         flexDirection: val,
       })),
       getResponsiveStyle(theme, wrap, (val) => ({
-        flexWrap: val,
+        flexWrap: typeof val === 'boolean' ? (val ? 'wrap' : 'nowrap') : val,
       })),
       getResponsiveStyle(theme, alignItems, (val) => ({
         alignItems: val,

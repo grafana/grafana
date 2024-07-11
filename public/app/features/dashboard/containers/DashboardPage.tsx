@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
@@ -458,19 +458,6 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  const { folderUid } = dashboard.meta;
-  if (folderUid && pageNav) {
-    const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-    // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
-    // don't show the "page not found" breadcrumb
-    if (folderNavModel.id !== 'not-found') {
-      pageNav = {
-        ...pageNav,
-        parentItem: folderNavModel,
-      };
-    }
-  }
-
   if (props.route.routeName === DashboardRoutes.Path) {
     sectionNav = getRootContentNavModel();
     const pageNav = getPageNavFromSlug(props.match.params.slug!);
@@ -483,6 +470,19 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       ID_PREFIX + dashboard.uid,
       getNavModel(props.navIndex, 'dashboards/browse')
     );
+  }
+
+  const { folderUid } = dashboard.meta;
+  if (folderUid && pageNav && sectionNav.main.id !== 'starred') {
+    const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+    // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+    // don't show the "page not found" breadcrumb
+    if (folderNavModel.id !== 'not-found') {
+      pageNav = {
+        ...pageNav,
+        parentItem: folderNavModel,
+      };
+    }
   }
 
   if (state.editPanel || state.viewPanel) {

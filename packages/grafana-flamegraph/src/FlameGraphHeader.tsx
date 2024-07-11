@@ -1,12 +1,14 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
+import { CollapsedMap } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
@@ -25,6 +27,8 @@ type Props = {
   stickyHeader: boolean;
   vertical?: boolean;
   isDiffMode: boolean;
+  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
+  collapsedMap: CollapsedMap;
 
   extraHeaderElements?: React.ReactNode;
 };
@@ -45,6 +49,8 @@ const FlameGraphHeader = ({
   extraHeaderElements,
   vertical,
   isDiffMode,
+  setCollapsedMap,
+  collapsedMap,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
@@ -94,6 +100,32 @@ const FlameGraphHeader = ({
           />
         )}
         <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
+        <ButtonGroup className={styles.buttonSpacing}>
+          <Button
+            variant={'secondary'}
+            fill={'outline'}
+            size={'sm'}
+            tooltip={'Expand all groups'}
+            onClick={() => {
+              setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
+            }}
+            aria-label={'Expand all groups'}
+            icon={'angle-double-down'}
+            disabled={selectedView === SelectedView.TopTable}
+          />
+          <Button
+            variant={'secondary'}
+            fill={'outline'}
+            size={'sm'}
+            tooltip={'Collapse all groups'}
+            onClick={() => {
+              setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
+            }}
+            aria-label={'Collapse all groups'}
+            icon={'angle-double-up'}
+            disabled={selectedView === SelectedView.TopTable}
+          />
+        </ButtonGroup>
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
@@ -129,15 +161,6 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
     </Menu>
   );
 
-  if (props.isDiffMode) {
-    menu = (
-      <Menu>
-        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
-        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
-      </Menu>
-    );
-  }
-
   // Show a bit different gradient as a way to indicate selected value
   const colorDotStyle =
     {
@@ -146,6 +169,25 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
       [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
       [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
     }[props.value] || styles.colorDotByValue;
+
+  let contents = <span className={cx(styles.colorDot, colorDotStyle)} />;
+
+  if (props.isDiffMode) {
+    menu = (
+      <Menu>
+        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+      </Menu>
+    );
+
+    contents = (
+      <div className={cx(styles.colorDotDiff, colorDotStyle)}>
+        <div>-100% (removed)</div>
+        <div>0%</div>
+        <div>+100% (added)</div>
+      </div>
+    );
+  }
 
   return (
     <Dropdown overlay={menu}>
@@ -158,7 +200,7 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
         className={styles.buttonSpacing}
         aria-label={'Change color scheme'}
       >
-        <span className={cx(styles.colorDot, colorDotStyle)} />
+        {contents}
       </Button>
     </Dropdown>
   );
@@ -221,17 +263,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     width: '100%',
     top: 0,
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
   }),
   stickyHeader: css({
     zIndex: theme.zIndex.navbarFixed,
     position: 'sticky',
-    paddingBottom: theme.spacing(1),
-    paddingTop: theme.spacing(1),
     background: theme.colors.background.primary,
   }),
   inputContainer: css({
     label: 'inputContainer',
-    marginRight: '20px',
     flexGrow: 1,
     minWidth: '150px',
     maxWidth: '350px',
@@ -263,6 +304,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '10px',
     // eslint-disable-next-line @grafana/no-border-radius-literal
     borderRadius: '50%',
+  }),
+  colorDotDiff: css({
+    label: 'colorDotDiff',
+    display: 'flex',
+    width: '200px',
+    height: '12px',
+    color: 'white',
+    fontSize: 9,
+    lineHeight: 1.3,
+    fontWeight: 300,
+    justifyContent: 'space-between',
+    padding: '0 2px',
+    // We have a specific sizing for this so probably makes sense to use hardcoded value here
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '2px',
   }),
   colorDotByValue: css({
     label: 'colorDotByValue',

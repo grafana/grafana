@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
@@ -12,7 +11,14 @@ type DiffTitleProps = {
   title: string;
 };
 
-const replaceDiff: Diff = { op: 'replace', originalValue: undefined, path: [''], value: undefined, startLineNumber: 0 };
+const replaceDiff: Diff = {
+  op: 'replace',
+  originalValue: undefined,
+  path: [''],
+  value: undefined,
+  startLineNumber: 0,
+  endLineNumber: 0,
+};
 
 export const DiffTitle = ({ diff, title }: DiffTitleProps) => {
   const styles = useStyles2(getDiffTitleStyles);

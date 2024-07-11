@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import {
@@ -24,6 +23,7 @@ import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/u
 
 import { QuerySettings } from './QuerySettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
+import { StreamingSection } from './StreamingSection';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
@@ -49,8 +49,11 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           onChange: onOptionsChange,
         })}
       />
-
       <Divider spacing={4} />
+
+      <StreamingSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
+
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
       <Divider spacing={4} />
 
@@ -70,9 +73,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
 
           {config.secureSocksDSProxyEnabled && (
-            <>
-              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-            </>
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
           )}
 
           <ConfigSubSection
@@ -125,7 +126,6 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    label: 'container',
     marginBottom: theme.spacing(2),
     maxWidth: '900px',
   }),

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
-import React, { FormEvent, useEffect, useMemo } from 'react';
+import { useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { logInfo, LogMessages } from '../../Analytics';
-import { parseMatchers } from '../../utils/alertmanager';
+import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 
 interface Props {
   defaultQueryString?: string;
@@ -16,29 +16,37 @@ interface Props {
 export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const onSearchInputChanged = useMemo(
-    () =>
-      debounce((e: FormEvent<HTMLInputElement>) => {
-        logInfo(LogMessages.filterByLabel);
-        const target = e.currentTarget;
-        onFilterChange(target.value);
-      }, 600),
-    [onFilterChange]
+  const [filterQuery, setFilterQuery] = useState<string>(defaultQueryString ?? '');
+
+  useDebounce(
+    () => {
+      logInfo(LogMessages.filterByLabel);
+      onFilterChange(filterQuery);
+    },
+    600,
+    [filterQuery]
   );
 
-  useEffect(() => onSearchInputChanged.cancel(), [onSearchInputChanged]);
-
   const searchIcon = <Icon name={'search'} />;
-  const inputInvalid = defaultQueryString ? parseMatchers(defaultQueryString).length === 0 : false;
+  let inputValid = Boolean(defaultQueryString && defaultQueryString.length >= 3);
+  try {
+    if (!defaultQueryString) {
+      inputValid = true;
+    } else {
+      parsePromQLStyleMatcherLoose(defaultQueryString);
+    }
+  } catch (err) {
+    inputValid = false;
+  }
 
   return (
     <Field
       className={styles.fixMargin}
-      invalid={inputInvalid || undefined}
-      error={inputInvalid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
+      invalid={!inputValid}
+      error={!inputValid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
       label={
         <Label>
-          <Stack gap={0.5}>
+          <Stack gap={0.5} alignItems="center">
             <span>Search by label</span>
             <Tooltip
               content={
@@ -63,8 +71,8 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
     >
       <Input
         placeholder="Search"
-        defaultValue={defaultQueryString ?? ''}
-        onChange={onSearchInputChanged}
+        value={filterQuery}
+        onChange={(e) => setFilterQuery(e.currentTarget.value)}
         data-testid="search-query-input"
         prefix={searchIcon}
         className={styles.inputWidth}

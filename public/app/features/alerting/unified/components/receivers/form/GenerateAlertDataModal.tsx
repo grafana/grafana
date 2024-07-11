@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { addDays, subDays } from 'date-fns';
 import { uniqueId } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -145,31 +145,31 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  onAddButton: css`
-    flex: none;
-    width: fit-content;
-    padding-right: ${theme.spacing(1)};
-    margin-left: auto;
-  `,
-  flexWrapper: css`
-    display: flex;
-    flex-direction: row,
-    justify-content: space-between;
-  `,
-  onSubmitWrapper: css`
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: flex-end;
-  `,
-  onSubmitButton: css`
-    margin-left: ${theme.spacing(2)};
-  `,
-  result: css`
-    width: 570px;
-    height: 363px;
-  `,
+  section: css({
+    marginBottom: theme.spacing(2),
+  }),
+  onAddButton: css({
+    flex: 'none',
+    width: 'fit-content',
+    paddingRight: theme.spacing(1),
+    marginLeft: 'auto',
+  }),
+  flexWrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  }),
+  onSubmitWrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'flex-end',
+  }),
+  onSubmitButton: css({
+    marginLeft: theme.spacing(2),
+  }),
+  result: css({
+    width: '570px',
+    height: '363px',
+  }),
 });

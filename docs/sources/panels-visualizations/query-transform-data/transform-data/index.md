@@ -39,8 +39,44 @@ labels:
     - enterprise
     - oss
 title: Transform data
-description: Use transformations to rename fields, join series data, apply mathematical operations, and more
+description: Use transformations to rename fields, join time series/SQL-like data, apply mathematical operations, and more
 weight: 100
+refs:
+  sparkline-cell-type:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#sparkline
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/#sparkline
+  calculation-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  configuration-file:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+  dashboard-variable:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  feature-toggle:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
+  table-panel:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/
+  time-series-panel:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Transform data
@@ -48,7 +84,7 @@ weight: 100
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
-- Join time series data
+- Join time series/SQL-like data
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
@@ -262,6 +298,9 @@ This transformation has the following options:
   - **Numeric** - attempts to make the values numbers
   - **String** - will make the values strings
   - **Time** - attempts to parse the values as time
+    - The input will be parsed according to the [Moment.js parsing format](https://momentjs.com/docs/#/parsing/)
+    - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
+      You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
@@ -761,13 +800,13 @@ Use this transformation to merge multiple results into a single table, enabling 
 
 This is especially useful for converting multiple time series results into a single wide table with a shared time field.
 
-#### Inner join
+#### Inner join (for Time Series or SQL-like data)
 
 An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes data where values do not match in every result.
 
-Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur.
+Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur. This is not optimized for large Time Series datasets.
 
-In the following example, two queries return table data. It is visualized as two separate tables before applying the inner join transformation.
+In the following example, two queries return Time Series data. It is visualized as two separate tables before applying the inner join transformation.
 
 **Query A:**
 
@@ -792,7 +831,39 @@ The result after applying the inner join transformation looks like the following
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
-#### Outer join
+This works in the same way for non-Time Series tabular data as well.
+
+**Students**
+
+| StudentID | Name     | Major            |
+| --------- | -------- | ---------------- |
+| 1         | John     | Computer Science |
+| 2         | Emily    | Mathematics      |
+| 3         | Michael  | Physics          |
+| 4         | Jennifer | Chemistry        |
+
+**Enrollments**
+
+| StudentID | CourseID | Grade |
+| --------- | -------- | ----- |
+| 1         | CS101    | A     |
+| 1         | CS102    | B     |
+| 2         | MATH201  | A     |
+| 3         | PHYS101  | B     |
+| 5         | HIST101  | B     |
+
+The result after applying the inner join transformation looks like the following:
+
+| StudentID | Name    | Major            | CourseID | Grade |
+| --------- | ------- | ---------------- | -------- | ----- |
+| 1         | John    | Computer Science | CS101    | A     |
+| 1         | John    | Computer Science | CS102    | B     |
+| 2         | Emily   | Mathematics      | MATH201  | A     |
+| 3         | Michael | Physics          | PHYS101  | B     |
+
+The inner join only includes rows where there is a match between the "StudentID" in both tables. In this case, the result does not include "Jennifer" from the "Students" table because there are no matching enrollments for her in the "Enrollments" table.
+
+#### Outer join (for Time Series data)
 
 An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins Query A and Query B on the time field, the outer join includes all rows that don't match on the time field.
 
@@ -830,6 +901,38 @@ In the following example, a template query displays time series data from multip
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for multiple servers" >}}
+
+#### Outer join (for SQL-like data)
+
+A tabular outer join combining tables so that the result includes matched and unmatched rows from either or both tables.
+
+| StudentID | Name     | Major            |
+| --------- | -------- | ---------------- |
+| 1         | John     | Computer Science |
+| 2         | Emily    | Mathematics      |
+| 3         | Michael  | Physics          |
+| 4         | Jennifer | Chemistry        |
+
+Can now be joined with:
+
+| StudentID | CourseID | Grade |
+| --------- | -------- | ----- |
+| 1         | CS101    | A     |
+| 1         | CS102    | B     |
+| 2         | MATH201  | A     |
+| 3         | PHYS101  | B     |
+| 5         | HIST101  | B     |
+
+The result after applying the outer join transformation looks like the following:
+
+| StudentID | Name     | Major            | CourseID | Grade |
+| --------- | -------- | ---------------- | -------- | ----- |
+| 1         | John     | Computer Science | CS101    | A     |
+| 1         | John     | Computer Science | CS102    | B     |
+| 2         | Emily    | Mathematics      | MATH201  | A     |
+| 3         | Michael  | Physics          | PHYS101  | B     |
+| 4         | Jennifer | Chemistry        | NULL     | NULL  |
+| 5         | NULL     | NULL             | HIST101  | B     |
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
 
@@ -1337,31 +1440,10 @@ There are two different models:
 
 > **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
-{{% docs/reference %}}
-[Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-[Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-
-[sparkline cell type]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table#sparkline"
-[sparkline cell type]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table#sparkline"
-
-[Heatmap panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
-[Heatmap panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
-
-[configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
-[configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
-
-[Time series panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
-[Time series panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
-
-[feature toggle]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-[feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-
-[dashboard variable]: "/docs/grafana/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[dashboard variable]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-
-{{% /docs/reference %}}
-
-[Data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
+[Table panel]: ref:table-panel
+[Calculation types]: ref:calculation-types
+[sparkline cell type]: ref:sparkline-cell-type
+[configuration file]: ref:configuration-file
+[Time series panel]: ref:time-series-panel
+[feature toggle]: ref:feature-toggle
+[dashboard variable]: ref:dashboard-variable

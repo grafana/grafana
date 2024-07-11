@@ -1,18 +1,21 @@
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
+import * as React from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
 import { LayerElement } from 'app/core/components/Layers/types';
-import {
-  BackgroundImageSize,
-  CanvasElementItem,
-  CanvasElementOptions,
-  canvasElementRegistry,
-} from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import {
+  BackgroundImageSize,
+  Constraint,
+  HorizontalConstraint,
+  Placement,
+  VerticalConstraint,
+} from 'app/plugins/panel/canvas/panelcfg.gen';
 import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
-import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { CanvasElementItem, CanvasElementOptions } from '../element';
+import { canvasElementRegistry } from '../registry';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -36,6 +39,7 @@ export class ElementState implements LayerElement {
   div?: HTMLDivElement;
 
   // Calculated
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any; // depends on the type
 
   constructor(
@@ -192,7 +196,7 @@ export class ElementState implements LayerElement {
 
     if (this.div) {
       for (const key in this.sizeStyle) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
@@ -201,7 +205,7 @@ export class ElementState implements LayerElement {
       if (!SVGElements.has(elementType)) {
         // apply styles to div if it's not an SVG element
         for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
           this.div.style[key as any] = (this.dataStyle as any)[key];
         }
       } else {
@@ -211,7 +215,7 @@ export class ElementState implements LayerElement {
         // wrapper div element (this.div) doesn't re-render (has static `key` property),
         // so we have to clean styles manually;
         for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
           this.div.style[key as any] = '';
         }
       }
@@ -492,11 +496,14 @@ export class ElementState implements LayerElement {
   };
 
   applyRotate = (event: OnRotate) => {
-    const absoluteRotationDegree = event.absoluteRotation;
-
+    const rotationDelta = event.delta;
     const placement = this.options.placement!;
+    const placementRotation = placement.rotation ?? 0;
+
+    const calculatedRotation = placementRotation + rotationDelta;
+
     // Ensure rotation is between 0 and 360
-    placement.rotation = absoluteRotationDegree - Math.floor(absoluteRotationDegree / 360) * 360;
+    placement.rotation = calculatedRotation - Math.floor(calculatedRotation / 360) * 360;
     event.target.style.transform = event.transform;
   };
 
@@ -600,7 +607,6 @@ export class ElementState implements LayerElement {
   render() {
     const { item, div } = this;
     const scene = this.getScene();
-    // TODO: Rethink selected state handling
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (

@@ -28,7 +28,7 @@ export const LogMessages = {
 
 const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
 
-export { logInfo, logError, logMeasurement };
+export { logError, logInfo, logMeasurement };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
@@ -78,6 +78,18 @@ export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => P
     );
     return response;
   };
+}
+
+type FormErrors = Record<string, Partial<{ message: string; type: string | number }>>;
+export function reportFormErrors(errors: FormErrors) {
+  Object.entries(errors).forEach(([field, error]) => {
+    const message = error.message ?? 'unknown error';
+    const type = String(error.type) ?? 'unknown';
+
+    const errorObject = new Error(message);
+
+    logError(errorObject, { field, type });
+  });
 }
 
 function getPromRulesMetadata(promRules: RuleNamespace[]) {
@@ -231,6 +243,16 @@ export function trackSwitchToSimplifiedRouting() {
 
 export function trackSwitchToPoliciesRouting() {
   reportInteraction('grafana_alerting_switch_to_policies_routing');
+}
+
+export function trackEditInputWithTemplate() {
+  reportInteraction('grafana_alerting_contact_point_form_edit_input_with_template');
+}
+export function trackUseCustomInputInTemplate() {
+  reportInteraction('grafana_alerting_contact_point_form_use_custom_input_in_template');
+}
+export function trackUseSingleTemplateInInput() {
+  reportInteraction('grafana_alerting_contact_point_form_use_single_template_in_input');
 }
 
 export type AlertRuleTrackingProps = {

@@ -105,7 +105,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	}
 
 	return &authn.Identity{
-		ID:              authn.NewNamespaceIDUnchecked(authn.NamespaceUser, usr.ID),
+		ID:              authn.NewNamespaceID(authn.NamespaceUser, usr.ID),
 		OrgID:           r.OrgID,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 		AuthenticatedBy: login.PasswordAuthModule,

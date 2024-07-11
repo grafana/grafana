@@ -9,10 +9,6 @@ import (
 )
 
 func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType RenderType, renderKey string, opts Opts) (*RenderResult, error) {
-	if renderType == RenderPDF {
-		opts.Encoding = "pdf"
-	}
-
 	// gives plugin some additional time to timeout and return possible errors.
 	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
@@ -31,7 +27,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 	}
 
 	req := &pluginextensionv2.RenderRequest{
-		Url:               rs.getURL(opts.Path),
+		Url:               rs.getGrafanaCallbackURL(opts.Path),
 		Width:             int32(opts.Width),
 		Height:            int32(opts.Height),
 		DeviceScaleFactor: float32(opts.DeviceScaleFactor),
@@ -42,7 +38,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 		Domain:            rs.domain,
 		Headers:           headers,
 		AuthToken:         rs.Cfg.RendererAuthToken,
-		Encoding:          opts.Encoding,
+		Encoding:          string(renderType),
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
 
@@ -83,7 +79,7 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 	}
 
 	req := &pluginextensionv2.RenderCSVRequest{
-		Url:       rs.getURL(opts.Path),
+		Url:       rs.getGrafanaCallbackURL(opts.Path),
 		FilePath:  filePath,
 		RenderKey: renderKey,
 		Domain:    rs.domain,

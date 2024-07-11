@@ -1,7 +1,8 @@
 import { auto } from '@popperjs/core';
 import { action } from '@storybook/addon-actions';
-import { Meta, Story } from '@storybook/react';
-import React, { useState } from 'react';
+import { Meta, StoryFn } from '@storybook/react';
+import Chance from 'chance';
+import { useState } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
@@ -11,6 +12,27 @@ import { getAvailableIcons } from '../../types';
 import mdx from './Select.mdx';
 import { generateOptions, generateThousandsOfOptions } from './mockOptions';
 import { SelectCommonProps } from './types';
+
+const chance = new Chance();
+
+const manyGroupedOptions = [
+  { label: 'Foo', value: '1' },
+  {
+    label: 'Animals',
+    options: new Array(100).fill(0).map((_, i) => {
+      const animal = chance.animal();
+      return { label: animal, value: animal };
+    }),
+  },
+  {
+    label: 'People',
+    options: new Array(100).fill(0).map((_, i) => {
+      const person = chance.name();
+      return { label: person, value: person };
+    }),
+  },
+  { label: 'Bar', value: '3' },
+];
 
 const meta: Meta = {
   title: 'Forms/Select',
@@ -88,7 +110,7 @@ interface StoryProps extends Partial<SelectCommonProps<string>> {
   icon: string;
 }
 
-export const Basic: Story<StoryProps> = (args) => {
+export const Basic: StoryFn<StoryProps> = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -106,7 +128,7 @@ export const Basic: Story<StoryProps> = (args) => {
   );
 };
 
-export const BasicVirtualizedList: Story<StoryProps> = (args) => {
+export const BasicVirtualizedList: StoryFn<StoryProps> = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -128,7 +150,7 @@ export const BasicVirtualizedList: Story<StoryProps> = (args) => {
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const BasicSelectPlainValue: Story<StoryProps> = (args) => {
+export const BasicSelectPlainValue: StoryFn<StoryProps> = (args) => {
   const [value, setValue] = useState<string>();
   return (
     <>
@@ -149,7 +171,7 @@ export const BasicSelectPlainValue: Story<StoryProps> = (args) => {
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const SelectWithOptionDescriptions: Story = (args) => {
+export const SelectWithOptionDescriptions: StoryFn = (args) => {
   // TODO this is not working with new Select
 
   const [value, setValue] = useState<number>();
@@ -183,7 +205,7 @@ export const SelectWithOptionDescriptions: Story = (args) => {
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const MultiPlainValue: Story = (args) => {
+export const MultiPlainValue: StoryFn = (args) => {
   const [value, setValue] = useState<string[]>();
 
   return (
@@ -201,15 +223,35 @@ export const MultiPlainValue: Story = (args) => {
   );
 };
 
-export const MultiSelectWithOptionGroups: Story = (args) => {
+export const MultiSelectWithOptionGroups: StoryFn = (args) => {
   const [value, setValue] = useState<string[]>();
 
   return (
     <>
       <MultiSelect
         options={[
-          { label: '1', value: '1' },
-          { label: '2', value: '2', options: [{ label: '5', value: '5' }] },
+          { label: 'Foo', value: '1' },
+          {
+            label: 'Colours',
+            value: '2',
+            options: [
+              { label: 'Blue', value: '5' },
+              { label: 'Red', value: '6' },
+              { label: 'Black', value: '7' },
+              { label: 'Yellow', value: '8' },
+            ],
+          },
+          {
+            label: 'Animals',
+            value: '9',
+            options: [
+              { label: 'Cat', value: '10' },
+              { label: 'Cow', value: '11' },
+              { label: 'Dog', value: '12' },
+              { label: 'Eagle', value: '13' },
+            ],
+          },
+          { label: 'Bar', value: '3' },
         ]}
         value={value}
         onChange={(v) => {
@@ -223,7 +265,27 @@ export const MultiSelectWithOptionGroups: Story = (args) => {
   );
 };
 
-export const MultiSelectBasic: Story = (args) => {
+export const MultiSelectWithOptionGroupsVirtualized: StoryFn = (args) => {
+  const [value, setValue] = useState<string[]>();
+
+  return (
+    <>
+      <MultiSelect
+        options={manyGroupedOptions}
+        virtualized
+        value={value}
+        onChange={(v) => {
+          setValue(v.map((v) => v.value!));
+          action('onChange')(v);
+        }}
+        prefix={getPrefix(args.icon)}
+        {...args}
+      />
+    </>
+  );
+};
+
+export const MultiSelectBasic: StoryFn = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
 
   return (
@@ -249,7 +311,7 @@ MultiSelectBasic.args = {
   noMultiValueWrap: false,
 };
 
-export const MultiSelectAsync: Story = (args) => {
+export const MultiSelectAsync: StoryFn = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>();
 
   return (
@@ -270,7 +332,7 @@ MultiSelectAsync.args = {
   allowCustomValue: false,
 };
 
-export const BasicSelectAsync: Story = (args) => {
+export const BasicSelectAsync: StoryFn = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -288,7 +350,7 @@ export const BasicSelectAsync: Story = (args) => {
   );
 };
 
-export const AutoMenuPlacement: Story = (args) => {
+export const AutoMenuPlacement: StoryFn = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -312,7 +374,7 @@ AutoMenuPlacement.args = {
   menuPlacement: auto,
 };
 
-export const WidthAuto: Story = (args) => {
+export const WidthAuto: StoryFn = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -334,7 +396,7 @@ export const WidthAuto: Story = (args) => {
   );
 };
 
-export const CustomValueCreation: Story = (args) => {
+export const CustomValueCreation: StoryFn = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
   const [customOptions, setCustomOptions] = useState<Array<SelectableValue<string>>>([]);
   const options = generateOptions();

@@ -1,19 +1,15 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { PluginExtensionPoints } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
-import { usePluginComponentExtensions } from '@grafana/runtime';
 import { Stack, Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
+
+import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExtensions';
 
 export function PluginIntegrations() {
   const styles = useStyles2(getStyles);
 
-  const { extensions } = usePluginComponentExtensions({
-    extensionPointId: PluginExtensionPoints.AlertingHomePage,
-    limitPerPlugin: 1,
-  });
+  const { extensions } = useAlertingHomePageExtensions();
 
   if (extensions.length === 0) {
     return null;

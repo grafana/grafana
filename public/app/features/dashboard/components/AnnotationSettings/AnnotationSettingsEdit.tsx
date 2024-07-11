@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -265,9 +266,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: theme.spacing(60),
       marginBottom: theme.spacing(2),
     }),
-    select: css`
-      margin-top: 8px;
-    `,
+    select: css({
+      marginTop: '8px',
+    }),
   };
 };
 

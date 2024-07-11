@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -28,13 +28,13 @@ export const VizTooltipContent = ({
   const scrollableStyle: CSSProperties = scrollable
     ? {
         maxHeight: maxHeight,
-        overflowY: 'scroll',
+        overflowY: 'auto',
       }
     : {};
 
   return (
     <div className={styles.wrapper} style={scrollableStyle}>
-      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive }, i) => (
+      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle }, i) => (
         <VizTooltipRow
           key={i}
           label={label}
@@ -45,6 +45,8 @@ export const VizTooltipContent = ({
           isActive={isActive}
           justify={'space-between'}
           isPinned={isPinned}
+          lineStyle={lineStyle}
+          showValueScroll={!scrollable}
         />
       ))}
       {children}

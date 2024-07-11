@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import * as React from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -13,7 +14,7 @@ import {
   SplitOpen,
   TimeZone,
 } from '@grafana/data';
-import { Button, InlineField, Alert, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -32,6 +33,7 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
 };
 
 export const LogsVolumePanelList = ({
@@ -45,6 +47,7 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
   onClose,
+  toggleLegendRef,
 }: Props) => {
   const {
     logVolumes,
@@ -121,6 +124,7 @@ export const LogsVolumePanelList = ({
         const logsVolumeData = { data: logVolumes[name] };
         return (
           <LogsVolumePanel
+            toggleLegendRef={toggleLegendRef}
             key={index}
             absoluteRange={visibleRange}
             allLogsVolumeMaximum={allLogsVolumeMaximumValue}

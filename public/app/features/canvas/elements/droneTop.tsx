@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
@@ -180,9 +179,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   propellerCW: css({
+    // TODO: figure out what styles to apply when prefers-reduced-motion is set
+    // eslint-disable-next-line @grafana/no-unreduced-motion
     animationDirection: 'normal',
   }),
   propellerCCW: css({
+    // TODO: figure out what styles to apply when prefers-reduced-motion is set
+    // eslint-disable-next-line @grafana/no-unreduced-motion
     animationDirection: 'reverse',
   }),
 });

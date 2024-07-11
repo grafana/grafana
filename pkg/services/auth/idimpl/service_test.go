@@ -56,7 +56,7 @@ func TestService_SignIdentity(t *testing.T) {
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
 			require.NoError(t, err)
 
-			token, err := jwt.Signed(s).Claims(claims).CompactSerialize()
+			token, err := jwt.Signed(s).Claims(claims.Claims).Claims(claims.Rest).CompactSerialize()
 			require.NoError(t, err)
 
 			return token, nil
@@ -87,7 +87,7 @@ func TestService_SignIdentity(t *testing.T) {
 		require.NoError(t, err)
 
 		claims := &auth.IDClaims{}
-		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims))
-		assert.Equal(t, login.AzureADAuthModule, claims.AuthenticatedBy)
+		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
+		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
 	})
 }

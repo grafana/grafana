@@ -52,17 +52,18 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
         case SpansetPipelineExpression:
           return 'Invalid spanset combining operator after spanset expression.';
         case Pipe:
-          return 'Invalid aggregation operator after pipepile operator.';
+          return 'Invalid aggregation operator after pipeline operator.';
         default:
           return 'Invalid spanset expression after spanset combining operator.';
       }
     case IntrinsicField:
     case Aggregate:
+      if (errorNode.parent?.parent?.parent?.type.id === GroupOperation) {
+        return 'Invalid expression for by operator.';
+      } else if (errorNode.parent?.parent?.parent?.parent?.type.id === SelectOperation) {
+        return 'Invalid expression for select operator.';
+      }
       return 'Invalid expression for aggregator operator.';
-    case GroupOperation:
-      return 'Invalid expression for by operator.';
-    case SelectOperation:
-      return 'Invalid expression for select operator.';
     case AttributeField:
       return 'Invalid expression for spanset.';
     case ScalarFilter:

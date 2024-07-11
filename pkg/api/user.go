@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,7 +36,7 @@ func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Respo
 		return response.JSON(http.StatusOK, user.UserProfileDTO{
 			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
 			OrgID:          c.SignedInUser.GetOrgID(),
-			UID:            strings.Join([]string{namespace, identifier}, ":"),
+			UID:            c.SignedInUser.GetID().String(),
 			Name:           c.SignedInUser.NameOrFallback(),
 			Email:          c.SignedInUser.GetEmail(),
 			Login:          c.SignedInUser.GetLogin(),
@@ -215,9 +215,7 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
@@ -493,9 +491,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
@@ -527,8 +523,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 		return
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		hs.NotFoundHandler(c)
 		return
 	}
@@ -606,16 +601,11 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 	bitmask := &usr.HelpFlags1
 	bitmask.AddFlag(user.HelpFlags1(flag))
 
-	cmd := user.SetUserHelpFlagCommand{
-		UserID:     userID,
-		HelpFlags1: *bitmask,
-	}
-
-	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: bitmask}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask})
 }
 
 // swagger:route GET /user/helpflags/clear signed_in_user clearHelpFlags
@@ -633,16 +623,12 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 		return errResponse
 	}
 
-	cmd := user.SetUserHelpFlagCommand{
-		UserID:     userID,
-		HelpFlags1: user.HelpFlags1(0),
-	}
-
-	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
+	flags := user.HelpFlags1(0)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: &flags}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": flags})
 }
 
 func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {

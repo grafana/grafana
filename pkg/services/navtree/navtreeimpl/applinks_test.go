@@ -6,12 +6,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -411,7 +412,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
-					Role:       roletype.RoleEditor,
+					Role:       identity.RoleEditor,
 					Action:     catalogReadAction,
 				},
 				{
@@ -419,7 +420,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Path:     "/a/test-app1/page2",
 					Type:     "page",
 					AddToNav: true,
-					Role:     roletype.RoleViewer,
+					Role:     identity.RoleViewer,
 				},
 			},
 		},
@@ -434,7 +435,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	service := ServiceImpl{
 		log:            log.New("navtree"),
 		cfg:            cfg,
-		accessControl:  acimpl.ProvideAccessControl(cfg),
+		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{
@@ -445,7 +446,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should not add app links when the user cannot access app plugins", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{}
-		user.OrgRole = roletype.RoleAdmin
+		user.OrgRole = identity.RoleAdmin
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
@@ -456,7 +457,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
-		user.OrgRole = roletype.RoleEditor
+		user.OrgRole = identity.RoleEditor
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
@@ -472,7 +473,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
-		user.OrgRole = roletype.RoleViewer
+		user.OrgRole = identity.RoleViewer
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
@@ -487,7 +488,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}, catalogReadAction: []string{}},
 		}
-		user.OrgRole = roletype.RoleViewer
+		user.OrgRole = identity.RoleViewer
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -504,7 +505,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
-		user.OrgRole = roletype.RoleEditor
+		user.OrgRole = identity.RoleEditor
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)

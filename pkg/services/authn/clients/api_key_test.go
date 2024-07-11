@@ -298,7 +298,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 		{
 			desc:        "should return error for invalid namespace",
 			namespaceID: authn.MustParseNamespaceID("user:1"),
-			expectedErr: authn.ErrInvalidNamepsaceID,
+			expectedErr: authn.ErrInvalidNamespaceID,
 		},
 		{
 			desc:        "should return error when api key has expired",
@@ -328,7 +328,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 				OrgID:            1,
 				ServiceAccountId: intPtr(1),
 			},
-			expectedErr: authn.ErrInvalidNamepsaceID,
+			expectedErr: authn.ErrInvalidNamespaceID,
 		},
 		{
 			desc:        "should return error when api key is belongs to different org",

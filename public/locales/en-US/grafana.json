@@ -25,6 +25,95 @@
       "user": "User"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "Hide common labels",
+      "show": {
+        "tooltip": "Show common labels"
+      }
+    }
+  },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Define how the alert rule is evaluated."
+      },
+      "info-help": {
+        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+      },
+      "pending-period": "Pending period"
+    },
+    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+    "evaluation-behaviour-for": {
+      "error-parsing": "Failed to parse duration",
+      "validation": "Pending period must be greater than or equal to the evaluation interval."
+    },
+    "evaluation-behaviour-group": {
+      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
+    },
+    "pause": "Pause evaluation"
+  },
+  "alerting": {
+    "central-alert-history": {
+      "details": {
+        "annotations": "Annotations",
+        "error": "Error loading rule for this event.",
+        "loading": "Loading...",
+        "no-annotations": "No annotations",
+        "no-recognized-state": "No recognized state",
+        "no-values": "No values",
+        "not-found": "Rule not found for this event.",
+        "not-grafana-rule": "Rule is not a Grafana rule",
+        "number-transitions": "State transitions for selected period",
+        "state": {
+          "alerting": "Alerting",
+          "error": "Error",
+          "no-data": "No data",
+          "normal": "Normal",
+          "pending": "Pending"
+        },
+        "state-transitions": "State transition",
+        "unknown-event-state": "Unknown",
+        "unknown-rule": "Unknown",
+        "value-in-transition": "Value in transition"
+      },
+      "error": "Something went wrong loading the alert state history",
+      "filter": {
+        "info": {
+          "label1": "Filter events using label querying without spaces, ex:",
+          "label2": "Invalid use of spaces:",
+          "label3": "Valid use of spaces:",
+          "label4": "Filter alerts using label querying without braces, ex:"
+        }
+      }
+    },
+    "contact-points": {
+      "telegram": {
+        "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
+        "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
+      }
+    },
+    "policies": {
+      "metadata": {
+        "timingOptions": {
+          "groupInterval": {
+            "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
+            "label": "Wait <1></1> before sending updates"
+          },
+          "groupWait": {
+            "description": "How long to initially wait to send a notification for a group of alert instances.",
+            "label": "Wait <1></1> to group instances"
+          },
+          "repeatInterval": {
+            "description": "How often notifications are sent if the group of alerts has not changed since the last notification.",
+            "label": "Repeated every <1></1>"
+          }
+        }
+      }
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -48,6 +137,7 @@
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. You can restore the dashboards anytime before the 30 days expires. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -62,15 +152,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -396,6 +486,8 @@
       "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
       "panel-options-graph-tooltip-label": "Graph tooltip",
       "panel-options-label": "Panel options",
+      "panels-preload-description": "When enabled all panels will start loading as soon as the dashboard has been loaded.",
+      "panels-preload-label": "Preload panels",
       "tags-label": "Tags",
       "title": "General",
       "title-label": "Title"
@@ -429,6 +521,16 @@
     },
     "versions": {
       "title": "Versions"
+    }
+  },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "Show dependencies",
+          "title": "Dependencies"
+        }
+      }
     }
   },
   "data-source-list": {
@@ -465,6 +567,28 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "add-to-library-modal": {
+      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
+      "data-source-name": "Data source name",
+      "data-source-type": "Data source type",
+      "description": "Description",
+      "info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
+      "query": "Query",
+      "title": "Add query to Query Library",
+      "visibility": "Visibility"
+    },
+    "logs": {
+      "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
+      "no-logs-found": "No logs found.",
+      "scan-for-older-logs": "Scan for older logs",
+      "stop-scan": "Stop scan"
+    },
+    "query-library": {
+      "delete-query": "Delete query",
+      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
+      "delete-query-title": "Delete query",
+      "query-deleted": "Query deleted"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -479,6 +603,7 @@
     "rich-history-card": {
       "add-comment-form": "Add comment form",
       "add-comment-tooltip": "Add comment",
+      "add-to-library": "Add to library",
       "cancel": "Cancel",
       "confirm-delete": "Delete",
       "copy-query-tooltip": "Copy query to clipboard",
@@ -491,15 +616,12 @@
       "delete-query-tooltip": "Delete query",
       "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
       "edit-comment-tooltip": "Edit comment",
-      "left-pane": "Left pane",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
+      "query-template-added": "Query template successfully added to the library",
       "query-text-label": "Query text",
-      "right-pane": "Right pane",
-      "run-query-button": "Run query",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
-      "switch-datasource-button": "Switch data source and run query",
       "unstar-query-tooltip": "Unstar query",
       "update-comment-form": "Update comment form"
     },
@@ -568,6 +690,12 @@
       "saving-failed": "Saving rich history failed",
       "update-failed": "Rich History update failed"
     },
+    "run-query": {
+      "left-pane": "Left pane",
+      "right-pane": "Right pane",
+      "run-query-button": "Run query",
+      "switch-datasource-button": "Switch data source and run query"
+    },
     "secondary-actions": {
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
@@ -584,11 +712,11 @@
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-link-abs-time": "Copy absolute URL",
       "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
-      "copy-shortened-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
@@ -598,6 +726,20 @@
       "split-title": "Split",
       "split-tooltip": "Split the pane",
       "split-widen": "Widen pane"
+    }
+  },
+  "export": {
+    "json": {
+      "cancel-button": "Cancel",
+      "copy-button": "Copy to clipboard",
+      "download-button": "Download file",
+      "export-externally-label": "Export the dashboard to use in another instance",
+      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
+      "title": "Save dashboard JSON"
+    },
+    "menu": {
+      "export-as-json-label": "Export",
+      "export-as-json-tooltip": "Export"
     }
   },
   "folder-picker": {
@@ -618,6 +760,9 @@
     "select": {
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    },
+    "spinner": {
+      "aria-label": "Loading"
     }
   },
   "graph": {
@@ -703,7 +848,7 @@
     },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -717,6 +862,18 @@
       "success": "Library panel saved"
     }
   },
+  "link": {
+    "share": {
+      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
+      "config-alert-title": "Link configuration",
+      "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
+      "copy-link-button": "Copy link",
+      "copy-to-clipboard": "Link copied to clipboard",
+      "short-url-label": "Shorten link",
+      "time-range-description": "Change the current relative time range to an absolute time range",
+      "time-range-label": "Lock time range"
+    }
+  },
   "login": {
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
@@ -727,10 +884,12 @@
     "forgot-password": "Forgot your password?",
     "form": {
       "password-label": "Password",
+      "password-placeholder": "password",
       "password-required": "Password is required",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
+      "username-placeholder": "email or username",
       "username-required": "Email or username is required"
     },
     "services": {
@@ -742,6 +901,16 @@
     }
   },
   "migrate-to-cloud": {
+    "build-snapshot": {
+      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
+      "title": "No snapshot exists",
+      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
+    },
+    "building-snapshot": {
+      "description": "We're creating a point-in-time snapshot of the current state of this installation. Once the snapshot is complete. you'll be able to upload it to Grafana Cloud.",
+      "description-eta": "Creating a snapshot typically takes less than two minutes.",
+      "title": "Building installation snapshot"
+    },
     "can-i-move": {
       "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
       "link-title": "Learn about migrating other settings",
@@ -785,7 +954,7 @@
       "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
       "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
       "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
-      "title": "How to get started"
+      "title": "Performing a migration"
     },
     "is-it-secure": {
       "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
@@ -793,12 +962,11 @@
       "title": "Is it secure?"
     },
     "migrate-to-this-stack": {
-      "body": "Some configuration from your self-managed Grafana instance can be automatically copied to this cloud stack.",
+      "body": "You can migrate some resources from your self-managed Grafana installation to this cloud stack. To do this securely, you'll need to generate a migration token. Your self-managed instance will use the token to authenticate with this cloud stack.",
       "link-title": "View the full migration guide",
-      "title": "Migrate configuration to this stack"
+      "title": "Let us help you migrate to this stack"
     },
     "migration-token": {
-      "body": "Your self-managed Grafana instance will require a special authentication token to securely connect to this cloud stack.",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
       "delete-modal-cancel": "Cancel",
       "delete-modal-confirm": "Delete",
@@ -814,8 +982,7 @@
       "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
       "modal-field-label": "Token",
       "modal-title": "Migration token created",
-      "status": "Current status: <1></1>",
-      "title": "Migration token"
+      "status": "Current status: <1></1>"
     },
     "pdc": {
       "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
@@ -846,13 +1013,20 @@
       "unknown": "Unknown"
     },
     "summary": {
+      "cancel-snapshot": "Cancel snapshot",
       "disconnect": "Disconnect",
       "disconnect-error-description": "See the Grafana server logs for more details",
       "disconnect-error-title": "There was an error disconnecting",
+      "errored-resource-count": "Errors",
       "run-migration-error-description": "See the Grafana server logs for more details",
       "run-migration-error-title": "There was an error migrating your resources",
-      "start-migration": "Upload everything",
-      "target-stack-title": "Uploading to"
+      "snapshot-date": "Snapshot timestamp",
+      "snapshot-not-created": "Not yet created",
+      "start-migration": "Build snapshot",
+      "successful-resource-count": "Successfully migrated",
+      "target-stack-title": "Uploading to",
+      "total-resource-count": "Total resources",
+      "upload-migration": "Upload snapshot"
     },
     "token-status": {
       "active": "Token created and active",
@@ -885,7 +1059,8 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "title": "Admin"
+      "subtitle": "Manage Alertmanager configurations",
+      "title": "Settings"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
@@ -1029,7 +1204,7 @@
       "title": "Home"
     },
     "incidents": {
-      "title": "Incidents"
+      "title": "Incident"
     },
     "infrastructure": {
       "subtitle": "Understand your infrastructure's health",
@@ -1107,6 +1282,10 @@
     },
     "public": {
       "title": "Public dashboards"
+    },
+    "recently-deleted": {
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "title": "Recently Deleted"
     },
     "recorded-queries": {
       "title": "Recorded queries"
@@ -1224,6 +1403,7 @@
       "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
+      "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
       "unlink-library-panel": "Unlink library panel",
@@ -1321,6 +1501,16 @@
       "revoke-public-URL-button-title": "Revoke public URL",
       "settings-title": "Settings"
     },
+    "configuration": {
+      "display-annotations-label": "Display annotations",
+      "enable-time-range-label": "Enable time range",
+      "settings-label": "Settings",
+      "success-pause": "Your dashboard access has been paused",
+      "success-resume": "Your dashboard access has been resumed",
+      "success-update": "Settings have been successfully updated",
+      "success-update-old": "Public dashboard updated!",
+      "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
+    },
     "create-page": {
       "generate-public-url-button": "Generate public URL",
       "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
@@ -1332,15 +1522,32 @@
       "revoke-title": "Revoke public URL"
     },
     "email-sharing": {
+      "accept-button": "Accept",
+      "alert-text": "Sharing dashboards by email is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.",
+      "bill-ack": "I understand that adding users requires payment.*",
+      "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
       "input-required-email-text": "Email is required",
       "invite-button": "Invite",
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
+      "learn-more-button": "Learn more",
+      "recipient-email-placeholder": "Email",
+      "recipient-invalid-email-text": "Invalid email",
+      "recipient-invitation-button": "Invite",
+      "recipient-invitation-description": "Invite someone by email",
+      "recipient-invitation-tooltip": "This dashboard contains sensitive data. By using this feature you will be sharing with external people.",
+      "recipient-list-description": "Only people you've directly invited can access this dashboard",
+      "recipient-list-title": "People with access",
+      "recipient-required-email-text": "Email is required",
       "resend-button": "Resend",
       "resend-button-title": "Resend",
+      "resend-invite-label": "Resend invite",
+      "revoke-access-label": "Revoke access",
       "revoke-button": "Revoke",
-      "revoke-button-title": "Revoke"
+      "revoke-button-title": "Revoke",
+      "success-creation": "Your dashboard is ready for external sharing",
+      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
@@ -1351,6 +1558,15 @@
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
       "unsupported-template-variable-alert-title": "Template variables are not supported"
+    },
+    "public-sharing": {
+      "accept-button": "Accept",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "cancel-button": "Cancel",
+      "learn-more-button": "Learn more",
+      "public-ack": "I understand that this entire dashboard will be public.*",
+      "success-creation": "Your dashboard is now publicly accessible",
+      "success-share-type-change": "Dashboard access updated: Anyone with the link can now access"
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Collapse settings",
@@ -1370,6 +1586,28 @@
       "time-range-picker-disabled-text": "Time range picker = disabled",
       "time-range-picker-enabled-text": "Time range picker = enabled",
       "time-range-text": "Time range = "
+    },
+    "share": {
+      "success-delete": "Your dashboard is no longer shareable",
+      "success-delete-old": "Public dashboard deleted!"
+    },
+    "share-configuration": {
+      "share-type-label": "Link access"
+    },
+    "share-externally": {
+      "copy-link-button": "Copy external link",
+      "email-share-type-option-description": "Only people with the link can access dashboard",
+      "email-share-type-option-label": "Only specific people",
+      "pause-access-button": "Pause access",
+      "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
+      "public-share-type-option-description": "Anyone with the link can access dashboard",
+      "public-share-type-option-label": "Anyone with the link",
+      "resume-access-button": "Resume access",
+      "revoke-access-button": "Revoke access",
+      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared."
+    },
+    "sharing": {
+      "success-creation": "Dashboard is public!"
     }
   },
   "public-dashboard-list": {
@@ -1418,6 +1656,9 @@
       "role-label": "Role"
     }
   },
+  "query-library": {
+    "delete-query-button": "Delete query"
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -1431,6 +1672,35 @@
       "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "recently-deleted": {
+    "buttons": {
+      "delete": "Delete permanently",
+      "restore": "Restore"
+    },
+    "page": {
+      "empty-state": "You haven't deleted any dashboards recently."
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "Delete",
+      "delete-button": "Delete",
+      "delete-loading": "Deleting...",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
+      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
+      "title": "Permanently Delete Dashboards"
+    },
+    "restore-modal": {
+      "restore-button": "Restore",
+      "restore-loading": "Restoring...",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
+      "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
+      "title": "Restore Dashboards"
+    }
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Search for dashboards"
+    }
   },
   "refresh-picker": {
     "aria-label": {
@@ -1460,6 +1730,39 @@
     },
     "dismissable-button": "Close"
   },
+  "scopes": {
+    "filters": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "input": {
+        "placeholder": "Select scopes...",
+        "removeAll": "Remove all scopes"
+      },
+      "title": "Select scopes"
+    },
+    "suggestedDashboards": {
+      "loading": "Loading dashboards",
+      "noResultsForFilter": "No results found for your query",
+      "noResultsForFilterClear": "Clear search",
+      "noResultsForScopes": "No dashboards found for the selected scopes",
+      "noResultsNoScopes": "No scopes selected",
+      "search": "Search",
+      "toggle": {
+        "collapse": "Collapse scope filters",
+        "expand": "Expand scope filters"
+      }
+    },
+    "tree": {
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "headline": {
+        "noResults": "No results found for your query",
+        "recommended": "Recommended",
+        "results": "Results"
+      },
+      "search": "Search"
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Include panels",
@@ -1477,6 +1780,8 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-less-than-1-min": "< 1 min",
+      "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
@@ -1495,6 +1800,22 @@
       "message": "No services accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
+    }
+  },
+  "share-dashboard": {
+    "menu": {
+      "export-json-title": "Export as JSON",
+      "share-externally-title": "Share externally",
+      "share-internally-description": "Advanced settings",
+      "share-internally-title": "Share internally",
+      "share-snapshot-title": "Share snapshot"
+    },
+    "share-button": "Share",
+    "share-button-tooltip": "Copy shortened link"
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": "Back button"
     }
   },
   "share-modal": {
@@ -1618,6 +1939,21 @@
     "empty-state": {
       "button-title": "Create silence",
       "title": "You haven't created any silences yet"
+    },
+    "table": {
+      "add-silence-button": "Add Silence",
+      "edit-button": "Edit",
+      "expired-silences": "Expired silences are automatically deleted after 5 days.",
+      "no-matching-silences": "No matching silences found;",
+      "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
+      "recreate-button": "Recreate",
+      "unsilence-button": "Unsilence"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Alert name",
+      "state": "State"
     }
   },
   "snapshot": {
@@ -1627,6 +1963,23 @@
     },
     "external-badge": "External",
     "name-column-header": "Name",
+    "share": {
+      "cancel-button": "Cancel",
+      "copy-link-button": "Copy link",
+      "delete-button": "Delete snapshot",
+      "delete-description": "Are you sure you want to delete this snapshot?",
+      "delete-title": "Delete snapshot",
+      "deleted-alert": "Your snapshot has been deleted. It might take up to an hour before the snapshot is cleared from any CDN caches.",
+      "expiration-label": "Expires in",
+      "info-alert": "A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.",
+      "learn-more-button": "Learn more",
+      "local-button": "Publish snapshot",
+      "name-label": "Snapshot name*",
+      "new-snapshot-button": "New snapshot",
+      "success-creation": "Your snapshot has been created",
+      "success-delete": "Your snapshot has been deleted",
+      "view-all-button": "View all snapshots"
+    },
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
@@ -1652,6 +2005,8 @@
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
       "close": "Close calendar",
+      "next-month": "Next month",
+      "previous-month": "Previous month",
       "select-time": "Select a time range"
     },
     "content": {

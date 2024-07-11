@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { defaults } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';

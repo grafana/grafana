@@ -1,7 +1,14 @@
-import { DataFrame } from '../../types';
+import { BootData } from '../../types/config';
+import { DataFrame } from '../../types/dataFrame';
+
+declare global {
+  interface Window {
+    grafanaBootData?: BootData;
+  }
+}
 
 export const transformationsVariableSupport = () => {
-  return (window as any)?.grafanaBootData?.settings?.featureToggles?.transformationsVariableSupport;
+  return window?.grafanaBootData?.settings?.featureToggles?.transformationsVariableSupport;
 };
 
 /**

@@ -9,9 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -43,17 +45,13 @@ func TestService_SetUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, cfg, _ := setupTestEnvironment(t, Options{
+			service, usrSvc, _ := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
 			})
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
-			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
 			user, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
@@ -91,14 +89,14 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _, teamSvc := setupTestEnvironment(t, Options{
+			service, _, teamSvc := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Teams: true},
 				PermissionsToActions: nil,
 			})
 
 			// seed team
-			team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
+			team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
 			require.NoError(t, err)
 
 			var hookCalled bool
@@ -135,7 +133,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _, _ := setupTestEnvironment(t, Options{
+			service, _, _ := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{BuiltInRoles: true},
 				PermissionsToActions: nil,
@@ -208,16 +206,12 @@ func TestService_SetPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, cfg, teamSvc := setupTestEnvironment(t, tt.options)
+			service, usrSvc, teamSvc := setupTestEnvironment(t, tt.options)
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+			_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
-			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
-			require.NoError(t, err)
-			_, err = teamSvc.CreateTeam("team", "", 1)
+			_, err = teamSvc.CreateTeam(context.Background(), "team", "", 1)
 			require.NoError(t, err)
 
 			permissions, err := service.SetPermissions(context.Background(), 1, "1", tt.commands...)
@@ -231,24 +225,123 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, ops Options) (*Service, db.DB, *setting.Cfg, team.Service) {
+func TestService_RegisterActionSets(t *testing.T) {
+	type registerActionSetsTest struct {
+		desc               string
+		actionSetsEnabled  bool
+		options            Options
+		expectedActionSets []ActionSet
+	}
+
+	tests := []registerActionSetsTest{
+		{
+			desc:              "should register folder action sets if action sets are enabled",
+			actionSetsEnabled: true,
+			options: Options{
+				Resource: "folders",
+				PermissionsToActions: map[string][]string{
+					"View": {"folders:read", "dashboards:read"},
+					"Edit": {"folders:read", "dashboards:read", "folders:write", "dashboards:write"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"folders:read", "dashboards:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"folders:read", "dashboards:read", "folders:write", "dashboards:write"},
+				},
+			},
+		},
+		{
+			desc:              "should register dashboard action set if action sets are enabled",
+			actionSetsEnabled: true,
+			options: Options{
+				Resource: "dashboards",
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "dashboards:view",
+					Actions: []string{"dashboards:read"},
+				},
+			},
+		},
+		{
+			desc:              "should not register dashboard action set if action sets are not enabled",
+			actionSetsEnabled: false,
+			options: Options{
+				Resource: "dashboards",
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			features := featuremgmt.WithFeatures()
+			if tt.actionSetsEnabled {
+				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
+			}
+			ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+			actionSets := NewActionSetService()
+			_, err := New(
+				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
+				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
+			)
+			require.NoError(t, err)
+
+			if len(tt.expectedActionSets) > 0 {
+				for _, expectedActionSet := range tt.expectedActionSets {
+					actionSet := actionSets.ResolveActionSet(expectedActionSet.Action)
+					assert.ElementsMatch(t, expectedActionSet.Actions, actionSet)
+				}
+			} else {
+				// Check that action sets have not been registered
+				for permission := range tt.options.PermissionsToActions {
+					actionSetName := GetActionSetName(tt.options.Resource, permission)
+					assert.Nil(t, actionSets.ResolveActionSet(actionSetName))
+				}
+			}
+		})
+	}
+}
+
+func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	teamSvc, err := teamimpl.ProvideService(sql, cfg)
+	tracer := tracing.InitializeTracerForTest()
+
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer)
 	require.NoError(t, err)
-	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamSvc, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
+
+	userSvc, err := userimpl.ProvideService(
+		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	ac := acimpl.ProvideAccessControl(cfg)
 	acService := &actest.FakeService{}
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	service, err := New(
 		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
 	)
 	require.NoError(t, err)
 
-	return service, sql, cfg, teamSvc
+	return service, userSvc, teamSvc
 }

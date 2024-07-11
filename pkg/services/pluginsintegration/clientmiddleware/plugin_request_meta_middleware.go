@@ -67,3 +67,21 @@ func (m *PluginRequestMetaMiddleware) RunStream(ctx context.Context, req *backen
 	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.RunStream(ctx, req, sender)
 }
+
+// ValidateAdmission implements backend.AdmissionHandler.
+func (m *PluginRequestMetaMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	ctx = m.withDefaultPluginRequestMeta(ctx)
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (m *PluginRequestMetaMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	ctx = m.withDefaultPluginRequestMeta(ctx)
+	return m.next.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (m *PluginRequestMetaMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	ctx = m.withDefaultPluginRequestMeta(ctx)
+	return m.next.ConvertObject(ctx, req)
+}

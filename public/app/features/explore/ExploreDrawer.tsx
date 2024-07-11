@@ -1,7 +1,7 @@
 // Libraries
 import { css, cx, keyframes } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import React from 'react';
+import * as React from 'react';
 
 // Services & Utils
 import { GrafanaTheme2 } from '@grafana/data';
@@ -68,6 +68,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   drawerActive: css({
     opacity: 1,
-    animation: `0.5s ease-out ${drawerSlide(theme)}`,
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `0.5s ease-out ${drawerSlide(theme)}`,
+    },
   }),
 });

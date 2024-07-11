@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, isTimeSeriesFrames, PanelData, ThresholdsConfig } from '@grafana/data';
@@ -64,19 +63,19 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    width: 100%;
-    position: relative;
-  `,
-  instantVectorResultWrapper: css`
-    border: solid 1px ${theme.colors.border.medium};
-    border-radius: ${theme.shape.radius.default};
-    padding: 0;
+  wrapper: css({
+    width: '100%',
+    position: 'relative',
+  }),
+  instantVectorResultWrapper: css({
+    border: `solid 1px ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    padding: 0,
 
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-  `,
+    display: 'flex',
+    flexDirection: 'column',
+    flexWrap: 'nowrap',
+  }),
   title: css({
     label: 'panel-title',
     padding: theme.spacing(),

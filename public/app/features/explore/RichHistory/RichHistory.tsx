@@ -1,9 +1,9 @@
 import { debounce } from 'lodash';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EmptyState, TabbedContainer, TabConfig } from '@grafana/ui';
+import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
@@ -11,6 +11,7 @@ import { RichHistoryQuery } from 'app/types/explore';
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
+import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
@@ -85,7 +86,7 @@ export function RichHistory(props: RichHistoryProps) {
   const QueryLibraryTab: TabConfig = {
     label: i18n.queryLibrary,
     value: Tabs.QueryLibrary,
-    content: <EmptyState message="Coming soon!" variant="not-found" />,
+    content: <QueryLibrary />,
     icon: 'book',
   };
 

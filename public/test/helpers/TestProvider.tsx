@@ -1,5 +1,5 @@
-import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
-import React from 'react';
+import { Store } from '@reduxjs/toolkit';
+import * as React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -13,7 +13,7 @@ import { StoreState } from 'app/types/store';
 
 export interface Props {
   storeState?: Partial<StoreState>;
-  store?: ToolkitStore;
+  store?: Store<StoreState>;
   children: React.ReactNode;
   grafanaContext?: GrafanaContextType;
 }

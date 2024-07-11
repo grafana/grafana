@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { Modal, useStyles2 } from '@grafana/ui';
 
@@ -24,8 +24,8 @@ export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate, warning }:
 };
 
 const getStyles = () => ({
-  modal: css`
-    label: RowOptionsModal;
-    width: 500px;
-  `,
+  modal: css({
+    label: 'RowOptionsModal',
+    width: '500px',
+  }),
 });

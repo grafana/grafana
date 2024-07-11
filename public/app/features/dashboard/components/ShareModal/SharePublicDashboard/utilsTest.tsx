@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import React from 'react';
+import * as React from 'react';
 import { Provider } from 'react-redux';
 
 import { configureStore } from '../../../../../store/configureStore';
@@ -56,7 +56,6 @@ export const renderSharePublicDashboard = async (
 
   const newProps = Object.assign(
     {
-      panel: mockPanel,
       dashboard: mockDashboard,
       onDismiss: () => {},
     },

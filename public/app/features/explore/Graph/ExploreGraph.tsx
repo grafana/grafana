@@ -1,30 +1,31 @@
 import { identity } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
   createFieldConfigRegistry,
+  DashboardCursorSync,
   DataFrame,
   dateTime,
+  EventBus,
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
   LoadingState,
   SplitOpen,
   ThresholdsConfig,
-  DashboardCursorSync,
-  EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
-  LegendDisplayMode,
-  TooltipDisplayMode,
-  SortOrder,
   GraphThresholdsStyleConfig,
+  LegendDisplayMode,
+  SortOrder,
   TimeZone,
+  TooltipDisplayMode,
   VizLegendOptions,
 } from '@grafana/schema';
 import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
@@ -58,6 +59,7 @@ interface Props {
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
   vizLegendOverrides?: Partial<VizLegendOptions>;
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
 }
 
 export function ExploreGraph({
@@ -79,6 +81,7 @@ export function ExploreGraph({
   thresholdsStyle,
   eventBus,
   vizLegendOverrides,
+  toggleLegendRef,
 }: Props) {
   const theme = useTheme2();
   const previousTimeRange = usePrevious(absoluteRange);
@@ -152,8 +155,10 @@ export function ExploreGraph({
 
   const structureRev = useStructureRev(dataWithConfig);
 
+  const onHiddenSeriesChangedRef = useRef(onHiddenSeriesChanged);
+
   useEffect(() => {
-    if (onHiddenSeriesChanged) {
+    if (onHiddenSeriesChangedRef.current) {
       const hiddenFrames: string[] = [];
       dataWithConfig.forEach((frame) => {
         const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
@@ -161,9 +166,9 @@ export function ExploreGraph({
           hiddenFrames.push(getFrameDisplayName(frame));
         }
       });
-      onHiddenSeriesChanged(hiddenFrames);
+      onHiddenSeriesChangedRef.current(hiddenFrames);
     }
-  }, [dataWithConfig, onHiddenSeriesChanged]);
+  }, [dataWithConfig]);
 
   const panelContext: PanelContext = {
     eventsScope: 'explore',
@@ -175,6 +180,14 @@ export function ExploreGraph({
     },
     dataLinkPostProcessor,
   };
+
+  function toggleLegend(name: string, mode: SeriesVisibilityChangeMode) {
+    setFieldConfig(seriesVisibilityConfigFactory(name, mode, fieldConfig, data));
+  }
+
+  if (toggleLegendRef) {
+    toggleLegendRef.current = toggleLegend;
+  }
 
   const panelOptions: TimeSeriesOptions = useMemo(
     () => ({

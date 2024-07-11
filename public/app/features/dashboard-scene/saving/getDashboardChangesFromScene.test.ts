@@ -162,7 +162,7 @@ describe('getDashboardChangesFromScene', () => {
 
         const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
         variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-        const result = getDashboardChangesFromScene(dashboard, false, false);
+        const result = getDashboardChangesFromScene(dashboard, false, true);
 
         expect(result.hasVariableValueChanges).toBe(false);
         expect(result.hasChanges).toBe(true);

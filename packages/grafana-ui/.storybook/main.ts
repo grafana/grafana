@@ -1,4 +1,4 @@
-import path from 'path';
+import path, { dirname, join } from 'path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
 // avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
@@ -33,7 +33,7 @@ const mainConfig: StorybookConfig = {
         backgrounds: false,
       },
     },
-    '@storybook/addon-a11y',
+    getAbsolutePath('@storybook/addon-a11y'),
     {
       name: '@storybook/preset-scss',
       options: {
@@ -47,27 +47,17 @@ const mainConfig: StorybookConfig = {
         },
       },
     },
-    '@storybook/addon-storysource',
-    'storybook-dark-mode',
-    {
-      // replace babel-loader in manager and preview with esbuild-loader
-      name: 'storybook-addon-turbo-build',
-      options: {
-        optimizationLevel: 3,
-        // Target must match storybook 7 manager otherwise minimised docs error in production
-        esbuildMinifyOptions: {
-          target: 'chrome100',
-          minify: true,
-        },
-      },
-    },
+    getAbsolutePath('@storybook/addon-storysource'),
+    getAbsolutePath('storybook-dark-mode'),
+    getAbsolutePath('@storybook/addon-mdx-gfm'),
+    getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
   core: {},
   docs: {
     autodocs: true,
   },
   framework: {
-    name: '@storybook/react-webpack5',
+    name: getAbsolutePath('@storybook/react-webpack5'),
     options: {
       fastRefresh: true,
       builder: {
@@ -106,10 +96,19 @@ const mainConfig: StorybookConfig = {
       tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
-      propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+      propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
       savePropValueAsString: true,
     },
   },
+  swc: () => ({
+    jsc: {
+      transform: {
+        react: {
+          runtime: 'automatic',
+        },
+      },
+    },
+  }),
   webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
     config.module?.rules?.push({
@@ -130,3 +129,7 @@ const mainConfig: StorybookConfig = {
   },
 };
 module.exports = mainConfig;
+
+function getAbsolutePath(value: string): any {
+  return dirname(require.resolve(join(value, 'package.json')));
+}

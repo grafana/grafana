@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 )
 
 func (s simpleSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
@@ -288,4 +290,91 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 	}
 
 	return !anyFailure
+}
+
+func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
+	results := make([]*models.SSOSettings, 0)
+
+	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Find(&results)
+	})
+
+	if err != nil {
+		logger.Warn("Failed to fetch SSO settings to re-encrypt", "err", err)
+		return false
+	}
+
+	var anyFailure bool
+
+	for _, result := range results {
+		err := sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+			for field, value := range result.Settings {
+				if ssosettingsimpl.IsSecretField(field) {
+					decrypted, err := s.decryptValue(ctx, value, secretsSrv)
+					if err != nil {
+						logger.Warn("Could not decrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
+						return err
+					}
+
+					if decrypted == nil {
+						continue
+					}
+
+					reencrypted, err := secretsSrv.Encrypt(ctx, decrypted, secrets.WithoutScope())
+					if err != nil {
+						logger.Warn("Could not re-encrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
+						return err
+					}
+
+					result.Settings[field] = base64.RawStdEncoding.EncodeToString(reencrypted)
+				}
+			}
+
+			err = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+				_, err := sess.Where("id = ?", result.ID).Update(result)
+				return err
+			})
+			if err != nil {
+				logger.Warn("Could not update SSO settings secrets while re-encrypting it", "id", result.ID, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			anyFailure = true
+		}
+	}
+
+	if anyFailure {
+		logger.Warn("SSO settings secrets have been re-encrypted with errors")
+	} else {
+		logger.Info("SSO settings secrets have been re-encrypted successfully")
+	}
+
+	return !anyFailure
+}
+
+func (s ssoSettingsSecret) decryptValue(ctx context.Context, value any, secretsSrv *manager.SecretsService) ([]byte, error) {
+	strValue, ok := value.(string)
+	if !ok {
+		return nil, fmt.Errorf("SSO secret value is not a string")
+	}
+
+	if strValue == "" {
+		return nil, nil
+	}
+
+	decoded, err := base64.RawStdEncoding.DecodeString(strValue)
+	if err != nil {
+		return nil, fmt.Errorf("could not decode base64-encoded SSO settings secret: %w", err)
+	}
+
+	decrypted, err := secretsSrv.Decrypt(ctx, decoded)
+	if err != nil {
+		return nil, fmt.Errorf("could not decrypt SSO settings secret: %w", err)
+	}
+
+	return decrypted, nil
 }

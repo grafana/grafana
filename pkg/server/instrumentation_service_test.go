@@ -9,13 +9,16 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRunInstrumentationService(t *testing.T) {
-	s, err := NewInstrumentationService(log.New("test-logger"))
+	cfg := setting.NewCfg()
+	cfg.HTTPPort = "3001"
+	s, err := NewInstrumentationService(log.New("test-logger"), cfg)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
@@ -35,7 +38,7 @@ func TestRunInstrumentationService(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	client := http.Client{}
-	res, err := client.Get("http://localhost:3000/metrics")
+	res, err := client.Get("http://localhost:3001/metrics")
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 

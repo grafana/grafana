@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
@@ -54,7 +53,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  if (dashboard?.value?.dashboard?.uid !== props.match.params.uid) {
+  if (dashboard?.value?.dashboard?.uid !== props.match.params.uid && dashboard.value?.meta?.isNew !== true) {
     return null;
   }
 
