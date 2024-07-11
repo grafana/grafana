@@ -1094,8 +1094,8 @@
       "title": "Notification channels"
     },
     "alerting-groups": {
-      "subtitle": "See grouped alerts from an Alertmanager instance",
-      "title": "Groups"
+      "subtitle": "See grouped alerts with active notifications",
+      "title": "Active notifications"
     },
     "alerting-home": {
       "title": "Home"
