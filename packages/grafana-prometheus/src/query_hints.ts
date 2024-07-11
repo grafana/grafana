@@ -218,7 +218,12 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
     }
 
     if (mapping[ruleName].length > 1) {
-      const mappingRuleIdx = getRecordingRuleIdentifierIdx(query, ruleName, mapping[ruleName]);
+      const {
+        idx: mappingRuleIdx,
+        expandedQuery,
+        identifier,
+        identifierValue,
+      } = getRecordingRuleIdentifierIdx(query, ruleName, mapping[ruleName]);
 
       // No identifier detected add warning
       if (mappingRuleIdx === -1) {
@@ -239,13 +244,19 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
         // Identifier found.
         return {
           ...acc,
-          [ruleName]: mapping[ruleName][mappingRuleIdx].query,
+          [ruleName]: {
+            query: expandedQuery,
+            identifier,
+            identifierValue,
+          },
         };
       }
     } else {
       return {
         ...acc,
-        [ruleName]: mapping[ruleName][0].query,
+        [ruleName]: {
+          query: mapping[ruleName][0].query,
+        },
       };
     }
   }, {});
@@ -269,11 +280,11 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
   return hints;
 }
 
-export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string, mapping: RuleQueryMapping[string]): number {
+export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string, mapping: RuleQueryMapping[string]) {
   const { query } = buildVisualQueryFromString(queryStr);
   const queryMetricLabels: QueryBuilderLabelFilter[] = getQueryLabelsForRuleName(ruleName, query);
   if (queryMetricLabels.length === 0) {
-    return -1;
+    return { idx: -1, identifier: '', identifierValue: '', expandedQuery: '' };
   }
 
   let uuidLabel = '';
@@ -297,7 +308,12 @@ export function getRecordingRuleIdentifierIdx(queryStr: string, ruleName: string
     }
   });
 
-  return uuidLabelIdx;
+  return {
+    idx: uuidLabelIdx,
+    identifier: uuidLabel,
+    identifierValue: uuidLabelValue,
+    expandedQuery: mapping[uuidLabelIdx]?.query ?? '',
+  };
 }
 
 // returns the labels of matching metric

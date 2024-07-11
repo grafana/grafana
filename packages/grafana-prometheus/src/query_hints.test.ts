@@ -279,7 +279,11 @@ describe('getExpandRulesHints', () => {
           action: {
             type: 'EXPAND_RULES',
             query,
-            options: { metric_5m: 'expanded_metric_query[5m]' },
+            options: {
+              metric_5m: {
+                query: 'expanded_metric_query[5m]',
+              },
+            },
           },
         },
       },
@@ -351,7 +355,13 @@ describe('getExpandRulesHints', () => {
           action: {
             type: 'EXPAND_RULES',
             query,
-            options: { metric_5m: 'expanded_metric_query_111[5m]' },
+            options: {
+              metric_5m: {
+                query: 'expanded_metric_query_111[5m]',
+                identifier: 'uuid',
+                identifierValue: '111',
+              },
+            },
           },
         },
       },
@@ -377,8 +387,11 @@ describe('getRecordingRuleIdentifierIdx', () => {
     ];
     const ruleName = `metric_5m`;
     const query = `metric_5m{uuid="111"}`;
-    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    const { idx, identifier, identifierValue, expandedQuery } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
     expect(idx).toEqual(0);
+    expect(identifier).toEqual(`uuid`);
+    expect(identifierValue).toEqual('111');
+    expect(expandedQuery).toEqual(`expanded_metric_query_111[5m]`);
   });
 
   it('should not return the matching identifier', () => {
@@ -398,11 +411,11 @@ describe('getRecordingRuleIdentifierIdx', () => {
     ];
     const ruleName = `metric_5m`;
     const query = `metric_5m{uuid="999"}`;
-    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    const { idx } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
     expect(idx).toEqual(-1);
   });
 
-  it('should return the matching identifier inex for a complex query', () => {
+  it('should return the matching identifier index for a complex query', () => {
     const mapping: RuleQueryMapping[string] = [
       {
         query: 'expanded_metric_query_111[5m]',
@@ -419,8 +432,11 @@ describe('getRecordingRuleIdentifierIdx', () => {
     ];
     const ruleName = `metric_55m`;
     const query = `metric_5m{uuid="111"} + metric_55m{uuid="222"}`;
-    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    const { idx, identifier, identifierValue, expandedQuery } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
     expect(idx).toEqual(1);
+    expect(identifier).toEqual(`uuid`);
+    expect(identifierValue).toEqual('222');
+    expect(expandedQuery).toEqual(`expanded_metric_query_222[5m]`);
   });
 
   it('should return the matching identifier index for a complex query with binary operators', () => {
@@ -446,8 +462,11 @@ describe('getRecordingRuleIdentifierIdx', () => {
     ];
     const ruleName = `metric_5m`;
     const query = `metric_7n{} + (metric_5m{uuid="333"} + metric_55m{uuid="222"})`;
-    const idx = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    const { idx, identifier, identifierValue, expandedQuery } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
     expect(idx).toEqual(2);
+    expect(identifier).toEqual(`uuid`);
+    expect(identifierValue).toEqual('333');
+    expect(expandedQuery).toEqual(`expanded_metric_query_333[5m]`);
   });
 });
 
