@@ -106,7 +106,6 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 
 	// if there is no object in storage, we return the object from legacy
 	if objStorage == nil {
-		d.recordReadLegacyCount(options.Kind, method)
 		return objLegacy, nil
 	}
 	return objStorage, err
@@ -185,7 +184,6 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return sl, nil
 	}
 	log.Info("lists from legacy and storage are not the same size")
-	d.recordReadLegacyCount(options.Kind, method)
 	return ll, nil
 }
 
