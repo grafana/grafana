@@ -9,10 +9,9 @@ import (
 )
 
 type dualWriterMetrics struct {
-	legacy      *prometheus.HistogramVec
-	storage     *prometheus.HistogramVec
-	outcome     *prometheus.HistogramVec
-	legacyReads *prometheus.CounterVec
+	legacy  *prometheus.HistogramVec
+	storage *prometheus.HistogramVec
+	outcome *prometheus.HistogramVec
 }
 
 // DualWriterStorageDuration is a metric summary for dual writer storage duration per mode
@@ -38,12 +37,6 @@ var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
 }, []string{"mode", "name", "method"})
-
-var DualWriterReadLegacyCounts = prometheus.NewCounterVec(prometheus.CounterOpts{
-	Name:      "dual_writer_read_legacy_count",
-	Help:      "Histogram for the runtime of dual writer reads from legacy",
-	Namespace: "grafana",
-}, []string{"kind", "method"})
 
 func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	log := klog.NewKlogr()
@@ -74,8 +67,4 @@ func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool
 		observeValue = 1
 	}
 	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
-}
-
-func (m *dualWriterMetrics) recordReadLegacyCount(kind string, method string) {
-	m.legacyReads.WithLabelValues(kind, method).Inc()
 }
