@@ -20,6 +20,7 @@ export function useStateSync(params: ExploreQueryParams) {
   const { location } = useGrafana();
   const dispatch = useDispatch();
   const panesState = useSelector(selectPanes);
+  const panesStateRef = useRef(panesState);
   const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
@@ -54,6 +55,10 @@ export function useStateSync(params: ExploreQueryParams) {
   }, [dispatch, location]);
 
   useEffect(() => {
+    panesStateRef.current = panesState;
+  }, [panesState]);
+
+  useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
     const [urlState, hasParseError] = parseURL(params);
@@ -74,7 +79,7 @@ export function useStateSync(params: ExploreQueryParams) {
     prevParams.current = params;
 
     if (isURLOutOfSync && initState.current === 'done') {
-      syncFromURL(urlState, panesState, dispatch);
+      syncFromURL(urlState, panesStateRef.current, dispatch);
     }
-  }, [dispatch, panesState, orgId, location, params, warning]);
+  }, [dispatch, orgId, location, params, warning]);
 }
