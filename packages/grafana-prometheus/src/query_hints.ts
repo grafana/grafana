@@ -212,7 +212,7 @@ export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
 
 export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): QueryHint[] {
   const hints: QueryHint[] = [];
-  const mappingForQuery = Object.keys(mapping).reduce<Record<string, any>>((acc, ruleName) => {
+  const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
     if (query.search(ruleName) === -1) {
       return acc;
     }
