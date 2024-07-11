@@ -134,6 +134,7 @@
     "action": {
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
+      "confirmation-text": "Delete",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
@@ -477,6 +478,8 @@
     },
     "dashboard-delete-button": "Delete dashboard",
     "dashboard-delete-modal": {
+      "confirmation-text": "Delete",
+      "delete-button": "Delete",
       "text": "Do you want to delete this dashboard?",
       "title": "Delete"
     },
@@ -508,6 +511,7 @@
       "title": "Permissions"
     },
     "provisioned-delete-modal": {
+      "confirm-button": "OK",
       "text-1": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
       "text-2": "See grafana documentation for more information about provisioning. ",
       "text-3": "File path: {{provisionedId}}",

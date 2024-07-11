@@ -134,6 +134,7 @@
     "action": {
       "cancel-button": "Cäŉčęľ",
       "cannot-move-folders": "Főľđęřş čäŉŉőŧ þę mővęđ",
+      "confirmation-text": "Đęľęŧę",
       "delete-button": "Đęľęŧę",
       "delete-modal-invalid-text": "Øŉę őř mőřę ƒőľđęřş čőŉŧäįŉ ľįþřäřy päŉęľş őř äľęřŧ řūľęş. Đęľęŧę ŧĥęşę ƒįřşŧ įŉ őřđęř ŧő přőčęęđ.",
       "delete-modal-invalid-title": "Cäŉŉőŧ đęľęŧę ƒőľđęř",
@@ -477,6 +478,8 @@
     },
     "dashboard-delete-button": "Đęľęŧę đäşĥþőäřđ",
     "dashboard-delete-modal": {
+      "confirmation-text": "Đęľęŧę",
+      "delete-button": "Đęľęŧę",
       "text": "Đő yőū ŵäŉŧ ŧő đęľęŧę ŧĥįş đäşĥþőäřđ?",
       "title": "Đęľęŧę"
     },
@@ -508,6 +511,7 @@
       "title": "Pęřmįşşįőŉş"
     },
     "provisioned-delete-modal": {
+      "confirm-button": "ØĶ",
       "text-1": "Ŧĥįş đäşĥþőäřđ įş mäŉäģęđ þy Ğřäƒäŉä přővįşįőŉįŉģ äŉđ čäŉŉőŧ þę đęľęŧęđ. Ŗęmővę ŧĥę đäşĥþőäřđ ƒřőm ŧĥę čőŉƒįģ ƒįľę ŧő đęľęŧę įŧ.",
       "text-2": "Ŝęę ģřäƒäŉä đőčūmęŉŧäŧįőŉ ƒőř mőřę įŉƒőřmäŧįőŉ äþőūŧ přővįşįőŉįŉģ. ",
       "text-3": "Fįľę päŧĥ: {{provisionedId}}",

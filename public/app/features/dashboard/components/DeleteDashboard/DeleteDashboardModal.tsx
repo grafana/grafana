@@ -56,8 +56,8 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
       onDismiss={hideModal}
       title={t('dashboard-settings.dashboard-delete-modal.title', 'Delete')}
       icon="trash-alt"
-      confirmText="Delete"
-      confirmationText="Delete"
+      confirmText={t('dashboard-settings.dashboard-delete-modal.delete-button', 'Delete')}
+      confirmationText={t('dashboard-settings.dashboard-delete-modal.confirmation-text', 'Delete')}
     />
   );
 };
@@ -93,7 +93,7 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
     </Text>
     <Modal.ButtonRow>
       <Button variant="primary" onClick={hideModal}>
-        OK
+        <Trans i18nKey="dashboard-settings.provisioned-delete-modal.confirm-button">OK</Trans>
       </Button>
     </Modal.ButtonRow>
   </Modal>
