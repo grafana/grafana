@@ -150,7 +150,7 @@ jobs:
           project_id: 'grafanalabs-global'
           install_components: 'bq'
 
-        # This is step is needed to generate a detailed levitate report
+        # This step is needed to generate a detailed levitate report
       - name: Set up gcloud project
         run: |
           unset CLOUDSDK_CORE_PROJECT
