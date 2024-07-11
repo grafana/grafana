@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
@@ -74,8 +74,8 @@ async function getFoldersAsOptions(
   // FIXME: stop using id from search and use UID instead
   const searchHits = await getBackendSrv().search(params);
   const options = searchHits.map((d) => ({ label: d.title, value: { uid: d.uid, title: d.title } }));
-  if (!searchString || 'general'.includes(searchString.toLowerCase())) {
-    options.unshift({ label: 'General', value: { uid: 'general', title: 'General' } });
+  if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
+    options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
   }
 
   setLoading(false);

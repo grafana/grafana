@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { forwardRef, ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getInputStyles, Icon, IconName, useStyles2, getSelectStyles } from '@grafana/ui';

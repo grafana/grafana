@@ -20,6 +20,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
+  group-alert-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
   templates:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/
@@ -37,9 +42,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
   notification-timings:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/#timing-options
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/#timing-options
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/#timing-options
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/#timing-options
   silences:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
@@ -63,7 +68,9 @@ Choosing how, when, and where to send your alert notifications is an important p
 
 Start defining your [contact points](ref:contact-points) to specify how to receive your alert notifications. Then, configure your alert rules to send their alerts to either a contact point or use the [Notification Policy Tree](#notification-policies) to flexibly route alerts to contact points.
 
-{{< figure src="/media/docs/alerting/alerting-configure-notifications.svg" max-width="750px" alt="Configure alerts to send notifications to a contact point or via notification policies" caption="Configure alerts to send notifications to a contact point or via notification policies" >}}
+<br/>
+
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="Configure alert rules to forward firing alerts directly to a contact point or through notification policies" caption="Configure alert rules to forward firing alerts directly to a contact point or through notification policies" >}}
 
 ## How it works at a glance
 
@@ -95,21 +102,21 @@ The notification policy tree is responsible for:
 Each notification policy handles specific tasks:
 
 - Deciding which contact point receives the alert notification.
-- Controlling when to send notifications based on its [notification timings](ref:notification-timings).
-- [Grouping multiple alerts](#group-alert-notifications) into a single notification to reduce alert noise.
+- Controlling when to send notifications based on its notification timing options.
+- Grouping multiple alerts into a single notification to reduce alert noise.
 
-{{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-v2.png" max-width="750px" alt="A diagram of the notification policy component" >}}
+{{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-v5.png" max-width="750px" alt="A diagram of the notification policy component" >}}
 
 ### Group alert notifications
 
 When something fails in our system, our alerting setup can easily trigger hundreds or even thousands of alert instances (notifications). Several alert rules often fail simultaneously. Additionally, each alert rule may generate multiple alert instances.
 
-Grouping alert notifications is commonly necessary to avoid bombarding our alert inbox. Grouping combines similar alert instances in a given period into one single notification.
+[Grouping alert notifications](ref:group-alert-notifications) is commonly necessary to avoid bombarding our alert inbox. Grouping combines similar alert instances in a given period into one single notification.
 
 Notification grouping uses:
 
-- **Matching labels**: Group alert instances of the same type by matching their labels.
-- **[Notification timings](ref:notification-timings)**: Wait for a specified period before sending the notification, allowing for the grouping of incoming alert instances.
+- **Labels**: Group alert instances of the same type by using labels.
+- **Timing options**: Wait for a specified period before sending the notification, allowing for the grouping of incoming alert instances.
 
 ### Templates, silences and mute timings
 

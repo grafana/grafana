@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -359,6 +360,7 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	authnimpl.ProvideIdentitySynchronizer,
 	authnimpl.ProvideAuthnService,
+	authnimpl.ProvideAuthnServiceAuthenticateOnly,
 	authnimpl.ProvideRegistration,
 	supportbundlesimpl.ProvideService,
 	extsvcaccounts.ProvideExtSvcAccountsService,
@@ -379,6 +381,7 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
+	authz.WireSet,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
@@ -388,11 +391,13 @@ var wireSet = wire.NewSet(
 	wireBasicSet,
 	metrics.WireSet,
 	sqlstore.ProvideService,
+	sqlstore.ProvideServiceWithReadReplica,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
@@ -403,11 +408,13 @@ var wireCLISet = wire.NewSet(
 	wireBasicSet,
 	metrics.WireSet,
 	sqlstore.ProvideService,
+	sqlstore.ProvideServiceWithReadReplica,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
@@ -418,12 +425,14 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	metrics.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
+	sqlstore.ProvideServiceWithReadReplicaForTests,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
@@ -437,7 +446,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 
 func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
+	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, ReadReplStore: &sqlstore.ReplStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {

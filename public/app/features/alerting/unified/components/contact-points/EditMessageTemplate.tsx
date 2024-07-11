@@ -1,4 +1,3 @@
-import React from 'react';
 import { RouteChildrenProps } from 'react-router-dom';
 
 import { Alert } from '@grafana/ui';

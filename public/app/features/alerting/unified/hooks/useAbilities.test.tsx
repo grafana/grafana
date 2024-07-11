@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { createBrowserHistory } from 'history';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 import { Router } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { render, screen } from 'test/test-utils';

@@ -47,7 +47,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 		// The accepted verbs will change when dual write is enabled
 		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
-		// fmt.Printf("%s", string(disco))
+		// fmt.Printf("%s", disco)
 		require.JSONEq(t, `[
 			{
 			  "version": "v0alpha1",
@@ -101,21 +101,19 @@ func TestIntegrationPlaylist(t *testing.T) {
 		}))
 	})
 
-	// #TODO Enable this test once we have fixed dual writing mode 1 behavior
-	// Do_CRUD_via_k8s_(and_check_that_legacy_api_still_works) breaks
-	// t.Run("with dual write (file, mode 1)", func(t *testing.T) {
-	// 	doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction:    true,
-	// 		DisableAnonymous:     true,
-	// 		APIServerStorageType: "file", // write the files to disk
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-	// 		},
-	// 		DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-	// 			playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
-	// 		},
-	// 	}))
-	// })
+	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			},
+		}))
+	})
 
 	t.Run("with dual write (file, mode 2)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -146,22 +144,20 @@ func TestIntegrationPlaylist(t *testing.T) {
 		}))
 	})
 
-	// #TODO Enable this test once we have fixed dual writing mode 1 behavior
-	// Do_CRUD_via_k8s_(and_check_that_legacy_api_still_works) breaks
-	// t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
-	// 	doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction:    false, // required for  unified storage
-	// 		DisableAnonymous:     true,
-	// 		APIServerStorageType: "unified", // use the entity api tables
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagUnifiedStorage,
-	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-	// 		},
-	// 		DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-	// 			playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
-	// 		},
-	// 	}))
-	// })
+	t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagUnifiedStorage,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			},
+		}))
+	})
 
 	t.Run("with dual write (unified storage, mode 2)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -364,9 +360,8 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			"kind": "Playlist",
 			"metadata": {
 			  "annotations": {
-				"grafana.app/originKey": "${originKey}",
-				"grafana.app/originName": "SQL",
-				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
+				"grafana.app/originPath": "${originPath}",
+				"grafana.app/originName": "SQL"
 			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",

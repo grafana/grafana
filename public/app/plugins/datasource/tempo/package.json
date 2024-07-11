@@ -2,12 +2,12 @@
   "name": "@grafana-plugins/tempo",
   "description": "Grafana plugin for the Tempo data source.",
   "private": true,
-  "version": "11.0.0",
+  "version": "11.2.0-pre",
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "1.7.11",
+    "@grafana/experimental": "1.7.12",
     "@grafana/lezer-logql": "0.2.4",
     "@grafana/lezer-traceql": "0.0.17",
     "@grafana/monaco-logql": "^0.0.7",
@@ -39,7 +39,7 @@
     "uuid": "9.0.1"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "11.0.0",
+    "@grafana/plugin-configs": "11.2.0-pre",
     "@testing-library/dom": "10.0.0",
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "15.0.2",
@@ -48,7 +48,7 @@
     "@types/lodash": "4.17.4",
     "@types/node": "20.14.2",
     "@types/prismjs": "1.26.4",
-    "@types/react": "18.3.2",
+    "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "@types/semver": "7.5.8",
     "@types/uuid": "9.0.8",

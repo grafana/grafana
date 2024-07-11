@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
+import { ITEM_TYPES } from './ContentOutlineItem';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
@@ -47,16 +48,27 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
   );
 
+  const outlineItemsHaveDeleteButton = outlineItems.some((item) => item.children?.some((child) => child.onRemove));
+
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
-      acc[item.id] = false;
+      acc[item.id] = !!item.expanded;
       return acc;
     }, {});
   });
 
-  const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
+  const scrollIntoView = (
+    ref: HTMLElement | null,
+    itemPanelId: string,
+    itemType: ITEM_TYPES | undefined,
+    customOffsetTop = 0
+  ) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
+
+    if (!el) {
+      return;
+    }
 
     do {
       scrollValue += el?.offsetTop || 0;
@@ -67,11 +79,24 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       top: scrollValue + customOffsetTop,
       behavior: 'smooth',
     });
+  };
 
-    reportInteraction('explore_toolbar_contentoutline_clicked', {
-      item: 'select_section',
-      type: itemPanelId,
-    });
+  const handleItemClicked = (item: ContentOutlineItemContextProps) => {
+    if (item.level === 'child' && item.type === 'filter') {
+      const activeParent = outlineItems.find((parent) => {
+        return parent.children?.find((child) => child.id === item.id);
+      });
+
+      if (activeParent) {
+        scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.type, activeParent.customTopOffset);
+      }
+    } else {
+      scrollIntoView(item.ref, item.panelId, item.type, item.customTopOffset);
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'select_section',
+        type: item.panelId,
+      });
+    }
   };
 
   const toggle = () => {
@@ -125,16 +150,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   }, [outlineItems, verticalScroll]);
 
-  const activateFilter = (filterId: string) => {
-    const activeParent = outlineItems.find((item) => {
-      return item.children?.find((child) => child.id === filterId);
-    });
-
-    if (activeParent) {
-      scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.customTopOffset);
-    }
-  };
-
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
@@ -152,13 +167,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
           {outlineItems.map((item) => {
             return (
-              <React.Fragment key={item.id}>
+              <Fragment key={item.id}>
                 <ContentOutlineItemButton
                   key={item.id}
                   title={contentOutlineExpanded ? item.title : undefined}
                   contentOutlineExpanded={contentOutlineExpanded}
                   className={cx(styles.buttonStyles, {
-                    [styles.justifyCenter]: !contentOutlineExpanded,
+                    [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
                     [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                   })}
                   indentStyle={cx({
@@ -167,7 +182,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
                   })}
                   icon={item.icon}
-                  onClick={() => scrollIntoView(item.ref, item.panelId)}
+                  onClick={() => handleItemClicked(item)}
                   tooltip={item.title}
                   collapsible={isCollapsible(item)}
                   collapsed={!sectionsExpanded[item.id]}
@@ -196,26 +211,25 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                           contentOutlineExpanded={contentOutlineExpanded}
                           icon={contentOutlineExpanded ? undefined : item.icon}
                           className={cx(styles.buttonStyles, {
-                            [styles.justifyCenter]: !contentOutlineExpanded,
+                            [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
                             [styles.sectionHighlighter]:
                               isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                           })}
                           indentStyle={styles.indentChild}
                           onClick={(e) => {
-                            child.type === 'filter'
-                              ? activateFilter(child.id)
-                              : scrollIntoView(child.ref, child.panelId, child.customTopOffset);
+                            handleItemClicked(child);
                             child.onClick?.(e);
                           }}
                           tooltip={child.title}
                           isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}
                           extraHighlight={child.highlight}
                           color={child.color}
+                          onRemove={child.onRemove ? () => child.onRemove?.(child.id) : undefined}
                         />
                       </div>
                     ))}
                 </div>
-              </React.Fragment>
+              </Fragment>
             );
           })}
         </div>
@@ -257,10 +271,10 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       marginRight: expanded ? theme.spacing(0.5) : undefined,
     }),
     indentRoot: css({
-      paddingLeft: theme.spacing(4),
+      paddingLeft: theme.spacing(3),
     }),
     indentChild: css({
-      paddingLeft: expanded ? theme.spacing(7) : theme.spacing(4),
+      paddingLeft: expanded ? theme.spacing(5) : theme.spacing(2.75),
     }),
     itemWrapper: css({
       display: 'flex',
@@ -275,7 +289,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
         borderRight: `1px solid ${theme.colors.border.medium}`,
         content: '""',
         height: '100%',
-        left: 48,
+        left: theme.spacing(4.75),
         position: 'absolute',
         transform: 'translateX(50%)',
       },

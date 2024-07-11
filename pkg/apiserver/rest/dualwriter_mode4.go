@@ -19,10 +19,8 @@ type DualWriterMode4 struct {
 
 // newDualWriterMode4 returns a new DualWriter in mode 4.
 // Mode 4 represents writing and reading from Storage.
-func newDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 {
-	metrics := &dualWriterMetrics{}
-	metrics.init()
-	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: metrics}
+func newDualWriterMode4(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode4 {
+	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: dwm}
 }
 
 // Mode returns the mode of the dual writer.
@@ -84,8 +82,4 @@ func (d *DualWriterMode4) NewList() runtime.Object {
 
 func (d *DualWriterMode4) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return d.Storage.ConvertToTable(ctx, object, tableOptions)
-}
-
-func (d *DualWriterMode4) Compare(storageObj, legacyObj runtime.Object) bool {
-	return d.Storage.Compare(storageObj, legacyObj)
 }

@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -1020,7 +1020,7 @@ func TestGetAlertRule(t *testing.T) {
 		service, _, _, ac := initServiceWithData(t)
 
 		expected := errors.New("test")
-		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
+		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error {
 			assert.Equal(t, u, user)
 			assert.EqualValues(t, rule, namespaced)
 			return expected
@@ -1034,7 +1034,7 @@ func TestGetAlertRule(t *testing.T) {
 		assert.Equal(t, "AuthorizeRuleRead", ac.Calls[0].Method)
 
 		ac.Calls = nil
-		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
+		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error {
 			return nil
 		}
 

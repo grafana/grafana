@@ -4,8 +4,10 @@ use (
 	.
 	./pkg/apimachinery
 	./pkg/apiserver
+	./pkg/build
 	./pkg/build/wire
 	./pkg/promlib
+	./pkg/storage/unified/resource
 	./pkg/util/xorm
 )
 

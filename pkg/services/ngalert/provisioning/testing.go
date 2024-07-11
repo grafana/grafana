@@ -8,8 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -161,7 +160,7 @@ type fakeRuleAccessControlService struct {
 	mu                             sync.Mutex
 	Calls                          []call
 	AuthorizeAccessToRuleGroupFunc func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeAccessInFolderFunc    func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error
+	AuthorizeAccessInFolderFunc    func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)

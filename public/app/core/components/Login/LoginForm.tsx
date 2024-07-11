@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useId } from 'react';
+import { ReactElement, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -82,6 +82,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     submitButton: css({
       justifyContent: 'center',
       width: '100%',
+    }),
+
+    skipButton: css({
+      alignSelf: 'flex-start',
     }),
   };
 };

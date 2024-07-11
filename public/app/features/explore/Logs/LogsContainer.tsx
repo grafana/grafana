@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import {
@@ -58,8 +59,9 @@ interface LogsContainerProps extends PropsFromRedux {
   splitOpenFn: SplitOpen;
   scrollElement?: HTMLDivElement;
   isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
-  onClickFilterValue: (value: string, refId?: string) => void;
-  onClickFilterOutValue: (value: string, refId?: string) => void;
+  onClickFilterString: (value: string, refId?: string) => void;
+  onClickFilterOutString: (value: string, refId?: string) => void;
+  onPinLineCallback?: () => void;
 }
 
 type DataSourceInstance =
@@ -282,6 +284,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       exploreId,
       logsVolume,
       scrollElement,
+      onPinLineCallback,
     } = this.props;
 
     if (!logRows) {
@@ -350,8 +353,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             scrollElement={scrollElement}
             isFilterLabelActive={this.logDetailsFilterAvailable() ? this.props.isFilterLabelActive : undefined}
             range={range}
-            onClickFilterValue={this.filterValueAvailable() ? this.props.onClickFilterValue : undefined}
-            onClickFilterOutValue={this.filterOutValueAvailable() ? this.props.onClickFilterOutValue : undefined}
+            onPinLineCallback={onPinLineCallback}
+            onClickFilterString={this.filterValueAvailable() ? this.props.onClickFilterString : undefined}
+            onClickFilterOutString={this.filterOutValueAvailable() ? this.props.onClickFilterOutString : undefined}
           />
         </LogsCrossFadeTransition>
       </>
