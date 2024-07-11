@@ -17,6 +17,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -96,7 +97,7 @@ func NewStorage(
 	}
 
 	// Initialize the RV stored in storage
-	s.getNewResourceVersion()
+	s.getCurrentResourceVersion()
 
 	return s, func() {
 		s.watchSet.cleanupWatchers()
@@ -104,15 +105,36 @@ func NewStorage(
 }
 
 func (s *Storage) getNewResourceVersion() uint64 {
-	if s.currentRV == 0 {
-		s.currentRV = uint64(time.Now().UnixMilli())
-	} else {
-		s.currentRV = s.currentRV + 1
-	}
+	s.currentRV += 1
 	return s.currentRV
 }
 
 func (s *Storage) getCurrentResourceVersion() uint64 {
+	if s.currentRV != 0 {
+		return s.currentRV
+	}
+
+	objs, err := readDirRecursive(s.codec, s.root, s.newFunc)
+	if err != nil {
+		s.currentRV = 1
+		return s.currentRV
+	}
+
+	for _, obj := range objs {
+		currentVersion, err := s.versioner.ObjectResourceVersion(obj)
+		if err != nil && s.currentRV == 0 {
+			s.currentRV = 1
+			continue
+		}
+		if currentVersion > s.currentRV {
+			s.currentRV = currentVersion
+		}
+	}
+
+	if s.currentRV == 0 {
+		s.currentRV = 1
+	}
+
 	return s.currentRV
 }
 
@@ -379,17 +401,14 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	remainingItems := int64(0)
-
-	resourceVersionInt, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
-	if err != nil {
-		return err
-	}
+	resourceVersionInt := uint64(0)
 
 	// read state protected by mutex
 	objs, err := func() ([]runtime.Object, error) {
 		s.rvMutex.Lock()
 		defer s.rvMutex.Unlock()
+
+		resourceVersionInt = s.getCurrentResourceVersion()
 
 		var fpath string
 		dirpath := s.dirPath(key)
@@ -426,6 +445,10 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, resourceVersionInt); err != nil {
+		return err
+	}
+
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
 		return err
@@ -435,30 +458,46 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	for _, obj := range objs {
-		if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
-			// Apply the minimum resource version validation when we are not being called as part of Watch
-			// SendInitialEvents flow
-			// reason: the resource version of currently returned init items will always be < list RV
-			// they are being generated for, unless of course, the requestedRV == "0"/""
-			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, s.getCurrentResourceVersion()); err != nil {
-				// Below log left for debug. It's usually not an error condition
-				// klog.Infof("failed to assert minimum resource version constraint against list version")
+	if v.IsNil() {
+		v.Set(reflect.MakeSlice(v.Type(), 0, 0))
+	}
+
+	remainingItems := (*int64)(nil)
+	for i, obj := range objs {
+		if opts.ResourceVersionMatch == v1.ResourceVersionMatchExact {
+			currentVersion, err := s.versioner.ObjectResourceVersion(obj)
+			if err != nil {
+				return err
+			}
+			expectedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+			if err != nil {
+				return err
+			}
+			if currentVersion != expectedRV {
 				continue
 			}
 		}
+
+		//if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
+		//	// Apply the minimum resource version validation when we are not being called as part of Watch
+		//	// SendInitialEvents flow
+		//	// reason: the resource version of currently returned init items will always be < list RV
+		//	// they are being generated for, unless of course, the requestedRV == "0"/""
+		//}
 
 		ok, err := opts.Predicate.Matches(obj)
 		if err == nil && ok {
 			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 		}
+
+		if int64(v.Len()) >= opts.Predicate.Limit && opts.Predicate.Limit > 0 {
+			remaining := int64(len(objs) - i - 1)
+			remainingItems = &remaining
+			break
+		}
 	}
 
-	if resourceVersionInt == 0 {
-		resourceVersionInt = s.getCurrentResourceVersion()
-	}
-
-	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
+	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", remainingItems); err != nil {
 		return err
 	}
 
