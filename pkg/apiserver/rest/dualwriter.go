@@ -157,6 +157,11 @@ func SetDualWritingMode(
 	desiredMode DualWriterMode,
 	reg prometheus.Registerer,
 ) (DualWriterMode, error) {
+	// Mode0 means no DualWriter
+	if desiredMode == Mode0 {
+		return Mode0, nil
+	}
+
 	toMode := map[string]DualWriterMode{
 		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
 		// writing to legacy storage without `unifiedStorage` enabled.
