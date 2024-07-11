@@ -62,9 +62,8 @@ export const CustomScrollbar = ({
   }, [ref, scrollRefCallback]);
 
   /**
-   * Calling scrollTop on a scrollbar ref in a useEffect can race with internal state in react-custom-scrollbars-2, causing scrollTop to get called on the wrong reference,
-   * which prevents the element from scrolling occasionally.
-   * Adding the reference to the useEffect dependency array not notify react that the reference has changed (and is an eslint violation), so we create a custom hook so updates to the reference trigger another render, fixing our race condition bug!
+   * Calling scrollTop on a scrollbar ref in a useEffect can race with internal state in react-custom-scrollbars-2, causing scrollTop to get called on a stale reference, which prevents the element from scrolling as desired.
+   * Adding the reference to the useEffect dependency array not notify react that the reference has changed (and is an eslint violation), so we create a custom hook so updates to the reference trigger another render, fixing the race condition bug.
    *
    * @param scrollBar
    * @param scrollTop
