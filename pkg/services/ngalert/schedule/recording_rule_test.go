@@ -168,7 +168,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 	sch.recordingWriter = setupWriter(t, writeTarget, writerReg)
 
 	t.Run("rule that errors", func(t *testing.T) {
-		rule := gen.With(withQueryForHealth(t, "error")).GenerateRef()
+		rule := gen.With(withQueryForHealth("error")).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
@@ -272,9 +272,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 	})
 }
 
-func withQueryForHealth(t *testing.T, health string) models.AlertRuleMutator {
-	t.Helper()
-
+func withQueryForHealth(health string) models.AlertRuleMutator {
 	var expression string
 	switch health {
 	case "ok":
@@ -290,7 +288,7 @@ func withQueryForHealth(t *testing.T, health string) models.AlertRuleMutator {
 			"expression":"$NOTEXIST"
 		}`
 	default:
-		require.Fail(t, "Query generation for health %s is not supported yet", health)
+		panic(fmt.Sprintf("Query generation for health %s is not supported yet", health))
 	}
 
 	return func(rule *models.AlertRule) {
