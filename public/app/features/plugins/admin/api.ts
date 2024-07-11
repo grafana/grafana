@@ -35,6 +35,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
+    changelog: remote?.changelog,
   };
 }
 

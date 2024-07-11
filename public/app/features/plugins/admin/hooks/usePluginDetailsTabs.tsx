@@ -34,6 +34,13 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         url: `${pathname}?page=${PluginTabIds.VERSIONS}`,
         active: PluginTabIds.VERSIONS === currentPageId,
       });
+      navModelChildren.push({
+        text: PluginTabLabels.CHANGELOG,
+        id: PluginTabIds.CHANGELOG,
+        icon: 'rocket',
+        url: `${pathname}?page=${PluginTabIds.CHANGELOG}`,
+        active: PluginTabIds.CHANGELOG === currentPageId,
+      });
     }
 
     // Not extending the tabs with the config pages if the plugin is not installed

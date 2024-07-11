@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, TabContent, Alert } from '@grafana/ui';
+import { useStyles2, Alert, TabContent, Stack } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
@@ -13,6 +13,7 @@ import { AngularDeprecationPluginNotice } from '../../angularDeprecation/Angular
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
+import { PluginDetailsRightPanel } from '../components/PluginDetailsRightPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
@@ -74,25 +75,30 @@ export function PluginDetailsPage({
   }
 
   return (
-    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
-      <Page.Contents>
-        <TabContent className={styles.tabContent}>
-          {plugin.angularDetected && (
-            <AngularDeprecationPluginNotice
-              className={styles.alert}
-              angularSupportEnabled={config?.angularSupportEnabled}
-              pluginId={plugin.id}
-              pluginType={plugin.type}
-              showPluginDetailsLink={false}
-              interactionElementId="plugin-details-page"
-            />
-          )}
-          <PluginDetailsSignature plugin={plugin} className={styles.alert} />
-          <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
-          <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
-          <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
-        </TabContent>
-      </Page.Contents>
+    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle}>
+      <Stack gap={4} justifyContent="space-between">
+        <div style={{ display: 'block', width: '80%' }}>
+          <Page.Contents>
+            <TabContent className={styles.tabContent}>
+              {plugin.angularDetected && (
+                <AngularDeprecationPluginNotice
+                  className={styles.alert}
+                  angularSupportEnabled={config?.angularSupportEnabled}
+                  pluginId={plugin.id}
+                  pluginType={plugin.type}
+                  showPluginDetailsLink={false}
+                  interactionElementId="plugin-details-page"
+                />
+              )}
+              <PluginDetailsSignature plugin={plugin} className={styles.alert} />
+              <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
+              <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
+              <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
+            </TabContent>
+          </Page.Contents>
+        </div>
+        <PluginDetailsRightPanel info={info} plugin={plugin} />
+      </Stack>
     </Page>
   );
 }
