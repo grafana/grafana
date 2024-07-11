@@ -48,7 +48,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: jest.fn(),
-        setStopGeneration: jest.fn(),
+        stopGeneration: jest.fn(),
         value: {
           enabled: false,
           stream: new Observable().subscribe(),
@@ -76,7 +76,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: setMessagesMock,
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -145,7 +145,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.GENERATING,
         reply: 'Some incomplete generated text',
         setMessages: jest.fn(),
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -187,7 +187,6 @@ describe('GenAIButton', () => {
       await fireEvent.click(generateButton);
 
       expect(setShouldStopMock).toHaveBeenCalledTimes(1);
-      expect(setShouldStopMock).toHaveBeenCalledWith(true);
       expect(onGenerate).not.toHaveBeenCalled();
     });
   });
@@ -202,7 +201,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.COMPLETED,
         reply: 'Some completed generated text',
         setMessages: jest.fn(),
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -243,7 +242,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: '',
         setMessages: setMessagesMock,
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),

@@ -44,7 +44,7 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const { setMessages, setStopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
+  const { setMessages, stopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -57,7 +57,7 @@ export const GenAIButton = ({
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (streamStatus === StreamStatus.GENERATING) {
-      setStopGeneration(true);
+      stopGeneration();
     } else {
       if (!hasHistory) {
         onClickProp?.(e);
@@ -79,7 +79,7 @@ export const GenAIButton = ({
 
   const pushHistoryEntry = useCallback(
     (historyEntry: string) => {
-      if (history.indexOf(historyEntry) === -1) {
+      if (!history.includes(historyEntry)) {
         setHistory([historyEntry, ...history]);
       }
     },
@@ -87,7 +87,7 @@ export const GenAIButton = ({
   );
 
   useEffect(() => {
-    // Todo: Consider other options for `"` sanitation
+    // Todo: Consider other options for `"` sanitization
     if (streamStatus === StreamStatus.COMPLETED && reply) {
       onGenerate(sanitizeReply(reply));
     }
@@ -114,7 +114,7 @@ export const GenAIButton = ({
     if (isGenerating) {
       return undefined;
     }
-    if (error || (value && !value?.enabled)) {
+    if (error || (value && !value.enabled)) {
       return 'exclamation-circle';
     }
     return 'ai';
@@ -151,12 +151,7 @@ export const GenAIButton = ({
     </Button>
   );
 
-  const getMessages = () => {
-    if (typeof messages === 'function') {
-      return messages();
-    }
-    return messages;
-  };
+  const getMessages = () => (typeof messages === 'function' ? messages() : messages);
 
   const renderButtonWithToggletip = () => {
     if (hasHistory) {

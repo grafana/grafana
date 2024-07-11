@@ -35,10 +35,7 @@ export const GenAIHistory = ({
   const [showError, setShowError] = useState(false);
   const [customFeedback, setCustomPrompt] = useState('');
 
-  const { setMessages, setStopGeneration, reply, streamStatus, error } = useOpenAIStream(
-    DEFAULT_OAI_MODEL,
-    temperature
-  );
+  const { setMessages, stopGeneration, reply, streamStatus, error } = useOpenAIStream(DEFAULT_OAI_MODEL, temperature);
 
   const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
@@ -46,7 +43,7 @@ export const GenAIHistory = ({
     reportAutoGenerateInteraction(eventTrackingSrc, item, otherMetadata);
 
   useEffect(() => {
-    if (!isStreamGenerating && reply !== '') {
+    if (!isStreamGenerating && reply) {
       setCurrentIndex(1);
     }
   }, [isStreamGenerating, reply]);
@@ -74,8 +71,8 @@ export const GenAIHistory = ({
 
   const onApply = () => {
     if (isStreamGenerating) {
-      setStopGeneration(true);
-      if (reply !== '') {
+      stopGeneration();
+      if (reply) {
         updateHistory(sanitizeReply(reply));
       }
     } else {
@@ -115,19 +112,13 @@ export const GenAIHistory = ({
     <div className={styles.container}>
       {showError && (
         <Alert title="">
-          <Stack direction={'column'}>
+          <Stack direction="column">
             <p>Sorry, I was unable to complete your request. Please try again.</p>
           </Stack>
         </Alert>
       )}
 
-      <GenerationHistoryCarousel
-        history={history}
-        index={currentIndex}
-        onNavigate={onNavigate}
-        reply={sanitizeReply(reply)}
-        streamStatus={streamStatus}
-      />
+      <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
 
       <div className={styles.actionButtons}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
@@ -142,7 +133,7 @@ export const GenAIHistory = ({
             fill="text"
             aria-label="Send custom feedback"
             onClick={onClickSubmitCustomFeedback}
-            disabled={customFeedback === ''}
+            disabled={!customFeedback}
           >
             Send
           </Button>
@@ -153,7 +144,7 @@ export const GenAIHistory = ({
       />
 
       <div className={styles.applySuggestion}>
-        <Stack justifyContent={'flex-end'} direction={'row'}>
+        <Stack justifyContent="flex-end" direction="row">
           <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} onClick={onApply}>
             {isStreamGenerating ? STOP_GENERATION_TEXT : 'Apply'}
           </Button>
