@@ -168,10 +168,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/history/',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingInstanceRead,
-        AccessControlAction.AlertingInstancesExternalRead,
-      ]),
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
       component: importAlertingComponent(
         () =>
           import(

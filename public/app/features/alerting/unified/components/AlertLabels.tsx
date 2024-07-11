@@ -15,9 +15,10 @@ interface Props {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
+  onClick?: (label: string, value: string) => void;
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
+export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
@@ -33,9 +34,19 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
 
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
-      {labelsToShow.map(([label, value]) => (
-        <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
-      ))}
+      {labelsToShow.map(([label, value]) => {
+        return (
+          <Label
+            key={label + value}
+            size={size}
+            label={label}
+            value={value}
+            color={getLabelColor(label)}
+            onClick={onClick}
+          />
+        );
+      })}
+
       {!showCommonLabels && hasCommonLabels && (
         <Button
           variant="secondary"
@@ -67,12 +78,14 @@ function getLabelColor(input: string): string {
   return getTagColorsFromName(input).color;
 }
 
-const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => ({
-  wrapper: css({
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => {
+  return {
+    wrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
 
-    gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
-  }),
-});
+      gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
+    }),
+  };
+};

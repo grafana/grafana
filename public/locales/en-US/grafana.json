@@ -58,15 +58,18 @@
   "alerting": {
     "central-alert-history": {
       "details": {
-        "annotations": "Annotations",
         "error": "Error loading rule for this event.",
+        "header": {
+          "alert-rule": "Alert rule",
+          "instance": "Instance",
+          "state": "State",
+          "timestamp": "Timestamp"
+        },
         "loading": "Loading...",
-        "no-annotations": "No annotations",
         "no-recognized-state": "No recognized state",
         "no-values": "No values",
         "not-found": "Rule not found for this event.",
-        "not-grafana-rule": "Rule is not a Grafana rule",
-        "number-transitions": "State transitions for selected period",
+        "number-transitions": "State transitions for selected period:",
         "state": {
           "alerting": "Alerting",
           "error": "Error",
@@ -81,12 +84,18 @@
       },
       "error": "Something went wrong loading the alert state history",
       "filter": {
+        "clear": "Clear filters",
         "info": {
           "label1": "Filter events using label querying without spaces, ex:",
           "label2": "Invalid use of spaces:",
           "label3": "Valid use of spaces:",
           "label4": "Filter alerts using label querying without braces, ex:"
         }
+      },
+      "filterBy": "Filter by:",
+      "too-many-events": {
+        "text": "The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.",
+        "title": "Unable to display all events"
       }
     },
     "contact-points": {

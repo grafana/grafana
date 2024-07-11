@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 
 import {
   DataFrame,
-  DataFrameJSON,
   Field as DataFrameField,
+  DataFrameJSON,
   FieldType,
   getDisplayProcessor,
   GrafanaTheme2,
@@ -109,7 +109,7 @@ export function logRecordsToDataFrame(
         values: timeField.values.map((_, i) => timeField.values[timeIndex[i]]),
       },
       {
-        name: 'state',
+        name: 'State',
         type: FieldType.string,
         values: stateValues.map((_, i) => stateValues[timeIndex[i]]),
         config: {

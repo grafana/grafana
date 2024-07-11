@@ -142,8 +142,8 @@ export const getHistoryResponse = (times: number[]) => ({
         },
         {
           schemaVersion: 1,
-          previous: 'Pending',
-          current: 'Alerting',
+          previous: 'Alerting',
+          current: 'Normal',
           value: {
             A: 1,
             B: 1,
@@ -152,7 +152,7 @@ export const getHistoryResponse = (times: number[]) => ({
           condition: 'C',
           dashboardUID: '',
           panelID: 0,
-          fingerprint: '141da2d491f61029',
+          fingerprint: '141da2d491f61030',
           ruleTitle: 'alert2',
           ruleID: 3,
           ruleUID: 'adna1xso80hdsd',
@@ -164,8 +164,8 @@ export const getHistoryResponse = (times: number[]) => ({
         },
         {
           schemaVersion: 1,
-          previous: 'Pending',
-          current: 'Alerting',
+          previous: 'Normal',
+          current: 'Pending',
           value: {
             A: 1,
             B: 1,
@@ -175,7 +175,7 @@ export const getHistoryResponse = (times: number[]) => ({
           dashboardUID: '',
           panelID: 0,
 
-          fingerprint: '141da2d491f61029',
+          fingerprint: '141da2d491f61031',
           ruleTitle: 'alert1',
           ruleID: 7,
           ruleUID: 'adnpo0g62bg1sb',

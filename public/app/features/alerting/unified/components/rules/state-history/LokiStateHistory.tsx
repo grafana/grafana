@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { fromPairs, isEmpty, sortBy, take, uniq } from 'lodash';
-import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -149,7 +149,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   );
 };
 
-function useFrameSubset(frames: DataFrame[]) {
+export function useFrameSubset(frames: DataFrame[]) {
   return useMemo(() => {
     const frameSubset = take(frames, MAX_TIMELINE_SERIES);
     const frameSubsetTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values)));
