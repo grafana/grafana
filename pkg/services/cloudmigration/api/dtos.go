@@ -231,8 +231,6 @@ const (
 
 func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
 	switch status {
-	case cloudmigration.SnapshotStatusInitializing:
-		return SnapshotStatusInitializing
 	case cloudmigration.SnapshotStatusCreating:
 		return SnapshotStatusCreating
 	case cloudmigration.SnapshotStatusPendingUpload:

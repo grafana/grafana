@@ -36,6 +36,9 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	if err := ss.decryptToken(ctx, &cm); err != nil {
 		return &cm, err
@@ -165,7 +168,6 @@ func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		snapshot.Created = time.Now()
 		snapshot.Updated = time.Now()
-		snapshot.UID = util.GenerateShortUID()
 
 		_, err := sess.Insert(&snapshot)
 		if err != nil {

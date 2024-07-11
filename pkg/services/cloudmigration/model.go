@@ -55,7 +55,6 @@ type CloudMigrationSnapshot struct {
 type SnapshotStatus string
 
 const (
-	SnapshotStatusInitializing      SnapshotStatus = "initializing"
 	SnapshotStatusCreating          SnapshotStatus = "creating"
 	SnapshotStatusPendingUpload     SnapshotStatus = "pending_upload"
 	SnapshotStatusUploading         SnapshotStatus = "uploading"

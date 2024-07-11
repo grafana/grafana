@@ -487,7 +487,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	snapshot := cloudmigration.CloudMigrationSnapshot{
 		UID:            util.GenerateShortUID(),
 		SessionUID:     sessionUid,
-		Status:         cloudmigration.SnapshotStatusInitializing,
+		Status:         cloudmigration.SnapshotStatusCreating,
 		EncryptionKey:  initResp.EncryptionKey,
 		UploadURL:      initResp.UploadURL,
 		GMSSnapshotUID: initResp.SnapshotID,
@@ -530,7 +530,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		// ask GMS for status if it's in the cloud
 		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot)
 		if err != nil {
-			return nil, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
+			return snapshot, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
 		}
 
 		var localStatus cloudmigration.SnapshotStatus
@@ -565,6 +565,8 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		}); err != nil {
 			return nil, fmt.Errorf("error updating snapshot status: %w", err)
 		}
+		snapshot.Status = localStatus
+		snapshot.Resources = append(snapshot.Resources, snapshotMeta.Results...)
 	}
 
 	return snapshot, nil

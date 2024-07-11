@@ -183,7 +183,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		//retrieve it from the db
 		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
 		require.NoError(t, err)
-		require.Equal(t, cloudmigration.SnapshotStatusInitializing, string(snapshot.Status))
+		require.Equal(t, cloudmigration.SnapshotStatusCreating, string(snapshot.Status))
 
 		// update its status
 		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
