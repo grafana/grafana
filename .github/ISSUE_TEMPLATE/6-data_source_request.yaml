@@ -36,6 +36,6 @@ body:
       label: Contribution
       description: If you are interested in creating the data source yourself and contributing to the [plugin catalog](https://grafana.com/grafana/plugins/), please fill in the following
       options:
-        - label: Are you looking to contribute the plugin?
+        - label: Are you looking to create the plugin?
         - label: Are you affiliated with the project/product the data source integrates with?
         - label: Does the plugin integrate with a commercial product?
