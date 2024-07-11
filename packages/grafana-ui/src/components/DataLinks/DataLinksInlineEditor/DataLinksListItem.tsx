@@ -18,17 +18,9 @@ export interface DataLinksListItemProps {
   onRemove: () => void;
   isEditing?: boolean;
   itemKey: string;
-  oneClickEnabled?: boolean;
 }
 
-export const DataLinksListItem = ({
-  link,
-  onEdit,
-  onRemove,
-  index,
-  itemKey,
-  oneClickEnabled,
-}: DataLinksListItemProps) => {
+export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: DataLinksListItemProps) => {
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', url = '' } = link;
 
@@ -36,13 +28,11 @@ export const DataLinksListItem = ({
   const hasUrl = url.trim() !== '';
 
   const isCompactExploreUrl = isCompactUrl(url);
-  const isOneClick = oneClickEnabled && (link.sortIndex === 0 || index === 0);
 
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
       {(provided) => (
         <>
-          {isOneClick && <div className={styles.onClickOverlay}>One-click</div>}
           <div
             className={cx(styles.wrapper, styles.dragRow)}
             ref={provided.innerRef}
@@ -93,17 +83,6 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       '&:last-child': {
         marginBottom: 0,
       },
-    }),
-    onClickOverlay: css({
-      position: 'absolute',
-      top: '77px',
-      height: '80px',
-      width: '98%',
-      pointerEvents: 'none',
-      border: `1px dashed ${theme.colors.border.medium}`,
-      padding: 10,
-      fontSize: 10,
-      color: theme.colors.text.link,
     }),
     linkDetails: css({
       display: 'flex',

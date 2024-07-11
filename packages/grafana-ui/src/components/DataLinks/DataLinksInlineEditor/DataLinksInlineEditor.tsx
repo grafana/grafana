@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
@@ -95,6 +95,18 @@ export const DataLinksInlineEditor = ({
     onChange(linksSafe);
   };
 
+  const renderFirstLink = (linkJSX: ReactNode) => {
+    if (oneClickEnabled) {
+      return (
+        <div className={styles.oneClickOverlay}>
+          <span>One-click</span>
+          {linkJSX}
+        </div>
+      );
+    }
+    return linkJSX;
+  };
+
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -103,6 +115,24 @@ export const DataLinksInlineEditor = ({
             <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
               {linksSafe.map((link, idx) => {
                 const key = `${link.title}/${idx}`;
+
+                const linkJSX = (
+                  <DataLinksListItem
+                    key={key}
+                    index={idx}
+                    link={link}
+                    onChange={onDataLinkChange}
+                    onEdit={() => setEditIndex(idx)}
+                    onRemove={() => onDataLinkRemove(idx)}
+                    data={data}
+                    itemKey={key}
+                  />
+                );
+
+                if (idx === 0) {
+                  return renderFirstLink(linkJSX);
+                }
+
                 return (
                   <DataLinksListItem
                     key={key}
@@ -113,7 +143,6 @@ export const DataLinksInlineEditor = ({
                     onRemove={() => onDataLinkRemove(idx)}
                     data={data}
                     itemKey={key}
-                    oneClickEnabled={oneClickEnabled}
                   />
                 );
               })}
@@ -153,5 +182,12 @@ export const DataLinksInlineEditor = ({
 const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     marginBottom: theme.spacing(2),
+  }),
+  oneClickOverlay: css({
+    height: 'auto',
+    border: `1px dashed ${theme.colors.border.medium}`,
+    padding: 10,
+    fontSize: 10,
+    color: theme.colors.text.link,
   }),
 });

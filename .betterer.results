@@ -601,11 +601,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "packages/grafana-ui/src/components/DataLinks/DataLinksInlineEditor/DataLinksInlineEditor.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "packages/grafana-ui/src/components/DataLinks/DataLinksInlineEditor/DataLinksListItem.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
+    "packages/grafana-ui/src/components/DataLinks/DataLinksInlineEditor/DataLinksListItem.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "packages/grafana-ui/src/components/DataLinks/FieldLinkList.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
