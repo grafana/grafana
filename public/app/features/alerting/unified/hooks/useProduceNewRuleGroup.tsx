@@ -132,7 +132,8 @@ export function useDeleteRuleFromGroup() {
 }
 
 /**
- * Update an existing rule group
+ * Update an existing rule group, currently only supports updating the interval.
+ * Use "useRenameRuleGroup" or "useMoveRuleGroup" for updating the namespace or group name.
  */
 export function useUpdateRuleGroupConfiguration() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
@@ -157,7 +158,8 @@ export function useUpdateRuleGroupConfiguration() {
 
 /**
  * Move a rule group to either another namespace with (optionally) a different name, throws if the action
- * targets an existing rule group
+ * targets an existing rule group.
+ * Optionally, update the rule group evaluation interval.
  */
 export function useMoveRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
@@ -226,7 +228,8 @@ export function useMoveRuleGroup() {
 }
 
 /**
- * Rename a rule group but keep it within the same namespace, throws if the action targets an existing rule group
+ * Rename a rule group but keep it within the same namespace, throws if the action targets an existing rule group.
+ * Optionally, update the rule group evaluation interval.
  */
 export function useRenameRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();

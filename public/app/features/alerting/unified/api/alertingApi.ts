@@ -30,7 +30,7 @@ export type WithRequestOptions<T> = T & {
   requestOptions?: Partial<ExtendedBackendSrvRequest>;
 };
 
-export function withRequestOptions<T>(
+export function withRequestOptions(
   options: BackendSrvRequest,
   requestOptions: Partial<ExtendedBackendSrvRequest> = {},
   defaults: Partial<ExtendedBackendSrvRequest> = {}
