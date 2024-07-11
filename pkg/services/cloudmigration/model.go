@@ -55,25 +55,26 @@ type CloudMigrationSnapshot struct {
 type SnapshotStatus string
 
 const (
-	SnapshotStatusInitializing      = "initializing"
-	SnapshotStatusCreating          = "creating"
-	SnapshotStatusPendingUpload     = "pending_upload"
-	SnapshotStatusUploading         = "uploading"
-	SnapshotStatusPendingProcessing = "pending_processing"
-	SnapshotStatusProcessing        = "processing"
-	SnapshotStatusFinished          = "finished"
-	SnapshotStatusError             = "error"
-	SnapshotStatusUnknown           = "unknown"
+	SnapshotStatusInitializing      SnapshotStatus = "initializing"
+	SnapshotStatusCreating          SnapshotStatus = "creating"
+	SnapshotStatusPendingUpload     SnapshotStatus = "pending_upload"
+	SnapshotStatusUploading         SnapshotStatus = "uploading"
+	SnapshotStatusPendingProcessing SnapshotStatus = "pending_processing"
+	SnapshotStatusProcessing        SnapshotStatus = "processing"
+	SnapshotStatusFinished          SnapshotStatus = "finished"
+	SnapshotStatusCanceled          SnapshotStatus = "canceled"
+	SnapshotStatusError             SnapshotStatus = "error"
+	SnapshotStatusUnknown           SnapshotStatus = "unknown"
 )
 
 type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
-	Type   MigrateDataType `xorm:"resource_type"`
-	RefID  string          `xorm:"resource_uid"`
-	Status ItemStatus      `xorm:"status"`
-	Error  string          `xorm:"error_string"`
+	Type   MigrateDataType `xorm:"resource_type" json:"type"`
+	RefID  string          `xorm:"resource_uid" json:"refId"`
+	Status ItemStatus      `xorm:"status" json:"status"`
+	Error  string          `xorm:"error_string" json:"error"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
 }
@@ -214,3 +215,19 @@ type StartSnapshotResponse struct {
 	EncryptionKey        string            `json:"encryptionKey"`
 	Nonce                string            `json:"nonce"`
 }
+
+// Based on Grafana Migration Service DTOs
+type GetSnapshotStatusResponse struct {
+	State   SnapshotState            `json:"state"`
+	Results []CloudMigrationResource `json:"results"`
+}
+
+type SnapshotState string
+
+const (
+	SnapshotStateInitialized SnapshotState = "INITIALIZED"
+	SnapshotStateProcessing  SnapshotState = "PROCESSING"
+	SnapshotStateFinished    SnapshotState = "FINISHED"
+	SnapshotStateCanceled    SnapshotState = "CANCELED"
+	SnapshotStateError       SnapshotState = "ERROR"
+)

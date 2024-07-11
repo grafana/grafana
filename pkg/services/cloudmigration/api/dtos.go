@@ -224,6 +224,7 @@ const (
 	SnapshotStatusPendingProcessing SnapshotStatus = "PENDING_PROCESSING"
 	SnapshotStatusProcessing        SnapshotStatus = "PROCESSING"
 	SnapshotStatusFinished          SnapshotStatus = "FINISHED"
+	SnapshotStatusCanceled          SnapshotStatus = "CANCELED"
 	SnapshotStatusError             SnapshotStatus = "ERROR"
 	SnapshotStatusUnknown           SnapshotStatus = "UNKNOWN"
 )
@@ -244,6 +245,8 @@ func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
 		return SnapshotStatusProcessing
 	case cloudmigration.SnapshotStatusFinished:
 		return SnapshotStatusFinished
+	case cloudmigration.SnapshotStatusCanceled:
+		return SnapshotStatusCanceled
 	case cloudmigration.SnapshotStatusError:
 		return SnapshotStatusError
 	default:

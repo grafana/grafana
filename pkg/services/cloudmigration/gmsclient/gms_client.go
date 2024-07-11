@@ -150,8 +150,43 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 	return &result, nil
 }
 
-func (c *gmsClientImpl) GetSnapshotStatus(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
-	panic("not implemented")
+func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+	logger := c.log.FromContext(ctx)
+
+	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/snapshot-status/%s", session.ClusterSlug, c.domain, snapshot.GMSSnapshotUID)
+
+	// Send the request to gms with the associated auth token
+	req, err := http.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		c.log.Error("error creating http request to get snapshot status", "err", err.Error())
+		return nil, fmt.Errorf("http request error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.log.Error("error sending http request to get snapshot status", "err", err.Error())
+		return nil, fmt.Errorf("http request error: %w", err)
+	} else if resp.StatusCode >= 400 {
+		c.log.Error("received error response to get snapshot status", "statusCode", resp.StatusCode)
+		return nil, fmt.Errorf("http request error: %w", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("closing request body: %w", err)
+		}
+	}()
+
+	var result cloudmigration.GetSnapshotStatusResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		logger.Error("unmarshalling response body: %w", err)
+		return nil, fmt.Errorf("unmarshalling get snapshot status response: %w", err)
+	}
+
+	return &result, nil
 }
 
 func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataRequestDTO {

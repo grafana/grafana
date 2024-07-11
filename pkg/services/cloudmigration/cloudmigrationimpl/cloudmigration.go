@@ -531,15 +531,37 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 			return nil, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
 		}
 
-		if snapshotMeta.Status == cloudmigration.SnapshotStatusFinished {
-			// we need to update the snapshot in our db before reporting anything finished to the client
-			if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-				UID:       snapshot.UID,
-				Status:    cloudmigration.SnapshotStatusFinished,
-				Resources: snapshotMeta.Resources,
-			}); err != nil {
-				return nil, fmt.Errorf("error updating snapshot status: %w", err)
-			}
+		var localStatus cloudmigration.SnapshotStatus
+		switch snapshotMeta.State {
+		case cloudmigration.SnapshotStateInitialized:
+			// Grafana Migration Service has not yet received a notification for the data
+			localStatus = cloudmigration.SnapshotStatusPendingProcessing
+
+		case cloudmigration.SnapshotStateProcessing:
+			// GMS has received a notification and is migrating the data
+			localStatus = cloudmigration.SnapshotStatusProcessing
+
+		case cloudmigration.SnapshotStateFinished:
+			// GMS has completed the migration - all resources were attempted to be migrated
+			localStatus = cloudmigration.SnapshotStatusFinished
+
+		case cloudmigration.SnapshotStateCanceled:
+			// GMS has processed a cancelation request. Snapshot cancelation is not supported yet.
+			localStatus = cloudmigration.SnapshotStatusCanceled
+
+		case cloudmigration.SnapshotStateError:
+			localStatus = cloudmigration.SnapshotStatusError
+		default:
+			localStatus = cloudmigration.SnapshotStatusUnknown
+		}
+
+		// we need to update the snapshot in our db before reporting anything
+		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:       snapshot.UID,
+			Status:    localStatus,
+			Resources: snapshotMeta.Results,
+		}); err != nil {
+			return nil, fmt.Errorf("error updating snapshot status: %w", err)
 		}
 	}
 

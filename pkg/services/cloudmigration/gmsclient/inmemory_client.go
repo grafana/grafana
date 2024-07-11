@@ -3,7 +3,6 @@ package gmsclient
 import (
 	"context"
 	"math/rand"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,33 +57,28 @@ func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMi
 	return c.snapshot, nil
 }
 
-func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
-	results := []cloudmigration.CloudMigrationResource{
-		{
-			Type:   cloudmigration.DashboardDataType,
-			RefID:  "dash1",
-			Status: cloudmigration.ItemStatusOK,
-		},
-		{
-			Type:   cloudmigration.DatasourceDataType,
-			RefID:  "ds1",
-			Status: cloudmigration.ItemStatusError,
-			Error:  "fake error",
-		},
-		{
-			Type:   cloudmigration.FolderDataType,
-			RefID:  "folder1",
-			Status: cloudmigration.ItemStatusOK,
+func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+	gmsResp := &cloudmigration.GetSnapshotStatusResponse{
+		State: cloudmigration.SnapshotStateFinished,
+		Results: []cloudmigration.CloudMigrationResource{
+			{
+				Type:   cloudmigration.DashboardDataType,
+				RefID:  "dash1",
+				Status: cloudmigration.ItemStatusOK,
+			},
+			{
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "ds1",
+				Status: cloudmigration.ItemStatusError,
+				Error:  "fake error",
+			},
+			{
+				Type:   cloudmigration.FolderDataType,
+				RefID:  "folder1",
+				Status: cloudmigration.ItemStatusOK,
+			},
 		},
 	}
 
-	// just fake an entire response
-	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
-		Status:         cloudmigration.SnapshotStatusFinished,
-		GMSSnapshotUID: "gmssnapshotuid",
-		Resources:      results,
-		Finished:       time.Now(),
-	}
-
-	return &gmsSnapshot, nil
+	return gmsResp, nil
 }
