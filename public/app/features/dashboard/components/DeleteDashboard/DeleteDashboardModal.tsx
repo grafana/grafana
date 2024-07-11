@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Modal, ConfirmModal, Button } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
@@ -25,6 +25,14 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
   const isProvisioned = dashboard.meta.provisioned;
 
   const [, onConfirm] = useAsyncFn(async () => {
+    reportInteraction('grafana_manage_dashboards_delete_clicked', {
+      item_counts: {
+        dashboard: 1,
+      },
+      source: 'dashboard_settings',
+      num_selected: 1,
+      ft_enabled: config.featureToggles.dashboardRestoreUI,
+    });
     await deleteDashboard(dashboard.uid, true);
     cleanUpDashboardAndVariables();
     hideModal();
