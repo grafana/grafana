@@ -70,7 +70,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
           ) : null}
         </>
       }
-      confirmationText="Delete"
+      confirmationText={t('browse-dashboards.action.confirmation-text', 'Delete')}
       confirmText={
         isDeleting
           ? t('browse-dashboards.action.deleting', 'Deleting...')
