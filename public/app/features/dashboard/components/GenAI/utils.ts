@@ -111,11 +111,7 @@ export const getFeedbackMessage = (previousResponse: string, feedback: string | 
  * @returns String for inclusion in prompts stating what the dashboard's panels are
  */
 export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
-  const getPanelString = (panel: PanelModel, idx: number) =>
-    `- Panel ${idx}
-- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;
-
-  const panelStrings: string[] = dashboard.panels.map(getPanelString);
+  const panelStrings: string[] = getPanelStrings(dashboard);
   let panelPrompt: string;
 
   if (panelStrings.length <= 10) {
@@ -158,3 +154,18 @@ export function getFilteredPanelString(panel: Panel): string {
 
   return JSON.stringify(filteredPanel, null, 2);
 }
+
+export function getPanelStrings(dashboard: DashboardModel): string[] {
+  const panelStrings = dashboard.panels
+    .filter(
+      (panel) =>
+        (panel.title.length > 0 && panel.title !== 'Panel title') || (panel.description && panel.description.length > 0)
+    )
+    .map(getPanelString);
+
+  return panelStrings;
+}
+
+const getPanelString = (panel: PanelModel, idx: number) =>
+  `- Panel ${idx}
+- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;
