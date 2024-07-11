@@ -101,8 +101,6 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 			m sync.Mutex
 		)
 
-		fmt.Println("here")
-
 		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 		if err != nil {
 			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), featuremgmt.FlagInfluxdbRunQueriesInParallel)
@@ -179,15 +177,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 			defer wg.Done()
 			res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane)
 			m.Lock()
-			if res.Error != nil {
-				if dr.Error == nil {
-					dr.Error = res.Error
-				} else {
-					dr.Error = fmt.Errorf("%v %w", dr.Error, res.Error)
-				}
-				dr.Status = res.Status
-			}
-			dr.Frames = append(dr.Frames, res.Frames...)
+			addDataResponse(&res, dr)
 			m.Unlock()
 		}()
 	}
