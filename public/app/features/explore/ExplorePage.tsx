@@ -31,6 +31,7 @@ import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
+const QUERY_LIBRARY_ACTION_KEY = 'queryLibraryAction';
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   return (
@@ -72,8 +73,8 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
 
   useEffect(() => {
     const hasQueryLibrary = config.featureToggles.queryLibrary || false;
-    RowActionComponents.addExtraRenderAction((props) =>
-      hasQueryLibrary ? (
+    if (hasQueryLibrary) {
+      RowActionComponents.addKeyedExtraRenderAction(QUERY_LIBRARY_ACTION_KEY, (props) => (
         <QueryOperationAction
           key={props.key}
           title={t('query-operation.header.save-to-query-library', 'Save to query library')}
@@ -82,8 +83,8 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
             setQueryToAdd(props.query);
           }}
         />
-      ) : null
-    );
+      ));
+    }
   }, []);
 
   useKeyboardShortcuts();

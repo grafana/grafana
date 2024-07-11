@@ -14,13 +14,19 @@ type QueryActionComponent = (props: ActionComponentProps) => JSX.Element | null;
 
 class QueryActionComponents {
   extraRenderActions: QueryActionComponent[] = [];
+  keyedExtraRenderActions: Map<string, QueryActionComponent> = new Map();
 
   addExtraRenderAction(extra: QueryActionComponent) {
     this.extraRenderActions = this.extraRenderActions.concat(extra);
   }
 
+  // for adding actions that need to be unique, but also need component context that may be fired multiple times
+  addKeyedExtraRenderAction(key: string, extra: QueryActionComponent) {
+    this.keyedExtraRenderActions.set(key, extra);
+  }
+
   getAllExtraRenderAction(): QueryActionComponent[] {
-    return this.extraRenderActions;
+    return [...this.extraRenderActions, ...Array.from(this.keyedExtraRenderActions, (value) => value[1])];
   }
 }
 
