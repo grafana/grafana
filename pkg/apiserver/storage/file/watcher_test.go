@@ -229,3 +229,17 @@ func newPod() runtime.Object {
 func newPodList() runtime.Object {
 	return &example.PodList{}
 }
+
+func TestWatchInitializationSignal(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestWatchInitializationSignal(ctx, t, store)
+}
+
+func TestWatchBookmarksWithCorrectResourceVersion(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx, t, store)
+}

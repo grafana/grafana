@@ -17,7 +17,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -464,7 +464,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	remainingItems := (*int64)(nil)
 	for i, obj := range objs {
-		if opts.ResourceVersionMatch == v1.ResourceVersionMatchExact {
+		if opts.ResourceVersionMatch == metaV1.ResourceVersionMatchExact {
 			currentVersion, err := s.versioner.ObjectResourceVersion(obj)
 			if err != nil {
 				return err
@@ -477,13 +477,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 				continue
 			}
 		}
-
-		//if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
-		//	// Apply the minimum resource version validation when we are not being called as part of Watch
-		//	// SendInitialEvents flow
-		//	// reason: the resource version of currently returned init items will always be < list RV
-		//	// they are being generated for, unless of course, the requestedRV == "0"/""
-		//}
 
 		ok, err := opts.Predicate.Matches(obj)
 		if err == nil && ok {
