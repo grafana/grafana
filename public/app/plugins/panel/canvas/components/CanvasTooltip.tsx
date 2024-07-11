@@ -1,11 +1,15 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import { createRef } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data/src';
-import { LinkButton, Portal, Stack, useStyles2, VizTooltipContainer } from '@grafana/ui';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { FieldType, GrafanaTheme2, formattedValueToString, getFieldDisplayName } from '@grafana/data/src';
+import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
+import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
+import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButton';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 interface Props {
@@ -13,7 +17,7 @@ interface Props {
 }
 
 export const CanvasTooltip = ({ scene }: Props) => {
-  const style = useStyles2(getStyles);
+  const styles = useStyles2(getStyles);
 
   const onClose = () => {
     if (scene?.tooltipCallback && scene.tooltip) {
@@ -30,40 +34,47 @@ export const CanvasTooltip = ({ scene }: Props) => {
     return <></>;
   }
 
-  const renderDataLinks = () =>
-    element.data?.links &&
-    element.data?.links.length > 0 && (
-      <div>
-        <Stack direction={'column'}>
-          {element.data?.links?.map((link: LinkModel, i: number) => (
-            <LinkButton
-              key={i}
-              icon={'external-link-alt'}
-              target={link.target}
-              href={link.href}
-              onClick={link.onClick}
-              fill="text"
-              style={{ width: '100%' }}
-            >
-              {link.title}
-            </LinkButton>
-          ))}
-        </Stack>
-      </div>
-    );
+  // Retrieve timestamp of the last data point if available
+  const timeField = scene.data?.series[0].fields?.find((field) => field.type === FieldType.time);
+  const lastTimeValue = timeField?.values[timeField.values.length - 1];
+  const shouldDisplayTimeContentItem =
+    timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
+
+  const headerItem: VizTooltipItem | null = {
+    label: element.getName(),
+    value: '',
+  };
+
+  const contentItems: VizTooltipItem[] = [
+    {
+      label: element.data.field ?? 'Fixed',
+      value: element.data.text,
+    },
+    ...(shouldDisplayTimeContentItem
+      ? [
+          {
+            label: 'Time',
+            value: formattedValueToString(timeField?.display!(lastTimeValue)),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>
       {scene.tooltip?.element && scene.tooltip.anchorPoint && (
         <Portal>
           <VizTooltipContainer
+            className={cx(styles.tooltipWrapper, scene.tooltip.isOpen && styles.pinned)}
             position={{ x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y }}
             offset={{ x: 5, y: 0 }}
             allowPointerEvents={scene.tooltip.isOpen}
           >
             <section ref={ref} {...overlayProps} {...dialogProps}>
               {scene.tooltip.isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
-              <div className={style.wrapper}>{renderDataLinks()}</div>
+              <VizTooltipHeader item={headerItem} isPinned={scene.tooltip.isOpen!} />
+              {element.data.text && <VizTooltipContent items={contentItems} isPinned={scene.tooltip.isOpen!} />}
+              <VizTooltipFooter dataLinks={element.data?.links} />
             </section>
           </VizTooltipContainer>
         </Portal>
@@ -76,5 +87,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     marginTop: '20px',
     background: theme.colors.background.primary,
+  }),
+  tooltipWrapper: css({
+    top: 0,
+    left: 0,
+    zIndex: theme.zIndex.portal,
+    whiteSpace: 'pre',
+    borderRadius: theme.shape.radius.default,
+    position: 'fixed',
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    boxShadow: theme.shadows.z2,
+    userSelect: 'text',
+    padding: 0,
+  }),
+  pinned: css({
+    boxShadow: theme.shadows.z3,
   }),
 });
