@@ -369,9 +369,10 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
 	meta := map[string]string{
-		"Name": alertRule.Title,
-		"Uid":  alertRule.UID,
-		"Type": string(alertRule.Type()),
+		"Name":    alertRule.Title,
+		"Uid":     alertRule.UID,
+		"Type":    string(alertRule.Type()),
+		"Version": strconv.FormatInt(alertRule.Version, 10),
 	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
