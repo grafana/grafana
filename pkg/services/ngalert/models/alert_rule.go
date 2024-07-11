@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -366,12 +367,12 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	return labels
 }
 
-func (alertRule *AlertRule) GetEvalCondition() Condition {
-	meta := map[string]string{
-		"Name": alertRule.Title,
-		"Uid":  alertRule.UID,
-		"Type": string(alertRule.Type()),
-	}
+func (alertRule *AlertRule) GetEvalCondition(additionalMetadata map[string]string) Condition {
+	meta := make(map[string]string, len(additionalMetadata)+3)
+	maps.Copy(meta, additionalMetadata)
+	meta["Name"] = alertRule.Title
+	meta["Uid"] = alertRule.UID
+	meta["Type"] = string(alertRule.Type())
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Metadata:  meta,
