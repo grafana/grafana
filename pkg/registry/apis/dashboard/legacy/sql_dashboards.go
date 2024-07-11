@@ -95,7 +95,7 @@ const history = `SELECT
 	dashboard.uid, dashboard.folder_uid,
 	dashboard_version.created,CreatedUSER.uid as created_by,
 	dashboard_version.created,CreatedUSER.uid as updated_by,
-	'', plugin_id,
+	NULL, plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
 	dashboard_provisioning.check_sum as origin_key,
