@@ -73,7 +73,7 @@ refs:
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
-Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
+Time series visualizations are the default and primary way to visualize data points listed over intervals of time as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
 
 {{% admonition type="note" %}}
 You can [link alert rules](ref:link-alert) to time series visualization to observe when alerts fire and are resolved in the form of annotations. In addition, you can create alert rules from the Alert tab within the panel options.
@@ -193,7 +193,7 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 ### Stack series
 
-_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
+_Stacking_ allows Grafana to display measurements on top of each other within each period displayed. This feature helps to visually represent the cumulative total of the metrics of the data series at each plotted moment. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
 
 ![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
 
