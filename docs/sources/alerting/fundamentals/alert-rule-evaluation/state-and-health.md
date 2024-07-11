@@ -26,9 +26,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#pending-period
   no-data-and-error-handling:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/configure-grafana-managed-alert-rules/#configure-no-data-and-error-handling
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/configure-grafana-managed-alert-rules/#configure-no-data-and-error-handling
   notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
