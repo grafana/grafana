@@ -47,46 +47,46 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("dashboard.grafana.app")
-		// fmt.Printf("%s", string(disco))
+		//fmt.Printf("%s", string(disco))
 
 		require.JSONEq(t, `[
 			{
-			  "freshness": "Current",
-			  "resources": [
+				"freshness": "Current",
+				"resources": [
 				{
-				  "resource": "dashboards",
-				  "responseKind": {
+					"resource": "dashboards",
+					"responseKind": {
 					"group": "",
 					"kind": "Dashboard",
 					"version": ""
-				  },
-				  "scope": "Namespaced",
-				  "singularResource": "dashboard",
-				  "subresources": [
+					},
+					"scope": "Namespaced",
+					"singularResource": "dashboard",
+					"subresources": [
 					{
-					  "responseKind": {
+						"responseKind": {
 						"group": "",
-						"kind": "DashboardAccessInfo",
+						"kind": "DashboardWithAccessInfo",
 						"version": ""
-					  },
-					  "subresource": "access",
-					  "verbs": [
+						},
+						"subresource": "dto",
+						"verbs": [
 						"get"
-					  ]
+						]
 					},
 					{
-					  "responseKind": {
+						"responseKind": {
 						"group": "",
 						"kind": "DashboardVersionList",
 						"version": ""
-					  },
-					  "subresource": "versions",
-					  "verbs": [
+						},
+						"subresource": "versions",
+						"verbs": [
 						"get"
-					  ]
+						]
 					}
-				  ],
-				  "verbs": [
+					],
+					"verbs": [
 					"create",
 					"delete",
 					"deletecollection",
@@ -94,25 +94,11 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 					"list",
 					"patch",
 					"update"
-				  ]
-				},
-				{
-				  "resource": "summary",
-				  "responseKind": {
-					"group": "",
-					"kind": "DashboardSummary",
-					"version": ""
-				  },
-				  "scope": "Namespaced",
-				  "singularResource": "summary",
-				  "verbs": [
-					"get",
-					"list"
-				  ]
+					]
 				}
-			  ],
-			  "version": "v0alpha1"
+				],
+				"version": "v0alpha1"
 			}
-		  ]`, disco)
+			]`, disco)
 	})
 }

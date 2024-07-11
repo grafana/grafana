@@ -21,13 +21,13 @@ import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createUrl } from './url';
 
-export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
+export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
 
-  return createUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
+  return createUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {
@@ -61,7 +61,7 @@ export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): st
       `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
     );
   } else if (isGrafanaRulerRule(rule.rulerRule)) {
-    return createUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
+    return createAbsoluteUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
   }
 
   return;

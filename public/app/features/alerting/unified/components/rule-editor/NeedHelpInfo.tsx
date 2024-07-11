@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Text, Toggletip, useStyles2, Stack } from '@grafana/ui';
@@ -17,7 +16,7 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Nee
     <Toggletip
       content={<div className={styles.mutedText}>{contentText}</div>}
       title={
-        <Stack gap={1} direction="row">
+        <Stack gap={0.5} direction="row" alignItems="center">
           <Icon name="question-circle" />
           {title}
         </Stack>

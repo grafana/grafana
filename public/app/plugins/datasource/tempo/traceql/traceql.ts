@@ -40,7 +40,15 @@ export const intrinsics = [
 ];
 export const scopes: string[] = ['resource', 'span'];
 
-export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
+const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];
+const functions = aggregatorFunctions.concat([
+  'by',
+  'count_over_time',
+  'histogram_over_time',
+  'quantile_over_time',
+  'rate',
+  'select',
+]);
 
 const keywords = intrinsics.concat(scopes);
 

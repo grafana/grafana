@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -52,8 +52,7 @@ export const TimeSeriesTooltip = ({
   const styles = useStyles2(getStyles);
 
   const xField = series.fields[0];
-
-  const xVal = xField.display!(xField.values[dataIdxs[0]!]).text;
+  const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
 
   const contentItems = getContentItems(
     series.fields,

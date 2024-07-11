@@ -35,6 +35,10 @@ export function arrayKeyValuesToObject(
 
 export const GRAFANA_ORIGIN_LABEL = '__grafana_origin';
 
+export function labelsSize(labels: Labels) {
+  return Object.keys(labels).filter((key) => !isPrivateLabelKey(key)).length;
+}
+
 export function isPrivateLabelKey(labelKey: string) {
   return (labelKey.startsWith('__') && labelKey.endsWith('__')) || labelKey === GRAFANA_ORIGIN_LABEL;
 }

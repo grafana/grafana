@@ -6,6 +6,26 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.0.1 (2024-07-01)
+#
+# ### Fixed
+#
+# - Update log suppression to catch new format of website /docs/ homepage REF_NOT_FOUND warnings.
+#
+#   These warnings are related to missing some pages during the build that are required for the /docs/ homepage.
+#   They were previously suppressed but the log format changed and without this change they reappear in the latest builds.
+#
+# ## 8.0.0 (2024-05-28)
+#
+# ### Changed
+#
+# - Add environment variable `OUTPUT_FORMAT` to control the output of commands.
+#
+#   The default value is `human` and means the output format is human readable.
+#   The value `json` is also supported and outputs JSON.
+#
+#   Note that the `json` format isn't supported by `make docs`, only `make doc-validator` and `make vale`.
+#
 # ## 7.0.0 (2024-05-03)
 #
 # ### Changed
@@ -254,6 +274,8 @@ readonly DOC_VALIDATOR_SKIP_CHECKS="${DOC_VALIDATOR_SKIP_CHECKS:-^image-}"
 readonly HUGO_REFLINKSERRORLEVEL="${HUGO_REFLINKSERRORLEVEL:-WARNING}"
 readonly VALE_MINALERTLEVEL="${VALE_MINALERTLEVEL:-error}"
 readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make server-docs}"
+
+readonly OUTPUT_FORMAT="${OUTPUT_FORMAT:-human}"
 
 PODMAN="$(if command -v podman >/dev/null 2>&1; then echo podman; else echo docker; fi)"
 
@@ -748,45 +770,74 @@ POSIX_HERESTRING
 
 case "${image}" in
   'grafana/doc-validator')
-    if ! command -v jq >/dev/null 2>&1; then
-      errr '`jq` must be installed for the `doc-validator` target to work.'
-      note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
-
-      exit 1
-    fi
-
     proj="$(new_proj "$1")"
     printf '\r\n'
-    "${PODMAN}" run \
+
+    IFS='' read -r cmd <<EOF
+    ${PODMAN} run \
                 --init \
                 --interactive \
                 --platform linux/amd64 \
                 --rm \
                 --tty \
                 ${volumes} \
-                "${DOCS_IMAGE}" \
-                "--include=${DOC_VALIDATOR_INCLUDE}" \
-                "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
-                "/hugo/content$(proj_canonical "${proj}")" \
-                "$(proj_canonical "${proj}")" \
-                | sed "s#$(proj_dst "${proj}")#sources#" \
-                | jq -r '"ERROR: \(.location.path):\(.location.range.start.line // 1):\(.location.range.start.column // 1): \(.message)" + if .suggestions[0].text then "\nSuggestion: \(.suggestions[0].text)" else "" end'
+                ${DOCS_IMAGE} \
+                --include=${DOC_VALIDATOR_INCLUDE} \
+                --skip-checks=${DOC_VALIDATOR_SKIP_CHECKS} \
+                /hugo/content$(proj_canonical "${proj}") \
+                "$(proj_canonical "${proj}") \
+                | sed "s#$(proj_dst "${proj}")#sources#"
+EOF
+
+    case "${OUTPUT_FORMAT}" in
+      human)
+        if ! command -v jq >/dev/null 2>&1; then
+          errr '`jq` must be installed for the `doc-validator` target to work.'
+          note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
+
+          exit 1
+        fi
+
+        ${cmd} \
+        | jq -r '"ERROR: \(.location.path):\(.location.range.start.line // 1):\(.location.range.start.column // 1): \(.message)" + if .suggestions[0].text then "\nSuggestion: \(.suggestions[0].text)" else "" end'
+      ;;
+      json)
+        ${cmd}
+      ;;
+      *)  # default
+        errr "Invalid output format '${OUTPUT_FORMAT}'"
+    esac
     ;;
   'grafana/vale')
     proj="$(new_proj "$1")"
     printf '\r\n'
-    "${PODMAN}" run \
+    IFS='' read -r cmd <<EOF
+    ${PODMAN} run \
                 --init \
                 --interactive \
                 --rm \
                 --workdir /etc/vale \
                 --tty \
                 ${volumes} \
-                "${DOCS_IMAGE}" \
-                "--minAlertLevel=${VALE_MINALERTLEVEL}" \
-                '--glob=*.md' \
-                --output=/etc/vale/rdjsonl.tmpl \
-                /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
+                ${DOCS_IMAGE} \
+                --minAlertLevel=${VALE_MINALERTLEVEL} \
+                --glob=*.md \
+                /hugo/content/docs
+EOF
+
+    case "${OUTPUT_FORMAT}" in
+      human)
+        ${cmd} --output=line \
+        | sed "s#$(proj_dst "${proj}")#sources#"
+      ;;
+      json)
+        ${cmd} --output=/etc/vale/rdjsonl.tmpl \
+        | sed "s#$(proj_dst "${proj}")#sources#"
+      ;;
+      *)
+        errr "Invalid output format '${OUTPUT_FORMAT}'"
+    esac
+
     ;;
   *)
     tempfile="$(mktemp -t make-docs.XXX)"
@@ -863,7 +914,7 @@ EOF
               -e '/Press Ctrl+C to stop/ d' \
               -e '/make/ d' \
               -e '/WARNING: The manual_mount source directory/ d' \
-              -e '/docs\/_index.md .* not found/ d'
+              -e '/"docs\/_index.md" not found/d'
     fi
     ;;
 esac

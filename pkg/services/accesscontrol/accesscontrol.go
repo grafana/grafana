@@ -6,13 +6,19 @@ import (
 	"fmt"
 	"strings"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol")
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
@@ -76,6 +82,7 @@ type Options struct {
 type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
+	ActionSets   []string
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
@@ -231,7 +238,19 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
+//
+// Deprecated: use GroupScopesByActionContext instead
 func GroupScopesByAction(permissions []Permission) map[string][]string {
+	return GroupScopesByActionContext(context.Background(), permissions)
+}
+
+// GroupScopesByAction will group scopes on action
+func GroupScopesByActionContext(ctx context.Context, permissions []Permission) map[string][]string {
+	_, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
+		attribute.Int("permissions_count", len(permissions)),
+	))
+	defer span.End()
+
 	m := make(map[string][]string)
 	for i := range permissions {
 		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import * as React from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
@@ -155,6 +156,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
 
     const data: TextData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,

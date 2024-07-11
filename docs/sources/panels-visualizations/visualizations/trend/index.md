@@ -15,13 +15,19 @@ labels:
 description: Configure options for Grafana's trend visualization
 title: Trend
 weight: 100
+refs:
+  time-series-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Trend
 
 Trend visualizations should be used for datasets that have a sequential, numeric X that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
 
-Trend visualizations support all visual styles and options available in the [time series visualization][] with these exceptions:
+Trend visualizations support all visual styles and options available in the [time series visualization](ref:time-series-visualization) with these exceptions:
 
 - No annotations or time regions
 - No shared cursor/crosshair
@@ -69,8 +75,3 @@ For example, you could represent engine power and torque versus speed where spee
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series"
-[Time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
-{{% /docs/reference %}}

@@ -11,14 +11,15 @@ import (
 
 var logger = log.New("accesscontrol.evaluator")
 
+type CheckerFn func(action string, scope string) (bool, error)
+
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string][]string) bool
+	// EvaluateCustom allows to perform evaluation with custom check function
+	EvaluateCustom(fn CheckerFn) (bool, error)
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
-	// AppendActionSets extends the evaluator with relevant action sets
-	// (e.g. evaluator checking `folders:write` is extended to check for any of `folders:write`, `folders:edit`, `folders:admin`)
-	AppendActionSets(ctx context.Context, mutate ActionSetResolver) Evaluator
 	// String returns a string representation of permission required by the evaluator
 	fmt.Stringer
 	fmt.GoStringer
@@ -83,6 +84,25 @@ func match(scope, target string) bool {
 	return scope == target
 }
 
+func (p permissionEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
+	if len(p.Scopes) == 0 {
+		return fn(p.Action, "")
+	}
+
+	for _, target := range p.Scopes {
+		matches, err := fn(p.Action, target)
+		if err != nil {
+			return false, err
+		}
+
+		if matches {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	if p.Scopes == nil {
 		return EvalPermission(p.Action), nil
@@ -108,17 +128,6 @@ func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttri
 	}
 
 	return EvalPermission(p.Action, scopes...), nil
-}
-
-func (p permissionEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
-	resolvedActions := resolve(ctx, p.Action)
-
-	evals := make([]Evaluator, 0, len(resolvedActions))
-	for _, action := range resolvedActions {
-		evals = append(evals, EvalPermission(action, p.Scopes...))
-	}
-
-	return EvalAny(evals...)
 }
 
 func (p permissionEvaluator) String() string {
@@ -149,6 +158,19 @@ func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 	return true
 }
 
+func (a allEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
+	for _, e := range a.allOf {
+		allowed, err := e.EvaluateCustom(fn)
+		if err != nil {
+			return false, err
+		}
+		if !allowed {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	resolved := false
 	modified := make([]Evaluator, 0, len(a.allOf))
@@ -169,16 +191,6 @@ func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMut
 		return nil, ErrResolverNotFound
 	}
 	return EvalAll(modified...), nil
-}
-
-func (a allEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
-	evals := make([]Evaluator, 0, len(a.allOf))
-	for _, e := range a.allOf {
-		resolvedSets := e.AppendActionSets(ctx, resolve)
-		evals = append(evals, resolvedSets)
-	}
-
-	return EvalAll(evals...)
 }
 
 func (a allEvaluator) String() string {
@@ -219,6 +231,19 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 	return false
 }
 
+func (a anyEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
+	for _, e := range a.anyOf {
+		allowed, err := e.EvaluateCustom(fn)
+		if err != nil {
+			return false, err
+		}
+		if allowed {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	resolved := false
 	modified := make([]Evaluator, 0, len(a.anyOf))
@@ -240,16 +265,6 @@ func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMut
 	}
 
 	return EvalAny(modified...), nil
-}
-
-func (a anyEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
-	evals := make([]Evaluator, 0, len(a.anyOf))
-	for _, e := range a.anyOf {
-		resolvedSets := e.AppendActionSets(ctx, resolve)
-		evals = append(evals, resolvedSets)
-	}
-
-	return EvalAny(evals...)
 }
 
 func (a anyEvaluator) String() string {

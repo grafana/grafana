@@ -3,7 +3,7 @@ import Feature, { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
-import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style, Circle } from 'ol/style';
 import FlowLine from 'ol-ext/style/FlowLine';
@@ -94,7 +94,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-    const vectorLayer = new VectorLayer({ source });
+    const vectorLayer = new VectorImage({ source });
     const hasArrows = config.arrow === 1 || config.arrow === -1;
 
     if (!style.fields && !hasArrows) {
@@ -222,14 +222,14 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       }),
     });
 
-    const crosshairLayer = new VectorLayer({
+    const crosshairLayer = new VectorImage({
       source: new VectorSource({
         features: [crosshairFeature],
       }),
       style: crosshairStyle,
     });
 
-    const linesLayer = new VectorLayer({
+    const linesLayer = new VectorImage({
       source: new VectorSource({
         features: lineFeatures,
       }),

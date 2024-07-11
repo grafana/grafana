@@ -80,6 +80,12 @@ func WithLabels(labels data.Labels) ResultMutator {
 	}
 }
 
+func WithValues(values map[string]NumberValueCapture) ResultMutator {
+	return func(r *Result) {
+		r.Values = values
+	}
+}
+
 type FakeLoadedMetricsReader struct {
 	fingerprints map[data.Fingerprint]struct{}
 }

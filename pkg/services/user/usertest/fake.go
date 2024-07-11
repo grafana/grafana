@@ -75,10 +75,6 @@ func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.Update
 	return f.ExpectedError
 }
 
-func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	return f.GetSignedInUser(ctx, query)
-}
-
 func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	if f.GetSignedInUserFn != nil {
 		return f.GetSignedInUserFn(ctx, query)

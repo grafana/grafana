@@ -25,6 +25,36 @@
       "user": "用户"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "",
+      "show": {
+        "tooltip": ""
+      }
+    }
+  },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -48,6 +78,7 @@
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此操作将删除以下内容：",
       "delete-modal-title": "删除",
       "deleting": "正在删除...",
@@ -109,6 +140,16 @@
     "no-results": {
       "clear": "清除搜索和筛选条件",
       "text": ""
+    }
+  },
+  "central-alert-history": {
+    "error": "",
+    "filter": {
+      "button": {
+        "clear": ""
+      },
+      "label": "",
+      "placeholder": ""
     }
   },
   "clipboard-button": {
@@ -426,6 +467,16 @@
       "title": "版本"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "",
+          "title": ""
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "",
@@ -460,6 +511,28 @@
   },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
+    "logs": {
+      "maximum-pinned-logs": "",
+      "no-logs-found": "",
+      "scan-for-older-logs": "",
+      "stop-scan": ""
+    },
+    "query-library": {
+      "delete-query": "",
+      "delete-query-text": "",
+      "delete-query-title": "",
+      "query-deleted": ""
+    },
     "rich-history": {
       "close-tooltip": "关闭查询历史记录",
       "datasource-a-z": "数据源 A-Z",
@@ -474,6 +547,7 @@
     "rich-history-card": {
       "add-comment-form": "添加备注表单",
       "add-comment-tooltip": "添加备注",
+      "add-to-library": "",
       "cancel": "取消",
       "confirm-delete": "删除",
       "copy-query-tooltip": "将查询复制到剪贴板",
@@ -486,15 +560,12 @@
       "delete-query-tooltip": "删除查询",
       "delete-starred-query-confirmation-text": "您是否确定要永久删除您的星标查询？",
       "edit-comment-tooltip": "编辑备注",
-      "left-pane": "",
       "optional-description": "查询所完成操作的可选描述。",
       "query-comment-label": "查询备注",
+      "query-template-added": "",
       "query-text-label": "查询文本",
-      "right-pane": "",
-      "run-query-button": "运行查询",
       "save-comment": "保存备注",
       "star-query-tooltip": "星标查询",
-      "switch-datasource-button": "切换数据源并运行查询",
       "unstar-query-tooltip": "取消星标查询",
       "update-comment-form": "更新备注表单"
     },
@@ -562,6 +633,12 @@
     "rich-history-utils-notification": {
       "saving-failed": "保存 Rich History 失败",
       "update-failed": "Rich History 更新失败"
+    },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
     },
     "secondary-actions": {
       "query-add-button": "添加查询",
@@ -1108,6 +1185,10 @@
     "public": {
       "title": "公共仪表板"
     },
+    "recently-deleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "已记录查询"
     },
@@ -1224,6 +1305,7 @@
       "new-alert-rule": "新建警报规则",
       "query": "查询",
       "remove": "删除",
+      "replace-library-panel": "",
       "share": "分享",
       "show-legend": "显示图例",
       "unlink-library-panel": "取消链接库面板",
@@ -1321,6 +1403,16 @@
       "revoke-public-URL-button-title": "注销公共网址",
       "settings-title": "设置"
     },
+    "configuration": {
+      "display-annotations-label": "",
+      "enable-time-range-label": "",
+      "settings-label": "",
+      "success-pause": "",
+      "success-resume": "",
+      "success-update": "",
+      "success-update-old": "",
+      "time-range-tooltip": ""
+    },
     "create-page": {
       "generate-public-url-button": "生成公共网址",
       "unsupported-features-desc": "目前，我们不支持模板变量或前端数据源",
@@ -1332,15 +1424,32 @@
       "revoke-title": "注销公共网址"
     },
     "email-sharing": {
+      "accept-button": "",
+      "alert-text": "",
+      "bill-ack": "",
+      "cancel-button": "",
       "input-invalid-email-text": "无效电子邮箱",
       "input-required-email-text": "电子邮箱是必填项",
       "invite-button": "邀请",
       "invite-field-desc": "通过电子邮件邀请人员",
       "invite-field-label": "邀请",
+      "learn-more-button": "",
+      "recipient-email-placeholder": "",
+      "recipient-invalid-email-text": "",
+      "recipient-invitation-button": "",
+      "recipient-invitation-description": "",
+      "recipient-invitation-tooltip": "",
+      "recipient-list-description": "",
+      "recipient-list-title": "",
+      "recipient-required-email-text": "",
       "resend-button": "重新发送",
       "resend-button-title": "重新发送",
+      "resend-invite-label": "",
+      "revoke-access-label": "",
       "revoke-button": "注销",
-      "revoke-button-title": "注销"
+      "revoke-button-title": "注销",
+      "success-creation": "",
+      "success-share-type-change": ""
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "请联系您的管理员以获得{{mode}}公共仪表板的权限",
@@ -1351,6 +1460,15 @@
       "unsupported-data-source-alert-title": "不受支持的数据源",
       "unsupported-template-variable-alert-desc": "此公共仪表板可能无法工作，因为其使用了模板变量",
       "unsupported-template-variable-alert-title": "模板变量不受支持"
+    },
+    "public-sharing": {
+      "accept-button": "",
+      "alert-text": "",
+      "cancel-button": "",
+      "learn-more-button": "",
+      "public-ack": "",
+      "success-creation": "",
+      "success-share-type-change": ""
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "折叠设置",
@@ -1370,6 +1488,29 @@
       "time-range-picker-disabled-text": "时间范围选择器 = 已禁用",
       "time-range-picker-enabled-text": "时间范围选择器 = 已启用",
       "time-range-text": "时间范围 = "
+    },
+    "share": {
+      "success-delete": "",
+      "success-delete-old": ""
+    },
+    "share-configuration": {
+      "access-label": "",
+      "share-type-label": ""
+    },
+    "share-externally": {
+      "copy-link-button": "",
+      "email-share-type-option-description": "",
+      "email-share-type-option-label": "",
+      "pause-access-button": "",
+      "pause-access-tooltip": "",
+      "public-share-type-option-description": "",
+      "public-share-type-option-label": "",
+      "resume-access-button": "",
+      "revoke-access-button": "",
+      "revoke-access-description": ""
+    },
+    "sharing": {
+      "success-creation": ""
     }
   },
   "public-dashboard-list": {
@@ -1418,6 +1559,9 @@
       "role-label": "角色"
     }
   },
+  "query-library": {
+    "delete-query-button": ""
+  },
   "query-operation": {
     "header": {
       "collapse-row": "折叠查询行",
@@ -1431,6 +1575,25 @@
       "toggle-edit-mode": "切换文本编辑模式"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
+  },
+  "recently-deleted": {
+    "buttons": {
+      "delete": "",
+      "restore": ""
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "",
+      "delete-button": "",
+      "delete-loading": "",
+      "title": "",
+      "text_other": ""
+    },
+    "restore-modal": {
+      "restore-button": "",
+      "restore-loading": "",
+      "title": "",
+      "text_other": ""
+    }
   },
   "refresh-picker": {
     "aria-label": {
@@ -1460,6 +1623,31 @@
     },
     "dismissable-button": "关闭"
   },
+  "scopes": {
+    "filters": {
+      "apply": "",
+      "cancel": "",
+      "input": {
+        "placeholder": "",
+        "removeAll": ""
+      },
+      "title": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": "",
+      "toggle": {
+        "collapse": "",
+        "expand": ""
+      }
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "headline": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "包括面板",
@@ -1477,6 +1665,8 @@
     },
     "results-table": {
       "datasource-header": "数据源",
+      "deleted-less-than-1-min": "",
+      "deleted-remaining-header": "",
       "location-header": "位置",
       "name-header": "名称",
       "tags-header": "标签",
@@ -1495,6 +1685,11 @@
       "message": "",
       "more-info": "",
       "title": ""
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": ""
     }
   },
   "share-modal": {
@@ -1618,6 +1813,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {
@@ -1652,6 +1862,8 @@
       "apply-button": "应用时间范围",
       "cancel-button": "取消",
       "close": "关闭日历",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "选择时间范围"
     },
     "content": {

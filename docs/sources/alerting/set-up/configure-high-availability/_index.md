@@ -62,11 +62,11 @@ As an alternative to Memberlist, you can use Redis for high availability. This i
 database for HA and cannot support the meshing of all Grafana servers.
 
 1. Make sure you have a Redis server that supports pub/sub. If you use a proxy in front of your Redis cluster, make sure the proxy supports pub/sub.
-1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified_alerting] section.
+1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
 1. Set `ha_redis_address` to the Redis server address Grafana should connect to.
-1. [Optional] Set the username and password if authentication is enabled on the Redis server using `ha_redis_username` and `ha_redis_password`.
-1. [Optional] Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
-1. [Optional] Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
+1. Optional: Set the username and password if authentication is enabled on the Redis server using `ha_redis_username` and `ha_redis_password`.
+1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
+1. Optional: Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
 
 The following metrics can be used for meta monitoring, exposed by the `/metrics` endpoint in Grafana:
 
@@ -147,4 +147,5 @@ The following metrics can be used for meta monitoring, exposed by the `/metrics`
    ha_peers = "grafana-alerting.grafana:9094"
    ha_advertise_address = "${POD_IP}:9094"
    ha_peer_timeout = 15s
+   ha_reconnect_timeout = 2m
    ```

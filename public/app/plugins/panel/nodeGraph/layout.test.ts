@@ -27,6 +27,17 @@ jest.mock('./createLayoutWorker', () => {
       };
       return worker;
     },
+    createMsaglWorker: () => {
+      onmessage = jest.fn();
+      postMessage = jest.fn();
+      terminate = jest.fn();
+      worker = {
+        onmessage: onmessage,
+        postMessage: postMessage,
+        terminate: terminate,
+      };
+      return worker;
+    },
   };
 });
 

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { toDuration } from '@grafana/data';
 
 export interface TimeProps {

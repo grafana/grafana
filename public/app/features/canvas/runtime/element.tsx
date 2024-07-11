@@ -1,18 +1,21 @@
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
+import * as React from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
 import { LayerElement } from 'app/core/components/Layers/types';
-import {
-  BackgroundImageSize,
-  CanvasElementItem,
-  CanvasElementOptions,
-  canvasElementRegistry,
-} from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import {
+  BackgroundImageSize,
+  Constraint,
+  HorizontalConstraint,
+  Placement,
+  VerticalConstraint,
+} from 'app/plugins/panel/canvas/panelcfg.gen';
 import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
-import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { CanvasElementItem, CanvasElementOptions } from '../element';
+import { canvasElementRegistry } from '../registry';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -604,7 +607,6 @@ export class ElementState implements LayerElement {
   render() {
     const { item, div } = this;
     const scene = this.getScene();
-    // TODO: Rethink selected state handling
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (

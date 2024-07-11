@@ -76,8 +76,9 @@ type PrometheusQueryProperties struct {
 }
 
 // ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix)
+// to avoid import (temp fix). This also has metadata.name inlined.
 type ScopeSpec struct {
+	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
 	Title       string        `json:"title"`
 	Type        string        `json:"type"`
 	Description string        `json:"description"`
@@ -434,6 +435,6 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 var f embed.FS
 
 // QueryTypeDefinitionsJSON returns the query type definitions
-func QueryTypeDefinitionsJSON() (json.RawMessage, error) {
+func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
 	return f.ReadFile("query.types.json")
 }

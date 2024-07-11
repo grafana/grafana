@@ -9,10 +9,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/scottlepp/go-duck/duck"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // SQLCommand is an expression to run SQL over results
@@ -35,6 +35,12 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 			errutil.WithPublicMessage("error reading SQL command"),
 		)
 	}
+	if len(tables) == 0 {
+		logger.Warn("no tables found in SQL query", "sql", rawSQL)
+	}
+	if tables != nil {
+		logger.Debug("REF tables", "tables", tables, "sql", rawSQL)
+	}
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,
@@ -45,15 +51,18 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
 func UnmarshalSQLCommand(rn *rawNode) (*SQLCommand, error) {
 	if rn.TimeRange == nil {
+		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
 
 	expressionRaw, ok := rn.Query["expression"]
 	if !ok {
+		logger.Error("no expression in the query", "query", rn.Query)
 		return nil, errors.New("no expression in the query")
 	}
 	expression, ok := expressionRaw.(string)
 	if !ok {
+		logger.Error("expected sql expression to be type string", "expression", expressionRaw)
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
@@ -87,11 +96,15 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	duckDB := duck.NewInMemoryDB()
 	var frame = &data.Frame{}
+
+	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 	err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
 	if err != nil {
+		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
 		return rsp, nil
 	}
+	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
 
 	frame.RefID = gr.refID
 

@@ -1,11 +1,18 @@
 package rest
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"strconv"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/klog/v2"
+)
 
 type dualWriterMetrics struct {
-	legacy  *prometheus.HistogramVec
-	storage *prometheus.HistogramVec
-	outcome *prometheus.HistogramVec
+	legacy      *prometheus.HistogramVec
+	storage     *prometheus.HistogramVec
+	outcome     *prometheus.HistogramVec
+	legacyReads *prometheus.CounterVec
 }
 
 // DualWriterStorageDuration is a metric summary for dual writer storage duration per mode
@@ -14,7 +21,7 @@ var DualWriterStorageDuration = prometheus.NewHistogramVec(prometheus.HistogramO
 	Help:                        "Histogram for the runtime of dual writer storage duration per mode",
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
-}, []string{"status_code", "mode", "name", "method"})
+}, []string{"is_error", "mode", "kind", "method"})
 
 // DualWriterLegacyDuration is a metric summary for dual writer legacy duration per mode
 var DualWriterLegacyDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -22,7 +29,7 @@ var DualWriterLegacyDuration = prometheus.NewHistogramVec(prometheus.HistogramOp
 	Help:                        "Histogram for the runtime of dual writer legacy duration per mode",
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
-}, []string{"status_code", "mode", "name", "method"})
+}, []string{"is_error", "mode", "kind", "method"})
 
 // DualWriterOutcome is a metric summary for dual writer outcome comparison between the 2 stores per mode
 var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -30,25 +37,45 @@ var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	Help:                        "Histogram for the runtime of dual writer outcome comparison between the 2 stores per mode",
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
-}, []string{"mode", "name", "outcome", "method"})
+}, []string{"mode", "name", "method"})
 
-func (m *dualWriterMetrics) init() {
+var DualWriterReadLegacyCounts = prometheus.NewCounterVec(prometheus.CounterOpts{
+	Name:      "dual_writer_read_legacy_count",
+	Help:      "Histogram for the runtime of dual writer reads from legacy",
+	Namespace: "grafana",
+}, []string{"kind", "method"})
+
+func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
+	log := klog.NewKlogr()
 	m.legacy = DualWriterLegacyDuration
 	m.storage = DualWriterStorageDuration
 	m.outcome = DualWriterOutcome
+	errLegacy := reg.Register(m.legacy)
+	errStorage := reg.Register(m.storage)
+	errOutcome := reg.Register(m.outcome)
+	if errLegacy != nil || errStorage != nil || errOutcome != nil {
+		log.Info("cloud migration metrics already registered")
+	}
 }
 
-// nolint:unused
-func (m *dualWriterMetrics) recordLegacyDuration(statusCode string, mode string, name string, method string, duration float64) {
-	m.legacy.WithLabelValues(statusCode, mode, name, method).Observe(duration)
+func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+	duration := time.Since(startFrom).Seconds()
+	m.legacy.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
-// nolint:unused
-func (m *dualWriterMetrics) recordStorageDuration(statusCode string, mode string, name string, method string, duration float64) {
-	m.storage.WithLabelValues(statusCode, mode, name, method).Observe(duration)
+func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+	duration := time.Since(startFrom).Seconds()
+	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
-// nolint:unused
-func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome string, method string) {
-	m.outcome.WithLabelValues(mode, name, outcome, method).Observe(1)
+func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
+	var observeValue float64
+	if outcome {
+		observeValue = 1
+	}
+	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
+}
+
+func (m *dualWriterMetrics) recordReadLegacyCount(kind string, method string) {
+	m.legacyReads.WithLabelValues(kind, method).Inc()
 }

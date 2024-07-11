@@ -1,23 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { usePluginLinkExtensions, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
-import { GrafanaAlertingConfigurationStatusResponse } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
-import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
-import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { RuleDetails } from './RuleDetails';
 
@@ -38,31 +28,14 @@ const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
     delete: byRole('button', { name: /delete/i }),
-    silence: byRole('link', { name: 'Silence' }),
   },
 };
 
-const server = setupServer(
-  http.get(`/api/plugins/${SupportedPlugin.Incident}/settings`, async () => {
-    return HttpResponse.json({
-      enabled: false,
-    });
-  })
-);
-
-const alertmanagerChoiceMockedResponse: GrafanaAlertingConfigurationStatusResponse = {
-  alertmanagersChoice: AlertmanagerChoice.Internal,
-  numExternalAlertmanagers: 0,
-};
+setupMswServer();
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
   jest.clearAllMocks();
-});
-
-afterAll(() => {
-  server.close();
 });
 
 beforeEach(() => {
@@ -80,8 +53,6 @@ beforeEach(() => {
     ],
     isLoading: false,
   });
-  server.resetHandlers();
-  mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 });
 
 describe('RuleDetails RBAC', () => {
@@ -93,11 +64,10 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
-      renderRuleDetails(grafanaRule);
+      render(<RuleDetails rule={grafanaRule} />);
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
-      await waitFor(() => screen.queryByRole('button', { name: 'Declare incident' }));
     });
 
     it('Should not render Delete button for users with the delete permission', async () => {
@@ -105,11 +75,10 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
-      renderRuleDetails(grafanaRule);
+      render(<RuleDetails rule={grafanaRule} />);
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
-      await waitFor(() => screen.queryByRole('button', { name: 'Declare incident' }));
     });
   });
 
@@ -121,11 +90,10 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
-      renderRuleDetails(cloudRule);
+      render(<RuleDetails rule={cloudRule} />);
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
-      await waitFor(() => screen.queryByRole('button', { name: 'Declare incident' }));
     });
 
     it('Should not render Delete button for users with the delete permission', async () => {
@@ -133,23 +101,10 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
-      renderRuleDetails(cloudRule);
+      render(<RuleDetails rule={cloudRule} />);
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
-      await waitFor(() => screen.queryByRole('button', { name: 'Declare incident' }));
     });
   });
 });
-
-function renderRuleDetails(rule: CombinedRule) {
-  const store = configureStore();
-
-  render(
-    <Provider store={store}>
-      <MemoryRouter>
-        <RuleDetails rule={rule} />
-      </MemoryRouter>
-    </Provider>
-  );
-}

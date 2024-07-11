@@ -35,25 +35,30 @@ type CookiesMiddleware struct {
 
 func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.PluginContext, req any) error {
 	reqCtx := contexthandler.FromContext(ctx)
-	// if request not for a datasource or no HTTP request context skip middleware
-	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
+	allowedCookies := []string{}
+	// if no HTTP request context skip middleware
+	if req == nil || reqCtx == nil || reqCtx.Req == nil {
 		return nil
 	}
 
-	settings := pCtx.DataSourceInstanceSettings
-	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
-	if err != nil {
-		return err
+	if pCtx.DataSourceInstanceSettings != nil {
+		settings := pCtx.DataSourceInstanceSettings
+		jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
+		if err != nil {
+			return err
+		}
+
+		ds := &datasources.DataSource{
+			ID:       settings.ID,
+			OrgID:    pCtx.OrgID,
+			JsonData: jsonDataBytes,
+			Updated:  settings.Updated,
+		}
+
+		allowedCookies = ds.AllowedCookies()
 	}
 
-	ds := &datasources.DataSource{
-		ID:       settings.ID,
-		OrgID:    pCtx.OrgID,
-		JsonData: jsonDataBytes,
-		Updated:  settings.Updated,
-	}
-
-	proxyutil.ClearCookieHeader(reqCtx.Req, ds.AllowedCookies(), m.skipCookiesNames)
+	proxyutil.ClearCookieHeader(reqCtx.Req, allowedCookies, m.skipCookiesNames)
 
 	cookieStr := reqCtx.Req.Header.Get(cookieHeaderName)
 	switch t := req.(type) {

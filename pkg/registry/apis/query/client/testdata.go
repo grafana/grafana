@@ -13,7 +13,6 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type testdataDummy struct{}
@@ -33,7 +32,7 @@ func NewTestDataRegistry() query.DataSourceApiServerRegistry {
 
 // ExecuteQueryData implements QueryHelper.
 func (d *testdataDummy) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
-	queries, _, err := legacydata.ToDataSourceQueries(req)
+	queries, _, err := data.ToDataSourceQueries(req)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}

@@ -360,7 +360,10 @@
       "build": {},
       "screenshots": null,
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "aws",
+        "amazon"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1668,8 +1671,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false,
-    "apiVersion": "v0alpha1"
+    "angularDetected": false
   },
   {
     "name": "Text",

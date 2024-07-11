@@ -5,4 +5,14 @@ export type QueryTemplate = {
   title: string;
   targets: DataQuery[];
   createdAtTimestamp: number;
+  user?: string;
+};
+
+export type AddQueryTemplateCommand = {
+  title: string;
+  targets: DataQuery[];
+};
+
+export type DeleteQueryTemplateCommand = {
+  uid: string;
 };

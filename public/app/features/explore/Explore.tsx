@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
-import React from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
@@ -139,7 +139,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 
-export class Explore extends React.PureComponent<Props, ExploreState> {
+export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
@@ -188,8 +188,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   /**
    * Used by Logs details.
-   * Returns true if all queries have the filter, otherwise false.
-   * TODO: In the future, we would like to return active filters based the query that produced the log line.
+   * Returns true if the query identified by `refId` has a filter with the provided key and value.
    * @alpha
    */
   isFilterLabelActive = async (key: string, value: string | number, refId?: string) => {
@@ -235,14 +234,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs Popover Menu.
    */
-  onClickFilterValue = (value: string | number, refId?: string) => {
+  onClickFilterString = (value: string | number, refId?: string) => {
     this.onModifyQueries({ type: 'ADD_STRING_FILTER', options: { value: value.toString() } }, refId);
   };
 
   /**
    * Used by Logs Popover Menu.
    */
-  onClickFilterOutValue = (value: string | number, refId?: string) => {
+  onClickFilterOutString = (value: string | number, refId?: string) => {
     this.onModifyQueries({ type: 'ADD_STRING_FILTER_OUT', options: { value: value.toString() } }, refId);
   };
 
@@ -437,8 +436,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('logs')}
           scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
-          onClickFilterValue={this.onClickFilterValue}
-          onClickFilterOutValue={this.onClickFilterOutValue}
+          onClickFilterString={this.onClickFilterString}
+          onClickFilterOutString={this.onClickFilterOutString}
+          onPinLineCallback={() => {
+            this.setState({ contentOutlineVisible: true });
+          }}
         />
       </ContentOutlineItem>
     );

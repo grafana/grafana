@@ -260,7 +260,7 @@ export function preparePlotData2(
     });
 
     onStackMeta({
-      totals: accumsBySeriesIdx as AlignedData,
+      totals: accumsBySeriesIdx,
     });
   }
 

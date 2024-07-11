@@ -15,9 +15,53 @@ labels:
 description: Configure options for Grafana's xy chart
 title: XY chart
 weight: 100
+refs:
+  panel-options:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/
+  data-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
+  configure-standard-options:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#max
+  standard-options:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/
+  color-scheme:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
+  add-a-field-override:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/#add-a-field-override
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/#add-a-field-override
+  configure-field-overrides:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
 ---
 
 # XY chart
+
+{{< admonition type="note">}}
+To use xy charts, enable the `autoMigrateXYChartPanel` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+{{< /admonition >}}
 
 XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables. XY charts are typically used to create scatter plots. You can also use them to create bubble charts where field values determine the size of each bubble:
 
@@ -49,6 +93,8 @@ When you select **Auto** as your series mapping mode, the following options are 
 - [Frame](#frame)
 - [X-field](#x-field)
 - [Y-field](#y-field)
+- [Size field](#size-field)
+- [Color field](#color-field)
 
 ##### Frame
 
@@ -70,17 +116,29 @@ In the resulting chart, the x-field is generated from the values in column "a" u
 
 After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use this option to explicitly choose which fields to use for y.
 
-The series of the chart are generated from the y-fields. To make changes to a series in an xy chart, make [overrides][Configure field overrides] to the y-field.
+The series of the chart are generated from the y-fields. To make changes to a series in an xy chart, make [overrides](ref:configure-field-overrides) to the y-field.
 
 {{< admonition type=note >}}
 Any field you use in the [Size field](#size-field) or [Color field](#color-field) doesn't generate a series.
 {{< /admonition >}}
 
-You can also use [overrides][Configure field overrides] to exclude y-fields individually. To do so, add an override with the following properties for each y-field you want removed:
+You can also use [overrides](ref:configure-field-overrides) to exclude y-fields individually. To do so, add an override with the following properties for each y-field you want removed:
 
 - Override type: **Fields with name**
 - Override property: **Series > Hide in area**
 - Area: **Viz**
+
+##### Size field
+
+Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
+
+When you select this option, you can then set the [Min point size](#minmax-point-size) and [Max point size](#minmax-point-size) options.
+
+##### Color field
+
+Set which field's values control the color of the points in the chart. To use the color value options under the Standard options, you must set this field.
+
+Typically, this field is used when you only have one series displayed in the chart.
 
 #### Manual series mapping options
 
@@ -91,18 +149,8 @@ In **Manual** mode, you must set the following options:
 - **Frame** - Select your data frame or dataset. You can add as many frames as you want.
 - **X-field** - Select which field x represents.
 - **Y-field** - Select which field y represents.
-
-### Size field
-
-Use this option to set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
-
-When you select this option, you can then set the [Min point size](#minmax-point-size) and [Max point size](#minmax-point-size) options.
-
-### Color field
-
-Use this option to set which field's values control the color of the points in the chart. To use the color value options under the **Standard options**, you must set this field.
-
-Typically, this option is used when you only have one series displayed in the chart.
+- **Size field** - Select which field controls the size of the points in the chart.
+- **Color field** - Select which field controls the color of the points in the chart.
 
 ### Show
 
@@ -114,15 +162,30 @@ Set how values are represented in the visualization.
 
 ### Point size
 
-Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override][Configure field overrides] to set the pixel size by series (y-field).
+Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override](ref:configure-field-overrides) to set the pixel size by series (y-field).
 
 ### Min/Max point size
 
-Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override][Configure field overrides] these options for specific series.
+Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series.
+
+### Point shape
+
+Set the shape of the points in the chart.
+
+- **Circle** - Display points as circles. This is the default setting.
+- **Square** - Display points as squares.
+
+### Point stroke width
+
+Set the width of the point stroke in pixels. The default is one pixel.
+
+### Fill opacity
+
+Set the opacity of the point fill. The default is 50.
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [Color scheme][] field option.
+Set the style of the lines that connect points. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
 
 ![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
 
@@ -132,7 +195,7 @@ Set the style of the line. To change the color, use the standard [Color scheme][
 
 ### Line width
 
-Set the width of the lines in pixels.
+Set the width of the lines that connect points, in pixels.
 
 ## Tooltip options
 
@@ -146,6 +209,10 @@ When you hover your cursor over the visualization, Grafana can display tooltips.
 - **Hidden -** Do not display the tooltip when you interact with the visualization.
 
 Use an override to hide individual series from the tooltip.
+
+### Max width
+
+Set the maximum width of the tooltip box.
 
 ### Max height
 
@@ -168,7 +235,7 @@ Select the placement of the y-axis.
 - **Right:** Display all y-axes on the right side.
 - **Hidden:** Hide all axes.
 
-To selectively hide axes, [Add a field override][] that targets specific fields.
+To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
 ### Label
 
@@ -213,11 +280,11 @@ Set the y-axis to be centered on zero.
 
 ### Soft min and soft max
 
-Set a **Soft min** or **soft max** option for better control of y-axis limits. By default, Grafana sets the range for the y-axis automatically based on the dataset.
+Set a **Soft min** or **soft max** option for better control of all axes limits. By default, Grafana sets the range automatically based on the dataset.
 
 **Soft min** and **soft max** settings can prevent small variations in the data from being magnified when it's mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
 
-To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options][].
+To define hard limits of the axes, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
@@ -236,14 +303,14 @@ The transform option is only available as an override.
 
 ## Standard options
 
-**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure field overrides][].
+**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure field overrides](ref:configure-field-overrides).
 
 You can customize the following standard options:
 
 - **Field min/max** - Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field.
 - **Color scheme** - Set single or multiple colors for your entire visualization.
 
-To learn more, refer to [Configure standard options][].
+To learn more, refer to [Configure standard options](ref:configure-standard-options).
 
 ## Data links
 
@@ -252,29 +319,3 @@ To learn more, refer to [Configure standard options][].
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
-
-[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
-[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides#add-a-field-override"
-
-[Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#max"
-[Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#max"
-
-[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
-
-[Configure field overrides]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides"
-[Configure field overrides]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides"
-
-[panel options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options"
-[panel options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options"
-
-[standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options"
-[standard options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options"
-
-[data links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links"
-[data links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links"
-{{% /docs/reference %}}

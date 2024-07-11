@@ -18,6 +18,22 @@ labels:
     - oss
 title: State and health of alerts
 weight: 109
+refs:
+  pending-period:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#pending-period
+  no-data-and-error-handling:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+  notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
 ---
 
 # State and health of alerts
@@ -31,18 +47,18 @@ An alert instance can be in either of the following states:
 | State        | Description                                                                                                                                                                                                                               |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Normal**   | The state of an alert when the condition (threshold) is not met.                                                                                                                                                                          |
-| **Pending**  | The state of an alert that has breached the threshold but for less than the [pending period.][pending-period]                                                                                                                             |
-| **Alerting** | The state of an alert that has breached the threshold for longer than the [pending period.][pending-period]                                                                                                                               |
-| **NoData**   | The state of an alert whose query returns no data or all values are null. You can [change the default behavior.](/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling)          |
-| **Error**    | The state of an alert when an error or timeout occurred evaluating the alert rule. You can [change the default behavior.](/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling) |
+| **Pending**  | The state of an alert that has breached the threshold but for less than the [pending period](ref:pending-period).                                                                                                                         |
+| **Alerting** | The state of an alert that has breached the threshold for longer than the [pending period](ref:pending-period).                                                                                                                           |
+| **NoData**   | The state of an alert whose query returns no data or all values are null. You can [change the default behavior](/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling).          |
+| **Error**    | The state of an alert when an error or timeout occurred evaluating the alert rule. You can [change the default behavior](/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling). |
 
-{{< figure src="/media/docs/alerting/alert-instance-states-v3.png" caption="Alert instance state diagram" alt="Alert instance state diagram" max-width="750px" >}}
+{{< figure src="/media/docs/alerting/alert-instance-states-v3.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
 ### Notifications
 
-Alert instances will be routed for [notifications][notifications] when they are in the `Alerting` state or have been `Resolved`, transitioning from `Alerting` to `Normal` state.
+Alert instances will be routed for [notifications](ref:notifications) when they are in the `Alerting` state or have been `Resolved`, transitioning from `Alerting` to `Normal` state.
 
-{{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" max-width="750px" >}}
+{{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" alt="A diagram of the alert instance states and when to route their notifications." max-width="750px" >}}
 
 ### Lifecycle of stale alert instances
 
@@ -54,9 +70,9 @@ Stale alert instances that are in the **Alerting**, **NoData**, or **Error** sta
 
 The "Keep Last State" option helps mitigate temporary data source issues, preventing alerts from unintentionally firing, resolving, and re-firing.
 
-In [Configure no data and error handling,][no-data-and-error-handling] you can decide to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
+In [Configure no data and error handling,](ref:no-data-and-error-handling) you can decide to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
 
-{{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error.png" max-width="500px" >}}
+{{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
 
 However, in situations where strict monitoring is critical, relying solely on the "Keep Last State" option may not be appropriate. Instead, consider using an alternative or implementing additional alert rules to ensure that issues with prolonged data source disruptions are detected.
 
@@ -91,16 +107,3 @@ An alert rule can have one of the following health statuses:
 | **Error**              | An error occurred when evaluating an alerting rule.                                                      |
 | **NoData**             | The absence of data in at least one time series returned during a rule evaluation.                       |
 | **{status}, KeepLast** | The rule would have received another status but was configured to keep the last state of the alert rule. |
-
-{{% docs/reference %}}
-
-[notifications]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications"
-[notifications]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications"
-
-[pending-period]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation#pending-period"
-[pending-period]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation#pending-period"
-
-[no-data-and-error-handling]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
-[no-data-and-error-handling]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
-
-{{% /docs/reference %}}

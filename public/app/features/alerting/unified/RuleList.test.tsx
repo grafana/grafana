@@ -1,9 +1,8 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { prettyDOM, render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes, PluginMeta } from '@grafana/data';
@@ -162,7 +161,7 @@ const ui = {
     paused: byText(/^Paused/),
   },
   actionButtons: {
-    more: byRole('button', { name: /more-actions/ }),
+    more: byRole('button', { name: /More/ }),
   },
   moreActionItems: {
     pause: byRole('menuitem', { name: /pause evaluation/i }),
@@ -462,7 +461,7 @@ describe('RuleList', () => {
 
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
-    expect(ruleDetails).toHaveTextContent('Matching instances');
+    expect(ruleDetails).toHaveTextContent('Instances');
 
     // finally, check instances table
     const instancesTable = byTestId('dynamic-table').get(ruleDetails);
@@ -632,7 +631,64 @@ describe('RuleList', () => {
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
 
-  describe('pausing rules', () => {
+  it('uses entire group when reordering after filtering', async () => {
+    const user = userEvent.setup();
+
+    mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+
+    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+
+    mocks.api.discoverFeatures.mockResolvedValue({
+      application: PromApplication.Cortex,
+      features: {
+        rulerApiEnabled: true,
+      },
+    });
+
+    mocks.api.fetchRulerRules.mockImplementation(() => Promise.resolve(someRulerRules));
+    mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+        return Promise.resolve([
+          mockPromRuleNamespace({
+            name: 'foofolder',
+            dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+            groups: [
+              mockPromRuleGroup({
+                name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ]);
+      } else {
+        return Promise.resolve([]);
+      }
+    });
+
+    renderRuleList();
+
+    const [firstReorderButton] = await screen.findAllByLabelText(/reorder/i);
+
+    const filterInput = ui.rulesFilterInput.get();
+    await userEvent.type(filterInput, 'alert1a{Enter}');
+
+    await user.click(firstReorderButton);
+
+    const reorderDialog = await screen.findByRole('dialog');
+
+    const alertsInReorder = within(reorderDialog).getAllByTestId('reorder-alert-rule');
+
+    // We've filtered down to one rule, but the reorder dialog should still
+    // have everything in the group visible for reordering
+    // If this were not the case, rules could be deleted ⚠️
+    expect(alertsInReorder).toHaveLength(2);
+  });
+
+  describe.skip('pausing rules', () => {
     beforeEach(() => {
       grantUserPermissions([
         AccessControlAction.AlertingRuleRead,

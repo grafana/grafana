@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -109,6 +108,7 @@ export const parallelogramItem: CanvasElementItem = {
 
     const data: CanvasElementData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,

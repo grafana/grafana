@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -105,7 +106,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           );
           actionIcons.push(
             <ActionIcon
-              aria-label="re-order rules"
               data-testid="reorder-group"
               key="reorder"
               icon="exchange-alt"
@@ -181,11 +181,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       );
       actionIcons.push(
         <ActionIcon
-          aria-label="re-order rules"
           data-testid="reorder-group"
           key="reorder"
           icon="exchange-alt"
-          tooltip="re-order rules"
+          tooltip="reorder rules"
           className={styles.rotate90}
           onClick={() => setIsReorderingGroup(true)}
         />

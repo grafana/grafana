@@ -13,6 +13,27 @@ menuTitle: Write expression queries
 title: Write expression queries
 description: Write server-side expressions to manipulate data using math and other operations
 weight: 40
+refs:
+  no-data-and-error-handling:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+  multiple-dimensional-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/
+  grafana-alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+  labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/#labels
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/#labels
 ---
 
 # Write expression queries
@@ -25,7 +46,7 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ### Using expressions
 
-Expressions are most commonly used for [Grafana Alerting][]. The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are most commonly used for [Grafana Alerting](ref:grafana-alerting). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 {{% admonition type="note" %}}
 Expressions do not work with legacy dashboard alerts.
@@ -37,7 +58,7 @@ Expressions are meant to augment data sources by enabling queries from different
 When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
 {{% /admonition %}}
 
-Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data][]. For example, a query that returns multiple series, where each series is identified by labels or tags.
+Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data](ref:multiple-dimensional-data). For example, a query that returns multiple series, where each series is identified by labels or tags.
 
 An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifier known as its RefID (e.g., the default letter `A` or `B`).
 
@@ -50,7 +71,7 @@ Expressions work with two types of data.
 - A collection of time series.
 - A collection of numbers, where each number is an item.
 
-Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels][] or key-value pairs.
+Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels](ref:labels) or key-value pairs.
 
 ### Data source queries
 
@@ -103,7 +124,7 @@ So if you have numbers with labels like `{host=web01}` in `$A` and another numbe
 
 - An item with no labels will join to anything.
 - If both `$A` and `$B` each contain only one item (one series, or one number), they will join.
-- If labels are exact math they will join.
+- If labels are exact match they will join.
 - If labels are a subset of the other, for example and item in `$A` is labeled `{host=A,dc=MIA}` and item in `$B` is labeled `{host=A}` they will join.
 - Currently, if within a variable such as `$A` there are different tag _keys_ for each item, the join behavior is undefined.
 
@@ -236,20 +257,6 @@ For more information about expressions, refer to [About expressions](#about-expr
 
 When any queried data source returns no series or numbers, the expression engine returns `NoData`. For example, if a request contains two data source queries that are merged by an expression, if `NoData` is returned by at least one of the data source queries, then the returned result for the entire query is `NoData`.
 
-For more information about how [Grafana Alerting][] processes `NoData` results, refer to [No data and error handling][].
+For more information about how [Grafana Alerting](ref:grafana-alerting) processes `NoData` results, refer to [No data and error handling](ref:no-data-and-error-handling).
 
 In the case of using an expression on multiple queries, the expression engine requires that all of the queries return an identical timestamp. For example, if using math to combine the results of multiple SQL queries which each use `SELECT NOW() AS "time"`, the expression will only work if all queries evaluate `NOW()` to an identical timestamp; which does not always happen. To resolve this, you can replace `NOW()` with an arbitrary time, such as `SELECT 1 AS "time"`, or any other valid UNIX timestamp.
-
-{{% docs/reference %}}
-[multiple-dimensional data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions"
-[multiple-dimensional data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions"
-
-[Grafana Alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-[Grafana Alerting]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-
-[labels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions#labels"
-[labels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions#labels"
-
-[No data and error handling]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
-[No data and error handling]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
-{{% /docs/reference %}}
