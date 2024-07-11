@@ -39,6 +39,8 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('JaegerDatasource', () => {
+  const defaultSearchRangeParams = `start=${Number(defaultQuery.range.from) * 1000}&end=${Number(defaultQuery.range.to) * 1000}`;
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -128,12 +130,26 @@ describe('JaegerDatasource', () => {
       })
     );
     expect(mock).toHaveBeenCalledWith({
-      url: `${defaultSettings.url}/api/traces?service=jaeger-query&operation=%2Fapi%2Fservices&start=1704085200000000&end=1704106800000000&lookback=custom`,
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&operation=%2Fapi%2Fservices&${defaultSearchRangeParams}&lookback=custom`,
     });
     expect(response.data[0].meta.preferredVisualisationType).toBe('table');
     // Make sure that traceID field has data link configured
     expect(response.data[0].fields[0].config.links).toHaveLength(1);
     expect(response.data[0].fields[0].name).toBe('traceID');
+  });
+
+  it("call for `query()` when `queryType === 'search'`, using default range", async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings);
+    const query = JSON.parse(JSON.stringify(defaultQuery));
+    // @ts-ignore
+    query.range = undefined;
+
+    ds.query({ ...query, targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: ALL_OPERATIONS_KEY }] });
+
+    expect(mock).toHaveBeenCalledWith({
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&start=1704085200000000&end=1704106800000000&lookback=custom`,
+    });
   });
 
   it('should show the correct error message if no service name is selected', async () => {
@@ -157,7 +173,7 @@ describe('JaegerDatasource', () => {
       })
     );
     expect(mock).toHaveBeenCalledWith({
-      url: `${defaultSettings.url}/api/traces?service=jaeger-query&start=1704085200000000&end=1704106800000000&lookback=custom`,
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&${defaultSearchRangeParams}&lookback=custom`,
     });
   });
 
@@ -171,7 +187,7 @@ describe('JaegerDatasource', () => {
       })
     );
     expect(mock).toHaveBeenCalledWith({
-      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1704085200000000&end=1704106800000000&lookback=custom`,
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&${defaultSearchRangeParams}&lookback=custom`,
     });
   });
 
@@ -217,7 +233,7 @@ describe('JaegerDatasource', () => {
       })
     );
     expect(mock).toHaveBeenCalledWith({
-      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1704085200000000&end=1704106800000000&lookback=custom`,
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&${defaultSearchRangeParams}&lookback=custom`,
     });
   });
 
@@ -247,7 +263,7 @@ describe('JaegerDatasource', () => {
       })
     );
     expect(mock).toHaveBeenCalledWith({
-      url: `${defaultSettings.url}/api/traces?service=interpolationText&operation=interpolationText&minDuration=interpolationText&maxDuration=interpolationText&start=1704085200000000&end=1704106800000000&lookback=custom`,
+      url: `${defaultSettings.url}/api/traces?service=interpolationText&operation=interpolationText&minDuration=interpolationText&maxDuration=interpolationText&${defaultSearchRangeParams}&lookback=custom`,
     });
   });
 });
