@@ -43,25 +43,27 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     }
   }
 
-  for (let idx = 0; idx < panel.fieldConfig.overrides.length; idx++) {
-    const override = panel.fieldConfig.overrides[idx];
+  if (parseFloat(pluginVersion) < 11.2) {
+    for (let idx = 0; idx < panel.fieldConfig.overrides.length; idx++) {
+      const override = panel.fieldConfig.overrides[idx];
 
-    if (override.matcher.id === FieldMatcherID.byName) {
-      let props: DynamicConfigValue[] = [];
+      if (override.matcher.id === FieldMatcherID.byName) {
+        let props: DynamicConfigValue[] = [];
 
-      // append override links to elements with dimensions mapped to same field name
-      for (const prop of override.properties) {
-        if (prop.id === 'links') {
-          addLinks(panel.options.root.elements, prop.value, override.matcher.options);
-        } else {
-          props.push(prop);
+        // append override links to elements with dimensions mapped to same field name
+        for (const prop of override.properties) {
+          if (prop.id === 'links') {
+            addLinks(panel.options.root.elements, prop.value, override.matcher.options);
+          } else {
+            props.push(prop);
+          }
         }
-      }
 
-      if (props.length > 0) {
-        override.properties = props;
-      } else {
-        panel.fieldConfig.overrides.splice(idx, 1);
+        if (props.length > 0) {
+          override.properties = props;
+        } else {
+          panel.fieldConfig.overrides.splice(idx, 1);
+        }
       }
     }
   }
