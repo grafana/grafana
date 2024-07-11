@@ -17,8 +17,8 @@ var (
 	ErrBadAlertmanagerConfiguration = errutil.Internal("alerting.notification.configCorrupted").MustTemplate("Failed to unmarshal the Alertmanager configuration", errutil.WithPublic("Current Alertmanager configuration in the storage is corrupted. Reset the configuration or rollback to a recent valid one."))
 
 	ErrProvenanceChangeNotAllowed = errutil.Forbidden("alerting.notifications.invalidProvenance").MustTemplate(
-		"Resource with provenance status '{{ .Public.CurrentProvenance }}' cannot be managed via API that handles resources with provenance status '{{ .Public.TargetProvenance }}'",
-		errutil.WithPublic("Resource with provenance status '{{ .Public.CurrentProvenance }}' cannot be managed via API that handles resources with provenance status '{{ .Public.TargetProvenance }}'. You must use appropriate API to manage this resource"),
+		"Resource with provenance status '{{ .Public.SourceProvenance }}' cannot be managed via API that handles resources with provenance status '{{ .Public.TargetProvenance }}'",
+		errutil.WithPublic("Resource with provenance status '{{ .Public.SourceProvenance }}' cannot be managed via API that handles resources with provenance status '{{ .Public.TargetProvenance }}'. You must use appropriate API to manage this resource"),
 	)
 
 	ErrVersionConflict = errutil.Conflict("alerting.notifications.conflict")
@@ -28,7 +28,8 @@ var (
 	ErrTimeIntervalInvalid  = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
 	ErrTimeIntervalInUse    = errutil.Conflict("alerting.notifications.time-intervals.used", errutil.WithPublicMessage("Time interval is used by one or many notification policies"))
 
-	ErrContactPointReferenced = errutil.BadRequest("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
+	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
+	ErrContactPointUsedInRule = errutil.Conflict("alerting.notifications.contact-points.used-by-rule", errutil.WithPublicMessage("Contact point is currently used in the notification settings of one or many alert rules."))
 )
 
 func makeErrBadAlertmanagerConfiguration(err error) error {

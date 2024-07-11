@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -631,9 +633,9 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	ruleStore := ngfakes.NewRuleStore(t)
-	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
+	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()))
 	return AlertmanagerSrv{
 		mam:        mam,
 		crypto:     mam.Crypto,

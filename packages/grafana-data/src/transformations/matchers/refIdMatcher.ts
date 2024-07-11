@@ -1,4 +1,4 @@
-import { stringToJsRegex } from '../../text';
+import { stringToJsRegex } from '../../text/string';
 import { DataFrame } from '../../types/dataFrame';
 import { FrameMatcherInfo } from '../../types/transformations';
 

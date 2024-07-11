@@ -2,6 +2,7 @@
 // once angular is disabled, this file can be deleted
 
 @use 'sass:map';
+@use 'sass:color';
 
 .edit-tab-content {
   flex-grow: 1;
@@ -1934,4 +1935,97 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
     font-size: $font-size-lg;
     width: 100%;
   }
+}
+
+// Base classes
+.label,
+.badge {
+  display: inline-block;
+  padding: 2px 4px;
+  font-size: $font-size-base * 0.846;
+  font-weight: $font-weight-semi-bold;
+  line-height: 14px; // ensure proper line-height if floated
+  color: $white;
+  vertical-align: baseline;
+  white-space: nowrap;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: $gray-1;
+}
+
+// Labels & Badges
+.label-tag {
+  background-color: $purple;
+  color: color.adjust($white, $lightness: -5%);
+  white-space: nowrap;
+  border-radius: 3px;
+  text-shadow: none;
+  font-size: 12px;
+  padding: 0px 6px;
+  line-height: 20px;
+  height: 20px;
+
+  svg {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    opacity: 0.85;
+    background-color: color.adjust($purple, $lightness: -10%);
+  }
+}
+
+.query-part__link {
+  cursor: pointer;
+
+  &--no-value {
+    color: $text-muted;
+  }
+}
+
+.grafana-info-box {
+  position: relative;
+  padding: $space-lg;
+  background-color: $empty-list-cta-bg;
+  border-left: 3px solid $info-box-border-color;
+  margin-bottom: $space-md;
+  margin-right: $space-xs;
+  box-shadow: $card-shadow;
+  flex-grow: 1;
+
+  h5 {
+    margin-bottom: $spacer;
+  }
+  ul {
+    padding-left: $spacer * 1.5;
+  }
+
+  code {
+    @include font-family-monospace();
+    font-size: $font-size-base - 2;
+    background-color: $code-tag-bg;
+    color: $text-color;
+    border: 1px solid $code-tag-border;
+    border-radius: 4px;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    @extend .external-link;
+  }
+
+  &--max-lg {
+    max-width: map.get($grid-breakpoints, 'lg');
+  }
+}
+
+.grafana-info-box__close {
+  text-align: center;
+  display: block;
+  color: $link-color !important;
+  height: 0;
+  position: relative;
+  top: -9px;
 }

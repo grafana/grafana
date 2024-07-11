@@ -10,13 +10,14 @@ import {
   AlertInstanceStateFilter,
   InstanceStateFilter,
 } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { createViewLink, sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { isAlertingRule } from '../../utils/rules';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
@@ -148,7 +149,7 @@ function filterAlerts(
 ): Alert[] {
   let filteredAlerts = [...alerts];
   if (alertInstanceLabel) {
-    const matchers = parseMatchers(alertInstanceLabel || '');
+    const matchers = alertInstanceLabel ? parsePromQLStyleMatcherLooseSafe(alertInstanceLabel) : [];
     filteredAlerts = filteredAlerts.filter(({ labels }) => labelsMatchMatchers(labels, matchers));
   }
   if (alertInstanceState) {

@@ -5685,6 +5685,9 @@
           "sessionUid": {
             "type": "string"
           },
+          "stats": {
+            "$ref": "#/components/schemas/SnapshotResourceStats"
+          },
           "status": {
             "enum": [
               "INITIALIZING",
@@ -10480,6 +10483,25 @@
               "$ref": "#/components/schemas/SnapshotDTO"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotResourceStats": {
+        "properties": {
+          "statuses": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "types": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -21461,6 +21483,34 @@
         ]
       }
     },
+    "/reports/images/:image": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`.",
+        "operationId": "getSettingsImage",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get custom branding report image.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
     "/reports/render/csvs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -21592,7 +21642,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get settings.",
+        "summary": "Get report settings.",
         "tags": [
           "reports",
           "enterprise"
