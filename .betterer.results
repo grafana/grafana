@@ -3170,15 +3170,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/DashboardSettings/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./DashboardSettings\`)", "0"]
     ],
-    "public/app/features/dashboard/components/DeleteDashboard/DeleteDashboardModal.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
-    ],
     "public/app/features/dashboard/components/GenAI/GenAIHistory.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
