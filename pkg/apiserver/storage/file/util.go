@@ -40,9 +40,9 @@ func writeFile(codec runtime.Codec, path string, obj runtime.Object) error {
 
 var fileReadCount uint64 = 0
 
-func getReadsAndReset() uint64 {
-	return atomic.SwapUint64(&fileReadCount, 0)
-}
+//func getReadsAndReset() uint64 {
+//return atomic.SwapUint64(&fileReadCount, 0)
+//}
 
 func readFile(codec runtime.Codec, path string, newFunc func() runtime.Object) (runtime.Object, error) {
 	atomic.AddUint64(&fileReadCount, 1)
