@@ -58,7 +58,7 @@ refs:
 
 # Table
 
-The Table panel in Grafana is a highly flexible visualization tool designed to display data in the format of columns and rows. It supports various data types tables, including tables, time series, annotations, and raw JSON data. The table visualization can even receive multiple data sets and will provide a dropdown list to switch between them. With this versatility, it is the prefered visualization for multiple data types aiding on data analysis needs.
+Tables are a highly flexible visualization designed to display data in columns and rows. They support various data types, including tables, time series, annotations, and raw JSON data. The table visualization can even take multiple data sets and provide the option to switch between them. With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
