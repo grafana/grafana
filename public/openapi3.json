@@ -5685,6 +5685,9 @@
           "sessionUid": {
             "type": "string"
           },
+          "stats": {
+            "$ref": "#/components/schemas/SnapshotResourceStats"
+          },
           "status": {
             "enum": [
               "INITIALIZING",
@@ -10479,6 +10482,25 @@
               "$ref": "#/components/schemas/SnapshotDTO"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotResourceStats": {
+        "properties": {
+          "statuses": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "types": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "type": "object"

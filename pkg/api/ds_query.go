@@ -84,19 +84,15 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
-	statusWhenError := http.StatusBadRequest
-	if hs.Features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
-		statusWhenError = http.StatusMultiStatus
-	}
-
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			statusCode = statusWhenError
+			statusCode = http.StatusBadRequest
+			break
 		}
 	}
 
-	if statusCode == statusWhenError {
+	if statusCode == http.StatusBadRequest {
 		// an error in the response we treat as downstream.
 		requestmeta.WithDownstreamStatusSource(ctx)
 	}
