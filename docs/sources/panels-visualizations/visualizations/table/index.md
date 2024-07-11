@@ -82,7 +82,7 @@ Annotations and alerts are not currently supported for tables.
 
 ## Table visualization functions
 
-The table visualization itself provides multiple functions.
+The table visualization provides multiple functions.
 
 ### Sort column
 
