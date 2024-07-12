@@ -6,7 +6,9 @@ import { PanelData, CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { LokiQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -99,14 +101,19 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   return (
     <>
       {queries.length && (
-        <QueryEditor
-          query={queries[0]}
-          queries={queries}
-          app={CoreApp.UnifiedAlerting}
-          onChange={handleChangedQuery}
-          onRunQuery={runQueries}
-          datasource={dataSource}
-        />
+        <>
+          <QueryEditor
+            query={queries[0]}
+            queries={queries}
+            app={CoreApp.UnifiedAlerting}
+            onChange={handleChangedQuery}
+            onRunQuery={runQueries}
+            datasource={dataSource}
+          />
+          {(data?.errors || []).map((err) => {
+            return <QueryErrorAlert key={err.message} error={err} />;
+          })}
+        </>
       )}
 
       {data && (
