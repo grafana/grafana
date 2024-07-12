@@ -3,6 +3,9 @@ import { SearchState } from 'app/features/search/types';
 
 import { initialState, SearchStateManager } from '../../search/state/SearchStateManager';
 
+// Subclass SearchStateMananger to customise the setStateAndDoSearch behaviour.
+// We want to clear the search results when the user clears any search input
+// to trigger the skeleton state.
 export class TrashStateManager extends SearchStateManager {
   setStateAndDoSearch(state: Partial<SearchState>) {
     const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
