@@ -39,7 +39,7 @@ type gmsClientImpl struct {
 func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) (err error) {
 	logger := c.log.FromContext(ctx)
 
-	// TODO update service url to gms
+	// TODO: there is a lot of boilerplate code in these methods, we should consolidate them when we have a gardening period
 	path := fmt.Sprintf("%s/api/v1/validate-key", c.buildBasePath(cm.ClusterSlug))
 
 	// validation is an empty POST to GMS with the authorization header included
