@@ -104,7 +104,7 @@ func ProvideService(
 	s.objectStorage = objectstorage.NewS3()
 
 	if !cfg.CloudMigration.IsDeveloperMode {
-		c, err := gmsclient.NewGMSClient(cfg.CloudMigration.GMSDomain)
+		c, err := gmsclient.NewGMSClient(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("initializing GMS client: %w", err)
 		}
@@ -472,10 +472,8 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		return nil, fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
 	}
 
-	// query gms to establish new snapshot
-	timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.StartSnapshotTimeout)
-	defer cancel()
-	initResp, err := s.gmsClient.StartSnapshot(timeoutCtx, *session)
+	// query gms to establish new snapshot s.cfg.CloudMigration.StartSnapshotTimeout
+	initResp, err := s.gmsClient.StartSnapshot(ctx, *session)
 	if err != nil {
 		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", sessionUid, err)
 	}

@@ -6,19 +6,21 @@ import (
 )
 
 type CloudMigrationSettings struct {
-	IsTarget                  bool
-	GcomAPIToken              string
-	SnapshotFolder            string
-	GMSDomain                 string
-	StartSnapshotTimeout      time.Duration
-	FetchInstanceTimeout      time.Duration
-	CreateAccessPolicyTimeout time.Duration
-	FetchAccessPolicyTimeout  time.Duration
-	DeleteAccessPolicyTimeout time.Duration
-	ListTokensTimeout         time.Duration
-	CreateTokenTimeout        time.Duration
-	DeleteTokenTimeout        time.Duration
-	TokenExpiresAfter         time.Duration
+	IsTarget                    bool
+	GcomAPIToken                string
+	SnapshotFolder              string
+	GMSDomain                   string
+	GMSStartSnapshotTimeout     time.Duration
+	GMSGetSnapshotStatusTimeout time.Duration
+	GMSValidateKeyTimeout       time.Duration
+	FetchInstanceTimeout        time.Duration
+	CreateAccessPolicyTimeout   time.Duration
+	FetchAccessPolicyTimeout    time.Duration
+	DeleteAccessPolicyTimeout   time.Duration
+	ListTokensTimeout           time.Duration
+	CreateTokenTimeout          time.Duration
+	DeleteTokenTimeout          time.Duration
+	TokenExpiresAfter           time.Duration
 
 	IsDeveloperMode bool
 }
@@ -29,7 +31,9 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.GcomAPIToken = cloudMigration.Key("gcom_api_token").MustString("")
 	cfg.CloudMigration.SnapshotFolder = cloudMigration.Key("snapshot_folder").MustString("")
 	cfg.CloudMigration.GMSDomain = cloudMigration.Key("domain").MustString("")
-	cfg.CloudMigration.StartSnapshotTimeout = cloudMigration.Key("start_snapshot_timeout").MustDuration(5 * time.Second)
+	cfg.CloudMigration.GMSValidateKeyTimeout = cloudMigration.Key("validate_key_timeout").MustDuration(5 * time.Second)
+	cfg.CloudMigration.GMSStartSnapshotTimeout = cloudMigration.Key("start_snapshot_timeout").MustDuration(5 * time.Second)
+	cfg.CloudMigration.GMSGetSnapshotStatusTimeout = cloudMigration.Key("get_snapshot_status_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.FetchInstanceTimeout = cloudMigration.Key("fetch_instance_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.CreateAccessPolicyTimeout = cloudMigration.Key("create_access_policy_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.FetchAccessPolicyTimeout = cloudMigration.Key("fetch_access_policy_timeout").MustDuration(5 * time.Second)
