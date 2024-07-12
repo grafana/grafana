@@ -437,7 +437,7 @@ var (
 		},
 		{
 			Name:         "pluginsDetailsRightPanel",
-			Description:  "Enables reight panel for the plugins details page",
+			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
