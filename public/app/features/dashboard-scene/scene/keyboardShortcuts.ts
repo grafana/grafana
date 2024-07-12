@@ -167,12 +167,26 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         }
       }),
     });
+
+    // collapse all rows
+    keybindings.addBinding({
+      key: 'd shift+c',
+      onTrigger: () => {
+        scene.collapseAllRows();
+      },
+    });
+
+    // expand all rows
+    keybindings.addBinding({
+      key: 'd shift+e',
+      onTrigger: () => {
+        scene.expandAllRows();
+      },
+    });
   }
 
   // toggle all panel legends (TODO)
   // toggle all exemplars (TODO)
-  // collapse all rows (TODO)
-  // expand all rows (TODO)
 
   return () => {
     keybindings.removeAll();

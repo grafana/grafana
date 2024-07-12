@@ -877,6 +877,40 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isDirty: false });
     locationService.replace('/');
   }
+
+  public collapseAllRows() {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Dashboard scene layout is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    sceneGridLayout.state.children.forEach((child) => {
+      if (!(child instanceof SceneGridRow)) {
+        return;
+      }
+      if (!child.state.isCollapsed) {
+        sceneGridLayout.toggleRow(child);
+      }
+    });
+  }
+
+  public expandAllRows() {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Dashboard scene layout is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    sceneGridLayout.state.children.forEach((child) => {
+      if (!(child instanceof SceneGridRow)) {
+        return;
+      }
+      if (child.state.isCollapsed) {
+        sceneGridLayout.toggleRow(child);
+      }
+    });
+  }
 }
 
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
