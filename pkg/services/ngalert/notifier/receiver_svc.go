@@ -9,8 +9,6 @@ import (
 	"hash/fnv"
 	"slices"
 
-	"github.com/grafana/alerting/definition"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -326,8 +324,8 @@ func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, na
 	}
 }
 
-// getContactPointProvenance determines the provenance of a definition.PostableApiReceiver based on the provenance of its integrations.
-func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *definition.PostableApiReceiver, orgID int64) (models.Provenance, error) {
+// getContactPointProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
+func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *definitions.PostableApiReceiver, orgID int64) (models.Provenance, error) {
 	if len(r.GrafanaManagedReceivers) == 0 {
 		return models.ProvenanceNone, nil
 	}
@@ -356,7 +354,7 @@ func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *def
 	return firstProvenance, nil
 }
 
-func (rs *ReceiverService) checkOptimisticConcurrency(current *definition.PostableApiReceiver, provenance models.Provenance, desiredVersion string, action string) error {
+func (rs *ReceiverService) checkOptimisticConcurrency(current *definitions.PostableApiReceiver, provenance models.Provenance, desiredVersion string, action string) error {
 	if desiredVersion == "" {
 		if provenance != models.ProvenanceFile {
 			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
@@ -372,7 +370,7 @@ func (rs *ReceiverService) checkOptimisticConcurrency(current *definition.Postab
 }
 
 // getReceiverByUID returns the index and receiver with the given UID.
-func getReceiverByUID(cfg definitions.PostableUserConfig, uid string) (int, *definition.PostableApiReceiver) {
+func getReceiverByUID(cfg definitions.PostableUserConfig, uid string) (int, *definitions.PostableApiReceiver) {
 	for i, r := range cfg.AlertmanagerConfig.Receivers {
 		if getUID(r) == uid {
 			return i, r
@@ -407,7 +405,7 @@ func isReceiverInUse(name string, routes []*definitions.Route) bool {
 }
 
 // calculateReceiverFingerprint returns a unique fingerprint for a PostableApiReceiver. Used for optimistic concurrency checks.
-func calculateReceiverFingerprint(recv *definition.PostableApiReceiver) string {
+func calculateReceiverFingerprint(recv *definitions.PostableApiReceiver) string {
 	// TODO: Stub + requires Version on GettableApiReceiver.
 	return recv.Name
 }
