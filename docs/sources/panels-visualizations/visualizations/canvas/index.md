@@ -178,6 +178,7 @@ Canvases support [data links](ref:data-links) for all elements except drone and 
 
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. Click **Save** to save changes and close the dialog box.
+1. Disable inline editing.
 
 If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
 
