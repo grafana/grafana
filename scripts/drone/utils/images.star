@@ -34,4 +34,5 @@ images = {
     "cypress": "cypress/included:13.10.0",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
+    "rocky": "rockylinux:9",
 }
