@@ -28,7 +28,6 @@ const RecentlyDeletedPage = memo(() => {
   const canSelect = canEditFolders || canEditDashboards;
 
   useEffect(() => {
-    console.log('RecentlyDeletedPage useEffect');
     stateManager.initStateFromUrl(undefined);
 
     // Clear selected state when folderUID changes
