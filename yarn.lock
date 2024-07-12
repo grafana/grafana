@@ -3685,6 +3685,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/schema": "npm:11.2.0-pre"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
+    "@hello-pangea/dnd": "npm:16.6.0"
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@monaco-editor/react": "npm:4.6.0"
     "@popperjs/core": "npm:2.11.8"

@@ -2,6 +2,7 @@ import { CSSProperties } from 'react';
 import * as React from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
+import { FieldType, getLinksSupplier, LinkModel, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -12,7 +13,7 @@ import {
   Placement,
   VerticalConstraint,
 } from 'app/plugins/panel/canvas/panelcfg.gen';
-import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
+import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
@@ -41,6 +42,8 @@ export class ElementState implements LayerElement {
   // Calculated
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any; // depends on the type
+
+  getLinks?: (config: ValueLinkConfig) => LinkModel[];
 
   constructor(
     public item: CanvasElementItem,
@@ -366,6 +369,34 @@ export class ElementState implements LayerElement {
       this.revId++; // rerender
     }
 
+    const scene = this.getScene();
+    const frames = scene?.data?.series;
+
+    if (frames) {
+      const defaultField = {
+        name: 'Default field',
+        type: FieldType.string,
+        config: { links: this.options.links ?? [] },
+        values: [],
+      };
+
+      this.getLinks = getLinksSupplier(
+        frames[0],
+        defaultField,
+        {
+          __dataContext: {
+            value: {
+              data: frames,
+              field: defaultField,
+              frame: frames[0],
+              frameIndex: 0,
+            },
+          },
+        },
+        scene?.panel.props.replaceVariables!
+      );
+    }
+
     const { background, border } = this.options;
     const css: CSSProperties = {};
     if (background) {
@@ -552,11 +583,30 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen) {
+
+    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen && !this.options.oneClickLinks) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
     }
+
+    if (this.options.oneClickLinks && this.div && this.options.links && this.options.links.length > 0) {
+      const primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        this.div.style.cursor = 'pointer';
+        this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
+      }
+    }
+  };
+
+  getPrimaryDataLink = () => {
+    if (this.getLinks) {
+      const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
+      const primaryDataLink = links.find((link: LinkModel) => link.sortIndex === 0);
+      return primaryDataLink ?? links[0];
+    }
+
+    return undefined;
   };
 
   handleTooltip = (event: React.MouseEvent) => {
@@ -573,14 +623,27 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && !this.options.oneClickLinks) {
       scene.tooltipCallback(undefined);
+    }
+
+    if (this.options.oneClickLinks && this.div) {
+      this.div.style.cursor = 'auto';
+      this.div.title = '';
     }
   };
 
   onElementClick = (event: React.MouseEvent) => {
-    this.handleTooltip(event);
-    this.onTooltipCallback();
+    // If one-click access is enabled, open the primary link
+    if (this.options.oneClickLinks) {
+      let primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        window.open(primaryDataLink.href, primaryDataLink.target);
+      }
+    } else {
+      this.handleTooltip(event);
+      this.onTooltipCallback();
+    }
   };
 
   onElementKeyDown = (event: React.KeyboardEvent) => {
