@@ -64,5 +64,5 @@ Use these settings to refine your visualization:
 - **Wrap lines -** Toggle line wrapping.
 - **Prettify JSON -** Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
 - **Enable log details -** Toggle option to see the log details view for each log row. The default setting is true.
-- **Deduplication -** Hides log messages that are duplicates of others shown according to criteria such as: Exact (ignoring ISO datetimes), Numerical (ignoring those that only differ by numbers such as IPs or latencies), or Signatures (removing successive lines with identical punctutaion and white space).
+- **Deduplication -** Hides log messages that are duplicates of others shown according to your selected criteria. Choose from: **Exact** (ignoring ISO datetimes), **Numerical** (ignoring only those that differ by numbers such as IPs or latencies), or **Signatures** (removing successive lines with identical punctuation and white space).
 - **Order -** Display results in descending or ascending time order. The default is **Descending**, showing the newest logs first. Set to **Ascending** to show the oldest log lines first.
