@@ -3,17 +3,17 @@ import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, Stack, EmptyState, useStyles2 } from '@grafana/ui';
+import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { t } from 'app/core/internationalization';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service';
-import { SearchState } from 'app/features/search/types';
 
 import { useDispatch } from '../../types';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
+import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { setAllSelection } from './state';
@@ -79,25 +79,6 @@ const RecentlyDeletedPage = memo(() => {
     </Page>
   );
 });
-
-interface RecentlyDeletedEmptyStateProps {
-  searchState: SearchState;
-}
-
-const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyStateProps) => {
-  const userIsSearching = Boolean(searchState.query || searchState.tag.length);
-  return (
-    <EmptyState
-      message={
-        userIsSearching
-          ? t('recently-deleted.page.no-search-result', 'No results found for your query')
-          : t('recently-deleted.page.no-deleted-dashboards', "You haven't deleted any dashboards recently.")
-      }
-      variant={userIsSearching ? 'not-found' : 'completed'}
-      role="alert"
-    />
-  );
-};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
