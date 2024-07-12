@@ -3,6 +3,8 @@
  */
 import { useMemo, useRef, useState } from 'react';
 
+import { stringifyErrorLike } from '../utils/misc';
+
 export type AsyncStatus = 'loading' | 'success' | 'error' | 'not-executed';
 
 export type AsyncState<Result> =
@@ -178,4 +180,19 @@ export function anyOfRequestState(...states: Array<AsyncState<unknown>>) {
     error: states.find(isError)?.error,
     success: states.some(isSuccess),
   };
+}
+
+/**
+ * This is only used for testing and serializing the async state
+ */
+export function SerializeState({ state }: { state: AsyncState<unknown> }) {
+  return (
+    <>
+      {isUninitialized(state) && 'uninitialized'}
+      {isLoading(state) && 'loading'}
+      {isSuccess(state) && 'success'}
+      {isSuccess(state) && `result: ${JSON.stringify(state.result, null, 2)}`}
+      {isError(state) && `error: ${stringifyErrorLike(state.error)}`}
+    </>
+  );
 }

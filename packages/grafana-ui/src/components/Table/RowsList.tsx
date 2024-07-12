@@ -81,6 +81,9 @@ export const RowsList = (props: RowsListProps) => {
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
+  if (initialRowIndex === undefined && rowHighlightIndex !== undefined) {
+    setRowHighlightIndex(undefined);
+  }
 
   const theme = useTheme2();
   const panelContext = usePanelContext();

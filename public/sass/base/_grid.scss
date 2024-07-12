@@ -10,7 +10,11 @@
   padding-left: calc($gutter / 2);
   padding-right: calc($gutter / 2);
   @if not $enable-flex {
-    @include clearfix();
+    &::after {
+      content: '';
+      display: table;
+      clear: both;
+    }
   }
 }
 
@@ -28,7 +32,11 @@
     display: flex;
     flex-wrap: wrap;
   } @else {
-    @include clearfix();
+    &::after {
+      content: '';
+      display: table;
+      clear: both;
+    }
   }
   margin-left: calc($gutter / -2);
   margin-right: calc($gutter / -2);
