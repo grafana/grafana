@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from '@hello-pangea/dnd';
 
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
