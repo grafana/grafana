@@ -121,11 +121,11 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1">}}
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1">}}
 
 ### Legend options
 
-{{< docs/shared lookup="visualizations/legend-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Axis options
 
@@ -294,7 +294,7 @@ Set the position of the bar relative to a data point. In the examples below, **S
 
 ### Standard options
 
-{{< docs/shared lookup="visualizations/standard-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Data links
 
@@ -306,8 +306,8 @@ Set the position of the bar relative to a data point. In the examples below, **S
 
 ### Thresholds
 
-{{< docs/shared lookup="visualizations/thresholds-options-3.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Field overrides
 
-{{< docs/shared lookup="visualizations/overrides-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
