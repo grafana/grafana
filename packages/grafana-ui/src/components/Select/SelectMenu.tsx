@@ -159,8 +159,6 @@ export const SelectMenuOptions = ({
       // @PERCONA
       // Added data-testid
       data-testid={`${data.label ? data.label + '-' : ''}select-option`}
-      // @PERCONA_TODO
-      // data-testid={selectors.components.Select.option}
     >
       {icon && <Icon name={icon} className={styles.optionIcon} />}
       {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || String(data.value)} />}

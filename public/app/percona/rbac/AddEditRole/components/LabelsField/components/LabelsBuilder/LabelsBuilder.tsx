@@ -30,7 +30,6 @@ const LabelsBuilder: FC<LabelsBuilderProps> = ({ value, onChange }) => {
 
   return (
     <div className={styles.QueryBuilder} data-testid="test">
-      {/* @PERCONA_TODO hide metric */}
       <MetricsLabelsSection datasource={datasource} onChange={handleQueryChange} query={visualQuery} />
       <div />
       {query.expr && <QueryPreview query={query.expr} />}

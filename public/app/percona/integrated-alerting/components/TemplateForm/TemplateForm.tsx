@@ -86,8 +86,6 @@ export const TemplateForm: FC = () => {
 
   useEffect(() => {
     const getData = async () => {
-      // @PERCONA_TODO
-      // await dispatch(fetchExternalAlertmanagersConfigAction());
       const { templates } = await dispatch(fetchTemplatesAction()).unwrap();
 
       if (selectedTemplate) {
