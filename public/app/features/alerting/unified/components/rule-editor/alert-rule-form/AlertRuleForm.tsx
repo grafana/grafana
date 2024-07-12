@@ -64,7 +64,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
-  const [deleteRuleFromGroup, _deleteRuleState] = useDeleteRuleFromGroup();
+  const [_deleteRuleState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -163,7 +163,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (existing) {
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
 
-      await deleteRuleFromGroup(ruleGroupIdentifier, existing.rule);
+      await deleteRuleFromGroup.execute(ruleGroupIdentifier, existing.rule);
       locationService.replace(returnTo);
     }
   };

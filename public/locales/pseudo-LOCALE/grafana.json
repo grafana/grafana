@@ -127,6 +127,31 @@
           }
         }
       }
+    },
+    "rule-groups": {
+      "delete": {
+        "success": "Ŝūččęşşƒūľľy đęľęŧęđ řūľę ģřőūp"
+      },
+      "move": {
+        "success": "Ŝūččęşşƒūľľy mővęđ řūľę ģřőūp"
+      },
+      "rename": {
+        "success": "Ŝūččęşşƒūľľy řęŉämęđ řūľę ģřőūp"
+      },
+      "update": {
+        "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
+      }
+    },
+    "rules": {
+      "delete-rule": {
+        "success": "Ŗūľę şūččęşşƒūľľy đęľęŧęđ"
+      },
+      "pause-rule": {
+        "success": "Ŗūľę ęväľūäŧįőŉ päūşęđ"
+      },
+      "resume-rule": {
+        "success": "Ŗūľę ęväľūäŧįőŉ řęşūmęđ"
+      }
     }
   },
   "annotations": {
