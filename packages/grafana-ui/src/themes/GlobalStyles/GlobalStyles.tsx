@@ -16,7 +16,7 @@ import { getJsonFormatterStyles } from './jsonFormatter';
 import { getLegacySelectStyles } from './legacySelect';
 import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
-import { getQueryPartStyles } from './queryPart';
+import { getQueryEditorStyles } from './queryEditor';
 import { getRcTimePickerStyles } from './rcTimePicker';
 import { getSkeletonStyles } from './skeletonStyles';
 import { getSlateStyles } from './slate';
@@ -42,7 +42,7 @@ export function GlobalStyles() {
         getCardStyles(theme),
         getMarkdownStyles(theme),
         getPageStyles(theme),
-        getQueryPartStyles(theme),
+        getQueryEditorStyles(theme),
         getRcTimePickerStyles(theme),
         getSkeletonStyles(theme),
         getSlateStyles(theme),
