@@ -30,8 +30,8 @@ labels:
     - enterprise
     - oss
 description: Configure options for Grafana's time series visualization
-title: Time series v3
-menuTitle: Time series v3
+title: Time series
+menuTitle: Time series
 weight: 10
 refs:
   configure-standard-options:
@@ -70,7 +70,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
 ---
 
-# Time series v3
+# Time series
 
 Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
 
