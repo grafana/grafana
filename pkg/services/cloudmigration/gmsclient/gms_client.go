@@ -73,6 +73,55 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	return nil
 }
 
+// Deprecated
+func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequest) (result *cloudmigration.MigrateDataResponse, err error) {
+	logger := c.log.FromContext(ctx)
+
+	// TODO update service url to gms
+	path := fmt.Sprintf("%s/api/v1/migrate-data", c.buildBasePath(cm.ClusterSlug))
+
+	reqDTO := convertRequestToDTO(request)
+	body, err := json.Marshal(reqDTO)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling request: %w", err)
+	}
+
+	// Send the request to GMS with the associated auth token
+	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+	if err != nil {
+		c.log.Error("error creating http request for cloud migration run", "err", err.Error())
+		return nil, fmt.Errorf("http request error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.log.Error("error sending http request for cloud migration run", "err", err.Error())
+		return nil, fmt.Errorf("http request error: %w", err)
+	}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
+		}
+	}()
+
+	if resp.StatusCode >= 400 {
+		c.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
+		return nil, fmt.Errorf("http request error: %w", err)
+	}
+
+	var respDTO MigrateDataResponseDTO
+	if err := json.NewDecoder(resp.Body).Decode(&respDTO); err != nil {
+		logger.Error("unmarshalling response body: %w", err)
+		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
+	}
+
+	res := convertResponseFromDTO(respDTO)
+	return &res, nil
+}
+
 func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession) (out *cloudmigration.StartSnapshotResponse, err error) {
 	path := fmt.Sprintf("%s/api/v1/start-snapshot", c.buildBasePath(session.ClusterSlug))
 
@@ -197,53 +246,4 @@ func convertResponseFromDTO(result MigrateDataResponseDTO) cloudmigration.Migrat
 		RunUID: result.RunUID,
 		Items:  items,
 	}
-}
-
-// Deprecated
-func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequest) (result *cloudmigration.MigrateDataResponse, err error) {
-	logger := c.log.FromContext(ctx)
-
-	// TODO update service url to gms
-	path := fmt.Sprintf("%s/api/v1/migrate-data", c.buildBasePath(cm.ClusterSlug))
-
-	reqDTO := convertRequestToDTO(request)
-	body, err := json.Marshal(reqDTO)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling request: %w", err)
-	}
-
-	// Send the request to GMS with the associated auth token
-	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
-	if err != nil {
-		c.log.Error("error creating http request for cloud migration run", "err", err.Error())
-		return nil, fmt.Errorf("http request error: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		c.log.Error("error sending http request for cloud migration run", "err", err.Error())
-		return nil, fmt.Errorf("http request error: %w", err)
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
-		}
-	}()
-
-	if resp.StatusCode >= 400 {
-		c.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
-		return nil, fmt.Errorf("http request error: %w", err)
-	}
-
-	var respDTO MigrateDataResponseDTO
-	if err := json.NewDecoder(resp.Body).Decode(&respDTO); err != nil {
-		logger.Error("unmarshalling response body: %w", err)
-		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
-	}
-
-	res := convertResponseFromDTO(respDTO)
-	return &res, nil
 }
