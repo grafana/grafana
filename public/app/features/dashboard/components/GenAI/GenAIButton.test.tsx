@@ -133,6 +133,23 @@ describe('GenAIButton', () => {
 
       await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
     });
+
+    it('should display the tooltip if provided', async () => {
+      const { getByRole, getByTestId } = setup({
+        tooltip: 'This is a tooltip',
+        onGenerate,
+        messages: [],
+        eventTrackingSrc,
+      });
+
+      // Wait for the check to be completed
+      const button = getByRole('button');
+      await userEvent.hover(button);
+
+      const tooltip = await waitFor(() => getByTestId(selectors.components.Tooltip.container));
+      expect(tooltip).toBeVisible();
+      expect(tooltip).toHaveTextContent('This is a tooltip');
+    });
   });
 
   describe('when it is generating data', () => {
@@ -288,7 +305,30 @@ describe('GenAIButton', () => {
       await userEvent.hover(tooltip);
       expect(tooltip).toBeVisible();
       expect(tooltip).toHaveTextContent(
-        'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+        'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
+      );
+    });
+
+    it('error message should overwrite the tooltip content passed in tooltip prop', async () => {
+      const { getByRole, getByTestId } = setup({
+        tooltip: 'This is a tooltip',
+        onGenerate,
+        messages: [],
+        eventTrackingSrc,
+      });
+
+      // Wait for the check to be completed
+      const button = getByRole('button');
+      await userEvent.hover(button);
+
+      const tooltip = await waitFor(() => getByTestId(selectors.components.Tooltip.container));
+      expect(tooltip).toBeVisible();
+
+      // The tooltip keeps interactive to be able to click the link
+      await userEvent.hover(tooltip);
+      expect(tooltip).toBeVisible();
+      expect(tooltip).toHaveTextContent(
+        'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
       );
     });
 

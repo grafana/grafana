@@ -28,6 +28,13 @@ export interface GenAIButtonProps {
   eventTrackingSrc: EventTrackingSrc;
   // Whether the button should be disabled
   disabled?: boolean;
+  /*
+    Tooltip to show when hovering over the button
+    Tooltip will be shown only before the improvement stage.
+    i.e once the button title changes to "Improve", the tooltip will not be shown because
+    toggletip will be enabled.
+  */
+  tooltip?: string;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -41,6 +48,7 @@ export const GenAIButton = ({
   temperature = 1,
   eventTrackingSrc,
   disabled,
+  tooltip,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
@@ -54,6 +62,11 @@ export const GenAIButton = ({
   const isFirstHistoryEntry = !hasHistory;
   const isButtonDisabled = disabled || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
+
+  const showTooltip = error || tooltip ? undefined : false;
+  const tooltipContent = error
+    ? 'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
+    : tooltip || '';
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (streamStatus === StreamStatus.GENERATING) {
@@ -192,13 +205,7 @@ export const GenAIButton = ({
     <div className={styles.wrapper}>
       {isGenerating && <Spinner size="sm" className={styles.spinner} />}
       {isFirstHistoryEntry ? (
-        <Tooltip
-          show={error ? undefined : false}
-          interactive
-          content={
-            'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
-          }
-        >
+        <Tooltip show={showTooltip} interactive content={tooltipContent}>
           {button}
         </Tooltip>
       ) : (
