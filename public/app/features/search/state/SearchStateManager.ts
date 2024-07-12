@@ -86,7 +86,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
 
     // Set internal state
-    this.setState({ sort, ...state, loading: this.hasSearchFilters() });
+    this.setState({ sort, ...state });
 
     // Update url state
     this.updateLocation({
