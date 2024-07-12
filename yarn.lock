@@ -17344,6 +17344,7 @@ __metadata:
     lucene: "npm:^2.1.1"
     marked: "npm:12.0.2"
     memoize-one: "npm:6.0.0"
+    micro-memoize: "npm:^4.1.2"
     mini-css-extract-plugin: "npm:2.9.0"
     ml-regression-polynomial: "npm:^3.0.0"
     ml-regression-simple-linear: "npm:^3.0.0"
