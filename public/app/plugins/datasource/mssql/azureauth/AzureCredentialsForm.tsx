@@ -49,7 +49,7 @@ export const AzureCredentialsForm = (props: Props) => {
   if (azureEntraPasswordCredentialsEnabled) {
     authTypeOptions.push({
       value: AzureAuthType.AD_PASSWORD,
-      label: 'Password',
+      label: 'Azure Entra Password',
     });
   }
 

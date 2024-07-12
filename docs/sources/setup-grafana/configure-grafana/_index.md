@@ -1277,7 +1277,7 @@ By default, this will include all Grafana Labs owned Azure plugins or those that
 
 ### azure_entra_password_credentials_enabled
 
-MSSQL will be able to use AD password auth.
+Specifies whether Entra password auth can be used for the MSSQL data source. This authentication is not recommended and consideration should be taken before enabling this.
 
 Disabled by default, needs to be explicitly enabled.
 
