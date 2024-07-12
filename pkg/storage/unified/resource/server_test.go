@@ -164,4 +164,57 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, all.Items, 0) // empty
 	})
+
+	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
+		raw := []byte(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "fdgsv37qslr0ga",
+				"namespace": "default",
+				"annotations": {
+					"grafana.app/originName": "elsewhere",
+					"grafana.app/originPath": "path/to/item",
+					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+				}
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
+
+		key := &ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr", // can be anything :(
+			Namespace: "default",
+			Name:      "fdgsv37qslr0ga",
+		}
+
+		created, err := server.Create(ctx, &CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.NoError(t, err)
+
+		// Update should return an ErrOptimisticLockingFailed the second time
+
+		_, err = server.Update(ctx, &UpdateRequest{
+			Key:             key,
+			Value:           raw,
+			ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+
+		_, err = server.Update(ctx, &UpdateRequest{
+			Key:             key,
+			Value:           raw,
+			ResourceVersion: created.ResourceVersion})
+		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
+	})
 }

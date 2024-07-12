@@ -7,8 +7,8 @@ import {
 } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
 import { isLoading } from '../hooks/useAsync';
-import { usePauseRuleInGroup } from '../hooks/useProduceNewRuleGroup';
 import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {

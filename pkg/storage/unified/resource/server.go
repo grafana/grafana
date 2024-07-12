@@ -353,6 +353,10 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return nil, apierrors.NewBadRequest("current value does not exist")
 	}
 
+	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
+		return nil, ErrOptimisticLockingFailed
+	}
+
 	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, latest.Value)
 	if err != nil {
 		rsp.Error, err = errToStatus(err)
