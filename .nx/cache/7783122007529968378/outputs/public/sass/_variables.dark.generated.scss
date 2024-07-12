@@ -19,12 +19,12 @@ $colors-action-selected: rgba(204, 204, 220, 0.12);
 
 // New Colors
 // -------------------------
-$blue-light: #6E9FFF;
-$blue-base: #3D71D9;
+$blue-light: #6e9fff;
+$blue-base: #3d71d9;
 $blue-shade: rgb(90, 134, 222);
-$red-base: #D10E5C;
+$red-base: #d10e5c;
 $red-shade: rgb(215, 50, 116);
-$green-base: #1A7F4B;
+$green-base: #1a7f4b;
 $green-shade: rgb(60, 146, 102);
 $orange-dark: #ff780a;
 
@@ -68,7 +68,7 @@ $layer2: #22252b;
 $divider: rgba(204, 204, 220, 0.12);
 
 $border0: rgba(204, 204, 220, 0.12);
-$border1: rgba(204, 204, 220, 0.20);
+$border1: rgba(204, 204, 220, 0.2);
 
 // Accent colors
 // -------------------------
@@ -77,23 +77,23 @@ $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #6E9FFF;
+$variable: #6e9fff;
 
 $brand-primary: #eb7b18;
-$brand-success: #1A7F4B;
-$brand-warning: #FF9900;
-$brand-danger: #D10E5C;
+$brand-success: #1a7f4b;
+$brand-warning: #ff9900;
+$brand-danger: #d10e5c;
 
-$query-red: #FF5286;
-$query-green: #6CCF8E;
+$query-red: #ff5286;
+$query-green: #6ccf8e;
 $query-purple: #fe85fc;
 $query-orange: #eb7b18;
 
 // Status colors
 // -------------------------¨
-$online: #6CCF8E;
+$online: #6ccf8e;
 $warn: #fbad37;
-$critical: #FF5286;
+$critical: #ff5286;
 
 // Scaffolding
 // -------------------------
@@ -101,27 +101,27 @@ $body-bg: #111217;
 $page-bg: #111217;
 $dashboard-bg: #111217;
 
-$text-color-strong: #FFFFFF;
+$text-color-strong: #ffffff;
 $text-color: rgb(204, 204, 220);
 $text-color-semi-weak: rgba(204, 204, 220, 0.65);
 $text-color-weak: rgba(204, 204, 220, 0.65);
 $text-color-faint: rgba(204, 204, 220, 0.6);
-$text-color-emphasis: #FFFFFF;
-$text-blue: #6E9FFF;
+$text-color-emphasis: #ffffff;
+$text-blue: #6e9fff;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);
-$brand-gradient-vertical: linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);
+$brand-gradient-horizontal: linear-gradient(270deg, #f55f3e 0%, #ff8833 100%);
+$brand-gradient-vertical: linear-gradient(0.01deg, #f55f3e 0.01%, #ff8833 99.99%);
 
 // Links
 // -------------------------
 $link-color: rgb(204, 204, 220);
 $link-color-disabled: rgba(204, 204, 220, 0.6);
-$link-hover-color: #FFFFFF;
-$external-link-color: #6E9FFF;
+$link-hover-color: #ffffff;
+$external-link-color: #6e9fff;
 
 // Typography
 // -------------------------
@@ -174,7 +174,7 @@ $scrollbarBorder: black;
 // Tables
 // -------------------------
 $table-bg-accent: #22252b;
-$table-border: rgba(204, 204, 220, 0.20);
+$table-border: rgba(204, 204, 220, 0.2);
 $table-bg-odd: rgb(28, 31, 35);
 $table-bg-hover: rgb(35, 38, 42);
 
@@ -216,10 +216,10 @@ $input-bg: #111217;
 $input-bg-disabled: rgba(204, 204, 220, 0.04);
 
 $input-color: rgb(204, 204, 220);
-$input-border-color: rgba(204, 204, 220, 0.20);
+$input-border-color: rgba(204, 204, 220, 0.2);
 $input-box-shadow: none;
-$input-border-focus: #6E9FFF;
-$input-box-shadow-focus: #6E9FFF !default;
+$input-border-focus: #6e9fff;
+$input-box-shadow-focus: #6e9fff !default;
 $input-color-placeholder: rgba(204, 204, 220, 0.6);
 $input-label-bg: #22252b;
 $input-color-select-arrow: $white;
@@ -277,13 +277,13 @@ $tab-border-color: $dark-9;
 // Form states and alerts
 // -------------------------
 $warning-text-color: #fbad37;
-$error-text-color: #FF5286;
-$success-text-color: #6CCF8E;
+$error-text-color: #ff5286;
+$success-text-color: #6ccf8e;
 
-$alert-error-bg: #D10E5C;
-$alert-success-bg: #1A7F4B;
-$alert-warning-bg: #FF9900;
-$alert-info-bg: #FF9900;
+$alert-error-bg: #d10e5c;
+$alert-success-bg: #1a7f4b;
+$alert-warning-bg: #ff9900;
+$alert-info-bg: #ff9900;
 
 // Tooltips and popovers
 // -------------------------
@@ -295,7 +295,7 @@ $graph-tooltip-bg: $dark-1;
 $tooltipBackground: #22252b;
 $tooltipColor: rgb(204, 204, 220);
 $tooltipArrowColor: #22252b;
-$tooltipBackgroundError: #D10E5C;
+$tooltipBackgroundError: #d10e5c;
 $tooltipShadow: 0px 4px 8px rgba(1, 4, 9, 0.75);
 
 $popover-bg: #181b1f;
