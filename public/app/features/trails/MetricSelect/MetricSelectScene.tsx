@@ -696,9 +696,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               onChange={model.onMetricRadioChange}
             />
           )}
-          {/*// FIXME remove ts-ignore*/}
-          {/*// @ts-ignore*/}
-          <body.Component model={body} />
+          {body instanceof SceneFlexLayout && <body.Component model={body} />}
+          {body instanceof SceneCSSGridLayout && <body.Component model={body} />}
         </StatusWrapper>
       </div>
     );
