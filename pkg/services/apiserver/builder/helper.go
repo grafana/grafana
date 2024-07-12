@@ -102,6 +102,7 @@ func SetupConfig(
 
 		// Needs to run last in request chain to function as expected, hence we register it first.
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 
