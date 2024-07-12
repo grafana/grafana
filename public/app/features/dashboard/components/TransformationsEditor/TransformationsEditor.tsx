@@ -1,6 +1,6 @@
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { ChangeEvent } from 'react';
 import * as React from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { Unsubscribable } from 'rxjs';
 
 import {
