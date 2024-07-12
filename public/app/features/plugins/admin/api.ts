@@ -18,10 +18,11 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
 
-  const [localPlugins, versions, localReadme] = await Promise.all([
+  const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
     getLocalPlugins(),
     getPluginVersions(id, isPublished),
     getLocalPluginReadme(id),
+    getLocalPluginChangelog(id),
   ]);
 
   const local = localPlugins.find((p) => p.id === id);
@@ -35,7 +36,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
-    changelog: remote?.changelog,
+    changelog: localChangelog || remote?.changelog,
   };
 }
 
@@ -106,6 +107,20 @@ async function getPluginVersions(id: string, isPublished: boolean): Promise<Vers
 async function getLocalPluginReadme(id: string): Promise<string> {
   try {
     const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/README`);
+    const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
+
+    return markdownAsHtml;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
+    return '';
+  }
+}
+
+async function getLocalPluginChangelog(id: string): Promise<string> {
+  try {
+    const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/CHANGELOG`);
     const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
 
     return markdownAsHtml;

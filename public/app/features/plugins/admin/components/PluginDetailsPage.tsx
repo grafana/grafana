@@ -74,10 +74,13 @@ export function PluginDetailsPage({
     );
   }
 
+  const conditionalProps = !config.featureToggles.pluginsDetailsRightPanel ? { info: info } : {};
+  const widthPage = !config.featureToggles.pluginsDetailsRightPanel ? '100%' : '80%';
+
   return (
-    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle}>
+    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
       <Stack gap={4} justifyContent="space-between">
-        <div style={{ display: 'block', width: '80%' }}>
+        <div style={{ display: 'block', width: widthPage }}>
           <Page.Contents>
             <TabContent className={styles.tabContent}>
               {plugin.angularDetected && (
@@ -97,7 +100,7 @@ export function PluginDetailsPage({
             </TabContent>
           </Page.Contents>
         </div>
-        <PluginDetailsRightPanel info={info} plugin={plugin} />
+        {config.featureToggles.pluginsDetailsRightPanel && <PluginDetailsRightPanel info={info} plugin={plugin} />}
       </Stack>
     </Page>
   );

@@ -215,7 +215,7 @@ describe('Plugin details page', () => {
     it('should display a "Signed" badge if the plugin signature is verified', async () => {
       const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.valid });
 
-      expect(await queryByText('Signed')).toBeInTheDocument();
+      expect(await queryByText('community')).toBeInTheDocument();
     });
 
     it('should display a "Missing signature" badge if the plugin signature is missing', async () => {

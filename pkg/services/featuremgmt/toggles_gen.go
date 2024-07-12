@@ -243,6 +243,10 @@ const (
 	// Enables monitor only in the plugin frontend sandbox (if enabled)
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
 
+	// FlagPluginsDetailsRightPanel
+	// Enables reight panel for the plugins details page
+	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
+
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"

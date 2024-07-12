@@ -34,6 +34,8 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         url: `${pathname}?page=${PluginTabIds.VERSIONS}`,
         active: PluginTabIds.VERSIONS === currentPageId,
       });
+    }
+    if (isPublished && plugin?.details?.changelog) {
       navModelChildren.push({
         text: PluginTabLabels.CHANGELOG,
         id: PluginTabIds.CHANGELOG,

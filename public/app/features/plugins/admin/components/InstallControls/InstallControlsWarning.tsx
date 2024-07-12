@@ -45,11 +45,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
 
   if (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) {
     return (
-      <Alert
-        severity="warning"
-        title="This is a development build of the plugin and can&#39;t be uninstalled."
-        className={styles.alert}
-      >
+      <Alert severity="warning" title="" className={styles.alert}>
         <HorizontalGroup height="auto" align="center">
           <span>No valid Grafana Enterprise license detected.</span>
           <LinkButton

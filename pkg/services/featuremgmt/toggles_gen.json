@@ -1796,6 +1796,19 @@
     },
     {
       "metadata": {
+        "name": "pluginsDetailsRightPanel",
+        "resourceVersion": "1720773561417",
+        "creationTimestamp": "2024-07-12T08:39:21Z"
+      },
+      "spec": {
+        "description": "Enables reight panel for the plugins details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-05T08:51:36Z"

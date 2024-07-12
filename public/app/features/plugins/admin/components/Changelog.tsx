@@ -15,17 +15,14 @@ export const Changelog = ({ plugin }: Props) => {
   return (
     <div
       dangerouslySetInnerHTML={{ __html: plugin.details?.changelog ?? 'No changelog was found' }}
-      className={cx(styles.changelog, styles.container)}
+      className={cx(styles.changelog)}
     ></div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(2, 4, 3)};
-  `,
   changelog: css({
-    h1: {
+    'h1:first-of-type': {
       display: 'none',
     },
     'h2:first-of-type': {
