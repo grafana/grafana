@@ -283,7 +283,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		}
 		count, err := res.RowsAffected()
 		if err != nil {
-			return fmt.Errorf("update into resource: %w", err)
+			return fmt.Errorf("delete resource: %w", err)
 		}
 		if count == 0 {
 			return fmt.Errorf("no rows affected")
