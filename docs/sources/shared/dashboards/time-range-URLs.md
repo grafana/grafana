@@ -1,3 +1,9 @@
+---
+title: Time range URLs
+comments: |
+  This file is used in the following files: dashboards/build-dashboards/create-dashboard-url-variables/index.md, dashboards/use-dashboards/index.md
+---
+
 You can control the time range of a dashboard by providing the following query parameters in the dashboard URL:
 
 - `from` - Defines the lower limit of the time range, specified in ms, epoch, or relative time.
