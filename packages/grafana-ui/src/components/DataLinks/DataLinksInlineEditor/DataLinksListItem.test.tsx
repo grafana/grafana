@@ -1,5 +1,5 @@
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { render, screen } from '@testing-library/react';
-import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
 import { DataLinksListItem, DataLinksListItemProps } from './DataLinksListItem';
 
