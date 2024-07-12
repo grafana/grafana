@@ -227,7 +227,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RootFolderUID:                       accesscontrol.GeneralFolderUID,
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
 		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
-		ExploreDefaultTimeOffset:			hs.Cfg.ExploreDefaultTimeOffset,
+		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,

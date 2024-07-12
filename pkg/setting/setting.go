@@ -513,7 +513,7 @@ type Cfg struct {
 	AlertingMinInterval         int64
 
 	// Explore UI
-	ExploreEnabled bool
+	ExploreEnabled           bool
 	ExploreDefaultTimeOffset string
 
 	// Help UI
