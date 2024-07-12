@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
@@ -27,6 +27,9 @@ export interface Props extends Themeable2 {
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+
+  onPinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
@@ -46,7 +49,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
       displayedFields,
       getFieldLinks,
       wrapLogMessage,
+      onPinLine,
       styles,
+      pinLineButtonTooltipTitle,
     } = this.props;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
@@ -151,6 +156,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
+                      onPinLine={onPinLine}
+                      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                       getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
@@ -170,6 +177,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
+                      onPinLine={onPinLine}
+                      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                       getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}

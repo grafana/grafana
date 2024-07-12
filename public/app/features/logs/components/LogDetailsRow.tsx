@@ -15,7 +15,7 @@ import {
   LogRowModel,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
 
@@ -38,6 +38,8 @@ export interface Props extends Themeable2 {
   row: LogRowModel;
   app?: CoreApp;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+  onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
 }
 
 interface State {
@@ -263,6 +265,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       disableActions,
       row,
       app,
+      onPinLine,
+      pinLineButtonTooltipTitle,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
@@ -324,11 +328,32 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
               {singleVal && this.generateClipboardButton(parsedValues[0])}
               <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
-                {links?.map((link, i) => (
-                  <span key={`${link.title}-${i}`}>
-                    <DataLinkButton link={link} />
-                  </span>
-                ))}
+                {links?.map((link, i) => {
+                  if (link.onClick && onPinLine) {
+                    const originalOnClick = link.onClick;
+                    link.onClick = (e, origin) => {
+                      // Pin the line
+                      onPinLine(row, false);
+
+                      // Execute the link onClick function
+                      originalOnClick(e, origin);
+                    };
+                  }
+                  return (
+                    <span key={`${link.title}-${i}`}>
+                      <DataLinkButton
+                        buttonProps={{
+                          // Show tooltip message if max number of pinned lines has been reached
+                          tooltip:
+                            typeof pinLineButtonTooltipTitle === 'object' && link.onClick
+                              ? pinLineButtonTooltipTitle
+                              : undefined,
+                        }}
+                        link={link}
+                      />
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </td>
