@@ -72,7 +72,7 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
       url: `${config.appSubUrl}/inventory`,
       subTitle: 'Configuration',
       children: [PMM_ADD_INSTANCE_PAGE, PMM_ADD_INSTANCE_CREATE_PAGE, inventoryLink, settingsLink],
-      sortWeight: -800,
+      sortWeight: -600,
     };
     mainLinks.push(pmmcfgNode);
   }
