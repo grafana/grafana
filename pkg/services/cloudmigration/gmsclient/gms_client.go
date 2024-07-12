@@ -19,7 +19,7 @@ import (
 // NewGMSClient returns an implementation of Client that queries GrafanaMigrationService
 func NewGMSClient(domain string, minPollingPeriod time.Duration) Client {
 	if minPollingPeriod < time.Second {
-		minPollingPeriod = time.Second // ensure we can't spam GMS
+		minPollingPeriod = time.Second // ensure the client can't spam GMS
 	}
 	return &gmsClientImpl{
 		domain:                    domain,
