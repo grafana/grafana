@@ -27,8 +27,10 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
       <div className={cx(styles.switch, invalid && styles.invalid)}>
         <input
           type="checkbox"
+          role="switch"
           disabled={disabled}
           checked={value}
+          aria-checked={value}
           onChange={(event) => {
             !disabled && onChange?.(event);
           }}
