@@ -1,4 +1,4 @@
-export { Parser, printTree, prefixDelimited };
+export { Parser, prefixDelimited };
 
 interface Config {
   minGroupSize: number;
