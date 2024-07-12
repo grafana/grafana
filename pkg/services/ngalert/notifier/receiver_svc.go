@@ -64,13 +64,7 @@ func NewReceiverService(
 }
 
 func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requester, reqDecrypt bool) (bool, error) {
-	// TODO: migrate to new permission
-	eval := accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
-	)
-
-	decryptAccess, err := rs.ac.Evaluate(ctx, user, eval)
+	decryptAccess, err := rs.hasReadDecrypted(ctx, user)
 	if err != nil {
 		return false, err
 	}
@@ -80,6 +74,31 @@ func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requ
 	}
 
 	return decryptAccess && reqDecrypt, nil
+}
+
+// hasReadDecrypted checks if the user has permission to read decrypted secure settings.
+func (rs *ReceiverService) hasReadDecrypted(ctx context.Context, user identity.Requester) (bool, error) {
+	return rs.ac.Evaluate(ctx, user, accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets), // TODO: Add scope all when we implement FGAC.
+	))
+}
+
+// hasReadRedacted checks if the user has permission to read redacted secure settings.
+func (rs *ReceiverService) hasReadRedacted(ctx context.Context, user identity.Requester) (bool, error) {
+	return rs.ac.Evaluate(ctx, user, accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningRead),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsProvisioningRead),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsRead),
+		//accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversRead, ScopeReceiversProvider.GetResourceAllScope()), // TODO: Add new permissions.
+		//accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets, ScopeReceiversProvider.GetResourceAllScope(),
+	))
+}
+
+// hasList checks if the user has permission to list receivers.
+func (rs *ReceiverService) hasList(ctx context.Context, user identity.Requester) (bool, error) {
+	return rs.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversList))
 }
 
 // GetReceiver returns a receiver by name.
@@ -144,10 +163,20 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversList)
-	listAccess, err := rs.ac.Evaluate(ctx, user, eval)
+	readRedactedAccess, err := rs.hasReadRedacted(ctx, user)
 	if err != nil {
 		return nil, err
+	}
+
+	listAccess, err := rs.hasList(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	// User doesn't have any permissions on the receivers.
+	// This is mostly a safeguard as it should not be possible with current API endpoints + middleware authentication.
+	if !listAccess && !readRedactedAccess {
+		return nil, ErrPermissionDenied
 	}
 
 	var output []definitions.GettableApiReceiver
@@ -163,7 +192,11 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		}
 
 		decryptFn := rs.decryptOrRedact(ctx, decrypt, r.Name, "")
-		listOnly := !decrypt && listAccess
+
+		// Only has permission to list. This reduces from:
+		// - Has List permission
+		// - Doesn't have ReadRedacted (or ReadDecrypted permission since it's a subset).
+		listOnly := !readRedactedAccess
 
 		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn, listOnly)
 		if err != nil {

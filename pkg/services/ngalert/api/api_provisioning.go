@@ -135,7 +135,7 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 		Name:  c.Query("name"),
 		OrgID: c.SignedInUser.GetOrgID(),
 	}
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, nil)
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrPermissionDenied) {
 			return ErrResp(http.StatusForbidden, err, "")

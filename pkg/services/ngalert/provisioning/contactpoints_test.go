@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -33,10 +32,17 @@ import (
 func TestContactPointService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+
+	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead: nil,
+		},
+	}}
+
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 2)
@@ -47,7 +53,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("service filters contact points by name", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "slack receiver"), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "slack receiver"), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -57,7 +63,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("service filters contact points by name, returns empty when no match", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "unknown"), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "unknown"), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 0)
@@ -70,7 +76,7 @@ func TestContactPointService(t *testing.T) {
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, cps, 3)
 		require.Equal(t, "test-contact-point", cps[2].Name)
@@ -86,7 +92,7 @@ func TestContactPointService(t *testing.T) {
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, cps, 1)
 		require.Equal(t, customUID, cps[0].UID)
@@ -164,7 +170,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 
 		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[0].Provenance))
@@ -222,7 +228,7 @@ func TestContactPointService(t *testing.T) {
 				newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, test.from)
 				require.NoError(t, err)
 
-				cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
+				cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
 				require.NoError(t, err)
 				require.Equal(t, newCp.UID, cps[0].UID)
 				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
@@ -231,7 +237,7 @@ func TestContactPointService(t *testing.T) {
 				if test.errNil {
 					require.NoError(t, err)
 
-					cps, err = sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
+					cps, err = sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
 					require.NoError(t, err)
 					require.Equal(t, newCp.UID, cps[0].UID)
 					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
@@ -260,22 +266,23 @@ func TestContactPointService(t *testing.T) {
 
 func TestContactPointServiceDecryptRedact(t *testing.T) {
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	receiverServiceWithAC := func(ecp *ContactPointService) *notifier.ReceiverService {
-		return notifier.NewReceiverService(
-			acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
-			// Get won't use the sut's config store, so we can use a different one here.
-			fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService)),
-			ecp.provenanceStore,
-			ecp.encryptionService,
-			ecp.xact,
-			log.NewNopLogger(),
-		)
-	}
+
+	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead: nil,
+		},
+	}}
+
+	decryptedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+		},
+	}}
 
 	t.Run("GetContactPoints gets redacted contact points by default", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 2)
@@ -285,16 +292,14 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 
 	t.Run("GetContactPoints errors when Decrypt = true and user does not have permissions", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.receiverService = receiverServiceWithAC(sut)
 
 		q := cpsQuery(1)
 		q.Decrypt = true
-		_, err := sut.GetContactPoints(context.Background(), q, nil)
+		_, err := sut.GetContactPoints(context.Background(), q, redactedUser)
 		require.ErrorIs(t, err, ErrPermissionDenied)
 	})
 	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.receiverService = receiverServiceWithAC(sut)
 
 		q := cpsQuery(1)
 		q.Decrypt = true
@@ -304,16 +309,11 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 
 	t.Run("GetContactPoints gets decrypted contact points when Decrypt = true and user has permissions", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.receiverService = receiverServiceWithAC(sut)
 
 		expectedName := "slack receiver"
 		q := cpsQueryWithName(1, expectedName)
 		q.Decrypt = true
-		cps, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: {
-				accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
-			},
-		}})
+		cps, err := sut.GetContactPoints(context.Background(), q, decryptedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -361,7 +361,7 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	receiverService := notifier.NewReceiverService(
-		actest.FakeAccessControl{},
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		store,
 		provisioningStore,
 		secretService,

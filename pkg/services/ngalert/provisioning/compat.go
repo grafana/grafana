@@ -47,9 +47,13 @@ func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.Pos
 }
 
 func GettableGrafanaReceiverToEmbeddedContactPoint(r *definitions.GettableGrafanaReceiver) (definitions.EmbeddedContactPoint, error) {
-	settingJson, err := simplejson.NewJson(r.Settings)
-	if err != nil {
-		return definitions.EmbeddedContactPoint{}, err
+	settingJson := simplejson.New()
+	if r.Settings != nil {
+		var err error
+		settingJson, err = simplejson.NewJson(r.Settings)
+		if err != nil {
+			return definitions.EmbeddedContactPoint{}, err
+		}
 	}
 
 	for k := range r.SecureFields {
