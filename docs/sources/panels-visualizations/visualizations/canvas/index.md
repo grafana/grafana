@@ -187,7 +187,7 @@ If you add multiple data links, you can control the order in which they appear i
 You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
 
 1. Enable inline editing.
-1. Click the element you to which you want to add the data link.
+1. Click the element to which you want to add the data link.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
 1. Scroll down to the **Data links** section and expand it.
 1. Toggle the **One-click** switch in the element's data links section.
