@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useState, useCallback, useId } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes';
+import { Alert } from '../Alert/Alert';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
@@ -13,6 +14,7 @@ import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
 import { InlineSwitch } from '../Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
+import { Text } from '../Text/Text';
 
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
@@ -38,9 +40,8 @@ const DEFAULT_ACCESS_OPTION = {
 };
 
 const HttpAccessHelp = () => {
-  const styles = useStyles2(getAccessStyles);
   return (
-    <div className={cx('grafana-info-box', styles.infoBox)}>
+    <Alert severity="info" title="" topSpacing={3}>
       <p>
         Access mode controls how requests to the data source will be handled.
         <strong>
@@ -48,27 +49,21 @@ const HttpAccessHelp = () => {
         </strong>{' '}
         should be the preferred way if nothing else is stated.
       </p>
-      <div className="alert-title">Server access mode (Default):</div>
+      <Text weight="medium">Server access mode (Default):</Text>
       <p>
         All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to
         the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs
         to be accessible from the grafana backend/server if you select this access mode.
       </p>
-      <div className="alert-title">Browser access mode:</div>
+      <Text weight="medium">Browser access mode:</Text>
       <p>
         All requests will be made from the browser directly to the data source and may be subject to Cross-Origin
         Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access
         mode.
       </p>
-    </div>
+    </Alert>
   );
 };
-
-const getAccessStyles = (theme: GrafanaTheme2) => ({
-  infoBox: css({
-    marginTop: theme.spacing(3),
-  }),
-});
 
 const LABEL_WIDTH = 26;
 

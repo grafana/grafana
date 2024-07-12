@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/apitesting"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,7 +25,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
-	storagetesting "k8s.io/apiserver/pkg/storage/testing"
+
+	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 )
 
 var scheme = runtime.NewScheme()
@@ -52,7 +54,7 @@ func withDefaults(options *setupOptions, t testing.TB) {
 	options.newFunc = newPod
 	options.newListFunc = newPodList
 	options.prefix = t.TempDir()
-	options.resourcePrefix = "/pods"
+	options.resourcePrefix = storagetesting.KeyFunc("", "")
 	options.groupResource = schema.GroupResource{Resource: "pods"}
 }
 
@@ -70,7 +72,11 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		config.ForResource(setupOpts.groupResource),
 		setupOpts.resourcePrefix,
 		func(obj runtime.Object) (string, error) {
-			return storage.NamespaceKeyFunc(setupOpts.resourcePrefix, obj)
+			accessor, err := meta.Accessor(obj)
+			if err != nil {
+				return "", err
+			}
+			return storagetesting.KeyFunc(accessor.GetNamespace(), accessor.GetName()), nil
 		},
 		setupOpts.newFunc,
 		setupOpts.newListFunc,
@@ -80,7 +86,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	)
 
 	// Some tests may start reading before writing
-	if err := os.MkdirAll(path.Join(setupOpts.prefix, "pods", "test-ns"), fs.ModePerm); err != nil {
+	if err := os.MkdirAll(path.Join(setupOpts.prefix, storagetesting.KeyFunc("test-ns", "")), fs.ModePerm); err != nil {
 		return nil, nil, nil, err
 	}
 
@@ -95,7 +101,6 @@ func TestWatch(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
-
 	storagetesting.RunTestWatch(ctx, t, store)
 }
 
@@ -129,7 +134,7 @@ func TestWatchFromZero(t *testing.T) {
 
 // TestWatchFromNonZero tests that
 // - watch from non-0 should just watch changes after given version
-func TestWatchFromNoneZero(t *testing.T) {
+func TestWatchFromNonZero(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
@@ -143,10 +148,12 @@ func TestDelayedWatchDelivery(t *testing.T) {
 	storagetesting.RunTestDelayedWatchDelivery(ctx, t, store)
 }
 
-/* func TestWatchError(t *testing.T) {
+/*
+func TestWatchError(t *testing.T) {
 	ctx, store, _ := testSetup(t)
 	storagetesting.RunTestWatchError(ctx, t, &storeWithPrefixTransformer{store})
-} */
+}
+*/
 
 func TestWatchContextCancel(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
@@ -208,18 +215,12 @@ func TestEtcdWatchSemantics(t *testing.T) {
 	storagetesting.RunWatchSemantics(ctx, t, store)
 }
 
-// TODO: determine if this test case is useful to pass
-// If we simply generate Snowflakes for List RVs (when none is passed in) as opposed to maxRV calculation, it makes
-// our watch implementation and comparing items against the requested RV much more reliable.
-// There is no guarantee that maxRV+1 won't end up being a future item's RV.
-/*
 func TestEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunWatchSemanticInitialEventsExtended(ctx, t, store)
 }
-*/
 
 func newPod() runtime.Object {
 	return &example.Pod{}

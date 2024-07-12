@@ -1,7 +1,7 @@
 import { memoize } from 'lodash';
 import moment from 'moment-timezone';
 
-import { TimeZone } from '../types';
+import { TimeZone } from '../types/time';
 
 import { getTimeZone } from './common';
 

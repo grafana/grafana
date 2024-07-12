@@ -9,10 +9,10 @@ import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unifie
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
-import { labelsMatchMatchers, matcherToMatcherField, parseMatchers } from '../utils/alertmanager';
+import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
-import { parseMatcher } from '../utils/matchers';
+import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
 import {
   getRuleHealth,
   isAlertingRule,
@@ -71,7 +71,7 @@ export function useRulesFilter() {
       dataSource: queryParams.get('dataSource') ?? undefined,
       alertState: queryParams.get('alertState') ?? undefined,
       ruleType: queryParams.get('ruleType') ?? undefined,
-      labels: parseMatchers(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
+      labels: parsePromQLStyleMatcherLoose(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
     };
 
     const hasLegacyFilters = Object.values(legacyFilters).some((legacyFilter) => !isEmpty(legacyFilter));
