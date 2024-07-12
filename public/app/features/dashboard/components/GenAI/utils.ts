@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
 import { DashboardModel, PanelModel } from '../../state';
+import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardStringDiff } from './jsonDiffText';
 
@@ -155,11 +156,15 @@ export function getFilteredPanelString(panel: Panel): string {
   return JSON.stringify(filteredPanel, null, 2);
 }
 
+export const DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE =
+  'To generate this content your dashboard must contain at least one panel with a valid title or description.';
+
 export function getPanelStrings(dashboard: DashboardModel): string[] {
   const panelStrings = dashboard.panels
     .filter(
       (panel) =>
-        (panel.title.length > 0 && panel.title !== 'Panel title') || (panel.description && panel.description.length > 0)
+        (panel.title.length > 0 && panel.title !== NEW_PANEL_TITLE) ||
+        (panel.description && panel.description.length > 0)
     )
     .map(getPanelString);
 

@@ -2,9 +2,14 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS } from './messages';
 import { EventTrackingSrc } from './tracking';
-import { getDashboardPanelPrompt, getPanelStrings, Message, Role } from './utils';
+import {
+  DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE,
+  getDashboardPanelPrompt,
+  getPanelStrings,
+  Message,
+  Role,
+} from './utils';
 
 interface GenAIDashDescriptionButtonProps {
   onGenerate: (description: string) => void;
@@ -34,7 +39,7 @@ export const GenAIDashDescriptionButton = ({ onGenerate }: GenAIDashDescriptionB
       eventTrackingSrc={EventTrackingSrc.dashboardDescription}
       toggleTipTitle={'Improve your dashboard description'}
       disabled={panelStrings.length === 0}
-      tooltip={panelStrings.length === 0 ? DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS : undefined}
+      tooltip={panelStrings.length === 0 ? DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE : undefined}
     />
   );
 };

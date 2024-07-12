@@ -28,10 +28,12 @@ export interface GenAIButtonProps {
   eventTrackingSrc: EventTrackingSrc;
   // Whether the button should be disabled
   disabled?: boolean;
-  // Tooltip to show when hovering over the button
-  // Tooltip will be shown only before the improvement stage.
-  // i.e once the button title changes to "Improve", the tooltip will not be shown because
-  // toggletip will be enabled.
+  /*
+    Tooltip to show when hovering over the button
+    Tooltip will be shown only before the improvement stage.
+    i.e once the button title changes to "Improve", the tooltip will not be shown because
+    toggletip will be enabled.
+  */
   tooltip?: string;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
