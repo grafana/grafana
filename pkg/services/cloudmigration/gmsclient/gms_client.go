@@ -17,21 +17,19 @@ import (
 )
 
 // NewGMSClient returns an implementation of Client that queries GrafanaMigrationService
-func NewGMSClient(domain string, minPollingPeriod time.Duration) Client {
-	if minPollingPeriod < time.Second {
-		minPollingPeriod = time.Second // ensure the client can't spam GMS
+func NewGMSClient(domain string) (Client, error) {
+	if domain == "" {
+		return nil, fmt.Errorf("missing GMS domain")
 	}
 	return &gmsClientImpl{
-		domain:                    domain,
-		log:                       log.New(logPrefix),
-		minGetStatusPollingPeriod: minPollingPeriod,
-	}
+		domain: domain,
+		log:    log.New(logPrefix),
+	}, nil
 }
 
 type gmsClientImpl struct {
-	domain                    string
-	minGetStatusPollingPeriod time.Duration
-	log                       *log.ConcreteLogger
+	domain string
+	log    *log.ConcreteLogger
 
 	getStatusMux         sync.Mutex
 	getStatusLastQueried time.Time
@@ -162,14 +160,6 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 	c.getStatusMux.Lock()
 	defer c.getStatusMux.Unlock()
 	logger := c.log.FromContext(ctx)
-
-	// Ensure we can't send requests more frequently than supported
-	if !c.getStatusLastQueried.IsZero() && time.Since(c.getStatusLastQueried) < c.minGetStatusPollingPeriod {
-		logger.Debug("skipping query to Grafana Migration Service because this request was made too soon after the previous one")
-		return &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateUnknown,
-		}, nil
-	}
 
 	path := fmt.Sprintf("%s/api/v1/status/%s/status", buildBasePath(c.domain, session.ClusterSlug), snapshot.GMSSnapshotUID)
 

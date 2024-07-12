@@ -104,15 +104,11 @@ func ProvideService(
 	s.objectStorage = objectstorage.NewS3()
 
 	if !cfg.CloudMigration.IsDeveloperMode {
-		// get GMS path from the config
-		section := cfg.Raw.Section("cloud_migration")
-		domain := section.Key("domain").MustString("")
-		if domain == "" {
-			return nil, fmt.Errorf("cloudmigration domain not set")
+		c, err := gmsclient.NewGMSClient(cfg.CloudMigration.GMSDomain)
+		if err != nil {
+			return nil, fmt.Errorf("initializing GMS client: %w", err)
 		}
-		minPollingPeriod := section.Key("minimum_gms_polling_period").MustDuration(time.Second)
-		s.gmsClient = gmsclient.NewGMSClient(domain, minPollingPeriod)
-
+		s.gmsClient = c
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()

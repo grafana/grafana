@@ -9,6 +9,7 @@ type CloudMigrationSettings struct {
 	IsTarget                  bool
 	GcomAPIToken              string
 	SnapshotFolder            string
+	GMSDomain                 string
 	StartSnapshotTimeout      time.Duration
 	FetchInstanceTimeout      time.Duration
 	CreateAccessPolicyTimeout time.Duration
@@ -27,6 +28,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.IsTarget = cloudMigration.Key("is_target").MustBool(false)
 	cfg.CloudMigration.GcomAPIToken = cloudMigration.Key("gcom_api_token").MustString("")
 	cfg.CloudMigration.SnapshotFolder = cloudMigration.Key("snapshot_folder").MustString("")
+	cfg.CloudMigration.GMSDomain = cloudMigration.Key("domain").MustString("")
 	cfg.CloudMigration.StartSnapshotTimeout = cloudMigration.Key("start_snapshot_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.FetchInstanceTimeout = cloudMigration.Key("fetch_instance_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.CreateAccessPolicyTimeout = cloudMigration.Key("create_access_policy_timeout").MustDuration(5 * time.Second)
