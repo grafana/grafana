@@ -24,7 +24,7 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Alert, Field, Icon, InlineSwitch, Input, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Field, Icon, InlineSwitch, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { Select } from '@grafana/ui/';
 
 import { DataTrail } from '../DataTrail';
@@ -79,10 +79,6 @@ const metricSelectSceneDisplayOptions = [
   {
     label: 'Nested Rows',
     value: 'nested-rows',
-  },
-  {
-    label: 'Tab View',
-    value: 'tabs',
   },
   {
     label: 'Prefix Filter',
@@ -398,7 +394,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       case 'nested-rows':
         await this.populateNestedRowsLayout(trail);
         break;
-      case 'tabs':
       case 'prefix-filter':
         await this.populateFilterableViewLayout(trail);
         break;
@@ -682,20 +677,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           </Alert>
         )}
         <StatusWrapper {...{ isLoading, blockingMessage }}>
-          {displayAs === 'tabs' && (
-            <RadioButtonGroup
-              className={styles.metricTabGroup}
-              options={[
-                {
-                  label: 'All',
-                  value: 'all',
-                },
-                ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: g, value: g })),
-              ]}
-              value={selectedTabGroupOption}
-              onChange={model.onMetricRadioChange}
-            />
-          )}
           {body instanceof SceneFlexLayout && <body.Component model={body} />}
           {body instanceof SceneCSSGridLayout && <body.Component model={body} />}
         </StatusWrapper>
