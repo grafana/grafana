@@ -264,7 +264,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	rsp := &CreateResponse{}
 	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, nil)
 	if err != nil {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
 
@@ -277,7 +277,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 
 	event, err := builder.toEvent()
 	if err != nil {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
 
@@ -285,28 +285,43 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	if err == nil {
 		rsp.Value = event.Value // with mutated fields
 	} else {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
 }
 
 // Convert golang errors to status result errors that can be returned to a client
-func errToStatus(err error) (*StatusResult, error) {
+func errToStatus(err error) (*ErrorResult, error) {
 	if err != nil {
 		apistatus, ok := err.(apierrors.APIStatus)
 		if ok {
 			s := apistatus.Status()
-			return &StatusResult{
-				Status:  s.Status,
+			res := &ErrorResult{
 				Message: s.Message,
 				Reason:  string(s.Reason),
 				Code:    s.Code,
-			}, nil
+			}
+			if s.Details != nil {
+				res.Details = &ErrorDetails{
+					Group:             s.Details.Group,
+					Kind:              s.Details.Kind,
+					Name:              s.Details.Name,
+					Uid:               string(s.Details.UID),
+					RetryAfterSeconds: s.Details.RetryAfterSeconds,
+				}
+				for _, c := range s.Details.Causes {
+					res.Details.Causes = append(res.Details.Causes, &ErrorCause{
+						Reason:  string(c.Type),
+						Message: c.Message,
+						Field:   c.Field,
+					})
+				}
+			}
+			return res, nil
 		}
 
-		// TODO... better conversion!!!
-		return &StatusResult{
-			Status:  "Failure",
+		// TODO... better conversion??
+		return &ErrorResult{
 			Message: err.Error(),
 			Code:    500,
 		}, nil
@@ -324,7 +339,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	rsp := &UpdateResponse{}
 	if req.ResourceVersion < 0 {
-		rsp.Status, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
+		rsp.Error, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
 
@@ -340,7 +355,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, latest.Value)
 	if err != nil {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
 
@@ -350,7 +365,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	event, err := builder.toEvent()
 	if err != nil {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
 
@@ -358,11 +373,11 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event.PreviousRV = latest.ResourceVersion
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Status, err = errToStatus(err)
+	rsp.Error, err = errToStatus(err)
 	if err == nil {
 		rsp.Value = event.Value // with mutated fields
 	} else {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
 }
@@ -427,7 +442,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Status, err = errToStatus(err)
+	rsp.Error, err = errToStatus(err)
 	return rsp, err
 }
 
@@ -442,7 +457,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	// }
 	if req.Key.Resource == "" {
 		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
-		return &ReadResponse{Status: status}, nil
+		return &ReadResponse{Error: status}, nil
 	}
 
 	rsp, err := s.backend.Read(ctx, req)
@@ -450,7 +465,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		if rsp == nil {
 			rsp = &ReadResponse{}
 		}
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
 }

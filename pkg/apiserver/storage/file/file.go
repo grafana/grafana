@@ -145,11 +145,11 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	if err != nil {
 		return err
 	}
-	if rsp.Status != nil {
-		if rsp.Status.Code == http.StatusConflict {
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusConflict {
 			return storage.NewKeyExistsError(key, 0)
 		}
-		return fmt.Errorf("other error %+v", rsp.Status)
+		return fmt.Errorf("other error %+v", rsp.Error)
 	}
 
 	_, _, err = s.codec.Decode(rsp.Value, nil, out)
@@ -226,7 +226,7 @@ func (s *Storage) Delete(
 	if err != nil {
 		return err
 	}
-	err = errorWrap(rsp.Status)
+	err = errorWrap(rsp.Error)
 	if err != nil {
 		return err
 	}
@@ -376,14 +376,14 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	if err != nil {
 		return err
 	}
-	if rsp.Status != nil {
-		if rsp.Status.Code == http.StatusNotFound {
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusNotFound {
 			if opts.IgnoreNotFound {
 				return runtime.SetZeroValue(objPtr)
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return errorWrap(rsp.Status)
+		return errorWrap(rsp.Error)
 	}
 
 	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -518,13 +518,13 @@ func (s *Storage) GuaranteedUpdate(
 			return err
 		}
 
-		if rsp.Status != nil {
-			if rsp.Status.Code == http.StatusNotFound {
+		if rsp.Error != nil {
+			if rsp.Error.Code == http.StatusNotFound {
 				if !ignoreNotFound {
 					return apierrors.NewNotFound(s.gr, req.Key.Name)
 				}
 			} else {
-				return fmt.Errorf("read error %+v", rsp.Status)
+				return fmt.Errorf("read error %+v", rsp.Error)
 			}
 		}
 
@@ -585,8 +585,8 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return err
 	}
-	if rsp2.Status != nil {
-		return fmt.Errorf("backend update error: %+v", rsp2.Status)
+	if rsp2.Error != nil {
+		return fmt.Errorf("backend update error: %+v", rsp2.Error)
 	}
 
 	_, _, err = s.codec.Decode(rsp2.Value, nil, destination)

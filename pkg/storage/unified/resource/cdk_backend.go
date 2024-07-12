@@ -18,7 +18,6 @@ import (
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
-	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -125,7 +124,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 			})
 			obj, _ := iter.Next(ctx)
 			if obj != nil {
-				return 0, &errors.StatusError{
+				return 0, &apierrors.StatusError{
 					ErrStatus: v1.Status{
 						Code:    http.StatusConflict,
 						Message: "key already exists",
@@ -156,6 +155,23 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 
 func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	rv := req.ResourceVersion
+	if rv > s.rv.Load() {
+		return nil, &apierrors.StatusError{
+			ErrStatus: v1.Status{
+				Reason:  v1.StatusReasonTimeout, // match etcd behavior
+				Code:    http.StatusGatewayTimeout,
+				Message: "CauseTypeResourceVersionTooLarge",
+				Details: &v1.StatusDetails{
+					Causes: []v1.StatusCause{
+						{
+							Type:    v1.CauseTypeResourceVersionTooLarge,
+							Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
+						},
+					},
+				},
+			},
+		}
+	}
 
 	path := s.getPath(req.Key, rv)
 	if rv < 1 {
@@ -180,13 +196,23 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	}
 
 	raw, err := s.bucket.ReadAll(ctx, path)
-	if raw == nil || (err == nil && isDeletedMarker(raw)) {
+	if raw == nil && req.ResourceVersion > 0 {
+		// If the there was an explicit request, find the latest
+		rsp, _ := s.Read(ctx, &ReadRequest{Key: req.Key})
+		if rsp != nil {
+			raw = rsp.Value
+			rv = rsp.ResourceVersion
+		}
+	}
+	if err == nil && isDeletedMarker(raw) {
+		raw = nil
+	}
+	if raw == nil {
 		return nil, apierrors.NewNotFound(schema.GroupResource{
 			Group:    req.Key.Group,
 			Resource: req.Key.Resource,
 		}, req.Key.Name)
 	}
-
 	return &ReadResponse{
 		ResourceVersion: rv,
 		Value:           raw,

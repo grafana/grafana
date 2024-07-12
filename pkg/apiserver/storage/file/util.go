@@ -13,19 +13,37 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func errorWrap(status *resource.StatusResult) error {
+func errorWrap(status *resource.ErrorResult) error {
 	if status != nil {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
+		err := &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
 			Code:    status.Code,
 			Reason:  metav1.StatusReason(status.Reason),
 			Message: status.Message,
 		}}
+		if status.Details != nil {
+			err.ErrStatus.Details = &metav1.StatusDetails{
+				Group:             status.Details.Group,
+				Kind:              status.Details.Kind,
+				Name:              status.Details.Name,
+				UID:               types.UID(status.Details.Uid),
+				RetryAfterSeconds: status.Details.RetryAfterSeconds,
+			}
+			for _, c := range status.Details.Causes {
+				err.ErrStatus.Details.Causes = append(err.ErrStatus.Details.Causes, metav1.StatusCause{
+					Type:    metav1.CauseType(c.Reason),
+					Message: c.Message,
+					Field:   c.Field,
+				})
+			}
+		}
+		return err
 	}
 	return nil
 }
