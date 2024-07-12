@@ -11,11 +11,12 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*ServiceAPIBuilder)(nil)
@@ -43,11 +44,6 @@ func (b *ServiceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return service.SchemeGroupVersion
-}
-
-func (b *ServiceAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -79,8 +75,7 @@ func (b *ServiceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(service.GROUP, scheme, metav1.ParameterCodec, codecs)
 
