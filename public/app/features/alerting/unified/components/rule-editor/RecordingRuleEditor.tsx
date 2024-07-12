@@ -7,6 +7,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { LokiQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isPromOrLokiQuery } from '../../utils/rule-form';
@@ -49,13 +50,13 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   }, [dataSourceName]);
 
   const handleChangedQuery = (changedQuery: DataQuery) => {
-    const query = queries[0];
-    const dataSourceId = getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid;
-
-    if (!isPromOrLokiQuery(changedQuery) || !dataSourceId) {
+    if (!isPromOrLokiQuery(changedQuery) || !dataSource) {
       return;
     }
 
+    const [query] = queries;
+    const { uid: dataSourceId, type } = dataSource;
+    const isLoki = type === DataSourceType.Loki;
     const expr = changedQuery.expr;
 
     const merged = {
@@ -72,7 +73,10 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
         instant: changedQuery.instant,
         range: changedQuery.range,
         // Query type is used by Loki queries
-        queryType: changedQuery.queryType,
+        // On first render/when creating a recording rule, the query type is not set
+        // unless the user has changed it betwee range/instant. The cleanest way to handle this
+        // is to default to instant, or whatever the changed type is
+        queryType: isLoki ? changedQuery.queryType || LokiQueryType.Instant : changedQuery.queryType,
         legendFormat: changedQuery.legendFormat,
       },
     };
