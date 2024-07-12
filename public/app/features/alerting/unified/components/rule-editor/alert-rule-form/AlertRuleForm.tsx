@@ -27,7 +27,7 @@ import {
   trackAlertRuleFormCancelled,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
-import { useDeleteRuleFromGroup } from '../../../hooks/useProduceNewRuleGroup';
+import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';

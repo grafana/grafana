@@ -5,7 +5,7 @@ import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useDeleteRuleFromGroup } from '../../hooks/useProduceNewRuleGroup';
+import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 
