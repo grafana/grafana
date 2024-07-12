@@ -477,7 +477,6 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	result.Error = FindConditionError(execResp, c.Condition)
 
 	for refID, res := range execResp.Responses {
-
 		if IsNoData(res) {
 			// To make sure NoData is nil when Results are also nil we wait to initialize
 			// NoData until there is at least one query or expression that returned no data
