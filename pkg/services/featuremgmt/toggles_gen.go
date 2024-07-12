@@ -51,10 +51,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagDatasourceQueryMultiStatus
-	// Introduce HTTP 207 Multi Status for api/ds/query
-	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -734,4 +730,12 @@ const (
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
+
+	// FlagBodyScrolling
+	// Adjusts Page to make body the scrollable element
+	FlagBodyScrolling = "bodyScrolling"
+
+	// FlagCloudwatchMetricInsightsCrossAccount
+	// Enables cross account observability for Cloudwatch Metric Insights
+	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 )

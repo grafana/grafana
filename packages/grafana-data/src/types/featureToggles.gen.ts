@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   storage?: boolean;
   correlations?: boolean;
-  datasourceQueryMultiStatus?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
   autoMigrateTablePanel?: boolean;
@@ -200,4 +199,6 @@ export interface FeatureToggles {
   alertingApiServer?: boolean;
   dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
+  bodyScrolling?: boolean;
+  cloudwatchMetricInsightsCrossAccount?: boolean;
 }

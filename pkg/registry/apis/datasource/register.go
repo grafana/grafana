@@ -23,12 +23,12 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -67,6 +67,8 @@ func RegisterAPIService(
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
+	// ATTENTION: Adding a datasource here requires the plugin to implement
+	// an AdmissionHandler to validate the datasource settings.
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
@@ -154,11 +156,6 @@ func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.connectionResourceInfo.GroupVersion()
 }
 
-func (b *DataSourceAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&datasource.DataSourceConnection{},
@@ -206,8 +203,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
 

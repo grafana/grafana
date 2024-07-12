@@ -22,8 +22,6 @@ import (
 	"sync"
 	"time"
 
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,11 +45,13 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
-	"github.com/grafana/grafana/pkg/apiserver/builder"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/service"
+
 	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
@@ -290,8 +290,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 			aggregatorscheme.Scheme,
 			aggregatorscheme.Codecs,
 			aggregatorConfig.GenericConfig.RESTOptionsGetter,
-			grafanarest.Mode0,
-			reg,
+			nil, // no dual writer
 		)
 		if err != nil {
 			return nil, err

@@ -100,12 +100,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:        "datasourceQueryMultiStatus",
-			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "autoMigrateOldPanels",
 			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
 			Stage:        FeatureStagePublicPreview,
@@ -1083,9 +1077,10 @@ var (
 		{
 			Name:         "groupToNestedTableTransformation",
 			Description:  "Enables the group to nested table transformation",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
+			Expression:   "true", // enabled by default,
 		},
 		{
 			Name:        "newPDFRendering",
@@ -1366,6 +1361,24 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
 			Expression:  "true",
+		},
+		{
+			Name:              "bodyScrolling",
+			Description:       "Adjusts Page to make body the scrollable element",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			Expression:        "false", // enabled by default
+			FrontendOnly:      true,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:         "cloudwatchMetricInsightsCrossAccount",
+			Description:  "Enables cross account observability for Cloudwatch Metric Insights",
+			Stage:        FeatureStageExperimental,
+			Owner:        awsDatasourcesSquad,
+			FrontendOnly: true,
 		},
 	}
 )
