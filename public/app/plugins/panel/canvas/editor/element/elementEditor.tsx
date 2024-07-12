@@ -118,6 +118,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       if (shouldAddBorderEditor) {
         optionBuilder.addBorder(builder, ctx);
       }
+
+      optionBuilder.addDataLinks(builder, ctx);
     },
   };
 }

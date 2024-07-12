@@ -87,6 +87,7 @@ composableKinds: PanelCfg: {
 					background?: BackgroundConfig
 					border?:     LineConfig
 					connections?: [...CanvasConnection]
+					oneClickLinks?: bool
 				} @cuetsy(kind="interface")
 
 				Options: {
