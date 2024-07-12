@@ -38,7 +38,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      fields: ['roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',

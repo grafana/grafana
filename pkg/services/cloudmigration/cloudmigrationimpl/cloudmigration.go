@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/objectstorage"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,8 +43,9 @@ type Service struct {
 
 	buildSnapshotMutex sync.Mutex
 
-	features  featuremgmt.FeatureToggles
-	gmsClient gmsclient.Client
+	features      featuremgmt.FeatureToggles
+	gmsClient     gmsclient.Client
+	objectStorage objectstorage.ObjectStorage
 
 	dsService        datasources.DataSourceService
 	gcomService      gcom.Service
@@ -98,6 +100,8 @@ func ProvideService(
 		folderService:    folderService,
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
+
+	s.objectStorage = objectstorage.NewS3()
 
 	if !cfg.CloudMigration.IsDeveloperMode {
 		// get GMS path from the config
@@ -332,7 +336,7 @@ func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.C
 }
 
 func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
-	values, err := s.store.GetAllCloudMigrationSessions(ctx)
+	values, err := s.store.GetCloudMigrationSessionList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -558,8 +562,19 @@ func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.List
 }
 
 func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
-	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot")
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot",
+		trace.WithAttributes(
+			attribute.String("sessionUid", sessionUid),
+			attribute.String("snapshotUid", snapshotUid),
+		),
+	)
 	defer span.End()
+
+	// fetch session for the gms auth token
+	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
+	if err != nil {
+		return fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
+	}
 
 	snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
@@ -569,11 +584,14 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 		return fmt.Errorf("fetching snapshot with uid %s: %w", snapshotUid, err)
 	}
 
-	s.log.Info("Uploading snapshot with GMS ID %s in local directory %s to url %s", snapshot.GMSSnapshotUID, snapshot.LocalDir, snapshot.UploadURL)
-	s.log.Debug("UploadSnapshot not yet implemented, faking it")
+	s.log.Info("Uploading snapshot in local directory", "gmsSnapshotUID", snapshot.GMSSnapshotUID, "localDir", snapshot.LocalDir, "uploadURL", snapshot.UploadURL)
 
 	// start uploading the snapshot asynchronously while we return a success response to the client
-	go s.uploadSnapshot(context.Background(), *snapshot)
+	go func() {
+		if err := s.uploadSnapshot(context.Background(), session, snapshot); err != nil {
+			s.log.Error("uploading snapshot", "err", err)
+		}
+	}()
 
 	return nil
 }

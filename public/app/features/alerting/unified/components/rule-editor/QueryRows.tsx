@@ -1,6 +1,6 @@
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
   DataQuery,

@@ -50,7 +50,7 @@ const ui = {
   row: byTestId('row'),
   collapseToggle: byTestId(selectors.components.AlertRules.toggle),
   silenceButton: byText('Silence'),
-  sourceButton: byText('See source'),
+  sourceButton: byText('See alert rule'),
   matcherInput: byTestId('search-query-input'),
   groupByContainer: byTestId('group-by-container'),
   groupByInput: byRole('combobox', { name: /group by label keys/i }),
