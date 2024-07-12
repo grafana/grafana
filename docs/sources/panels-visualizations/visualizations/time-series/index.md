@@ -65,11 +65,11 @@ refs:
 
 Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
 
-{{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
+{{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Configure a time series visualization
 
@@ -111,7 +111,7 @@ The **Fill below to** option fills the area between two series. This option is o
 
 The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
 
-{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
+{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" alt="Fill below to example" >}}
 
 ## Configuration options
 
@@ -232,13 +232,13 @@ The **Gradient mode** option located under the **Graph styles** has a mode named
 
 If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as they cross the defined thresholds.
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" alt="Colors scheme: From thresholds" >}}
 
 ###### Gradient color schemes
 
 The following image shows a line chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" alt="Color scheme: Green-Yellow-Red" >}}
 
 #### Line style
 
