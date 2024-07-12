@@ -767,6 +767,7 @@ global:
     http_config:
         follow_redirects: true
         enable_http2: true
+        http_headers: null
     smtp_hello: localhost
     smtp_require_tls: true
     pagerduty_url: https://events.pagerduty.com/v2/enqueue
