@@ -514,6 +514,7 @@ type Cfg struct {
 
 	// Explore UI
 	ExploreEnabled bool
+	ExploreDefaultTimeOffset string
 
 	// Help UI
 	HelpEnabled bool
@@ -1172,6 +1173,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	explore := iniFile.Section("explore")
 	cfg.ExploreEnabled = explore.Key("enabled").MustBool(true)
+	cfg.ExploreDefaultTimeOffset = explore.Key("defaultTimeOffset").MustString("1h")
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)

@@ -1777,6 +1777,11 @@ For more information about this feature, refer to [Explore]({{< relref "../../ex
 
 Enable or disable the Explore section. Default is `enabled`.
 
+### defaultTimeOffset
+
+Set a default time offset from now on the time picker. Default is 1 hour.
+This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1w (week), 1M (month).
+
 ## [help]
 
 Configures the help section.
