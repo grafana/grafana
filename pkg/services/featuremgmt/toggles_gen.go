@@ -240,7 +240,7 @@ const (
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
 
 	// FlagPluginsDetailsRightPanel
-	// Enables reight panel for the plugins details page
+	// Enables right panel for the plugins details page
 	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
 
 	// FlagSqlDatasourceDatabaseSelection

@@ -79,7 +79,7 @@ export function PluginDetailsPage({
 
   return (
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
-      <Stack gap={4} justifyContent="space-between">
+      <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
         <div style={{ display: 'block', width: widthPage }}>
           <Page.Contents>
             <TabContent className={styles.tabContent}>
