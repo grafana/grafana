@@ -22,10 +22,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.create-import.title', 'Import dashboard');
     case 'alert':
       return t('nav.create-alert.title', 'New alert rule');
-    case 'saved':
-      return t('nav.saved.title', 'Saved pages');
-    case 'saved-empty':
-      return t('nav.saved-empty.title', 'Your saved pages will appear here');
+    case 'bookmarks':
+      return t('nav.bookmarks.title', 'Bookmarks');
+    case 'bookmarks-empty':
+      return t('nav.bookmarks-empty.title', 'Bookmark pages for them to appear here');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':

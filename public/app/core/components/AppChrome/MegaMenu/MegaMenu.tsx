@@ -9,7 +9,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
-import { setSavedPage } from 'app/core/reducers/navBarTree';
+import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -80,7 +80,7 @@ export const MegaMenu = memo(
             },
           },
         }).then(() => {
-          dispatch(setSavedPage({ item: item, isSaved: !isSaved }));
+          dispatch(setBookmark({ item: item, isSaved: !isSaved }));
         });
       }
     };

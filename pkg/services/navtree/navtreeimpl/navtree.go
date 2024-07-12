@@ -167,13 +167,13 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		savedItems := s.buildSavedItemsNavLinks(prefs, treeRoot)
 
 		treeRoot.AddSection(&navtree.NavLink{
-			Text:           "Saved pages",
-			Id:             "saved",
-			Icon:           "star",
-			SortWeight:     navtree.WeightSavedItems,
+			Text:           "Bookmarks",
+			Id:             "bookmarks",
+			Icon:           "bookmark",
+			SortWeight:     navtree.WeightBookmarks,
 			Children:       savedItems,
-			EmptyMessageId: "saved-empty",
-			Url:            s.cfg.AppSubURL + "/dashboards?starred",
+			EmptyMessageId: "bookmarks-empty",
+			Url:            s.cfg.AppSubURL + "/bookmarks",
 		})
 	}
 
