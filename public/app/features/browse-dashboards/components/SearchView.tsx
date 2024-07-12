@@ -59,9 +59,6 @@ export function SearchView({
   const { keyboardEvents } = useKeyNavigationListener();
 
   const value = searchState.result ?? initialLoadingView;
-  if (!value) {
-    console.warn("We still don't have a value???", { ...searchState });
-  }
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {

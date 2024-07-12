@@ -60,7 +60,9 @@ const RecentlyDeletedPage = memo(() => {
           onPanelTypeChange={stateManager.onPanelTypeChange}
           onSetIncludePanels={stateManager.onSetIncludePanels}
         />
+
         <RecentlyDeletedActions />
+
         <div className={styles.subView}>
           <AutoSizer>
             {({ width, height }) => (
