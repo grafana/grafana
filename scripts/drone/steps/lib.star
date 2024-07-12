@@ -1277,6 +1277,7 @@ def verify_linux_DEB_packages_step(depends_on = []):
             'echo "Step 4: Adding Grafana repository..."',
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
             'echo "Step 5: Installing Grafana..."',
+            # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
         ] + retry_command(install_command, attempts = 10) + [
             'echo "Step 6: Verifying Grafana installation..."',
             'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
