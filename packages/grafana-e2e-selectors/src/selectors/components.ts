@@ -377,6 +377,9 @@ export const Components = {
   NavMenu: {
     Menu: 'data-testid navigation mega-menu',
     item: 'data-testid Nav menu item',
+    PinNavItems: {
+      pinIconButton: 'data-testid pin nav icon button',
+    },
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
