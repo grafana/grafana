@@ -74,7 +74,7 @@ describe('GenAIButton', () => {
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.IDLE,
-        reply: 'Some completed genereated text',
+        reply: 'Some completed generated text',
         setMessages: setMessagesMock,
         stopGeneration: setShouldStopMock,
         value: {
@@ -84,7 +84,7 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render text ', async () => {
+    it('should render text', async () => {
       setup();
 
       waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
@@ -153,7 +153,7 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render loading text ', async () => {
+    it('should render loading text', async () => {
       setup();
 
       waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
@@ -195,18 +195,27 @@ describe('GenAIButton', () => {
     const setShouldStopMock = jest.fn();
 
     beforeEach(() => {
-      jest.mocked(useOpenAIStream).mockReturnValue({
+      const reply = 'Some completed generated text';
+      const returnValue = {
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.COMPLETED,
-        reply: 'Some completed generated text',
+        reply,
         setMessages: jest.fn(),
         stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
         },
-      });
+      };
+
+      jest
+        .mocked(useOpenAIStream)
+        .mockImplementationOnce((options) => {
+          options?.onResponse?.(reply);
+          return returnValue;
+        })
+        .mockImplementation(() => returnValue);
     });
 
     it('should render improve text ', async () => {

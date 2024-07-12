@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
@@ -22,30 +22,35 @@ export enum StreamStatus {
 
 export const TIMEOUT = 10000;
 
-// TODO: Add tests
-export function useOpenAIStream(
-  model = DEFAULT_OAI_MODEL,
-  temperature = 1
-): {
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+interface Options {
+  model: string;
+  temperature: number;
+  onResponse?: (response: string) => void;
+}
+
+const defaultOptions = {
+  model: DEFAULT_OAI_MODEL,
+  temperature: 1,
+};
+
+interface UseOpenAIStreamResponse {
+  setMessages: Dispatch<SetStateAction<Message[]>>;
   stopGeneration: () => void;
   messages: Message[];
   reply: string;
   streamStatus: StreamStatus;
-  error: Error | undefined;
-  value:
-    | {
-        enabled: boolean | undefined;
-        stream?: undefined;
-      }
-    | {
-        enabled: boolean | undefined;
-        stream: Subscription;
-      }
-    | undefined;
-} {
+  error?: Error;
+  value?: {
+    enabled?: boolean | undefined;
+    stream?: Subscription;
+  };
+}
+
+// TODO: Add tests
+export function useOpenAIStream({ model, temperature, onResponse }: Options = defaultOptions): UseOpenAIStreamResponse {
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
+
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
@@ -115,6 +120,7 @@ export function useOpenAIStream(
         complete: () => {
           setReply(partialReply);
           setStreamStatus(StreamStatus.COMPLETED);
+          onResponse?.(partialReply);
           setMessages([]);
           setError(undefined);
         },
@@ -145,8 +151,9 @@ export function useOpenAIStream(
         onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
       }, TIMEOUT);
     }
+
     return () => {
-      timeout && clearTimeout(timeout);
+      clearTimeout(timeout);
     };
   }, [streamStatus, reply, onError]);
 

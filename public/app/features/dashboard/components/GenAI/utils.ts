@@ -21,7 +21,7 @@ export type Message = llms.openai.Message;
 export enum QuickFeedbackType {
   Shorter = 'Even shorter',
   MoreDescriptive = 'More descriptive',
-  Regenerate = 'Regenerate',
+  Regenerate = 'Please, regenerate',
 }
 
 /**
