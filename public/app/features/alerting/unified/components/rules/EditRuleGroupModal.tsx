@@ -4,9 +4,7 @@ import { useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, useStyles2 } from '@grafana/ui';
-
-import { Alert } from '@grafana/ui';
+import { Alert, Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
@@ -244,7 +242,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
       }
       onClose(true);
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
-    } catch (_error) { } // React hook form will handle errors
+    } catch (_error) {} // React hook form will handle errors
   };
 
   const formAPI = useForm<FormValues>({

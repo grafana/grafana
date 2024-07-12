@@ -246,7 +246,6 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         },
         annotations: arrayToRecord(values.annotations || []),
         labels: arrayToRecord(values.labels || []),
-        for: null,
       };
     }
   }

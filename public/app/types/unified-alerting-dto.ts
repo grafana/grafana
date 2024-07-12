@@ -242,7 +242,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
 
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
-  for: string | null;
+  for?: string;
   annotations: Annotations;
   labels: Labels;
 }

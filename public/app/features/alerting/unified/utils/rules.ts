@@ -258,7 +258,7 @@ export function getRuleName(rule: RulerRuleDTO) {
 
 export interface AlertInfo {
   alertName: string;
-  forDuration: string | null;
+  forDuration?: string;
   evaluationsToFire: number | null;
 }
 
