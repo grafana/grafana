@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -35,10 +35,6 @@ const MaxUpdateAttempts = 30
 
 var _ storage.Interface = (*Storage)(nil)
 
-// Replace with: https://github.com/kubernetes/kubernetes/blob/v1.29.0-alpha.3/staging/src/k8s.io/apiserver/pkg/storage/errors.go#L28
-// When we upgrade to 1.29
-var errResourceVersionSetOnCreate = errors.New("resourceVersion should not be set on objects to be created")
-
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	root           string
@@ -52,7 +48,6 @@ type Storage struct {
 	trigger        storage.IndexerFuncs
 	indexers       *cache.Indexers
 
-	rvGenerationNode *snowflake.Node
 	// rvMutex provides synchronization between Get and GetList+Watch+CUD methods
 	// with access to resource version generation for the latter group
 	rvMutex   sync.RWMutex
@@ -84,11 +79,6 @@ func NewStorage(
 		return nil, func() {}, fmt.Errorf("could not establish a writable directory at path=%s", root)
 	}
 
-	rvGenerationNode, err := snowflake.NewNode(1)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	s := &Storage{
 		root:           root,
 		resourcePrefix: resourcePrefix,
@@ -101,14 +91,13 @@ func NewStorage(
 		trigger:        trigger,
 		indexers:       indexers,
 
-		rvGenerationNode: rvGenerationNode,
-		watchSet:         NewWatchSet(),
+		watchSet: NewWatchSet(),
 
 		versioner: &storage.APIObjectVersioner{},
 	}
 
 	// Initialize the RV stored in storage
-	s.getNewResourceVersion()
+	s.getCurrentResourceVersion()
 
 	return s, func() {
 		s.watchSet.cleanupWatchers()
@@ -116,12 +105,36 @@ func NewStorage(
 }
 
 func (s *Storage) getNewResourceVersion() uint64 {
-	snowflakeNumber := s.rvGenerationNode.Generate().Int64()
-	s.currentRV = uint64(snowflakeNumber)
+	s.currentRV += 1
 	return s.currentRV
 }
 
 func (s *Storage) getCurrentResourceVersion() uint64 {
+	if s.currentRV != 0 {
+		return s.currentRV
+	}
+
+	objs, err := readDirRecursive(s.codec, s.root, s.newFunc)
+	if err != nil {
+		s.currentRV = 1
+		return s.currentRV
+	}
+
+	for _, obj := range objs {
+		currentVersion, err := s.versioner.ObjectResourceVersion(obj)
+		if err != nil && s.currentRV == 0 {
+			s.currentRV = 1
+			continue
+		}
+		if currentVersion > s.currentRV {
+			s.currentRV = currentVersion
+		}
+	}
+
+	if s.currentRV == 0 {
+		s.currentRV = 1
+	}
+
 	return s.currentRV
 }
 
@@ -154,7 +167,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 	metaObj.SetSelfLink("")
 	if metaObj.GetResourceVersion() != "" {
-		return errResourceVersionSetOnCreate
+		return storage.ErrResourceVersionSetOnCreate
 	}
 
 	if err := s.versioner.UpdateObject(obj, generatedRV); err != nil {
@@ -197,76 +210,40 @@ func (s *Storage) Delete(
 	out runtime.Object,
 	preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc,
-	cachedExistingObject runtime.Object,
+	_ runtime.Object,
 ) error {
-	// TODO: is it gonna be contentious
-	// Either way, this should have max attempts logic
 	s.rvMutex.Lock()
 	defer s.rvMutex.Unlock()
 
 	fpath := s.filePath(key)
-	var currentState runtime.Object
-	var stateIsCurrent bool
-	if cachedExistingObject != nil {
-		currentState = cachedExistingObject
-	} else {
-		getOptions := storage.GetOptions{}
-		if preconditions != nil && preconditions.ResourceVersion != nil {
-			getOptions.ResourceVersion = *preconditions.ResourceVersion
-		}
-		if err := s.Get(ctx, key, getOptions, currentState); err == nil {
-			stateIsCurrent = true
+	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
+		return err
+	}
+
+	if preconditions != nil {
+		if err := preconditions.Check(key, out); err != nil {
+			return err
 		}
 	}
 
-	for {
-		if preconditions != nil {
-			if err := preconditions.Check(key, out); err != nil {
-				if stateIsCurrent {
-					return err
-				}
-
-				// If the state is not current, we need to re-read the state and try again.
-				if err := s.Get(ctx, key, storage.GetOptions{}, currentState); err != nil {
-					return err
-				}
-				stateIsCurrent = true
-				continue
-			}
-		}
-
-		if err := validateDeletion(ctx, out); err != nil {
-			if stateIsCurrent {
-				return err
-			}
-
-			// If the state is not current, we need to re-read the state and try again.
-			if err := s.Get(ctx, key, storage.GetOptions{}, currentState); err == nil {
-				stateIsCurrent = true
-			}
-			continue
-		}
-
-		if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
-			return err
-		}
-
-		generatedRV := s.getNewResourceVersion()
-		if err := s.versioner.UpdateObject(out, generatedRV); err != nil {
-			return err
-		}
-
-		if err := deleteFile(fpath); err != nil {
-			return err
-		}
-
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: out.DeepCopyObject(),
-			Type:   watch.Deleted,
-		}, nil)
-
-		return nil
+	generatedRV := s.getNewResourceVersion()
+	if err := s.versioner.UpdateObject(out, generatedRV); err != nil {
+		return err
 	}
+
+	if err := validateDeletion(ctx, out); err != nil {
+		return err
+	}
+
+	if err := deleteFile(fpath); err != nil {
+		return err
+	}
+
+	s.watchSet.notifyWatchers(watch.Event{
+		Object: out.DeepCopyObject(),
+		Type:   watch.Deleted,
+	}, nil)
+	return nil
 }
 
 // Watch begins watching the specified key. Events are decoded into API objects,
@@ -338,8 +315,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		}
 
 		if p.AllowWatchBookmarks && len(initEvents) > 0 {
-			lastInitEvent := initEvents[len(initEvents)-1]
-			lastItemRV, err := s.versioner.ObjectResourceVersion(lastInitEvent.Object)
+			listRV, err := s.versioner.ParseResourceVersion(listAccessor.GetResourceVersion())
 			if err != nil {
 				return nil, fmt.Errorf("could not get last init event's revision for bookmark: %v", err)
 			}
@@ -349,7 +325,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 				Object: s.newFunc(),
 			}
 
-			if err := s.versioner.UpdateObject(bookmarkEvent.Object, lastItemRV); err != nil {
+			if err := s.versioner.UpdateObject(bookmarkEvent.Object, listRV); err != nil {
 				return nil, err
 			}
 
@@ -398,7 +374,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	}
 
 	obj, err := readFile(s.codec, fpath, func() runtime.Object {
-		return objPtr
+		return s.newFunc()
 	})
 	if err != nil {
 		if opts.IgnoreNotFound {
@@ -407,12 +383,11 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return storage.NewKeyNotFoundError(key, int64(rv))
 	}
 
-	currentVersion, err := s.versioner.ObjectResourceVersion(obj)
-	if err != nil {
+	if err := copyModifiedObjectToDestination(obj, objPtr); err != nil {
 		return err
 	}
 
-	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
+	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, s.getCurrentResourceVersion()); err != nil {
 		return err
 	}
 
@@ -426,17 +401,14 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	remainingItems := int64(0)
-
-	resourceVersionInt, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
-	if err != nil {
-		return err
-	}
+	resourceVersionInt := uint64(0)
 
 	// read state protected by mutex
 	objs, err := func() ([]runtime.Object, error) {
 		s.rvMutex.Lock()
 		defer s.rvMutex.Unlock()
+
+		resourceVersionInt = s.getCurrentResourceVersion()
 
 		var fpath string
 		dirpath := s.dirPath(key)
@@ -473,6 +445,10 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, resourceVersionInt); err != nil {
+		return err
+	}
+
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
 		return err
@@ -482,20 +458,22 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	for _, obj := range objs {
-		currentVersion, err := s.versioner.ObjectResourceVersion(obj)
-		if err != nil {
-			return err
-		}
+	if v.IsNil() {
+		v.Set(reflect.MakeSlice(v.Type(), 0, 0))
+	}
 
-		if opts.SendInitialEvents == nil || (opts.SendInitialEvents != nil && !*opts.SendInitialEvents) {
-			// Apply the minimum resource version validation when we are not being called as part of Watch
-			// SendInitialEvents flow
-			// reason: the resource version of currently returned init items will always be < list RV
-			// they are being generated for, unless of course, the requestedRV == "0"/""
-			if err := s.validateMinimumResourceVersion(opts.ResourceVersion, currentVersion); err != nil {
-				// Below log left for debug. It's usually not an error condition
-				// klog.Infof("failed to assert minimum resource version constraint against list version")
+	remainingItems := (*int64)(nil)
+	for i, obj := range objs {
+		if opts.ResourceVersionMatch == metaV1.ResourceVersionMatchExact {
+			currentVersion, err := s.versioner.ObjectResourceVersion(obj)
+			if err != nil {
+				return err
+			}
+			expectedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+			if err != nil {
+				return err
+			}
+			if currentVersion != expectedRV {
 				continue
 			}
 		}
@@ -504,13 +482,15 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		if err == nil && ok {
 			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 		}
+
+		if int64(v.Len()) >= opts.Predicate.Limit && opts.Predicate.Limit > 0 {
+			remaining := int64(len(objs) - i - 1)
+			remainingItems = &remaining
+			break
+		}
 	}
 
-	if resourceVersionInt == 0 {
-		resourceVersionInt = s.getNewResourceVersion()
-	}
-
-	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
+	if err := s.versioner.UpdateList(listObj, resourceVersionInt, "", remainingItems); err != nil {
 		return err
 	}
 
@@ -663,6 +643,7 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	if err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
 	}
+
 	// Enforce the storage.Interface guarantee that the resource version of the returned data
 	// "will be at least 'resourceVersion'".
 	if minimumRV > actualRevision {
