@@ -472,6 +472,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect; @grafana-app-platform-squad
 )
 
+require github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
+
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c
 
