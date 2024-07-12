@@ -17,11 +17,21 @@ import {
 } from './rule-form';
 
 describe('formValuesToRulerGrafanaRuleDTO', () => {
-  it('should correctly convert rule form values', () => {
+  it('should correctly convert rule form values for grafana alerting rule', () => {
     const formValues: RuleFormValues = {
       ...getDefaultFormValues(),
       condition: 'A',
       type: RuleFormType.grafana,
+    };
+
+    expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
+  });
+
+  it('should correctly convert rule form values for grafana recording rule', () => {
+    const formValues: RuleFormValues = {
+      ...getDefaultFormValues(),
+      condition: 'A',
+      type: RuleFormType.grafanaRecording,
     };
 
     expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
