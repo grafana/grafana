@@ -227,6 +227,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Adobe Analytics',
       imgUrl: 'public/img/plugins/adobe-analytics.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-cloudflare-datasource',
+      description: 'Cloudflare datasource',
+      name: 'Cloudflare',
+      imgUrl: 'public/img/plugins/cloudflare.jpg',
+    }),
   ];
 }
 
