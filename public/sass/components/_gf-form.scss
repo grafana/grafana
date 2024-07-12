@@ -191,7 +191,7 @@ $input-border: 1px solid $input-border-color;
   margin-right: $space-xs;
   border: $border-width solid transparent;
   border-left: none;
-  @include border-radius($input-border-radius);
+  border-radius: $input-border-radius;
 }
 
 .gf-form-textarea {

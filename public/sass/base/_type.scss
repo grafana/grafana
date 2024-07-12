@@ -94,13 +94,19 @@ dd {
 }
 // Horizontal layout (like forms)
 .dl-horizontal {
-  @include clearfix();
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
   dt {
     float: left;
     width: $horizontalComponentOffset - 20;
     clear: left;
     text-align: right;
-    @include text-overflow();
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   dd {
     margin-left: $horizontalComponentOffset;

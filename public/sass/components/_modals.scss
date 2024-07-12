@@ -15,7 +15,7 @@
 
 .modal-backdrop,
 .modal-backdrop.fade.in {
-  @include opacity(70);
+  opacity: 0.7;
 }
 
 // Base modal
@@ -24,8 +24,8 @@
   z-index: $zindex-modal;
   width: 100%;
   background: $page-bg;
-  @include box-shadow(0 3px 7px rgba(0, 0, 0, 0.3));
-  @include background-clip(padding-box);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  background-clip: padding-box;
   outline: none;
 
   max-width: 750px;
@@ -82,7 +82,12 @@
   border-top: 1px solid $panel-bg;
   background-color: $panel-bg;
   text-align: right; // right align buttons
-  @include clearfix(); // clear it in case folks use .pull-* classes on buttons
+  // clear it in case folks use .pull-* classes on buttons
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
 }
 
 .modal--narrow {

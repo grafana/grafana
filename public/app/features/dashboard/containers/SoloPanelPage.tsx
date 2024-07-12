@@ -2,6 +2,7 @@ import { Component } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { Alert } from '@grafana/ui';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -106,7 +107,7 @@ export interface SoloPanelProps extends State {
 
 export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: SoloPanelProps) => {
   if (notFound) {
-    return <div className="alert alert-error">Panel with id {panelId} not found</div>;
+    return <Alert severity="error" title={`Panel with id ${panelId} not found`} />;
   }
 
   if (!panel || !dashboard) {
