@@ -221,7 +221,7 @@ func TestCachingMiddleware(t *testing.T) {
 		}
 
 		var sentResponse *backend.CallResourceResponse
-		var storeOneResponseCallResourceSender = callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		var storeOneResponseCallResourceSender = backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			sentResponse = res
 			return nil
 		})

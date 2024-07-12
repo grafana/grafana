@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
+import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
-import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
   DataTransformerID,
