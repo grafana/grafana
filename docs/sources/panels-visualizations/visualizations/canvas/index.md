@@ -195,7 +195,7 @@ You can configure a canvas data link to open with a single click on the element.
 
 The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/one-click-data-link-canvas.mp4>" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/one-click-data-link-canvas.mp4" >}}
 
 ## Panel options
 
