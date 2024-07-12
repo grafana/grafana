@@ -30,7 +30,7 @@
       - ./docker/blocks/self-instrumentation/tempo.yaml:/etc/tempo.yaml
     ports:
       - "14268:14268"
-      - "127.0.0.1:3200:3200"
+      - "3200:3200"
       - "4317:4317"
   pyroscope:
     image: "grafana/pyroscope:latest"
