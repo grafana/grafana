@@ -43,13 +43,18 @@ type ConditionEvaluator interface {
 	Evaluate(ctx context.Context, now time.Time) (Results, error)
 }
 
-type expressionService interface {
+type expressionExecutor interface {
 	ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+}
+
+type expressionBuilder interface {
+	expressionExecutor
+	BuildPipeline(req *expr.Request) (expr.DataPipeline, error)
 }
 
 type conditionEvaluator struct {
 	pipeline          expr.DataPipeline
-	expressionService expressionService
+	expressionService expressionExecutor
 	condition         models.Condition
 	evalTimeout       time.Duration
 	evalResultLimit   int
@@ -105,7 +110,7 @@ type evaluatorImpl struct {
 	evaluationTimeout     time.Duration
 	evaluationResultLimit int
 	dataSourceCache       datasources.CacheService
-	expressionService     *expr.Service
+	expressionService     expressionBuilder
 	pluginsStore          pluginstore.Store
 }
 
