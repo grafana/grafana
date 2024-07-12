@@ -3,27 +3,23 @@ package querydata
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/dskit/concurrency"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"net/http"
 	"regexp"
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
 	"github.com/grafana/grafana/pkg/promlib/client"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/promlib/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/promlib/utils"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const legendFormatAuto = "__auto"
@@ -96,14 +92,15 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	hasPromQLScopeFeatureFlag := cfg.FeatureToggles().IsEnabled("promQLScope")
 	hasPrometheusDataplaneFeatureFlag := cfg.FeatureToggles().IsEnabled("prometheusDataplane")
 
-	if cfg.FeatureToggles().IsEnabled(featuremgmt.FlagPrometheusRunQueriesInParallel) {
+	if cfg.FeatureToggles().IsEnabled("prometheusRunQueriesInParallel") {
 		var (
 			m sync.Mutex
 		)
 
 		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 		if err != nil {
-			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), featuremgmt.FlagPrometheusRunQueriesInParallel)
+			logger := s.log.FromContext(ctx)
+			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), "prometheusRunQueriesInParallel")
 			concurrentQueryCount = 10
 		}
 
