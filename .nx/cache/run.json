@@ -1,0 +1,131 @@
+{
+  "run": {
+    "command": "nx run grafana:\"start\"",
+    "startTime": "2024-05-22T23:32:04.704Z",
+    "endTime": "2024-05-22T23:32:07.602Z",
+    "inner": false
+  },
+  "tasks": [
+    {
+      "taskId": "@grafana-plugins/grafana-postgresql-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-postgresql-datasource",
+      "hash": "10174454276136836525",
+      "startTime": "2024-05-22T23:32:04.717Z",
+      "endTime": "2024-05-22T23:32:04.743Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/grafana-pyroscope-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-pyroscope-datasource",
+      "hash": "9798348858019442851",
+      "startTime": "2024-05-22T23:32:04.717Z",
+      "endTime": "2024-05-22T23:32:04.744Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "grafana:themes-generate",
+      "target": "themes-generate",
+      "projectName": "grafana",
+      "hash": "5655317428987753959",
+      "startTime": "2024-05-22T23:32:04.717Z",
+      "endTime": "2024-05-22T23:32:04.744Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/grafana-testdata-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-testdata-datasource",
+      "hash": "2606047836775078044",
+      "startTime": "2024-05-22T23:32:04.745Z",
+      "endTime": "2024-05-22T23:32:04.753Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/stackdriver:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/stackdriver",
+      "hash": "16289793941960591157",
+      "startTime": "2024-05-22T23:32:04.746Z",
+      "endTime": "2024-05-22T23:32:04.753Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/jaeger:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/jaeger",
+      "hash": "2882312463079654538",
+      "startTime": "2024-05-22T23:32:04.754Z",
+      "endTime": "2024-05-22T23:32:04.756Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/zipkin:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/zipkin",
+      "hash": "14803415929955051640",
+      "startTime": "2024-05-22T23:32:04.755Z",
+      "endTime": "2024-05-22T23:32:04.756Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/mysql:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/mysql",
+      "hash": "11608405100546009247",
+      "startTime": "2024-05-22T23:32:04.757Z",
+      "endTime": "2024-05-22T23:32:04.758Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/parca:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/parca",
+      "hash": "18298235139238436803",
+      "startTime": "2024-05-22T23:32:04.757Z",
+      "endTime": "2024-05-22T23:32:04.758Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/tempo:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/tempo",
+      "hash": "2545487168886761632",
+      "startTime": "2024-05-22T23:32:04.759Z",
+      "endTime": "2024-05-22T23:32:07.600Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 1
+    },
+    {
+      "taskId": "@grafana-plugins/grafana-azure-monitor-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-azure-monitor-datasource",
+      "hash": "8481901364988216927",
+      "startTime": "2024-05-22T23:32:04.746Z",
+      "endTime": "2024-05-22T23:32:07.601Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 1
+    }
+  ]
+}

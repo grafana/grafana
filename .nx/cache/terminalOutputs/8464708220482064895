@@ -1,0 +1,15 @@
+35 assets
+3370 modules
+
+[1m[33mWARNING[39m[22m in [1masset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  img/azure_monitor_cpu.png (253 KiB)
+  img/contoso_loans_grafana_dashboard.png (251 KiB)
+  dashboards/adx.json (281 KiB)[39m[22m
+
+[1m[33mWARNING[39m[22m in [1mwebpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/[39m[22m
+
+webpack 5.91.0 compiled with [1m[33m2 warnings[39m[22m in 11658 ms

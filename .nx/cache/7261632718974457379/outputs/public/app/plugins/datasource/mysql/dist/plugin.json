@@ -1,0 +1,32 @@
+{
+  "type": "datasource",
+  "name": "MySQL",
+  "id": "mysql",
+  "executable": "gpx_mysql",
+  "category": "sql",
+
+  "info": {
+    "description": "Data source for MySQL databases",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/mysql_logo.svg",
+      "large": "img/mysql_logo.svg"
+    },
+    "version": "11.0.0"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.4.0"
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true,
+  "backend": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
+}
