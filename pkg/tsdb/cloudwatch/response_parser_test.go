@@ -405,7 +405,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			MetricQueryType:  models.MetricQueryTypeSearch,
-			MetricEditorMode: models.MetricEditorModeRaw,
+			MetricEditorMode: models.MetricEditorModeBuilder,
 		}
 		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
 		require.NoError(t, err)
@@ -610,6 +610,44 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 
 		assert.Equal(t, "cloudwatch-default-label", frames[0].Name)
 		assert.Equal(t, "cloudwatch-default-label", frames[0].Fields[1].Labels["Series"])
+	})
+
+	t.Run("ignore dimensions for raw mode query", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("lb3"),
+					Label: aws.String("some label"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"*"},
+			},
+			Expression:       "SEARCH('MetricName=\"ResourceCount\" AND (\"AWS/Usage\") AND Resource=TargetsPer NOT QueueName=TargetsPerNetworkLoadBalancer', 'Average')",
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeRaw,
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Equal(t, "some label", frames[0].Name)
+		assert.Len(t, frames[0].Fields[1].Labels, 1)
+		assert.Equal(t, "some label", frames[0].Fields[1].Labels["Series"])
 	})
 
 	t.Run("Parse cloudwatch response", func(t *testing.T) {
