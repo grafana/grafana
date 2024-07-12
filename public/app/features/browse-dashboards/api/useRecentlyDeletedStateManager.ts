@@ -10,12 +10,15 @@ export class TrashStateManager extends SearchStateManager {
     const query = state.query ?? this.state.query;
     const tags = state.tag ?? this.state.tag;
 
-    const shouldEmpty = query.length === 0 && tags.length === 0;
-
-    console.log('shouldEmpty', shouldEmpty, { query, tags });
+    // When the user clears the search, and we revert back to list listing all
+    const clearResults = query.length === 0 && tags.length === 0;
 
     // Set internal state
-    this.setState({ sort, ...state, result: shouldEmpty ? undefined : this.state.result });
+    this.setState({
+      sort,
+      result: clearResults ? undefined : this.state.result,
+      ...state,
+    });
 
     // Update url state
     this.updateLocation({
