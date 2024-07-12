@@ -145,7 +145,7 @@ export const navIndex: NavIndex = {
       {
         id: 'groups',
         text: 'Alert groups',
-        subTitle: 'See grouped alerts from an Alertmanager instance',
+        subTitle: 'See grouped alerts with active notifications',
         icon: 'layer-group',
         url: '/alerting/groups',
       },
@@ -210,7 +210,7 @@ export const navIndex: NavIndex = {
   groups: {
     id: 'groups',
     text: 'Alert groups',
-    subTitle: 'See grouped alerts from an Alertmanager instance',
+    subTitle: 'See grouped alerts with active notifications',
     icon: 'layer-group',
     url: '/alerting/groups',
   },
