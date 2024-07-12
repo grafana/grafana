@@ -20,7 +20,7 @@ interface SearchViewProps {
   emptyState?: ReactNode;
 }
 
-const NUM_PLACEHOLDER_ROWS = 50;
+const NUM_PLACEHOLDER_ROWS = 25;
 const initialLoadingView = {
   view: new DataFrameView(
     toDataFrame({
@@ -58,8 +58,10 @@ export function SearchView({
 
   const { keyboardEvents } = useKeyNavigationListener();
 
-  const showPlaceholder = !searchState.result || searchState.loading;
-  const value = showPlaceholder ? initialLoadingView : searchState.result;
+  const value = searchState.result ?? initialLoadingView;
+  if (!value) {
+    console.warn("We still don't have a value???", { ...searchState });
+  }
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
@@ -114,7 +116,7 @@ export function SearchView({
   }
 
   const props: SearchResultsProps = {
-    response: searchState.result ?? initialLoadingView,
+    response: value,
     selection: canSelect ? selectionChecker : undefined,
     selectionToggle: canSelect ? handleItemSelectionChange : undefined,
     clearSelection,
