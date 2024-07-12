@@ -2419,7 +2419,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
@@ -2477,7 +2481,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
@@ -2568,7 +2576,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
