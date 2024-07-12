@@ -303,6 +303,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 
 		t.Run("write was performed", func(t *testing.T) {
 			require.NotZero(t, writeTarget.RequestsCount)
+			require.Contains(t, writeTarget.LastRequestBody, "some_metric")
 		})
 	})
 
