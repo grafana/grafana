@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { ErrorBoundaryAlert, Modal, useStyles2, useTheme2 } from '@grafana/ui';
@@ -74,16 +74,19 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   useEffect(() => {
     const hasQueryLibrary = config.featureToggles.queryLibrary || false;
     if (hasQueryLibrary) {
-      RowActionComponents.addKeyedExtraRenderAction(QUERY_LIBRARY_ACTION_KEY, (props) => (
-        <QueryOperationAction
-          key={props.key}
-          title={t('query-operation.header.save-to-query-library', 'Save to query library')}
-          icon="save"
-          onClick={() => {
-            setQueryToAdd(props.query);
-          }}
-        />
-      ));
+      RowActionComponents.addKeyedExtraRenderAction(QUERY_LIBRARY_ACTION_KEY, {
+        scope: CoreApp.Explore,
+        queryActionComponent: (props) => (
+          <QueryOperationAction
+            key={props.key}
+            title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+            icon="save"
+            onClick={() => {
+              setQueryToAdd(props.query);
+            }}
+          />
+        ),
+      });
     }
   }, []);
 
