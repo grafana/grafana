@@ -39,17 +39,17 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Testing DB", func(t *testing.T) {
-		var sqlStore db.DB
+		var sqlStore db.ReplDB
 		var cfg *setting.Cfg
 		var flder, dashInRoot, childDash *dashboards.Dashboard
 		var currentUser *user.SignedInUser
 		var dashboardStore dashboards.Store
 
 		setup := func() {
-			sqlStore, cfg = db.InitTestDBWithCfg(t)
+			sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 			quotaService := quotatest.New(false, nil)
 			var err error
-			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 			require.NoError(t, err)
 			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod", "webapp")
@@ -68,7 +68,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("and user can read folders and dashboards", func(t *testing.T) {
 				currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
 					dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}}}
-				actest.AddUserPermissionToDB(t, sqlStore, currentUser)
+				actest.AddUserPermissionToDB(t, sqlStore.DB(), currentUser)
 
 				t.Run("should return all dashboards and folders", func(t *testing.T) {
 					query := &dashboards.FindPersistedDashboardsQuery{
@@ -86,7 +86,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and user can only read dashboards", func(t *testing.T) {
 				currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}}}
-				actest.AddUserPermissionToDB(t, sqlStore, currentUser)
+				actest.AddUserPermissionToDB(t, sqlStore.DB(), currentUser)
 
 				t.Run("should not return folder", func(t *testing.T) {
 					query := &dashboards.FindPersistedDashboardsQuery{
@@ -104,7 +104,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and permissions are set for dashboard child and folder has all permissions removed", func(t *testing.T) {
 				currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID)}}}
-				actest.AddUserPermissionToDB(t, sqlStore, currentUser)
+				actest.AddUserPermissionToDB(t, sqlStore.DB(), currentUser)
 
 				t.Run("should not return folder or child", func(t *testing.T) {
 					query := &dashboards.FindPersistedDashboardsQuery{
@@ -119,7 +119,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("when the user is given permission to child", func(t *testing.T) {
 					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}
-					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
+					actest.AddUserPermissionToDB(t, sqlStore.DB(), currentUser)
 
 					t.Run("should be able to search for child dashboard but not folder", func(t *testing.T) {
 						query := &dashboards.FindPersistedDashboardsQuery{
@@ -138,17 +138,17 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		})
 
 		t.Run("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func(t *testing.T) {
-			var sqlStore db.DB
+			var sqlStore db.ReplDB
 			var cfg *setting.Cfg
 			var folder1, folder2, dashInRoot, childDash1, childDash2 *dashboards.Dashboard
 			var rootFolderId int64 = 0
 			var currentUser *user.SignedInUser
 
 			setup2 := func() {
-				sqlStore, cfg = db.InitTestDBWithCfg(t)
+				sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 				quotaService := quotatest.New(false, nil)
 				var err error
-				dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+				dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, "", true, "prod")
@@ -166,7 +166,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			setup2()
 			t.Run("and one folder is expanded, the other collapsed", func(t *testing.T) {
 				currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}, dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}}}
-				actest.AddUserPermissionToDB(t, sqlStore, currentUser)
+				actest.AddUserPermissionToDB(t, sqlStore.DB(), currentUser)
 
 				t.Run("should return dashboards in root and expanded folder", func(t *testing.T) {
 					query := &dashboards.FindPersistedDashboardsQuery{
@@ -191,7 +191,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("and a dashboard is moved from folder without acl to the folder with an acl", func(t *testing.T) {
 					moveDashboard(t, dashboardStore, 1, childDash2.Data, folder1.ID, folder1.UID)
 					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID), dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID)}}}
-					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
+					actest.AddUserPermissionToDB(t, sqlStore.DB(), currentUser)
 
 					t.Run("should not return folder with acl or its children", func(t *testing.T) {
 						query := &dashboards.FindPersistedDashboardsQuery{
@@ -210,7 +210,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					setup2()
 					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, childDash2.FolderUID)
 					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}}}
-					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
+					actest.AddUserPermissionToDB(t, sqlStore.DB(), currentUser)
 
 					t.Run("should return folder without acl and its children", func(t *testing.T) {
 						query := &dashboards.FindPersistedDashboardsQuery{
@@ -240,7 +240,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 	// the maximux nested folder hierarchy starting from parent down to subfolders
 	nestedFolders := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth+1)
 
-	var sqlStore db.DB
+	var sqlStore db.ReplDB
 	var cfg *setting.Cfg
 	const (
 		dashInRootTitle      = "dashboard in root"
@@ -250,7 +250,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 	var viewer *user.SignedInUser
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 		cfg.AutoAssignOrg = true
 		cfg.AutoAssignOrgId = 1
 		cfg.AutoAssignOrgRole = string(org.RoleViewer)
@@ -262,13 +262,13 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
 		var err error
-		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 
-		orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(sqlStore.DB(), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
-			sqlStore, orgService, cfg, nil, nil, tracer,
+			sqlStore.DB(), orgService, cfg, nil, nil, tracer,
 			quotaService, supportbundlestest.NewFakeBundleService(),
 		)
 		require.NoError(t, err)
@@ -305,7 +305,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore.DB()), sqlStore.DB(), features, supportbundlestest.NewFakeBundleService(), nil)
 
 		parentUID := ""
 		for i := 0; ; i++ {
@@ -407,11 +407,11 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			dashboardReadStore, err := ProvideDashboardStore(sqlStore, cfg, tc.features, tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+			dashboardReadStore, err := ProvideDashboardStore(sqlStore, cfg, tc.features, tagimpl.ProvideService(sqlStore.DB()), quotatest.New(false, nil))
 			require.NoError(t, err)
 
 			viewer.Permissions = map[int64]map[string][]string{viewer.OrgID: tc.permissions}
-			actest.AddUserPermissionToDB(t, sqlStore, viewer)
+			actest.AddUserPermissionToDB(t, sqlStore.DB(), viewer)
 
 			query := &dashboards.FindPersistedDashboardsQuery{
 				SignedInUser: viewer,

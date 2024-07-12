@@ -103,7 +103,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 			permissionScenario(t, "When creating a new dashboard in the General folder", canSave,
 				func(t *testing.T, sc *permissionScenarioContext) {
-					sqlStore := db.InitTestDB(t)
+					sqlStore := db.InitTestReplDB(t)
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]any{
@@ -838,7 +838,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
-	sqlStore                 db.DB
+	sqlStore                 db.ReplDB
 	dashboardStore           dashboards.Store
 	savedFolder              *dashboards.Dashboard
 	savedDashInFolder        *dashboards.Dashboard
@@ -858,7 +858,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	t.Run(desc, func(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		cfg := setting.NewCfg()
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestReplDB(t)
 		quotaService := quotatest.New(false, nil)
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
@@ -917,16 +917,16 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	})
 }
 
-func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) *dashboards.Dashboard {
+func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.ReplDB) *dashboards.Dashboard {
 	t.Helper()
 
 	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
@@ -948,14 +948,14 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 	return res
 }
 
-func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) error {
+func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.ReplDB) error {
 	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
@@ -970,7 +970,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string, sqlStore db.DB) *dashboards.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string, sqlStore db.ReplDB) *dashboards.Dashboard {
 	t.Helper()
 
 	cmd := dashboards.SaveDashboardCommand{
@@ -994,9 +994,9 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
@@ -1016,7 +1016,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 	return res
 }
 
-func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *dashboards.Dashboard {
+func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.ReplDB) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
@@ -1044,9 +1044,9 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(

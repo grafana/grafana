@@ -254,7 +254,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, cfg := db.InitTestReplDBWithCfg(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db, guardian.ProvideGuardian())
 	qds := buildQueryDataService(t, cacheService, nil, db)

@@ -89,7 +89,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
+			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -164,7 +164,7 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
+			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -279,10 +279,11 @@ type scenarioContext struct {
 	folder        *folder.Folder
 	initialResult libraryElementResult
 	sqlStore      db.DB
+	replStore     db.ReplDB
 	log           log.Logger
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64, folderUID string) *dashboards.Dashboard {
+func createDashboard(t *testing.T, sqlStore db.ReplDB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64, folderUID string) *dashboards.Dashboard {
 	// nolint:staticcheck
 	dash.FolderID = folderID
 	dash.FolderUID = folderUID
@@ -297,13 +298,13 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
@@ -324,7 +325,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	cfg := setting.NewCfg()
 	ac := actest.FakeAccessControl{}
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.replStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
@@ -380,7 +381,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	t.Helper()
 
 	features := featuremgmt.WithFeatures()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestReplDBWithCfg(t)
 	ac := actest.FakeAccessControl{}
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
@@ -441,7 +442,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		features := featuremgmt.WithFeatures()
 		tracer := tracing.InitializeTracerForTest()
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		sqlStore, cfg := db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
@@ -484,10 +485,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 
 		sc := scenarioContext{
-			user:     usr,
-			ctx:      &webCtx,
-			service:  &service,
-			sqlStore: sqlStore,
+			user:      usr,
+			ctx:       &webCtx,
+			service:   &service,
+			sqlStore:  sqlStore.DB(),
+			replStore: sqlStore,
 			reqContext: &contextmodel.ReqContext{
 				Context:      &webCtx,
 				SignedInUser: &usr,
