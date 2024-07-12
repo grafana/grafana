@@ -2,6 +2,7 @@ import { llms } from '@grafana/experimental';
 
 import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
+import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardChanges, getPanelStrings, isLLMPluginEnabled, sanitizeReply } from './utils';
 
@@ -149,7 +150,7 @@ describe('getPanelStrings', () => {
   });
 
   it('should return an empty array if all panels have no description and panels that have title are titled "Panel title', () => {
-    const dashboard = dashboardSetup([{ title: 'Panel title', description: '' }]);
+    const dashboard = dashboardSetup([{ title: NEW_PANEL_TITLE, description: '' }]);
 
     expect(getPanelStrings(dashboard)).toEqual([]);
   });
