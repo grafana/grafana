@@ -71,7 +71,7 @@ func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {
 // Reset resets all tracked requests and counters.
 func (s *TestRemoteWriteTarget) Reset() {
 	s.mtx.Lock()
-	s.mtx.Unlock()
+	defer s.mtx.Unlock()
 	s.RequestsCount = 0
 	s.LastRequestBody = ""
 }
