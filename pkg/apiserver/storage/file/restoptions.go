@@ -3,54 +3,36 @@
 package file
 
 import (
-	"os"
-	"path/filepath"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	path     string
+	store    resource.ResourceStoreClient
 	original storagebackend.Config
 }
 
 // Optionally, this constructor allows specifying directories
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetter(path string,
+func NewRESTOptionsGetter(store resource.ResourceStoreClient,
 	originalStorageConfig storagebackend.Config,
-	createResourceDirs ...string) (*RESTOptionsGetter, error) {
-	if path == "" {
-		path = filepath.Join(os.TempDir(), "grafana-apiserver")
-	}
-
-	if err := initializeDirs(path, createResourceDirs); err != nil {
-		return nil, err
-	}
-
-	return &RESTOptionsGetter{path: path, original: originalStorageConfig}, nil
-}
-
-func initializeDirs(root string, createResourceDirs []string) error {
-	for _, dir := range createResourceDirs {
-		if err := ensureDir(filepath.Join(root, dir)); err != nil {
-			return err
-		}
-	}
-	return nil
+) (*RESTOptionsGetter, error) {
+	return &RESTOptionsGetter{store: store, original: originalStorageConfig}, nil
 }
 
 func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
 			Type:                      "file",
-			Prefix:                    r.path,
 			Transport:                 storagebackend.TransportConfig{},
 			Codec:                     r.original.Codec,
 			EncodeVersioner:           r.original.EncodeVersioner,
@@ -66,8 +48,8 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 	}
 
 	ret := generic.RESTOptions{
-		StorageConfig:           storageConfig,
-		Decorator:               NewStorage,
+		StorageConfig: storageConfig,
+		///Decorator:               NewStorage,
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
