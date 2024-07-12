@@ -3,6 +3,7 @@ import { Global } from '@emotion/react';
 import { useTheme2 } from '../ThemeContext';
 
 import { getAccessibilityStyles } from './accessibility';
+import { getAlertingStyles } from './alerting';
 import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
@@ -30,6 +31,7 @@ export function GlobalStyles() {
       styles={[
         getAccessibilityStyles(theme),
         getAgularPanelStyles(theme),
+        getAlertingStyles(theme),
         getCodeStyles(theme),
         getElementStyles(theme),
         getExtraStyles(theme),
