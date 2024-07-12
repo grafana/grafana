@@ -4,6 +4,17 @@
 @use 'sass:map';
 @use 'sass:color';
 
+// Gradients
+@mixin gradient-vertical($startColor: #555, $endColor: #333) {
+  background-color: color.mix($startColor, $endColor, 60%);
+  background-image: linear-gradient(to bottom, $startColor, $endColor); // Standard, IE10
+  background-repeat: repeat-x;
+}
+
+@mixin font-family-monospace() {
+  font-family: $font-family-monospace;
+}
+
 .edit-tab-content {
   flex-grow: 1;
   min-width: 0;
@@ -75,7 +86,7 @@ input.invalid {
     font-size: $font-size-md;
     min-height: 50px; // Include space for horizontal scrollbar
 
-    @include border-radius($input-border-radius);
+    border-radius: $input-border-radius;
     border: $border-width solid $input-border-color;
   }
 
@@ -2028,4 +2039,114 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
   height: 0;
   position: relative;
   top: -9px;
+}
+
+//
+// Alerts
+// --------------------------------------------------
+
+// Base styles
+// -------------------------
+
+.alert {
+  padding: 15px 20px;
+  margin-bottom: $space-xs;
+  border-left: 3px solid $alert-error-bg;
+  background: $layer2;
+  position: relative;
+  border-radius: $border-radius;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+// Alternate styles
+// -------------------------
+
+.alert-success {
+  border-color: $alert-success-bg;
+}
+
+.alert-danger,
+.alert-error {
+  border-color: $alert-error-bg;
+}
+
+.alert-info {
+  border-color: $alert-info-bg;
+}
+
+.alert-warning {
+  border-color: $alert-warning-bg;
+}
+
+.alert-title {
+  font-weight: $font-weight-semi-bold;
+}
+
+.alert-icon {
+  padding: 0 $space-md 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+
+  .fa {
+    font-size: 21px;
+  }
+}
+
+.alert-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  flex-grow: 1;
+}
+
+// Alert List
+.alert-rule-item__body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.alert-rule-item__header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.alert-rule-item__name {
+  font-size: $font-size-base;
+  margin: 0;
+  font-weight: $font-weight-semi-bold;
+}
+
+.alert-rule-item__text {
+  font-weight: bold;
+  font-size: $font-size-sm;
+  margin: 0;
+}
+
+.alert-rule-item__time {
+  color: $text-color-weak;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.alert-rule-item__info {
+  //color: $text-color;
+  font-weight: normal;
+  flex-grow: 2;
+  display: flex;
+  align-items: flex-end;
+}
+
+.grafana-metric-options {
+  margin-top: 25px;
+}
+
+.drop-element.drop-popover.drop-function-def .drop-content {
+  max-width: 416px;
 }
