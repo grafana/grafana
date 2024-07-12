@@ -121,6 +121,31 @@
           }
         }
       }
+    },
+    "rule-groups": {
+      "delete": {
+        "success": "Successfully deleted rule group"
+      },
+      "move": {
+        "success": "Successfully moved rule group"
+      },
+      "rename": {
+        "success": "Successfully renamed rule group"
+      },
+      "update": {
+        "success": "Successfully updated rule group"
+      }
+    },
+    "rules": {
+      "delete-rule": {
+        "success": "Rule successfully deleted"
+      },
+      "pause-rule": {
+        "success": "Rule evaluation paused"
+      },
+      "resume-rule": {
+        "success": "Rule evaluation resumed"
+      }
     }
   },
   "annotations": {
