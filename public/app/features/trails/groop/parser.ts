@@ -103,26 +103,6 @@ class Parser {
   }
 }
 
-// printTree returns a string representation of the tree.
-function printTree(node: Node): string {
-  return _printTree(node, 0);
-}
-
-function _printTree(node: Node, level = 0): string {
-  if (node === null) {
-    return '(null node)';
-  }
-  let out = '';
-  for (const [k, v] of node.groups.entries()) {
-    out += `g ${level} ${'\t'.repeat(level)}${k} (${v.descendants})\n`;
-    out += _printTree(v, level + 1);
-  }
-  for (const v of node.values) {
-    out += `v ${level} ${'\t'.repeat(level)}${v}\n`;
-  }
-  return out;
-}
-
 export interface Node {
   groups: Map<string, Node>;
   values: string[];
