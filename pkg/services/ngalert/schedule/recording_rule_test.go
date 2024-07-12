@@ -158,7 +158,7 @@ func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
-	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules())
+	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
 	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
@@ -167,8 +167,9 @@ func TestRecordingRule_Integration(t *testing.T) {
 	writerReg := prometheus.NewPedanticRegistry()
 	sch.recordingWriter = setupWriter(t, writeTarget, writerReg)
 
-	t.Run("rule that errors", func(t *testing.T) {
-		rule := gen.With(withQueryForHealth("error")).GenerateRef()
+	t.Run("rule that succeeds", func(t *testing.T) {
+		writeTarget.Reset()
+		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
@@ -239,6 +240,144 @@ func TestRecordingRule_Integration(t *testing.T) {
 			require.NoError(t, err)
 		})
 
+		t.Run("reports success evaluation metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
+				# TYPE grafana_alerting_rule_evaluation_failures_total counter
+				grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 0
+				# HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
+				# TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
+				grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} 0
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluation_failures_total",
+				"grafana_alerting_rule_evaluation_attempt_failures_total",
+			)
+			require.NoError(t, err)
+		})
+
+		t.Run("reports remote write metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_remote_writer_write_duration_seconds Histogram of remote write durations.
+				# TYPE grafana_alerting_remote_writer_write_duration_seconds histogram
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.005"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.01"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.025"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.05"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.1"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.25"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="1"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="2.5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="10"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="+Inf"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_sum{backend="prometheus",org="%[1]d"} 0
+				grafana_alerting_remote_writer_write_duration_seconds_count{backend="prometheus",org="%[1]d"} 1
+				# HELP grafana_alerting_remote_writer_writes_total The total number of remote writes attempted.
+				# TYPE grafana_alerting_remote_writer_writes_total counter
+				grafana_alerting_remote_writer_writes_total{backend="prometheus", org="%[1]d", status_code="200"} 1
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(writerReg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_remote_writer_writes_total",
+				"grafana_alerting_remote_writer_write_duration_seconds",
+			)
+			require.NoError(t, err)
+		})
+
+		t.Run("status shows evaluation", func(t *testing.T) {
+			status := process.(*recordingRule).Status()
+
+			require.Equal(t, "ok", status.Health)
+			require.Nil(t, status.LastError)
+		})
+
+		t.Run("write was performed", func(t *testing.T) {
+			require.NotZero(t, writeTarget.RequestsCount)
+		})
+	})
+
+	t.Run("rule that errors", func(t *testing.T) {
+		writeTarget.Reset()
+		rule := gen.With(withQueryForHealth("error")).GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+		evalDoneChan := make(chan time.Time)
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+		now := time.Now()
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		t.Run("status shows no evaluations", func(t *testing.T) {
+			status := process.(*recordingRule).Status()
+
+			require.Equal(t, "unknown", status.Health)
+			require.Nil(t, status.LastError)
+			require.Zero(t, status.EvaluationTimestamp)
+			require.Zero(t, status.EvaluationDuration)
+		})
+
+		process.Eval(&Evaluation{
+			scheduledAt: now,
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+		_ = waitForTimeChannel(t, evalDoneChan)
+
+		t.Run("reports basic evaluation metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
+				# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 2
+				grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
+				grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 2
+				# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+				# TYPE grafana_alerting_rule_evaluations_total counter
+				grafana_alerting_rule_evaluations_total{org="%[1]d"} 2
+				# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+				 # TYPE grafana_alerting_rule_evaluation_attempts_total counter
+				grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 2
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluation_duration_seconds",
+				"grafana_alerting_rule_evaluations_total",
+				"grafana_alerting_rule_evaluation_attempts_total",
+			)
+			require.NoError(t, err)
+		})
+
 		t.Run("reports failure evaluation metrics", func(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
 				`
@@ -255,6 +394,39 @@ func TestRecordingRule_Integration(t *testing.T) {
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
 				"grafana_alerting_rule_evaluation_failures_total",
 				"grafana_alerting_rule_evaluation_attempt_failures_total",
+			)
+			require.NoError(t, err)
+		})
+
+		t.Run("reports remote write metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_remote_writer_write_duration_seconds Histogram of remote write durations.
+				# TYPE grafana_alerting_remote_writer_write_duration_seconds histogram
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.005"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.01"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.025"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.05"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.1"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.25"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="0.5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="1"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="2.5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="5"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="10"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_bucket{backend="prometheus",org="%[1]d",le="+Inf"} 1
+				grafana_alerting_remote_writer_write_duration_seconds_sum{backend="prometheus",org="%[1]d"} 0
+				grafana_alerting_remote_writer_write_duration_seconds_count{backend="prometheus",org="%[1]d"} 1
+				# HELP grafana_alerting_remote_writer_writes_total The total number of remote writes attempted.
+				# TYPE grafana_alerting_remote_writer_writes_total counter
+				grafana_alerting_remote_writer_writes_total{backend="prometheus", org="%[1]d", status_code="200"} 1
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(writerReg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_remote_writer_writes_total",
+				"grafana_alerting_remote_writer_write_duration_seconds",
 			)
 			require.NoError(t, err)
 		})

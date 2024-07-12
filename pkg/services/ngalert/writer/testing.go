@@ -53,3 +53,8 @@ func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {
 		BasicAuthPassword: "",
 	}
 }
+
+// Reset resets all tracked requests and counters. Not thread safe.
+func (s *TestRemoteWriteTarget) Reset() {
+	s.RequestsCount = 0
+}
