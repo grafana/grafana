@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -71,6 +71,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
+  const isGrafanaRecordingType = type === RuleFormType.grafanaRecording;
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
 
@@ -114,9 +115,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const emptyQueries = queries.length === 0;
 
   // apply some validations and asserts to the results of the evaluation when creating or editing
-  // Grafana-managed alert rules
+  // Grafana-managed alert rules and Grafa-managed recording rules
   useEffect(() => {
-    if (!isGrafanaManagedType) {
+    if (!isGrafanaManagedType && !isGrafanaRecordingType) {
       return;
     }
 
@@ -133,7 +134,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     const error = errorFromPreviewData(previewData) ?? errorFromCurrentCondition(previewData);
 
     onDataChange(error?.message || '');
-  }, [queryPreviewData, getValues, onDataChange, isGrafanaManagedType]);
+  }, [queryPreviewData, getValues, onDataChange, isGrafanaManagedType, isGrafanaRecordingType]);
 
   const handleSetCondition = useCallback(
     (refId: string | null) => {
@@ -429,8 +430,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         </Stack>
       )}
 
-      {/* This is the editor for Grafana managed rules */}
-      {isGrafanaManagedType && (
+      {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
+      {(isGrafanaManagedType || isGrafanaRecordingType) && (
         <Stack direction="column">
           {/* Data Queries */}
           <QueryEditor
@@ -457,12 +458,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               Add query
             </Button>
           </Tooltip>
-          <SmartAlertTypeDetector
-            editingExistingRule={editingExistingRule}
-            rulesSourcesWithRuler={rulesSourcesWithRuler}
-            queries={queries}
-            onClickSwitch={onClickSwitch}
-          />
+          {/* We only show Switch for Grafana managed alerts */}
+          {isGrafanaManagedType && (
+            <SmartAlertTypeDetector
+              editingExistingRule={editingExistingRule}
+              rulesSourcesWithRuler={rulesSourcesWithRuler}
+              queries={queries}
+              onClickSwitch={onClickSwitch}
+            />
+          )}
           {/* Expression Queries */}
           <Stack direction="column" gap={0}>
             <Text element="h5">Expressions</Text>

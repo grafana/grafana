@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import { useEffect, useMemo } from 'react';
 import * as React from 'react';
+import { useEffect, useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack } from '@grafana/ui';
+import { Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
@@ -15,10 +15,10 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
-import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
+import { AlertInfo, getAlertInfo, isGrafanaOrDataSourceRecordingRule } from '../../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
@@ -72,7 +72,8 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
     }))
     .sort(
       (alert1, alert2) =>
-        safeParsePrometheusDuration(alert1.data.forDuration) - safeParsePrometheusDuration(alert2.data.forDuration)
+        safeParsePrometheusDuration(alert1.data.forDuration ?? '') -
+        safeParsePrometheusDuration(alert2.data.forDuration ?? '')
     );
 
   const columns: AlertsWithForTableColumnProps[] = useMemo(() => {
@@ -151,9 +152,11 @@ export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterO
       } else {
         const rulePendingPeriods = rules.map((rule) => {
           const { forDuration } = getAlertInfo(rule, evaluateEvery);
-          return safeParsePrometheusDuration(forDuration);
+          return forDuration ? safeParsePrometheusDuration(forDuration) : null;
         });
-        const largestPendingPeriod = Math.min(...rulePendingPeriods);
+        const largestPendingPeriod = Math.min(
+          ...rulePendingPeriods.filter((period): period is number => period !== null)
+        );
         return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
       }
     } catch (error) {
@@ -245,7 +248,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   };
 
   const rulesWithoutRecordingRules = compact(
-    group.rules.map((r) => r.rulerRule).filter((rule) => !isRecordingRulerRule(rule))
+    group.rules.map((r) => r.rulerRule).filter((rule) => rule && !isGrafanaOrDataSourceRecordingRule(rule))
   );
   const hasSomeNoRecordingRules = rulesWithoutRecordingRules.length > 0;
   const modalTitle =

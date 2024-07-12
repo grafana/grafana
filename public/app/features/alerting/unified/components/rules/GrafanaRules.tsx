@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LoadingPlaceholder, Pagination, Spinner, useStyles2, Text } from '@grafana/ui';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
+import { LogMessages, logInfo } from '../../Analytics';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
@@ -53,26 +56,47 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;
 
+  const grafanaRecordingRulesEnabled = config.featureToggles.grafanaManagedRecordingRules;
+
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <Text element="h2" variant="h5">
-            Grafana
+            <Trans i18nKey="alerting.grafana-rules.title">Grafana</Trans>
           </Text>
-          {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
-          {hasGrafanaAlerts && canExportRules && (
-            <Button
-              aria-label="export all grafana rules"
-              data-testid="export-all-grafana-rules"
-              icon="download-alt"
-              tooltip="Export all Grafana-managed rules"
-              onClick={toggleShowExportDrawer}
-              variant="secondary"
-            >
-              Export rules
-            </Button>
+          {loading ? (
+            <LoadingPlaceholder className={styles.loader} text={t('alerting.grafana-rules.loading', 'Loading...')} />
+          ) : (
+            <div />
           )}
+          <Stack direction="row" alignItems="center" justifyContent="flex-end">
+            {hasGrafanaAlerts && canExportRules && (
+              <Button
+                aria-label="export all grafana rules"
+                data-testid="export-all-grafana-rules"
+                icon="download-alt"
+                tooltip="Export all Grafana-managed rules"
+                onClick={toggleShowExportDrawer}
+                variant="secondary"
+              >
+                <Trans i18nKey="alerting.grafana-rules.export-rules">Export rules</Trans>
+              </Button>
+            )}
+            {grafanaRecordingRulesEnabled && (
+              <LinkButton
+                href={urlUtil.renderUrl('alerting/new/grafana-recording', {
+                  returnTo: location.pathname + location.search,
+                })}
+                icon="plus"
+                variant="secondary"
+                tooltip="Create new Grafana-managed recording rule"
+                onClick={() => logInfo(LogMessages.grafanaRecording)}
+              >
+                <Trans i18nKey="alerting.grafana-rules.new-recording-rule">New recording rule</Trans>
+              </LinkButton>
+            )}
+          </Stack>
         </div>
       </div>
 

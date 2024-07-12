@@ -104,6 +104,12 @@
         "parse-mode-warning-title": "Ŧęľęģřäm męşşäģęş äřę ľįmįŧęđ ŧő 4096 ŮŦF-8 čĥäřäčŧęřş."
       }
     },
+    "grafana-rules": {
+      "export-rules": "Ēχpőřŧ řūľęş",
+      "loading": "Ŀőäđįŉģ...",
+      "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
+      "title": "Ğřäƒäŉä"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {

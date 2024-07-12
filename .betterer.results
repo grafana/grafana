@@ -2290,9 +2290,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/alerting/unified/components/rules/GrafanaRules.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleConfigStatus.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],

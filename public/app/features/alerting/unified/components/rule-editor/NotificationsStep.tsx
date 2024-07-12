@@ -52,7 +52,11 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   return (
     <RuleEditorSection
       stepNo={4}
-      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
+      title={
+        type === RuleFormType.cloudRecording || type === RuleFormType.grafanaRecording
+          ? 'Add labels'
+          : 'Configure labels and notifications'
+      }
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
           {type === RuleFormType.cloudRecording ? (

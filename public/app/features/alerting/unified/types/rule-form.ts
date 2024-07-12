@@ -3,7 +3,8 @@ import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alertin
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
 
 export enum RuleFormType {
-  grafana = 'grafana',
+  grafana = 'grafana-alerting',
+  grafanaRecording = 'grafana-recording',
   cloudAlerting = 'cloud-alerting',
   cloudRecording = 'cloud-recording',
 }

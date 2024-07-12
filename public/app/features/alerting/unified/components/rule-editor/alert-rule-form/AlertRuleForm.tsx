@@ -23,8 +23,8 @@ import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   LogMessages,
   logInfo,
-  trackAlertRuleFormError,
   trackAlertRuleFormCancelled,
+  trackAlertRuleFormError,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
 import { useDeleteRuleFromGroup } from '../../../hooks/useProduceNewRuleGroup';
@@ -33,8 +33,8 @@ import { saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
-  MANUAL_ROUTING_KEY,
   DEFAULT_GROUP_EVALUATION_INTERVAL,
+  MANUAL_ROUTING_KEY,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
@@ -106,7 +106,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showDataSourceDependantStep = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
+  const showDataSourceDependantStep = Boolean(
+    type && (type === RuleFormType.grafana || !!dataSourceName || type === RuleFormType.grafanaRecording)
+  );
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
@@ -136,6 +138,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     dispatch(
       saveRuleFormAction({
+        // todo: saveRuleFormAction with new types
         values: {
           ...defaultValues,
           ...values,
@@ -249,7 +252,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               {showDataSourceDependantStep && (
                 <>
                   {/* Step 3 */}
-                  {type === RuleFormType.grafana && (
+                  {(type === RuleFormType.grafana || type === RuleFormType.grafanaRecording) && (
                     <GrafanaEvaluationBehavior
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
@@ -266,7 +269,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
                   {/* Annotations only for cloud and Grafana */}
-                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
+                  {type !== RuleFormType.cloudRecording && type !== RuleFormType.grafanaRecording && (
+                    <AnnotationsStep />
+                  )}
                 </>
               )}
             </Stack>
@@ -285,7 +290,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         />
       ) : null}
       {showEditYaml ? (
-        type === RuleFormType.grafana ? (
+        type === RuleFormType.grafana || type === RuleFormType.grafanaRecording ? (
           <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />

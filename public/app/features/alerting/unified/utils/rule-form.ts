@@ -47,7 +47,12 @@ import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
 import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
+import {
+  isAlertingRulerRule,
+  isGrafanaOrDataSourceRecordingRule,
+  isGrafanaRulerRule,
+  isRecordingRulerRule,
+} from './rules';
 import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -194,28 +199,56 @@ export function getNotificationSettingsForDTO(
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused, contactPoints, manualRouting } =
-    values;
+  const {
+    name,
+    condition,
+    noDataState,
+    execErrState,
+    evaluateFor,
+    queries,
+    isPaused,
+    contactPoints,
+    manualRouting,
+    type,
+  } = values;
   if (condition) {
     const notificationSettings: GrafanaNotificationSettings | undefined = getNotificationSettingsForDTO(
       manualRouting,
       contactPoints
     );
-
-    return {
-      grafana_alert: {
-        title: name,
-        condition,
-        no_data_state: noDataState,
-        exec_err_state: execErrState,
-        data: queries.map(fixBothInstantAndRangeQuery),
-        is_paused: Boolean(isPaused),
-        notification_settings: notificationSettings,
-      },
-      for: evaluateFor,
-      annotations: arrayToRecord(values.annotations || []),
-      labels: arrayToRecord(values.labels || []),
-    };
+    if (type === RuleFormType.grafana) {
+      return {
+        grafana_alert: {
+          title: name,
+          condition,
+          no_data_state: noDataState,
+          exec_err_state: execErrState,
+          data: queries.map(fixBothInstantAndRangeQuery),
+          is_paused: Boolean(isPaused),
+          notification_settings: notificationSettings,
+        },
+        for: evaluateFor,
+        annotations: arrayToRecord(values.annotations || []),
+        labels: arrayToRecord(values.labels || []),
+      };
+    } else {
+      return {
+        grafana_alert: {
+          title: name,
+          condition,
+          data: queries.map(fixBothInstantAndRangeQuery),
+          record: {
+            Metric: name,
+            From: condition,
+          },
+          is_paused: Boolean(isPaused),
+          notification_settings: undefined,
+        },
+        annotations: arrayToRecord(values.annotations || []),
+        labels: arrayToRecord(values.labels || []),
+        for: null,
+      };
+    }
   }
   throw new Error('Cannot create rule without specifying alert condition');
 }
@@ -251,34 +284,55 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
-    if (isGrafanaRulerRule(rule)) {
+    // GRAFANA-MANAGED RULES
+    if (isGrafanaOrDataSourceRecordingRule(rule) && isGrafanaRulerRule(rule)) {
+      // grafana recording rule
       const ga = rule.grafana_alert;
-
-      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-
       return {
         ...defaultFormValues,
         name: ga.title,
-        type: RuleFormType.grafana,
+        type: RuleFormType.grafanaRecording,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
-        evaluateFor: rule.for || '0',
-        noDataState: ga.no_data_state,
-        execErrState: ga.exec_err_state,
         queries: ga.data,
         condition: ga.condition,
         annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
-        isPaused: ga.is_paused,
-
-        contactPoints: routingSettings,
-        manualRouting: Boolean(routingSettings),
+        // isPaused: ga.is_paused, // can we pause recording rules?
       };
+    } else if (isGrafanaRulerRule(rule)) {
+      // grafana alerting rule
+      const ga = rule.grafana_alert;
+      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+      if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
+        return {
+          ...defaultFormValues,
+          name: ga.title,
+          type: RuleFormType.grafana,
+          group: group.name,
+          evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
+          evaluateFor: rule.for || '0',
+          noDataState: ga.no_data_state,
+          execErrState: ga.exec_err_state,
+          queries: ga.data,
+          condition: ga.condition,
+          annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
+          labels: listifyLabelsOrAnnotations(rule.labels, true),
+          folder: { title: namespace, uid: ga.namespace_uid },
+          isPaused: ga.is_paused,
+
+          contactPoints: routingSettings,
+          manualRouting: Boolean(routingSettings),
+        };
+      } else {
+        throw new Error('Unexpected type of rule for grafana rules source');
+      }
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
     }
   } else {
+    // DATASOURCE-MANAGED RULES
     if (isAlertingRulerRule(rule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 

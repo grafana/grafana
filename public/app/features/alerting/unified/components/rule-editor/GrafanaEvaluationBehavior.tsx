@@ -10,7 +10,7 @@ import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/u
 import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -290,6 +290,7 @@ export function GrafanaEvaluationBehavior({
   const { watch, setValue } = useFormContext<RuleFormValues>();
 
   const isPaused = watch('isPaused');
+  const type = watch('type');
 
   return (
     // TODO remove "and alert condition" for recording rules
@@ -300,7 +301,8 @@ export function GrafanaEvaluationBehavior({
           evaluateEvery={evaluateEvery}
           enableProvisionedGroups={enableProvisionedGroups}
         />
-        <ForInput evaluateEvery={evaluateEvery} />
+        {/* Show the pending period input only for Grafana alerting rules */}
+        {type === RuleFormType.grafana && <ForInput evaluateEvery={evaluateEvery} />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -327,44 +329,48 @@ export function GrafanaEvaluationBehavior({
           </Field>
         )}
       </Stack>
-      <CollapseToggle
-        isCollapsed={!showErrorHandling}
-        onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
-        text="Configure no data and error handling"
-      />
-      {showErrorHandling && (
+      {type === RuleFormType.grafana && (
         <>
-          <NeedHelpInfoForConfigureNoDataError />
-          <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
-            <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <GrafanaAlertStatePicker
-                  {...field}
-                  inputId="no-data-state-input"
-                  width={42}
-                  includeNoData={true}
-                  includeError={false}
-                  onChange={(value) => onChange(value?.value)}
+          <CollapseToggle
+            isCollapsed={!showErrorHandling}
+            onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
+            text="Configure no data and error handling"
+          />
+          {showErrorHandling && (
+            <>
+              <NeedHelpInfoForConfigureNoDataError />
+              <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
+                <Controller
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      inputId="no-data-state-input"
+                      width={42}
+                      includeNoData={true}
+                      includeError={false}
+                      onChange={(value) => onChange(value?.value)}
+                    />
+                  )}
+                  name="noDataState"
                 />
-              )}
-              name="noDataState"
-            />
-          </Field>
-          <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
-            <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <GrafanaAlertStatePicker
-                  {...field}
-                  inputId="exec-err-state-input"
-                  width={42}
-                  includeNoData={false}
-                  includeError={true}
-                  onChange={(value) => onChange(value?.value)}
+              </Field>
+              <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
+                <Controller
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      inputId="exec-err-state-input"
+                      width={42}
+                      includeNoData={false}
+                      includeError={true}
+                      onChange={(value) => onChange(value?.value)}
+                    />
+                  )}
+                  name="execErrState"
                 />
-              )}
-              name="execErrState"
-            />
-          </Field>
+              </Field>
+            </>
+          )}
         </>
       )}
     </RuleEditorSection>

@@ -371,8 +371,8 @@ export const saveRuleFormAction = createAsyncThunk(
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveLotexRule(values, evaluateEvery, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: values.dataSourceName }));
-            // in case of grafana managed
-          } else if (type === RuleFormType.grafana) {
+            // in case of grafana managed rules or grafana-managed recording rules
+          } else if (type === RuleFormType.grafana || type === RuleFormType.grafanaRecording) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
@@ -665,10 +665,10 @@ interface UpdateNamespaceAndGroupOptions {
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
   return rules.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
-    const forNumber = safeParsePrometheusDuration(forDuration);
+    const forNumber = forDuration ? safeParsePrometheusDuration(forDuration) : null;
     const everyNumber = safeParsePrometheusDuration(everyDuration);
 
-    return forNumber !== 0 && forNumber < everyNumber;
+    return forNumber ? forNumber !== 0 && forNumber < everyNumber : false;
   });
 };
 

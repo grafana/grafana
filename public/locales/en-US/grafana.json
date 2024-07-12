@@ -104,6 +104,12 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       }
     },
+    "grafana-rules": {
+      "export-rules": "Export rules",
+      "loading": "Loading...",
+      "new-recording-rule": "New recording rule",
+      "title": "Grafana"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {

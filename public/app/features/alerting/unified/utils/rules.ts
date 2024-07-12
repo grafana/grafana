@@ -10,19 +10,18 @@ import {
   CombinedRuleGroup,
   CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
-  PrometheusRuleIdentifier,
   PromRuleWithLocation,
+  PrometheusRuleIdentifier,
   RecordingRule,
   Rule,
-  RuleIdentifier,
   RuleGroupIdentifier,
+  RuleIdentifier,
   RuleNamespace,
   RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
-  mapStateWithReasonToBaseState,
   PostableRuleDTO,
   PromAlertingRuleState,
   PromRuleType,
@@ -31,6 +30,7 @@ import {
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
+  mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
@@ -57,6 +57,10 @@ export function isAlertingRulerRule(rule?: RulerRuleDTO): rule is RulerAlertingR
 
 export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordingRuleDTO {
   return typeof rule === 'object' && 'record' in rule;
+}
+
+export function isGrafanaOrDataSourceRecordingRule(rule: RulerRuleDTO) {
+  return isRecordingRulerRule(rule) || (isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert);
 }
 
 export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
@@ -254,8 +258,8 @@ export function getRuleName(rule: RulerRuleDTO) {
 
 export interface AlertInfo {
   alertName: string;
-  forDuration: string;
-  evaluationsToFire: number;
+  forDuration: string | null;
+  evaluationsToFire: number | null;
 }
 
 export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): AlertInfo => {
@@ -268,7 +272,7 @@ export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): Al
     return {
       alertName: alert.grafana_alert.title,
       forDuration: alert.for,
-      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation),
+      evaluationsToFire: alert.for ? getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation) : null,
     };
   }
   if (isAlertingRulerRule(alert)) {

@@ -24,6 +24,7 @@ export const LogMessages = {
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
+  grafanaRecording: 'creating Grafana recording rule from scratch',
 };
 
 const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
