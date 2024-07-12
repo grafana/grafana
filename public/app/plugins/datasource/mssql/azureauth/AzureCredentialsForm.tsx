@@ -181,7 +181,7 @@ export const AzureCredentialsForm = (props: Props) => {
             ))}
         </>
       )}
-      {(credentials.authType === AzureAuthType.AD_PASSWORD && azureEntraPasswordCredentialsEnabled) && (
+      {credentials.authType === AzureAuthType.AD_PASSWORD && azureEntraPasswordCredentialsEnabled && (
         <>
           <Field label="User Id" required htmlFor="user-id" invalid={!credentials.userId} error={'User ID is required'}>
             <Input
