@@ -163,6 +163,32 @@ func (a *State) AddErrorAnnotations(err error, rule *models.AlertRule) {
 	}
 }
 
+func (a *State) SetNextValues(result eval.Result) {
+	const sentinel = float64(-1)
+
+	// We try to provide a reasonable object for Values in the event of nodata/error.
+	// In order to not break templates that might refer to refIDs,
+	// we instead fill values with the latest known set of refIDs, but with a sentinel -1 to indicate that the value didn't exist.
+	if result.State == eval.NoData || result.State == eval.Error {
+		placeholder := make(map[string]float64, len(a.Values))
+		for refID := range a.Values {
+			placeholder[refID] = sentinel
+		}
+		a.Values = placeholder
+		return
+	}
+
+	newValues := make(map[string]float64, len(result.Values))
+	for k, v := range result.Values {
+		if v.Value != nil {
+			newValues[k] = *v.Value
+		} else {
+			newValues[k] = math.NaN()
+		}
+	}
+	a.Values = newValues
+}
+
 // IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
 func IsNormalStateWithNoReason(s *State) bool {
 	return s.State == eval.Normal && s.StateReason == ""
@@ -206,16 +232,20 @@ type Evaluation struct {
 	// Values contains the RefID and value of reduce and math expressions.
 	// Classic conditions can have different values for the same RefID as they can include multiple conditions.
 	// For these, we use the index of the condition in addition RefID as the key e.g. "A0, A1, A2, etc.".
-	Values map[string]*float64
+	Values map[string]float64
 	// Condition is the refID specified as the condition in the alerting rule at the time of the evaluation.
 	Condition string
 }
 
 // NewEvaluationValues returns the labels and values for each RefID in the capture.
-func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float64 {
-	result := make(map[string]*float64, len(m))
+func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]float64 {
+	result := make(map[string]float64, len(m))
 	for k, v := range m {
-		result[k] = v.Value
+		if v.Value != nil {
+			result[k] = *v.Value
+		} else {
+			result[k] = math.NaN()
+		}
 	}
 	return result
 }
@@ -486,11 +516,7 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 
 	for refID, value := range lastResult.Values {
 		if strings.Contains(refID, lastResult.Condition) {
-			if value != nil {
-				r[refID] = *value
-				continue
-			}
-			r[refID] = math.NaN()
+			r[refID] = value
 		}
 	}
 
