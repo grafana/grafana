@@ -5,6 +5,7 @@ import (
 	context "context"
 	"fmt"
 	"io"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,7 +18,9 @@ import (
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -113,6 +116,24 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 
+		// Make sure the key does not already exist
+		// TODO: this will not allow restoring a deleted value!
+		if event.Type == WatchEvent_ADDED {
+			iter := s.bucket.List(&blob.ListOptions{
+				Prefix:    s.getPath(event.Key, 0) + "/",
+				Delimiter: "/",
+			})
+			obj, _ := iter.Next(ctx)
+			if obj != nil {
+				return 0, &errors.StatusError{
+					ErrStatus: v1.Status{
+						Code:    http.StatusConflict,
+						Message: "key already exists",
+					},
+				}
+			}
+		}
+
 		rv = s.rv.Add(1)
 		err = s.bucket.WriteAll(ctx, s.getPath(event.Key, rv), event.Value, &blob.WriterOptions{
 			ContentType: "application/json",
@@ -136,7 +157,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	rv := req.ResourceVersion
 
-	path := s.getPath(req.Key, req.ResourceVersion)
+	path := s.getPath(req.Key, rv)
 	if rv < 1 {
 		iter := s.bucket.List(&blob.ListOptions{Prefix: path + "/", Delimiter: "/"})
 		for {

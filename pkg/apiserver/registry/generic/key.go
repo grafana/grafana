@@ -45,7 +45,7 @@ func ParseKey(raw string) (*Key, error) {
 		case "name":
 			key.Name = v
 		default:
-			return nil, fmt.Errorf("invalid key name: %s", key)
+			return nil, fmt.Errorf("invalid key part: %s", key)
 		}
 	}
 

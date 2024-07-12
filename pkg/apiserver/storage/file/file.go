@@ -359,7 +359,10 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	req := &resource.ReadRequest{}
 	req.Key, err = getKey(key)
 	if err != nil {
-		return err
+		if opts.IgnoreNotFound {
+			return runtime.SetZeroValue(objPtr)
+		}
+		return storage.NewKeyNotFoundError(key, 0)
 	}
 
 	if opts.ResourceVersion != "" {
@@ -533,16 +536,20 @@ func (s *Storage) GuaranteedUpdate(
 			if err != nil {
 				return err
 			}
-			if err := s.versioner.UpdateObject(updatedObj, uint64(rsp.ResourceVersion)); err != nil {
+			mmm, err := utils.MetaAccessor(objFromDisk)
+			if err != nil {
 				return err
 			}
-		}
+			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
 
-		if err := preconditions.Check(keystring, objFromDisk); err != nil {
-			if attempt >= MaxUpdateAttempts {
-				return fmt.Errorf("precondition failed: %w", err)
+			if err := preconditions.Check(keystring, objFromDisk); err != nil {
+				if attempt >= MaxUpdateAttempts {
+					return fmt.Errorf("precondition failed: %w", err)
+				}
+				continue
 			}
-			continue
+		} else if !ignoreNotFound {
+			return apierrors.NewNotFound(s.gr, req.Key.Name)
 		}
 
 		updatedObj, _, err = tryUpdate(objFromDisk, res)
