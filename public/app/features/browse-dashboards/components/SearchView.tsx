@@ -95,7 +95,7 @@ export function SearchView({
     [selectionChecker, dispatch]
   );
 
-  if (value?.totalRows === 0) {
+  if (value.totalRows === 0) {
     const emptyState = emptyStateProp ?? (
       <EmptyState
         button={
