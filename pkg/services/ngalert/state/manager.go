@@ -215,6 +215,8 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				LastEvaluationTime:   entry.LastEvalTime,
 				Annotations:          ruleForEntry.Annotations,
 				ResultFingerprint:    resultFp,
+				ResolvedAt:           entry.ResolvedAt,
+				LastSentAt:           entry.LastSentAt,
 			}
 			statesCount++
 		}
