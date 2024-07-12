@@ -108,6 +108,6 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
       "refId": "C",
     },
   ],
-  "type": "grafana",
+  "type": "grafana-alerting",
 }
 `;

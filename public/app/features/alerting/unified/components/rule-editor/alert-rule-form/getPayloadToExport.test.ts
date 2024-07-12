@@ -1,7 +1,7 @@
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockRulerGrafanaRule } from '../../../mocks';
-import { RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { Annotation } from '../../../utils/constants';
 import { getDefaultFormValues } from '../../../utils/rule-form';
 
@@ -38,6 +38,7 @@ const rule3 = mockRulerGrafanaRule(
 const defaultValues = getDefaultFormValues();
 const formValuesForRule2Updated: RuleFormValues = {
   ...defaultValues,
+  type: RuleFormType.grafana,
   queries: [
     {
       refId: 'A',

@@ -21,6 +21,7 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     const formValues: RuleFormValues = {
       ...getDefaultFormValues(),
       condition: 'A',
+      type: RuleFormType.grafana,
     };
 
     expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
@@ -31,6 +32,7 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
 
     const values: RuleFormValues = {
       ...defaultValues,
+      type: RuleFormType.grafana,
       queries: [
         {
           refId: 'A',
