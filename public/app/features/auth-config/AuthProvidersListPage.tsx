@@ -52,8 +52,9 @@ export const AuthConfigPageUnconnected = ({
     reportInteraction('authentication_ui_provider_clicked', { provider: providerType, enabled });
   };
 
-  // filter out saml from sso providers because it is already included in availableProviders
+  // filter out saml and ldap from sso providers because it is already included in availableProviders
   providers = providers.filter((p) => p.provider !== 'saml');
+  providers = providers.filter((p) => p.provider !== 'ldap');
 
   // temporarily remove LDAP until its configuration form is ready
   providers = providers.filter((p) => p.provider !== 'ldap');
@@ -67,7 +68,10 @@ export const AuthConfigPageUnconnected = ({
         ...providers,
       ]
     : providers;
-  return (
+    providerList.map((provider, i) => {
+      console.log(provider.provider + i, provider.settings)
+    })
+    return (
     <Page
       navId="authentication"
       subTitle={
@@ -98,9 +102,9 @@ export const AuthConfigPageUnconnected = ({
             {providerList
               // Temporarily filter out providers that don't have the UI implemented
               .filter(({ provider }) => !['grafana_com'].includes(provider))
-              .map(({ provider, settings }) => (
+              .map(({ provider, settings }, i) => (
                 <ProviderCard
-                  key={provider}
+                  key={provider + i}
                   authType={settings.type || 'OAuth'}
                   providerId={provider}
                   enabled={settings.enabled}

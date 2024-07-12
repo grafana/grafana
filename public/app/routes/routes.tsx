@@ -8,6 +8,7 @@ import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
+import LdapSettingsPage from 'app/features/admin/ldap/LdapSettingsPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
@@ -298,7 +299,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
-      component: LdapPage,
+      component: config.featureToggles.ssoSettingsLDAP ? LdapSettingsPage : LdapPage,
     },
     {
       path: '/admin/authentication/:provider',
