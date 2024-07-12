@@ -17,7 +17,7 @@ title: Dashboard URL variables
 description: Use variables in dashboard URLs to add more context to your links
 weight: 250
 refs:
-  add-ad-hoc-filters:
+  ad-hoc-filters:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
     - pattern: /docs/grafana-cloud/
@@ -27,11 +27,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/
-  linking-overview:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
   variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
@@ -41,7 +36,7 @@ refs:
 
 # Dashboard URL variables
 
-Dashboard URL [variables](ref:template-and-variables) allow you to provide more context when you share a dashboard URL.
+Dashboard URL [variables](ref:variables) allow you to provide more context when you share a dashboard URL.
 
 For example, you could share a basic URL to your dashboard that looks like this:
 
@@ -87,7 +82,7 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 ## Ad hoc filters
 
-Ad hoc filters apply key/value filters to all metric queries that use a specified data source. For more information, refer to [Add ad hoc filters](ref:add-ad-hoc-filters).
+Ad hoc filters apply key/value filters to all metric queries that use a specified data source. For more information, refer to [Add ad hoc filters](ref:ad-hoc-filters).
 
 <!-- I'm not sure what the "a specified data source" part means; is this the dashboard data source or the ad hoc filter data source? -->
 
