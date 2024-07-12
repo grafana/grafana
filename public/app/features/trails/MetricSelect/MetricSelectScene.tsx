@@ -145,8 +145,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
-      // Might need ??
-      // this.metricContainer.setState({ children: [] });
       // In all cases, we want to reload the metric names
       this._debounceRefreshMetricNames();
     },
