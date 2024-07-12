@@ -136,8 +136,8 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
       {sigV4Selected && (
         <Alert title="Deprecation Notice" severity="warning">
-          The SigV4 authentication in the core Prometheus data source is deprecated. Please use the Amazon Prometheus
-          data source to authenticate with SigV4.
+          The SigV4 authentication in the core Prometheus data source is deprecated. Please use the Amazon Managed
+          Service for Prometheus data source to authenticate with SigV4.
         </Alert>
       )}
       <Auth
