@@ -533,28 +533,15 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 			return snapshot, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
 		}
 
-		var localStatus cloudmigration.SnapshotStatus
-		switch snapshotMeta.State {
-		case cloudmigration.SnapshotStateUnknown:
-			fallthrough
-		default:
+		if snapshotMeta.State == cloudmigration.SnapshotStateUnknown {
 			// If a status from Grafana Migration Service is unavailable, return the snapshot as-is
 			return snapshot, nil
-		case cloudmigration.SnapshotStateInitialized:
-			// GMS has not yet received a notification for the data
-			localStatus = cloudmigration.SnapshotStatusPendingProcessing
-		case cloudmigration.SnapshotStateProcessing:
-			// GMS has received a notification and is migrating the data
-			localStatus = cloudmigration.SnapshotStatusProcessing
-		case cloudmigration.SnapshotStateFinished:
-			// GMS has completed the migration - all resources were attempted to be migrated
-			localStatus = cloudmigration.SnapshotStatusFinished
-		case cloudmigration.SnapshotStateCanceled:
-			// GMS has processed a cancelation request. Snapshot cancelation is not supported yet.
-			localStatus = cloudmigration.SnapshotStatusCanceled
-		case cloudmigration.SnapshotStateError:
-			// Something unrecoverable has occurred in the migration process.
-			localStatus = cloudmigration.SnapshotStatusError
+		}
+
+		localStatus, ok := gmsStateToLocalStatus[snapshotMeta.State]
+		if !ok {
+			s.log.Error("unexpected GMS snapshot state: %s", snapshotMeta.State)
+			return snapshot, nil
 		}
 
 		// We need to update the snapshot in our db before reporting anything
@@ -570,6 +557,15 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 	}
 
 	return snapshot, nil
+}
+
+var gmsStateToLocalStatus map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus = map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus{
+	cloudmigration.SnapshotStateInitialized: cloudmigration.SnapshotStatusPendingProcessing, // GMS has not yet received a notification for the data
+	cloudmigration.SnapshotStateProcessing:  cloudmigration.SnapshotStatusProcessing,        // GMS has received a notification and is migrating the data
+	cloudmigration.SnapshotStateFinished:    cloudmigration.SnapshotStatusFinished,          // GMS has completed the migration - all resources were attempted to be migrated
+	cloudmigration.SnapshotStateCanceled:    cloudmigration.SnapshotStatusCanceled,          // GMS has processed a cancelation request. Snapshot cancelation is not supported yet.
+	cloudmigration.SnapshotStateError:       cloudmigration.SnapshotStatusError,             // Something unrecoverable has occurred in the migration process.
+
 }
 
 func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
