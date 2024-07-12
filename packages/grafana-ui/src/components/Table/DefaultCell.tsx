@@ -16,7 +16,19 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
+  const {
+    field,
+    cell,
+    tableStyles,
+    row,
+    cellProps,
+    frame,
+    rowStyled,
+    rowExpanded,
+    textWrapped,
+    height,
+    oneClickLinks,
+  } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -83,6 +95,9 @@ export const DefaultCell = (props: TableCellProps) => {
     cellProps.style = { ...cellProps.style, textWrap: 'wrap' };
   }
 
+  // currently struggling to figure out how to pass this prop into the cell context...
+  console.log(oneClickLinks, 'oneClickLinks');
+
   return (
     <div
       {...cellProps}
@@ -95,7 +110,7 @@ export const DefaultCell = (props: TableCellProps) => {
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
-            if (api.openMenu) {
+            if (api.openMenu && !oneClickLinks) {
               return (
                 <button
                   className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}

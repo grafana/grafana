@@ -176,6 +176,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         path: 'footer.enablePagination',
         name: 'Enable pagination',
         editor: PaginationEditor,
+      })
+      .addCustomEditor({
+        id: 'enableOneClick',
+        path: 'oneClickLinks',
+        name: 'One-click data links',
+        description:
+          'When enabled and there are multiple data links, the first data link will open with a single click',
+        editor: standardEditorsRegistry.get('boolean').editor,
+        defaultValue: false,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

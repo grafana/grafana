@@ -26,6 +26,10 @@ export interface Options {
    */
   frameIndex: number;
   /**
+   * Controls one click data link functionality
+   */
+  oneClickLinks?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
