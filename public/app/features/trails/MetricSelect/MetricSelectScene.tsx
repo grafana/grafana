@@ -247,7 +247,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         : undefined;
 
       let bodyLayout = this.state.body;
-      const rootGroupNode = this.generateGroups(metricNames);
+      const rootGroupNode = await this.generateGroups(metricNames);
 
       if (this.state.displayAs === 'nested-rows') {
         const nestedScenes = this.generateNestedScene(rootGroupNode);
@@ -276,7 +276,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
   }
 
-  private generateGroups(metricNames: string[] = []) {
+  private async generateGroups(metricNames: string[] = []) {
     const groopParser = new Parser();
     groopParser.config = {
       ...groopParser.config,
@@ -449,7 +449,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     let rootGroupNode = this.state.rootGroup;
     if (!rootGroupNode) {
-      rootGroupNode = this.generateGroups(this.state.metricNames);
+      rootGroupNode = await this.generateGroups(this.state.metricNames);
       this.setState({ rootGroup: rootGroupNode });
     }
     const nestedScenes = this.generateNestedScene(rootGroupNode);
@@ -476,7 +476,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     let rootGroupNode = this.state.rootGroup;
     if (!rootGroupNode) {
-      rootGroupNode = this.generateGroups(this.state.metricNames);
+      rootGroupNode = await this.generateGroups(this.state.metricNames);
       this.setState({ rootGroup: rootGroupNode });
     }
 
