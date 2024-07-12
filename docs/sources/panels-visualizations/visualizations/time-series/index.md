@@ -205,8 +205,6 @@ Use this option to define how to display your time series data. You can use over
 
 This option controls how the graph interpolates the series line.
 
-![Line interpolation option](/static/img/docs/time-series-panel/line-interpolation-option.png)
-
 - **Linear:** Points are joined by straight lines.
 - **Smooth:** Points are joined by curved lines that smooths transitions between points.
 - **Step before:** The line is displayed as steps between points. Points are rendered at the end of the step.
@@ -215,8 +213,6 @@ This option controls how the graph interpolates the series line.
 #### Line width
 
 Line width is a slider that controls the thickness for series lines or the outline for bars.
-
-![Line thickness 5 example](/static/img/docs/time-series-panel/line-width-5.png)
 
 #### Fill opacity
 
@@ -257,8 +253,6 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 
 Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
-![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
-
 - **Solid:** Display a solid line. This is the default setting.
 - **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
 - **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
@@ -280,8 +274,6 @@ You can configure your visualization to add points to lines or bars.
 #### Stack series
 
 _Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
-
-![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
 
 - **Off:** Turns off series stacking. When **Off**, all series share the same space in the visualization.
 - **Normal:** Stacks series on top of each other.
