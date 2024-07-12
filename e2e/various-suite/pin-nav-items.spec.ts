@@ -10,7 +10,7 @@ describe('Pin nav items', () => {
     });
     cy.visit(fromBaseUrl('/'));
   });
-  it('should pin the selected meny item', () => {
+  it('should pin the selected menu item', () => {
     // Open the mega menu
     cy.get('[aria-label="Open menu"]').click();
     // Dock the mega menu
@@ -18,7 +18,13 @@ describe('Pin nav items', () => {
     // Check if the menu is visible
     e2e.components.NavMenu.Menu().should('be.visible');
     // Hover on the Administration menu item to make the pin icon visible
-    cy.contains('a', 'Administration').focus().click();
-    e2e.components.NavMenu.PinNavItems.pinIconButton().click({ force: true });
+    const adminItem = cy.contains('a', 'Administration');
+    adminItem.focus().click();
+    adminItem.within(() => {
+      e2e.components.NavMenu.PinNavItems.pinIconButton().should('exist');
+      // Click on the pin icon
+      const pinIcon = e2e.components.NavMenu.PinNavItems.pinIconButton();
+      pinIcon.click({ force: true });
+    });
   });
 });
