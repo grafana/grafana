@@ -274,7 +274,7 @@ export const RowsList = (props: RowsListProps) => {
       const rowExpanded = nestedDataField && tableState.expanded[row.id];
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
-        style = { ...style, backgroundColor: theme.colors.background.canvas };
+        style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
         additionalProps = {
           'aria-selected': 'true',
         };
