@@ -34,6 +34,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
         <Icon
           name={isPinned ? 'favorite' : 'star'}
           className={'pin-icon'}
+          data-testid={selectors.components.NavMenu.PinNavItems.pinIconButton}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
