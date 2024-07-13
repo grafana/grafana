@@ -28,7 +28,6 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -75,15 +74,6 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		Group:    "example.apiserver.k8s.io",
 		Resource: "pods",
 	}
-	testUserA := &identity.StaticRequester{
-		Namespace:      identity.NamespaceUser,
-		Login:          "testuser",
-		UserID:         123,
-		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true, // can do anything
-	}
-	ctx := identity.WithRequester(context.Background(), testUserA)
 
 	bucket := memblob.OpenBucket(nil)
 	if true {
@@ -97,6 +87,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
+	ctx := storagetesting.NewContext()
 	backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
 		Bucket: bucket,
 	})
