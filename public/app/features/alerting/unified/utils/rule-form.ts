@@ -298,7 +298,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
-        // isPaused: ga.is_paused, // can we pause recording rules?
+        isPaused: ga.is_paused,
       };
     } else if (isGrafanaRulerRule(rule)) {
       // grafana alerting rule

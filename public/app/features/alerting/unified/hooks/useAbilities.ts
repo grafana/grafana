@@ -163,7 +163,6 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const isFederated = isFederatedRuleGroup(rule.group);
   const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
   const isPluginProvided = isPluginProvidedRule(rule);
-  const isGrafanaRecording = isGrafanaRulerRule(rule.rulerRule) && isGrafanaOrDataSourceRecordingRule(rule.rulerRule);
 
   // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
   const immutableRule = isProvisioned || isFederated || isPluginProvided;
@@ -194,10 +193,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
     [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
-    [AlertRuleAction.Pause]: [
-      MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule && !isGrafanaRecording,
-      isEditable ?? false,
-    ], // not sure about this one
+    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false], // not sure about this one
   };
 
   return abilities;
