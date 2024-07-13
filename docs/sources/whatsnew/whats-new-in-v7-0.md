@@ -153,7 +153,7 @@ Plugins can be monitored with the new metrics and health check capabilities. The
 
 With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
-To learn more, start with the [overview](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/). Next, in this [tutorial](/developers/plugin-tools/tutorials/build-a-data-source-backend-plugin) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
+To learn more, start with the [overview](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/). Next, in this [tutorial](https://grafana.com/developers/plugin-tools/tutorials/build-a-data-source-backend-plugin) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
 
 ## New tutorials
 
