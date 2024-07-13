@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"sync"
 	"time"
 
@@ -262,6 +263,15 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
+	found, _ := s.backend.Read(ctx, &ReadRequest{Key: req.Key})
+	if found != nil && len(found.Value) > 0 {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusConflict,
+			Message: "key already exists",
+		}
+		return rsp, nil
+	}
+
 	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, nil)
 	if err != nil {
 		rsp.Error, err = errToStatus(err)

@@ -115,24 +115,6 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 
-		// Make sure the key does not already exist
-		// TODO: this will not allow restoring a deleted value!
-		if event.Type == WatchEvent_ADDED {
-			iter := s.bucket.List(&blob.ListOptions{
-				Prefix:    s.getPath(event.Key, 0) + "/",
-				Delimiter: "/",
-			})
-			obj, _ := iter.Next(ctx)
-			if obj != nil {
-				return 0, &apierrors.StatusError{
-					ErrStatus: v1.Status{
-						Code:    http.StatusConflict,
-						Message: "key already exists",
-					},
-				}
-			}
-		}
-
 		rv = s.rv.Add(1)
 		err = s.bucket.WriteAll(ctx, s.getPath(event.Key, rv), event.Value, &blob.WriterOptions{
 			ContentType: "application/json",
@@ -155,23 +137,6 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 
 func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	rv := req.ResourceVersion
-	if rv > s.rv.Load() {
-		return nil, &apierrors.StatusError{
-			ErrStatus: v1.Status{
-				Reason:  v1.StatusReasonTimeout, // match etcd behavior
-				Code:    http.StatusGatewayTimeout,
-				Message: "CauseTypeResourceVersionTooLarge",
-				Details: &v1.StatusDetails{
-					Causes: []v1.StatusCause{
-						{
-							Type:    v1.CauseTypeResourceVersionTooLarge,
-							Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
-						},
-					},
-				},
-			},
-		}
-	}
 
 	path := s.getPath(req.Key, rv)
 	if rv < 1 {
@@ -197,11 +162,30 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 
 	raw, err := s.bucket.ReadAll(ctx, path)
 	if raw == nil && req.ResourceVersion > 0 {
-		// If the there was an explicit request, find the latest
+		if req.ResourceVersion > s.rv.Load() {
+			return nil, &apierrors.StatusError{
+				ErrStatus: v1.Status{
+					Reason:  v1.StatusReasonTimeout, // match etcd behavior
+					Code:    http.StatusGatewayTimeout,
+					Message: "ResourceVersion is larger than max",
+					Details: &v1.StatusDetails{
+						Causes: []v1.StatusCause{
+							{
+								Type:    v1.CauseTypeResourceVersionTooLarge,
+								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
+							},
+						},
+					},
+				},
+			}
+		}
+
+		// If the there was an explicit request, get the latest
 		rsp, _ := s.Read(ctx, &ReadRequest{Key: req.Key})
-		if rsp != nil {
+		if rsp != nil && len(rsp.Value) > 0 {
 			raw = rsp.Value
 			rv = rsp.ResourceVersion
+			err = nil
 		}
 	}
 	if err == nil && isDeletedMarker(raw) {

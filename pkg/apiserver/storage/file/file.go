@@ -386,10 +386,6 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return errorWrap(rsp.Error)
 	}
 
-	if err = s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
-		return err
-	}
-
 	_, _, err = s.codec.Decode(rsp.Value, nil, objPtr)
 	if err != nil {
 		return err
