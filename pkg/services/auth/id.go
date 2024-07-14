@@ -3,9 +3,9 @@ package auth
 import (
 	"context"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type IDService interface {
@@ -20,9 +20,4 @@ type IDSigner interface {
 	SignIDToken(ctx context.Context, claims *IDClaims) (string, error)
 }
 
-type IDClaims struct {
-	jwt.Claims
-	Email           string `json:"email"`
-	EmailVerified   bool   `json:"email_verified"`
-	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
-}
+type IDClaims = authnlib.Claims[authnlib.IDTokenClaims]

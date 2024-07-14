@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
 import { DashboardModel, PanelModel } from '../../state';
+import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardStringDiff } from './jsonDiffText';
 
@@ -59,18 +60,35 @@ export function getDashboardChanges(dashboard: DashboardModel): {
   };
 }
 
+// Shared healthcheck promise so avoid multiple calls llm app settings and health check APIs
+let llmHealthCheck: Promise<boolean> | undefined;
+
 /**
  * Check if the LLM plugin is enabled.
  * @returns true if the LLM plugin is enabled.
  */
-export async function isLLMPluginEnabled() {
+export async function isLLMPluginEnabled(): Promise<boolean> {
   if (!config.apps['grafana-llm-app']) {
     return false;
   }
 
+  if (llmHealthCheck) {
+    return llmHealthCheck;
+  }
+
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  return llms.openai.health().then((response) => response.ok);
+  llmHealthCheck = new Promise((resolve) => {
+    llms.openai.health().then((response) => {
+      if (!response.ok) {
+        // Health check fail clear cached promise so we can try again later
+        llmHealthCheck = undefined;
+      }
+      resolve(response.ok);
+    });
+  });
+
+  return llmHealthCheck;
 }
 
 /**
@@ -94,11 +112,7 @@ export const getFeedbackMessage = (previousResponse: string, feedback: string | 
  * @returns String for inclusion in prompts stating what the dashboard's panels are
  */
 export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
-  const getPanelString = (panel: PanelModel, idx: number) =>
-    `- Panel ${idx}
-- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;
-
-  const panelStrings: string[] = dashboard.panels.map(getPanelString);
+  const panelStrings: string[] = getPanelStrings(dashboard);
   let panelPrompt: string;
 
   if (panelStrings.length <= 10) {
@@ -141,3 +155,22 @@ export function getFilteredPanelString(panel: Panel): string {
 
   return JSON.stringify(filteredPanel, null, 2);
 }
+
+export const DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE =
+  'To generate this content your dashboard must contain at least one panel with a valid title or description.';
+
+export function getPanelStrings(dashboard: DashboardModel): string[] {
+  const panelStrings = dashboard.panels
+    .filter(
+      (panel) =>
+        (panel.title.length > 0 && panel.title !== NEW_PANEL_TITLE) ||
+        (panel.description && panel.description.length > 0)
+    )
+    .map(getPanelString);
+
+  return panelStrings;
+}
+
+const getPanelString = (panel: PanelModel, idx: number) =>
+  `- Panel ${idx}
+- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;

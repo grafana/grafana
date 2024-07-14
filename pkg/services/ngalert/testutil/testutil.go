@@ -26,10 +26,10 @@ import (
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features, supportbundlestest.NewFakeBundleService(), nil)
+	return folderimpl.ProvideService(ac, bus, dashboardStore, folderStore, db, features, supportbundlestest.NewFakeBundleService(), nil)
 }
 
-func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
+func SetupDashboardService(tb testing.TB, sqlStore db.ReplDB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
 	tb.Helper()
 
 	origNewGuardian := guardian.New
@@ -50,7 +50,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(tb, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(

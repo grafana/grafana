@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -65,11 +66,12 @@ type FrontendSettingsLicenseInfoDTO struct {
 }
 
 type FrontendSettingsAzureDTO struct {
-	Cloud                                  string `json:"cloud"`
-	ManagedIdentityEnabled                 bool   `json:"managedIdentityEnabled"`
-	WorkloadIdentityEnabled                bool   `json:"workloadIdentityEnabled"`
-	UserIdentityEnabled                    bool   `json:"userIdentityEnabled"`
-	UserIdentityFallbackCredentialsEnabled bool   `json:"userIdentityFallbackCredentialsEnabled"`
+	Cloud                                  string                      `json:"cloud"`
+	Clouds                                 []azsettings.AzureCloudInfo `json:"clouds"`
+	ManagedIdentityEnabled                 bool                        `json:"managedIdentityEnabled"`
+	WorkloadIdentityEnabled                bool                        `json:"workloadIdentityEnabled"`
+	UserIdentityEnabled                    bool                        `json:"userIdentityEnabled"`
+	UserIdentityFallbackCredentialsEnabled bool                        `json:"userIdentityFallbackCredentialsEnabled"`
 }
 
 type FrontendSettingsCachingDTO struct {
@@ -229,6 +231,7 @@ type FrontendSettingsDTO struct {
 	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
+	ReportingStaticContext           map[string]string              `json:"reportingStaticContext"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 

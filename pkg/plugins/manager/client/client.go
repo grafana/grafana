@@ -94,7 +94,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	removeNonAllowedHeaders(req.Headers)
 
 	processedStreams := 0
-	wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+	wrappedSender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		// Expected that headers and status are only part of first stream
 		if processedStreams == 0 && res != nil {
 			if len(res.Headers) > 0 {
@@ -217,6 +217,48 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	return plugin.RunStream(ctx, req, sender)
 }
 
+// ConvertObject implements plugins.Client.
+func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.ConvertObject(ctx, req)
+}
+
+// MutateAdmission implements plugins.Client.
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.MutateAdmission(ctx, req)
+}
+
+// ValidateAdmission implements plugins.Client.
+func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.ValidateAdmission(ctx, req)
+}
+
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pluginID, pluginVersion string) (*plugins.Plugin, bool) {
 	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, pluginVersion)
@@ -311,10 +353,4 @@ func ensureContentTypeHeader(res *backend.CallResourceResponse) {
 	if !hasContentType && res.Status != http.StatusNoContent {
 		res.Headers[contentTypeHeaderName] = []string{defaultContentType}
 	}
-}
-
-type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
-
-func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
-	return fn(res)
 }

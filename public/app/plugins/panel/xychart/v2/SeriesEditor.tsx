@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -30,15 +30,20 @@ export const SeriesEditor = ({
   const prevMapping = usePrevious(mapping);
   const mappingChanged = prevMapping != null && mapping !== prevMapping;
 
-  if (mappingChanged || seriesCfg == null || seriesCfg.length === 0) {
-    seriesCfg = [{}];
-    onChange([...seriesCfg]);
-  }
-
+  const defaultFrame = { frame: { matcher: { id: FrameMatcherID.byIndex, options: 0 } } };
   const [selectedIdx, setSelectedIdx] = useState(0);
 
+  if (mappingChanged || seriesCfg == null) {
+    seriesCfg = [{ ...defaultFrame }];
+    onChange([...seriesCfg]);
+
+    if (selectedIdx > 0) {
+      setSelectedIdx(0);
+    }
+  }
+
   const addSeries = () => {
-    seriesCfg = seriesCfg.concat({});
+    seriesCfg = seriesCfg.concat({ ...defaultFrame });
     setSelectedIdx(seriesCfg.length - 1);
     onChange([...seriesCfg]);
   };
@@ -50,7 +55,6 @@ export const SeriesEditor = ({
   };
 
   const series = seriesCfg[selectedIdx];
-
   const formKey = `${mapping}${selectedIdx}`;
 
   const baseNameMode =
@@ -119,174 +123,176 @@ export const SeriesEditor = ({
         </>
       )}
 
-      <Fragment key={formKey}>
-        <Field label="Frame">
-          <Select
-            placeholder={mapping === SeriesMapping.Auto ? 'All frames' : 'Select frame'}
-            isClearable={true}
-            options={context.data.map((frame, index) => ({
-              value: index,
-              label: `${getFrameDisplayName(frame, index)} (index: ${index}, rows: ${frame.length})`,
-            }))}
-            value={series.frame?.matcher.options}
-            onChange={(opt) => {
-              if (opt == null) {
-                delete series.frame;
-              } else {
-                series.frame = {
-                  matcher: {
-                    id: FrameMatcherID.byIndex,
-                    options: Number(opt.value),
-                  },
-                };
-              }
+      {selectedIdx >= 0 && series != null && (
+        <Fragment key={formKey}>
+          <Field label="Frame">
+            <Select
+              placeholder={mapping === SeriesMapping.Auto ? 'All frames' : 'Select frame'}
+              isClearable={true}
+              options={context.data.map((frame, index) => ({
+                value: index,
+                label: `${getFrameDisplayName(frame, index)} (index: ${index}, rows: ${frame.length})`,
+              }))}
+              value={series.frame?.matcher.options}
+              onChange={(opt) => {
+                if (opt == null) {
+                  delete series.frame;
+                } else {
+                  series.frame = {
+                    matcher: {
+                      id: FrameMatcherID.byIndex,
+                      options: Number(opt.value),
+                    },
+                  };
+                }
 
-              onChange([...seriesCfg]);
-            }}
-          />
-        </Field>
-        <Field label="X field">
-          <FieldNamePicker
-            value={series.x?.matcher.options as string}
-            context={context}
-            onChange={(fieldName) => {
-              if (fieldName == null) {
-                delete series.x;
-              } else {
-                // TODO: reset any other dim that was set to fieldName
-                series.x = {
-                  matcher: {
-                    id: FieldMatcherID.byName,
-                    options: fieldName,
-                  },
-                };
-              }
+                onChange([...seriesCfg]);
+              }}
+            />
+          </Field>
+          <Field label="X field">
+            <FieldNamePicker
+              value={series.x?.matcher.options as string}
+              context={context}
+              onChange={(fieldName) => {
+                if (fieldName == null) {
+                  delete series.x;
+                } else {
+                  // TODO: reset any other dim that was set to fieldName
+                  series.x = {
+                    matcher: {
+                      id: FieldMatcherID.byName,
+                      options: fieldName,
+                    },
+                  };
+                }
 
-              onChange([...seriesCfg]);
-            }}
-            item={{
-              id: 'x',
-              name: 'x',
-              settings: {
-                filter: (field) =>
-                  (mapping === SeriesMapping.Auto ||
-                    field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                  field.type === FieldType.number &&
-                  !field.config.custom?.hideFrom?.viz,
-                baseNameMode,
-                placeholderText: mapping === SeriesMapping.Auto ? 'First number field in each frame' : undefined,
-              },
-            }}
-          />
-        </Field>
-        <Field label="Y field">
-          <FieldNamePicker
-            value={series.y?.matcher?.options as string}
-            context={context}
-            onChange={(fieldName) => {
-              if (fieldName == null) {
-                delete series.y;
-              } else {
-                // TODO: reset any other dim that was set to fieldName
-                series.y = {
-                  matcher: {
-                    id: FieldMatcherID.byName,
-                    options: fieldName,
-                  },
-                };
-              }
+                onChange([...seriesCfg]);
+              }}
+              item={{
+                id: 'x',
+                name: 'x',
+                settings: {
+                  filter: (field) =>
+                    (mapping === SeriesMapping.Auto ||
+                      field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
+                    field.type === FieldType.number &&
+                    !field.config.custom?.hideFrom?.viz,
+                  baseNameMode,
+                  placeholderText: mapping === SeriesMapping.Auto ? 'First number field in each frame' : undefined,
+                },
+              }}
+            />
+          </Field>
+          <Field label="Y field">
+            <FieldNamePicker
+              value={series.y?.matcher?.options as string}
+              context={context}
+              onChange={(fieldName) => {
+                if (fieldName == null) {
+                  delete series.y;
+                } else {
+                  // TODO: reset any other dim that was set to fieldName
+                  series.y = {
+                    matcher: {
+                      id: FieldMatcherID.byName,
+                      options: fieldName,
+                    },
+                  };
+                }
 
-              onChange([...seriesCfg]);
-            }}
-            item={{
-              id: 'y',
-              name: 'y',
-              settings: {
-                // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
-                filter: (field) =>
-                  (mapping === SeriesMapping.Auto ||
-                    field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                  field.type === FieldType.number &&
-                  !field.config.custom?.hideFrom?.viz,
-                baseNameMode,
-                placeholderText: mapping === SeriesMapping.Auto ? 'Remaining number fields in each frame' : undefined,
-              },
-            }}
-          />
-        </Field>
-        <Field label="Size field">
-          <FieldNamePicker
-            value={series.size?.matcher?.options as string}
-            context={context}
-            onChange={(fieldName) => {
-              if (fieldName == null) {
-                delete series.size;
-              } else {
-                // TODO: reset any other dim that was set to fieldName
-                series.size = {
-                  matcher: {
-                    id: FieldMatcherID.byName,
-                    options: fieldName,
-                  },
-                };
-              }
+                onChange([...seriesCfg]);
+              }}
+              item={{
+                id: 'y',
+                name: 'y',
+                settings: {
+                  // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
+                  filter: (field) =>
+                    (mapping === SeriesMapping.Auto ||
+                      field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
+                    field.type === FieldType.number &&
+                    !field.config.custom?.hideFrom?.viz,
+                  baseNameMode,
+                  placeholderText: mapping === SeriesMapping.Auto ? 'Remaining number fields in each frame' : undefined,
+                },
+              }}
+            />
+          </Field>
+          <Field label="Size field">
+            <FieldNamePicker
+              value={series.size?.matcher?.options as string}
+              context={context}
+              onChange={(fieldName) => {
+                if (fieldName == null) {
+                  delete series.size;
+                } else {
+                  // TODO: reset any other dim that was set to fieldName
+                  series.size = {
+                    matcher: {
+                      id: FieldMatcherID.byName,
+                      options: fieldName,
+                    },
+                  };
+                }
 
-              onChange([...seriesCfg]);
-            }}
-            item={{
-              id: 'size',
-              name: 'size',
-              settings: {
-                // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
-                filter: (field) =>
-                  field.name !== series.x?.matcher.options &&
-                  (mapping === SeriesMapping.Auto ||
-                    field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                  field.type === FieldType.number &&
-                  !field.config.custom?.hideFrom?.viz,
-                baseNameMode,
-                placeholderText: '',
-              },
-            }}
-          />
-        </Field>
-        <Field label="Color field">
-          <FieldNamePicker
-            value={series.color?.matcher?.options as string}
-            context={context}
-            onChange={(fieldName) => {
-              if (fieldName == null) {
-                delete series.color;
-              } else {
-                // TODO: reset any other dim that was set to fieldName
-                series.color = {
-                  matcher: {
-                    id: FieldMatcherID.byName,
-                    options: fieldName,
-                  },
-                };
-              }
+                onChange([...seriesCfg]);
+              }}
+              item={{
+                id: 'size',
+                name: 'size',
+                settings: {
+                  // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
+                  filter: (field) =>
+                    field.name !== series.x?.matcher.options &&
+                    (mapping === SeriesMapping.Auto ||
+                      field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
+                    field.type === FieldType.number &&
+                    !field.config.custom?.hideFrom?.viz,
+                  baseNameMode,
+                  placeholderText: '',
+                },
+              }}
+            />
+          </Field>
+          <Field label="Color field">
+            <FieldNamePicker
+              value={series.color?.matcher?.options as string}
+              context={context}
+              onChange={(fieldName) => {
+                if (fieldName == null) {
+                  delete series.color;
+                } else {
+                  // TODO: reset any other dim that was set to fieldName
+                  series.color = {
+                    matcher: {
+                      id: FieldMatcherID.byName,
+                      options: fieldName,
+                    },
+                  };
+                }
 
-              onChange([...seriesCfg]);
-            }}
-            item={{
-              id: 'color',
-              name: 'color',
-              settings: {
-                // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
-                filter: (field) =>
-                  field.name !== series.x?.matcher.options &&
-                  (mapping === SeriesMapping.Auto ||
-                    field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                  field.type === FieldType.number &&
-                  !field.config.custom?.hideFrom?.viz,
-                baseNameMode,
-                placeholderText: '',
-              },
-            }}
-          />
-        </Field>
-      </Fragment>
+                onChange([...seriesCfg]);
+              }}
+              item={{
+                id: 'color',
+                name: 'color',
+                settings: {
+                  // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
+                  filter: (field) =>
+                    field.name !== series.x?.matcher.options &&
+                    (mapping === SeriesMapping.Auto ||
+                      field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
+                    field.type === FieldType.number &&
+                    !field.config.custom?.hideFrom?.viz,
+                  baseNameMode,
+                  placeholderText: '',
+                },
+              }}
+            />
+          </Field>
+        </Fragment>
+      )}
     </>
   );
 };

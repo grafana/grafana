@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -40,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -72,6 +75,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
+	httpClientProvider httpclient.Provider,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -98,6 +102,7 @@ func ProvideService(
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
+		httpClientProvider:   httpClientProvider,
 	}
 
 	if ng.IsDisabled() {
@@ -133,7 +138,8 @@ type AlertNG struct {
 	stateManager        *state.Manager
 	folderService       folder.Service
 	dashboardService    dashboards.DashboardService
-	api                 *api.API
+	Api                 *api.API
+	httpClientProvider  httpclient.Provider
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -164,17 +170,90 @@ func (ng *AlertNG) init() error {
 	// If enabled, configure the remote Alertmanager.
 	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
 	// - If no toggles are enabled, we default to using only the internal Alertmanager
-	// We currently support only remote secondary mode, so in case other toggles are enabled we fall back to remote secondary.
+	// We currently do not support remote primary mode, so we fall back to remote secondary.
 	var overrides []notifier.Option
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
+		autogenFn := remote.NoopAutogenFn
+		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertingSimplifiedRouting) {
+			autogenFn = func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
+				return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
+			}
+		}
+
 		switch {
-		case remoteOnly, remotePrimary:
-			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
-			fallthrough
+		case remoteOnly:
+			ng.Log.Debug("Starting Grafana with remote only mode enabled")
+			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+			m.Info.WithLabelValues(metrics.ModeRemoteOnly).Set(1)
+			ng.Cfg.UnifiedAlerting.SkipClustering = true
+
+			// This function will be used by the MOA to create new Alertmanagers.
+			override := notifier.WithAlertmanagerOverride(func(_ notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create remote Alertmanager.
+					cfg := remote.AlertmanagerConfig{
+						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+						OrgID:             orgID,
+						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						PromoteConfig:     true,
+						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+						ExternalURL:       ng.Cfg.AppURL,
+						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
+					}
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
+					if err != nil {
+						moaLogger.Error("Failed to create remote Alertmanager", "err", err)
+						return nil, err
+					}
+					return remoteAM, nil
+				}
+			})
+
+			overrides = append(overrides, override)
+
+		case remotePrimary:
+			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
+			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
+			ng.Cfg.UnifiedAlerting.SkipClustering = true
+			// This function will be used by the MOA to create new Alertmanagers.
+			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Create remote Alertmanager.
+					cfg := remote.AlertmanagerConfig{
+						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+						OrgID:             orgID,
+						PromoteConfig:     true,
+						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						ExternalURL:       ng.Cfg.AppURL,
+						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
+					}
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
+					if err != nil {
+						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+						return internalAM, nil
+					}
+
+					// Use both Alertmanager implementations in the forked Alertmanager.
+					return remote.NewRemotePrimaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-primary"), internalAM, remoteAM), nil
+				}
+			})
+
+			overrides = append(overrides, override)
 
 		case remoteSecondary:
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
@@ -191,20 +270,30 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, ng.SecretsService.Decrypt, ng.Cfg.UnifiedAlerting.DefaultConfiguration, m)
+					cfg := remote.AlertmanagerConfig{
+						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+						OrgID:             orgID,
+						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+						ExternalURL:       ng.Cfg.AppURL,
+						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
+					}
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
 					}
 
 					// Use both Alertmanager implementations in the forked Alertmanager.
-					cfg := remote.RemoteSecondaryConfig{
+					rsCfg := remote.RemoteSecondaryConfig{
 						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
 						OrgID:        orgID,
 						Store:        ng.store,
 						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
-					return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
+					return remote.NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
 				}
 			})
 
@@ -243,16 +332,22 @@ func (ng *AlertNG) init() error {
 	clk := clock.New()
 
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService)
+		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
-	if err := alertsRouter.SyncAndApplyConfigFromDatabase(); err != nil {
+	if err := alertsRouter.SyncAndApplyConfigFromDatabase(initCtx); err != nil {
 		return fmt.Errorf("failed to initialize alerting because alert notifications router failed to warm up: %w", err)
 	}
 
 	ng.AlertsRouter = alertsRouter
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
+
+	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.tracer, ng.Metrics.GetRemoteWriterMetrics())
+	if err != nil {
+		return fmt.Errorf("failed to initialize recording writer: %w", err)
+	}
+
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
 		C:                    clk,
@@ -263,16 +358,18 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
+		FeatureToggles:       ng.FeatureToggles,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
+		RecordingWriter:      recordingWriter,
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
 	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
-	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
+	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer, ac.NewRuleService(ng.accesscontrol))
 	if err != nil {
 		return err
 	}
@@ -290,6 +387,7 @@ func (ng *AlertNG) init() error {
 		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
+		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
 	logger := log.New("ngalert.state.manager.persist")
 	statePersister := state.NewSyncStatePersisiter(logger, cfg)
@@ -315,13 +413,13 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
 	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.dashboardService, ng.QuotaService, ng.store,
+	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol))
 
-	ng.api = &api.API{
+	ng.Api = &api.API{
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
@@ -350,7 +448,7 @@ func (ng *AlertNG) init() error {
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
 	}
-	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
+	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
 	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
 		return err
@@ -428,7 +526,7 @@ func (ng *AlertNG) IsDisabled() bool {
 // GetHooks returns a facility for replacing handlers for paths. The handler hook for a path
 // is invoked after all other middleware is invoked (authentication, instrumentation).
 func (ng *AlertNG) GetHooks() *api.Hooks {
-	return ng.api.Hooks
+	return ng.Api.Hooks
 }
 
 type Historian interface {
@@ -436,7 +534,7 @@ type Historian interface {
 	state.Historian
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger) (Historian, error) {
+func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger, tracer tracing.Tracer, ac historian.AccessControl) (Historian, error) {
 	if !cfg.Enabled {
 		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
@@ -451,7 +549,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -460,7 +558,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -472,7 +570,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 	if backend == historian.BackendTypeAnnotations {
 		store := historian.NewAnnotationStore(ar, ds, met)
-		return historian.NewAnnotationBackend(store, rs, met), nil
+		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)
@@ -481,7 +580,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		}
 		req := historian.NewRequester()
 		lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
-		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met)
+		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met, tracer, rs, ac)
 
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
@@ -539,12 +638,16 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 }
 
-func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, defaultConfig string, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
-	externalAMCfg := remote.AlertmanagerConfig{
-		OrgID:             orgID,
-		URL:               amCfg.URL,
-		TenantID:          amCfg.TenantID,
-		BasicAuthPassword: amCfg.Password,
+func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*remote.Alertmanager, error) {
+	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
+}
+
+func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, tracer tracing.Tracer, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+	logger := log.New("ngalert.writer")
+
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+		return writer.NewPrometheusWriter(settings, httpClientProvider, tracer, logger, m)
 	}
-	return remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvstore), decryptFn, defaultConfig, m)
+
+	return writer.NoopWriter{}, nil
 }

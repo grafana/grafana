@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
+import * as React from 'react';
 
 import { createDataFrame } from '@grafana/data';
 
@@ -49,6 +49,8 @@ describe('FlameGraph', () => {
         colorScheme={ColorScheme.ValueBased}
         selectedView={SelectedView.FlameGraph}
         search={''}
+        collapsedMap={container.getCollapsedMap()}
+        setCollapsedMap={() => {}}
         {...props}
       />
     );

@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/ResultsTable.tsx
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -187,67 +187,65 @@ export function ResultsTable(props: ResultsTableProps) {
 
 const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
-    table: css`
-      ${disableTextWrap ? '' : 'table-layout: fixed;'}
-      border-radius: ${theme.shape.radius.default};
-      width: 100%;
-      white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
-      td {
-        padding: ${theme.spacing(1)};
-      }
-
-      td,
-      th {
-        min-width: ${theme.spacing(3)};
-        border-bottom: 1px solid ${theme.colors.border.weak};
-      }
-    `,
-    row: css`
-      label: row;
-      border-bottom: 1px solid ${theme.colors.border.weak}
-      &:last-child {
-        border-bottom: 0;
-      }
-    `,
-    tableHeaderPadding: css`
-      padding: 8px;
-    `,
-    matchHighLight: css`
-      background: inherit;
-      color: ${theme.components.textHighlight.text};
-      background-color: ${theme.components.textHighlight.background};
-    `,
-    nameWidth: css`
-      ${disableTextWrap ? '' : 'width: 37.5%;'}
-    `,
-    nameOverflow: css`
-      ${disableTextWrap ? '' : 'overflow-wrap: anywhere;'}
-    `,
-    typeWidth: css`
-      ${disableTextWrap ? '' : 'width: 15%;'}
-    `,
-    descriptionWidth: css`
-      ${disableTextWrap ? '' : 'width: 35%;'}
-    `,
-    selectButtonWidth: css`
-      ${disableTextWrap ? '' : 'width: 12.5%;'}
-    `,
-    stickyHeader: css`
-      position: sticky;
-      top: 0;
-      background-color: ${theme.colors.background.primary};
-    `,
-    noResults: css`
-      text-align: center;
-      color: ${theme.colors.text.secondary};
-    `,
-    tooltipSpace: css`
-      margin-left: 4px;
-    `,
-    centerButton: css`
-      display: block;
-      margin: auto;
-      border: none;
-    `,
+    table: css({
+      tableLayout: disableTextWrap ? undefined : 'fixed',
+      borderRadius: theme.shape.radius.default,
+      width: '100%',
+      whiteSpace: disableTextWrap ? 'nowrap' : 'normal',
+      td: {
+        padding: theme.spacing(1),
+      },
+      'td,th': {
+        minWidth: theme.spacing(3),
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+      },
+    }),
+    row: css({
+      label: 'row',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:last-child': {
+        borderBottom: 0,
+      },
+    }),
+    tableHeaderPadding: css({
+      padding: '8px',
+    }),
+    matchHighLight: css({
+      background: 'inherit',
+      color: theme.components.textHighlight.text,
+      backgroundColor: theme.components.textHighlight.background,
+    }),
+    nameWidth: css({
+      width: disableTextWrap ? undefined : '37.5%',
+    }),
+    nameOverflow: css({
+      overflowWrap: disableTextWrap ? undefined : 'anywhere',
+    }),
+    typeWidth: css({
+      width: disableTextWrap ? undefined : '15%',
+    }),
+    descriptionWidth: css({
+      width: disableTextWrap ? undefined : '35%',
+    }),
+    selectButtonWidth: css({
+      width: disableTextWrap ? undefined : '12.5%',
+    }),
+    stickyHeader: css({
+      position: 'sticky',
+      top: 0,
+      backgroundColor: theme.colors.background.primary,
+    }),
+    noResults: css({
+      textAlign: 'center',
+      color: theme.colors.text.secondary,
+    }),
+    tooltipSpace: css({
+      marginLeft: '4px',
+    }),
+    centerButton: css({
+      display: 'block',
+      margin: 'auto',
+      border: 'none',
+    }),
   };
 };

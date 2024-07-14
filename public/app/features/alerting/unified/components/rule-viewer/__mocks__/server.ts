@@ -1,13 +1,12 @@
 import { http, HttpResponse, RequestHandler } from 'msw';
 import { setupServer } from 'msw/node';
 
-import { AlertmanagersChoiceResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
+import { GrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
+import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import { alertmanagerChoiceHandler } from '../../../mocks/alertmanagerApi';
-
-const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
+const grafanaAlertingConfigurationMockedResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
   numExternalAlertmanagers: 0,
 };
@@ -21,7 +20,7 @@ const folderAccess = {
 
 export function createMockGrafanaServer(...handlers: RequestHandler[]) {
   const folderHandler = mockFolderAccess(folderAccess);
-  const amChoiceHandler = alertmanagerChoiceHandler(alertmanagerChoiceMockedResponse);
+  const amChoiceHandler = grafanaAlertingConfigurationStatusHandler(grafanaAlertingConfigurationMockedResponse);
 
   return setupServer(folderHandler, amChoiceHandler, ...handlers);
 }

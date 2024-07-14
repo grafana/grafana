@@ -1,23 +1,24 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, MouseEvent } from 'react';
+import * as React from 'react';
+import { MouseEvent, PureComponent } from 'react';
 
 import {
-  Field,
-  LinkModel,
-  LogRowModel,
-  LogsSortOrder,
-  dateTimeFormat,
   CoreApp,
   DataFrame,
+  dateTimeFormat,
+  Field,
+  LinkModel,
   LogRowContextOptions,
+  LogRowModel,
+  LogsSortOrder,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+import { Icon, PopoverContent, Themeable2, Tooltip, withTheme2 } from '@grafana/ui';
 
-import { checkLogsError, escapeUnescapedString } from '../utils';
+import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
@@ -58,8 +59,9 @@ interface Props extends Themeable2 {
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  onPinLine?: (row: LogRowModel) => void;
+  onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
@@ -217,13 +219,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       app,
       styles,
       getRowContextQuery,
+      pinned,
     } = this.props;
+
     const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
+    const { sampleMessage, isSampled } = checkLogsSampled(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: showingContext || permalinked,
+      [styles.highlightBackground]: showingContext || permalinked || pinned,
     });
     const logRowDetailsBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
@@ -253,18 +258,32 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={hasError ? '' : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}>
+          <td
+            className={
+              hasError || isSampled
+                ? styles.logsRowWithError
+                : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`
+            }
+          >
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
                 <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
               </Tooltip>
             )}
+            {isSampled && (
+              <Tooltip content={`${sampleMessage}`} placement="right" theme="info">
+                <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
+              </Tooltip>
+            )}
           </td>
-          {enableLogDetails && (
-            <td title={showDetails ? 'Hide log details' : 'See log details'} className={styles.logsRowToggleDetails}>
+          <td
+            title={enableLogDetails ? (showDetails ? 'Hide log details' : 'See log details') : ''}
+            className={enableLogDetails ? styles.logsRowToggleDetails : ''}
+          >
+            {enableLogDetails && (
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
-            </td>
-          )}
+            )}
+          </td>
           {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
             <td className={styles.logsRowLabels}>
@@ -300,14 +319,17 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               styles={styles}
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
+              pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
+              expanded={this.state.showDetails}
             />
           )}
         </tr>
         {this.state.showDetails && (
           <LogDetails
+            onPinLine={this.props.onPinLine}
             className={logRowDetailsBackground}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
@@ -323,6 +345,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             app={app}
             styles={styles}
             isFilterLabelActive={this.props.isFilterLabelActive}
+            pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
           />
         )}
       </>

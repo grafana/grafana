@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';

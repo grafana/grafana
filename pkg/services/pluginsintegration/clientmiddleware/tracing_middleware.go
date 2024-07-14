@@ -44,10 +44,10 @@ func setSpanAttributeFromHTTPHeader(headers http.Header, span trace.Span, attrib
 // plugin id, org id, user login, ds, dashboard and panel info. The second function returned is a cleanup function,
 // which should be called by the caller (deferred) and will set the span status/error and end the span.
 func (m *TracingMiddleware) traceWrap(
-	ctx context.Context, pluginContext backend.PluginContext, opName string,
+	ctx context.Context, pluginContext backend.PluginContext,
 ) (context.Context, func(error)) {
-	// Start span
-	ctx, span := m.tracer.Start(ctx, "PluginClient."+opName, trace.WithAttributes(
+	endpoint := backend.EndpointFromContext(ctx)
+	ctx, span := m.tracer.Start(ctx, "PluginClient."+string(endpoint), trace.WithAttributes(
 		// Attach some plugin context information to span
 		attribute.String("plugin_id", pluginContext.PluginID),
 		attribute.Int64("org_id", pluginContext.OrgID),
@@ -82,7 +82,7 @@ func (m *TracingMiddleware) traceWrap(
 
 func (m *TracingMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "queryData")
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
 	resp, err := m.next.QueryData(ctx, req)
 	return resp, err
@@ -90,7 +90,7 @@ func (m *TracingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 
 func (m *TracingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "callResource")
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
 	err = m.next.CallResource(ctx, req, sender)
 	return err
@@ -98,7 +98,7 @@ func (m *TracingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 
 func (m *TracingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "checkHealth")
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
 	resp, err := m.next.CheckHealth(ctx, req)
 	return resp, err
@@ -106,7 +106,7 @@ func (m *TracingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckH
 
 func (m *TracingMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "collectMetrics")
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
 	resp, err := m.next.CollectMetrics(ctx, req)
 	return resp, err
@@ -114,7 +114,7 @@ func (m *TracingMiddleware) CollectMetrics(ctx context.Context, req *backend.Col
 
 func (m *TracingMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "subscribeStream")
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
 	resp, err := m.next.SubscribeStream(ctx, req)
 	return resp, err
@@ -122,7 +122,7 @@ func (m *TracingMiddleware) SubscribeStream(ctx context.Context, req *backend.Su
 
 func (m *TracingMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "publishStream")
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
 	resp, err := m.next.PublishStream(ctx, req)
 	return resp, err
@@ -130,8 +130,35 @@ func (m *TracingMiddleware) PublishStream(ctx context.Context, req *backend.Publ
 
 func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "runStream")
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
 	err = m.next.RunStream(ctx, req, sender)
 	return err
+}
+
+// ValidateAdmission implements backend.AdmissionHandler.
+func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
+	defer func() { end(err) }()
+	resp, err := m.next.ValidateAdmission(ctx, req)
+	return resp, err
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
+	defer func() { end(err) }()
+	resp, err := m.next.MutateAdmission(ctx, req)
+	return resp, err
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
+	defer func() { end(err) }()
+	resp, err := m.next.ConvertObject(ctx, req)
+	return resp, err
 }

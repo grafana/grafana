@@ -1,6 +1,12 @@
+import { AppEvents } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertingApi } from './alertingApi';
+
+export type SilenceCreatedResponse = {
+  silenceId: string;
+};
 
 export const alertSilencesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -8,10 +14,17 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       Silence[],
       {
         datasourceUid: string;
+        ruleMetadata?: boolean;
+        accessControl?: boolean;
       }
     >({
-      query: ({ datasourceUid }) => ({
+      query: ({ datasourceUid, ruleMetadata, accessControl }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silences`,
+        params: {
+          ruleMetadata,
+          // query param is lowercased on backend for consistency with folder endpoint
+          accesscontrol: accessControl,
+        },
       }),
       providesTags: (result) =>
         result ? result.map(({ id }) => ({ type: 'AlertmanagerSilences', id })) : ['AlertmanagerSilences'],
@@ -22,20 +35,25 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       {
         datasourceUid: string;
         id: string;
+        ruleMetadata?: boolean;
+        accessControl?: boolean;
       }
     >({
-      query: ({ datasourceUid, id }) => ({
+      query: ({ datasourceUid, id, ruleMetadata, accessControl }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silence/${id}`,
         showErrorAlert: false,
+        params: {
+          ruleMetadata,
+          // query param is lowercased on backend for consistency with folder endpoint
+          accesscontrol: accessControl,
+        },
       }),
       providesTags: (result, error, { id }) =>
         result ? [{ type: 'AlertmanagerSilences', id }] : ['AlertmanagerSilences'],
     }),
 
     createSilence: build.mutation<
-      {
-        silenceId: string;
-      },
+      SilenceCreatedResponse,
       {
         datasourceUid: string;
         payload: SilenceCreatePayload;
@@ -47,6 +65,14 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
         data: payload,
       }),
       invalidatesTags: ['AlertmanagerSilences', 'AlertmanagerAlerts'],
+      onQueryStarted: async (arg, { queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+          appEvents.emit(AppEvents.alertSuccess, ['Silence created']);
+        } catch (error) {
+          appEvents.emit(AppEvents.alertError, ['Could not create silence']);
+        }
+      },
     }),
 
     expireSilence: build.mutation<

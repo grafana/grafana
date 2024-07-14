@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Icon, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -11,9 +12,12 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
+  id?: string;
+  onPin: (id?: string) => void;
+  isPinned?: boolean;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url, id, onPin, isPinned }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
@@ -26,6 +30,17 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
         // As nav links are supposed to link to internal urls this option should be used with caution
         target === '_blank' && <Icon data-testid="external-link-icon" name="external-link-alt" />
       }
+      {config.featureToggles.pinNavItems && (
+        <Icon
+          name={isPinned ? 'favorite' : 'star'}
+          className={'pin-icon'}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onPin(id);
+          }}
+        />
+      )}
     </div>
   );
 
@@ -90,5 +105,17 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     gap: '0.5rem',
     height: '100%',
     width: '100%',
+    justifyContent: 'space-between',
+    '.pin-icon': {
+      display: 'none',
+      padding: theme.spacing(0.5),
+      width: theme.spacing(3),
+      height: theme.spacing(3),
+    },
+    '&:hover': {
+      '.pin-icon': {
+        display: 'block',
+      },
+    },
   }),
 });

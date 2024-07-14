@@ -19,6 +19,12 @@ labels:
 menuTitle: Datagrid
 title: Datagrid
 weight: 100
+refs:
+  special-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
 ---
 
 # Datagrid
@@ -41,7 +47,7 @@ Editing the dataset changes the data source to use the inbuilt `-- Grafana --` d
 
 You can then use the panel as a data source for other panels, by using the inbuilt `-- Dashboard --` data source to pull the datagrid data. This allows for an interactive dashboard experience, where you can modify the data and see the changes reflected in other panels.
 
-Learn more about the inbuilt `-- Grafana --` and `-- Dashboard --` data sources in the [special data sources][] documentation.
+Learn more about the inbuilt `-- Grafana --` and `-- Dashboard --` data sources in the [special data sources](ref:special-data-sources) documentation.
 
 ## Context menu
 
@@ -122,7 +128,6 @@ The same rules apply to columns by clicking the column headers.
 
 To delete all rows, use the "select all" checkbox at the top left corner of the datagrid. This selects all rows and allows you to delete them using the context menu.
 
-{{% docs/reference %}}
-[special data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
-[special data sources]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources#special-data-sources"
-{{% /docs/reference %}}
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

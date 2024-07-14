@@ -17,13 +17,19 @@ labels:
     - oss
 title: Stat
 weight: 100
+refs:
+  calculation-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
 ---
 
 # Stat
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This visualization replaces the Singlestat visualization, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
-{{% /admonition %}}
+{{< /admonition >}}
 
 A stat visualization displays your data in single values of interest&mdash;such as the latest or current value of a series&mdash;with an optional graph sparkline. A graph sparkline, which is only available in stat visualizations, is a small time-series graph shown in the background of each value in the visualization.
 
@@ -52,7 +58,7 @@ Alternatively, refer to this blog post on [how to easily retrieve values from a 
 The stat visualization supports a variety of formats for displaying data. Supported formats include:
 
 - **Single values** - The most common format and can be numerical, strings, or boolean values.
-- **Time-series data** - [Calculation types][] can be applied to your time-series data to display single values over a specified time range.
+- **Time-series data** - [Calculation types](ref:calculation-types) can be applied to your time-series data to display single values over a specified time range.
 
 ### Examples
 
@@ -96,6 +102,10 @@ You can use the [**Text mode**](#text-mode) to control how the text is displayed
 
 The panel automatically adjusts the layout depending on available width and height in the dashboard. It automatically hides the graph (sparkline) if the panel becomes too small.
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value options
 
 Use the following options to refine how your visualization displays its values:
@@ -108,7 +118,7 @@ Display a single value per column or series, or show values for each row.
 
 Display a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types][].
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types).
 - **Fields -** Select the fields display in the visualization.
 
 #### All values
@@ -147,9 +157,9 @@ Set whether wide layout is enabled or not. Wide layout is enabled by default.
 - **On -** Wide layout is enabled.
 - **Off -** Wide layout is disabled.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This option is only applicable when **Text mode** is set to **Value and name**. When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough. When wide layout is disabled, the value is always rendered underneath the name.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Color mode
 
@@ -178,9 +188,17 @@ Choose an alignment mode.
 
 Set whether percent change is displayed or not. Disabled by default.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**.
-{{% /admonition %}}
+{{< /admonition >}}
+
+### Percent change color mode
+
+This option is only displayed when **Show percent change** is enabled. Choose from:
+
+- **Standard -** Green if the percent change is positive, red if the percent change is negative.
+- **Inverted -** Red if the percent change is positive, green if the percent change is negative.
+- **Same as Value -** Use the same color as the value.
 
 ## Text size
 
@@ -189,15 +207,22 @@ Adjust the sizes of the gauge text.
 - **Title -** Enter a numeric value for the gauge title size.
 - **Value -** Enter a numeric value for the gauge value size.
 
-## Thresholds
+## Standard options
 
-{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

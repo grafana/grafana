@@ -13,7 +13,6 @@ export interface ActionViewDefinition {
 export const TRAILS_ROUTE = '/explore/metrics/trail';
 export const HOME_ROUTE = '/explore/metrics';
 
-export const VAR_METRIC_NAMES = 'metricNames';
 export const VAR_FILTERS = 'filters';
 export const VAR_FILTERS_EXPR = '{${filters}}';
 export const VAR_METRIC = 'metric';
@@ -32,7 +31,10 @@ export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 
 // Local storage keys
 export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
-export const BOOKMARKED_TRAILS_KEY = 'grafana.trails.bookmarks';
+
+export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
+
+export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 

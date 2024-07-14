@@ -13,8 +13,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -27,7 +30,7 @@ func NewPeakQAPIBuilder() *PeakQAPIBuilder {
 	return &PeakQAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *PeakQAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *PeakQAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -66,7 +69,7 @@ func (b *PeakQAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	_ bool, // dual write (not relevant)
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(peakq.GROUP, scheme, metav1.ParameterCodec, codecs)
 

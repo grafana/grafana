@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -32,6 +32,38 @@ export const openQueryHistory = async () => {
   expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
+export const openQueryLibrary = async () => {
+  const explore = withinExplore('left');
+  const button = explore.getByRole('button', { name: 'Query library' });
+  await userEvent.click(button);
+  await waitFor(async () => {
+    screen.getByRole('tab', {
+      name: /query library/i,
+    });
+  });
+};
+
+export const switchToQueryHistory = async () => {
+  const tab = screen.getByRole('tab', {
+    name: /query history/i,
+  });
+  await userEvent.click(tab);
+};
+
+export const addQueryHistoryToQueryLibrary = async () => {
+  const button = withinQueryHistory().getByRole('button', { name: /add to library/i });
+  await userEvent.click(button);
+};
+
+export const submitAddToQueryLibrary = async ({ description }: { description: string }) => {
+  const input = within(screen.getByRole('dialog')).getByLabelText('Description');
+  await userEvent.type(input, description);
+  const saveButton = screen.getByRole('button', {
+    name: /save/i,
+  });
+  await userEvent.click(saveButton);
+};
+
 export const closeQueryHistory = async () => {
   const selector = withinQueryHistory();
   const closeButton = selector.getByRole('button', { name: 'Close query history' });
@@ -39,7 +71,7 @@ export const closeQueryHistory = async () => {
 };
 
 export const switchToQueryHistoryTab = async (name: 'Settings' | 'Query History') => {
-  await userEvent.click(withinQueryHistory().getByRole('tab', { name: `Tab ${name}` }));
+  await userEvent.click(withinQueryHistory().getByRole('tab', { name }));
 };
 
 export const selectStarredTabFirst = async () => {

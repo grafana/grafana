@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -72,21 +73,21 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
 }
 
 const fileExportPreviewStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    gap: ${theme.spacing(2)};
-  `,
-  content: css`
-    flex: 1 1 100%;
-  `,
-  actions: css`
-    flex: 0;
-    justify-content: flex-end;
-    display: flex;
-    gap: ${theme.spacing(1)};
-  `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    gap: theme.spacing(2),
+  }),
+  content: css({
+    flex: '1 1 100%',
+  }),
+  actions: css({
+    flex: 0,
+    justifyContent: 'flex-end',
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
 });
 
 function FileExportInlineDocumentation({ exportProvider }: { exportProvider: ExportProvider<unknown> }) {

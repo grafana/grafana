@@ -10,7 +10,8 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -34,9 +35,13 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
 
-  useEffect(() => {
-    onVisibleChange?.(show);
-  }, [onVisibleChange, show]);
+  const handleOpenChange = useCallback(
+    (newState: boolean) => {
+      setShow(newState);
+      onVisibleChange?.(newState);
+    },
+    [onVisibleChange]
+  );
 
   // the order of middleware is important!
   const middleware = [
@@ -56,7 +61,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const { context, refs, floatingStyles } = useFloating({
     open: show,
     placement: getPlacement(placement),
-    onOpenChange: setShow,
+    onOpenChange: handleOpenChange,
     middleware,
     whileElementsMounted: autoUpdate,
   });
@@ -69,12 +74,12 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const animationStyles = useStyles2(getStyles, animationDuration);
 
   const onOverlayClicked = () => {
-    setShow(false);
+    handleOpenChange(false);
   };
 
   const handleKeys = (event: React.KeyboardEvent) => {
     if (event.key === 'Tab') {
-      setShow(false);
+      handleOpenChange(false);
     }
   };
 

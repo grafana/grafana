@@ -32,13 +32,53 @@ labels:
 description: Configure options for Grafana's time series visualization
 title: Time series
 weight: 10
+refs:
+  configure-standard-options:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#max
+  color-scheme:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
+  add-a-field-override:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/#add-a-field-override
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/#add-a-field-override
+  configure-field-overrides:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
+  alert-list:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
+  link-alert:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
 ---
 
 # Time series
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
-Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
+Time series visualizations are the default and primary way to visualize data points over intervals of time as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
+
+{{% admonition type="note" %}}
+You can [link alert rules](ref:link-alert) to time series visualization to observe when alerts fire and are resolved in the form of annotations. In addition, you can create alert rules from the Alert tab within the panel options.
+At the moment, alerts are only supported in the time series and [alert list](ref:alert-list) visualizations.
+{{% /admonition %}}
 
 {{% admonition type="note" %}}
 You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
@@ -49,6 +89,10 @@ The following video guides you through the creation steps and common customizati
 {{< youtube id="RKtW87cPxsw" >}}
 
 {{< docs/play title="Time Series Visualizations in Grafana" url="https://play.grafana.org/d/000000016/" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Tooltip options
 
@@ -79,6 +123,10 @@ Set the position of the bar relative to a data point. In the examples below, **S
 - **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
   The bar is drawn after the point. The point is placed on the leading corner of the bar.
 
+### Bar width factor
+
+Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space.
+
 ### Line width
 
 Line width is a slider that controls the thickness for series lines or the outline for bars.
@@ -93,12 +141,12 @@ Use opacity to specify the series area fill color.
 
 ### Gradient mode
 
-Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme][].
+Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
 
 - **None:** No gradient fill. This is the default setting.
 - **Opacity:** An opacity gradient where the opacity of the fill increases as y-axis values increase.
 - **Hue:** A subtle gradient that is based on the hue of the series color.
-- **Scheme:** A color gradient defined by your [Color scheme][]. This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
+- **Scheme:** A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
@@ -129,7 +177,7 @@ This option controls how the graph interpolates the series line.
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme][] field option.
+Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
 ![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
 
@@ -145,7 +193,7 @@ Set the style of the line. To change the color, use the standard [color scheme][
 
 ### Stack series
 
-_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
+_Stacking_ allows Grafana to display measurements on top of each other within each period displayed. This feature helps to visually represent the cumulative total of the metrics of the data series at each plotted moment. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
 
 ![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
 
@@ -155,7 +203,7 @@ _Stacking_ allows Grafana to display series on top of each other. Be cautious wh
 
 #### Stack series in groups
 
-The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides][].
+The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides](ref:configure-field-overrides).
 
 1. Edit the panel and click **Overrides**.
 1. Create a field override for the **Stack series** option.
@@ -194,7 +242,7 @@ Select the placement of the y-axis.
 - **Right:** Display all y-axes on the right side.
 - **Hidden:** Hide all axes.
 
-To selectively hide axes, [Add a field override][] that targets specific fields.
+To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
 ### Label
 
@@ -243,7 +291,7 @@ Set a **Soft min** or **soft max** option for better control of y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent small variations in the data from being magnified when it's mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
 
-To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options][].
+To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
@@ -262,7 +310,7 @@ The transform option is only available as an override.
 
 ## Color options
 
-By default, the graph uses the standard [Color scheme][] option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+By default, the graph uses the standard [Color scheme](ref:color-scheme) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
 color this way automatically creates an override rule that set's a specific color for a specific series.
 
 ### Classic palette
@@ -301,27 +349,22 @@ The following image shows a bar chart with the **Green-Yellow-Red (by value)** c
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-## Thresholds
+## Standard options
 
-{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{% docs/reference %}}
-[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
+## Thresholds
 
-[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
-[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides#add-a-field-override"
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-[Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#max"
-[Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#max"
+## Field overrides
 
-[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
-
-[Configure field overrides]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides"
-[Configure field overrides]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides"
-{{% /docs/reference %}}
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

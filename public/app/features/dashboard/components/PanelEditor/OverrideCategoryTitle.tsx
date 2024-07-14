@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
 import { HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
@@ -8,7 +7,7 @@ import { FieldMatcherUIRegistryItem } from '@grafana/ui/src/components/MatchersU
 interface Props {
   isExpanded: boolean;
   registry: FieldConfigOptionsRegistry;
-  matcherUi: FieldMatcherUIRegistryItem<any>;
+  matcherUi: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
   override: ConfigOverrideRule;
   overrideName: string;
   onOverrideRemove: () => void;

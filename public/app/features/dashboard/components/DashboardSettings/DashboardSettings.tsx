@@ -1,11 +1,11 @@
 import * as H from 'history';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, ToolbarButtonRow } from '@grafana/ui';
+import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { t } from 'app/core/internationalization';
@@ -212,10 +212,12 @@ function getSectionNav(
 function MakeEditable({ dashboard, sectionNav }: SettingsPageProps) {
   return (
     <Page navModel={sectionNav}>
-      <div className="dashboard-settings__header">Dashboard not editable</div>
-      <Button type="submit" onClick={() => dashboard.makeEditable()}>
-        Make editable
-      </Button>
+      <Stack direction="column" gap={2} alignItems="flex-start">
+        <Text variant="h3">Dashboard not editable</Text>
+        <Button type="submit" onClick={() => dashboard.makeEditable()}>
+          Make editable
+        </Button>
+      </Stack>
     </Page>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { config } from '@grafana/runtime';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
@@ -18,6 +19,13 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const onCredentialsChange = (credentials: AzureCredentialsType): void => {
     onChange(updateCredentials(dsSettings, config, credentials));
   };
+
+  // The auth type needs to be set on the first load of the data source
+  useEffectOnce(() => {
+    if (!dsSettings.jsonData.authType) {
+      onCredentialsChange(credentials);
+    }
+  });
 
   return (
     <AzureCredentialsForm

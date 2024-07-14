@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -72,10 +71,15 @@ type FetchPermissionsParams struct {
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
 type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
+type PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
 
-type Service interface {
+type Authenticator interface {
 	// Authenticate authenticates a request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+}
+
+type Service interface {
+	Authenticator
 	// RegisterPostAuthHook registers a hook with a priority that is called after a successful authentication.
 	// A lower number means higher priority.
 	RegisterPostAuthHook(hook PostAuthHookFn, priority uint)
@@ -88,9 +92,10 @@ type Service interface {
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 	// Logout revokes session token and does additional clean up if client used to authenticate supports it
 	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
-
+	// RegisterPreLogoutHook registers a hook that is called before a logout request.
+	RegisterPreLogoutHook(hook PreLogoutHookFn, priority uint)
 	// ResolveIdentity resolves an identity from org and namespace id.
-	ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*Identity, error)
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
 
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
@@ -114,10 +119,9 @@ type IdentitySynchronizer interface {
 }
 
 type Client interface {
+	Authenticator
 	// Name returns the name of a client
 	Name() string
-	// Authenticate performs the authentication for the request
-	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 	// IsEnabled returns the enabled status of the client
 	IsEnabled() bool
 }
@@ -184,11 +188,6 @@ type Request struct {
 	OrgID int64
 	// HTTPRequest is the original HTTP request to authenticate
 	HTTPRequest *http.Request
-
-	// Resp is the response writer to use for the request
-	// Used to set cookies and headers
-	Resp web.ResponseWriter
-
 	// metadata is additional information about the auth request
 	metadata map[string]string
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,13 +16,14 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -46,6 +48,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 	accessControl accesscontrol.AccessControl,
+	registerer prometheus.Registerer,
 ) *FolderAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -99,14 +102,14 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	dualWrite bool,
+	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	legacyStore := &legacyStorage{
 		service:    b.folderSvc,
 		namespacer: b.namespacer,
-		tableConverter: utils.NewTableConverter(
+		tableConverter: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
@@ -133,13 +136,16 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
-	// enable dual writes if a RESTOptionsGetter is provided
-	if dualWrite && optsGetter != nil {
+	// enable dual writer
+	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
+		storage[resourceInfo.StoragePath()], err = dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
@@ -181,7 +187,7 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			// require a user
-			user, err := appcontext.User(ctx)
+			user, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}

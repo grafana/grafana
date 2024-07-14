@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
 
 import { LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
@@ -8,10 +8,9 @@ import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
+import { LineConfig } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
-import { LineConfig } from '../types';
 
 export interface IconConfig {
   path?: ResourceDimensionConfig;
@@ -34,7 +33,7 @@ const svgStrokePathClass = css({
   },
 });
 
-export function IconDisplay(props: CanvasElementProps) {
+export function IconDisplay(props: CanvasElementProps<IconConfig, IconData>) {
   const { data } = props;
   if (!data?.path) {
     return null;
@@ -81,6 +80,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       left: options?.placement?.left ?? 100,
       rotation: options?.placement?.rotation ?? 0,
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
@@ -106,8 +106,6 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         data.strokeColor = dimensionContext.getColor(iconConfig.stroke.color).value();
       }
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.path);
 
     return data;
   },

@@ -10,12 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
+	apistore "k8s.io/apiserver/pkg/storage"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
-	apistore "k8s.io/apiserver/pkg/storage"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -31,14 +31,18 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Created At", Type: "date"},
+				{Name: "Title", Type: "string"},
+				{Name: "Filters", Type: "array"},
 			},
 			func(obj any) ([]interface{}, error) {
 				m, ok := obj.(*scope.Scope)
@@ -48,6 +52,8 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 				return []interface{}{
 					m.Name,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
+					m.Spec.Title,
+					m.Spec.Filters,
 				}, nil
 			},
 		),
@@ -69,23 +75,79 @@ func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Created At", Type: "date"},
+				{Name: "Dashboard", Type: "string"},
+				{Name: "Scope", Type: "string"},
 			},
 			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*scope.Scope)
+				m, ok := obj.(*scope.ScopeDashboardBinding)
 				if !ok {
-					return nil, fmt.Errorf("expected scope")
+					return nil, fmt.Errorf("expected scope dashboard binding")
 				}
 				return []interface{}{
 					m.Name,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
+					m.Spec.Dashboard,
+					m.Spec.Scope,
+				}, nil
+			},
+		),
+		CreateStrategy: strategy,
+		UpdateStrategy: strategy,
+		DeleteStrategy: strategy,
+	}
+	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
+	if err := store.CompleteWithOptions(options); err != nil {
+		return nil, err
+	}
+	return &storage{Store: store}, nil
+}
+
+func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+	strategy := grafanaregistry.NewStrategy(scheme)
+
+	resourceInfo := scope.ScopeNodeResourceInfo
+	store := &genericregistry.Store{
+		NewFunc:                   resourceInfo.NewFunc,
+		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
+		PredicateFunc:             Matcher,
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
+		TableConvertor: gapiutil.NewTableConverter(
+			resourceInfo.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Created At", Type: "date"},
+				{Name: "Title", Type: "string"},
+				{Name: "Parent Name", Type: "string"},
+				{Name: "Node Type", Type: "string"},
+				{Name: "Link Type", Type: "string"},
+				{Name: "Link ID", Type: "string"},
+			},
+			func(obj any) ([]interface{}, error) {
+				m, ok := obj.(*scope.ScopeNode)
+				if !ok {
+					return nil, fmt.Errorf("expected scope node")
+				}
+				return []interface{}{
+					m.Name,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+					m.Spec.Title,
+					m.Spec.ParentName,
+					m.Spec.NodeType,
+					m.Spec.LinkType,
+					m.Spec.LinkID,
 				}, nil
 			},
 		),
@@ -107,6 +169,9 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if s, ok := obj.(*scope.ScopeDashboardBinding); ok {
 		return labels.Set(s.Labels), SelectableScopeDashboardBindingFields(s), nil
 	}
+	if s, ok := obj.(*scope.ScopeNode); ok {
+		return labels.Set(s.Labels), SelectableScopeNodeFields(s), nil
+	}
 	return nil, nil, fmt.Errorf("not a scope or ScopeDashboardBinding object")
 }
 
@@ -121,13 +186,24 @@ func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPre
 
 func SelectableScopeFields(obj *scope.Scope) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.type":     obj.Spec.Type,
-		"spec.category": obj.Spec.Category,
+		"spec.title": obj.Spec.Title,
 	})
 }
 
 func SelectableScopeDashboardBindingFields(obj *scope.ScopeDashboardBinding) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
 		"spec.scope": obj.Spec.Scope,
+	})
+}
+
+func SelectableScopeNodeFields(obj *scope.ScopeNode) fields.Set {
+	parentName := ""
+
+	if obj != nil {
+		parentName = obj.Spec.ParentName
+	}
+
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"spec.parentName": parentName,
 	})
 }

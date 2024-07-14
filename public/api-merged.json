@@ -2299,11 +2299,11 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Get a list of all cloud migrations.",
-        "operationId": "getMigrationList",
+        "summary": "Get a list of all cloud migration sessions that have been created.",
+        "operationId": "getSessionList",
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationListResponse"
+            "$ref": "#/responses/cloudMigrationSessionListResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2320,21 +2320,24 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Create a migration.",
-        "operationId": "createMigration",
+        "summary": "Create a migration session.",
+        "operationId": "createSession",
         "parameters": [
           {
-            "name": "body",
+            "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CloudMigrationRequest"
+              "$ref": "#/definitions/CloudMigrationSessionRequestDTO"
             }
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationResponse"
+            "$ref": "#/responses/cloudMigrationSessionResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2348,27 +2351,63 @@
         }
       }
     },
-    "/cloudmigration/migration/{id}": {
+    "/cloudmigration/migration/run/{runUID}": {
       "get": {
-        "description": "It returns migrations that has been created.",
         "tags": [
           "migrations"
         ],
-        "summary": "Get a cloud migration.",
-        "operationId": "getCloudMigration",
+        "summary": "Get the result of a single migration run.",
+        "operationId": "getCloudMigrationRun",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "type": "string",
+            "description": "RunUID of a migration run",
+            "name": "runUID",
             "in": "path",
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationResponse"
+            "$ref": "#/responses/cloudMigrationRunResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a cloud migration session by its uid.",
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a migration session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationSessionResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2385,19 +2424,21 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Delete a migration.",
-        "operationId": "deleteCloudMigration",
+        "summary": "Delete a migration session by its uid.",
+        "operationId": "deleteSession",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "type": "string",
+            "description": "UID of a migration session",
+            "name": "uid",
             "in": "path",
             "required": true
           }
         ],
         "responses": {
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/responses/unauthorisedError"
           },
@@ -2410,7 +2451,7 @@
         }
       }
     },
-    "/cloudmigration/migration/{id}/run": {
+    "/cloudmigration/migration/{uid}/run": {
       "get": {
         "tags": [
           "migrations"
@@ -2419,10 +2460,9 @@
         "operationId": "getCloudMigrationRunList",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "type": "string",
+            "description": "UID of a migration",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -2430,6 +2470,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationRunListResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2451,10 +2494,9 @@
         "operationId": "runCloudMigration",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
+            "type": "string",
+            "description": "UID of a migration",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -2462,6 +2504,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationRunResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2475,34 +2520,223 @@
         }
       }
     },
-    "/cloudmigration/migration/{id}/run/{runID}": {
-      "get": {
+    "/cloudmigration/migration/{uid}/snapshot": {
+      "post": {
+        "description": "If the snapshot initialization is successful, the snapshot uid is returned.",
         "tags": [
           "migrations"
         ],
-        "summary": "Get the result of a single migration run.",
-        "operationId": "getCloudMigrationRun",
+        "summary": "Trigger the creation of an instance snapshot associated with the provided session.",
+        "operationId": "createSnapshot",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "ID of an migration",
-            "name": "id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Run ID of a migration run",
-            "name": "runID",
+            "type": "string",
+            "description": "UID of a session",
+            "name": "uid",
             "in": "path",
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
+            "$ref": "#/responses/createSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get metadata about a snapshot, including where it is in its processing and final results.",
+        "operationId": "getSnapshot",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "description": "ResultPage is used for pagination with ResultLimit",
+            "name": "resultPage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 100,
+            "description": "Max limit for snapshot results returned.",
+            "name": "resultLimit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "UID of a snapshot",
+            "name": "snapshotUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/cancel": {
+      "post": {
+        "description": "TODO: Implement",
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Cancel a snapshot, wherever it is in its processing chain.",
+        "operationId": "cancelSnapshot",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "UID of a snapshot",
+            "name": "snapshotUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/upload": {
+      "post": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Upload a snapshot to the Grafana Migration Service for processing.",
+        "operationId": "uploadSnapshot",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "UID of a snapshot",
+            "name": "snapshotUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshots": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a list of snapshots for a session.",
+        "operationId": "getShapshotList",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "description": "Page is used for pagination with limit",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 100,
+            "description": "Max limit for results returned.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/snapshotListResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2517,6 +2751,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Fetch the cloud migration token if it exists.",
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "migrations"
@@ -2526,6 +2784,41 @@
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Deletes a cloud migration token.",
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a cloud migration token",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -3323,6 +3616,84 @@
         "responses": {
           "200": {
             "$ref": "#/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/trash": {
+      "delete": {
+        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Hard delete dashboard by uid.",
+        "operationId": "hardDeleteDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "operationId": "restoreDeletedDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDeletedDashboardCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4253,6 +4624,78 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/uid/{uid}/lbac/teams": {
+      "get": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Retrieves LBAC rules for a team.",
+        "operationId": "getTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Updates LBAC rules for a team.",
+        "operationId": "updateTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -7541,7 +7984,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -7608,6 +8051,77 @@
         }
       }
     },
+    "/reports/images/:image": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "Get custom branding report image.",
+        "operationId": "getSettingsImage",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/render/csvs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": [
+          "application/zip"
+        ],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "Download a CSV report.",
+        "operationId": "renderReportCSVs",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboards",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "204": {
+            "$ref": "#/responses/noContentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -7623,7 +8137,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "dashboardID",
+            "name": "dashboards",
             "in": "query"
           },
           {
@@ -7675,7 +8189,7 @@
           "reports",
           "enterprise"
         ],
-        "summary": "Get settings.",
+        "summary": "Get report settings.",
         "operationId": "getReportSettings",
         "responses": {
           "200": {
@@ -7744,7 +8258,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -7823,7 +8337,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           },
           {
@@ -8111,6 +8625,12 @@
             "default": "alpha-asc",
             "description": "Sort method; for listing all the possible sort methods use the search sorting endpoint.",
             "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Flag indicating if only soft deleted Dashboards should be returned",
+            "name": "deleted",
             "in": "query"
           }
         ],
@@ -9045,6 +9565,47 @@
         "responses": {
           "200": {
             "$ref": "#/responses/getTeamMembersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Takes user emails, and updates team members and admins to the provided lists of users.\nAny current team members and admins not in the provided lists will be removed.",
+        "tags": [
+          "teams"
+        ],
+        "summary": "Set team memberships.",
+        "operationId": "setTeamMemberships",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamMembershipsCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -10915,6 +11476,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -10931,6 +11498,17 @@
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -11907,7 +12485,7 @@
         "condition": {
           "type": "string"
         },
-        "dasboardUid": {
+        "dashboardUid": {
           "type": "string"
         },
         "data": {
@@ -11950,6 +12528,9 @@
         "panelId": {
           "type": "integer",
           "format": "int64"
+        },
+        "record": {
+          "$ref": "#/definitions/AlertRuleRecordExport"
         },
         "title": {
           "type": "string"
@@ -12098,6 +12679,18 @@
         }
       }
     },
+    "AlertRuleRecordExport": {
+      "type": "object",
+      "title": "Record is the provisioned export of models.Record.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "string"
+        }
+      }
+    },
     "AlertingFileExport": {
       "type": "object",
       "title": "AlertingFileExport is the full provisioned file export.",
@@ -12204,7 +12797,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -13022,46 +13615,7 @@
         }
       }
     },
-    "CloudMigrationListResponse": {
-      "type": "object",
-      "properties": {
-        "migrations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CloudMigrationResponse"
-          }
-        }
-      }
-    },
-    "CloudMigrationRequest": {
-      "type": "object",
-      "properties": {
-        "authToken": {
-          "type": "string"
-        }
-      }
-    },
-    "CloudMigrationResponse": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "stack": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "CloudMigrationRunList": {
+    "CloudMigrationRunListDTO": {
       "type": "object",
       "properties": {
         "runs": {
@@ -13069,6 +13623,44 @@
           "items": {
             "$ref": "#/definitions/MigrateDataResponseListDTO"
           }
+        }
+      }
+    },
+    "CloudMigrationSessionListResponseDTO": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
+          }
+        }
+      }
+    },
+    "CloudMigrationSessionRequestDTO": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
+    "CloudMigrationSessionResponseDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -13426,7 +14018,7 @@
         }
       }
     },
-    "CreateOrUpdateReportConfig": {
+    "CreateOrUpdateReport": {
       "type": "object",
       "properties": {
         "dashboards": {
@@ -13572,6 +14164,14 @@
             "Admin"
           ],
           "example": "Admin"
+        }
+      }
+    },
+    "CreateSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -13807,9 +14407,6 @@
         },
         "publicDashboardEnabled": {
           "type": "boolean"
-        },
-        "publicDashboardUid": {
-          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -14449,7 +15046,9 @@
         }
       }
     },
-    "EvalQueriesResponse": {},
+    "EvalQueriesResponse": {
+      "type": "object"
+    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -14913,6 +15512,29 @@
         }
       }
     },
+    "GetAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "firstUsedAt": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string"
+        }
+      }
+    },
     "GetAnnotationTagsResponse": {
       "type": "object",
       "title": "GetAnnotationTagsResponse is a response struct for FindTagsResult.",
@@ -14945,6 +15567,48 @@
           }
         }
       ]
+    },
+    "GetSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "stats": {
+          "$ref": "#/definitions/SnapshotResourceStats"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "GettableAlertmanagers": {
       "type": "object",
@@ -15226,6 +15890,9 @@
         "provenance": {
           "$ref": "#/definitions/Provenance"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "rule_group": {
           "type": "string"
         },
@@ -15348,6 +16015,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -15512,7 +16182,6 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -15529,8 +16198,15 @@
           "type": "integer",
           "format": "int64"
         },
+        "isDeleted": {
+          "type": "boolean"
+        },
         "isStarred": {
           "type": "boolean"
+        },
+        "permanentlyDeleteDate": {
+          "type": "string",
+          "format": "date-time"
         },
         "slug": {
           "type": "string"
@@ -16216,15 +16892,14 @@
     "MigrateDataResponseDTO": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "items": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/MigrateDataResponseItemDTO"
           }
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -16246,7 +16921,9 @@
           "type": "string",
           "enum": [
             "OK",
-            "ERROR"
+            "ERROR",
+            "PENDING",
+            "UNKNOWN"
           ]
         },
         "type": {
@@ -16262,9 +16939,8 @@
     "MigrateDataResponseListDTO": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -16366,6 +17042,18 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/GettableRuleGroupConfig"
+        }
+      }
+    },
+    "NavbarPreference": {
+      "type": "object",
+      "title": "NavbarPreference defines model for NavbarPreference.",
+      "properties": {
+        "savedItemIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -16813,8 +17501,8 @@
       }
     },
     "PagerdutyImage": {
-      "description": "PagerdutyImage is an image",
       "type": "object",
+      "title": "PagerdutyImage is an image.",
       "properties": {
         "alt": {
           "type": "string"
@@ -16828,8 +17516,8 @@
       }
     },
     "PagerdutyLink": {
-      "description": "PagerdutyLink is a link",
       "type": "object",
+      "title": "PagerdutyLink is a link.",
       "properties": {
         "href": {
           "type": "string"
@@ -16931,6 +17619,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -17436,6 +18127,9 @@
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "title": {
           "type": "string"
         },
@@ -17485,6 +18179,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17516,6 +18213,9 @@
         "language": {
           "description": "Selected language (beta)",
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -17678,6 +18378,9 @@
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "ruleGroup": {
           "type": "string",
@@ -18244,6 +18947,25 @@
         }
       }
     },
+    "Record": {
+      "type": "object",
+      "required": [
+        "metric",
+        "from"
+      ],
+      "properties": {
+        "from": {
+          "description": "Which expression node should be used as the input for the recorded metric.",
+          "type": "string",
+          "example": "A"
+        },
+        "metric": {
+          "description": "Name of the recorded metric.",
+          "type": "string",
+          "example": "grafana_alerts_ratio"
+        }
+      }
+    },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",
       "type": "object",
@@ -18315,7 +19037,6 @@
       }
     },
     "Report": {
-      "description": "ConfigDTO is model representation in transfer",
       "type": "object",
       "properties": {
         "created": {
@@ -18552,6 +19273,14 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "RestoreDeletedDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
         }
       }
     },
@@ -18813,7 +19542,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -18924,10 +19653,6 @@
         }
       }
     },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
-    },
     "SNSConfig": {
       "type": "object",
       "properties": {
@@ -19016,6 +19741,32 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "SearchDTO": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "basicRole": {
+          "type": "string"
+        },
+        "onlyRoles": {
+          "type": "boolean"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
         }
       }
     },
@@ -19358,6 +20109,23 @@
         }
       }
     },
+    "SetTeamMembershipsCommand": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "SetUserRolesCommand": {
       "type": "object",
       "properties": {
@@ -19411,6 +20179,20 @@
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
+    },
+    "SilenceMetadata": {
+      "type": "object",
+      "properties": {
+        "folder_uid": {
+          "type": "string"
+        },
+        "rule_title": {
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
+        }
+      }
     },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -19562,6 +20344,70 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "SnapshotDTO": {
+      "description": "Base snapshot without results",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "SnapshotListResponseDTO": {
+      "type": "object",
+      "properties": {
+        "snapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SnapshotDTO"
+          }
+        }
+      }
+    },
+    "SnapshotResourceStats": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "Span": {
       "type": "object",
       "title": "A Span defines a continuous sequence of buckets.",
@@ -19579,6 +20425,7 @@
       }
     },
     "State": {
+      "description": "+enum",
       "type": "string"
     },
     "Status": {
@@ -20338,6 +21185,7 @@
       }
     },
     "Type": {
+      "description": "+enum",
       "type": "string"
     },
     "TypeMeta": {
@@ -20637,6 +21485,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -21194,9 +22045,9 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
       }
     },
@@ -21385,10 +22236,37 @@
     "gettableAlerts": {
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
       }
     },
+    "gettableGrafanaSilence": {
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "create": false,
+            "read": true,
+            "write": false
+          }
+        },
+        "metadata": {
+          "$ref": "#/definitions/SilenceMetadata"
+        }
+      }
+    },
+    "gettableGrafanaSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableGrafanaSilence"
+      }
+    },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21437,9 +22315,9 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
       }
     },
@@ -21654,6 +22532,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -21958,28 +22837,37 @@
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
       }
     },
-    "cloudMigrationListResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/CloudMigrationListResponse"
-      }
+    "cloudMigrationDeleteTokenResponse": {
+      "description": "(empty)"
     },
-    "cloudMigrationResponse": {
+    "cloudMigrationGetTokenResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationResponse"
+        "$ref": "#/definitions/GetAccessTokenResponseDTO"
       }
     },
     "cloudMigrationRunListResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationRunList"
+        "$ref": "#/definitions/CloudMigrationRunListDTO"
       }
     },
     "cloudMigrationRunResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/MigrateDataResponseDTO"
+      }
+    },
+    "cloudMigrationSessionListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionListResponseDTO"
+      }
+    },
+    "cloudMigrationSessionResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
       }
     },
     "conflictError": {
@@ -22126,6 +23014,12 @@
         "$ref": "#/definitions/ServiceAccountDTO"
       }
     },
+    "createSnapshotResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreateSnapshotResponseDTO"
+      }
+    },
     "createTeamResponse": {
       "description": "(empty)",
       "schema": {
@@ -22179,17 +23073,11 @@
       "schema": {
         "type": "object",
         "required": [
-          "id",
+          "uid",
           "title",
           "message"
         ],
         "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted dashboard.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
@@ -22199,6 +23087,11 @@
             "description": "Title Title of the deleted dashboard.",
             "type": "string",
             "example": "My Dashboard"
+          },
+          "uid": {
+            "description": "UID Identifier of the deleted dashboard.",
+            "type": "string",
+            "example": "65"
           }
         }
       }
@@ -22694,6 +23587,12 @@
         }
       }
     },
+    "getSnapshotResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GetSnapshotResponseDTO"
+      }
+    },
     "getStatusResponse": {
       "description": "(empty)"
     },
@@ -22912,6 +23811,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "noContentResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object"
       }
     },
     "notFoundError": {
@@ -23151,6 +24056,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
+    "snapshotListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SnapshotListResponseDTO"
       }
     },
     "unauthorisedError": {

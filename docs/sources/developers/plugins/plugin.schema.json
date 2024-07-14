@@ -72,6 +72,10 @@
             "pr": {
               "type": "number",
               "description": "GitHub pull request the plugin was built from"
+            },
+            "build": {
+              "type": "number",
+              "description": "Build job number used to build this plugin."
             }
           }
         },
@@ -175,7 +179,7 @@
           "items": {
             "type": "object",
             "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
-            "required": ["id", "name", "type", "version"],
+            "required": ["id", "name", "type"],
             "properties": {
               "id": {
                 "type": "string",
@@ -189,7 +193,8 @@
                 "type": "string"
               },
               "version": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
               }
             }
           }
@@ -333,10 +338,10 @@
     },
     "routes": {
       "type": "array",
-      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
+      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
       "items": {
         "type": "object",
-        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
+        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
         "additionalProperties": false,
         "properties": {
           "path": {
@@ -556,33 +561,27 @@
         }
       }
     },
-    "generated": {
-      "type": "object",
-      "description": "Auto-generated metadata for the plugin (usually automatically extracted from the source code during build time).",
-      "properties": {
-        "extensions": {
-          "type": "array",
-          "description": "List of the extensions that the plugin registers.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "extensionPointId": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string",
-                "enum": ["link", "component"]
-              }
-            },
-            "required": ["extensionPointId", "title", "description", "type"]
+    "extensions": {
+      "type": "array",
+      "description": "The list of extensions that the plugin registers under other extension points.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "extensionPointId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["link", "component"]
           }
-        }
+        },
+        "required": ["extensionPointId", "title", "type"]
       }
     }
   }

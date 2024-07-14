@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
@@ -112,9 +113,9 @@ function isCompleted(response: PreviewRuleResponse): boolean {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      margin-top: ${theme.spacing(2)};
-      max-width: ${theme.breakpoints.values.xxl}px;
-    `,
+    container: css({
+      marginTop: theme.spacing(2),
+      maxWidth: `${theme.breakpoints.values.xxl}px`,
+    }),
   };
 }

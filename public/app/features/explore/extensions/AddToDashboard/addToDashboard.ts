@@ -1,7 +1,7 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
 import { Dashboard, DataQuery, DataSourceRef } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { DashboardDTO, ExplorePanelData } from 'app/types';
@@ -80,7 +80,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
 
   if (options.dashboardUid) {
     try {
-      dto = await backendSrv.getDashboardByUid(options.dashboardUid);
+      dto = await getDashboardAPI().getDashboardDTO(options.dashboardUid);
     } catch (e) {
       throw AddToDashboardError.FETCH_DASHBOARD;
     }

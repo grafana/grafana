@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -43,16 +44,16 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var sqlStore db.DB
+	var sqlStore db.ReplDB
 	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		// insertTestDashboard creates the following hierarchy:
 		// 1 test dash folder
@@ -525,12 +526,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder.ID, folder.UID, false, "delete this 1")
 		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder.ID, folder.UID, false, "delete this 2")
 
-		err := dashboardStore.DeleteDashboardsInFolders(
-			context.Background(),
-			&dashboards.DeleteDashboardsInFolderRequest{
-				FolderUIDs: []string{folder.UID},
-				OrgID:      1,
-			})
+		err := dashboardStore.SoftDeleteDashboardsInFolders(context.Background(), folder.OrgID, []string{folder.UID})
 		require.NoError(t, err)
 
 		count, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{folder.UID}, OrgID: 1})
@@ -539,11 +535,132 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	var sqlStore db.ReplDB
+	var cfg *setting.Cfg
+	var savedFolder, savedDash *dashboards.Dashboard
+	var dashboardStore dashboards.Store
+
+	setup := func() {
+		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
+		quotaService := quotatest.New(false, nil)
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
+		require.NoError(t, err)
+		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
+		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
+		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
+	}
+
+	t.Run("Should soft delete a dashboard", func(t *testing.T) {
+		setup()
+
+		// Confirm there are 2 dashboards in the folder
+		amount, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), amount)
+
+		// Soft delete the dashboard
+		err = dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// There is only 1 dashboard in the folder after soft delete
+		amount, err = dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), amount)
+
+		var dash *dashboards.Dashboard
+		// Get the soft deleted dashboard should be empty
+		dash, _ = dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
+		assert.Error(t, dashboards.ErrDashboardNotFound)
+		assert.Nil(t, dash)
+
+		// Get the soft deleted dashboard
+		dash, err = dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+	})
+
+	t.Run("Should not fail when trying to soft delete a soft deleted dashboard", func(t *testing.T) {
+		setup()
+
+		// Soft delete the dashboard
+		err := dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// Soft delete the dashboard
+		err = dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// Get the soft deleted dashboard
+		dash, err := dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+	})
+
+	t.Run("Should restore a dashboard", func(t *testing.T) {
+		setup()
+
+		// Confirm there are 2 dashboards in the folder
+		amount, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), amount)
+
+		// Soft delete the dashboard
+		err = dashboardStore.SoftDeleteDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+
+		// There is only 1 dashboard in the folder after soft delete
+		amount, err = dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), amount)
+
+		// Get the soft deleted dashboard
+		dash, err := dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+
+		// Restore deleted dashboard
+		// nolint:staticcheck
+		err = dashboardStore.RestoreDashboard(context.Background(), savedDash.OrgID, savedDash.UID, &folder.Folder{ID: savedDash.FolderID, UID: savedDash.FolderUID})
+		require.NoError(t, err)
+
+		// Restore increases the amount of dashboards in the folder
+		amount, err = dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), amount)
+
+		// Get the soft deleted dashboard should be empty
+		dash, err = dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+		assert.Error(t, err)
+		assert.Nil(t, dash)
+
+		// Get the restored dashboard
+		dash, err = dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
+		require.NoError(t, err)
+		assert.Equal(t, savedDash.ID, dash.ID)
+		assert.Equal(t, savedDash.UID, dash.UID)
+		assert.Equal(t, savedDash.Title, dash.Title)
+		// nolint:staticcheck
+		assert.Equal(t, savedDash.FolderID, dash.FolderID)
+		assert.Equal(t, savedDash.FolderUID, dash.FolderUID)
+	})
+}
+
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -568,7 +685,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -619,7 +736,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
@@ -663,7 +780,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 }
 
 func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
@@ -671,7 +788,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, "", false)
 	t.Run("Finds a dashboard with existing name in root directory and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, sqlStore.GetDialect(), false, false)
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, false, false)
 			return err
 		})
 		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
@@ -679,7 +796,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 
 	t.Run("Returns no error when dashboard does not exist in root folder", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta", OrgID: 1}, sqlStore.GetDialect(), false, false)
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta", OrgID: 1}, false, false)
 			return err
 		})
 		require.NoError(t, err)
@@ -689,7 +806,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, "", true, "prod", "webapp")
 		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderUID: savedFolder.UID, OrgID: 1}, sqlStore.GetDialect(), false, false)
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderUID: savedFolder.UID, OrgID: 1}, false, false)
 			return err
 		})
 		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
@@ -701,7 +818,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
@@ -711,9 +828,9 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -818,7 +935,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
@@ -828,9 +945,9 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -999,8 +1116,8 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}
 }
 
-func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
-	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+func insertTestRule(t *testing.T, sqlStore db.ReplDB, foderOrgID int64, folderUID string) {
+	err := sqlStore.DB().WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string

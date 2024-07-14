@@ -7,13 +7,15 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,7 +37,8 @@ func ProvideService(
 	s := &Service{
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
-		metrics: newMetrics(reg),
+		metrics:  newMetrics(reg),
+		nsMapper: request.GetNamespaceMapper(cfg),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
@@ -46,12 +49,13 @@ func ProvideService(
 }
 
 type Service struct {
-	cfg     *setting.Cfg
-	logger  log.Logger
-	signer  auth.IDSigner
-	cache   remotecache.CacheStorage
-	si      singleflight.Group
-	metrics *metrics
+	cfg      *setting.Cfg
+	logger   log.Logger
+	signer   auth.IDSigner
+	cache    remotecache.CacheStorage
+	si       singleflight.Group
+	metrics  *metrics
+	nsMapper request.NamespaceMapper
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, error) {
@@ -76,19 +80,24 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		now := time.Now()
 		claims := &auth.IDClaims{
-			Claims: jwt.Claims{
+			Claims: &jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
-				Subject:  getSubject(namespace, identifier),
+				Subject:  getSubject(namespace.String(), identifier),
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
+			},
+			Rest: authnlib.IDTokenClaims{
+				Namespace: s.nsMapper(id.GetOrgID()),
 			},
 		}
 
 		if identity.IsNamespace(namespace, identity.NamespaceUser) {
-			claims.Email = id.GetEmail()
-			claims.EmailVerified = id.IsEmailVerified()
-			claims.AuthenticatedBy = id.GetAuthenticatedBy()
+			claims.Rest.Email = id.GetEmail()
+			claims.Rest.EmailVerified = id.IsEmailVerified()
+			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
+			claims.Rest.Username = id.GetLogin()
+			claims.Rest.UID = id.GetUID().String()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)
@@ -104,7 +113,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		}
 
 		extracted := auth.IDClaims{}
-		// We don't need to verify the signature here, we are only intrested in checking
+		// We don't need to verify the signature here, we are only interested in checking
 		// when the token expires.
 		if err := parsed.UnsafeClaimsWithoutVerification(&extracted); err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()

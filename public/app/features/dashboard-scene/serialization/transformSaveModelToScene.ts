@@ -30,7 +30,7 @@ import {
   AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -45,10 +45,10 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { hoverHeaderOffsetBehavior } from '../scene/hoverHeaderOffsetBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
@@ -74,7 +74,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
   scene.setInitialSaveModel(rsp.dashboard);
 
@@ -176,13 +176,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
   if (row.repeat) {
     // For repeated rows the children are stored in the behavior
-    children = [];
-    behaviors = [
-      new RowRepeaterBehavior({
-        variableName: row.repeat,
-        sources: content,
-      }),
-    ];
+    behaviors = [new RowRepeaterBehavior({ variableName: row.repeat })];
   }
 
   return new SceneGridRow({
@@ -196,7 +190,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
   });
 }
 
-export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
+export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
@@ -255,6 +249,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   const dashboardScene = new DashboardScene({
     description: oldModel.description,
     editable: oldModel.editable,
+    preload: dto.preload ?? false,
     id: oldModel.id,
     isDirty: false,
     links: oldModel.links || [],
@@ -264,7 +259,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     uid: oldModel.uid,
     version: oldModel.version,
     body: new SceneGridLayout({
-      isLazy: true,
+      isLazy: dto.preload ? false : true,
       children: createSceneObjectsForPanels(oldModel.panels),
       $behaviors: [trackIfEmpty],
     }),
@@ -285,6 +280,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
+      preserveDashboardSceneStateInLocalStorage,
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
@@ -319,6 +315,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
+      useQueriesAsFilterForOptions: true,
     });
   }
   if (variable.type === 'custom') {
@@ -441,17 +438,15 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     x: panel.gridPos.x,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    itemHeight: panel.gridPos.h,
     body,
   });
 }
 
 export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
-  const repeatDirection: RepeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
-  const repeatOptions = panel.repeat
+  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
         variableName: panel.repeat,
-        repeatDirection,
+        repeatDirection: panel.repeatDirection === 'h' ? 'h' : 'v',
       }
     : {};
 
@@ -477,7 +472,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-    hoverHeaderOffset: (panel.gridPos?.y ?? 0) === 0 ? 0 : undefined,
+    hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
 
@@ -505,13 +500,11 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
-    width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
+    width: repeatOptions.repeatDirection === 'h' ? 24 : panel.gridPos.w,
     height: panel.gridPos.h,
-    itemHeight: panel.gridPos.h,
     body,
     maxPerRow: panel.maxPerRow,
     ...repeatOptions,
-    $behaviors: [hoverHeaderOffsetBehavior],
   });
 }
 

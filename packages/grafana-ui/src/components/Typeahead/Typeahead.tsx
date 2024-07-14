@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { createRef, PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom';
 import { FixedSizeList } from 'react-window';
 
-import { ThemeContext } from '@grafana/data';
+import { GrafanaTheme2, ThemeContext } from '@grafana/data';
 
 import { CompletionItem, CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from '../../utils/typeahead';
@@ -157,13 +159,14 @@ export class Typeahead extends PureComponent<Props, State> {
   render() {
     const { prefix, isOpen = false, origin } = this.props;
     const { allItems, listWidth, listHeight, itemHeight, hoveredItem, typeaheadIndex } = this.state;
+    const styles = getStyles(this.context);
 
     const showDocumentation = hoveredItem || typeaheadIndex;
     const documentationItem = allItems[hoveredItem ? hoveredItem : typeaheadIndex || 0];
 
     return (
       <Portal origin={origin} isOpen={isOpen} style={this.menuPosition}>
-        <ul role="menu" className="typeahead" data-testid="typeahead">
+        <ul role="menu" className={styles.typeahead} data-testid="typeahead">
           <FixedSizeList
             ref={this.listRef}
             itemCount={allItems.length}
@@ -238,3 +241,14 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
     return null;
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  typeahead: css({
+    maxHeight: 300,
+    overflowY: 'auto',
+
+    strong: {
+      color: theme.v1.palette.yellow,
+    },
+  }),
+});

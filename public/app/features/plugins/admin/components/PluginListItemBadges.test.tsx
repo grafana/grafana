@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -60,12 +59,11 @@ describe('PluginListItemBadges', () => {
     expect(screen.queryByRole('button', { name: /learn more/i })).not.toBeInTheDocument();
   });
 
-  it('renders an enterprise badge with icon and link (when a license is invalid)', () => {
+  it('renders an enterprise badge with icon (when a license is invalid)', () => {
     config.licenseInfo.enabledFeatures = {};
     render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.getByLabelText(/lock icon/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /learn more/i })).toBeInTheDocument();
   });
 
   it('renders a error badge (when plugin has an error)', () => {

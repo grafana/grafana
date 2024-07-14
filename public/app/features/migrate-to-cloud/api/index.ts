@@ -4,42 +4,45 @@ import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/dist/query';
 import { generatedAPI } from './endpoints.gen';
 
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
-  addTagTypes: ['cloud-migration-config', 'cloud-migration-run', 'cloud-migration-run-list'],
+  addTagTypes: ['cloud-migration-session', 'cloud-migration-snapshot'],
+
   endpoints: {
     // Cloud-side - create token
     createCloudMigrationToken: suppressErrorsOnQuery,
 
     // List Cloud Configs
-    getMigrationList: {
-      providesTags: ['cloud-migration-config'] /* should this be a -list? */,
+    getSessionList: {
+      providesTags: ['cloud-migration-session'] /* should this be a -list? */,
     },
 
     // Create Cloud Config
-    createMigration(endpoint) {
+    createSession(endpoint) {
       suppressErrorsOnQuery(endpoint);
-      endpoint.invalidatesTags = ['cloud-migration-config'];
+      endpoint.invalidatesTags = ['cloud-migration-session'];
     },
 
     // Get one Cloud Config
-    getCloudMigration: {
-      providesTags: ['cloud-migration-config'],
+    getSession: {
+      providesTags: ['cloud-migration-session'],
     },
 
     // Delete one Cloud Config
-    deleteCloudMigration: {
-      invalidatesTags: ['cloud-migration-config'],
+    deleteSession: {
+      invalidatesTags: ['cloud-migration-session', 'cloud-migration-snapshot'],
     },
 
-    getCloudMigrationRunList: {
-      providesTags: ['cloud-migration-run-list'],
+    // Snapshot management
+    getSnapshot: {
+      providesTags: ['cloud-migration-snapshot'],
     },
-
-    getCloudMigrationRun: {
-      providesTags: ['cloud-migration-run'],
+    getShapshotList: {
+      providesTags: ['cloud-migration-snapshot'],
     },
-
-    runCloudMigration: {
-      invalidatesTags: ['cloud-migration-run-list'],
+    createSnapshot: {
+      invalidatesTags: ['cloud-migration-snapshot'],
+    },
+    uploadSnapshot: {
+      invalidatesTags: ['cloud-migration-snapshot'],
     },
 
     getDashboardByUid: suppressErrorsOnQuery,

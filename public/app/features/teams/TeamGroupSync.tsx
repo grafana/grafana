@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react';
+import { css, cx } from '@emotion/css';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
@@ -98,6 +99,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   render() {
     const { isAdding, newGroupId } = this.state;
     const { groups, isReadOnly } = this.props;
+    const styles = getStyles();
     return (
       <div>
         {highlightTrial() && (
@@ -113,13 +115,13 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <>
               <h3 className="page-sub-heading">External group sync</h3>
               <Tooltip placement="auto" content={headerTooltip}>
-                <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
+                <Icon className={cx(styles.icon, 'page-sub-heading-icon')} name="question-circle" />
               </Tooltip>
             </>
           )}
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <Button className="pull-right" onClick={this.onToggleAdding} disabled={isReadOnly}>
+            <Button onClick={this.onToggleAdding} disabled={isReadOnly}>
               <Icon name="plus" /> Add group
             </Button>
           )}
@@ -206,3 +208,13 @@ export const TeamSyncUpgradeContent = ({ action }: { action?: UpgradeContentProp
   );
 };
 export default connect(mapStateToProps, mapDispatchToProps)(TeamGroupSync);
+
+const getStyles = () => ({
+  icon: css({
+    opacity: 0.7,
+
+    '&:hover': {
+      opacity: 1,
+    },
+  }),
+});

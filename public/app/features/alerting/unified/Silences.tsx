@@ -1,11 +1,14 @@
-import React from 'react';
 import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';
+import {
+  defaultsFromQuery,
+  getDefaultSilenceFormValues,
+} from 'app/features/alerting/unified/components/silences/utils';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
-import SilencesEditor from './components/silences/SilencesEditor';
+import ExistingSilenceEditor, { SilencesEditor } from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useSilenceNavData } from './hooks/useSilenceNavData';
 import { useAlertmanager } from './state/AlertmanagerContext';
@@ -20,19 +23,23 @@ const Silences = () => {
   return (
     <>
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
-
       <Switch>
         <Route exact path="/alerting/silences">
           <SilencesTable alertManagerSourceName={selectedAlertmanager} />
         </Route>
         <Route exact path="/alerting/silence/new">
-          <SilencesEditor alertManagerSourceName={selectedAlertmanager} />
+          {({ location }) => {
+            const queryParams = new URLSearchParams(location.search);
+            const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
+
+            return <SilencesEditor formValues={formValues} alertManagerSourceName={selectedAlertmanager} />;
+          }}
         </Route>
         <Route exact path="/alerting/silence/:id/edit">
           {({ match }: RouteChildrenProps<{ id: string }>) => {
             return (
               match?.params.id && (
-                <SilencesEditor silenceId={match.params.id} alertManagerSourceName={selectedAlertmanager} />
+                <ExistingSilenceEditor silenceId={match.params.id} alertManagerSourceName={selectedAlertmanager} />
               )
             );
           }}

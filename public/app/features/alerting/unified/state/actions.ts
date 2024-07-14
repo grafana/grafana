@@ -1,4 +1,4 @@
-import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
@@ -6,8 +6,6 @@ import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import {
   AlertManagerCortexConfig,
   AlertmanagerGroup,
-  ExternalAlertmanagerConfig,
-  ExternalAlertmanagersResponse,
   Matcher,
   Receiver,
   TestReceiversAlert,
@@ -19,8 +17,8 @@ import {
   PromBasedDataSource,
   RuleIdentifier,
   RuleNamespace,
-  RulerDataSourceConfig,
   RuleWithLocation,
+  RulerDataSourceConfig,
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import {
@@ -32,20 +30,19 @@ import {
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import {
-  logInfo,
   LogMessages,
+  logError,
+  logInfo,
   trackSwitchToPoliciesRouting,
   trackSwitchToSimplifiedRouting,
   withPerformanceLogging,
   withPromRulesMetadataLogging,
   withRulerRulesMetadataLogging,
 } from '../Analytics';
+import { alertRuleApi } from '../api/alertRuleApi';
 import {
-  addAlertManagers,
   deleteAlertManagerConfig,
   fetchAlertGroups,
-  fetchExternalAlertmanagerConfig,
-  fetchExternalAlertmanagers,
   testReceivers,
   updateAlertManagerConfig,
 } from '../api/alertmanager';
@@ -54,21 +51,14 @@ import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
-import {
-  deleteNamespace,
-  deleteRulerRulesGroup,
-  fetchRulerRules,
-  FetchRulerRulesFilter,
-  setRulerRuleGroup,
-} from '../api/ruler';
-import { encodeGrafanaNamespace } from '../components/expressions/util';
+import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
+  GRAFANA_RULES_SOURCE_NAME,
   getAllRulesSourceNames,
   getRulesDataSource,
   getRulesSourceName,
-  GRAFANA_RULES_SOURCE_NAME,
 } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
@@ -80,14 +70,22 @@ import { safeParsePrometheusDuration } from '../utils/time';
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
   const dataSources = (getState() as StoreState).unifiedAlerting.dataSources;
   const dsConfig = dataSources[rulesSourceName]?.result;
+  const dsError = dataSources[rulesSourceName]?.error;
+
+  // @TODO use aggregateError but add support for it in "stringifyErrorLike"
   if (!dsConfig) {
-    throw new Error(`Data source configuration is not available for "${rulesSourceName}" data source`);
+    const error = new Error(`Data source configuration is not available for "${rulesSourceName}" data source`);
+    if (dsError) {
+      error.cause = dsError;
+    }
+
+    throw error;
   }
 
   return dsConfig;
 }
 
-function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: string) {
+export function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: string) {
   const dsConfig = getDataSourceConfig(getState, rulesSourceName);
   if (!dsConfig.rulerConfig) {
     throw new Error(`Ruler API is not available for ${rulesSourceName}`);
@@ -126,20 +124,6 @@ export const fetchPromRulesAction = createAsyncThunk(
     return await withSerializedError(
       fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
     );
-  }
-);
-
-export const fetchExternalAlertmanagersAction = createAsyncThunk(
-  'unifiedAlerting/fetchExternalAlertmanagers',
-  (): Promise<ExternalAlertmanagersResponse> => {
-    return withSerializedError(fetchExternalAlertmanagers());
-  }
-);
-
-export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
-  'unifiedAlerting/fetchExternAlertmanagersConfig',
-  (): Promise<ExternalAlertmanagerConfig> => {
-    return withSerializedError(fetchExternalAlertmanagerConfig());
   }
 );
 
@@ -334,14 +318,6 @@ export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
   };
 }
 
-export const fetchEditableRuleAction = createAsyncThunk(
-  'unifiedalerting/fetchEditableRule',
-  (ruleIdentifier: RuleIdentifier, thunkAPI): Promise<RuleWithLocation | null> => {
-    const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, ruleIdentifier.ruleSourceName);
-    return withSerializedError(getRulerClient(rulerConfig).findEditableRule(ruleIdentifier));
-  }
-);
-
 export function deleteRulesGroupAction(
   namespace: CombinedRuleNamespace,
   ruleGroup: CombinedRuleGroup
@@ -356,41 +332,6 @@ export function deleteRulesGroupAction(
         await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: sourceName }));
       })(),
       { successMessage: 'Group deleted' }
-    );
-  };
-}
-
-export function deleteRuleAction(
-  ruleIdentifier: RuleIdentifier,
-  options: { navigateTo?: string } = {}
-): ThunkResult<void> {
-  /*
-   * fetch the rules group from backend, delete group if it is found and+
-   * reload ruler rules
-   */
-  return async (dispatch, getState) => {
-    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleIdentifier.ruleSourceName }));
-
-    withAppEvents(
-      (async () => {
-        const rulerConfig = getDataSourceRulerConfig(getState, ruleIdentifier.ruleSourceName);
-        const rulerClient = getRulerClient(rulerConfig);
-        const ruleWithLocation = await rulerClient.findEditableRule(ruleIdentifier);
-
-        if (!ruleWithLocation) {
-          throw new Error('Rule not found.');
-        }
-        await rulerClient.deleteRule(ruleWithLocation);
-        // refetch rules for this rules source
-        await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
-
-        if (options.navigateTo) {
-          locationService.replace(options.navigateTo);
-        }
-      })(),
-      {
-        successMessage: 'Rule deleted.',
-      }
     );
   };
 }
@@ -421,6 +362,7 @@ export const saveRuleFormAction = createAsyncThunk(
           // For the dataSourceName specified
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
+
           if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
@@ -430,14 +372,14 @@ export const saveRuleFormAction = createAsyncThunk(
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveLotexRule(values, evaluateEvery, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: values.dataSourceName }));
-
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
             reportSwitchingRoutingType(values, existing);
-            await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+            // when using a Granfa-managed alert rule we can invalidate a single rule
+            thunkAPI.dispatch(alertRuleApi.util.invalidateTags([{ type: 'GrafanaRulerRule', id: identifier.uid }]));
           } else {
             throw new Error('Unexpected rule form type');
           }
@@ -457,9 +399,6 @@ export const saveRuleFormAction = createAsyncThunk(
             const newLocation = `/alerting/${encodeURIComponent(stringifiedIdentifier)}/edit`;
             if (locationService.getLocation().pathname !== newLocation) {
               locationService.replace(newLocation);
-            } else {
-              // refresh the details of the current editable rule after saving
-              thunkAPI.dispatch(fetchEditableRuleAction(identifier));
             }
           }
         })()
@@ -518,7 +457,11 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       withSerializedError(
         (async () => {
           const latestConfig = await thunkAPI
-            .dispatch(alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName))
+            .dispatch(
+              alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName, {
+                forceRefetch: true,
+              })
+            )
             .unwrap();
 
           const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
@@ -710,16 +653,6 @@ export const testReceiversAction = createAsyncThunk(
   }
 );
 
-interface UpdateNamespaceAndGroupOptions {
-  rulesSourceName: string;
-  namespaceName: string;
-  groupName: string;
-  newNamespaceName: string;
-  newGroupName: string;
-  groupInterval?: string;
-  folderUid?: string;
-}
-
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
   return rules.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
@@ -729,123 +662,6 @@ export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDurat
     return forNumber !== 0 && forNumber < everyNumber;
   });
 };
-
-// allows renaming namespace, renaming group and changing group interval, all in one go
-export const updateLotexNamespaceAndGroupAction: AsyncThunk<
-  void,
-  UpdateNamespaceAndGroupOptions,
-  { state: StoreState }
-> = createAsyncThunk<void, UpdateNamespaceAndGroupOptions, { state: StoreState }>(
-  'unifiedalerting/updateLotexNamespaceAndGroup',
-  async (options: UpdateNamespaceAndGroupOptions, thunkAPI): Promise<void> => {
-    return withAppEvents(
-      withSerializedError(
-        (async () => {
-          const {
-            rulesSourceName,
-            namespaceName,
-            groupName,
-            newNamespaceName,
-            newGroupName,
-            groupInterval,
-            folderUid,
-          } = options;
-
-          const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
-          // fetch rules and perform sanity checks
-          const rulesResult = await fetchRulerRules(rulerConfig);
-
-          const existingNamespace = Boolean(rulesResult[namespaceName]);
-
-          if (!existingNamespace) {
-            throw new Error(`Namespace "${namespaceName}" not found.`);
-          }
-
-          const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
-          if (!existingGroup) {
-            throw new Error(`Group "${groupName}" not found.`);
-          }
-
-          const newGroupAlreadyExists = Boolean(
-            rulesResult[namespaceName].find((group) => group.name === newGroupName)
-          );
-
-          if (newGroupName !== groupName && newGroupAlreadyExists) {
-            throw new Error(`Group "${newGroupName}" already exists in namespace "${namespaceName}".`);
-          }
-
-          const newNamespaceAlreadyExists = Boolean(rulesResult[newNamespaceName]);
-          const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
-          const originalNamespace = isGrafanaManagedGroup ? encodeGrafanaNamespace(namespaceName) : namespaceName;
-
-          if (newNamespaceName !== originalNamespace && newNamespaceAlreadyExists) {
-            throw new Error(`Namespace "${newNamespaceName}" already exists.`);
-          }
-          if (
-            newNamespaceName === originalNamespace &&
-            groupName === newGroupName &&
-            groupInterval === existingGroup.interval
-          ) {
-            throw new Error('Nothing changed.');
-          }
-
-          // validation for new groupInterval
-          if (groupInterval !== existingGroup.interval) {
-            const notValidRules = rulesInSameGroupHaveInvalidFor(existingGroup.rules, groupInterval ?? '1m');
-            if (notValidRules.length > 0) {
-              throw new Error(
-                `These alerts belonging to this group will have an invalid 'For' value: ${notValidRules
-                  .map((rule) => {
-                    const { alertName } = getAlertInfo(rule, groupInterval ?? '');
-                    return alertName;
-                  })
-                  .join(',')}`
-              );
-            }
-          }
-          // if renaming namespace - make new copies of all groups, then delete old namespace
-          // this is only possible for cloud rules
-          if (newNamespaceName !== originalNamespace) {
-            for (const group of rulesResult[namespaceName]) {
-              await setRulerRuleGroup(
-                rulerConfig,
-                newNamespaceName,
-                group.name === groupName
-                  ? {
-                      ...group,
-                      name: newGroupName,
-                      interval: groupInterval,
-                    }
-                  : group
-              );
-            }
-            await deleteNamespace(rulerConfig, folderUid || namespaceName);
-
-            // if only modifying group...
-          } else {
-            // save updated group
-            await setRulerRuleGroup(rulerConfig, folderUid || namespaceName, {
-              ...existingGroup,
-              name: newGroupName,
-              interval: groupInterval,
-            });
-            // if group name was changed, delete old group
-            if (newGroupName !== groupName) {
-              await deleteRulerRulesGroup(rulerConfig, folderUid || namespaceName, groupName);
-            }
-          }
-
-          // refetch all rules
-          await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
-        })()
-      ),
-      {
-        errorMessage: 'Failed to update namespace / group',
-        successMessage: 'Update successful',
-      }
-    );
-  }
-);
 
 interface UpdateRulesOrderOptions {
   rulesSourceName: string;
@@ -871,6 +687,16 @@ export const updateRulesOrder = createAsyncThunk(
             throw new Error(`Group "${groupName}" not found.`);
           }
 
+          // We're unlikely to have this happen, as any user of this action should have already ensured
+          // that the entire group was fetched before sending a new order.
+          // But as a final safeguard we should fail if we somehow ended up here with a mismatched rules count
+          // This would indicate an accidental deletion of rules following a frontend bug
+          if (existingGroup.rules.length !== newRules.length) {
+            const err = new Error('Rules count mismatch. Please refresh the page and try again.');
+            logError(err, { namespaceName, groupName });
+            throw err;
+          }
+
           const payload: PostableRulerRuleGroupDTO = {
             name: existingGroup.name,
             interval: existingGroup.interval,
@@ -885,24 +711,6 @@ export const updateRulesOrder = createAsyncThunk(
       {
         errorMessage: 'Failed to update namespace / group',
         successMessage: 'Update successful',
-      }
-    );
-  }
-);
-
-export const addExternalAlertmanagersAction = createAsyncThunk(
-  'unifiedAlerting/addExternalAlertmanagers',
-  async (alertmanagerConfig: ExternalAlertmanagerConfig, thunkAPI): Promise<void> => {
-    return withAppEvents(
-      withSerializedError(
-        (async () => {
-          await addAlertManagers(alertmanagerConfig);
-          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
-        })()
-      ),
-      {
-        errorMessage: 'Failed adding alertmanagers',
-        successMessage: 'Alertmanagers updated',
       }
     );
   }

@@ -1,14 +1,15 @@
 import { ComponentType } from 'react';
 
-import { RegistryItem } from '@grafana/data';
+import { DataLink, RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
+import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
 import { DimensionContext } from '../dimensions';
 
-import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConfig } from './types';
+import { StandardEditorConfig } from './types';
 
 /**
  * This gets saved in panel json
@@ -17,6 +18,7 @@ import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConf
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementOptions<TConfig = any> {
   name: string; // configured unique display name
   type: string;
@@ -30,6 +32,8 @@ export interface CanvasElementOptions<TConfig = any> {
   background?: BackgroundConfig;
   border?: LineConfig;
   connections?: CanvasConnection[];
+  links?: DataLink[];
+  oneClickLinks?: boolean;
 }
 
 // Unit is percentage from the middle of the element
@@ -66,7 +70,7 @@ export interface CanvasConnection {
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
-export interface CanvasElementProps<TConfig = any, TData = any> {
+export interface CanvasElementProps<TConfig = unknown, TData = unknown> {
   // Saved config
   config: TConfig;
 
@@ -82,6 +86,7 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItem {
   /** The default width/height to use when adding  */
   defaultSize?: Placement;

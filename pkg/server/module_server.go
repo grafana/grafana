@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -106,14 +107,6 @@ func (s *ModuleServer) Run() error {
 	s.notifySystemd("READY=1")
 	s.log.Debug("Waiting on services...")
 
-	// Only allow individual dskit modules to run in dev mode.
-	if s.cfg.Env != setting.Dev {
-		if len(s.cfg.Target) > 1 || s.cfg.Target[0] != "all" {
-			s.log.Error("dskit module targeting is only supported in dev mode. Falling back to 'all'")
-			s.cfg.Target = []string{"all"}
-		}
-	}
-
 	m := modules.New(s.cfg.Target)
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
@@ -121,7 +114,7 @@ func (s *ModuleServer) Run() error {
 		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
-		return NewInstrumentationService(s.log)
+		return NewInstrumentationService(s.log, s.cfg)
 	})
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
@@ -139,6 +132,10 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
 		return storageServer.ProvideService(s.cfg, s.features, s.log)
+	})
+
+	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
+		return authz.ProvideZanzanaService(s.cfg, s.features)
 	})
 
 	m.RegisterModule(modules.All, nil)

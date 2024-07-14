@@ -121,6 +121,10 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddAlertingScopeRemovalMigration(mg)
 
 	accesscontrol.AddManagedFolderAlertingSilencesActionsMigrator(mg)
+
+	ualert.AddRecordingRuleColumns(mg)
+
+	ualert.AddStateResolvedAtColumns(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

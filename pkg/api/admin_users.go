@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -334,7 +334,7 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Could not enable external user", nil)
 	}
 
-	isDisabled := true
+	isDisabled := false
 	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled}); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
@@ -366,15 +366,8 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace == identity.NamespaceUser {
-		activeUserID, err := identity.IntIdentifier(namespace, identifier)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to parse active user id", err)
-		}
-		if activeUserID == userID {
-			return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
-		}
+	if c.SignedInUser.GetID() == authn.NewNamespaceID(authn.NamespaceUser, userID) {
+		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)

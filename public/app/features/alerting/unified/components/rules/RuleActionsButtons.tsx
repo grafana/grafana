@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,9 @@ import { LinkButton, useStyles2, Stack } from '@grafana/ui';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
+import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
+import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
@@ -42,7 +44,11 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   const dispatch = useDispatch();
   const location = useLocation();
   const style = useStyles2(getStyles);
-  const [deleteModal, showDeleteModal] = useDeleteModal();
+
+  const redirectToListView = compact ? false : true;
+  const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
+
+  const [showSilenceDrawer, setShowSilenceDrawer] = useState<boolean>(false);
 
   const [redirectToClone, setRedirectToClone] = useState<
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
@@ -119,6 +125,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
         identifier={identifier}
         showCopyLinkButton={showCopyLinkButton}
         handleDelete={() => showDeleteModal(rule)}
+        handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
         onPauseChange={() => {
           // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
@@ -131,6 +138,11 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
         }}
       />
       {deleteModal}
+      {isGrafanaRulerRule(rule.rulerRule) && showSilenceDrawer && (
+        <AlertmanagerProvider accessType="instance">
+          <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
+        </AlertmanagerProvider>
+      )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule
           identifier={redirectToClone.identifier}

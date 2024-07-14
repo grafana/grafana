@@ -7,11 +7,11 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -170,14 +170,17 @@ func ProvideDashboardPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			wildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
+			scopes := []string(wildcards)
+
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
 			}
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
 			// nolint:staticcheck
-			if dashboard.FolderID > 0 {
-				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
+			if dashboard.FolderUID != "" {
+				query := &dashboards.GetDashboardQuery{UID: dashboard.FolderUID, OrgID: orgID}
 				queryResult, err := dashboardStore.GetDashboard(ctx, query)
 				if err != nil {
 					return nil, err
@@ -188,9 +191,12 @@ func ProvideDashboardPermissions(
 				if err != nil {
 					return nil, err
 				}
-				return append([]string{parentScope}, nestedScopes...), nil
+
+				scopes = append(scopes, parentScope)
+				scopes = append(scopes, nestedScopes...)
+				return scopes, nil
 			}
-			return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}, nil
+			return append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)), nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
@@ -288,9 +294,9 @@ var DatasourceQueryActions = []string{
 	datasources.ActionQuery,
 }
 
-func ProvideDatasourcePermissionsService(features featuremgmt.FeatureToggles, db db.DB, actionSetService resourcepermissions.ActionSetService) *DatasourcePermissionsService {
+func ProvideDatasourcePermissionsService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, db db.DB) *DatasourcePermissionsService {
 	return &DatasourcePermissionsService{
-		store: resourcepermissions.NewStore(db, features, &actionSetService),
+		store: resourcepermissions.NewStore(cfg, db, features),
 	}
 }
 
@@ -320,10 +326,10 @@ func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Conte
 // if an OSS/unlicensed instance is upgraded to Enterprise/licensed.
 // https://github.com/grafana/identity-access-team/issues/672
 func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
-	var dbCommands []resourcepermissions.SetResourcePermissionsCommand
+	dbCommands := make([]resourcepermissions.SetResourcePermissionsCommand, 0, len(commands))
 	for _, cmd := range commands {
-		// Only set query permissions for built-in roles
-		if cmd.Permission != "Query" || cmd.BuiltinRole == "" {
+		// Only set query permissions for built-in roles; do not set permissions for data sources with * as UID, as this would grant wildcard permissions
+		if cmd.Permission != "Query" || cmd.BuiltinRole == "" || resourceID == "*" {
 			continue
 		}
 		actions := DatasourceQueryActions

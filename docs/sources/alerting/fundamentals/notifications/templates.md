@@ -17,7 +17,13 @@ labels:
     - enterprise
     - oss
 title: Templates
-weight: 114
+weight: 115
+refs:
+  variables-label-annotation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations/
 ---
 
 # Templates
@@ -68,7 +74,7 @@ Templating can be applied by using variables and functions. These variables can 
 In Grafana templating, the $ and . symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the $ symbol followed by the variable name. Similarly, you can access properties of variables using the dot (.) notation within alert rule definitions.
 {{</admonition>}}
 
-Here are some commonly used built-in [variables][variables-label-annotation] to interact with the name and value of labels in Grafana alerting:
+Here are some commonly used built-in [variables](ref:variables-label-annotation) to interact with the name and value of labels in Grafana alerting:
 
 - The `$labels` variable, which contains all labels from the query.
 
@@ -99,6 +105,10 @@ Here are some commonly used built-in [variables][variables-label-annotation] to 
   And it would print:
 
         CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
+
+{{% admonition type="caution" %}}
+Extra whitespace in label templates can break matches with notification policies.
+{{% /admonition %}}
 
 ### Template annotations
 
@@ -147,13 +157,8 @@ This is the message you would receive in your contact point:
             1 resolved alert(s)
             - The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
 
-Once the template is created, you need to make reference to it in your **Contact point** (in the Optional [contact point] settings) .
+Once the template is created, you need to make reference to it in your **Contact point** (in the Optional `[contact point]` settings) .
 
 {{<admonition type="note">}}
 It's not recommended to include individual alert information within notification templates. Instead, it's more effective to incorporate such details within the rule using labels and annotations.
 {{</admonition>}}
-
-{{% docs/reference %}}
-[variables-label-annotation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations"
-[variables-label-annotation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations"
-{{% /docs/reference %}}

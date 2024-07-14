@@ -3,7 +3,7 @@
 ARG BASE_IMAGE=alpine:3.19.1
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.22.2-alpine
+ARG GO_IMAGE=golang:1.22.4-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -57,8 +57,10 @@ COPY .bingo .bingo
 COPY pkg/util/xorm/go.* pkg/util/xorm/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
+COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
 COPY pkg/promlib/go.* pkg/promlib/
+COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \

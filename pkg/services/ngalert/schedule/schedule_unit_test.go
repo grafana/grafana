@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -354,6 +356,47 @@ func TestProcessTicks(t *testing.T) {
 		require.Len(t, updated, 1)
 		require.Equal(t, expectedUpdated, updated[0])
 	})
+	t.Run("on 12th tick all rules should be stopped", func(t *testing.T) {
+		expectedToBeStopped, err := ruleStore.GetAlertRulesKeysForScheduling(ctx)
+		require.NoError(t, err)
+
+		ruleStore.rules = map[string]*models.AlertRule{}
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Emptyf(t, scheduled, "None rules should be scheduled")
+
+		require.Len(t, stopped, len(expectedToBeStopped))
+
+		require.Emptyf(t, updated, "No rules should be updated")
+	})
+
+	t.Run("scheduled rules should be sorted", func(t *testing.T) {
+		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval)).GenerateManyRef(10, 20)
+		ruleStore.rules = map[string]*models.AlertRule{}
+		ruleStore.PutRule(context.Background(), rules...)
+
+		expectedUids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			expectedUids = append(expectedUids, rule.UID)
+		}
+		slices.Sort(expectedUids)
+
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+
+		actualUids := make([]string, 0, len(scheduled))
+		for _, rule := range scheduled {
+			actualUids = append(actualUids, rule.rule.UID)
+		}
+
+		require.Len(t, scheduled, len(rules))
+		assert.Truef(t, slices.IsSorted(actualUids), "The scheduler rules should be sorted by UID but they aren't")
+		require.Equal(t, expectedUids, actualUids)
+	})
 }
 
 func TestSchedule_deleteAlertRule(t *testing.T) {
@@ -363,7 +406,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			ruleFactory := ruleFactoryFromScheduler(sch)
 			rule := models.RuleGen.GenerateRef()
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(context.Background(), key, ruleFactory)
+			info, _ := sch.registry.getOrCreate(context.Background(), rule, ruleFactory)
 			sch.deleteAlertRule(key)
 			require.ErrorIs(t, info.(*alertRule).ctx.Err(), errRuleDeleted)
 			require.False(t, sch.registry.exists(key))
@@ -394,7 +437,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()), &pluginstore.FakePluginStore{})
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, &datasources.FakeCacheService{}, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()), &pluginstore.FakePluginStore{})
 	}
 
 	if registry == nil {
@@ -417,6 +460,8 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		MaxAttempts:  1,
 	}
 
+	fakeRecordingWriter := writer.FakeWriter{}
+
 	schedCfg := SchedulerCfg{
 		BaseInterval:     cfg.BaseInterval,
 		MaxAttempts:      cfg.MaxAttempts,
@@ -424,10 +469,12 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AppURL:           appUrl,
 		EvaluatorFactory: evaluator,
 		RuleStore:        rs,
+		FeatureToggles:   featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
 		Metrics:          m.GetSchedulerMetrics(),
 		AlertSender:      senderMock,
 		Tracer:           testTracer,
 		Log:              log.New("ngalert.scheduler"),
+		RecordingWriter:  fakeRecordingWriter,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),

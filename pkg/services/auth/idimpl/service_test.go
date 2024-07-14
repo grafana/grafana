@@ -56,14 +56,14 @@ func TestService_SignIdentity(t *testing.T) {
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
 			require.NoError(t, err)
 
-			token, err := jwt.Signed(s).Claims(claims).CompactSerialize()
+			token, err := jwt.Signed(s).Claims(claims.Claims).Claims(claims.Rest).CompactSerialize()
 			require.NoError(t, err)
 
 			return token, nil
 		},
 	}
 
-	t.Run("should sing identity", func(t *testing.T) {
+	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
@@ -74,20 +74,26 @@ func TestService_SignIdentity(t *testing.T) {
 		require.NotEmpty(t, token)
 	})
 
-	t.Run("should sing identity with authenticated by if user is externally authenticated", func(t *testing.T) {
+	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), AuthenticatedBy: login.AzureADAuthModule})
+		token, err := s.SignIdentity(context.Background(), &authn.Identity{
+			ID:              authn.MustParseNamespaceID("user:1"),
+			AuthenticatedBy: login.AzureADAuthModule,
+			Login:           "U1",
+			UID:             authn.NewNamespaceIDString(authn.NamespaceUser, "edpu3nnt61se8e")})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
 		require.NoError(t, err)
 
 		claims := &auth.IDClaims{}
-		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims))
-		assert.Equal(t, login.AzureADAuthModule, claims.AuthenticatedBy)
+		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
+		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
+		assert.Equal(t, "U1", claims.Rest.Username)
+		assert.Equal(t, "user:edpu3nnt61se8e", claims.Rest.UID)
 	})
 }

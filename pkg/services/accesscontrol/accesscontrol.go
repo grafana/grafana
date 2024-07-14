@@ -4,16 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol")
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
@@ -55,6 +60,8 @@ type Service interface {
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
 type Store interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	GetBasicRolesPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	GetTeamsPermissions(ctx context.Context, query GetUserPermissionsQuery) (map[int64][]Permission, error)
 	SearchUsersPermissions(ctx context.Context, orgID int64, options SearchOptions) (map[int64][]Permission, error)
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
@@ -75,6 +82,7 @@ type Options struct {
 type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
+	ActionSets   []string
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
@@ -100,22 +108,18 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 	if s.NamespacedID == "" {
 		return 0, errors.New("namespacedID must be set")
 	}
-	// Split namespaceID into namespace and ID
-	parts := strings.Split(s.NamespacedID, ":")
-	// Validate namespace ID format
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
-	}
-	// Validate namespace type is user or service account
-	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", parts[0])
-	}
-	// Validate namespace ID is a number
-	id, err := strconv.ParseInt(parts[1], 10, 64)
+
+	id, err := identity.ParseNamespaceID(s.NamespacedID)
 	if err != nil {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
+		return 0, err
 	}
-	return id, nil
+
+	// Validate namespace type is user or service account
+	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
+		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	}
+
+	return id.ParseInt()
 }
 
 type SyncUserRolesCommand struct {
@@ -129,6 +133,7 @@ type SyncUserRolesCommand struct {
 type TeamPermissionsService interface {
 	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 }
 
 type FolderPermissionsService interface {
@@ -233,7 +238,19 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
+//
+// Deprecated: use GroupScopesByActionContext instead
 func GroupScopesByAction(permissions []Permission) map[string][]string {
+	return GroupScopesByActionContext(context.Background(), permissions)
+}
+
+// GroupScopesByAction will group scopes on action
+func GroupScopesByActionContext(ctx context.Context, permissions []Permission) map[string][]string {
+	_, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
+		attribute.Int("permissions_count", len(permissions)),
+	))
+	defer span.End()
+
 	m := make(map[string][]string)
 	for i := range permissions {
 		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)

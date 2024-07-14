@@ -15,6 +15,12 @@ labels:
     - oss
 title: Heatmap
 weight: 100
+refs:
+  introduction-to-histograms-and-heatmaps:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
 ---
 
 # Heatmap
@@ -24,6 +30,8 @@ Heatmaps allow you to view [histograms](https://grafana.com/docs/grafana/latest/
 For example, if you want to understand the temperature changes for the past few years, you can use a heatmap visualization to identify trends in your data:
 
 {{< figure src="/static/img/docs/heatmap-panel/temperature_heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
+
+{{< docs/play title="Grafana Heatmaps" url="https://play.grafana.org/d/heatmap-calculate-log/" >}}
 
 You can use a heatmap visualization if you need to:
 
@@ -59,6 +67,10 @@ The table below is a simplified output of random walk distribution over time:
 The data is converted as follows:
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Heatmap options
 
@@ -174,11 +186,14 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 
 Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Exemplars
 
 Set the color used to show exemplar data.
-
-{{% docs/reference %}}
-[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms"
-[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms"
-{{% /docs/reference %}}

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import { startCase, uniqBy } from 'lodash';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
@@ -9,6 +10,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { getSelectStyles, Select, AsyncSelect, useStyles2, useTheme2 } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
+import { selectors } from '../e2e/selectors';
 import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
 import { PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from '../types/query';
 import { CustomMetaData, MetricDescriptor } from '../types/types';
@@ -223,7 +225,7 @@ export function Editor({
   };
 
   return (
-    <>
+    <span data-testid={selectors.components.queryEditor.visualMetricsQueryEditor.container.input}>
       <EditorRow>
         <EditorFieldGroup>
           <Project
@@ -306,7 +308,7 @@ export function Editor({
           <AliasBy refId={refId} value={aliasBy} onChange={onChangeAliasBy} />
         </EditorRow>
       </>
-    </>
+    </span>
   );
 }
 

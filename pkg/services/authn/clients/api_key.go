@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -135,7 +135,7 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Namespace() string {
-	return authn.NamespaceAPIKey
+	return authn.NamespaceAPIKey.String()
 }
 
 func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
@@ -255,7 +255,7 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NewNamespaceIDUnchecked(authn.NamespaceAPIKey, key.ID),
+		ID:              authn.NewNamespaceID(authn.NamespaceAPIKey, key.ID),
 		OrgID:           key.OrgID,
 		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
 		ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -265,7 +265,7 @@ func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NewNamespaceIDUnchecked(authn.NamespaceServiceAccount, *key.ServiceAccountId),
+		ID:              authn.NewNamespaceID(authn.NamespaceServiceAccount, *key.ServiceAccountId),
 		OrgID:           key.OrgID,
 		AuthenticatedBy: login.APIKeyAuthModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},

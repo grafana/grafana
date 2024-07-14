@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { RefCallback, useCallback, useEffect, useRef } from 'react';
+import { RefCallback, useCallback, useEffect, useRef } from 'react';
+import * as React from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,6 +27,7 @@ interface Props {
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
   onScroll?: React.UIEventHandler;
+  divId?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export const CustomScrollbar = ({
   scrollTop,
   onScroll,
   children,
+  divId,
 }: React.PropsWithChildren<Props>) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
   const styles = useStyles2(getStyles);
@@ -110,14 +113,17 @@ export const CustomScrollbar = ({
     return <div {...passedProps} className="thumb-vertical" />;
   }, []);
 
-  const renderView = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
-    // fixes issues of visibility on safari and ios devices
-    if (passedProps.style && passedProps.style['WebkitOverflowScrolling'] === 'touch') {
-      passedProps.style['WebkitOverflowScrolling'] = 'auto';
-    }
+  const renderView = useCallback(
+    (passedProps: JSX.IntrinsicElements['div']) => {
+      // fixes issues of visibility on safari and ios devices
+      if (passedProps.style && passedProps.style['WebkitOverflowScrolling'] === 'touch') {
+        passedProps.style['WebkitOverflowScrolling'] = 'auto';
+      }
 
-    return <div {...passedProps} className="scrollbar-view" />;
-  }, []);
+      return <div {...passedProps} className="scrollbar-view" id={divId} />;
+    },
+    [divId]
+  );
 
   const onScrollStop = useCallback(() => {
     ref.current && setScrollTop && setScrollTop(ref.current.getValues());

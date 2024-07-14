@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { identity } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -12,7 +12,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';
@@ -29,10 +29,19 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   annotations: DataFrame[];
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> | undefined;
 };
 
 export function LogsVolumePanel(props: Props) {
-  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged, allLogsVolumeMaximum } = props;
+  const {
+    width,
+    timeZone,
+    splitOpen,
+    onUpdateTimeRange,
+    onHiddenSeriesChanged,
+    allLogsVolumeMaximum,
+    toggleLegendRef,
+  } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -68,6 +77,7 @@ export function LogsVolumePanel(props: Props) {
   return (
     <div style={{ height }} className={styles.contentContainer}>
       <ExploreGraph
+        toggleLegendRef={toggleLegendRef}
         vizLegendOverrides={{
           calcs: ['sum'],
         }}

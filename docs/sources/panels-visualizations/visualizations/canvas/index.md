@@ -15,6 +15,17 @@ labels:
     - oss
 title: Canvas
 weight: 100
+refs:
+  data-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
+  add-field-from-calculation-transform:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
 ---
 
 # Canvas
@@ -76,6 +87,8 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 {{% /admonition %}}
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
+
+{{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
 
 ## Connections
 
@@ -151,27 +164,46 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 ### Data links
 
-Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/), but only for all elements except drone and button elements. You can add a data link by following these steps:
+Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
-1. Set an element to be tied to a field value.
-1. Turn off the inline editing toggle.
-1. Create an override for **Fields with name** and select the element field name from the list.
-1. Click the **+ Add override property** button.
-1. Select `Datalinks > Datalinks` from the list.
-1. Click **+Add link** add a title and URL for the data link.
-1. Hover over the element to display the data link tooltip.
-1. Click on the element to be able to open the data link.
+1. Enable inline editing.
+1. Click the element you to which you want to add the data link.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links** section and expand it.
+1. Click **Add link**.
+1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
+1. Enter the **URL** or variable to which you want to link.
 
-If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element.
+   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
-1. In the panel editor for the canvas, click the **Transform** tab.
-1. Select **Add field from calculation** from the list of transformations, or click **+ Add transformation** to display the list first.
-1. Choose **Reduce row** from the dropdown and click the field name that you want to use for the element.
-1. Select **All Values** from the **Calculation** dropdown.
-1. Add an alias for the field name.
-1. Reference the new unique field alias to create the element and field override.
+1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
+1. Click **Save** to save changes and close the dialog box.
+1. Disable inline editing.
 
-{{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
+If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
+
+#### One-click data link
+
+You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
+
+1. Enable inline editing.
+1. Click the element to which you want to add the data link.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links** section and expand it.
+1. Toggle the **One-click** switch in the element's data links section.
+1. Disable inline editing.
+
+The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-data-link.mp4" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Thresholds
 
@@ -180,3 +212,7 @@ If multiple elements use the same field name, and you want to control which elem
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

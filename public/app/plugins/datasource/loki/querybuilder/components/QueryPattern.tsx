@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { RawQuery } from '@grafana/experimental';
@@ -68,7 +67,7 @@ export const QueryPattern = (props: Props) => {
                 onPatternSelect(pattern);
               }}
             >
-              Replace query
+              Apply to query
             </Button>
             {hasNewQueryOption && (
               <Button

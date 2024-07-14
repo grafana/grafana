@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "11.1.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 export enum HorizontalConstraint {
   Center = 'center',
@@ -104,6 +104,7 @@ export interface CanvasElementOptions {
   connections?: Array<CanvasConnection>;
   constraint?: Constraint;
   name: string;
+  oneClickLinks?: boolean;
   placement?: Placement;
   type: string;
 }

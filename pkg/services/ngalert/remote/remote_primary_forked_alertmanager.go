@@ -67,8 +67,8 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx contex
 	return nil
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
-	return fam.remote.GetStatus()
+func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	return fam.remote.GetStatus(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
@@ -119,11 +119,13 @@ func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return fam.remote.TestReceivers(ctx, c)
+	// TODO: change to remote AM once it's implemented there.
+	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return fam.remote.TestTemplate(ctx, c)
+	// TODO: change to remote AM once it's implemented there.
+	return fam.internal.TestTemplate(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {

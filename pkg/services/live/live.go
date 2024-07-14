@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -54,10 +55,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -138,7 +137,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	var managedStreamRunner *managedstream.Runner
 	var redisClient *redis.Client
 	if g.IsHA() && redisHealthy {
-		redisClient := redis.NewClient(&redis.Options{
+		redisClient = redis.NewClient(&redis.Options{
 			Addr:     g.Cfg.LiveHAEngineAddress,
 			Password: g.Cfg.LiveHAEnginePassword,
 		})
@@ -333,12 +332,14 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	redisShardConfigs := []centrifuge.RedisShardConfig{
 		{Address: redisAddress, Password: redisPassword},
 	}
-	var redisShards []*centrifuge.RedisShard
+
+	redisShards := make([]*centrifuge.RedisShard, 0, len(redisShardConfigs))
 	for _, redisConf := range redisShardConfigs {
 		redisShard, err := centrifuge.NewRedisShard(node, redisConf)
 		if err != nil {
 			return fmt.Errorf("error connecting to Live Redis: %v", err)
 		}
+
 		redisShards = append(redisShards, redisShard)
 	}
 
@@ -349,6 +350,7 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	if err != nil {
 		return fmt.Errorf("error creating Live Redis broker: %v", err)
 	}
+
 	node.SetBroker(broker)
 
 	presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
@@ -358,7 +360,9 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	if err != nil {
 		return fmt.Errorf("error creating Live Redis presence manager: %v", err)
 	}
+
 	node.SetPresenceManager(presenceManager)
+
 	return nil
 }
 
@@ -414,10 +418,10 @@ type DashboardActivityChannel interface {
 	// gitops workflow that knows if the value was saved to the local database or not
 	// in many cases all direct save requests will fail, but the request should be forwarded
 	// to any gitops observers
-	DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *dashboards.Dashboard, err error) error
+	DashboardSaved(orgID int64, requester identity.Requester, message string, dashboard *dashboards.Dashboard, err error) error
 
 	// Called when a dashboard is deleted
-	DashboardDeleted(orgID int64, user *user.UserDisplayDTO, uid string) error
+	DashboardDeleted(orgID int64, requester identity.Requester, uid string) error
 
 	// Experimental! Indicate is GitOps is active.  This really means
 	// someone is subscribed to the `grafana/dashboards/gitops` channel

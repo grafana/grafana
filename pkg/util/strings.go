@@ -48,11 +48,13 @@ func SplitString(str string) []string {
 		return res
 	}
 
-	var result []string
 	matches := stringListItemMatcher.FindAllString(str, -1)
-	for _, match := range matches {
-		result = append(result, strings.Trim(match, "\""))
+
+	result := make([]string, len(matches))
+	for i, match := range matches {
+		result[i] = strings.Trim(match, "\"")
 	}
+
 	return result
 }
 
@@ -111,6 +113,21 @@ func GetAgeString(t time.Time) string {
 	}
 
 	return "< 1 minute"
+}
+
+func RemainingDaysUntil(expiration time.Time) string {
+	currentTime := time.Now()
+	durationUntil := expiration.Sub(currentTime)
+
+	daysUntil := int(durationUntil.Hours() / 24)
+
+	if daysUntil == 0 {
+		return "Today"
+	} else if daysUntil == 1 {
+		return "Tomorrow"
+	} else {
+		return fmt.Sprintf("%d days", daysUntil)
+	}
 }
 
 // ToCamelCase changes kebab case, snake case or mixed strings to camel case. See unit test for examples.

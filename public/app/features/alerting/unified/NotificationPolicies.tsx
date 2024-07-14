@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -380,9 +380,9 @@ function findMapIntersection(...matchingRoutes: FilterResult[]): FilterResult {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tabContent: css`
-    margin-top: ${theme.spacing(2)};
-  `,
+  tabContent: css({
+    marginTop: theme.spacing(2),
+  }),
 });
 
 interface QueryParamValues {

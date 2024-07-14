@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { ConnectionDirection } from 'app/features/canvas';
+import { ConnectionDirection } from 'app/features/canvas/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionCoordinates } from '../../panelcfg.gen';
@@ -217,14 +217,15 @@ export const ConnectionSVG = ({
                   }
                 } else {
                   // Last vertex
-                  let previousVertex = { x: 0, y: 0 };
                   if (index > 0) {
                     // Not also the first vertex
-                    previousVertex = vertices[index - 1];
+                    const previousVertex = vertices[index - 1];
+                    const Xp = previousVertex.x * xDist + xStart;
+                    const Yp = previousVertex.y * yDist + yStart;
+                    angle1 = calculateAngle(Xp, Yp, X, Y);
+                  } else {
+                    angle1 = calculateAngle(x1, y1, X, Y);
                   }
-                  const Xp = previousVertex.x * xDist + xStart;
-                  const Yp = previousVertex.y * yDist + yStart;
-                  angle1 = calculateAngle(Xp, Yp, X, Y);
                   angle2 = calculateAngle(X, Y, x2, y2);
                 }
 
@@ -271,10 +272,10 @@ export const ConnectionSVG = ({
                   }
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + x1;
-                  ya = lDelta * Math.sin(angle1) + y1;
-                  xb = lHalfArc * Math.cos(angle2) + X;
-                  yb = lHalfArc * Math.sin(angle2) + Y;
+                  xa = Math.round(lDelta * Math.cos(angle1) + x1);
+                  ya = Math.round(lDelta * Math.sin(angle1) + y1);
+                  xb = Math.round(lHalfArc * Math.cos(angle2) + X);
+                  yb = Math.round(lHalfArc * Math.sin(angle2) + Y);
 
                   // Check if arc control points are inside of segment, otherwise swap sign
                   if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
@@ -320,10 +321,10 @@ export const ConnectionSVG = ({
 
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + Xp;
-                  ya = lDelta * Math.sin(angle1) + Yp;
-                  xb = lHalfArc * Math.cos(angle2) + X;
-                  yb = lHalfArc * Math.sin(angle2) + Y;
+                  xa = Math.round(lDelta * Math.cos(angle1) + Xp);
+                  ya = Math.round(lDelta * Math.sin(angle1) + Yp);
+                  xb = Math.round(lHalfArc * Math.cos(angle2) + X);
+                  yb = Math.round(lHalfArc * Math.sin(angle2) + Y);
 
                   // Check if arc control points are inside of segment, otherwise swap sign
                   if ((xa > X && xa > Xp) || (xa < X && xa < Xp)) {

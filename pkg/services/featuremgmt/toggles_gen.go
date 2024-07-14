@@ -51,14 +51,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagExploreContentOutline
-	// Content outline sidebar
-	FlagExploreContentOutline = "exploreContentOutline"
-
-	// FlagDatasourceQueryMultiStatus
-	// Introduce HTTP 207 Multi Status for api/ds/query
-	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -95,10 +87,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagScenes
-	// Experimental framework to build interactive dashboards
-	FlagScenes = "scenes"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -110,10 +98,6 @@ const (
 	// FlagTopnav
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
-
-	// FlagReturnToPrevious
-	// Enables the return to previous context functionality
-	FlagReturnToPrevious = "returnToPrevious"
 
 	// FlagGrpcServer
 	// Run the GRPC server
@@ -142,10 +126,6 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
-
-	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
-	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
@@ -235,10 +215,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableElasticsearchBackendQuerying
-	// Enable the processing of queries and responses in the Elasticsearch data source through backend
-	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
-
 	// FlagFaroDatasourceSelector
 	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
@@ -267,10 +243,6 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
-	// FlagLokiFormatQuery
-	// Enables the ability to format Loki queries
-	FlagLokiFormatQuery = "lokiFormatQuery"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -278,10 +250,6 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
-
-	// FlagPrometheusIncrementalQueryInstrumentation
-	// Adds RudderStack events to incremental queries
-	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
 
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
@@ -316,7 +284,7 @@ const (
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end
+	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
@@ -399,6 +367,10 @@ const (
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
+
 	// FlagFormatString
 	// Enable format string transformer
 	FlagFormatString = "formatString"
@@ -414,6 +386,14 @@ const (
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
+	// FlagKubernetesDashboards
+	// Use the kubernetes API in the frontend for dashboards
+	FlagKubernetesDashboards = "kubernetesDashboards"
+
+	// FlagDatasourceQueryTypes
+	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
+	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -603,6 +583,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -614,10 +598,6 @@ const (
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
-
-	// FlagBetterPageScrolling
-	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
-	FlagBetterPageScrolling = "betterPageScrolling"
 
 	// FlagAuthAPIAccessTokenAuth
 	// Enables the use of Auth API access tokens for authentication
@@ -658,4 +638,100 @@ const (
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagLogsExploreTableDefaultVisualization
+	// Sets the logs table as default visualisation in logs explore
+	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
+
+	// FlagNewDashboardSharingComponent
+	// Enables the new sharing drawer design
+	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagAlertingListViewV2
+	// Enables the new alert list view design
+	FlagAlertingListViewV2 = "alertingListViewV2"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
+
+	// FlagDashboardRestore
+	// Enables deleted dashboard restore feature (backend only)
+	FlagDashboardRestore = "dashboardRestore"
+
+	// FlagDatasourceProxyDisableRBAC
+	// Disables applying a plugin route&#39;s ReqAction field to authorization
+	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
+
+	// FlagAlertingDisableSendAlertsExternal
+	// Disables the ability to send alerts to an external Alertmanager datasource.
+	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
+
+	// FlagPreserveDashboardStateWhenNavigating
+	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
+	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
+
+	// FlagAlertingCentralAlertHistory
+	// Enables the new central alert history.
+	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
+
+	// FlagAzureMonitorPrometheusExemplars
+	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
+
+	// FlagPinNavItems
+	// Enables pinning of nav items
+	FlagPinNavItems = "pinNavItems"
+
+	// FlagAuthZGRPCServer
+	// Enables the gRPC server for authorization
+	FlagAuthZGRPCServer = "authZGRPCServer"
+
+	// FlagOpenSearchBackendFlowEnabled
+	// Enables the backend query flow for Open Search datasource plugin
+	FlagOpenSearchBackendFlowEnabled = "openSearchBackendFlowEnabled"
+
+	// FlagSsoSettingsLDAP
+	// Use the new SSO Settings API to configure LDAP
+	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
+
+	// FlagFailWrongDSUID
+	// Throws an error if a datasource has an invalid UIDs
+	FlagFailWrongDSUID = "failWrongDSUID"
+
+	// FlagDatabaseReadReplica
+	// Use a read replica for some database queries.
+	FlagDatabaseReadReplica = "databaseReadReplica"
+
+	// FlagZanzana
+	// Use openFGA as authorization engine.
+	FlagZanzana = "zanzana"
+
+	// FlagPassScopeToDashboardApi
+	// Enables the passing of scopes to dashboards fetching in Grafana
+	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
+
+	// FlagAlertingApiServer
+	// Register Alerting APIs with the K8s API server
+	FlagAlertingApiServer = "alertingApiServer"
+
+	// FlagDashboardRestoreUI
+	// Enables the frontend to be able to restore a recently deleted dashboard
+	FlagDashboardRestoreUI = "dashboardRestoreUI"
+
+	// FlagCloudWatchRoundUpEndTime
+	// Round up end time for metric queries to the next minute to avoid missing data
+	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
+
+	// FlagBodyScrolling
+	// Adjusts Page to make body the scrollable element
+	FlagBodyScrolling = "bodyScrolling"
+
+	// FlagCloudwatchMetricInsightsCrossAccount
+	// Enables cross account observability for Cloudwatch Metric Insights
+	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 )

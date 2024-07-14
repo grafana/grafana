@@ -1,6 +1,12 @@
 import { t } from 'i18next';
-import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
-import { default as ReactSelect, IndicatorsContainerProps, Props as ReactSelectProps } from 'react-select';
+import { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import {
+  default as ReactSelect,
+  IndicatorsContainerProps,
+  Props as ReactSelectProps,
+  ClearIndicatorProps,
+} from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
@@ -19,7 +25,8 @@ import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
-import { SingleValue } from './SingleValue';
+import { SelectOptionGroupHeader } from './SelectOptionGroupHeader';
+import { Props, SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
@@ -186,7 +193,7 @@ export function SelectBase<T, Rest = {}>({
         const selectableValue = findSelectedValue(v.value ?? v, options);
         // If the select allows custom values there likely won't be a selectableValue in options
         // so we must return a new selectableValue
-        if (!allowCustomValue || selectableValue) {
+        if (selectableValue) {
           return selectableValue;
         }
         return typeof v === 'string' ? toOption(v) : v;
@@ -241,8 +248,13 @@ export function SelectBase<T, Rest = {}>({
     onBlur,
     onChange: onChangeWithEmpty,
     onInputChange: (val: string, actionMeta: InputActionMeta) => {
-      setHasInputValue(!!val);
-      onInputChange?.(val, actionMeta);
+      const newValue = onInputChange?.(val, actionMeta) ?? val;
+      const newHasValue = !!newValue;
+      if (newHasValue !== hasInputValue) {
+        setHasInputValue(newHasValue);
+      }
+
+      return newValue;
     },
     onKeyDown,
     onMenuClose: onCloseMenu,
@@ -263,7 +275,7 @@ export function SelectBase<T, Rest = {}>({
   };
 
   if (allowCustomValue) {
-    ReactSelectComponent = Creatable as any;
+    ReactSelectComponent = Creatable;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
@@ -290,12 +302,13 @@ export function SelectBase<T, Rest = {}>({
         components={{
           MenuList: SelectMenuComponent,
           Group: SelectOptionGroup,
+          GroupHeading: SelectOptionGroupHeader,
           ValueContainer,
           IndicatorsContainer: CustomIndicatorsContainer,
           IndicatorSeparator: IndicatorSeparator,
           Control: CustomControl,
           Option: SelectMenuOptions,
-          ClearIndicator(props: any) {
+          ClearIndicator(props: ClearIndicatorProps) {
             const { clearValue } = props;
             return (
               <Icon
@@ -325,7 +338,7 @@ export function SelectBase<T, Rest = {}>({
             );
           },
           DropdownIndicator: DropdownIndicator,
-          SingleValue(props: any) {
+          SingleValue(props: Props<T>) {
             return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,

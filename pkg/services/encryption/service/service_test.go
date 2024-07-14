@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/encryption/provider"
@@ -20,7 +21,7 @@ func Test_Service(t *testing.T) {
 	usageStats := &usagestats.UsageStatsMock{}
 	settings := setting.NewCfg()
 
-	svc, err := ProvideEncryptionService(encProvider, usageStats, settings)
+	svc, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, settings)
 	require.NoError(t, err)
 
 	t.Run("decrypt empty payload should return error", func(t *testing.T) {
@@ -79,7 +80,7 @@ func Test_Service_MissingProvider(t *testing.T) {
 	usageStats := &usagestats.UsageStatsMock{}
 	settings := setting.NewCfg()
 
-	service, err := ProvideEncryptionService(encProvider, usageStats, settings)
+	service, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, settings)
 	assert.Nil(t, service)
 	assert.Error(t, err)
 }

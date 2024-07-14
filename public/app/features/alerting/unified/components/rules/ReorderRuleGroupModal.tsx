@@ -1,7 +1,4 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
-import { compact } from 'lodash';
-import React, { useCallback, useState } from 'react';
 import {
   DragDropContext,
   Draggable,
@@ -9,10 +6,15 @@ import {
   Droppable,
   DroppableProvided,
   DropResult,
-} from 'react-beautiful-dnd';
+} from '@hello-pangea/dnd';
+import cx from 'classnames';
+import { compact } from 'lodash';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
+import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { dispatch } from 'app/store/store';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -34,8 +36,18 @@ type CombinedRuleWithUID = { uid: string } & CombinedRule;
 
 export const ReorderCloudGroupModal = (props: ModalProps) => {
   const { group, namespace, onClose, folderUid } = props;
+
+  // The list of rules might have been filtered before we get to this reordering modal
+  // We need to grab the full (unfiltered) list so we are able to reorder via the API without
+  // deleting any rules (as they otherwise would have been omitted from the payload)
+  const unfilteredNamespaces = useCombinedRuleNamespaces();
+  const matchedNamespace = unfilteredNamespaces.find(
+    (ns) => ns.rulesSource === namespace.rulesSource && ns.name === namespace.name
+  );
+  const matchedGroup = matchedNamespace?.groups.find((g) => g.name === group.name);
+
   const [pending, setPending] = useState<boolean>(false);
-  const [rulesList, setRulesList] = useState<CombinedRule[]>(group.rules);
+  const [rulesList, setRulesList] = useState<CombinedRule[]>(matchedGroup?.rules || []);
 
   const styles = useStyles2(getStyles);
 
@@ -129,6 +141,7 @@ const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListI
 
   return (
     <div
+      data-testid="reorder-alert-rule"
       className={cx(styles.listItem, isClone && 'isClone', isDragging && 'isDragging')}
       ref={provided.innerRef}
       {...provided.draggableProps}
@@ -170,57 +183,57 @@ const ModalHeader = ({ namespace, group }: ModalHeaderProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    max-width: 640px;
-    max-height: 80%;
-    overflow: hidden;
-  `,
-  listItem: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+  modal: css({
+    maxWidth: '640px',
+    maxHeight: '80%',
+    overflow: 'hidden',
+  }),
+  listItem: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
 
-    gap: ${theme.spacing()};
+    gap: theme.spacing(),
 
-    background: ${theme.colors.background.primary};
-    color: ${theme.colors.text.secondary};
+    background: theme.colors.background.primary,
+    color: theme.colors.text.secondary,
 
-    border-bottom: solid 1px ${theme.colors.border.medium};
-    padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    borderBottom: `solid 1px ${theme.colors.border.medium}`,
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
 
-    &:last-child {
-      border-bottom: none;
-    }
+    '&:last-child': {
+      borderBottom: 'none',
+    },
 
-    &.isClone {
-      border: solid 1px ${theme.colors.primary.shade};
-    }
-  `,
-  listContainer: css`
-    user-select: none;
-    border: solid 1px ${theme.colors.border.medium};
-  `,
-  disabled: css`
-    opacity: 0.5;
-    pointer-events: none;
-  `,
-  listItemName: css`
-    flex: 1;
+    '&.isClone': {
+      border: `solid 1px ${theme.colors.primary.shade}`,
+    },
+  }),
+  listContainer: css({
+    userSelect: 'none',
+    border: `solid 1px ${theme.colors.border.medium}`,
+  }),
+  disabled: css({
+    opacity: '0.5',
+    pointerEvents: 'none',
+  }),
+  listItemName: css({
+    flex: 1,
 
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  header: css`
-    display: flex;
-    align-items: center;
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  }),
+  header: css({
+    display: 'flex',
+    alignItems: 'center',
 
-    gap: ${theme.spacing(1)};
-  `,
-  dataSourceIcon: css`
-    width: ${theme.spacing(2)};
-    height: ${theme.spacing(2)};
-  `,
+    gap: theme.spacing(1),
+  }),
+  dataSourceIcon: css({
+    width: theme.spacing(2),
+    height: theme.spacing(2),
+  }),
 });
 
 export function reorder<T>(rules: T[], startIndex: number, endIndex: number): T[] {

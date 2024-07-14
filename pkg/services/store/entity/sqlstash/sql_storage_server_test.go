@@ -1,143 +1,44 @@
 package sqlstash
 
 import (
-	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
+	traceNoop "go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
+func newTestSQLEntityServer(t *testing.T) (*sqlEntityServer, sqlmock.Sqlmock) {
+	db, mock := newMockDBMatchWords(t)
+
+	return &sqlEntityServer{
+		log:    log.NewNopLogger(),
+		tracer: traceNoop.NewTracerProvider().Tracer("test-tracer"),
+
+		sess: new(session.SessionDB), // FIXME
+
+		sqlDB:      db,
+		sqlDialect: sqltemplate.MySQL,
+	}, mock
 }
 
-func TestCreate(t *testing.T) {
-	s := setUpTestServer(t)
+func TestIsHealthy(t *testing.T) {
+	t.Parallel()
 
-	tests := []struct {
-		name             string
-		ent              *entity.Entity
-		errIsExpected    bool
-		statusIsExpected bool
-	}{
-		{
-			"request with key and entity creator",
-			&entity.Entity{
-				Group:     "playlist.grafana.app",
-				Resource:  "playlists",
-				Namespace: "default",
-				Name:      "set-minimum-uid",
-				Key:       "/playlist.grafana.app/playlists/namespaces/default/set-minimum-uid",
-				CreatedBy: "set-minimum-creator",
-				Origin:    &entity.EntityOriginInfo{},
-			},
-			false,
-			true,
-		},
-		{
-			"request with no entity creator",
-			&entity.Entity{
-				Key: "/playlist.grafana.app/playlists/namespaces/default/set-only-key",
-			},
-			true,
-			false,
-		},
-		{
-			"request with no key",
-			&entity.Entity{
-				CreatedBy: "entity-creator",
-			},
-			true,
-			true,
-		},
-	}
+	// test declarations
+	ctx := testutil.NewDefaultTestContext(t)
+	s, mock := newTestSQLEntityServer(t)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			req := entity.CreateEntityRequest{
-				Entity: &entity.Entity{
-					Key:       tc.ent.Key,
-					CreatedBy: tc.ent.CreatedBy,
-				},
-			}
-			resp, err := s.Create(context.Background(), &req)
+	// setup expectations
+	mock.ExpectPing()
 
-			if tc.errIsExpected {
-				require.Error(t, err)
-
-				if tc.statusIsExpected {
-					require.Equal(t, entity.CreateEntityResponse_ERROR, resp.Status)
-				}
-
-				return
-			}
-
-			require.Nil(t, err)
-			require.Equal(t, entity.CreateEntityResponse_CREATED, resp.Status)
-			require.NotNil(t, resp)
-			require.Nil(t, resp.Error)
-
-			read, err := s.Read(context.Background(), &entity.ReadEntityRequest{
-				Key: tc.ent.Key,
-			})
-			require.NoError(t, err)
-			require.NotNil(t, read)
-
-			require.Greater(t, len(read.Guid), 0)
-			require.Greater(t, read.ResourceVersion, int64(0))
-
-			expectedETag := createContentsHash(tc.ent.Body, tc.ent.Meta, tc.ent.Status)
-			require.Equal(t, expectedETag, read.ETag)
-			require.Equal(t, tc.ent.Origin, read.Origin)
-			require.Equal(t, tc.ent.Group, read.Group)
-			require.Equal(t, tc.ent.Resource, read.Resource)
-			require.Equal(t, tc.ent.Namespace, read.Namespace)
-			require.Equal(t, tc.ent.Name, read.Name)
-			require.Equal(t, tc.ent.Subresource, read.Subresource)
-			require.Equal(t, tc.ent.GroupVersion, read.GroupVersion)
-			require.Equal(t, tc.ent.Key, read.Key)
-			require.Equal(t, tc.ent.Folder, read.Folder)
-			require.Equal(t, tc.ent.Meta, read.Meta)
-			require.Equal(t, tc.ent.Body, read.Body)
-			require.Equal(t, tc.ent.Status, read.Status)
-			require.Equal(t, tc.ent.Title, read.Title)
-			require.Equal(t, tc.ent.Size, read.Size)
-			require.Greater(t, read.CreatedAt, int64(0))
-			require.Equal(t, tc.ent.CreatedBy, read.CreatedBy)
-			require.Equal(t, tc.ent.UpdatedAt, read.UpdatedAt)
-			require.Equal(t, tc.ent.UpdatedBy, read.UpdatedBy)
-			require.Equal(t, tc.ent.Description, read.Description)
-			require.Equal(t, tc.ent.Slug, read.Slug)
-			require.Equal(t, tc.ent.Message, read.Message)
-			require.Equal(t, tc.ent.Labels, read.Labels)
-			require.Equal(t, tc.ent.Fields, read.Fields)
-			require.Equal(t, tc.ent.Errors, read.Errors)
-		})
-	}
-}
-
-func setUpTestServer(t *testing.T) entity.EntityStoreServer {
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-
-	entityDB, err := dbimpl.ProvideEntityDB(
-		sqlStore,
-		cfg,
-		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
+	// execute and assert
+	_, err := s.IsHealthy(ctx, new(entity.HealthCheckRequest))
 	require.NoError(t, err)
-
-	traceConfig, err := tracing.ParseTracingConfig(cfg)
-	require.NoError(t, err)
-	tracer, err := tracing.ProvideService(traceConfig)
-	require.NoError(t, err)
-
-	s, err := ProvideSQLEntityServer(entityDB, tracer)
-	require.NoError(t, err)
-	return s
 }

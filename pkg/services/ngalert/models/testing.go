@@ -9,9 +9,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -485,6 +490,39 @@ func (a *AlertRuleMutators) WithIsPaused(paused bool) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithRandomRecordingRules() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rand.Int63()%2 == 0 {
+			return
+		}
+		convertToRecordingRule(rule)
+	}
+}
+
+func (a *AlertRuleMutators) WithAllRecordingRules() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		convertToRecordingRule(rule)
+	}
+}
+
+func (a *AlertRuleMutators) WithMetric(metric string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Record == nil {
+			rule.Record = &Record{}
+		}
+		rule.Record.Metric = metric
+	}
+}
+
+func (a *AlertRuleMutators) WithRecordFrom(from string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Record == nil {
+			rule.Record = &Record{}
+		}
+		rule.Record.From = from
+	}
+}
+
 func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.Labels {
 	count := max
 	if min > max {
@@ -566,6 +604,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
+		Record:          r.Record,
 	}
 
 	if r.DashboardUID != nil {
@@ -600,6 +639,13 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		result.Labels = make(map[string]string, len(r.Labels))
 		for s, s2 := range r.Labels {
 			result.Labels[s] = s2
+		}
+	}
+
+	if r.Record != nil {
+		result.Record = &Record{
+			From:   r.Record.From,
+			Metric: r.Record.Metric,
 		}
 	}
 
@@ -795,6 +841,11 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 		CurrentStateSince: currentStateSince,
 		CurrentStateEnd:   currentStateSince.Add(time.Duration(rand.Intn(100) + 200)),
 		LastEvalTime:      time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
+		LastSentAt:        util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50))),
+	}
+
+	if instance.CurrentState == InstanceStateNormal && rand.Intn(2) == 1 {
+		instance.ResolvedAt = util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50)))
 	}
 
 	for _, mutator := range mutators {
@@ -902,4 +953,158 @@ func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ..
 	return func(ns *NotificationSettings) {
 		ns.MuteTimeIntervals = muteTimeIntervals
 	}
+}
+
+// Silences
+
+// CopySilenceWith creates a deep copy of Silence and then applies mutators to it.
+func CopySilenceWith(s Silence, mutators ...Mutator[Silence]) Silence {
+	c := CopySilence(s)
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	return c
+}
+
+// CopySilence creates a deep copy of Silence.
+func CopySilence(s Silence) Silence {
+	c := Silence{
+		Silence: amv2.Silence{},
+	}
+
+	if s.ID != nil {
+		c.ID = util.Pointer(*s.ID)
+	}
+	if s.Status != nil {
+		c.Status = util.Pointer(*s.Status)
+	}
+	if s.UpdatedAt != nil {
+		c.UpdatedAt = util.Pointer(*s.UpdatedAt)
+	}
+	if s.Silence.Comment != nil {
+		c.Silence.Comment = util.Pointer(*s.Silence.Comment)
+	}
+	if s.Silence.CreatedBy != nil {
+		c.Silence.CreatedBy = util.Pointer(*s.Silence.CreatedBy)
+	}
+	if s.Silence.EndsAt != nil {
+		c.Silence.EndsAt = util.Pointer(*s.Silence.EndsAt)
+	}
+	if s.Silence.StartsAt != nil {
+		c.Silence.StartsAt = util.Pointer(*s.Silence.StartsAt)
+	}
+	if s.Silence.Matchers != nil {
+		c.Silence.Matchers = CopyMatchers(s.Silence.Matchers)
+	}
+
+	return c
+}
+
+// CopyMatchers creates a deep copy of Matchers.
+func CopyMatchers(matchers []*amv2.Matcher) []*amv2.Matcher {
+	copies := make([]*amv2.Matcher, len(matchers))
+	for i, m := range matchers {
+		c := amv2.Matcher{}
+		if m.IsEqual != nil {
+			c.IsEqual = util.Pointer(*m.IsEqual)
+		}
+		if m.IsRegex != nil {
+			c.IsRegex = util.Pointer(*m.IsRegex)
+		}
+		if m.Name != nil {
+			c.Name = util.Pointer(*m.Name)
+		}
+		if m.Value != nil {
+			c.Value = util.Pointer(*m.Value)
+		}
+		copies[i] = &c
+	}
+	return copies
+}
+
+// SilenceGen generates Silence using a base and mutators.
+func SilenceGen(mutators ...Mutator[Silence]) func() Silence {
+	return func() Silence {
+		now := time.Now()
+		c := Silence{
+			ID:        util.Pointer(util.GenerateShortUID()),
+			Status:    util.Pointer(amv2.SilenceStatus{State: util.Pointer(amv2.SilenceStatusStateActive)}),
+			UpdatedAt: util.Pointer(strfmt.DateTime(now.Add(time.Minute))),
+			Silence: amv2.Silence{
+				Comment:   util.Pointer(util.GenerateShortUID()),
+				CreatedBy: util.Pointer(util.GenerateShortUID()),
+				StartsAt:  util.Pointer(strfmt.DateTime(now.Add(-time.Minute))),
+				EndsAt:    util.Pointer(strfmt.DateTime(now.Add(time.Minute))),
+				Matchers:  []*amv2.Matcher{{Name: util.Pointer(util.GenerateShortUID()), Value: util.Pointer(util.GenerateShortUID()), IsRegex: util.Pointer(false), IsEqual: util.Pointer(true)}},
+			},
+		}
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		return c
+	}
+}
+
+var (
+	SilenceMuts = SilenceMutators{}
+)
+
+type SilenceMutators struct{}
+
+func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchType) Mutator[Silence] {
+	return func(s *Silence) {
+		m := amv2.Matcher{
+			Name:    &name,
+			Value:   &value,
+			IsRegex: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchNotRegexp),
+			IsEqual: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
+		}
+		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+	}
+}
+func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
+	return func(s *Silence) {
+		name := alertingModels.RuleUIDLabel
+		m := amv2.Matcher{
+			Name:    &name,
+			Value:   &value,
+			IsRegex: util.Pointer(false),
+			IsEqual: util.Pointer(true),
+		}
+		for _, matcher := range s.Silence.Matchers {
+			if isRuleUIDMatcher(*matcher) {
+				*matcher = m
+				return
+			}
+		}
+		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+	}
+}
+func (n SilenceMutators) Expired() Mutator[Silence] {
+	return func(s *Silence) {
+		s.EndsAt = util.Pointer(strfmt.DateTime(time.Now().Add(-time.Minute)))
+	}
+}
+
+func (n SilenceMutators) WithEmptyId() Mutator[Silence] {
+	return func(s *Silence) {
+		s.ID = util.Pointer("")
+	}
+}
+
+func convertToRecordingRule(rule *AlertRule) {
+	if rule.Record == nil {
+		rule.Record = &Record{}
+	}
+	if rule.Record.From == "" {
+		rule.Record.From = rule.Condition
+	}
+	if rule.Record.Metric == "" {
+		rule.Record.Metric = fmt.Sprintf("some_metric_%s", util.GenerateShortUID())
+	}
+	rule.Condition = ""
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }

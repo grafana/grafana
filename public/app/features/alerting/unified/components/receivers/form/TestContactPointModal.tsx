@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -108,13 +108,13 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  section: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing(1),
+  }),
+  section: css({
+    marginBottom: theme.spacing(2),
+  }),
 });

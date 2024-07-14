@@ -40,6 +40,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
       margin: theme.spacing(0, 0, 2),
     },
 
+    textarea: {
+      overflow: 'auto',
+    },
+
     button: {
       letterSpacing: theme.typography.body.letterSpacing,
 
@@ -50,8 +54,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     // Ex: 14px base font * 85% = about 12px
-    small: {
+    'small, .small': {
       fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: 'normal',
     },
 
     'b, strong': {
@@ -65,6 +70,174 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     cite: {
       fontStyle: 'normal',
+    },
+
+    blockquote: {
+      padding: theme.spacing(0, 0, 0, 2),
+      margin: theme.spacing(0, 0, 2),
+      borderLeft: `5px solid ${theme.v1.palette.gray3}`,
+      p: {
+        marginBottom: 0,
+        fontSize: theme.typography.fontSize * 1.25,
+        fontWeight: 300,
+        lineHeight: 1.25,
+      },
+      small: {
+        display: 'block',
+        lineHeight: theme.typography.body.lineHeight,
+        color: theme.v1.palette.gray2,
+        '&:before': {
+          content: "'\\2014 \\00A0'",
+        },
+      },
+    },
+
+    // Quotes
+    'q:before, q:after, blockquote:before, blockquote:after': {
+      content: "''",
+    },
+
+    // Addresses
+    address: {
+      display: 'block',
+      marginBottom: theme.spacing(2),
+      fontStyle: 'normal',
+      lineHeight: theme.typography.body.lineHeight,
+    },
+
+    'a.external-link': {
+      color: theme.colors.text.link,
+      textDecoration: 'normal',
+
+      '&:hover': {
+        color: theme.colors.text.link,
+        textDecoration: 'underline',
+      },
+    },
+
+    '.link': {
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+    },
+
+    '.link:hover': {
+      color: theme.colors.text.maxContrast,
+    },
+
+    '.pointer': {
+      cursor: 'pointer',
+    },
+
+    'audio, canvas, progress, video': {
+      display: 'inline-block',
+      verticalAlign: 'baseline',
+    },
+
+    // Prevent modern browsers from displaying `audio` without controls.
+    // Remove excess height in iOS 5 devices.
+    'audio:not([controls])': {
+      display: 'none',
+      height: 0,
+    },
+
+    // Address styling not present in Safari.
+    'abbr[title]': {
+      borderBottom: '1px dotted',
+      cursor: 'help',
+    },
+    dfn: {
+      fontStyle: 'italic',
+    },
+
+    // Prevent `sub` and `sup` affecting `line-height` in all browsers.
+    'sub, sup': {
+      fontSize: '75%',
+      lineHeight: 0,
+      position: 'relative',
+      verticalAlign: 'baseline',
+    },
+    sup: {
+      top: '-0.5em',
+    },
+    sub: {
+      bottom: '-0.25em',
+    },
+
+    hr: {
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+      border: 0,
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+    },
+
+    'mark, .mark': {
+      background: theme.colors.warning.main,
+    },
+
+    'ul, ol': {
+      padding: 0,
+    },
+    'ul ul, ul ol, ol ol, ol ul': {
+      marginBottom: 0,
+    },
+    li: {
+      lineHeight: theme.typography.body.lineHeight,
+    },
+
+    dl: {
+      marginBottom: theme.spacing(2),
+    },
+    'dt, dd': {
+      lineHeight: theme.typography.body.lineHeight,
+    },
+    dt: {
+      fontWeight: theme.typography.fontWeightMedium,
+    },
+
+    // 1. Correct color not being inherited.
+    //    Known issue: affects color of disabled elements.
+    // 2. Correct font properties not being inherited.
+    // 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
+    'button, input, optgroup, select, textarea': {
+      color: 'inherit',
+      font: 'inherit',
+      margin: 0,
+    },
+
+    // Don't inherit the `font-weight` (applied by a rule above).
+    // NOTE: the default cannot safely be changed in Chrome and Safari on OS X.
+    optgroup: {
+      fontWeight: 'bold',
+    },
+
+    // 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+    //    and `video` controls.
+    // 2. Correct inability to style clickable `input` types in iOS.
+    // 3. Improve usability and consistency of cursor style between image-type
+    //    `input` and others.
+    'button, html input[type="button"], input[type="submit"]': {
+      WebkitAppearance: 'button',
+      cursor: 'pointer',
+    },
+
+    // Remove inner padding and search cancel button in Safari and Chrome on OS X.
+    // Safari (but not Chrome) clips the cancel button when the search input has
+    // padding (and `textfield` appearance).
+    'input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration': {
+      WebkitAppearance: 'none',
+    },
+
+    table: {
+      borderCollapse: 'collapse',
+      borderSpacing: 0,
+    },
+
+    th: {
+      fontWeight: theme.typography.fontWeightMedium,
+    },
+
+    'td, th': {
+      padding: 0,
     },
 
     // Utility classes

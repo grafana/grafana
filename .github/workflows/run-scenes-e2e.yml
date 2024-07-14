@@ -3,6 +3,7 @@ name: Run dashboard scenes e2e
 on:
   schedule:
     - cron: "0 8 * * 1-5" # every day at 08:00UTC on weekdays
+  # push # uncomment for test run during PR
 
 env:
   ARCH: linux-amd64
@@ -13,6 +14,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Pin Go version to mod file
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - run: go version
       - uses: actions/setup-node@v4
         with:
           node-version: 20

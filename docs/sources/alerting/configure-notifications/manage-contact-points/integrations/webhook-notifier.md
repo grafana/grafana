@@ -24,9 +24,11 @@ title: Configure the webhook notifier for Alerting
 weight: 200
 ---
 
-### Configure the webhook notifier for Alerting
+# Configure the webhook notifier for Alerting
 
-Example JSON body:
+The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint. Using this notification you could integrate Grafana into a system of your choosing.
+
+## Webhook JSON payload
 
 ```json
 {
@@ -98,9 +100,9 @@ Example JSON body:
 }
 ```
 
-### Webhook fields
+## Webhook fields
 
-## Body
+### Body
 
 | Key               | Type                      | Description                                                                     |
 | ----------------- | ------------------------- | ------------------------------------------------------------------------------- |
@@ -136,18 +138,31 @@ Example JSON body:
 | panelURL     | string | **Will be deprecated soon**                                                        |
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
-### Removed fields related to dashboards
+{{< admonition type="note" >}}
+Alert rules are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
+{{< /admonition >}}
 
-Alerts are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
+## Procedure
 
-## WeCom
+To create your Webhook integration in Grafana Alerting, complete the following steps.
 
-WeCom contact points need a Webhook URL. These are obtained by setting up a WeCom robot on the corresponding group chat. To obtain a Webhook URL using the WeCom desktop Client please follow these steps:
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Click **+ Add contact point**.
+1. Enter a contact point name.
+1. From the Integration list, select **Webhook**.
+1. In the **URL** field, copy in your Webhook URL.
+1. Click **Test** to check that your integration works.
+1. Click **Save contact point**.
 
-1. Click the "..." in the top right corner of a group chat that you want your alerts to be delivered to
-2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
-3. There should be a Webhook URL in the panel.
+## Next steps
 
-| Setting | Description        |
-| ------- | ------------------ |
-| Url     | WeCom webhook URL. |
+The Webhook contact point is ready to receive alert notifications.
+
+To add this contact point to your alert, complete the following steps.
+
+1. In Grafana, navigate to **Alerting** > **Alert rules**.
+1. Edit or create a new alert rule.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Under Notifications, click **Select contact point**.
+1. From the drop-down menu, select the previously created contact point.
+1. **Click Save rule and exit**.

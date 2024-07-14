@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -101,21 +100,21 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  loader: css`
-    margin-bottom: 0;
-  `,
-  sectionHeader: css`
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  wrapper: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-  spinner: css`
-    text-align: center;
-    padding: ${theme.spacing(2)};
-  `,
+  loader: css({
+    marginBottom: 0,
+  }),
+  sectionHeader: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing(1),
+  }),
+  wrapper: css({
+    marginBottom: theme.spacing(4),
+  }),
+  spinner: css({
+    textAlign: 'center',
+    padding: theme.spacing(2),
+  }),
   pagination: getPaginationStyles(theme),
   headerRow: css({
     display: 'flex',
