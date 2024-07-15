@@ -76,6 +76,24 @@ If you want to learn more, in detail, about all the improvements we've made, don
 
 {{< youtube id="kcKwBhvrsHc" >}}
 
+### Data link improvements in canvas visualizations
+
+<!-- Adela Almasan, Nathan Marrs, #grafana-dataviz -->
+
+_Generally available in all editions of Grafana_
+
+We've updated canvas visualizations so that you can add data links to canvas elements without using an override. The **Selected element** configuration now includes a **Data links** section where you can add data links to elements using the same steps as in other visualizations.
+
+Data links in canvas elements can also be configured to open with a single click. To enable this functionality, toggle the **One-click** switch in the **Selected element** data link options. If there are multiple data links for an element, the first link in the list has the one-click functionality.
+
+As part of this improvement, we've also added the ability to control the order in which data links are displayed by dragging and dropping them. This improvement has been added to all visualizations.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-data-link.mp4" >}}
+
+In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#data-links)
+
 ## Explore
 
 ### Logs filtering and pinning in Explore content outline
