@@ -6,8 +6,8 @@ Welcome! We're glad you're here.
 
 Go to [Writers' Toolkit](https://grafana.com/docs/writers-toolkit/) for the following resources:
 
-- **Contribute** - Learn how can you contribute to Grafana Labs documentation.
-- **Structure** - Learn how to organize and structure our documentation.
+- **Contribution guidelines** - Learn how can you contribute to Grafana Labs documentation.
+- **Structure guidelines** - Learn how to organize and structure our documentation.
 - **Writing and style guide** - Guidelines that cover aspects of content such as style, tooling, workflows, markdown syntax, and more.
 - **Build and review guide** - Instructions for testing, linting, validating, and backporting our documentation.
 
