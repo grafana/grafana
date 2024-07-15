@@ -1,1 +1,3 @@
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/identity/v0alpha1,IdentityDisplay,NamespacedID
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/identity/v0alpha1,IdentityDisplay,NamespacedUID
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/identity/v0alpha1,TeamSpec,Title

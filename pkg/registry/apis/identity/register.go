@@ -43,12 +43,16 @@ func (b *IdentityAPIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *IdentityAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	identity.AddKnownTypes(scheme, identity.VERSION)
+	if err := identity.AddKnownTypes(scheme, identity.VERSION); err != nil {
+		return err
+	}
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	identity.AddKnownTypes(scheme, runtime.APIVersionInternal)
+	if err := identity.AddKnownTypes(scheme, runtime.APIVersionInternal); err != nil {
+		return err
+	}
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {

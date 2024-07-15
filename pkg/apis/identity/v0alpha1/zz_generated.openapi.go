@@ -16,12 +16,54 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team":     schema_pkg_apis_identity_v0alpha1_Team(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamList": schema_pkg_apis_identity_v0alpha1_TeamList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec": schema_pkg_apis_identity_v0alpha1_TeamSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.User":     schema_pkg_apis_identity_v0alpha1_User(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserList": schema_pkg_apis_identity_v0alpha1_UserList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserSpec": schema_pkg_apis_identity_v0alpha1_UserSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay": schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team":            schema_pkg_apis_identity_v0alpha1_Team(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamList":        schema_pkg_apis_identity_v0alpha1_TeamList(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec":        schema_pkg_apis_identity_v0alpha1_TeamSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.User":            schema_pkg_apis_identity_v0alpha1_User(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserList":        schema_pkg_apis_identity_v0alpha1_UserList(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserSpec":        schema_pkg_apis_identity_v0alpha1_UserSpec(ref),
+	}
+}
+
+func schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The namespaced UID, eg `user:xyz`",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"display": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The namespaced ID (should be deprecated, but find for now)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"avatar": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"uid", "display"},
+			},
+		},
 	}
 }
 
@@ -54,14 +96,14 @@ func schema_pkg_apis_identity_v0alpha1_Team(ref common.ReferenceCallback) common
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -127,12 +169,6 @@ func schema_pkg_apis_identity_v0alpha1_TeamSpec(ref common.ReferenceCallback) co
 					"email": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"emailVerified": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
 							Format: "",
 						},
 					},
