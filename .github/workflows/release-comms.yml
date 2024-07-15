@@ -21,6 +21,7 @@ on:
     - 'v*.*.*'
 jobs:
   setup:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
     name: Setup and establish latest
     outputs:
       version: ${{ steps.output.outputs.version }}
@@ -34,7 +35,7 @@ jobs:
         echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
         echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
         echo "LATEST=${{ inputs.latest }}" >> $GITHUB_ENV
-    - if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
+    - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
         echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\///g')" >> $GITHUB_ENV
         echo "DRY_RUN=true" >> $GITHUB_ENV

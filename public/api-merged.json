@@ -7984,7 +7984,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -8258,7 +8258,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -8337,7 +8337,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           },
           {
@@ -14018,7 +14018,7 @@
         }
       }
     },
-    "CreateOrUpdateReportConfig": {
+    "CreateOrUpdateReport": {
       "type": "object",
       "properties": {
         "dashboards": {
@@ -15601,6 +15601,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -19037,7 +19038,6 @@
       }
     },
     "Report": {
-      "description": "ConfigDTO is model representation in transfer",
       "type": "object",
       "properties": {
         "created": {
@@ -20370,6 +20370,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
