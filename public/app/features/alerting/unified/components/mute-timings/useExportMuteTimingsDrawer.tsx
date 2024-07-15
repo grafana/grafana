@@ -16,8 +16,8 @@ export const useExportMuteTimingsDrawer = (): ExportProps => {
     toggleShowExportDrawer(false);
   }, [toggleShowExportDrawer]);
 
-  const handleOpen = (receiverName: string | typeof ALL_MUTE_TIMINGS) => {
-    setMuteTimingName(receiverName);
+  const handleOpen = (muteTimingName: string | typeof ALL_MUTE_TIMINGS) => {
+    setMuteTimingName(muteTimingName);
     toggleShowExportDrawer(true);
   };
 
