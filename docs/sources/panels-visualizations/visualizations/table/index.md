@@ -167,9 +167,9 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 
 Cells can be displayed as a graphical gauge, with several different presentation types.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole data set. If you don't want the max/min values to be pulled from the whole data set, you can configure them for each column with field overrides.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ##### Basic
 
