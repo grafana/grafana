@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
@@ -75,6 +76,11 @@ export function RecentlyDeletedActions() {
   };
 
   const showRestoreModal = () => {
+    reportInteraction('grafana_restore_clicked', {
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
+    });
     appEvents.publish(
       new ShowModalReactEvent({
         component: RestoreModal,
@@ -88,6 +94,11 @@ export function RecentlyDeletedActions() {
   };
 
   const showDeleteModal = () => {
+    reportInteraction('grafana_delete_permanently_clicked', {
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
+    });
     appEvents.publish(
       new ShowModalReactEvent({
         component: PermanentlyDeleteModal,

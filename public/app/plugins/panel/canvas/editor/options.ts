@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash';
 
-import { FieldType } from '@grafana/data';
+import { FieldType, standardEditorsRegistry } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { ConnectionDirection } from 'app/features/canvas/element';
 import { SVGElements } from 'app/features/canvas/runtime/element';
@@ -11,10 +11,12 @@ import { CanvasConnection, CanvasElementOptions } from '../panelcfg.gen';
 import { LineStyle } from '../types';
 
 import { LineStyleEditor } from './LineStyleEditor';
+import { DataLinksEditor } from './element/DataLinksEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
+  addDataLinks: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
   addRadius: PanelOptionsSupplier<CanvasConnection>;
@@ -204,5 +206,26 @@ export const optionBuilder: OptionSuppliers = {
       settings: {},
       defaultValue: { value: LineStyle.Solid, label: 'Solid' },
     });
+  },
+
+  addDataLinks: (builder, context) => {
+    const category = ['Data links'];
+    builder
+      .addCustomEditor({
+        category,
+        id: 'enableOneClick',
+        path: 'oneClickLinks',
+        name: 'One-click',
+        description: 'When enabled, the top link in the list below works with a single click',
+        editor: standardEditorsRegistry.get('boolean').editor,
+      })
+      .addCustomEditor({
+        category,
+        id: 'dataLinks',
+        path: 'links',
+        name: '',
+        editor: DataLinksEditor,
+        settings: context.options,
+      });
   },
 };

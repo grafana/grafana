@@ -614,6 +614,7 @@
       "message": "Ńő đäŧä şőūřčęş ƒőūŉđ"
     }
   },
+  "Description": "Đęşčřįpŧįőŉ",
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "add-to-library-modal": {
@@ -874,6 +875,7 @@
       "refresh": "Ŗęƒřęşĥ"
     }
   },
+  "Labels": "Ŀäþęľş",
   "library-panel": {
     "add-modal": {
       "cancel": "Cäŉčęľ",
@@ -1428,6 +1430,7 @@
     },
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
+  "No description available": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
   "notifications": {
     "empty-state": {
       "description": "Ńőŧįƒįčäŧįőŉş yőū ĥävę řęčęįvęđ ŵįľľ äppęäř ĥęřę",
@@ -2112,6 +2115,9 @@
       "add-transformation-header": "Ŝŧäřŧ ŧřäŉşƒőřmįŉģ đäŧä"
     }
   },
+  "Type": "Ŧypę",
+  "Unit": "Ůŉįŧ",
+  "Unknown": "Ůŉĸŉőŵŉ",
   "user-orgs": {
     "current-org-button": "Cūřřęŉŧ",
     "name-column": "Ńämę",
