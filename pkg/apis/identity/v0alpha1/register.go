@@ -1,7 +1,6 @@
 package v0alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -37,18 +36,20 @@ var (
 )
 
 func init() {
-	localSchemeBuilder.Register(addKnownTypes)
+	localSchemeBuilder.Register(func(s *runtime.Scheme) error {
+		return AddKnownTypes(s, VERSION)
+	})
 }
 
 // Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
+func AddKnownTypes(scheme *runtime.Scheme, version string) error {
+	scheme.AddKnownTypes(schema.GroupVersion{Group: GROUP, Version: version},
 		&User{},
 		&UserList{},
 		&Team{},
 		&TeamList{},
 	)
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	// metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }
 

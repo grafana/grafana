@@ -8,6 +8,7 @@ type Service interface {
 	CreateTeam(ctx context.Context, name, email string, orgID int64) (Team, error)
 	UpdateTeam(ctx context.Context, cmd *UpdateTeamCommand) error
 	DeleteTeam(ctx context.Context, cmd *DeleteTeamCommand) error
+	ListTeams(ctx context.Context, query *ListTeamsCommand) ([]*Team, error)
 	SearchTeams(ctx context.Context, query *SearchTeamsQuery) (SearchTeamQueryResult, error)
 	GetTeamByID(ctx context.Context, query *GetTeamByIDQuery) (*TeamDTO, error)
 	GetTeamsByUser(ctx context.Context, query *GetTeamsByUserQuery) ([]*TeamDTO, error)
