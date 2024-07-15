@@ -2,11 +2,15 @@ package gmsclient
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
+	cryptoRand "crypto/rand"
+
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/crypto/nacl/box"
 )
 
 // NewInMemoryClient returns an implementation of Client that returns canned responses
@@ -49,10 +53,16 @@ func (c *memoryClientImpl) MigrateData(
 }
 
 func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+	publicKey, _, err := box.GenerateKey(cryptoRand.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
+	}
 	c.snapshot = &cloudmigration.StartSnapshotResponse{
-		EncryptionKey: util.GenerateShortUID(),
-		SnapshotID:    util.GenerateShortUID(),
-		UploadURL:     "localhost:3000",
+		EncryptionKey:        fmt.Sprintf("%x", publicKey[:]),
+		UploadURL:            "localhost:3000",
+		SnapshotID:           uuid.NewString(),
+		MaxItemsPerPartition: 10,
+		Algo:                 "nacl",
 	}
 
 	return c.snapshot, nil

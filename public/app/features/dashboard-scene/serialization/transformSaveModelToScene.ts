@@ -476,7 +476,6 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     x: panel.gridPos.x,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    itemHeight: panel.gridPos.h,
     body,
   });
 }
@@ -541,7 +540,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     y: panel.gridPos.y,
     width: repeatOptions.repeatDirection === 'h' ? 24 : panel.gridPos.w,
     height: panel.gridPos.h,
-    itemHeight: panel.gridPos.h,
     body,
     maxPerRow: panel.maxPerRow,
     ...repeatOptions,
