@@ -89,7 +89,7 @@ You can then click on any panel icon in the content outline to navigate to that 
 
 ### Filter logs in content outline
 
-When using Explore with logs, you can filter the logs in the content outline. You can filter by log level, currently supported for Elasticsearch and Loki data sources. To select multiple filters, hold down the command key on Mac or the control key on Windows while clicking.
+When using Explore with logs, you can filter the logs in the content outline. You can filter by log level, which is currently supported for Elasticsearch and Loki data sources. To select multiple filters, press Command-click on a Mac or Ctrl+Click in Windows.
 
 {{% admonition type="note" %}}
 Log levels will only show if the datasource supports the log volume histogram and contains multiple levels. Additionally, the query to the datasource may have to format the log lines to see the levels. For example, in loki, the `logfmt` parser commonly will display log levels.
