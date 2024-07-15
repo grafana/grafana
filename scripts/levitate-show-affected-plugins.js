@@ -98,7 +98,6 @@ function getColumn(lines, columnIndex) {
   return set;
 }
 
-
 /**
  * Generates a markdown section detailing the affected plugins based on the provided data.
  *
@@ -124,7 +123,7 @@ function printAffectedPluginsSection(data) {
       const affectedPlugins = getColumn(rows, pluginsColumnIndex);
 
       markdown += `<h3>Number of affected plugins: ${affectedPlugins.size}</h3>`;
-      markdown += "<p>To check the plugins affected by each import, click on the links below.</p>";
+      markdown += '<p>To check the plugins affected by each import, click on the links below.</p>';
 
       const propertiesColumnIndex = 1;
       const affectingProperties = getColumn(rows, propertiesColumnIndex);
