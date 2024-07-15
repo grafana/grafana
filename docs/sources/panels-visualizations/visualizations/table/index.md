@@ -75,9 +75,6 @@ The following video provides a visual walkthrough of the options you can set in 
 Annotations and alerts are not currently supported for tables.
 {{< /admonition >}}
 
-## Table visualization functions
-
-The table visualization provides multiple functions.
 
 ### Sort column
 
