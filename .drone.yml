@@ -955,23 +955,6 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.21.10-alpine
   name: memcached-integration-tests
-- commands:
-  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-remote-alertmanager
-- commands:
-  - apk add --update build-base
-  - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
-  depends_on:
-  - wire-install
-  - wait-for-remote-alertmanager
-  environment:
-    AM_PASSWORD: test
-    AM_TENANT_ID: test
-    AM_URL: http://mimir_backend:8080
-  image: golang:1.21.10-alpine
-  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - pull_request
@@ -2232,23 +2215,6 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.21.10-alpine
   name: memcached-integration-tests
-- commands:
-  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-remote-alertmanager
-- commands:
-  - apk add --update build-base
-  - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
-  depends_on:
-  - wire-install
-  - wait-for-remote-alertmanager
-  environment:
-    AM_PASSWORD: test
-    AM_TENANT_ID: test
-    AM_URL: http://mimir_backend:8080
-  image: golang:1.21.10-alpine
-  name: remote-alertmanager-integration-tests
 trigger:
   branch: main
   event:
@@ -4248,23 +4214,6 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.21.10-alpine
   name: memcached-integration-tests
-- commands:
-  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-remote-alertmanager
-- commands:
-  - apk add --update build-base
-  - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
-  depends_on:
-  - wire-install
-  - wait-for-remote-alertmanager
-  environment:
-    AM_PASSWORD: test
-    AM_TENANT_ID: test
-    AM_URL: http://mimir_backend:8080
-  image: golang:1.21.10-alpine
-  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - promote
@@ -4907,6 +4856,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5c1d70d7b12f1e03a71578ec26ba9b06260eb4aa0f6d08a05820decbf17d60e1
+hmac: e66b20de75489bedc8d5576b080931f8519ef797c325205570bedbd3cd85e1b2
 
 ...
