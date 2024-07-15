@@ -173,12 +173,10 @@ func TestDelayedWatchDelivery(t *testing.T) {
 	storagetesting.RunTestDelayedWatchDelivery(ctx, t, store)
 }
 
-/*
-func TestWatchError(t *testing.T) {
-	ctx, store, _ := testSetup(t)
-	storagetesting.RunTestWatchError(ctx, t, &storeWithPrefixTransformer{store})
-}
-*/
+// func TestWatchError(t *testing.T) {
+// 	ctx, store, _, _ := testSetup(t)
+// 	storagetesting.RunTestWatchError(ctx, t, &storeWithPrefixTransformer{store})
+// }
 
 func TestWatchContextCancel(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)

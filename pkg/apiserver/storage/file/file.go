@@ -252,6 +252,10 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	p := opts.Predicate
 	listObj := s.newListFunc()
 
+	if ctx.Err() != nil {
+		return &dummyWatch{}, nil
+	}
+
 	// Parses to 0 for opts.ResourceVersion == 0
 	requestedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
 	if err != nil {
