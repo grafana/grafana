@@ -3,8 +3,6 @@ import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -29,7 +27,6 @@ import { useDeleteRuleFromGroup } from './useDeleteRuleFromGroup';
 setupMswServer();
 
 beforeAll(() => {
-  setBackendSrv(backendSrv);
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleRead]);
 });
 

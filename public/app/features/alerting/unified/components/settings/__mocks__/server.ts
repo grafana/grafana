@@ -1,5 +1,5 @@
 import { delay, http, HttpResponse } from 'msw';
-import { SetupServerApi } from 'msw/lib/node';
+import { SetupServerApi } from 'msw/node';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import {

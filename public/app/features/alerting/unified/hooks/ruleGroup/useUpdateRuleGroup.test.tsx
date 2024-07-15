@@ -2,8 +2,6 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
@@ -22,7 +20,6 @@ import { useMoveRuleGroup, useRenameRuleGroup, useUpdateRuleGroupConfiguration }
 setupMswServer();
 
 beforeAll(() => {
-  setBackendSrv(backendSrv);
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleRead]);
 });
 
