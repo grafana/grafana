@@ -71,9 +71,9 @@ The following video provides a visual walkthrough of the options you can set in 
 
 ## Annotation and alert support
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Annotations and alerts are not currently supported for tables.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Table visualization functions
 
