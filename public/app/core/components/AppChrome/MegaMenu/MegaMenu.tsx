@@ -79,8 +79,10 @@ export const MegaMenu = memo(
               bookmarkIds: newItems,
             },
           },
-        }).then(() => {
-          dispatch(setBookmark({ item: item, isSaved: !isSaved }));
+        }).then((data) => {
+          if (!data.error) {
+            dispatch(setBookmark({ item: item, isSaved: !isSaved }));
+          }
         });
       }
     };
