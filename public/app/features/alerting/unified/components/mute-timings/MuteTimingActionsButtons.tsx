@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -11,10 +10,10 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
 
-import { useDeleteMuteTiming } from './useMuteTimings';
+import { MuteTiming, useDeleteMuteTiming } from './useMuteTimings';
 
 interface MuteTimingActionsButtonsProps {
-  muteTiming: MuteTimeInterval;
+  muteTiming: MuteTiming;
   alertManagerSourceName: string;
 }
 

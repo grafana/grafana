@@ -8,7 +8,10 @@ import {
   mergeTimeIntervals,
   shouldUseK8sApi,
 } from 'app/features/alerting/unified/components/mute-timings/util';
-import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
+import {
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval,
+  ReadNamespacedTimeIntervalApiResponse,
+} from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { deleteMuteTimingAction, updateAlertManagerConfigAction } from 'app/features/alerting/unified/state/actions';
 import { renameMuteTimings } from 'app/features/alerting/unified/utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -24,15 +27,22 @@ type BaseAlertmanagerArgs = {
   alertmanager: string;
 };
 
+/**
+ * Alertmanager mute time interval, with optional additional metadata
+ * (returned in the case of K8S API implementation)
+ * */
+export type MuteTiming = MuteTimeInterval & { metadata?: ReadNamespacedTimeIntervalApiResponse['metadata'] };
+
 /** Name of the custom annotation label used in k8s APIs for us to discern if a given entity was provisioned */
 export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
 
-/** Value of `PROVENANCE_ANNOTATION` given for file provisioned intervals */
-export const PROVENANCE_FILE = 'file';
 /** Value of `PROVENANCE_ANNOTATION` given for non-provisioned intervals */
 export const PROVENANCE_NONE = 'none';
 
-const parseTimeInterval = (item: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval) => {
+/** Alias for generated kuberenetes Alerting API Server type */
+type TimeIntervalV0Alpha1 = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
+
+const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) => {
   const { metadata, spec } = item;
   return {
     ...spec,
@@ -70,7 +80,7 @@ const useGrafanaAlertmanagerIntervals = () =>
   timeIntervalsApi.endpoints.listNamespacedTimeInterval.useLazyQuery({
     selectFromResult: ({ data, ...rest }) => {
       return {
-        data: data?.items.map((item) => parseTimeInterval(item)),
+        data: data?.items.map((item) => parseK8sTimeInterval(item)),
         ...rest,
       };
     },
@@ -160,7 +170,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
       }
 
       return {
-        data: parseTimeInterval(data),
+        data: parseK8sTimeInterval(data),
         ...rest,
       };
     },
