@@ -21,8 +21,9 @@ export const AlertRuleNameInput = () => {
   } = useFormContext<RuleFormValues>();
 
   const ruleFormType = watch('type');
-  const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
-
+  const isRecordingRule =
+    ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.grafanaRecording;
+  const entityName = isRecordingRule ? 'recording rule' : 'alert rule';
   return (
     <RuleEditorSection
       stepNo={1}
@@ -40,7 +41,7 @@ export const AlertRuleNameInput = () => {
           width={35}
           {...register('name', {
             required: { value: true, message: 'Must enter a name' },
-            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
+            pattern: isRecordingRule ? recordingRuleNameValidationPattern : undefined,
           })}
           aria-label="name"
           placeholder={`Give your ${entityName} a name`}
