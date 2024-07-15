@@ -793,113 +793,168 @@ func TestStore_StoreActionSet(t *testing.T) {
 }
 
 func TestStore_DeclareActionSet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	type actionSetTest struct {
-		desc              string
-		pluginID          string
-		pluginName        string
-		actionsets        []plugins.ActionSet
-		expectedErr       error
-		expectedActionSet struct {
-			action  string
-			actions []string
-		}
+		desc               string
+		features           featuremgmt.FeatureToggles
+		pluginID           string
+		pluginActions      []plugins.ActionSet
+		coreActionSets     []ActionSet
+		expectedErr        bool
+		expectedActionSets []ActionSet
 	}
 
-	pluginID := "k6testid"
 	tests := []actionSetTest{
 		{
-			desc:       "should not be able to declare action outside of allowlist",
-			pluginID:   pluginID,
-			pluginName: "k6testname",
-			actionsets: []plugins.ActionSet{
+			desc:     "should be able to register a plugin action set if the right feature toggles are enabled",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
 				{
-					Action:  "k6-app:edit",
-					Actions: []string{pluginID + ":k6tests.read", pluginID + ":k6tests.write"},
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
 				},
 			},
-			expectedErr: &accesscontrol.ErrActionSetValidationFailed,
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+			},
 		},
 		{
-			desc:       "should not be able to declare action set without prefix for actions",
-			pluginID:   pluginID,
-			pluginName: "k6testname",
-			actionsets: []plugins.ActionSet{
+			desc:     "should not register plugin action set if feature toggles are missing",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{},
+		},
+		{
+			desc:     "should be able to register multiple plugin action sets",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
 				{
 					Action:  "folders:edit",
-					Actions: []string{"noprefix:folders.read"},
+					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
 				},
 			},
-			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
-		},
-		{
-			desc:       "should not be able to declare action set with two colons for actions",
-			pluginID:   pluginID,
-			pluginName: "k6testname",
-			actionsets: []plugins.ActionSet{
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
 				{
 					Action:  "folders:edit",
-					Actions: []string{pluginID + ":folders:read"}, // here the two colons is the issue
+					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
 				},
-			},
-			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
-		},
-		{
-			desc:       "should be able to declare action set to extend existing action set",
-			pluginID:   pluginID,
-			pluginName: "k6testname",
-			actionsets: []plugins.ActionSet{
-				{
-					Action:  "folders:view",
-					Actions: []string{pluginID + ".tests:read"},
-				},
-				{
-					Action:  "folders:view",
-					Actions: []string{pluginID + ":read"},
-				},
-			},
-			expectedActionSet: struct {
-				action  string
-				actions []string
-			}{
-				action:  "folders:view",
-				actions: []string{"folders:read", pluginID + ".tests:read", pluginID + ":read"},
 			},
 		},
 		{
-			desc:       "should not be able to declare action set with two colons",
-			pluginID:   pluginID,
-			pluginName: "k6testname",
-			actionsets: []plugins.ActionSet{
+			desc:     "action set actions should be added not replaced",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
 				{
 					Action:  "folders:view",
-					Actions: []string{pluginID + ":" + "tests:read"},
+					Actions: []string{"test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
 				},
 			},
-			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
+			coreActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"folders:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"folders:write", "folders:delete"},
+				},
+				{
+					Action:  "folders:admin",
+					Actions: []string{"folders.permissions:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"folders:read", "test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"folders:write", "test-app.resource:write", "folders:delete", "test-app.resource:delete"},
+				},
+				{
+					Action:  "folders:admin",
+					Actions: []string{"folders.permissions:read"},
+				},
+			},
+		},
+		{
+			desc:     "should not be able to register an action that doesn't have a plugin prefix",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"users:read", "test-app.resource:delete"},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:     "should not be able to register action set that is not a dashboard or folder action set",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "datasources:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+			},
+			expectedErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
-			// first register the folders:view actions
-			// mimiking pre seeded actionsets
-			asService.StoreActionSet("folders:view", []string{"folders:read"})
+			asService := NewActionSetService(tt.features)
 
-			err := asService.RegisterActionSets(context.Background(), tt.pluginID, tt.actionsets)
-			if tt.expectedErr != nil {
-				require.IsType(t, tt.expectedErr, err)
+			err := asService.RegisterActionSets(context.Background(), tt.pluginID, tt.pluginActions)
+			if tt.expectedErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
 
-			if tt.expectedActionSet.action != "" {
-				actionSet := asService.ResolveActionSet(tt.expectedActionSet.action)
-				require.ElementsMatch(t, tt.expectedActionSet.actions, actionSet)
+			for _, set := range tt.coreActionSets {
+				asService.StoreActionSet(set.Action, set.Actions)
+			}
+
+			for _, expected := range tt.expectedActionSets {
+				actions := asService.ResolveActionSet(expected.Action)
+				assert.ElementsMatch(t, expected.Actions, actions)
+			}
+
+			if len(tt.expectedActionSets) == 0 {
+				for _, set := range tt.pluginActions {
+					registeredActions := asService.ResolveActionSet(set.Action)
+					assert.Empty(t, registeredActions, "no actions from plugin action sets should have been registered")
+				}
 			}
 		})
 	}
