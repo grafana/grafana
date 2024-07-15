@@ -1,10 +1,8 @@
 // MIXINS
-@import 'mixins/mixins';
 @import 'mixins/breakpoints';
 
 // BASE
 @import 'base/reboot';
-@import 'base/type';
 @import 'base/forms';
 @import 'base/grid';
 @import 'base/font_awesome';
@@ -15,16 +13,13 @@
 
 // COMPONENTS
 @import 'components/buttons';
-@import 'components/alerts';
 @import 'components/gf-form';
 @import 'components/modals';
 @import 'components/dropdown';
-@import 'components/query_editor';
 @import 'components/dashboard_grid';
 
 // PAGES
 @import 'pages/dashboard';
-@import 'pages/alerting';
 @import 'pages/history';
 
 // ANGULAR
