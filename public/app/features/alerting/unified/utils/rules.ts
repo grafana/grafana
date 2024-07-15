@@ -36,6 +36,7 @@ import {
 import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
 import { RuleHealth } from '../search/rulesSearchParser';
+import { RuleFormType } from '../types/rule-form';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
@@ -340,4 +341,12 @@ export function getRuleGroupLocationFromRuleWithLocation(rule: RuleWithLocation)
     namespaceName,
     groupName,
   };
+}
+
+export function isGrafanaManagedRuleByType(type: RuleFormType) {
+  return type === RuleFormType.grafana || type === RuleFormType.grafanaRecording;
+}
+
+export function isRecordingRulebyType(type: RuleFormType) {
+  return type === RuleFormType.grafanaRecording || type === RuleFormType.cloudRecording;
 }

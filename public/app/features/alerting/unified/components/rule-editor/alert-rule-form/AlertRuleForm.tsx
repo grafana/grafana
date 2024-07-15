@@ -14,6 +14,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromRuleWithLocation,
+  isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
 } from 'app/features/alerting/unified/utils/rules';
@@ -106,9 +107,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showDataSourceDependantStep = Boolean(
-    type && (type === RuleFormType.grafana || !!dataSourceName || type === RuleFormType.grafanaRecording)
-  );
+  const showDataSourceDependantStep = Boolean(type && (isGrafanaManagedRuleByType(type) || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
@@ -236,6 +235,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   );
 
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
+  if (!type) {
+    return null;
+  }
   return (
     <FormProvider {...formAPI}>
       <AppChromeUpdate actions={actionButtons} />
@@ -252,7 +254,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               {showDataSourceDependantStep && (
                 <>
                   {/* Step 3 */}
-                  {(type === RuleFormType.grafana || type === RuleFormType.grafanaRecording) && (
+                  {isGrafanaManagedRuleByType(type) && (
                     <GrafanaEvaluationBehavior
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
@@ -290,7 +292,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         />
       ) : null}
       {showEditYaml ? (
-        type === RuleFormType.grafana || type === RuleFormType.grafanaRecording ? (
+        isGrafanaManagedRuleByType(type) ? (
           <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />

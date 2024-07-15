@@ -64,7 +64,12 @@ import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { getAlertInfo, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
+import {
+  getAlertInfo,
+  isGrafanaManagedRuleByType,
+  isGrafanaRulerRule,
+  isRulerNotSupportedResponse,
+} from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -357,6 +362,9 @@ export const saveRuleFormAction = createAsyncThunk(
       withSerializedError(
         (async () => {
           const { type } = values;
+          if (!type) {
+            return;
+          }
 
           // TODO getRulerConfig should be smart enough to provide proper rulerClient implementation
           // For the dataSourceName specified
@@ -373,7 +381,7 @@ export const saveRuleFormAction = createAsyncThunk(
             identifier = await rulerClient.saveLotexRule(values, evaluateEvery, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: values.dataSourceName }));
             // in case of grafana managed rules or grafana-managed recording rules
-          } else if (type === RuleFormType.grafana || type === RuleFormType.grafanaRecording) {
+          } else if (isGrafanaManagedRuleByType(type)) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);

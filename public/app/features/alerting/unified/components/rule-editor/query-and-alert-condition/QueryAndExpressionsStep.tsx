@@ -18,6 +18,7 @@ import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
+import { isGrafanaManagedRuleByType } from '../../../utils/rules';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -70,8 +71,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
-  const isGrafanaManagedType = type === RuleFormType.grafana;
-  const isGrafanaRecordingType = type === RuleFormType.grafanaRecording;
+  const isGrafanaAlertingType = type === RuleFormType.grafana;
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
 
@@ -117,7 +117,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   // apply some validations and asserts to the results of the evaluation when creating or editing
   // Grafana-managed alert rules and Grafa-managed recording rules
   useEffect(() => {
-    if (!isGrafanaManagedType && !isGrafanaRecordingType) {
+    if (type && !isGrafanaManagedRuleByType(type)) {
       return;
     }
 
@@ -134,7 +134,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     const error = errorFromPreviewData(previewData) ?? errorFromCurrentCondition(previewData);
 
     onDataChange(error?.message || '');
-  }, [queryPreviewData, getValues, onDataChange, isGrafanaManagedType, isGrafanaRecordingType]);
+  }, [queryPreviewData, getValues, onDataChange, type]);
 
   const handleSetCondition = useCallback(
     (refId: string | null) => {
@@ -362,7 +362,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   ]);
 
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
-
+  if (!type) {
+    return null;
+  }
   return (
     <RuleEditorSection
       stepNo={2}
@@ -431,7 +433,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       )}
 
       {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
-      {(isGrafanaManagedType || isGrafanaRecordingType) && (
+      {isGrafanaManagedRuleByType(type) && (
         <Stack direction="column">
           {/* Data Queries */}
           <QueryEditor
@@ -459,7 +461,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             </Button>
           </Tooltip>
           {/* We only show Switch for Grafana managed alerts */}
-          {isGrafanaManagedType && (
+          {isGrafanaAlertingType && (
             <SmartAlertTypeDetector
               editingExistingRule={editingExistingRule}
               rulesSourcesWithRuler={rulesSourcesWithRuler}

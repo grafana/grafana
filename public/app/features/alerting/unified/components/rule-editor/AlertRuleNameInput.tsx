@@ -3,7 +3,8 @@ import { useFormContext } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Input, Text } from '@grafana/ui';
 
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
+import { isRecordingRulebyType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
 
@@ -21,9 +22,11 @@ export const AlertRuleNameInput = () => {
   } = useFormContext<RuleFormValues>();
 
   const ruleFormType = watch('type');
-  const isRecordingRule =
-    ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.grafanaRecording;
-  const entityName = isRecordingRule ? 'recording rule' : 'alert rule';
+  if (!ruleFormType) {
+    return null;
+  }
+  const isRecording = isRecordingRulebyType(ruleFormType);
+  const entityName = isRecording ? 'recording rule' : 'alert rule';
   return (
     <RuleEditorSection
       stepNo={1}
@@ -41,7 +44,7 @@ export const AlertRuleNameInput = () => {
           width={35}
           {...register('name', {
             required: { value: true, message: 'Must enter a name' },
-            pattern: isRecordingRule ? recordingRuleNameValidationPattern : undefined,
+            pattern: isRecording ? recordingRuleNameValidationPattern : undefined,
           })}
           aria-label="name"
           placeholder={`Give your ${entityName} a name`}

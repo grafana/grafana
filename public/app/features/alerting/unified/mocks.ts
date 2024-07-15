@@ -155,6 +155,10 @@ export const mockRulerGrafanaRecordingRule = (
       namespace_uid: '123',
       rule_group: 'my-group',
       condition: 'A',
+      record: {
+        Metric: 'myalert',
+        From: 'A',
+      },
       data: [
         {
           datasourceUid: '123',
