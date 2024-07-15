@@ -18,6 +18,9 @@ import {
   SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
@@ -26,6 +29,7 @@ import {
 import { Alert, Field, Icon, InlineSwitch, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { Select } from '@grafana/ui/';
 
+import { LayoutType } from '../ActionTabs/types';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
@@ -59,7 +63,7 @@ interface MetricPanel {
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
-  selectedPrefix?: string;
+  metricPrefix?: string;
   showPreviews?: boolean;
   metricNames?: string[];
   metricNamesLoading?: boolean;
@@ -69,10 +73,11 @@ export interface MetricSelectSceneState extends SceneObjectState {
 
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
+const METRIC_PREFIX_ALL = 'all';
 
 const MAX_METRIC_NAMES = 20000;
 
-export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
+export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
   private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
@@ -81,6 +86,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     super({
       showPreviews: true,
       $variables: state.$variables,
+      metricPrefix: state.metricPrefix ?? METRIC_PREFIX_ALL,
       body:
         state.body ??
         new SceneCSSGridLayout({
@@ -89,13 +95,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           autoRows: ROW_PREVIEW_HEIGHT,
           isLazy: true,
         }),
-      selectedPrefix: 'all',
       ...state,
     });
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView', 'layout'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
@@ -103,6 +109,18 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       this._debounceRefreshMetricNames();
     },
   });
+
+  getUrlState() {
+    return { metricPrefix: this.state.metricPrefix };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    if (typeof values.metricPrefix === 'string') {
+      if (this.state.metricPrefix !== values.metricPrefix) {
+        this.setState({ metricPrefix: values.metricPrefix });
+      }
+    }
+  }
 
   private _onActivate() {
     if (this.state.body.state.children.length === 0) {
@@ -323,7 +341,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const children: SceneFlexItem[] = [];
 
     for (const [groupKey, groupNode] of rootGroupNode.groups) {
-      if (this.state.selectedPrefix !== 'all' && this.state.selectedPrefix !== groupKey) {
+      if (this.state.metricPrefix !== METRIC_PREFIX_ALL && this.state.metricPrefix !== groupKey) {
         continue;
       }
 
@@ -381,7 +399,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       metricPanel.isEmpty = isEmpty;
       metricPanel.loaded = isLoaded;
       this.previewCache[metric] = metricPanel;
-      if (this.state.selectedPrefix === 'All') {
+      if (this.state.metricPrefix === 'All') {
         this.buildLayout();
       }
     }
@@ -395,7 +413,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public onPrefixFilterChange = (val: SelectableValue) => {
-    this.setState({ selectedPrefix: val.value });
+    this.setState({ metricPrefix: val.value });
     this.buildLayout();
   };
 
@@ -413,7 +431,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       metricNamesLoading,
       metricNamesWarning,
       rootGroup,
-      selectedPrefix,
+      metricPrefix,
     } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -462,11 +480,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           <Field label={'Select Prefix'} className={styles.displayOption}>
             <Select
               onChange={model.onPrefixFilterChange}
-              value={selectedPrefix}
+              value={metricPrefix}
               options={[
                 {
                   label: 'All',
-                  value: 'all',
+                  value: METRIC_PREFIX_ALL,
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
               ]}
