@@ -68,11 +68,6 @@ The following video provides a visual walkthrough of the options you can set in 
 
 {{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
 
-### Key Features:
-- **Multi-Mode Support**: Seamlessly visualize time series data, detailed tables, annotations, or raw JSON inputs.
-- **Advanced Formatting**: Customize your data presentation with options for date formatting and value formatting.
-- **Coloring Options**: Enhance readability and insights by applying custom coloring schemes to your data points.
-- **Diverse Cell Types**: Elevate your data display with a variety of cell types, including: Colored text and backgrounds, Gauges, JSON, Images, Sparklines, and multiple combinations.
 
 ## Annotation and alert support
 
