@@ -64,13 +64,15 @@ const navTreeSlice = createSlice({
           }
           const newBookmark: NavModelItem = {
             ...item,
-            // Clear the children and sortWeight of the item
+            // Clear the children, sortWeight and empty message of the item
             children: [],
             sortWeight: 0,
+            emptyMessageId: '',
+            emptyMessage: '',
           };
           bookmarks.children.push(newBookmark);
         } else {
-         bookmarks.children = bookmarks.children?.filter(i => i.id !== item.id) ?? [];
+          bookmarks.children = bookmarks.children?.filter((i) => i.id !== item.id) ?? [];
         }
       }
     },
