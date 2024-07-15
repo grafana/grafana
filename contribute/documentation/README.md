@@ -11,4 +11,4 @@ Go to [Writers' Toolkit](https://grafana.com/docs/writers-toolkit/) for the foll
 - **Writing and style guide** - Guidelines that cover aspects of content such as style, tooling, workflows, markdown syntax, and more.
 - **Build and review guide** - Instructions for testing, linting, validating, and backporting our documentation.
 
-If you're interested in contributing to our documentation, go to [Writers' Toolkit](https://github.com/grafana/writers-toolkit) repository.
+If you're interested in contributing to our documentation, go to [Writers' Toolkit](https://github.com/grafana/writers-toolkit) repository for writers' resources.
