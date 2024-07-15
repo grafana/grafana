@@ -1,6 +1,7 @@
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -35,6 +36,13 @@ interface ModalProps {
 
 function DeleteDashboardModal({ dashboard, onClose }: ModalProps) {
   const [, onConfirm] = useAsyncFn(async () => {
+    reportInteraction('grafana_manage_dashboards_delete_clicked', {
+      item_counts: {
+        dashboard: 1,
+      },
+      source: 'dashboard_scene_settings',
+      restore_enabled: config.featureToggles.dashboardRestoreUI,
+    });
     onClose();
     await dashboard.deleteDashboard();
   }, [dashboard, onClose]);
