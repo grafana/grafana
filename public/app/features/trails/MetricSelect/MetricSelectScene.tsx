@@ -241,21 +241,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     return rootGroupNode;
   }
 
-  private sortedPreviewMetrics() {
-    return Object.values(this.previewCache).sort((a, b) => {
-      if (a.isEmpty && b.isEmpty) {
-        return a.index - b.index;
-      }
-      if (a.isEmpty) {
-        return 1;
-      }
-      if (b.isEmpty) {
-        return -1;
-      }
-      return a.index - b.index;
-    });
-  }
-
   private onMetricNamesChanged() {
     const metricNames = this.state.metricNames || [];
 
@@ -312,64 +297,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       this.ignoreNextUpdate = false;
       return;
     }
-    const trail = getTrailFor(this);
-    let children: SceneFlexItem[] = [];
 
-    if (this.state.selectedPrefix !== 'all') {
-      let rootGroupNode = this.state.rootGroup;
-      if (!rootGroupNode) {
-        rootGroupNode = await this.generateGroups(this.state.metricNames);
-        this.setState({ rootGroup: rootGroupNode });
-      }
-
-      children = await this.populateFilterableViewLayout(trail);
-    } else {
-      children = await this.populateAllViewLayout(trail);
+    if (!this.state.rootGroup) {
+      const rootGroupNode = await this.generateGroups(this.state.metricNames);
+      this.setState({ rootGroup: rootGroupNode });
     }
 
+    const children = await this.populateFilterableViewLayout();
     const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
     this.state.body.setState({ children, autoRows: rowTemplate });
   }
 
-  private async populateAllViewLayout(trail: DataTrail) {
-    const children: SceneFlexItem[] = [];
-    const metricsList = this.sortedPreviewMetrics();
-
-    // Get the current filters to determine the count of them
-    // Which is required for `getPreviewPanelFor`
-    const filters = getFilters(this);
-    const currentFilterCount = filters?.length || 0;
-    for (let index = 0; index < metricsList.length; index++) {
-      const metric = metricsList[index];
-      const metadata = await trail.getMetricMetadata(metric.name);
-      const description = getMetricDescription(metadata);
-
-      if (this.state.showPreviews) {
-        if (metric.itemRef && metric.isPanel) {
-          children.push(metric.itemRef.resolve());
-          continue;
-        }
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
-
-        metric.itemRef = panel.getRef();
-        metric.isPanel = true;
-        children.push(panel);
-      } else {
-        const panel = new SceneCSSGridItem({
-          $variables: new SceneVariableSet({
-            variables: getVariablesWithMetricConstant(metric.name),
-          }),
-          body: getCardPanelFor(metric.name, description),
-        });
-        metric.itemRef = panel.getRef();
-        metric.isPanel = false;
-        children.push(panel);
-      }
-    }
-    return children;
-  }
-
-  private async populateFilterableViewLayout(trail: DataTrail) {
+  private async populateFilterableViewLayout() {
+    const trail = getTrailFor(this);
     // Get the current filters to determine the count of them
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
@@ -383,7 +323,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const children: SceneFlexItem[] = [];
 
     for (const [groupKey, groupNode] of rootGroupNode.groups) {
-      if (this.state.selectedPrefix !== groupKey) {
+      if (this.state.selectedPrefix !== 'all' && this.state.selectedPrefix !== groupKey) {
         continue;
       }
 
@@ -405,7 +345,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const kinder: SceneFlexItem[] = [];
     for (let index = 0; index < values.length; index++) {
       const metricName = values[index];
-      const metric: MetricPanel = { name: metricName, index, loaded: false };
+      const metric: MetricPanel = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
       const metadata = await trail.getMetricMetadata(metricName);
       const description = getMetricDescription(metadata);
 
