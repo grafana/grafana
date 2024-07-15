@@ -1,52 +1,30 @@
 package resourcepermissions
 
 import (
-	"strings"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 )
 
 // ValidateActionSets errors when a actionset does not match expected pattern for plugins
-// - action should be in allowlist
+// - action set should exist and should be dashboard or folder action set
 // - actions should have the pluginID prefix
-func ValidateActionSet(pluginID string, actionset ActionSet) error {
-	// takeout the pluginID prefix
-	action := ""
-	if strings.Contains(actionset.Action, pluginID+":") {
-		action = strings.TrimPrefix(actionset.Action, pluginID+":")
-	} else {
-		action = strings.TrimPrefix(actionset.Action, pluginID+".")
+func (s *InMemoryActionSets) validateActionSet(pluginID string, actionSet plugins.ActionSet) error {
+	if !isFolderOrDashboardAction(actionSet.Action) {
+		return accesscontrol.ErrActionSetValidationFailed.Errorf("currently only dashboard and folder action sets are supported")
 	}
-	if !isFolderOrDashboardAction(action) {
-		return &accesscontrol.ErrorActionNotAllowed{Action: actionset.Action, AllowList: []string{dashboards.ScopeDashboardsRoot, dashboards.ScopeFoldersRoot}}
+
+	// TODO also test that failures get printed nicely
+	if !isFolderOrDashboardAction(actionSet.Action) {
+		return accesscontrol.ErrActionSetValidationFailed.Errorf("currently only folder and dashboard action sets are supported, provided action set %s is not a folder or dashboard action set", actionSet.Action)
 	}
-	// verify that actions have the pluginID prefix
-	// plugin.json - actionset.ActionSets - actions "k6testid:folders:edit"
-	for _, action := range actionset.Actions {
-		// contains two or more colons , error out
-		if strings.Count(action, ":") > 1 {
-			return &accesscontrol.ErrorActionPrefixMissing{Action: action,
-				Prefixes: []string{pluginID + ":", pluginID + "."}}
-		}
-		if !strings.HasPrefix(action, pluginID+":") &&
-			!strings.HasPrefix(action, pluginID+".") {
-			return &accesscontrol.ErrorActionPrefixMissing{Action: action,
-				Prefixes: []string{pluginID + ":", pluginID + "."}}
+
+	// verify that actions have the pluginID prefix, plugins are only allowed to register actions for the plugin
+	for _, action := range actionSet.Actions {
+		if err := pluginutils.ValidatePluginAction(pluginID, action); err != nil {
+			return err
 		}
 	}
 
 	return nil
-}
-
-func ToActionSets(pluginID, pluginName string, regs []plugins.ActionSetRegistration) []ActionSet {
-	res := make([]ActionSet, 0, len(regs))
-	for i := range regs {
-		res = append(res, ActionSet{
-			Action:  regs[i].ActionSet.Action,
-			Actions: regs[i].ActionSet.Actions,
-		})
-	}
-	return res
 }

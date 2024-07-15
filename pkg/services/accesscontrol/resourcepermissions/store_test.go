@@ -782,8 +782,8 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService()
-			asService.StoreActionSet(tt.resource, tt.action, tt.actions)
+			asService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
 
 			actionSetName := GetActionSetName(tt.resource, tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
@@ -801,7 +801,7 @@ func TestStore_DeclareActionSet(t *testing.T) {
 		desc              string
 		pluginID          string
 		pluginName        string
-		actionsets        []plugins.ActionSetRegistration
+		actionsets        []plugins.ActionSet
 		expectedErr       error
 		expectedActionSet struct {
 			action  string
@@ -815,25 +815,23 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			desc:       "should not be able to declare action outside of allowlist",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
-			actionsets: []plugins.ActionSetRegistration{{
-				ActionSet: plugins.ActionSet{
+			actionsets: []plugins.ActionSet{
+				{
 					Action:  "k6-app:edit",
 					Actions: []string{pluginID + ":k6tests.read", pluginID + ":k6tests.write"},
 				},
 			},
-			},
-			expectedErr: &accesscontrol.ErrorActionNotAllowed{},
+			expectedErr: &accesscontrol.ErrActionSetValidationFailed,
 		},
 		{
 			desc:       "should not be able to declare action set without prefix for actions",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
-			actionsets: []plugins.ActionSetRegistration{{
-				ActionSet: plugins.ActionSet{
+			actionsets: []plugins.ActionSet{
+				{
 					Action:  "folders:edit",
 					Actions: []string{"noprefix:folders.read"},
 				},
-			},
 			},
 			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
 		},
@@ -841,12 +839,11 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			desc:       "should not be able to declare action set with two colons for actions",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
-			actionsets: []plugins.ActionSetRegistration{{
-				ActionSet: plugins.ActionSet{
+			actionsets: []plugins.ActionSet{
+				{
 					Action:  "folders:edit",
 					Actions: []string{pluginID + ":folders:read"}, // here the two colons is the issue
 				},
-			},
 			},
 			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
 		},
@@ -854,18 +851,14 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			desc:       "should be able to declare action set to extend existing action set",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
-			actionsets: []plugins.ActionSetRegistration{
+			actionsets: []plugins.ActionSet{
 				{
-					ActionSet: plugins.ActionSet{
-						Action:  "folders:view",
-						Actions: []string{pluginID + ".tests:read"},
-					},
+					Action:  "folders:view",
+					Actions: []string{pluginID + ".tests:read"},
 				},
 				{
-					ActionSet: plugins.ActionSet{
-						Action:  "folders:view",
-						Actions: []string{pluginID + ":read"},
-					},
+					Action:  "folders:view",
+					Actions: []string{pluginID + ":read"},
 				},
 			},
 			expectedActionSet: struct {
@@ -880,12 +873,10 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			desc:       "should not be able to declare action set with two colons",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
-			actionsets: []plugins.ActionSetRegistration{
+			actionsets: []plugins.ActionSet{
 				{
-					ActionSet: plugins.ActionSet{
-						Action:  "folders:view",
-						Actions: []string{pluginID + ":" + "tests:read"},
-					},
+					Action:  "folders:view",
+					Actions: []string{pluginID + ":" + "tests:read"},
 				},
 			},
 			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
@@ -893,12 +884,12 @@ func TestStore_DeclareActionSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService()
+			asService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
 			// first register the folders:view actions
 			// mimiking pre seeded actionsets
-			asService.StoreActionSet("folders", "view", []string{"folders:read"})
+			asService.StoreActionSet("folders:view", []string{"folders:read"})
 
-			err := asService.DeclareActionSets(context.TODO(), tt.pluginID, tt.pluginID, tt.actionsets)
+			err := asService.RegisterActionSets(context.Background(), tt.pluginID, tt.actionsets)
 			if tt.expectedErr != nil {
 				require.IsType(t, tt.expectedErr, err)
 				require.Error(t, err)
@@ -915,10 +906,10 @@ func TestStore_DeclareActionSet(t *testing.T) {
 }
 
 func TestStore_ResolveActionSet(t *testing.T) {
-	actionSetService := NewActionSetService()
-	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
-	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
-	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
 
 	type actionSetTest struct {
 		desc               string
@@ -958,10 +949,10 @@ func TestStore_ResolveActionSet(t *testing.T) {
 }
 
 func TestStore_ExpandActions(t *testing.T) {
-	actionSetService := NewActionSetService()
-	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
-	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
-	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
 
 	type actionSetTest struct {
 		desc                string

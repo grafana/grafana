@@ -114,8 +114,8 @@ func newRegisterActionSets(registry plugins.ActionSetRegistry) *RegisterActionSe
 
 // Register registers the plugin action sets.
 func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if err := r.roleRegistry.DeclareActionSets(ctx, p.ID, p.Name, p.ActionSets); err != nil {
-		r.log.Warn("Declare plugin actionsets failed.", "pluginId", p.ID, "error", err)
+	if err := r.roleRegistry.RegisterActionSets(ctx, p.ID, p.ActionSets); err != nil {
+		r.log.Warn("Plugin action set registration failed", "pluginId", p.ID, "error", err)
 		return nil, err
 	}
 	return p, nil

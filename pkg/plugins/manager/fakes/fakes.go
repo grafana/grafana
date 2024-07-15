@@ -399,7 +399,7 @@ func NewFakeActionSetRegistry() *FakeActionSetRegistry {
 	return &FakeActionSetRegistry{}
 }
 
-func (f *FakeActionSetRegistry) DeclareActionSets(_ context.Context, _ string, _ string, _ []plugins.ActionSetRegistration) error {
+func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, _ []plugins.ActionSet) error {
 	return f.ExpectedErr
 }
 

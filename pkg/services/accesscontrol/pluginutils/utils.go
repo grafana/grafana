@@ -34,11 +34,19 @@ func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) err
 			permissions[i].Scope = scopePrefix + pluginID
 			continue
 		}
-		if !strings.HasPrefix(permissions[i].Action, pluginID+":") &&
-			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
-			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
-				Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
+		if err := ValidatePluginAction(pluginID, permissions[i].Action); err != nil {
+			return err
 		}
+	}
+
+	return nil
+}
+
+func ValidatePluginAction(pluginID, action string) error {
+	if !strings.HasPrefix(action, pluginID+":") &&
+		!strings.HasPrefix(action, pluginID+".") {
+		return &ac.ErrorActionPrefixMissing{Action: action,
+			Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
 	}
 
 	return nil

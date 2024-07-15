@@ -27,6 +27,8 @@ var (
 	ErrResolverNotFound       = errors.New("no resolver found")
 	ErrPluginIDRequired       = errors.New("plugin ID is required")
 	ErrRoleNotFound           = errors.New("role not found")
+
+	ErrActionSetValidationFailed = errutil.ValidationFailed("accesscontrol.actionSetInvalid")
 )
 
 func ErrInvalidBuiltinRoleData(builtInRole string) errutil.TemplateData {
@@ -99,24 +101,4 @@ func (e *ErrorScopeTarget) Error() string {
 
 func (e *ErrorScopeTarget) Unwrap() error {
 	return &ErrorInvalidRole{}
-}
-
-// ### actionset errors
-type ErrorInvalidActionSet struct{}
-
-func (e *ErrorInvalidActionSet) Error() string {
-	return "actionset is invalid"
-}
-
-type ErrorActionNotAllowed struct {
-	Action    string
-	AllowList []string
-}
-
-func (e *ErrorActionNotAllowed) Error() string {
-	return fmt.Sprintf("expected action '%s' to be within the allowlist '%v'", e.Action, e.AllowList)
-}
-
-func (e *ErrorActionNotAllowed) Unwrap() error {
-	return &ErrorInvalidActionSet{}
 }
