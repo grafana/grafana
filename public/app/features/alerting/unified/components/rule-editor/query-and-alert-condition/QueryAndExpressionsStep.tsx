@@ -392,7 +392,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <RecordingRuleEditor
             dataSourceName={dataSourceName}
             queries={queries}
-            runQueries={runQueriesPreview}
+            runQueries={() => runQueriesPreview()}
             onChangeQuery={onChangeRecordingRulesQueries}
             panelData={queryPreviewData}
           />

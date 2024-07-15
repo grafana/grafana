@@ -10,12 +10,12 @@ import { dispatch } from 'app/store/store';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { anyOfRequestState } from '../../hooks/useAsync';
 import {
-  useMoveRuleGroup,
-  useRenameRuleGroup,
   useUpdateRuleGroupConfiguration,
-} from '../../hooks/useProduceNewRuleGroup';
+  useRenameRuleGroup,
+  useMoveRuleGroup,
+} from '../../hooks/ruleGroup/useUpdateRuleGroup';
+import { anyOfRequestState } from '../../hooks/useAsync';
 import { fetchRulerRulesAction, rulesInSameGroupHaveInvalidFor } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';

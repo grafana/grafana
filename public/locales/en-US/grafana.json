@@ -626,6 +626,7 @@
       "message": "No data sources found"
     }
   },
+  "Description": "Description",
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "add-to-library-modal": {
@@ -886,6 +887,7 @@
       "refresh": "Refresh"
     }
   },
+  "Labels": "Labels",
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
@@ -1440,6 +1442,7 @@
     },
     "title": "Latest from the blog"
   },
+  "No description available": "No description available",
   "notifications": {
     "empty-state": {
       "description": "Notifications you have received will appear here",
@@ -2123,6 +2126,9 @@
       "add-transformation-header": "Start transforming data"
     }
   },
+  "Type": "Type",
+  "Unit": "Unit",
+  "Unknown": "Unknown",
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",

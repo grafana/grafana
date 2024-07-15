@@ -4116,7 +4116,7 @@
         },
         "type": "object"
       },
-      "CreateOrUpdateReportConfig": {
+      "CreateOrUpdateReport": {
         "properties": {
           "dashboards": {
             "items": {
@@ -9135,7 +9135,6 @@
         "type": "object"
       },
       "Report": {
-        "description": "ConfigDTO is model representation in transfer",
         "properties": {
           "created": {
             "format": "date-time",
@@ -21407,7 +21406,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -21694,7 +21693,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -21827,7 +21826,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
