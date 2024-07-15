@@ -228,7 +228,8 @@ export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): Q
       if (idx === -1) {
         hints.push({
           type: 'EXPAND_RULES_WARNING',
-          label: 'Query contains a recording rule. To be able to expand it please add an identifier label/value.',
+          label:
+            'We found multiple recording rules that match in this query. To expand the recording rule, add an identifier label/value.',
         });
         return acc;
       } else {
