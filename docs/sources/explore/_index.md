@@ -103,7 +103,7 @@ When using Explore with logs, you can pin logs to content outline by hovering ov
 
 {{< figure src="/media/docs/grafana/explore/screenshot-explore-content-outline-logs-pinning-11.2.png" max-width= "450px" caption="Screenshot of Explore content outline logs pinning" >}}
 
-Clicking on a pinned log will open the [log context modal](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-context), showing the log highlighted in context with other logs. From here, you can also open the log in split mode to preserve the time range in the left pane while having the time range specific to that log in the right pane.
+Clicking on a pinned log opens the [log context modal](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-context), showing the log highlighted in context with other logs. From here, you can also open the log in split mode to preserve the time range in the left pane while having the time range specific to that log in the right pane.
 
 ## Share Explore URLs
 
