@@ -10,7 +10,7 @@ import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaOrDataSourceRecordingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 
 interface Props {
   rule: CombinedRule;
@@ -103,7 +103,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
     }
   }
 
-  if (isGrafanaRulerRule(rule.rulerRule) && !isGrafanaOrDataSourceRecordingRule(rule.rulerRule)) {
+  if (rule.rulerRule && isGrafanaAlertingRule(rule.rulerRule)) {
     buttons.push(
       <Fragment key="history">
         <Button

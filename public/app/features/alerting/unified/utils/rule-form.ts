@@ -47,12 +47,7 @@ import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
 import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import {
-  isAlertingRulerRule,
-  isGrafanaOrDataSourceRecordingRule,
-  isGrafanaRulerRule,
-  isRecordingRulerRule,
-} from './rules';
+import { isAlertingRulerRule, isGrafanaRecordingRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -284,7 +279,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (isGrafanaOrDataSourceRecordingRule(rule) && isGrafanaRulerRule(rule)) {
+    if (isGrafanaRecordingRule(rule)) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {

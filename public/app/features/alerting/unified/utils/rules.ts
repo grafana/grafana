@@ -63,6 +63,14 @@ export function isGrafanaOrDataSourceRecordingRule(rule: RulerRuleDTO) {
   return isRecordingRulerRule(rule) || (isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert);
 }
 
+export function isGrafanaRecordingRule(rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  return isGrafanaOrDataSourceRecordingRule(rule) && isGrafanaRulerRule(rule);
+}
+
+export function isGrafanaAlertingRule(rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  return isGrafanaRulerRule(rule) && !isGrafanaOrDataSourceRecordingRule(rule);
+}
+
 export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
 }

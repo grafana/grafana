@@ -18,7 +18,7 @@ import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isGrafanaOrDataSourceRecordingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
@@ -138,13 +138,11 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
         }}
       />
       {deleteModal}
-      {isGrafanaRulerRule(rule.rulerRule) &&
-        !isGrafanaOrDataSourceRecordingRule(rule.rulerRule) &&
-        showSilenceDrawer && (
-          <AlertmanagerProvider accessType="instance">
-            <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
-          </AlertmanagerProvider>
-        )}
+      {rule.rulerRule && isGrafanaAlertingRule(rule.rulerRule) && showSilenceDrawer && (
+        <AlertmanagerProvider accessType="instance">
+          <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
+        </AlertmanagerProvider>
+      )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule
           identifier={redirectToClone.identifier}

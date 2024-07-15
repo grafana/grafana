@@ -11,12 +11,7 @@ import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
-import {
-  isFederatedRuleGroup,
-  isGrafanaOrDataSourceRecordingRule,
-  isGrafanaRulerRule,
-  isPluginProvidedRule,
-} from '../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -289,7 +284,7 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
 function useCanSilence(rule: CombinedRule): [boolean, boolean] {
   const rulesSource = rule.namespace.rulesSource;
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
-  const isGrafanaRecording = isGrafanaRulerRule(rule.rulerRule) && isGrafanaOrDataSourceRecordingRule(rule.rulerRule);
+  const isGrafanaRecording = rule.rulerRule && isGrafanaRecordingRule(rule.rulerRule);
 
   const { currentData: amConfigStatus, isLoading } =
     alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {

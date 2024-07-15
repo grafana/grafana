@@ -7,13 +7,7 @@ import { Trans } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import {
-  getFirstActiveAt,
-  isAlertingRule,
-  isGrafanaOrDataSourceRecordingRule,
-  isGrafanaRulerRule,
-  isRecordingRule,
-} from '../../utils/rules';
+import { getFirstActiveAt, isAlertingRule, isGrafanaRecordingRule, isRecordingRule } from '../../utils/rules';
 import { StateTag } from '../StateTag';
 
 import { AlertStateTag } from './AlertStateTag';
@@ -28,10 +22,9 @@ interface Props {
 export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => {
   const style = useStyles2(getStyle);
   const { promRule, rulerRule } = rule;
-  const isGrafanaRecordingRule = isGrafanaRulerRule(rulerRule) && isGrafanaOrDataSourceRecordingRule(rulerRule);
   // return how long the rule has been in its firing state, if any
   const RecordingRuleState = () => {
-    if (isPaused && isGrafanaRecordingRule) {
+    if (isPaused && rulerRule && isGrafanaRecordingRule(rulerRule)) {
       return (
         <Tooltip content={'Recording rule evaluation is currently paused'} placement="top">
           <StateTag state="warning">
