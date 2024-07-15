@@ -121,6 +121,31 @@
           }
         }
       }
+    },
+    "rule-groups": {
+      "delete": {
+        "success": "Ŝūččęşşƒūľľy đęľęŧęđ řūľę ģřőūp"
+      },
+      "move": {
+        "success": "Ŝūččęşşƒūľľy mővęđ řūľę ģřőūp"
+      },
+      "rename": {
+        "success": "Ŝūččęşşƒūľľy řęŉämęđ řūľę ģřőūp"
+      },
+      "update": {
+        "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
+      }
+    },
+    "rules": {
+      "delete-rule": {
+        "success": "Ŗūľę şūččęşşƒūľľy đęľęŧęđ"
+      },
+      "pause-rule": {
+        "success": "Ŗūľę ęväľūäŧįőŉ päūşęđ"
+      },
+      "resume-rule": {
+        "success": "Ŗūľę ęväľūäŧįőŉ řęşūmęđ"
+      }
     }
   },
   "annotations": {
@@ -589,6 +614,7 @@
       "message": "Ńő đäŧä şőūřčęş ƒőūŉđ"
     }
   },
+  "Description": "Đęşčřįpŧįőŉ",
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "add-to-library-modal": {
@@ -849,6 +875,7 @@
       "refresh": "Ŗęƒřęşĥ"
     }
   },
+  "Labels": "Ŀäþęľş",
   "library-panel": {
     "add-modal": {
       "cancel": "Cäŉčęľ",
@@ -1094,8 +1121,8 @@
       "title": "Ńőŧįƒįčäŧįőŉ čĥäŉŉęľş"
     },
     "alerting-groups": {
-      "subtitle": "Ŝęę ģřőūpęđ äľęřŧş ƒřőm äŉ Åľęřŧmäŉäģęř įŉşŧäŉčę",
-      "title": "Ğřőūpş"
+      "subtitle": "Ŝęę ģřőūpęđ äľęřŧş ŵįŧĥ äčŧįvę ŉőŧįƒįčäŧįőŉş",
+      "title": "Åčŧįvę ŉőŧįƒįčäŧįőŉş"
     },
     "alerting-home": {
       "title": "Ħőmę"
@@ -1403,6 +1430,7 @@
     },
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
+  "No description available": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
   "notifications": {
     "empty-state": {
       "description": "Ńőŧįƒįčäŧįőŉş yőū ĥävę řęčęįvęđ ŵįľľ äppęäř ĥęřę",
@@ -1703,7 +1731,8 @@
       "restore": "Ŗęşŧőřę"
     },
     "page": {
-      "empty-state": "Ÿőū ĥävęŉ'ŧ đęľęŧęđ äŉy đäşĥþőäřđş řęčęŉŧľy."
+      "no-deleted-dashboards": "Ÿőū ĥävęŉ'ŧ đęľęŧęđ äŉy đäşĥþőäřđş řęčęŉŧľy.",
+      "no-search-result": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
     },
     "permanently-delete-modal": {
       "confirm-text": "Đęľęŧę",
@@ -2086,6 +2115,9 @@
       "add-transformation-header": "Ŝŧäřŧ ŧřäŉşƒőřmįŉģ đäŧä"
     }
   },
+  "Type": "Ŧypę",
+  "Unit": "Ůŉįŧ",
+  "Unknown": "Ůŉĸŉőŵŉ",
   "user-orgs": {
     "current-org-button": "Cūřřęŉŧ",
     "name-column": "Ńämę",

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`delete rule should be able to delete a Data source managed rule 1`] = `
+exports[`useUpdateRuleGroupConfiguration should be able to move a Data Source managed rule group 1`] = `
 [
   {
     "body": "",
@@ -11,20 +11,43 @@ exports[`delete rule should be able to delete a Data source managed rule 1`] = `
       ],
     ],
     "method": "GET",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/mockCombinedNamespace/mockCombinedRuleGroup?subtype=cortex",
+    "url": "https://mimir.local:9000/api/v1/status/buildinfo",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2/a-new-group?subtype=mimir",
   },
   {
     "body": {
-      "name": "group-1",
+      "interval": "2m",
+      "name": "a-new-group",
       "rules": [
         {
-          "alert": "r1",
+          "alert": "alert1",
           "annotations": {
             "summary": "test alert",
           },
           "expr": "up = 1",
           "labels": {
-            "foo": "bar",
+            "severity": "warning",
           },
         },
       ],
@@ -40,7 +63,7 @@ exports[`delete rule should be able to delete a Data source managed rule 1`] = `
       ],
     ],
     "method": "POST",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/mockCombinedNamespace?subtype=cortex",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2?subtype=mimir",
   },
   {
     "body": "",
@@ -51,84 +74,7 @@ exports[`delete rule should be able to delete a Data source managed rule 1`] = `
       ],
     ],
     "method": "GET",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/mockCombinedNamespace/mockCombinedRuleGroup?subtype=cortex",
-  },
-]
-`;
-
-exports[`delete rule should be able to delete a Grafana managed rule 1`] = `
-[
-  {
-    "body": "",
-    "headers": [
-      [
-        "accept",
-        "application/json, text/plain, */*",
-      ],
-    ],
-    "method": "GET",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/NAMESPACE_UID/mockCombinedRuleGroup?subtype=cortex",
-  },
-  {
-    "body": {
-      "name": "group-1",
-      "rules": [
-        {
-          "annotations": {},
-          "for": "",
-          "grafana_alert": {
-            "condition": "",
-            "data": [],
-            "exec_err_state": "Error",
-            "namespace_uid": "NAMESPACE_UID",
-            "no_data_state": "NoData",
-            "rule_group": "my-group",
-            "title": "my rule",
-            "uid": "r1",
-          },
-          "labels": {},
-        },
-      ],
-    },
-    "headers": [
-      [
-        "content-type",
-        "application/json",
-      ],
-      [
-        "accept",
-        "application/json, text/plain, */*",
-      ],
-    ],
-    "method": "POST",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/NAMESPACE_UID?subtype=cortex",
-  },
-  {
-    "body": "",
-    "headers": [
-      [
-        "accept",
-        "application/json, text/plain, */*",
-      ],
-    ],
-    "method": "GET",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/NAMESPACE_UID/mockCombinedRuleGroup?subtype=cortex",
-  },
-]
-`;
-
-exports[`delete rule should delete the entire group if no more rules are left 1`] = `
-[
-  {
-    "body": "",
-    "headers": [
-      [
-        "accept",
-        "application/json, text/plain, */*",
-      ],
-    ],
-    "method": "GET",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/mockCombinedRuleGroup?subtype=cortex",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2/a-new-group?subtype=mimir",
   },
   {
     "body": "",
@@ -139,7 +85,7 @@ exports[`delete rule should delete the entire group if no more rules are left 1`
       ],
     ],
     "method": "DELETE",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/mockCombinedRuleGroup?subtype=cortex",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
   },
   {
     "body": "",
@@ -150,12 +96,154 @@ exports[`delete rule should delete the entire group if no more rules are left 1`
       ],
     ],
     "method": "GET",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/mockCombinedRuleGroup?subtype=cortex",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
   },
 ]
 `;
 
-exports[`pause rule should be able to pause a rule 1`] = `
+exports[`useUpdateRuleGroupConfiguration should rename a rule group 1`] = `
+[
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/another-group-name?subtype=cortex",
+  },
+  {
+    "body": {
+      "interval": "2m",
+      "name": "another-group-name",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/another-group-name?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "DELETE",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/another-group-name?subtype=cortex",
+  },
+]
+`;
+
+exports[`useUpdateRuleGroupConfiguration should update a rule group interval 1`] = `
 [
   {
     "body": "",
@@ -170,7 +258,7 @@ exports[`pause rule should be able to pause a rule 1`] = `
   },
   {
     "body": {
-      "interval": "1m",
+      "interval": "2m",
       "name": "grafana-group-1",
       "rules": [
         {
@@ -201,7 +289,7 @@ exports[`pause rule should be able to pause a rule 1`] = `
               },
             ],
             "exec_err_state": "Error",
-            "is_paused": true,
+            "is_paused": false,
             "namespace_uid": "uuid020c61ef",
             "no_data_state": "NoData",
             "rule_group": "grafana-group-1",

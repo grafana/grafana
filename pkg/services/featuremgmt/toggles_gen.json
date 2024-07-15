@@ -1126,7 +1126,8 @@
       "metadata": {
         "name": "flameGraphItemCollapsing",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-09T14:31:07Z"
+        "creationTimestamp": "2023-11-09T14:31:07Z",
+        "deletionTimestamp": "2024-07-08T14:17:01Z"
       },
       "spec": {
         "description": "Allow collapsing of flame graph items",

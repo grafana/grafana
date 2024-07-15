@@ -121,6 +121,31 @@
           }
         }
       }
+    },
+    "rule-groups": {
+      "delete": {
+        "success": "Successfully deleted rule group"
+      },
+      "move": {
+        "success": "Successfully moved rule group"
+      },
+      "rename": {
+        "success": "Successfully renamed rule group"
+      },
+      "update": {
+        "success": "Successfully updated rule group"
+      }
+    },
+    "rules": {
+      "delete-rule": {
+        "success": "Rule successfully deleted"
+      },
+      "pause-rule": {
+        "success": "Rule evaluation paused"
+      },
+      "resume-rule": {
+        "success": "Rule evaluation resumed"
+      }
     }
   },
   "annotations": {
@@ -589,6 +614,7 @@
       "message": "No data sources found"
     }
   },
+  "Description": "Description",
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "add-to-library-modal": {
@@ -849,6 +875,7 @@
       "refresh": "Refresh"
     }
   },
+  "Labels": "Labels",
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
@@ -1094,8 +1121,8 @@
       "title": "Notification channels"
     },
     "alerting-groups": {
-      "subtitle": "See grouped alerts from an Alertmanager instance",
-      "title": "Groups"
+      "subtitle": "See grouped alerts with active notifications",
+      "title": "Active notifications"
     },
     "alerting-home": {
       "title": "Home"
@@ -1403,6 +1430,7 @@
     },
     "title": "Latest from the blog"
   },
+  "No description available": "No description available",
   "notifications": {
     "empty-state": {
       "description": "Notifications you have received will appear here",
@@ -1703,7 +1731,8 @@
       "restore": "Restore"
     },
     "page": {
-      "empty-state": "You haven't deleted any dashboards recently."
+      "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
+      "no-search-result": "No results found for your query"
     },
     "permanently-delete-modal": {
       "confirm-text": "Delete",
@@ -2086,6 +2115,9 @@
       "add-transformation-header": "Start transforming data"
     }
   },
+  "Type": "Type",
+  "Unit": "Unit",
+  "Unknown": "Unknown",
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
