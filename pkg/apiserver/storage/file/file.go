@@ -342,10 +342,24 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 
 	maybeUpdatedRV := requestedRV
 	if maybeUpdatedRV == 0 {
-		// ??????
-		// s.rvMutex.RLock()
-		// maybeUpdatedRV = s.getCurrentResourceVersion()
-		// s.rvMutex.RUnlock()
+		rsp, err := s.store.List(ctx, &resource.ListRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:     parsedkey.Group,
+					Namespace: parsedkey.Namespace,
+					Resource:  parsedkey.Resource,
+					Name:      parsedkey.Name,
+				},
+			},
+			Limit: 1, // we ignore the results, just look at the RV
+		})
+		if err != nil {
+			return nil, err
+		}
+		maybeUpdatedRV = uint64(rsp.ResourceVersion)
+		if maybeUpdatedRV < 1 {
+			return nil, fmt.Errorf("expecting a non-zero resource version")
+		}
 	}
 	jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, p, s.versioner, namespace)
 
