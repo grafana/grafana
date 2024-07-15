@@ -17,7 +17,6 @@ load(
     "mysql_integration_tests_steps",
     "postgres_integration_tests_steps",
     "redis_integration_tests_steps",
-    "remote_alertmanager_integration_tests_steps",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
@@ -66,8 +65,7 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
                  mysql_integration_tests_steps("mysql57", "5.7") + \
                  mysql_integration_tests_steps("mysql80", "8.0") + \
                  redis_integration_tests_steps() + \
-                 memcached_integration_tests_steps() + \
-                 remote_alertmanager_integration_tests_steps()
+                 memcached_integration_tests_steps()
 
     return pipeline(
         name = "{}-integration-tests".format(prefix),

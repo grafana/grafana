@@ -33,4 +33,5 @@ images = {
     "cypress": "cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
+    "rocky": "rockylinux:9",
 }
