@@ -284,6 +284,8 @@ test-js: ## Run tests for frontend.
 .PHONY: test
 test: test-go test-js ## Run all tests.
 
+
+
 ##@ Linting
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT)
