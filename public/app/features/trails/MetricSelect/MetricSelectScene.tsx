@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import { useReducer } from 'react';
+import { SyntheticEvent, useReducer } from 'react';
 
 import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
-  NestedScene,
   PanelBuilders,
   SceneComponentProps,
   SceneCSSGridItem,
@@ -48,8 +47,6 @@ import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from './util';
 
-type DisplayAs = (typeof metricSelectSceneDisplayOptions)[number]['value'];
-
 interface MetricPanel {
   name: string;
   index: number;
@@ -62,76 +59,37 @@ interface MetricPanel {
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
-  selectedTabGroupOption?: string;
+  selectedPrefix?: string;
   showPreviews?: boolean;
-  displayAs?: DisplayAs;
   metricNames?: string[];
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
 }
 
-const metricSelectSceneDisplayOptions = [
-  {
-    label: 'Default',
-    value: 'all-metrics',
-  },
-  {
-    label: 'Nested Rows',
-    value: 'nested-rows',
-  },
-  {
-    label: 'Prefix Filter',
-    value: 'prefix-filter',
-  },
-] as const;
-
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
 
 const MAX_METRIC_NAMES = 20000;
 
-function generateBodyFormation(displayAs: DisplayAs = 'all-metrics'): {
-  layout: SceneCSSGridLayout | SceneFlexLayout;
-  displayAs: DisplayAs;
-} {
-  switch (displayAs) {
-    case 'nested-rows':
-      return {
-        displayAs,
-        layout: new SceneFlexLayout({
-          direction: 'column',
-          children: [],
-        }),
-      };
-    case 'all-metrics':
-    default:
-      return {
-        displayAs,
-        layout: new SceneCSSGridLayout({
+export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
+  private previewCache: Record<string, MetricPanel> = {};
+  private ignoreNextUpdate = false;
+  private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
+
+  constructor(state: Partial<MetricSelectSceneState>) {
+    super({
+      showPreviews: true,
+      $variables: state.$variables,
+      body:
+        state.body ??
+        new SceneCSSGridLayout({
           children: [],
           templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
           autoRows: ROW_PREVIEW_HEIGHT,
           isLazy: true,
         }),
-      };
-  }
-}
-
-export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
-  private previewCache: Record<string, MetricPanel> = {};
-  private ignoreNextUpdate = false;
-  private nestedSceneRec: Record<string, NestedScene> = {};
-  private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
-
-  constructor(state: Partial<MetricSelectSceneState>) {
-    const bodyFormation = generateBodyFormation(state.displayAs);
-    super({
-      showPreviews: true,
-      $variables: state.$variables,
-      displayAs: bodyFormation.displayAs,
-      body: state.body ?? bodyFormation.layout,
-      selectedTabGroupOption: 'all',
+      selectedPrefix: 'all',
       ...state,
     });
 
@@ -249,11 +207,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       let bodyLayout = this.state.body;
       const rootGroupNode = await this.generateGroups(metricNames);
 
-      if (this.state.displayAs === 'nested-rows') {
-        const nestedScenes = this.generateNestedScene(rootGroupNode);
-        bodyLayout = new SceneFlexLayout({ children: nestedScenes });
-      }
-
       this.setState({
         metricNames,
         rootGroup: rootGroupNode,
@@ -286,29 +239,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     };
     const { root: rootGroupNode } = groopParser.parse(metricNames);
     return rootGroupNode;
-  }
-
-  private generateNestedScene(rootGroupNode: Node): NestedScene[] {
-    const nestedScenes: NestedScene[] = [];
-    rootGroupNode.groups.forEach((value, key) => {
-      // Check if we have a scene for that key already
-      // If we don't have, let's create one
-      if (!this.nestedSceneRec[key]) {
-        this.nestedSceneRec[key] = new NestedScene({
-          title: key,
-          canCollapse: true,
-          isCollapsed: true,
-          body: new SceneCSSGridLayout({
-            children: [],
-            templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
-            autoRows: ROW_PREVIEW_HEIGHT,
-            isLazy: true,
-          }),
-        });
-      }
-      nestedScenes.push(this.nestedSceneRec[key]);
-    });
-    return nestedScenes;
   }
 
   private sortedPreviewMetrics() {
@@ -353,7 +283,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     for (let index = 0; index < sortedMetricNames.length; index++) {
       const metricName = sortedMetricNames[index];
 
-      if (this.state.displayAs === 'all-metrics' && Object.keys(metricsMap).length > metricsLimit) {
+      if (Object.keys(metricsMap).length > metricsLimit) {
         break;
       }
 
@@ -385,24 +315,23 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const trail = getTrailFor(this);
     let children: SceneFlexItem[] = [];
 
-    switch (this.state.displayAs) {
-      case 'all-metrics':
-        children = await this.populateAllMetricsLayout(trail);
-        const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
-        this.state.body.setState({ children, autoRows: rowTemplate });
-        break;
-      case 'nested-rows':
-        await this.populateNestedRowsLayout(trail);
-        break;
-      case 'prefix-filter':
-        await this.populateFilterableViewLayout(trail);
-        break;
-      default:
-        console.error('Not implemented yet: ', this.state.displayAs);
+    if (this.state.selectedPrefix !== 'all') {
+      let rootGroupNode = this.state.rootGroup;
+      if (!rootGroupNode) {
+        rootGroupNode = await this.generateGroups(this.state.metricNames);
+        this.setState({ rootGroup: rootGroupNode });
+      }
+
+      children = await this.populateFilterableViewLayout(trail);
+    } else {
+      children = await this.populateAllViewLayout(trail);
     }
+
+    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+    this.state.body.setState({ children, autoRows: rowTemplate });
   }
 
-  private async populateAllMetricsLayout(trail: DataTrail) {
+  private async populateAllViewLayout(trail: DataTrail) {
     const children: SceneFlexItem[] = [];
     const metricsList = this.sortedPreviewMetrics();
 
@@ -410,7 +339,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
     const currentFilterCount = filters?.length || 0;
-
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
       const metadata = await trail.getMetricMetadata(metric.name);
@@ -438,35 +366,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         children.push(panel);
       }
     }
-
     return children;
-  }
-
-  private async populateNestedRowsLayout(trail: DataTrail) {
-    // Get the current filters to determine the count of them
-    // Which is required for `getPreviewPanelFor`
-    const filters = getFilters(this);
-
-    let rootGroupNode = this.state.rootGroup;
-    if (!rootGroupNode) {
-      rootGroupNode = await this.generateGroups(this.state.metricNames);
-      this.setState({ rootGroup: rootGroupNode });
-    }
-    const nestedScenes = this.generateNestedScene(rootGroupNode);
-    this.state.body.setState({ children: nestedScenes });
-
-    for (const [groupKey, groupNode] of rootGroupNode.groups) {
-      const children: SceneFlexItem[] = [];
-
-      for (const [_, value] of groupNode.groups) {
-        const panels = await this.populatePanels(trail, filters, value.values);
-        children.push(...panels);
-      }
-
-      const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
-      children.push(...morePanelsMaybe);
-      this.nestedSceneRec[groupKey].state.body.setState({ children });
-    }
   }
 
   private async populateFilterableViewLayout(trail: DataTrail) {
@@ -483,7 +383,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const children: SceneFlexItem[] = [];
 
     for (const [groupKey, groupNode] of rootGroupNode.groups) {
-      if (this.state.selectedTabGroupOption !== 'all' && this.state.selectedTabGroupOption !== groupKey) {
+      if (this.state.selectedPrefix !== groupKey) {
         continue;
       }
 
@@ -496,7 +396,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       children.push(...morePanelsMaybe);
     }
 
-    this.state.body.setState({ children });
+    return children;
   }
 
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
@@ -541,36 +441,21 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       metricPanel.isEmpty = isEmpty;
       metricPanel.loaded = isLoaded;
       this.previewCache[metric] = metricPanel;
-      if (this.state.displayAs === 'all-metrics') {
+      if (this.state.selectedPrefix === 'All') {
         this.buildLayout();
       }
     }
   };
 
-  public onSearchQueryChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
+  public onSearchQueryChange = (evt: SyntheticEvent<HTMLInputElement>) => {
     const metricSearch = evt.currentTarget.value;
     const trail = getTrailFor(this);
     // Update the variable
     trail.setState({ metricSearch });
   };
 
-  public onMetricRadioChange = (val: string) => {
-    this.setState({ selectedTabGroupOption: val });
-    this.buildLayout();
-  };
-
   public onPrefixFilterChange = (val: SelectableValue) => {
-    this.setState({ selectedTabGroupOption: val.value });
-    this.buildLayout();
-  };
-
-  public onDisplayTypeChanged = (val: SelectableValue) => {
-    const bodyFormation = generateBodyFormation(val.value);
-    if (val.value !== this.state.displayAs && (val.value === 'nested-rows' || this.state.displayAs === 'nested-rows')) {
-      this.setState({ body: bodyFormation.layout, displayAs: val.value });
-    } else {
-      this.setState({ displayAs: val.value });
-    }
+    this.setState({ selectedPrefix: val.value });
     this.buildLayout();
   };
 
@@ -587,9 +472,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       metricNamesError,
       metricNamesLoading,
       metricNamesWarning,
-      displayAs,
       rootGroup,
-      selectedTabGroupOption,
+      selectedPrefix,
     } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -626,29 +510,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
-          <Field label={'Select Display'} className={styles.displayOption}>
-            <Select
-              width={20}
-              value={displayAs}
-              onChange={model.onDisplayTypeChanged}
-              options={metricSelectSceneDisplayOptions.map((o) => ({ label: o.label, value: o.value }))}
-            />
-          </Field>
-          {displayAs === 'prefix-filter' && (
-            <Field label={'Select Prefix'} className={styles.displayOption}>
-              <Select
-                onChange={model.onPrefixFilterChange}
-                value={selectedTabGroupOption}
-                options={[
-                  {
-                    label: 'All',
-                    value: 'all',
-                  },
-                  ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
-                ]}
-              />
-            </Field>
-          )}
           <Field label={'Search metrics'} className={styles.searchField}>
             <Input
               placeholder="Search metrics"
@@ -656,6 +517,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               value={metricSearch}
               onChange={model.onSearchQueryChange}
               suffix={metricNamesWarningIcon}
+            />
+          </Field>
+          <Field label={'Select Prefix'} className={styles.displayOption}>
+            <Select
+              onChange={model.onPrefixFilterChange}
+              value={selectedPrefix}
+              options={[
+                {
+                  label: 'All',
+                  value: 'all',
+                },
+                ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
+              ]}
             />
           </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
