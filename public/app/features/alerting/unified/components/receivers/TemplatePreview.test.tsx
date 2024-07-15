@@ -1,13 +1,11 @@
-import { screen, render, waitFor } from '@testing-library/react';
-import { setupServer } from 'msw/node';
 import { default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
+import { screen, render, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { Components } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { configureStore } from 'app/store/configureStore';
 
 import { TemplatePreviewResponse } from '../../api/templateApi';
@@ -39,20 +37,7 @@ const getProviderWraper = () => {
   };
 };
 
-const server = setupServer();
-
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-beforeEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+const server = setupMswServer();
 
 const ui = {
   errorAlert: byRole('alert', { name: /error/i }),

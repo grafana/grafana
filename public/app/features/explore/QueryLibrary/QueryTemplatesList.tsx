@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { EmptyState, Spinner } from '@grafana/ui';
 import { useAllQueryTemplatesQuery } from 'app/features/query-library';
 import { QueryTemplate } from 'app/features/query-library/types';
@@ -41,11 +39,13 @@ export function QueryTemplatesList() {
     const datasourceType = getDatasourceSrv().getInstanceSettings(datasourceRef)?.meta.name || '';
     return {
       index: index.toString(),
+      uid: queryTemplate.uid,
       datasourceRef,
       datasourceType,
       createdAtTimestamp: queryTemplate?.createdAtTimestamp || 0,
       query: queryTemplate.targets[0],
       description: queryTemplate.title,
+      user: queryTemplate.user,
     };
   });
 

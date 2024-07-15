@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -200,7 +200,7 @@ const AmRoutes = () => {
     updatingTree
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
-  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
+  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 

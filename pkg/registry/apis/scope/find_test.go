@@ -54,7 +54,7 @@ func TestFilterAndAppendItem(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		results := &scope.TreeResults{}
+		results := &scope.FindScopeNodeChildrenResults{}
 		item := scope.ScopeNode{
 			Spec: scope.ScopeNodeSpec{
 				ParentName:  tc.ParentName,

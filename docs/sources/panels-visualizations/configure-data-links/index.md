@@ -248,7 +248,9 @@ If you want to add all of the current dashboard's variables to the URL, then use
 
    To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
-1. If you want the link to open in a new tab, then toggle the **Open in a new tab** switch.
+1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. Click **Save** to save changes and close the dialog box.
-1. Click **Apply** to see your changes in the dashboard.
-1. Click the **Save dashboard** icon to save your changes to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.
+
+If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.

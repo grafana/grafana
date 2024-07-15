@@ -1,14 +1,18 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { matcherToObjectMatcher, parseMatchers } from '../../utils/alertmanager';
-import { normalizeMatchers } from '../../utils/matchers';
+import { matcherToObjectMatcher } from '../../utils/alertmanager';
+import {
+  normalizeMatchers,
+  parsePromQLStyleMatcherLoose,
+  parsePromQLStyleMatcherLooseSafe,
+} from '../../utils/matchers';
 
 interface NotificationPoliciesFilterProps {
   receivers: Receiver[];
@@ -35,7 +39,7 @@ const NotificationPoliciesFilter = ({
   }, [contactPoint, onChangeReceiver]);
 
   useEffect(() => {
-    const matchers = parseMatchers(queryString ?? '').map(matcherToObjectMatcher);
+    const matchers = parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher);
     handleChangeLabels()(matchers);
   }, [handleChangeLabels, queryString]);
 
@@ -50,7 +54,17 @@ const NotificationPoliciesFilter = ({
   const selectedContactPoint = receiverOptions.find((option) => option.value === contactPoint) ?? null;
 
   const hasFilters = queryString || contactPoint;
-  const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;
+
+  let inputValid = Boolean(queryString && queryString.length > 3);
+  try {
+    if (!queryString) {
+      inputValid = true;
+    } else {
+      parsePromQLStyleMatcherLoose(queryString);
+    }
+  } catch (err) {
+    inputValid = false;
+  }
 
   return (
     <Stack direction="row" alignItems="flex-end" gap={1}>
@@ -64,7 +78,7 @@ const NotificationPoliciesFilter = ({
                 content={
                   <div>
                     Filter notification policies by using a comma separated list of matchers, e.g.:
-                    <pre>severity=critical, instance=~cluster-us-.+</pre>
+                    <pre>severity=critical, region=EMEA</pre>
                   </div>
                 }
               >
@@ -73,8 +87,8 @@ const NotificationPoliciesFilter = ({
             </Stack>
           </Label>
         }
-        invalid={inputInvalid}
-        error={inputInvalid ? 'Query must use valid matcher syntax' : null}
+        invalid={!inputValid}
+        error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
           ref={searchInputRef}

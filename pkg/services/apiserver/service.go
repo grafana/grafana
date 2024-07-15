@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
+	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,11 +23,13 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -31,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
@@ -42,6 +49,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -99,6 +109,7 @@ type service struct {
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
 
+	startedCh chan struct{}
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -108,8 +119,11 @@ type service struct {
 	builders []builder.APIGroupBuilder
 
 	tracing *tracing.TracingService
+	metrics prometheus.Registerer
 
-	authorizer *authorizer.GrafanaAuthorizer
+	authorizer        *authorizer.GrafanaAuthorizer
+	serverLockService builder.ServerLockService
+	kvStore           kvstore.KVStore
 }
 
 func ProvideService(
@@ -118,17 +132,22 @@ func ProvideService(
 	rr routing.RouteRegister,
 	orgService org.Service,
 	tracing *tracing.TracingService,
+	serverLockService *serverlock.ServerLockService,
 	db db.DB,
+	kvStore kvstore.KVStore,
 ) (*service, error) {
 	s := &service{
 		cfg:        cfg,
 		features:   features,
 		rr:         rr,
+		startedCh:  make(chan struct{}),
 		stopCh:     make(chan struct{}),
 		builders:   []builder.APIGroupBuilder{},
 		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
 		tracing:    tracing,
 		db:         db, // For Unified storage
+		metrics:    metrics.ProvideRegisterer(),
+		kvStore:    kvStore,
 	}
 
 	// This will be used when running as a dskit service
@@ -139,6 +158,7 @@ func ProvideService(
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
+			<-s.startedCh
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
 				_, _ = c.Resp.Write([]byte("Not found"))
@@ -148,6 +168,11 @@ func ProvideService(
 			req := c.Req
 			if req.URL.Path == "" {
 				req.URL.Path = "/"
+			}
+
+			if c.SignedInUser != nil {
+				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				req = req.WithContext(ctx)
 			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
@@ -187,7 +212,10 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+// nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
+	defer close(s.startedCh)
+
 	// Get the list of groups the server will support
 	builders := s.builders
 
@@ -244,39 +272,87 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-	case grafanaapiserveroptions.StorageTypeUnified:
+	case grafanaapiserveroptions.StorageTypeUnifiedNext:
+		// CDK (for now)
+		dir := filepath.Join(s.cfg.DataPath, "unistore", "resource")
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			return err
+		}
+
+		bucket, err := fileblob.OpenBucket(dir, &fileblob.Options{
+			CreateDir: true,
+			Metadata:  fileblob.MetadataDontWrite, // skip
+		})
+		if err != nil {
+			return err
+		}
+		backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
+			Tracer: s.tracing,
+			Bucket: bucket,
+		})
+		if err != nil {
+			return err
+		}
+		server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: backend})
+		if err != nil {
+			return err
+		}
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
+			o.RecommendedOptions.Etcd.StorageConfig.Codec)
+
+	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
-
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
-		if err != nil {
-			return err
-		}
-
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
-		if err != nil {
-			return err
-		}
-
-		store := entity.NewEntityStoreClientLocal(storeServer)
-
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
-
-	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
 		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
 
-		// TODO: determine when to close the connection, we cannot defer it here
-		// defer conn.Close()
-
 		// Create a client instance
-		store := entity.NewEntityStoreClientGRPC(conn)
+		client := resource.NewResourceStoreClientGRPC(conn)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+	case grafanaapiserveroptions.StorageTypeUnified, grafanaapiserveroptions.StorageTypeUnifiedGrpc:
+		var client entity.EntityStoreClient
+		var entityServer sqlstash.SqlEntityServer
+
+		if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeUnifiedGrpc {
+			conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return err
+			}
+			client = entity.NewEntityStoreClientGRPC(conn)
+		} else {
+			if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+				return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+			}
+
+			eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
+			if err != nil {
+				return err
+			}
+
+			entityServer, err = sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
+			if err != nil {
+				return err
+			}
+			client = entity.NewEntityStoreClientLocal(entityServer)
+		}
+
+		if false {
+			// Use the entity bridge
+			server, err := entitybridge.EntityAsResourceServer(client, entityServer, s.tracing)
+			if err != nil {
+				return err
+			}
+			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
+				o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		} else {
+			serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
+				client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		}
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
@@ -309,7 +385,10 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions)
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+		// Required for the dual writer initialization
+		s.metrics, kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
+	)
 	if err != nil {
 		return err
 	}
@@ -319,7 +398,7 @@ func (s *service) start(ctx context.Context) error {
 
 	var runningServer *genericapiserver.GenericAPIServer
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startAggregator(transport, serverConfig, server)
+		runningServer, err = s.startAggregator(transport, serverConfig, server, s.metrics)
 		if err != nil {
 			return err
 		}
@@ -369,6 +448,7 @@ func (s *service) startAggregator(
 	transport *roundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
+	reg prometheus.Registerer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	namespaceMapper := request.GetNamespaceMapper(s.cfg)
 
@@ -377,7 +457,7 @@ func (s *service) startAggregator(
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
 	if err != nil {
 		return nil, err
 	}
@@ -405,6 +485,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
+				<-s.startedCh
 				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
@@ -414,6 +495,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+	<-s.startedCh
 	s.handler.ServeHTTP(w, r)
 }
 

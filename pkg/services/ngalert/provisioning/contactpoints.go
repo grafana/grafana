@@ -11,8 +11,8 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -88,13 +88,14 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		}
 	}
 
-	var contactPoints []apimodels.EmbeddedContactPoint
-	for _, gr := range grafanaReceivers {
+	contactPoints := make([]apimodels.EmbeddedContactPoint, len(grafanaReceivers))
+	for i, gr := range grafanaReceivers {
 		contactPoint, err := GettableGrafanaReceiverToEmbeddedContactPoint(gr)
 		if err != nil {
 			return nil, err
 		}
-		contactPoints = append(contactPoints, contactPoint)
+
+		contactPoints[i] = contactPoint
 	}
 
 	sort.SliceStable(contactPoints, func(i, j int) bool {
@@ -338,7 +339,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		}
 	}
 	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
-		return ErrContactPointReferenced
+		return ErrContactPointReferenced.Errorf("")
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -353,7 +354,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 					uids = append(uids, key.UID)
 				}
 				ecp.log.Error("Cannot delete contact point because it is used in rule's notification settings", "receiverName", name, "rulesUid", strings.Join(uids, ","))
-				return fmt.Errorf("contact point '%s' is currently used in notification settings by one or many alert rules", name)
+				return ErrContactPointUsedInRule.Errorf("")
 			}
 		}
 

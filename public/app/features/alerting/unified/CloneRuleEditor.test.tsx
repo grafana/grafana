@@ -1,5 +1,5 @@
 import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import React from 'react';
+import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
@@ -29,8 +29,8 @@ import {
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
 } from './mocks';
-import { grafanaRulerRule } from './mocks/alertRuleApi';
 import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { setupDataSources } from './testSetup/datasources';

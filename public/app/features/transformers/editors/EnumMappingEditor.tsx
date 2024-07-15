@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { isEqual } from 'lodash';
-import React, { useEffect, useState } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { useEffect, useState } from 'react';
 
 import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';
 import { ConvertFieldTypeTransformerOptions } from '@grafana/data/src/transformations/transformers/convertFieldType';

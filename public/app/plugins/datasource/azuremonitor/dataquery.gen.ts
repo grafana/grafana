@@ -33,9 +33,9 @@ export interface AzureMonitorQuery extends common.DataQuery {
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
   namespace?: string;
   /**
-   * Azure Monitor query type.
-   * queryType: #AzureQueryType
+   * Used only for exemplar queries from Prometheus
    */
+  query?: string;
   region?: string;
   resource?: string;
   /**
@@ -71,6 +71,7 @@ export enum AzureQueryType {
   ResourceGroupsQuery = 'Azure Resource Groups',
   ResourceNamesQuery = 'Azure Resource Names',
   SubscriptionsQuery = 'Azure Subscriptions',
+  TraceExemplar = 'traceql',
   WorkspacesQuery = 'Azure Workspaces',
 }
 

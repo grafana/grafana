@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -265,7 +266,7 @@ func TestPluginProxy(t *testing.T) {
 			SecureJSONData: map[string][]byte{},
 		}
 		cfg := &setting.Cfg{}
-		proxy, err := NewPluginProxy(ps, routes, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+		proxy, err := NewPluginProxy(ps, routes, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
@@ -316,10 +317,16 @@ func TestPluginProxyRoutes(t *testing.T) {
 			Method: "GET",
 			URL:    "http://localhost/api/v2/instances",
 		},
+		{
+			Path:   "/mypath/*",
+			Method: "GET",
+			URL:    "https://example.com/api/v1/",
+		},
 	}
 
 	tcs := []struct {
 		proxyPath       string
+		withFeatures    []any
 		expectedURLPath string
 		expectedStatus  int
 	}{
@@ -360,6 +367,17 @@ func TestPluginProxyRoutes(t *testing.T) {
 		{
 			proxyPath:       "/some-other-api/instances/instance-one",
 			expectedURLPath: "/api/v2/instances/instance-one",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/mypath/some-route/",
+			expectedURLPath: "/api/v1/some-route",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/mypath/some-route/",
+			withFeatures:    []any{featuremgmt.FlagPluginProxyPreserveTrailingSlash},
+			expectedURLPath: "/api/v1/some-route/",
 			expectedStatus:  http.StatusOK,
 		},
 	}
@@ -404,7 +422,7 @@ func TestPluginProxyRoutes(t *testing.T) {
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures(tc.withFeatures...))
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
@@ -519,7 +537,7 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
@@ -550,7 +568,7 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsServic
 			ReqRole: org.RoleEditor,
 		}
 	}
-	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)

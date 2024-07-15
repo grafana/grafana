@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Alert, Select, useStyles2 } from '@grafana/ui';

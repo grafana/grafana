@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';

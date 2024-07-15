@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -173,20 +173,9 @@ function NeedHelpInfoForNotificationPolicy() {
         <Stack gap={1} direction="column">
           <Stack direction="column" gap={0}>
             <>
-              Firing alert rule instances are routed to notification policies based on matching labels. All alert rules
-              and instances, irrespective of their labels, match the default notification policy. If there are no nested
-              policies, or no nested policies match the labels in the alert rule or alert instance, then the default
-              notification policy is the matching policy.
+              Firing alert instances are routed to notification policies based on matching labels. The default
+              notification policy matches all alert instances.
             </>
-            <a
-              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Text color="link">
-                Read about notification routing. <Icon name="external-link-alt" />
-              </Text>
-            </a>
           </Stack>
           <Stack direction="column" gap={0}>
             <>
@@ -194,12 +183,12 @@ function NeedHelpInfoForNotificationPolicy() {
               connect them to your notification policy by adding label matchers.
             </>
             <a
-              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/`}
+              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/`}
               target="_blank"
               rel="noreferrer"
             >
               <Text color="link">
-                Read about Labels and annotations. <Icon name="external-link-alt" />
+                Read about notification policies. <Icon name="external-link-alt" />
               </Text>
             </a>
           </Stack>
@@ -220,20 +209,18 @@ function NeedHelpInfoForContactpoint() {
           <br />
           Notifications for firing alert instances are grouped based on folder and alert rule name.
           <br />
-          The waiting time until the initial notification is sent for a new group created by an incoming alert is 30
-          seconds.
+          The wait time before sending the first notification for a new group of alerts is 30 seconds.
           <br />
-          The waiting time to send a batch of new alerts for that group after the first notification was sent is 5
-          minutes.
+          The waiting time before sending a notification about changes in the alert group after the first notification
+          has been sent is 5 minutes.
           <br />
-          The waiting time to resend an alert after they have successfully been sent is 4 hours.
+          The wait time before resending a notification that has already been sent successfully is 4 hours.
           <br />
           Grouping and wait time values are defined in your default notification policy.
         </>
       }
-      // todo: update the link with the new documentation about simplified routing
-      externalLink="`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`"
-      linkText="Read more about notifiying contact points"
+      externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
+      linkText="Read more about notifications"
       title="Notify contact points"
     />
   );

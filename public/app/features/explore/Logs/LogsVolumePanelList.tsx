@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import * as React from 'react';
 
 import {
   AbsoluteTimeRange,

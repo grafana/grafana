@@ -13,10 +13,12 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,6 +42,7 @@ func RegisterAPIService(features *featuremgmt.FeatureManager,
 	accessControl accesscontrol.AccessControl,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
+	registerer prometheus.Registerer,
 ) *FeatureFlagAPIBuilder {
 	builder := NewFeatureFlagAPIBuilder(features, accessControl, cfg)
 	apiregistration.RegisterAPI(builder)
@@ -48,11 +51,6 @@ func RegisterAPIService(features *featuremgmt.FeatureManager,
 
 func (b *FeatureFlagAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return gv
-}
-
-func (b *FeatureFlagAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -88,7 +86,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode,
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 

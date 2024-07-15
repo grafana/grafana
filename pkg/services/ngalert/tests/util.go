@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -52,7 +53,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	*cfg.UnifiedAlerting.Enabled = true
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
-	sqlStore := db.InitTestDB(tb)
+	replStore := db.InitTestReplDB(tb)
+	sqlStore := replStore.DB()
 	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
 
 	ac := acmock.New()
@@ -60,7 +62,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
+	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, replStore, folderStore, cfg)
 	features := featuremgmt.WithFeatures()
 	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, features, ac)
 	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService, &dashboards.FakeDashboardService{}, ac)
@@ -68,7 +70,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	ng, err := ngalert.ProvideService(
 		cfg, features, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(),
 	)
 	require.NoError(tb, err)
 	return ng, &store.DBstore{

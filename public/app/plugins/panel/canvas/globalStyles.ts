@@ -89,6 +89,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           },
         },
         span: {
+          height: '100%',
           '&.rc-tree-checkbox, &.rc-tree-iconEle': {
             display: 'inline-block',
             width: '16px',
@@ -110,6 +111,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             display: 'flex',
             alignItems: 'center',
             width: '16px',
+            height: 'auto',
             backgroundColor: 'transparent',
             backgroundRepeat: 'no-repeat',
             backgroundAttachment: 'scroll',

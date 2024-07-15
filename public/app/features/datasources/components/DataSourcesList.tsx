@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -22,7 +22,7 @@ export function DataSourcesList() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
-  const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const hasExploreRights = contextSrv.hasAccessToExplore();
 
   return (
     <DataSourcesListView

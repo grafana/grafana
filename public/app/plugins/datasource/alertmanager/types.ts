@@ -1,5 +1,5 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
-import { DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
@@ -188,7 +188,7 @@ export enum MatcherOperator {
   notRegex = '!~',
 }
 
-export type Silence = {
+export interface Silence extends WithAccessControlMetadata {
   id: string;
   matchers?: Matcher[];
   startsAt: string;
@@ -199,7 +199,12 @@ export type Silence = {
   status: {
     state: SilenceState;
   };
-};
+  metadata?: {
+    rule_uid?: string;
+    rule_title?: string;
+    folder_uid?: string;
+  };
+}
 
 export type SilenceCreatePayload = {
   id?: string;

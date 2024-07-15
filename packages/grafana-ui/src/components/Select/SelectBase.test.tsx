@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
@@ -63,39 +63,6 @@ describe('SelectBase', () => {
     expect(screen.queryByText('Test label')).toBeInTheDocument();
     await userEvent.click(screen.getByText('clear value'));
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
-  });
-
-  describe('with custom values', () => {
-    it('allows editing a custom SelectableValue', async () => {
-      render(
-        <SelectBase
-          onChange={onChangeHandler}
-          allowCustomValue
-          value={{
-            label: 'my custom value',
-            value: 'my custom value',
-          }}
-        />
-      );
-
-      await userEvent.click(screen.getByRole('combobox'));
-      await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');
-      expect(onChangeHandler).toHaveBeenCalled();
-      expect(onChangeHandler.mock.calls[0][0]).toEqual(
-        expect.objectContaining({ label: 'my custom val', value: 'my custom val' })
-      );
-    });
-
-    it('allows editing a custom basic value', async () => {
-      render(<SelectBase onChange={onChangeHandler} allowCustomValue value="my custom value" />);
-
-      await userEvent.click(screen.getByRole('combobox'));
-      await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');
-      expect(onChangeHandler).toHaveBeenCalled();
-      expect(onChangeHandler.mock.calls[0][0]).toEqual(
-        expect.objectContaining({ label: 'my custom val', value: 'my custom val' })
-      );
-    });
   });
 
   describe('when openMenuOnFocus prop', () => {

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { Route } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
@@ -18,7 +18,7 @@ import * as ruler from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from './mocks';
-import { grafanaRulerGroup, grafanaRulerRule } from './mocks/alertRuleApi';
+import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { Annotation } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';

@@ -13,15 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -31,10 +25,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAlertRuleService(t *testing.T) {
@@ -1020,7 +1019,7 @@ func TestGetAlertRule(t *testing.T) {
 		service, _, _, ac := initServiceWithData(t)
 
 		expected := errors.New("test")
-		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
+		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error {
 			assert.Equal(t, u, user)
 			assert.EqualValues(t, rule, namespaced)
 			return expected
@@ -1034,7 +1033,7 @@ func TestGetAlertRule(t *testing.T) {
 		assert.Equal(t, "AuthorizeRuleRead", ac.Calls[0].Method)
 
 		ac.Calls = nil
-		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
+		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error {
 			return nil
 		}
 
@@ -1474,7 +1473,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 func TestProvisiongWithFullpath(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
