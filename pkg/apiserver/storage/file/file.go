@@ -571,25 +571,44 @@ func (s *Storage) GuaranteedUpdate(
 		return nil
 	}
 
+	rv := int64(0)
+	var out []byte
 	var val bytes.Buffer
 	err = s.codec.Encode(updatedObj, &val)
 	if err != nil {
 		return err
 	}
-	req.Value = val.Bytes()
-	rsp2, err := s.store.Update(ctx, req)
-	if err != nil {
-		return err
-	}
-	if rsp2.Error != nil {
-		return fmt.Errorf("backend update error: %+v", rsp2.Error)
+	if created {
+		rsp2, err := s.store.Create(ctx, &resource.CreateRequest{
+			Key:   req.Key,
+			Value: val.Bytes(),
+		})
+		if err != nil {
+			return err
+		}
+		if rsp2.Error != nil {
+			return fmt.Errorf("backend update error: %+v", rsp2.Error)
+		}
+		out = rsp2.Value
+		rv = rsp2.ResourceVersion
+	} else {
+		req.Value = val.Bytes()
+		rsp2, err := s.store.Update(ctx, req)
+		if err != nil {
+			return err
+		}
+		if rsp2.Error != nil {
+			return fmt.Errorf("backend update error: %+v", rsp2.Error)
+		}
+		out = rsp2.Value
+		rv = rsp2.ResourceVersion
 	}
 
-	_, _, err = s.codec.Decode(rsp2.Value, nil, destination)
+	_, _, err = s.codec.Decode(out, nil, destination)
 	if err != nil {
 		return err
 	}
-	if err := s.versioner.UpdateObject(destination, uint64(rsp2.ResourceVersion)); err != nil {
+	if err := s.versioner.UpdateObject(destination, uint64(rv)); err != nil {
 		return err
 	}
 

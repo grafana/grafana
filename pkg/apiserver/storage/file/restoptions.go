@@ -3,12 +3,20 @@
 package file
 
 import (
+	"context"
+	"os"
+	"path/filepath"
 	"time"
 
+	"gocloud.dev/blob/fileblob"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -16,23 +24,48 @@ import (
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	store    resource.ResourceStoreClient
+	client   resource.ResourceStoreClient
 	original storagebackend.Config
 }
 
 // Optionally, this constructor allows specifying directories
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetter(store resource.ResourceStoreClient,
-	originalStorageConfig storagebackend.Config,
-) (*RESTOptionsGetter, error) {
-	return &RESTOptionsGetter{store: store, original: originalStorageConfig}, nil
+func NewRESTOptionsGetter(path string,
+	originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	if path == "" {
+		path = filepath.Join(os.TempDir(), "grafana-apiserver")
+	}
+
+	bucket, err := fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
+		CreateDir: true,
+		Metadata:  fileblob.MetadataDontWrite, // skip
+	})
+	if err != nil {
+		return nil, err
+	}
+	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
+		Bucket: bucket,
+	})
+	if err != nil {
+		return nil, err
+	}
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend: backend,
+	})
+	if err != nil {
+		return nil, err
+	}
+	client := resource.NewLocalResourceStoreClient(server)
+
+	return &RESTOptionsGetter{client: client, original: originalStorageConfig}, nil
 }
 
 func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
-			Type:                      "file",
+			Type:                      "resource",
+			Prefix:                    "resource/", // Not actually used
 			Transport:                 storagebackend.TransportConfig{},
 			Codec:                     r.original.Codec,
 			EncodeVersioner:           r.original.EncodeVersioner,
@@ -49,7 +82,18 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 
 	ret := generic.RESTOptions{
 		StorageConfig: storageConfig,
-		///Decorator:               NewStorage,
+		Decorator: func(
+			config *storagebackend.ConfigForResource,
+			resourcePrefix string,
+			keyFunc func(obj runtime.Object) (string, error),
+			newFunc func() runtime.Object,
+			newListFunc func() runtime.Object,
+			getAttrsFunc storage.AttrFunc,
+			trigger storage.IndexerFuncs,
+			indexers *cache.Indexers,
+		) (storage.Interface, factory.DestroyFunc, error) {
+			return NewStorage(config, r.client, keyFunc, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
+		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
