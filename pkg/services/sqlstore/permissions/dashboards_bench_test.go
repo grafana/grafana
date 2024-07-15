@@ -77,7 +77,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		nestingLevel = folder.MaxNestedFolderDepth
 	}
 
-	store, cfg := db.InitTestDBWithCfg(b)
+	store, cfg := db.InitTestReplDBWithCfg(b)
 
 	quotaService := quotatest.New(false, nil)
 
