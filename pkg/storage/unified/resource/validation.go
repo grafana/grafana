@@ -16,7 +16,7 @@ func validateName(name string) error {
 		return fmt.Errorf("name is too long")
 	}
 	if !validNamePattern(name) {
-		return fmt.Errorf("name includes invalid characters")
+		return fmt.Errorf("name includes invalid characters // " + name)
 	}
 	// In standard k8s, it must not start with a number
 	// however that would force us to update many many many existing resources

@@ -44,20 +44,6 @@ func ParseKey(raw string) (*Key, error) {
 			key.Namespace = v
 		case "name":
 			key.Name = v
-		case "pods":
-			if len(parts) == 2 {
-				return &Key{
-					Resource: parts[0], // pods
-					Name:     parts[1],
-				}, nil
-			}
-			if len(parts) == 3 {
-				return &Key{
-					Resource:  parts[0], // pods
-					Namespace: parts[1],
-					Name:      parts[2],
-				}, nil
-			}
 		default:
 			return nil, fmt.Errorf("invalid key part: %s", raw)
 		}

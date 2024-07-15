@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -49,12 +51,8 @@ func errorWrap(status *resource.ErrorResult) error {
 	return nil
 }
 
-func toListRequest(key string, opts storage.ListOptions) (*resource.ListRequest, storage.SelectionPredicate, error) {
+func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource.ListRequest, storage.SelectionPredicate, error) {
 	predicate := opts.Predicate
-	k, err := getKey(key)
-	if err != nil {
-		return nil, predicate, err
-	}
 	req := &resource.ListRequest{
 		Limit: opts.Predicate.Limit,
 		Options: &resource.ListOptions{
@@ -136,4 +134,39 @@ func (d *dummyWatch) ResultChan() <-chan watch.Event {
 	stream := make(chan watch.Event)
 	close(stream)
 	return stream
+}
+
+func testKeyParser(val string) (*resource.ResourceKey, error) {
+	k, err := grafanaregistry.ParseKey(val)
+	if err != nil {
+		if strings.HasPrefix(val, "pods/") {
+			parts := strings.Split(val, "/")
+			if len(parts) == 2 {
+				k = &grafanaregistry.Key{
+					Resource: parts[0], // pods
+					Name:     parts[1],
+				}
+			} else if len(parts) == 3 {
+				k = &grafanaregistry.Key{
+					Resource:  parts[0], // pods
+					Namespace: parts[1],
+					Name:      parts[2],
+				}
+			} else {
+				return nil, err
+			}
+		}
+	}
+	if k.Group == "" {
+		k.Group = "example.apiserver.k8s.io"
+	}
+	if k.Resource == "" {
+		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
+	}
+	return &resource.ResourceKey{
+		Namespace: k.Namespace,
+		Group:     k.Group,
+		Resource:  k.Resource,
+		Name:      k.Name,
+	}, err
 }

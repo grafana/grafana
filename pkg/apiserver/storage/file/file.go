@@ -48,7 +48,8 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store resource.ResourceStoreClient
+	store  resource.ResourceStoreClient
+	getKey func(string) (*resource.ResourceKey, error)
 
 	watchSet  *WatchSet
 	versioner storage.Versioner
@@ -84,6 +85,20 @@ func NewStorage(
 
 		watchSet: NewWatchSet(),
 
+		// This allows for testing with k8s key expectations
+		getKey: func(key string) (*resource.ResourceKey, error) {
+			k, err := grafanaregistry.ParseKey(key)
+			if err != nil {
+				return nil, err
+			}
+			return &resource.ResourceKey{
+				Namespace: k.Namespace,
+				Group:     k.Group,
+				Resource:  k.Resource,
+				Name:      k.Name,
+			}, err
+		},
+
 		versioner: &storage.APIObjectVersioner{},
 	}
 
@@ -94,26 +109,6 @@ func NewStorage(
 
 func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
-}
-
-func getKey(val string) (*resource.ResourceKey, error) {
-	k, err := grafanaregistry.ParseKey(val)
-	if err != nil {
-		return nil, err
-	}
-	if k.Group == "" {
-		k.Group = "example.apiserver.k8s.io"
-		// return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
-	}
-	if k.Resource == "" {
-		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
-	}
-	return &resource.ResourceKey{
-		Namespace: k.Namespace,
-		Group:     k.Group,
-		Resource:  k.Resource,
-		Name:      k.Name,
-	}, err
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
@@ -137,7 +132,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	req := &resource.CreateRequest{
 		Value: val.Bytes(),
 	}
-	req.Key, err = getKey(key)
+	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
@@ -196,7 +191,7 @@ func (s *Storage) Delete(
 		return err
 	}
 
-	k, err := getKey(key)
+	k, err := s.getKey(key)
 	if err != nil {
 		return err
 	}
@@ -375,7 +370,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	var err error
 	req := &resource.ReadRequest{}
-	req.Key, err = getKey(key)
+	req.Key, err = s.getKey(key)
 	if err != nil {
 		if opts.IgnoreNotFound {
 			return runtime.SetZeroValue(objPtr)
@@ -418,7 +413,12 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	req, predicate, err := toListRequest(key, opts)
+	k, err := s.getKey(key)
+	if err != nil {
+		return err
+	}
+
+	req, predicate, err := toListRequest(k, opts)
 	if err != nil {
 		return err
 	}
@@ -514,7 +514,7 @@ func (s *Storage) GuaranteedUpdate(
 		err         error
 	)
 	req := &resource.UpdateRequest{}
-	req.Key, err = getKey(keystring)
+	req.Key, err = s.getKey(keystring)
 	if err != nil {
 		return err
 	}
