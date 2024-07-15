@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -17,6 +17,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { getPaginationStyles } from '../../styles/pagination';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { createUrl } from '../../utils/url';
 import { GrafanaRulesExporter } from '../export/GrafanaRulesExporter';
 
 import { RulesGroup } from './RulesGroup';
@@ -85,7 +86,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
             )}
             {grafanaRecordingRulesEnabled && (
               <LinkButton
-                href={urlUtil.renderUrl('alerting/new/grafana-recording', {
+                href={createUrl('alerting/new/grafana-recording', {
                   returnTo: location.pathname + location.search,
                 })}
                 icon="plus"
