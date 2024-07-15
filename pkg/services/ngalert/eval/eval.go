@@ -387,8 +387,9 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 					return nil, fmt.Errorf("recovery threshold '%s' is only allowed to be the alert condition", q.RefID)
 				}
 				if reader != nil {
-					logger.FromContext(ctx.Ctx).Debug("Detected hysteresis threshold command. Populating with the results")
-					err = q.PatchHysteresisExpression(reader.Read())
+					active := reader.Read()
+					logger.FromContext(ctx.Ctx).Debug("Detected hysteresis threshold command. Populating with the results", "items", len(active))
+					err = q.PatchHysteresisExpression(active)
 					if err != nil {
 						return nil, fmt.Errorf("failed to amend hysteresis command '%s': %w", q.RefID, err)
 					}
