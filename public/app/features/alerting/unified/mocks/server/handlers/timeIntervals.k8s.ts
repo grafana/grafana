@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import {
   PROVENANCE_ANNOTATION,
-  PROVENANCE_FILE,
+  PROVENANCE_NONE,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 
@@ -17,8 +17,10 @@ const getK8sResponse = <T>(kind: string, items: T[]) => {
   };
 };
 
+/** UID of a time interval that we expect to follow all happy paths within tests/mocks */
 export const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
-export const TIME_INTERVAL_UID_PROVISIONED = 'd7b8515fc39e90f7';
+/** UID of a (file) provisioned time interval */
+export const TIME_INTERVAL_UID_FILE_PROVISIONED = 'd7b8515fc39e90f7';
 
 const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval>(
   'TimeIntervalList',
@@ -26,7 +28,7 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
     {
       metadata: {
         annotations: {
-          [PROVENANCE_ANNOTATION]: 'none',
+          [PROVENANCE_ANNOTATION]: PROVENANCE_NONE,
         },
         name: TIME_INTERVAL_UID_HAPPY_PATH,
         uid: TIME_INTERVAL_UID_HAPPY_PATH,
@@ -38,10 +40,10 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
     {
       metadata: {
         annotations: {
-          [PROVENANCE_ANNOTATION]: PROVENANCE_FILE,
+          [PROVENANCE_ANNOTATION]: 'file',
         },
-        name: TIME_INTERVAL_UID_PROVISIONED,
-        uid: TIME_INTERVAL_UID_PROVISIONED,
+        name: TIME_INTERVAL_UID_FILE_PROVISIONED,
+        uid: TIME_INTERVAL_UID_FILE_PROVISIONED,
         namespace: 'default',
         resourceVersion: 'a76d2fcc6731aa0c',
       },

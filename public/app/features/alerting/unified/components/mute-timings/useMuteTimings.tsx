@@ -29,14 +29,16 @@ export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
 
 /** Value of `PROVENANCE_ANNOTATION` given for file provisioned intervals */
 export const PROVENANCE_FILE = 'file';
+/** Value of `PROVENANCE_ANNOTATION` given for non-provisioned intervals */
+export const PROVENANCE_NONE = 'none';
 
 const parseTimeInterval = (item: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval) => {
   const { metadata, spec } = item;
   return {
     ...spec,
     id: metadata.uid || spec.name,
-    metadata: metadata,
-    provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] === PROVENANCE_FILE,
+    metadata,
+    provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] !== PROVENANCE_NONE,
   };
 };
 
@@ -52,7 +54,9 @@ const useAlertmanagerIntervals = () =>
       const timeIntervals = intervals.map((interval) => ({
         ...interval,
         id: interval.name,
-        provisioned: muteTimingsProvenances[interval.name] === PROVENANCE_FILE,
+        provisioned: Boolean(
+          muteTimingsProvenances[interval.name] && muteTimingsProvenances[interval.name] !== PROVENANCE_NONE
+        ),
       }));
 
       return {
@@ -175,7 +179,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
           const muteTimingsProvenances = alertmanager_config?.muteTimeProvenances ?? {};
 
           return {
-            data: { ...timing, provisioned: muteTimingsProvenances[timing.name] === PROVENANCE_FILE },
+            data: { ...timing, provisioned: muteTimingsProvenances[timing.name] === PROVENANCE_NONE },
             ...rest,
           };
         }
