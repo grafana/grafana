@@ -49,7 +49,7 @@ export const ConfigureCorrelationSourceForm = () => {
     );
   }
 
-  const dataSourceName = getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name;
+  const dataSourceName = getDatasourceSrv().getInstanceSettings(getValues('targetUID'))?.name;
   return (
     <>
       <FieldSet
