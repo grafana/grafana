@@ -103,6 +103,7 @@
       "delete": "Đęľęŧę",
       "edit": "Ēđįŧ",
       "export": "Ēχpőřŧ",
+      "export-all": "Ēχpőřŧ äľľ",
       "view": "Vįęŵ"
     },
     "contact-points": {
@@ -138,6 +139,10 @@
           }
         }
       }
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ vįä {{provenance}} äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ",
+      "badge-tooltip-standard": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ"
     },
     "rule-groups": {
       "delete": {

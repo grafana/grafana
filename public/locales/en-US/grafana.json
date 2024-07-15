@@ -103,6 +103,7 @@
       "delete": "Delete",
       "edit": "Edit",
       "export": "Export",
+      "export-all": "Export all",
       "view": "View"
     },
     "contact-points": {
@@ -138,6 +139,10 @@
           }
         }
       }
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
+      "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI"
     },
     "rule-groups": {
       "delete": {
