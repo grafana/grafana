@@ -2,7 +2,14 @@ import { memo } from 'react';
 
 import { DataFrame, Field, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
-import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
+import {
+  // UPlotConfigBuilder,
+  VizLayout,
+  VizLayoutLegendProps,
+  VizLegend,
+  VizLegendItem,
+  useTheme2,
+} from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 
@@ -17,7 +24,7 @@ interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendPro
  *
  * @internal
  */
-export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFrame[]) {
+export function hasVisibleLegendSeries(data: DataFrame[]) {
   return data[0].fields.slice(1).some((field) => !Boolean(field.config.custom?.hideFrom?.legend));
 
   // return config.getSeries().some((s, i) => {
@@ -30,6 +37,7 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 
 export const BarChartLegend = memo(
   ({ data, placement, calcs, displayMode, colorField, ...vizLayoutLegendProps }: BarChartLegend2Props) => {
+    console.log({ data });
     const theme = useTheme2();
 
     if (colorField != null) {

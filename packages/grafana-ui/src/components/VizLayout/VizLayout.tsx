@@ -97,7 +97,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
+      {/* viz */}
       <div className={styles.viz}>{size && children(size.width, size.height)}</div>
+      {/* legend */}
       <div style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
@@ -114,6 +116,7 @@ export const getVizStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
 interface VizSize {
   width: number;
   height: number;

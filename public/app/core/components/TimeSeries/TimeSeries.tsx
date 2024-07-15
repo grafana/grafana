@@ -1,7 +1,11 @@
 import { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
-import { hasVisibleLegendSeries, PlotLegend } from '@grafana/ui/src/components/uPlot/PlotLegend';
+import { VizLegend2 } from '@grafana/ui';
+import {
+  hasVisibleLegendSeries,
+  // PlotLegend
+} from '@grafana/ui/src/components/uPlot/PlotLegend';
 import { UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 import { withTheme2 } from '@grafana/ui/src/themes/ThemeContext';
 
@@ -10,8 +14,10 @@ import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 import { preparePlotConfigBuilder } from './utils';
 
 const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
+// const propsToDiff: Array<string | PropDiffFn> = ['options', 'theme'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
+// type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff'>;
 
 export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
@@ -46,7 +52,8 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
     }
 
     // JEV: REFACTOR: remove plotlegend in favor of new legend component/interface?
-    return <PlotLegend data={frames} config={config} {...legend} />;
+    // return <PlotLegend data={frames} config={config} {...legend} />;
+    return <VizLegend2 data={frames} {...legend} />;
   };
 
   render() {

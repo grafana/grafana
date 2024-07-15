@@ -8,6 +8,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
   UPlotChart,
   VizLayout,
+  VizLegend2,
   measureText,
   // usePanelContext,
   useTheme2,
@@ -16,7 +17,7 @@ import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/Toolt
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
-import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
+import { hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
 import { prepConfig, prepSeries } from './utils';
 
@@ -145,18 +146,11 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     );
   }
 
-  const legendComp =
-    legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
-      <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
-    ) : null;
+  const legendComponent =
+    legend.showLegend && hasVisibleLegendSeries(data.series) ? <VizLegend2 data={data.series} {...legend} /> : null;
 
   return (
-    <VizLayout
-      width={props.width}
-      height={props.height}
-      // legend={<BarChartLegend frame={info.series![0]} colorField={info.color} {...legend} />}
-      legend={legendComp}
-    >
+    <VizLayout width={props.width} height={props.height} legend={legendComponent}>
       {(vizWidth, vizHeight) => (
         <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight}>
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (

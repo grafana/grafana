@@ -40,6 +40,12 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 }
 
 // JEV: REFACTOR: possibly use this as a template to create a legendBuilder component?
+/* IHOR: config? why it should be here? what's the difference between config and data?
+  `config` is a UPlotConfigBuilder, which is a class that holds the configuration for the uPlot chart.
+  
+  The goal is to make legend component panel agnostic.
+  Can we use some other source of data instead of `config` (uPlot-based config)? FieldConfig + data?
+*/
 export const PlotLegend = memo(
   ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();

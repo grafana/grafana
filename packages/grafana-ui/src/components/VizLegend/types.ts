@@ -24,7 +24,7 @@ export interface VizLegendBaseProps<T> {
     item: VizLegendItem,
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
-  readonly?: boolean;
+  readonly?: boolean; // IHOR: this property is used in TimelineChart only
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {

@@ -148,6 +148,7 @@ export {
 } from './VizLayout/VizLayout';
 export { type VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
 export { VizLegend } from './VizLegend/VizLegend';
+export { VizLegend2 } from './VizLegend/VizLegend2';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, type AlertVariant } from './Alert/Alert';
