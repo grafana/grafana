@@ -736,6 +736,6 @@ const (
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 
 	// FlagPrometheusAzureOverrideAudience
-	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. This feature should no longer be used and will be removed in the future.
+	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 )
