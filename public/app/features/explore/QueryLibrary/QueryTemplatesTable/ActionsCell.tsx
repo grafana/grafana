@@ -9,6 +9,7 @@ import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
+import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
 
 import { useQueryLibraryListStyles } from './styles';
 
@@ -20,6 +21,7 @@ interface ActionsCellProps {
 
 function ActionsCell({ query, rootDatasourceUid, queryUid }: ActionsCellProps) {
   const [deleteQueryTemplate] = useDeleteQueryTemplateMutation();
+  const { setDrawerOpened } = useQueriesDrawerContext();
   const styles = useQueryLibraryListStyles();
 
   const onDeleteQuery = (queryUid: string) => {
@@ -57,7 +59,11 @@ function ActionsCell({ query, rootDatasourceUid, queryUid }: ActionsCellProps) {
           }
         }}
       />
-      <ExploreRunQueryButton queries={query ? [query] : []} rootDatasourceUid={rootDatasourceUid} />
+      <ExploreRunQueryButton
+        queries={query ? [query] : []}
+        rootDatasourceUid={rootDatasourceUid}
+        onClick={() => setDrawerOpened(false)}
+      />
     </div>
   );
 }
