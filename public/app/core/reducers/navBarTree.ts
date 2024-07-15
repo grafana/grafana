@@ -67,10 +67,7 @@ const navTreeSlice = createSlice({
           };
           bookmarks.children.push(newBookmark);
         } else {
-          const index = bookmarks.children?.findIndex((i) => i.id === item.id) ?? -1;
-          if (index > -1) {
-            bookmarks?.children?.splice(index, 1);
-          }
+         bookmarks.children = bookmarks.children?.filter(i => i.id !== item.id) ?? [];
         }
       }
     },
