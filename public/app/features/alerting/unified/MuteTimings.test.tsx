@@ -13,7 +13,7 @@ import { captureRequests } from 'app/features/alerting/unified/mocks/server/even
 import { MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import {
   TIME_INTERVAL_UID_HAPPY_PATH,
-  TIME_INTERVAL_UID_PROVISIONED,
+  TIME_INTERVAL_UID_FILE_PROVISIONED,
 } from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
@@ -155,7 +155,8 @@ const defaultConfigWithBothTimeIntervalsField: AlertManagerCortexConfig = {
   template_files: {},
 };
 
-const expectToHaveRedirectedToTable = async () => expect(await screen.findByText(indexPageText)).toBeInTheDocument();
+const expectedToHaveRedirectedToRoutesRoute = async () =>
+  expect(await screen.findByText(indexPageText)).toBeInTheDocument();
 
 const fillOutForm = async ({
   name,
@@ -222,7 +223,7 @@ describe('Mute timings', () => {
 
     await saveMuteTiming();
 
-    await expectToHaveRedirectedToTable();
+    await expectedToHaveRedirectedToRoutesRoute();
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
@@ -247,7 +248,7 @@ describe('Mute timings', () => {
     });
 
     await saveMuteTiming();
-    await expectToHaveRedirectedToTable();
+    await expectedToHaveRedirectedToRoutesRoute();
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
@@ -272,7 +273,7 @@ describe('Mute timings', () => {
     });
 
     await saveMuteTiming();
-    await expectToHaveRedirectedToTable();
+    await expectedToHaveRedirectedToRoutesRoute();
   });
 
   it('prepopulates the form when editing a mute timing', async () => {
@@ -305,7 +306,7 @@ describe('Mute timings', () => {
     await fillOutForm(formValues);
 
     await saveMuteTiming();
-    await expectToHaveRedirectedToTable();
+    await expectedToHaveRedirectedToRoutesRoute();
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
@@ -341,7 +342,7 @@ describe('Mute timings', () => {
     await fillOutForm({ name: 'Lunch breaks' });
     await saveMuteTiming();
 
-    await expectToHaveRedirectedToTable();
+    await expectedToHaveRedirectedToRoutesRoute();
   });
 
   it('shows error when mute timing does not exist', async () => {
@@ -366,7 +367,7 @@ describe('Mute timings', () => {
       await fillOutForm({ name: 'a new mute timing' });
 
       await saveMuteTiming();
-      await expectToHaveRedirectedToTable();
+      await expectedToHaveRedirectedToRoutesRoute();
     });
 
     it('shows error when mute timing does not exist', async () => {
@@ -388,13 +389,13 @@ describe('Mute timings', () => {
       expect(await ui.nameField.find()).toBeDisabled();
 
       await saveMuteTiming();
-      await expectToHaveRedirectedToTable();
+      await expectedToHaveRedirectedToRoutesRoute();
     });
 
     it('loads view form for provisioned interval', async () => {
       renderMuteTimings({
         pathname: '/alerting/routes/mute-timing/edit',
-        search: `?muteName=${TIME_INTERVAL_UID_PROVISIONED}`,
+        search: `?muteName=${TIME_INTERVAL_UID_FILE_PROVISIONED}`,
       });
 
       expect(await screen.findByText(/This mute timing cannot be edited through the UI/i)).toBeInTheDocument();
