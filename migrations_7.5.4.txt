@@ -1,0 +1,280 @@
+id	migration_id
+1	create migration_log table
+2	create user table
+3	add unique index user.login
+4	add unique index user.email
+5	drop index UQE_user_login - v1
+6	drop index UQE_user_email - v1
+7	Rename table user to user_v1 - v1
+8	create user table v2
+9	create index UQE_user_login - v2
+10	create index UQE_user_email - v2
+11	copy data_source v1 to v2
+12	Drop old table user_v1
+13	Add column help_flags1 to user table
+14	Update user table charset
+15	Add last_seen_at column to user
+16	Add missing user data
+17	Add is_disabled column to user
+18	Add index user.login/user.email
+19	create temp user table v1-7
+20	create index IDX_temp_user_email - v1-7
+21	create index IDX_temp_user_org_id - v1-7
+22	create index IDX_temp_user_code - v1-7
+23	create index IDX_temp_user_status - v1-7
+24	Update temp_user table charset
+25	drop index IDX_temp_user_email - v1
+26	drop index IDX_temp_user_org_id - v1
+27	drop index IDX_temp_user_code - v1
+28	drop index IDX_temp_user_status - v1
+29	Rename table temp_user to temp_user_tmp_qwerty - v1
+30	create temp_user v2
+31	create index IDX_temp_user_email - v2
+32	create index IDX_temp_user_org_id - v2
+33	create index IDX_temp_user_code - v2
+34	create index IDX_temp_user_status - v2
+35	copy temp_user v1 to v2
+36	drop temp_user_tmp_qwerty
+37	Set created for temp users that will otherwise prematurely expire
+38	create star table
+39	add unique index star.user_id_dashboard_id
+40	create org table v1
+41	create index UQE_org_name - v1
+42	create org_user table v1
+43	create index IDX_org_user_org_id - v1
+44	create index UQE_org_user_org_id_user_id - v1
+45	Update org table charset
+46	Update org_user table charset
+47	Migrate all Read Only Viewers to Viewers
+48	create dashboard table
+49	add index dashboard.account_id
+50	add unique index dashboard_account_id_slug
+51	create dashboard_tag table
+52	add unique index dashboard_tag.dasboard_id_term
+53	drop index UQE_dashboard_tag_dashboard_id_term - v1
+54	Rename table dashboard to dashboard_v1 - v1
+55	create dashboard v2
+56	create index IDX_dashboard_org_id - v2
+57	create index UQE_dashboard_org_id_slug - v2
+58	copy dashboard v1 to v2
+59	drop table dashboard_v1
+60	alter dashboard.data to mediumtext v1
+61	Add column updated_by in dashboard - v2
+62	Add column created_by in dashboard - v2
+63	Add column gnetId in dashboard
+64	Add index for gnetId in dashboard
+65	Add column plugin_id in dashboard
+66	Add index for plugin_id in dashboard
+67	Add index for dashboard_id in dashboard_tag
+68	Update dashboard table charset
+69	Update dashboard_tag table charset
+70	Add column folder_id in dashboard
+71	Add column isFolder in dashboard
+72	Add column has_acl in dashboard
+73	Add column uid in dashboard
+74	Update uid column values in dashboard
+75	Add unique index dashboard_org_id_uid
+76	Remove unique index org_id_slug
+77	Update dashboard title length
+78	Add unique index for dashboard_org_id_title_folder_id
+79	create dashboard_provisioning
+80	Rename table dashboard_provisioning to dashboard_provisioning_tmp_qwerty - v1
+81	create dashboard_provisioning v2
+82	create index IDX_dashboard_provisioning_dashboard_id - v2
+83	create index IDX_dashboard_provisioning_dashboard_id_name - v2
+84	copy dashboard_provisioning v1 to v2
+85	drop dashboard_provisioning_tmp_qwerty
+86	Add check_sum column
+87	Add index for dashboard_title
+88	delete tags for deleted dashboards
+89	delete stars for deleted dashboards
+90	create data_source table
+91	add index data_source.account_id
+92	add unique index data_source.account_id_name
+93	drop index IDX_data_source_account_id - v1
+94	drop index UQE_data_source_account_id_name - v1
+95	Rename table data_source to data_source_v1 - v1
+96	create data_source table v2
+97	create index IDX_data_source_org_id - v2
+98	create index UQE_data_source_org_id_name - v2
+99	copy data_source v1 to v2
+100	Drop old table data_source_v1 #2
+101	Add column with_credentials
+102	Add secure json data column
+103	Update data_source table charset
+104	Update initial version to 1
+105	Add read_only data column
+106	Migrate logging ds to loki ds
+107	Update json_data with nulls
+108	Add uid column
+109	Update uid value
+110	Add unique index datasource_org_id_uid
+111	add unique index datasource_org_id_is_default
+112	create api_key table
+113	add index api_key.account_id
+114	add index api_key.key
+115	add index api_key.account_id_name
+116	drop index IDX_api_key_account_id - v1
+117	drop index UQE_api_key_key - v1
+118	drop index UQE_api_key_account_id_name - v1
+119	Rename table api_key to api_key_v1 - v1
+120	create api_key table v2
+121	create index IDX_api_key_org_id - v2
+122	create index UQE_api_key_key - v2
+123	create index UQE_api_key_org_id_name - v2
+124	copy api_key v1 to v2
+125	Drop old table api_key_v1
+126	Update api_key table charset
+127	Add expires to api_key table
+128	create dashboard_snapshot table v4
+129	drop table dashboard_snapshot_v4 #1
+130	create dashboard_snapshot table v5 #2
+131	create index UQE_dashboard_snapshot_key - v5
+132	create index UQE_dashboard_snapshot_delete_key - v5
+133	create index IDX_dashboard_snapshot_user_id - v5
+134	alter dashboard_snapshot to mediumtext v2
+135	Update dashboard_snapshot table charset
+136	Add column external_delete_url to dashboard_snapshots table
+137	Add encrypted dashboard json column
+138	Change dashboard_encrypted column to MEDIUMBLOB
+139	create quota table v1
+140	create index UQE_quota_org_id_user_id_target - v1
+141	Update quota table charset
+142	create plugin_setting table
+143	create index UQE_plugin_setting_org_id_plugin_id - v1
+144	Add column plugin_version to plugin_settings
+145	Update plugin_setting table charset
+146	create session table
+147	Drop old table playlist table
+148	Drop old table playlist_item table
+149	create playlist table v2
+150	create playlist item table v2
+151	Update playlist table charset
+152	Update playlist_item table charset
+153	drop preferences table v2
+154	drop preferences table v3
+155	create preferences table v3
+156	Update preferences table charset
+157	Add column team_id in preferences
+158	Update team_id column values in preferences
+159	create alert table v1
+160	add index alert org_id & id 
+161	add index alert state
+162	add index alert dashboard_id
+163	Create alert_rule_tag table v1
+164	Add unique index alert_rule_tag.alert_id_tag_id
+165	drop index UQE_alert_rule_tag_alert_id_tag_id - v1
+166	Rename table alert_rule_tag to alert_rule_tag_v1 - v1
+167	Create alert_rule_tag table v2
+168	create index UQE_alert_rule_tag_alert_id_tag_id - Add unique index alert_rule_tag.alert_id_tag_id V2
+169	copy alert_rule_tag v1 to v2
+170	drop table alert_rule_tag_v1
+171	create alert_notification table v1
+172	Add column is_default
+173	Add column frequency
+174	Add column send_reminder
+175	Add column disable_resolve_message
+176	add index alert_notification org_id & name
+177	Update alert table charset
+178	Update alert_notification table charset
+179	create notification_journal table v1
+180	add index notification_journal org_id & alert_id & notifier_id
+181	drop alert_notification_journal
+182	create alert_notification_state table v1
+183	add index alert_notification_state org_id & alert_id & notifier_id
+184	Add for to alert table
+185	Add column uid in alert_notification
+186	Update uid column values in alert_notification
+187	Add unique index alert_notification_org_id_uid
+188	Remove unique index org_id_name
+189	Add column secure_settings in alert_notification
+190	alter alert.settings to mediumtext
+191	Add non-unique index alert_notification_state_alert_id
+192	Add non-unique index alert_rule_tag_alert_id
+193	Drop old annotation table v4
+194	create annotation table v5
+195	add index annotation 0 v3
+196	add index annotation 1 v3
+197	add index annotation 2 v3
+198	add index annotation 3 v3
+199	add index annotation 4 v3
+200	Update annotation table charset
+201	Add column region_id to annotation table
+202	Drop category_id index
+203	Add column tags to annotation table
+204	Create annotation_tag table v2
+205	Add unique index annotation_tag.annotation_id_tag_id
+206	drop index UQE_annotation_tag_annotation_id_tag_id - v2
+207	Rename table annotation_tag to annotation_tag_v2 - v2
+208	Create annotation_tag table v3
+209	create index UQE_annotation_tag_annotation_id_tag_id - Add unique index annotation_tag.annotation_id_tag_id V3
+210	copy annotation_tag v2 to v3
+211	drop table annotation_tag_v2
+212	Update alert annotations and set TEXT to empty
+213	Add created time to annotation table
+214	Add updated time to annotation table
+215	Add index for created in annotation table
+216	Add index for updated in annotation table
+217	Convert existing annotations from seconds to milliseconds
+218	Add epoch_end column
+219	Add index for epoch_end
+220	Make epoch_end the same as epoch
+221	Move region to single row
+222	Remove index org_id_epoch from annotation table
+223	Remove index org_id_dashboard_id_panel_id_epoch from annotation table
+224	Add index for org_id_dashboard_id_epoch_end_epoch on annotation table
+225	Add index for org_id_epoch_end_epoch on annotation table
+226	Remove index org_id_epoch_epoch_end from annotation table
+227	Add index for alert_id on annotation table
+228	create test_data table
+229	create dashboard_version table v1
+230	add index dashboard_version.dashboard_id
+231	add unique index dashboard_version.dashboard_id and dashboard_version.version
+232	Set dashboard version to 1 where 0
+233	save existing dashboard data in dashboard_version table v1
+234	alter dashboard_version.data to mediumtext v1
+235	create team table
+236	add index team.org_id
+237	add unique index team_org_id_name
+238	create team member table
+239	add index team_member.org_id
+240	add unique index team_member_org_id_team_id_user_id
+241	add index team_member.team_id
+242	Add column email to team table
+243	Add column external to team_member table
+244	Add column permission to team_member table
+245	create dashboard acl table
+246	add index dashboard_acl_dashboard_id
+247	add unique index dashboard_acl_dashboard_id_user_id
+248	add unique index dashboard_acl_dashboard_id_team_id
+249	save default acl rules in dashboard_acl table
+250	delete acl rules for deleted dashboards and folders
+251	create tag table
+252	add index tag.key_value
+253	create login attempt table
+254	add index login_attempt.username
+258	create index IDX_login_attempt_username - v2
+255	drop index IDX_login_attempt_username - v1
+256	Rename table login_attempt to login_attempt_tmp_qwerty - v1
+257	create login_attempt v2
+259	copy login_attempt v1 to v2
+260	drop login_attempt_tmp_qwerty
+261	create user auth table
+262	create index IDX_user_auth_auth_module_auth_id - v1
+263	alter user_auth.auth_id to length 190
+264	Add OAuth access token to user_auth
+265	Add OAuth refresh token to user_auth
+266	Add OAuth token type to user_auth
+267	Add OAuth expiry to user_auth
+268	Add index to user_id column in user_auth
+269	create server_lock table
+270	add index server_lock.operation_uid
+271	create user auth token table
+272	add unique index user_auth_token.auth_token
+273	add unique index user_auth_token.prev_auth_token
+274	add index user_auth_token.user_id
+275	Add revoked_at to the user auth token
+276	create cache_data table
+277	add unique index cache_data.cache_key
+278	create short_url table v1
+279	add index short_url.org_id-uid
