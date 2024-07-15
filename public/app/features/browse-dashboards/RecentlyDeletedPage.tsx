@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { FilterInput, EmptyState, Stack } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { t } from 'app/core/internationalization';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
@@ -11,12 +13,14 @@ import { useDispatch } from '../../types';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
+import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { setAllSelection } from './state';
 
 const RecentlyDeletedPage = memo(() => {
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
 
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
 
@@ -35,61 +39,61 @@ const RecentlyDeletedPage = memo(() => {
     );
   }, [dispatch, stateManager]);
 
-  if (searchState.loading === false && searchState.result?.totalRows === 0) {
-    return (
-      <Page navId="dashboards/recently-deleted">
-        <Page.Contents>
-          <EmptyState
-            variant="completed"
-            message={t('recently-deleted.page.empty-state', "You haven't deleted any dashboards recently.")}
-          />
-        </Page.Contents>
-      </Page>
-    );
-  }
-
   return (
     <Page navId="dashboards/recently-deleted">
-      <Page.Contents>
-        {searchState.result && (
-          <>
-            <Stack direction="column">
-              <FilterInput
-                placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
-                value={searchState.query}
-                escapeRegex={false}
-                onChange={stateManager.onQueryChange}
+      <Page.Contents className={styles.pageContents}>
+        <FilterInput
+          placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
+          value={searchState.query}
+          escapeRegex={false}
+          onChange={stateManager.onQueryChange}
+        />
+        <ActionRow
+          state={searchState}
+          getTagOptions={stateManager.getTagOptions}
+          getSortOptions={getGrafanaSearcher().getSortOptions}
+          sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
+          onLayoutChange={stateManager.onLayoutChange}
+          onSortChange={stateManager.onSortChange}
+          onTagFilterChange={stateManager.onTagFilterChange}
+          onDatasourceChange={stateManager.onDatasourceChange}
+          onPanelTypeChange={stateManager.onPanelTypeChange}
+          onSetIncludePanels={stateManager.onSetIncludePanels}
+        />
+
+        <RecentlyDeletedActions />
+
+        <div className={styles.subView}>
+          <AutoSizer>
+            {({ width, height }) => (
+              <SearchView
+                canSelect={canSelect}
+                width={width}
+                height={height}
+                searchStateManager={stateManager}
+                searchState={searchState}
+                emptyState={<RecentlyDeletedEmptyState searchState={searchState} />}
               />
-              <ActionRow
-                state={searchState}
-                getTagOptions={stateManager.getTagOptions}
-                getSortOptions={getGrafanaSearcher().getSortOptions}
-                sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-                onLayoutChange={stateManager.onLayoutChange}
-                onSortChange={stateManager.onSortChange}
-                onTagFilterChange={stateManager.onTagFilterChange}
-                onDatasourceChange={stateManager.onDatasourceChange}
-                onPanelTypeChange={stateManager.onPanelTypeChange}
-                onSetIncludePanels={stateManager.onSetIncludePanels}
-              />
-            </Stack>
-            <RecentlyDeletedActions />
-            <AutoSizer>
-              {({ width, height }) => (
-                <SearchView
-                  canSelect={canSelect}
-                  width={width}
-                  height={height}
-                  searchStateManager={stateManager}
-                  searchState={searchState}
-                />
-              )}
-            </AutoSizer>
-          </>
-        )}
+            )}
+          </AutoSizer>
+        </div>
       </Page.Contents>
     </Page>
   );
+});
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  pageContents: css({
+    display: 'grid',
+    gridTemplateRows: 'auto auto auto 1fr',
+    height: '100%',
+    rowGap: theme.spacing(1),
+  }),
+
+  // AutoSizer needs an element to measure the full height available
+  subView: css({
+    height: '100%',
+  }),
 });
 
 RecentlyDeletedPage.displayName = 'RecentlyDeletedPage';
