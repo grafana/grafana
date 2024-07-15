@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -843,14 +844,12 @@ func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {
 
 // DeclareActionSets allow the caller to expand the existing action sets with additional permissions
 // This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
-// TODO move to service, this isn't store logic
-// TODO check that this happens every time - not enough to do it only once, as we don't store stuff in DB
 func (s *InMemoryActionSets) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) || !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
 		return nil
 	}
 	for _, reg := range registrations {
-		if err := s.validateActionSet(pluginID, reg); err != nil {
+		if err := validateActionSet(pluginID, reg); err != nil {
 			return err
 		}
 		s.StoreActionSet(reg.Action, reg.Actions)
@@ -863,5 +862,23 @@ func GetActionSetName(resource, permission string) string {
 	// lower cased
 	resource = strings.ToLower(resource)
 	permission = strings.ToLower(permission)
-	return strings.Join([]string{resource, permission}, ":")
+	return fmt.Sprintf("%s:%s", resource, permission)
+}
+
+// validateActionSets errors when a actionset does not match expected pattern for plugins
+// - action set should be dashboard or folder action set
+// - actions should have the pluginID prefix
+func validateActionSet(pluginID string, actionSet plugins.ActionSet) error {
+	if !isFolderOrDashboardAction(actionSet.Action) {
+		return accesscontrol.ErrActionSetValidationFailed.Errorf("currently only folder and dashboard action sets are supported, provided action set %s is not a folder or dashboard action set", actionSet.Action)
+	}
+
+	// verify that actions have the pluginID prefix, plugins are only allowed to register actions for the plugin
+	for _, action := range actionSet.Actions {
+		if err := pluginutils.ValidatePluginAction(pluginID, action); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
