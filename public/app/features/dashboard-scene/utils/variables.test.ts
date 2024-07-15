@@ -8,7 +8,6 @@ import {
   QueryVariableModel,
   TextBoxVariableModel,
   TypedVariableModel,
-  VariableType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -17,9 +16,19 @@ import {
   DataSourceVariable,
   GroupByVariable,
   QueryVariable,
+  SceneVariableSet,
 } from '@grafana/scenes';
+import { defaultDashboard, defaultTimePickerConfig, VariableType } from '@grafana/schema';
+import { DashboardModel } from 'app/features/dashboard/state';
 
-import { createSceneVariableFromVariableModel } from './variables';
+import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { NEW_LINK } from '../settings/links/utils';
+
+import {
+  createSceneVariableFromVariableModel,
+  createVariablesForDashboard,
+  createVariablesForSnapshot,
+} from './variables';
 
 describe('when creating variables objects', () => {
   it('should migrate custom variable', () => {
@@ -659,5 +668,112 @@ describe('when creating variables objects', () => {
       value: '',
       isMulti: true,
     });
+  });
+});
+
+describe('when creating snapshot variables from dashboard model', () => {
+  it('should create SnapshotVariables when required', () => {
+    const customVariable = {
+      current: {
+        selected: false,
+        text: 'a',
+        value: 'a',
+      },
+      hide: 0,
+      includeAll: false,
+      multi: false,
+      name: 'custom0',
+      options: [],
+      query: 'a,b,c,d',
+      skipUrlSync: false,
+      type: 'custom' as VariableType,
+      rootStateKey: 'N4XLmH5Vz',
+    };
+
+    const intervalVariable = {
+      current: {
+        selected: false,
+        text: '10s',
+        value: '10s',
+      },
+      hide: 0,
+      includeAll: false,
+      multi: false,
+      name: 'interval0',
+      options: [],
+      query: '10s,20s,30s',
+      skipUrlSync: false,
+      type: 'interval' as VariableType,
+      rootStateKey: 'N4XLmH5Vz',
+    };
+
+    const adHocVariable = {
+      global: false,
+      name: 'CoolFilters',
+      label: 'CoolFilters Label',
+      type: 'adhoc' as VariableType,
+      datasource: {
+        uid: 'gdev-prometheus',
+        type: 'prometheus',
+      },
+      filters: [
+        {
+          key: 'filterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+      baseFilters: [
+        {
+          key: 'baseFilterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+      hide: 0,
+      index: 0,
+    };
+
+    const snapshot = {
+      ...defaultDashboard,
+      title: 'snapshot dash',
+      uid: 'test-uid',
+      time: { from: 'now-10h', to: 'now' },
+      weekStart: 'saturday',
+      fiscalYearStartMonth: 2,
+      timezone: 'America/New_York',
+      timepicker: {
+        ...defaultTimePickerConfig,
+        hidden: true,
+      },
+      links: [{ ...NEW_LINK, title: 'Link 1' }],
+      templating: {
+        list: [customVariable, adHocVariable, intervalVariable],
+      },
+    };
+
+    const oldModel = new DashboardModel(snapshot, { isSnapshot: true });
+    const variables = createVariablesForSnapshot(oldModel);
+
+    // check variables were converted to snapshot variables
+    expect(variables).toBeInstanceOf(SceneVariableSet);
+    expect(variables.getByName('custom0')).toBeInstanceOf(SnapshotVariable);
+    expect(variables?.getByName('CoolFilters')).toBeInstanceOf(AdHocFiltersVariable);
+    expect(variables?.getByName('interval0')).toBeInstanceOf(SnapshotVariable);
+    // // custom snapshot
+    const customSnapshot = variables?.getByName('custom0') as SnapshotVariable;
+    expect(customSnapshot.state.value).toBe('a');
+    expect(customSnapshot.state.text).toBe('a');
+    expect(customSnapshot.state.isReadOnly).toBe(true);
+    // // adhoc snapshot
+    const adhocSnapshot = variables?.getByName('CoolFilters') as AdHocFiltersVariable;
+    expect(adhocSnapshot.state.filters).toEqual(adHocVariable.filters);
+    expect(adhocSnapshot.state.readOnly).toBe(true);
+    //
+    // // interval snapshot
+    const intervalSnapshot = variables?.getByName('interval0') as SnapshotVariable;
+    expect(intervalSnapshot.state.value).toBe('10s');
+    expect(intervalSnapshot.state.text).toBe('10s');
+    expect(intervalSnapshot.state.isReadOnly).toBe(true);
   });
 });
