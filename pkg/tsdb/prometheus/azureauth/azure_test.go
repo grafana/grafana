@@ -158,7 +158,6 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		t.Log(str)
 		assert.NoError(t, err)
 		assert.Contains(t, str, "Specifying an audience override requires the prometheusAzureOverrideAudience feature toggle to be enabled. This functionality is deprecated and will be removed in a future release.")
-
 	})
 }
 
