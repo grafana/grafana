@@ -1,4 +1,4 @@
-import { getDataSourceRef, IntervalVariableModel, TypedVariableModel } from '@grafana/data';
+import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   CustomVariable,
@@ -8,7 +8,6 @@ import {
   SceneGridRow,
   SceneObject,
   SceneQueryRunner,
-  SceneVariable,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
@@ -20,7 +19,6 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
-import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 
@@ -262,44 +260,4 @@ export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined
     return vizPanel.parent;
   }
   return;
-}
-
-export function createVariableForSnapshots(variable: TypedVariableModel): SceneVariable {
-  let snapshotVariable: SnapshotVariable;
-  let current: { value: string | string[]; text: string | string[] };
-  if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
-    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
-    snapshotVariable = new SnapshotVariable({
-      name: variable.name,
-      label: variable.label,
-      description: variable.description,
-      value: currentInterval,
-      text: currentInterval,
-      hide: variable.hide,
-    });
-    return snapshotVariable;
-  }
-
-  if (variable.type === 'system' || variable.type === 'constant' || variable.type === 'adhoc') {
-    current = {
-      value: '',
-      text: '',
-    };
-  } else {
-    current = {
-      value: variable.current?.value ?? '',
-      text: variable.current?.text ?? '',
-    };
-  }
-
-  snapshotVariable = new SnapshotVariable({
-    name: variable.name,
-    label: variable.label,
-    description: variable.description,
-    value: current?.value ?? '',
-    text: current?.text ?? '',
-    hide: variable.hide,
-  });
-  return snapshotVariable;
 }

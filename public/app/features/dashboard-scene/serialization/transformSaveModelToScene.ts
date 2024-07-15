@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
+import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -10,12 +10,6 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   VariableValueSelectors,
-  SceneVariable,
-  CustomVariable,
-  DataSourceVariable,
-  QueryVariable,
-  ConstantVariable,
-  IntervalVariable,
   SceneRefreshPicker,
   SceneObject,
   VizPanelMenu,
@@ -24,10 +18,7 @@ import {
   SceneGridItemLike,
   SceneDataLayerProvider,
   SceneDataLayerControls,
-  TextBoxVariable,
   UserActionEvent,
-  GroupByVariable,
-  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
@@ -50,13 +41,8 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
-import {
-  createVariableForSnapshots,
-  getCurrentValueForOldIntervalModel,
-  getDashboardSceneFor,
-  getIntervalsFromQueryString,
-  getVizPanelKeyForPanelId,
-} from '../utils/utils';
+import { getDashboardSceneFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -198,57 +184,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
 
   if (oldModel.templating?.list?.length) {
     if (oldModel.meta.isSnapshot) {
-      const variableObjects = oldModel.templating.list
-        .map((v) => {
-          try {
-            // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
-            if (v.type === 'adhoc') {
-              return new AdHocFiltersVariable({
-                name: v.name,
-                label: v.label,
-                readOnly: true,
-                description: v.description,
-                skipUrlSync: v.skipUrlSync,
-                hide: v.hide,
-                datasource: v.datasource,
-                applyMode: 'auto',
-                filters: v.filters ?? [],
-                baseFilters: v.baseFilters ?? [],
-                defaultKeys: v.defaultKeys,
-                useQueriesAsFilterForOptions: true,
-              });
-            }
-            // for other variable types we are using the SnapshotVariable
-            return createVariableForSnapshots(v);
-          } catch (err) {
-            console.error(err);
-            return null;
-          }
-        })
-        // TODO: Remove filter
-        // Added temporarily to allow skipping non-compatible variables
-        .filter((v): v is SceneVariable => Boolean(v));
-
-      variables = new SceneVariableSet({
-        variables: variableObjects,
-      });
+      variables = createVariablesForSnapshot(oldModel);
     } else {
-      const variableObjects = oldModel.templating.list
-        .map((v) => {
-          try {
-            return createSceneVariableFromVariableModel(v);
-          } catch (err) {
-            console.error(err);
-            return null;
-          }
-        })
-        // TODO: Remove filter
-        // Added temporarily to allow skipping non-compatible variables
-        .filter((v): v is SceneVariable => Boolean(v));
-
-      variables = new SceneVariableSet({
-        variables: variableObjects,
-      });
+      variables = createVariablesForDashboard(oldModel);
     }
   } else {
     // Create empty variable set
@@ -334,128 +272,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   });
 
   return dashboardScene;
-}
-
-export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
-  const commonProperties = {
-    name: variable.name,
-    label: variable.label,
-    description: variable.description,
-  };
-  if (variable.type === 'adhoc') {
-    return new AdHocFiltersVariable({
-      ...commonProperties,
-      description: variable.description,
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-      datasource: variable.datasource,
-      applyMode: 'auto',
-      filters: variable.filters ?? [],
-      baseFilters: variable.baseFilters ?? [],
-      defaultKeys: variable.defaultKeys,
-      useQueriesAsFilterForOptions: true,
-    });
-  }
-  if (variable.type === 'custom') {
-    return new CustomVariable({
-      ...commonProperties,
-      value: variable.current?.value ?? '',
-      text: variable.current?.text ?? '',
-
-      query: variable.query,
-      isMulti: variable.multi,
-      allValue: variable.allValue || undefined,
-      includeAll: variable.includeAll,
-      defaultToAll: Boolean(variable.includeAll),
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-    });
-  } else if (variable.type === 'query') {
-    return new QueryVariable({
-      ...commonProperties,
-      value: variable.current?.value ?? '',
-      text: variable.current?.text ?? '',
-
-      query: variable.query,
-      datasource: variable.datasource,
-      sort: variable.sort,
-      refresh: variable.refresh,
-      regex: variable.regex,
-      allValue: variable.allValue || undefined,
-      includeAll: variable.includeAll,
-      defaultToAll: Boolean(variable.includeAll),
-      isMulti: variable.multi,
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-      definition: variable.definition,
-    });
-  } else if (variable.type === 'datasource') {
-    return new DataSourceVariable({
-      ...commonProperties,
-      value: variable.current?.value ?? '',
-      text: variable.current?.text ?? '',
-      regex: variable.regex,
-      pluginId: variable.query,
-      allValue: variable.allValue || undefined,
-      includeAll: variable.includeAll,
-      defaultToAll: Boolean(variable.includeAll),
-      skipUrlSync: variable.skipUrlSync,
-      isMulti: variable.multi,
-      hide: variable.hide,
-    });
-  } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
-    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
-    return new IntervalVariable({
-      ...commonProperties,
-      value: currentInterval,
-      intervals: intervals,
-      autoEnabled: variable.auto,
-      autoStepCount: variable.auto_count,
-      autoMinInterval: variable.auto_min,
-      refresh: variable.refresh,
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-    });
-  } else if (variable.type === 'constant') {
-    return new ConstantVariable({
-      ...commonProperties,
-      value: variable.query,
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-    });
-  } else if (variable.type === 'textbox') {
-    let val;
-    if (!variable?.current?.value) {
-      val = variable.query;
-    } else {
-      if (typeof variable.current.value === 'string') {
-        val = variable.current.value;
-      } else {
-        val = variable.current.value[0];
-      }
-    }
-
-    return new TextBoxVariable({
-      ...commonProperties,
-      value: val,
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-    });
-  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
-    return new GroupByVariable({
-      ...commonProperties,
-      datasource: variable.datasource,
-      value: variable.current?.value || [],
-      text: variable.current?.text || [],
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-      // @ts-expect-error
-      defaultOptions: variable.options,
-    });
-  } else {
-    throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
-  }
 }
 
 export function buildGridItemForLibPanel(panel: PanelModel) {
