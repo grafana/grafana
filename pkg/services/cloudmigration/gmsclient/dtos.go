@@ -1,4 +1,3 @@
-// TODO: Move these to a shared library in common with GMS
 package gmsclient
 
 type MigrateDataType string
