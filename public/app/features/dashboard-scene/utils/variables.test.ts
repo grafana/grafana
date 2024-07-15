@@ -24,11 +24,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
 
-import {
-  createSceneVariableFromVariableModel,
-  createVariablesForDashboard,
-  createVariablesForSnapshot,
-} from './variables';
+import { createSceneVariableFromVariableModel, createVariablesForSnapshot } from './variables';
 
 describe('when creating variables objects', () => {
   it('should migrate custom variable', () => {
