@@ -25,7 +25,7 @@ describe('logRecordsToDataFrame', () => {
     expect(timeField.name).toBe('time');
     expect(timeField.type).toBe(FieldType.time);
 
-    expect(stateChangeField.name).toBe('state');
+    expect(stateChangeField.name).toBe('State');
     expect(stateChangeField.type).toBe(FieldType.string);
     // There should be an artificial element at the end meaning Date.now()
     // It exist to draw the state change from when it happened to the current time

@@ -7984,7 +7984,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -8258,7 +8258,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -8337,7 +8337,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           },
           {
@@ -14018,7 +14018,7 @@
         }
       }
     },
-    "CreateOrUpdateReportConfig": {
+    "CreateOrUpdateReport": {
       "type": "object",
       "properties": {
         "dashboards": {
@@ -15587,6 +15587,9 @@
         },
         "sessionUid": {
           "type": "string"
+        },
+        "stats": {
+          "$ref": "#/definitions/SnapshotResourceStats"
         },
         "status": {
           "type": "string",
@@ -19034,7 +19037,6 @@
       }
     },
     "Report": {
-      "description": "ConfigDTO is model representation in transfer",
       "type": "object",
       "properties": {
         "created": {
@@ -20383,6 +20385,25 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SnapshotDTO"
+          }
+        }
+      }
+    },
+    "SnapshotResourceStats": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }

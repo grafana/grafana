@@ -1,7 +1,7 @@
 import { merge } from 'lodash';
 
 import { toDataFrame } from '../dataframe/processDataFrame';
-import { createTheme } from '../themes';
+import { createTheme } from '../themes/createTheme';
 import { ReducerID } from '../transformations/fieldReducer';
 import { FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { MappingType, SpecialValueMatch, ValueMapping } from '../types/valueMapping';

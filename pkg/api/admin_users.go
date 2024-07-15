@@ -334,7 +334,7 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Could not enable external user", nil)
 	}
 
-	isDisabled := true
+	isDisabled := false
 	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled}); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
