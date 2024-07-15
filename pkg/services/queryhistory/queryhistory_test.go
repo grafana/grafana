@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -73,7 +73,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, fn func(t *testing.T
 		)
 		require.NoError(t, err)
 
-		var role roletype.RoleType
+		var role identity.RoleType
 		if isViewer {
 			role = org.RoleViewer
 		} else {

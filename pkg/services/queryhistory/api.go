@@ -70,7 +70,6 @@ func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusUnauthorized, "Failed to get query history", nil)
 	}
 
-	
 	timeRange := gtime.NewTimeRange(c.Query("from"), c.Query("to"))
 
 	query := SearchInQueryHistoryQuery{
@@ -103,7 +102,7 @@ func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) deleteHandler(c *contextmodel.ReqContext) response.Response {
-		if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
+	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
 		return response.Error(http.StatusUnauthorized, "Failed to delete query history", nil)
 	}
 
@@ -164,8 +163,7 @@ func (s *QueryHistoryService) patchCommentHandler(c *contextmodel.ReqContext) re
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) starHandler(c *contextmodel.ReqContext) response.Response {
-
-		if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
+	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
 		return response.Error(http.StatusUnauthorized, "Failed to star query history", nil)
 	}
 	queryUID := web.Params(c.Req)[":uid"]
@@ -192,7 +190,7 @@ func (s *QueryHistoryService) starHandler(c *contextmodel.ReqContext) response.R
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) unstarHandler(c *contextmodel.ReqContext) response.Response {
-		if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
+	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
 		return response.Error(http.StatusUnauthorized, "Failed to unstar query history", nil)
 	}
 	queryUID := web.Params(c.Req)[":uid"]
