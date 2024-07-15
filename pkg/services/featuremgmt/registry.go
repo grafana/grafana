@@ -1378,6 +1378,7 @@ var (
 			Description: "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. This feature should no longer be used and will be removed in the future.",
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // Enabled by default for now
 		},
 	}
 )
