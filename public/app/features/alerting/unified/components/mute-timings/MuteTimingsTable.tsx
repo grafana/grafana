@@ -19,7 +19,7 @@ import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
-import { useMuteTimings } from './useMuteTimings';
+import { PROVENANCE_ANNOTATION, useMuteTimings } from './useMuteTimings';
 import { renderTimeIntervals } from './util';
 
 interface MuteTimingsTableProps {
@@ -91,11 +91,10 @@ export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTi
               icon="download-alt"
               className={styles.muteTimingsButtons}
               variant="secondary"
-              aria-label="export all"
               disabled={!exportMuteTimingsAllowed}
               onClick={() => showExportAllDrawer(ALL_MUTE_TIMINGS)}
             >
-              Export all
+              <Trans i18nKey="alerting.common.export-all">Export all</Trans>
             </Button>
             {ExportAllDrawer}
           </>
@@ -134,7 +133,10 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
         renderCell: function renderName({ data }) {
           return (
             <div>
-              {data.name} {data.provisioned && <ProvisioningBadge tooltip />}
+              {data.name}{' '}
+              {data.provisioned && (
+                <ProvisioningBadge tooltip provenance={data.metadata?.annotations?.[PROVENANCE_ANNOTATION]} />
+              )}
             </div>
           );
         },
