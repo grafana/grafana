@@ -588,14 +588,14 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
 	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
 	convertToResources := func() error {
-		for idx, group := range body.Groups {
+		for _, group := range body.Groups {
 			gr := group
-			toHashedGruopIdx := append([]byte(gr.Name), []byte(string(idx))...)
+			toHashedGruopIdx := append([]byte(gr.Name), []byte(gr.FolderUID)...)
 			hash, err := fnv.New32().Write(toHashedGruopIdx)
 			if err != nil {
 				resources = append(resources, hcl.Resource{
 					Type: "grafana_rule_group",
-					Name: fmt.Sprintf("rule_group_%04d", hash),
+					Name: fmt.Sprintf("rule_group_%016x", hash),
 					Body: &gr,
 				})
 			}
