@@ -91,7 +91,6 @@ const (
 	ItemStatusOK      ItemStatus = "OK"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
-	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 type SnapshotResourceStats struct {
