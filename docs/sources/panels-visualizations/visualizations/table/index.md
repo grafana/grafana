@@ -82,7 +82,7 @@ Click a column title to change the sort order from default to descending to asce
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
 
-### Data set selector
+## Data set selector
 
 If the data queried contains multiple data sets, a table displays a drop-down list at the bottom, so you can select the data set you want to visualize.
 
