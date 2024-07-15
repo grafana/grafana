@@ -1,8 +1,15 @@
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { getDashboardPanelPrompt, Message, Role } from './utils';
+import {
+  DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE,
+  getDashboardPanelPrompt,
+  getPanelStrings,
+  Message,
+  Role,
+} from './utils';
 
 interface GenAIDashDescriptionButtonProps {
   onGenerate: (description: string) => void;
@@ -22,27 +29,29 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'Respond with only the description of the dashboard.';
 
 export const GenAIDashDescriptionButton = ({ onGenerate }: GenAIDashDescriptionButtonProps) => {
+  const dashboard = getDashboardSrv().getCurrent()!;
+  const panelStrings = getPanelStrings(dashboard);
+
   return (
     <GenAIButton
-      messages={getMessages}
+      messages={getMessages(dashboard)}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.dashboardDescription}
       toggleTipTitle={'Improve your dashboard description'}
+      disabled={panelStrings.length === 0}
+      tooltip={panelStrings.length === 0 ? DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE : undefined}
     />
   );
 };
 
-function getMessages(): Message[] {
-  const dashboard = getDashboardSrv().getCurrent()!;
-  const panelPrompt = getDashboardPanelPrompt(dashboard);
-
+function getMessages(dashboard: DashboardModel): Message[] {
   return [
     {
       content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
       role: Role.system,
     },
     {
-      content: `The title of the dashboard is "${dashboard.title}"\n` + `${panelPrompt}`,
+      content: `The title of the dashboard is "${dashboard.title}"\n` + `${getDashboardPanelPrompt(dashboard)}`,
       role: Role.user,
     },
   ];

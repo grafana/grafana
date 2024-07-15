@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/objectstorage"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,8 +43,9 @@ type Service struct {
 
 	buildSnapshotMutex sync.Mutex
 
-	features  featuremgmt.FeatureToggles
-	gmsClient gmsclient.Client
+	features      featuremgmt.FeatureToggles
+	gmsClient     gmsclient.Client
+	objectStorage objectstorage.ObjectStorage
 
 	dsService        datasources.DataSourceService
 	gcomService      gcom.Service
@@ -99,14 +101,14 @@ func ProvideService(
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
-	if !cfg.CloudMigration.IsDeveloperMode {
-		// get GMS path from the config
-		domain, err := s.parseCloudMigrationConfig()
-		if err != nil {
-			return nil, fmt.Errorf("config parse error: %w", err)
-		}
-		s.gmsClient = gmsclient.NewGMSClient(domain)
+	s.objectStorage = objectstorage.NewS3()
 
+	if !cfg.CloudMigration.IsDeveloperMode {
+		c, err := gmsclient.NewGMSClient(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("initializing GMS client: %w", err)
+		}
+		s.gmsClient = c
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
@@ -332,7 +334,7 @@ func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.C
 }
 
 func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
-	values, err := s.store.GetAllCloudMigrationSessions(ctx)
+	values, err := s.store.GetCloudMigrationSessionList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -470,10 +472,8 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		return nil, fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
 	}
 
-	// query gms to establish new snapshot
-	timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.StartSnapshotTimeout)
-	defer cancel()
-	initResp, err := s.gmsClient.StartSnapshot(timeoutCtx, *session)
+	// query gms to establish new snapshot s.cfg.CloudMigration.StartSnapshotTimeout
+	initResp, err := s.gmsClient.StartSnapshot(ctx, *session)
 	if err != nil {
 		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", sessionUid, err)
 	}
@@ -485,7 +485,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	snapshot := cloudmigration.CloudMigrationSnapshot{
 		UID:            util.GenerateShortUID(),
 		SessionUID:     sessionUid,
-		Status:         cloudmigration.SnapshotStatusInitializing,
+		Status:         cloudmigration.SnapshotStatusCreating,
 		EncryptionKey:  initResp.EncryptionKey,
 		UploadURL:      initResp.UploadURL,
 		GMSSnapshotUID: initResp.SnapshotID,
@@ -528,22 +528,41 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		// ask GMS for status if it's in the cloud
 		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot)
 		if err != nil {
-			return nil, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
+			return snapshot, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
 		}
 
-		if snapshotMeta.Status == cloudmigration.SnapshotStatusFinished {
-			// we need to update the snapshot in our db before reporting anything finished to the client
-			if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-				UID:       snapshot.UID,
-				Status:    cloudmigration.SnapshotStatusFinished,
-				Resources: snapshotMeta.Resources,
-			}); err != nil {
-				return nil, fmt.Errorf("error updating snapshot status: %w", err)
-			}
+		if snapshotMeta.State == cloudmigration.SnapshotStateUnknown {
+			// If a status from Grafana Migration Service is unavailable, return the snapshot as-is
+			return snapshot, nil
 		}
+
+		localStatus, ok := gmsStateToLocalStatus[snapshotMeta.State]
+		if !ok {
+			s.log.Error("unexpected GMS snapshot state: %s", snapshotMeta.State)
+			return snapshot, nil
+		}
+
+		// We need to update the snapshot in our db before reporting anything
+		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:       snapshot.UID,
+			Status:    localStatus,
+			Resources: snapshotMeta.Results,
+		}); err != nil {
+			return nil, fmt.Errorf("error updating snapshot status: %w", err)
+		}
+		snapshot.Status = localStatus
+		snapshot.Resources = append(snapshot.Resources, snapshotMeta.Results...)
 	}
 
 	return snapshot, nil
+}
+
+var gmsStateToLocalStatus map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus = map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus{
+	cloudmigration.SnapshotStateInitialized: cloudmigration.SnapshotStatusPendingProcessing, // GMS has not yet received a notification for the data
+	cloudmigration.SnapshotStateProcessing:  cloudmigration.SnapshotStatusProcessing,        // GMS has received a notification and is migrating the data
+	cloudmigration.SnapshotStateFinished:    cloudmigration.SnapshotStatusFinished,          // GMS has completed the migration - all resources were attempted to be migrated
+	cloudmigration.SnapshotStateCanceled:    cloudmigration.SnapshotStatusCanceled,          // GMS has processed a cancelation request. Snapshot cancelation is not supported yet.
+	cloudmigration.SnapshotStateError:       cloudmigration.SnapshotStatusError,             // Something unrecoverable has occurred in the migration process.
 }
 
 func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
@@ -558,8 +577,19 @@ func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.List
 }
 
 func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
-	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot")
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot",
+		trace.WithAttributes(
+			attribute.String("sessionUid", sessionUid),
+			attribute.String("snapshotUid", snapshotUid),
+		),
+	)
 	defer span.End()
+
+	// fetch session for the gms auth token
+	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
+	if err != nil {
+		return fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
+	}
 
 	snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
@@ -569,27 +599,18 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 		return fmt.Errorf("fetching snapshot with uid %s: %w", snapshotUid, err)
 	}
 
-	s.log.Info("Uploading snapshot with GMS ID %s in local directory %s to url %s", snapshot.GMSSnapshotUID, snapshot.LocalDir, snapshot.UploadURL)
-	s.log.Debug("UploadSnapshot not yet implemented, faking it")
+	s.log.Info("Uploading snapshot in local directory", "gmsSnapshotUID", snapshot.GMSSnapshotUID, "localDir", snapshot.LocalDir, "uploadURL", snapshot.UploadURL)
 
 	// start uploading the snapshot asynchronously while we return a success response to the client
-	go s.uploadSnapshot(context.Background(), *snapshot)
+	go func() {
+		if err := s.uploadSnapshot(context.Background(), session, snapshot); err != nil {
+			s.log.Error("uploading snapshot", "err", err)
+		}
+	}()
 
 	return nil
 }
 
 func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
 	panic("not implemented")
-}
-
-func (s *Service) parseCloudMigrationConfig() (string, error) {
-	if s.cfg == nil {
-		return "", fmt.Errorf("cfg cannot be nil")
-	}
-	section := s.cfg.Raw.Section("cloud_migration")
-	domain := section.Key("domain").MustString("")
-	if domain == "" {
-		return "", fmt.Errorf("cloudmigration domain not set")
-	}
-	return domain, nil
 }
