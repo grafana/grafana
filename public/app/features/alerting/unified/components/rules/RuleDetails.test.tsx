@@ -2,8 +2,7 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
-import { usePluginLinkExtensions, setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { usePluginLinkExtensions } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
@@ -34,7 +33,6 @@ const ui = {
 setupMswServer();
 
 beforeAll(() => {
-  setBackendSrv(backendSrv);
   jest.clearAllMocks();
 });
 

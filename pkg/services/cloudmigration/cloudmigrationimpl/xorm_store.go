@@ -36,6 +36,9 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	if err := ss.decryptToken(ctx, &cm); err != nil {
 		return &cm, err
@@ -165,7 +168,6 @@ func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		snapshot.Created = time.Now()
 		snapshot.Updated = time.Now()
-		snapshot.UID = util.GenerateShortUID()
 
 		_, err := sess.Insert(&snapshot)
 		if err != nil {
@@ -271,6 +273,8 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	return snapshots, nil
 }
 
+// CreateUpdateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
+// If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
 func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	// ensure snapshot_uids are consistent so that we can use them to query when uid isn't known
 	for i := 0; i < len(resources); i++ {

@@ -503,10 +503,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagFlameGraphItemCollapsing
-	// Allow collapsing of flame graph items
-	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
-
 	// FlagExploreMetrics
 	// Enables the new Explore Metrics core app
 	FlagExploreMetrics = "exploreMetrics"
