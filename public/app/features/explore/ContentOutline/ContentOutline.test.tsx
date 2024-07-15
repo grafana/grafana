@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { store } from '@grafana/data';
+
 import { ContentOutline } from './ContentOutline';
 
 jest.mock('./ContentOutlineContext', () => ({
@@ -156,5 +158,16 @@ describe('<ContentOutline />', () => {
     await userEvent.click(deleteButtons[0]);
 
     expect(unregisterMock).toHaveBeenCalledWith('item-2-1');
+  });
+
+  it('should retrieve the last expanded state from local storage', async () => {
+    const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
+    setup();
+    const collapseContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
+    const expandContentOutlineButton = screen.queryByRole('button', { name: 'Expand outline' });
+    expect(collapseContentOutlineButton).not.toBeInTheDocument();
+    expect(expandContentOutlineButton).toBeInTheDocument();
+
+    getBoolMock.mockRestore();
   });
 });

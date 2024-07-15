@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
@@ -34,8 +34,15 @@ function shouldBeActive(
   }
 }
 
+export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
+  visible: 'grafana.explore.contentOutline.visible',
+  expanded: 'grafana.explore.contentOutline.expanded',
+};
+
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
-  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(true);
+  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
+    store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
+  );
   const styles = useStyles2(getStyles, contentOutlineExpanded);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
@@ -94,6 +101,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   const toggle = () => {
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, !contentOutlineExpanded);
     toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'outline',
