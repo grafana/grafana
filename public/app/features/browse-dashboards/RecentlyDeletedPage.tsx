@@ -43,28 +43,32 @@ const RecentlyDeletedPage = memo(() => {
   return (
     <Page navId="dashboards/recently-deleted">
       <Page.Contents className={styles.pageContents}>
-        <FilterInput
-          placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
-          value={searchState.query}
-          escapeRegex={false}
-          onChange={stateManager.onQueryChange}
-        />
+        <div>
+          <FilterInput
+            placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
+            value={searchState.query}
+            escapeRegex={false}
+            onChange={stateManager.onQueryChange}
+          />
+        </div>
 
         {hasSelection ? (
           <RecentlyDeletedActions />
         ) : (
-          <ActionRow
-            state={searchState}
-            getTagOptions={stateManager.getTagOptions}
-            getSortOptions={getGrafanaSearcher().getSortOptions}
-            sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-            onLayoutChange={stateManager.onLayoutChange}
-            onSortChange={stateManager.onSortChange}
-            onTagFilterChange={stateManager.onTagFilterChange}
-            onDatasourceChange={stateManager.onDatasourceChange}
-            onPanelTypeChange={stateManager.onPanelTypeChange}
-            onSetIncludePanels={stateManager.onSetIncludePanels}
-          />
+          <div className={styles.filters}>
+            <ActionRow
+              state={searchState}
+              getTagOptions={stateManager.getTagOptions}
+              getSortOptions={getGrafanaSearcher().getSortOptions}
+              sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
+              onLayoutChange={stateManager.onLayoutChange}
+              onSortChange={stateManager.onSortChange}
+              onTagFilterChange={stateManager.onTagFilterChange}
+              onDatasourceChange={stateManager.onDatasourceChange}
+              onPanelTypeChange={stateManager.onPanelTypeChange}
+              onSetIncludePanels={stateManager.onSetIncludePanels}
+            />
+          </div>
         )}
 
         <div className={styles.subView}>
@@ -88,15 +92,23 @@ const RecentlyDeletedPage = memo(() => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
-    display: 'grid',
-    gridTemplateRows: 'auto auto 1fr',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
     height: '100%',
-    rowGap: theme.spacing(1),
   }),
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
     height: '100%',
+  }),
+
+  filters: css({
+    display: 'none',
+
+    [theme.breakpoints.up('md')]: {
+      display: 'block',
+    },
   }),
 });
 
