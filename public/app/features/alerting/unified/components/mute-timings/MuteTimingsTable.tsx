@@ -9,17 +9,16 @@ import {
   ALL_MUTE_TIMINGS,
   useExportMuteTimingsDrawer,
 } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { makeAMLink } from '../../utils/misc';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTable, DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
-import { PROVENANCE_ANNOTATION, useMuteTimings } from './useMuteTimings';
+import { MuteTiming, PROVENANCE_ANNOTATION, useMuteTimings } from './useMuteTimings';
 import { renderTimeIntervals } from './util';
 
 interface MuteTimingsTableProps {
@@ -27,13 +26,18 @@ interface MuteTimingsTableProps {
   hideActions?: boolean;
 }
 
+type TableItem = {
+  id: string;
+  data: MuteTiming;
+};
+
 export const MuteTimingsTable = ({ alertManagerSourceName, hideActions }: MuteTimingsTableProps) => {
   const styles = useStyles2(getStyles);
   const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTimingsDrawer();
 
   const { data, isLoading, error } = useMuteTimings({ alertmanager: alertManagerSourceName });
 
-  const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
+  const items = useMemo((): TableItem[] => {
     const muteTimings = data || [];
 
     return muteTimings.map((mute) => {
@@ -125,8 +129,8 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
   ]);
   const showActions = !hideActions && (allowedToEdit || allowedToDelete);
 
-  return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
-    const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
+  return useMemo((): Array<DynamicTableColumnProps<MuteTiming>> => {
+    const columns: Array<DynamicTableColumnProps<MuteTiming>> = [
       {
         id: 'name',
         label: 'Name',

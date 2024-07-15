@@ -6,12 +6,12 @@ import { locationService } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import {
+  MuteTiming,
   useCreateMuteTiming,
   useUpdateMuteTiming,
   useValidateMuteTiming,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/components/mute-timings/util';
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
@@ -22,7 +22,7 @@ import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
 interface Props {
-  muteTiming?: MuteTimeInterval;
+  muteTiming?: MuteTiming;
   showError?: boolean;
   loading?: boolean;
   /** Is the current mute timing provisioned? If so, will disable editing via UI */
@@ -31,7 +31,7 @@ interface Props {
   editMode?: boolean;
 }
 
-const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
+const useDefaultValues = (muteTiming?: MuteTiming): MuteTimingFields => {
   const defaultValues = {
     name: '',
     time_intervals: [defaultTimeInterval],

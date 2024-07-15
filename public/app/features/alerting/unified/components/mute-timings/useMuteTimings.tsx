@@ -31,7 +31,10 @@ type BaseAlertmanagerArgs = {
  * Alertmanager mute time interval, with optional additional metadata
  * (returned in the case of K8S API implementation)
  * */
-export type MuteTiming = MuteTimeInterval & { metadata?: ReadNamespacedTimeIntervalApiResponse['metadata'] };
+export type MuteTiming = MuteTimeInterval & {
+  id: string;
+  metadata?: ReadNamespacedTimeIntervalApiResponse['metadata'];
+};
 
 /** Name of the custom annotation label used in k8s APIs for us to discern if a given entity was provisioned */
 export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
@@ -42,6 +45,7 @@ export const PROVENANCE_NONE = 'none';
 /** Alias for generated kuberenetes Alerting API Server type */
 type TimeIntervalV0Alpha1 = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
 
+/** Parse kubernetes API response into a Mute Timing */
 const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) => {
   const { metadata, spec } = item;
   return {
@@ -49,6 +53,15 @@ const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) 
     id: metadata.uid || spec.name,
     metadata,
     provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] !== PROVENANCE_NONE,
+  };
+};
+
+/** Parse Alertmanager time interval response into a Mute Timing */
+const parseAmTimeInterval: (interval: MuteTimeInterval, provenance: string) => MuteTiming = (interval, provenance) => {
+  return {
+    ...interval,
+    id: interval.name,
+    provisioned: Boolean(provenance && provenance !== PROVENANCE_NONE),
   };
 };
 
@@ -61,13 +74,9 @@ const useAlertmanagerIntervals = () =>
       const { alertmanager_config } = data;
       const muteTimingsProvenances = alertmanager_config.muteTimeProvenances ?? {};
       const intervals = mergeTimeIntervals(alertmanager_config);
-      const timeIntervals = intervals.map((interval) => ({
-        ...interval,
-        id: interval.name,
-        provisioned: Boolean(
-          muteTimingsProvenances[interval.name] && muteTimingsProvenances[interval.name] !== PROVENANCE_NONE
-        ),
-      }));
+      const timeIntervals = intervals.map((interval) =>
+        parseAmTimeInterval(interval, muteTimingsProvenances[interval.name])
+      );
 
       return {
         data: timeIntervals,
@@ -189,7 +198,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
           const muteTimingsProvenances = alertmanager_config?.muteTimeProvenances ?? {};
 
           return {
-            data: { ...timing, provisioned: muteTimingsProvenances[timing.name] === PROVENANCE_NONE },
+            data: parseAmTimeInterval(timing, muteTimingsProvenances[timing.name]),
             ...rest,
           };
         }
