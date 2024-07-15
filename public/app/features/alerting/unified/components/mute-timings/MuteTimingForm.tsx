@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -72,15 +71,14 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
    */
   const disableNameField = editMode && shouldUseK8sApi(selectedAlertmanager!);
   const styles = useStyles2(getStyles);
-  const [updating, setUpdating] = useState(false);
   const defaultValues = useDefaultValues(muteTiming);
 
   const formApi = useForm({ defaultValues, values: defaultValues });
+  const updating = formApi.formState.isSubmitting;
 
   const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'mute_timings' });
 
   const onSubmit = async (values: MuteTimingFields) => {
-    setUpdating(true);
     const timeInterval = createMuteTiming(values);
 
     const updateOrCreate = async () => {
@@ -90,13 +88,9 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
       return createTimeInterval({ timeInterval });
     };
 
-    return updateOrCreate()
-      .then(() => {
-        locationService.push(returnLink);
-      })
-      .finally(() => {
-        setUpdating(false);
-      });
+    return updateOrCreate().then(() => {
+      locationService.push(returnLink);
+    });
   };
 
   if (loading) {
