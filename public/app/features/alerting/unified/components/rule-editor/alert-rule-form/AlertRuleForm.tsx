@@ -137,7 +137,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     dispatch(
       saveRuleFormAction({
-        // todo: saveRuleFormAction with new types
         values: {
           ...defaultValues,
           ...values,

@@ -350,3 +350,7 @@ export function isGrafanaManagedRuleByType(type: RuleFormType) {
 export function isRecordingRulebyType(type: RuleFormType) {
   return type === RuleFormType.grafanaRecording || type === RuleFormType.cloudRecording;
 }
+
+export function isDatatSourceManagedRuleByType(type: RuleFormType) {
+  return type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording;
+}

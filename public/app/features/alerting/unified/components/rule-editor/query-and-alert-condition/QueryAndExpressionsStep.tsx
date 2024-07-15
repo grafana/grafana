@@ -18,7 +18,7 @@ import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
-import { isGrafanaManagedRuleByType } from '../../../utils/rules';
+import { isDatatSourceManagedRuleByType, isGrafanaManagedRuleByType } from '../../../utils/rules';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -384,7 +384,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
     >
       {/* This is the cloud data source selector */}
-      {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
+      {isDatatSourceManagedRuleByType(type) && (
         <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
       )}
 

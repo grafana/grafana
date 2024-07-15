@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
 import * as React from 'react';
+import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
 import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { isDatatSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
@@ -25,7 +26,7 @@ export function PreviewRule(): React.ReactElement | null {
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
   const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
-  if (type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) {
+  if (!type || isDatatSourceManagedRuleByType(type)) {
     return null;
   }
 

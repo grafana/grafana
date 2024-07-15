@@ -52,7 +52,7 @@ import { discoverFeatures } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
   GRAFANA_RULES_SOURCE_NAME,
@@ -66,6 +66,7 @@ import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
 import {
   getAlertInfo,
+  isDatatSourceManagedRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isRulerNotSupportedResponse,
@@ -371,7 +372,7 @@ export const saveRuleFormAction = createAsyncThunk(
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
 
-          if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
+          if (isDatatSourceManagedRuleByType(type)) {
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
             }
