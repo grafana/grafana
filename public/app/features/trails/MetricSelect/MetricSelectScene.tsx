@@ -29,7 +29,6 @@ import {
 import { Alert, Field, Icon, InlineSwitch, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { Select } from '@grafana/ui/';
 
-import { LayoutType } from '../ActionTabs/types';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
@@ -101,7 +100,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView', 'layout'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
