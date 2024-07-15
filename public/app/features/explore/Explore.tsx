@@ -14,6 +14,7 @@ import {
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
+  store,
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -66,6 +67,8 @@ import {
 } from './state/query';
 import { isSplit } from './state/selectors';
 import { updateTimeRange } from './state/time';
+
+const EXPLORE_CONTENT_OULTINE_LOCAL_STORAGE_KEY = 'grafana.explore.contentOutline.visible';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -147,7 +150,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      contentOutlineVisible: true,
+      contentOutlineVisible: store.getBool(EXPLORE_CONTENT_OULTINE_LOCAL_STORAGE_KEY, true),
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -175,6 +178,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onContentOutlineToogle = () => {
+    store.set(EXPLORE_CONTENT_OULTINE_LOCAL_STORAGE_KEY, !this.state.contentOutlineVisible);
     this.setState((state) => {
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',
