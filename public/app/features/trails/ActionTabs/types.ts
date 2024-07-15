@@ -1,7 +1,9 @@
-const LAYOUT_TYPES = ['single', 'grid', 'rows'] as const;
+const BREAKDOWN_LAYOUT_TYPES = ['single', 'grid', 'rows'] as const;
 
-export type LayoutType = (typeof LAYOUT_TYPES)[number];
+export type BreakdownLayoutType = (typeof BREAKDOWN_LAYOUT_TYPES)[number];
 
-export function isLayoutType(layoutType: string | null | undefined): layoutType is LayoutType {
-  return !!layoutType && layoutType in LAYOUT_TYPES;
+export function isBreakdownLayoutType(
+  breakdownLayoutType: string | null | undefined
+): breakdownLayoutType is BreakdownLayoutType {
+  return !!breakdownLayoutType && breakdownLayoutType in BREAKDOWN_LAYOUT_TYPES;
 }

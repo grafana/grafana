@@ -1,21 +1,44 @@
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
+} from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { MetricScene } from '../MetricScene';
 import { reportExploreMetrics } from '../interactions';
-import { TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
+import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
-import { LayoutType } from './types';
+import { BreakdownLayoutType } from './types';
 
 export interface LayoutSwitcherState extends SceneObjectState {
+  breakdownLayout: BreakdownLayoutType;
   layouts: SceneObject[];
-  options: Array<SelectableValue<LayoutType>>;
+  options: Array<SelectableValue<BreakdownLayoutType>>;
 }
 
-export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
-  private getMetricScene() {
-    return sceneGraph.getAncestor(this, MetricScene);
+export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> implements SceneObjectWithUrlSync {
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['breakdownLayout'] });
+
+  public constructor(state: MakeOptional<LayoutSwitcherState, 'breakdownLayout'>) {
+    super({ ...state, breakdownLayout: state.breakdownLayout ?? 'grid' });
+  }
+
+  getUrlState() {
+    return { breakdownLayout: this.state.breakdownLayout };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    if (typeof values.breakdownLayout === 'string') {
+      const newBreakdownLayout = values.breakdownLayout as BreakdownLayoutType;
+      if (this.state.breakdownLayout !== newBreakdownLayout) {
+        this.setState({ breakdownLayout: newBreakdownLayout });
+      }
+    }
   }
 
   public Selector({ model }: { model: LayoutSwitcher }) {
@@ -30,17 +53,18 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
   }
 
   private useActiveLayout() {
-    const { options } = this.useState();
-    const { layout } = this.getMetricScene().useState();
+    const { options, breakdownLayout } = this.useState();
 
-    const activeLayout = options.map((option) => option.value).includes(layout) ? layout : options[0].value;
+    const activeLayout = options.map((option) => option.value).includes(breakdownLayout)
+      ? breakdownLayout
+      : options[0].value;
     return activeLayout;
   }
 
-  public onLayoutChange = (layout: LayoutType) => {
-    reportExploreMetrics('breakdown_layout_changed', { layout });
-    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, layout);
-    this.getMetricScene().setState({ layout });
+  public onLayoutChange = (breakdownLayout: BreakdownLayoutType) => {
+    reportExploreMetrics('breakdown_layout_changed', { layout: breakdownLayout });
+    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, breakdownLayout);
+    this.setState({ breakdownLayout });
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {

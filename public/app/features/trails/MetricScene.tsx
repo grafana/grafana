@@ -19,7 +19,6 @@ import { getExploreUrl } from '../../core/utils/explore';
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
-import { isLayoutType, LayoutType } from './ActionTabs/types';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
@@ -32,7 +31,6 @@ import {
   getVariablesWithMetricConstant,
   MakeOptional,
   MetricSelectedEvent,
-  TRAIL_BREAKDOWN_VIEW_KEY,
   trailDS,
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
@@ -43,24 +41,21 @@ export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
   metric: string;
   actionView?: string;
-  layout: LayoutType;
 
   autoQuery: AutoQueryInfo;
   queryDef?: AutoQueryDef;
 }
 
 export class MetricScene extends SceneObjectBase<MetricSceneState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView', 'layout'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
-  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery' | 'layout'>) {
+  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery'>) {
     const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
-    const layout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),
       autoQuery,
       queryDef: state.queryDef ?? autoQuery.main,
-      layout: isLayoutType(layout) ? layout : 'grid',
       ...state,
     });
 
@@ -74,7 +69,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
   }
 
   getUrlState() {
-    return { actionView: this.state.actionView, layout: this.state.layout };
+    return { actionView: this.state.actionView };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -87,13 +82,6 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       }
     } else if (values.actionView === null) {
       this.setActionView(undefined);
-    }
-
-    if (typeof values.layout === 'string') {
-      const newLayout = values.layout as LayoutType;
-      if (this.state.layout !== newLayout) {
-        this.setState({ layout: newLayout });
-      }
     }
   }
 

@@ -16,6 +16,9 @@ import {
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneQueryRunner,
   VariableDependencyConfig,
   VizPanel,
@@ -30,13 +33,14 @@ import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
-import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
+import { TRAIL_BREAKDOWN_VIEW_KEY, trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { breakdownPanelOptions } from './panelConfigs';
+import { isBreakdownLayoutType, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
 
@@ -49,24 +53,43 @@ export interface BreakdownSceneState extends SceneObjectState {
   loading?: boolean;
   error?: string;
   blockingMessage?: string;
+  breakdownLayout: BreakdownLayoutType;
 }
 
-export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
+export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> implements SceneObjectWithUrlSync {
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['breakdownLayout'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_FILTERS],
     onReferencedVariableValueChanged: this.onReferencedVariableValueChanged.bind(this),
   });
 
   constructor(state: Partial<BreakdownSceneState>) {
+    const breakdownLayout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
     super({
       labels: state.labels ?? [],
       ...state,
+      breakdownLayout: isBreakdownLayoutType(breakdownLayout) ? breakdownLayout : 'grid',
     });
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
   private _query?: AutoQueryDef;
+
+  getUrlState() {
+    return { breakdownLayout: this.state.breakdownLayout };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    if (typeof values.breakdownLayout === 'string') {
+      const newBreakdownLayout = values.breakdownLayout as BreakdownLayoutType;
+      if (this.state.breakdownLayout !== newBreakdownLayout) {
+        // Change in layout will set up a different set of panel objects that haven't received the current yaxis range
+        this.clearBreakdownPanelAxisValues();
+        this.setState({ breakdownLayout: newBreakdownLayout });
+      }
+    }
+  }
 
   private _onActivate() {
     const variable = this.getVariable();
@@ -95,13 +118,6 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     trail.state.$timeRange?.subscribeToState(() => {
       // The change in time range will cause a refresh of panel values.
       this.clearBreakdownPanelAxisValues();
-    });
-
-    metricScene.subscribeToState(({ layout }, old) => {
-      if (layout !== old.layout) {
-        // Change in layout will set up a different set of panel objects that haven't received the current yaxis range
-        this.clearBreakdownPanelAxisValues();
-      }
     });
 
     this.updateBody(variable);
