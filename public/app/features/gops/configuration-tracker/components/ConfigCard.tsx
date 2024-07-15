@@ -42,7 +42,7 @@ export function ConfigCard({ config, handleActionClick, isLoading = false }: Con
           </Stack>
         </Stack>
         <Stack direction={'row'} gap={1} justifyContent={'flex-start'} alignItems={'flex-end'}>
-          <Button variant="secondary" onClick={() => handleActionClick(config.id, config.isDone)}>
+          <Button variant="secondary" onClick={() => handleActionClick(config.id, config.isDone)} className="fs-unmask">
             {config.actionButtonTitle}
           </Button>
         </Stack>

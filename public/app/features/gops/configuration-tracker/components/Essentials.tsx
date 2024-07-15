@@ -48,9 +48,13 @@ function Section({ section }: SectionProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>
-      <Text element="h4">{section.title}</Text>
+      <Text element="h4">
+        <span className="fs-unmask">{section.title}</span>
+      </Text>
 
-      <Text color="secondary">{section.description}</Text>
+      <Text color="secondary">
+        <span className="fs-unmask">{section.description}</span>
+      </Text>
       <Stack direction={'column'} gap={2}>
         {section.steps.map((step, index) => (
           <Step key={index} step={step} />
@@ -61,9 +65,9 @@ function Section({ section }: SectionProps) {
 }
 function DoneIcon({ done }: { done: boolean }) {
   return done ? (
-    <Icon name="check-circle" color="green" data-testid="checked-step" />
+    <Icon name="check-circle" color="green" data-testid="checked-step" className="fs-unmask" />
   ) : (
-    <Icon name="circle" data-testid="unckecked-step" />
+    <Icon name="circle" data-testid="unckecked-step" className="fs-unmask" />
   );
 }
 interface StepProps {
@@ -75,7 +79,9 @@ function Step({ step }: StepProps) {
     <Stack direction={'row'} justifyContent={'space-between'} data-testid="step">
       <Stack direction={'row'} alignItems="center">
         {step.done !== undefined && <DoneIcon done={step.done} />}
-        <Text variant="body">{step.title}</Text>
+        <Text variant="body">
+          <span className="fs-unmask">{step.title}</span>
+        </Text>
         <Tooltip content={step.description} placement="right">
           <Icon name="question-circle" />
         </Tooltip>
@@ -108,7 +114,7 @@ function OpenLinkButton(props: LinkButtonProps) {
     : '';
   const urlToGo = done ? urlToGoWhenDone : urlToGoWhenNotDone;
   return (
-    <LinkButton href={urlToGo} variant="secondary">
+    <LinkButton href={urlToGo} variant="secondary" className="fs-unmask">
       {done ? labelOnDone ?? label : label}
     </LinkButton>
   );
@@ -144,11 +150,12 @@ function StepButton({
         return (
           <Dropdown
             overlay={
-              <Menu>
+              <Menu className="fs-unmask">
                 {options?.map((option) => (
                   <Menu.Item
                     label={option.label}
                     key={option.value}
+                    className="fs-unmask"
                     onClick={() => {
                       onClickOption?.(option.value);
                     }}
@@ -157,7 +164,7 @@ function StepButton({
               </Menu>
             }
           >
-            <Button variant="secondary" size="md">
+            <Button variant="secondary" size="md" className="fs-unmask">
               {label}
               <Icon name="angle-down" />
             </Button>
