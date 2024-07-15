@@ -1,0 +1,7 @@
+35 assets
+3372 modules
+
+[1m[31mERROR[39m[22m in [1m../../../../../packages/grafana-ui/src/components/Table/CellActions.tsx[39m[22m [1m[32m32:0-64[39m[22m
+[1mModule [1m[31mnot found[39m[22m[1m: [1m[31mError[39m[22m[1m: Can't resolve './TableCellInspectModal' in '/Users/jevforsberg/go/src/github.com/grafana/grafana/packages/grafana-ui/src/components/Table'[39m[22m
+
+webpack 5.91.0 compiled with [1m[31m1 error[39m[22m in 1087 ms

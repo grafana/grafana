@@ -1,0 +1,35 @@
+{
+  "type": "datasource",
+  "name": "Zipkin",
+  "id": "zipkin",
+  "category": "tracing",
+
+  "metrics": true,
+  "alerting": false,
+  "annotations": false,
+  "logs": false,
+  "streaming": false,
+  "tracing": true,
+
+  "info": {
+    "description": "Placeholder for the distributed tracing system.",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/zipkin-logo.svg",
+      "large": "img/zipkin-logo.svg"
+    },
+    "links": [
+      {
+        "name": "Learn more",
+        "url": "https://zipkin.io"
+      }
+    ],
+    "version": "11.0.0"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.3.0-0"
+  }
+}
