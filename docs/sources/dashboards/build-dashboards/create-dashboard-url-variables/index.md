@@ -82,9 +82,7 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 ## Ad hoc filters
 
-Ad hoc filters apply key/value filters to all metric queries that use a specified data source. For more information, refer to [Add ad hoc filters](ref:ad-hoc-filters).
-
-<!-- I'm not sure what the "a specified data source" part means; is this the dashboard data source or the ad hoc filter data source? -->
+Ad hoc filters apply key/value filters to all metric queries that use the specified data source. For more information, refer to [Add ad hoc filters](ref:ad-hoc-filters).
 
 To pass an ad hoc filter as a query parameter, use the variable syntax to pass the ad hoc filter variable. Then provide the key, operator, and value as a pipe-separated list.
 
