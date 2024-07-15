@@ -4,9 +4,13 @@ import { cloneDeep } from 'lodash';
 import { ReactNode, useEffect, useState } from 'react';
 
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+// eslint-disable-next-line no-restricted-imports
+import { defaultActionConfig } from '@grafana/data/src/types/action';
 
 import { useStyles2 } from '../../../themes';
+import { ActionEditorModalContent } from '../../Actions/ActionsEditorModalContent';
 import { Button } from '../../Button';
+import { Stack } from '../../Layout/Stack/Stack';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
@@ -32,6 +36,9 @@ export const DataLinksInlineEditor = ({
 
   const [linksSafe, setLinksSafe] = useState<DataLink[]>([]);
   links?.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
+
+  // Actions
+  const [showAddActionModal, setShowAddActionModal] = useState(false);
 
   useEffect(() => {
     setLinksSafe(links ?? []);
@@ -74,6 +81,16 @@ export const DataLinksInlineEditor = ({
     const update = cloneDeep(linksSafe);
     update.splice(index, 1);
     onChange(update);
+  };
+
+  // Actions
+
+  const onActionAdd = () => {
+    setShowAddActionModal(true);
+  };
+
+  const onActionCancel = () => {
+    setShowAddActionModal(false);
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -161,9 +178,26 @@ export const DataLinksInlineEditor = ({
         </Modal>
       )}
 
-      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
-        Add link
-      </Button>
+      {showAddActionModal && (
+        <Modal title="Edit action" isOpen={true} closeOnBackdropClick={false} onDismiss={onActionCancel}>
+          <ActionEditorModalContent
+            data={data}
+            index={0}
+            action={defaultActionConfig}
+            onSave={() => {}}
+            onCancel={onActionCancel}
+          />
+        </Modal>
+      )}
+
+      <Stack gap={1} direction="row">
+        <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
+          Add link
+        </Button>
+        <Button size="sm" icon="plus" onClick={onActionAdd} variant="secondary">
+          Add action
+        </Button>
+      </Stack>
     </>
   );
 };
