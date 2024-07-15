@@ -164,14 +164,14 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
-		savedItems := s.buildSavedItemsNavLinks(prefs, treeRoot)
+		bookmarks := s.buildBookmarksNavLinks(prefs, treeRoot)
 
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             "bookmarks",
 			Icon:           "bookmark",
 			SortWeight:     navtree.WeightBookmarks,
-			Children:       savedItems,
+			Children:       bookmarks,
 			EmptyMessageId: "bookmarks-empty",
 			Url:            s.cfg.AppSubURL + "/bookmarks",
 		})
@@ -330,16 +330,16 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 
 	return starredItemsChildNavs, nil
 }
-func (s *ServiceImpl) buildSavedItemsNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
-	savedItemsChildNavs := []*navtree.NavLink{}
+func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
+	bookmarksChildNavs := []*navtree.NavLink{}
 
-	savedItemIds := prefs.JSONData.Navbar.SavedItemIds
+	bookmarkIds := prefs.JSONData.Navbar.BookmarkIds
 
-	if len(savedItemIds) > 0 {
-		for _, savedItem := range savedItemIds {
-			item := treeRoot.FindById(savedItem)
+	if len(bookmarkIds) > 0 {
+		for _, id := range bookmarkIds {
+			item := treeRoot.FindById(id)
 			if item != nil {
-				savedItemsChildNavs = append(savedItemsChildNavs, &navtree.NavLink{
+				bookmarksChildNavs = append(bookmarksChildNavs, &navtree.NavLink{
 					Id:             item.Id,
 					Text:           item.Text,
 					SubTitle:       item.SubTitle,
@@ -360,7 +360,7 @@ func (s *ServiceImpl) buildSavedItemsNavLinks(prefs *pref.Preference, treeRoot *
 		}
 	}
 
-	return savedItemsChildNavs
+	return bookmarksChildNavs
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {

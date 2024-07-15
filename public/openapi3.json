@@ -7145,7 +7145,7 @@
       },
       "NavbarPreference": {
         "properties": {
-          "savedItemIds": {
+          "bookmarkIds": {
             "items": {
               "type": "string"
             },

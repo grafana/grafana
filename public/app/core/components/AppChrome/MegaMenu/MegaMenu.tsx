@@ -76,7 +76,7 @@ export const MegaMenu = memo(
         patchPreferences({
           patchPrefsCmd: {
             navbar: {
-              savedItemIds: newItems,
+              bookmarkIds: newItems,
             },
           },
         }).then(() => {

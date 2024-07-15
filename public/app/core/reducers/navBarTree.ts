@@ -52,9 +52,12 @@ const navTreeSlice = createSlice({
       }
     },
     setBookmark: (state, action: PayloadAction<{ item: NavModelItem; isSaved: boolean }>) => {
+      if (!config.featureToggles.pinNavItems) {
+        return;
+      }
       const bookmarks = state.find((navItem) => navItem.id === 'bookmarks');
       const { item, isSaved } = action.payload;
-      if (bookmarks && config.featureToggles.pinNavItems) {
+      if (bookmarks) {
         if (isSaved) {
           if (!bookmarks.children) {
             bookmarks.children = [];
