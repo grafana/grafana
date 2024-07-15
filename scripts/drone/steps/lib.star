@@ -961,21 +961,6 @@ def redis_integration_tests_steps():
 
     return integration_tests_steps("redis", cmds, "redis", "6379", environment = environment)
 
-# Removing this test step; `tcp://mimir_backend:8080` timing out; drone failing.
-# def remote_alertmanager_integration_tests_steps():
-#     cmds = [
-#         "go clean -testcache",
-#         "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...",
-#     ]
-# 
-#     environment = {
-#         "AM_TENANT_ID": "test",
-#         "AM_PASSWORD": "test",
-#         "AM_URL": "http://mimir_backend:8080",
-#     }
-# 
-#     return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
-
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
