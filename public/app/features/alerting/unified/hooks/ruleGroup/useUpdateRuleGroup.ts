@@ -1,135 +1,14 @@
-import { Action } from '@reduxjs/toolkit';
+import { t } from 'i18next';
 
-import { t } from 'app/core/internationalization';
-import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../api/alertRuleApi';
-import { notFoundToNullOrThrow } from '../api/util';
-import {
-  deleteRuleAction,
-  moveRuleGroupAction,
-  pauseRuleAction,
-  renameRuleGroupAction,
-  ruleGroupReducer,
-  updateRuleGroupAction,
-} from '../reducers/ruler/ruleGroups';
-import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
-import { isGrafanaRulesSource } from '../utils/datasource';
+import { alertRuleApi } from '../../api/alertRuleApi';
+import { notFoundToNullOrThrow } from '../../api/util';
+import { updateRuleGroupAction, moveRuleGroupAction, renameRuleGroupAction } from '../../reducers/ruler/ruleGroups';
+import { isGrafanaRulesSource } from '../../utils/datasource';
+import { useAsync } from '../useAsync';
 
-import { useAsync } from './useAsync';
-
-/**
- * Hook for reuse that handles freshly fetching a rule group's definition, applying an action to it,
- * and then performing the API mutations necessary to persist the change.
- *
- * All rule groups changes should ideally be implemented as a wrapper around this hook,
- * to ensure that we always protect as best we can against accidentally overwriting changes,
- * and to guard against user concurrency issues.
- *
- * @throws
- */
-function useProduceNewRuleGroup() {
-  const [fetchRuleGroup, requestState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
-
-  /**
-   * This function will fetch the latest configuration we have for the rule group, apply a diff to it via a reducer and sends
-   * returns the result.
-   *
-   * The API does not allow operations on a single rule and will always overwrite the existing rule group with the payload.
-   *
-   * ┌─────────────────────────┐  ┌───────────────┐  ┌──────────────────┐
-   * │ fetch latest rule group │─▶│ apply reducer │─▶│  new rule group  │
-   * └─────────────────────────┘  └───────────────┘  └──────────────────┘
-   */
-  const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, action: Action) => {
-    const { dataSourceName, groupName, namespaceName } = ruleGroup;
-
-    // @TODO we should really not work with the redux state (getState) here
-    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
-    const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
-
-    const latestRuleGroupDefinition = await fetchRuleGroup({
-      rulerConfig,
-      namespace: namespaceName,
-      group: groupName,
-    }).unwrap();
-
-    const newRuleGroupDefinition = ruleGroupReducer(latestRuleGroupDefinition, action);
-
-    return { newRuleGroupDefinition, rulerConfig };
-  };
-
-  return [produceNewRuleGroup, requestState] as const;
-}
-
-/**
- * Pause a single rule in a (ruler) group. This hook will ensure that mutations on the rule group are safe and will always
- * use the latest definition of the ruler group identifier.
- */
-export function usePauseRuleInGroup() {
-  const [produceNewRuleGroup] = useProduceNewRuleGroup();
-  const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-
-  return useAsync(async (ruleGroup: RuleGroupIdentifier, uid: string, pause: boolean) => {
-    const { namespaceName } = ruleGroup;
-
-    const action = pauseRuleAction({ uid, pause });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
-
-    const rulePauseMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
-    const ruleResumeMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
-
-    return upsertRuleGroup({
-      rulerConfig,
-      namespace: namespaceName,
-      payload: newRuleGroupDefinition,
-      requestOptions: {
-        successMessage: pause ? rulePauseMessage : ruleResumeMessage,
-      },
-    }).unwrap();
-  });
-}
-
-/**
- * Delete a single rule from a (ruler) group. This hook will ensure that mutations on the rule group are safe and will always
- * use the latest definition of the ruler group identifier.
- *
- * If no more rules are left in the group it will remove the entire group instead of updating.
- */
-export function useDeleteRuleFromGroup() {
-  const [produceNewRuleGroup] = useProduceNewRuleGroup();
-  const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
-
-  return useAsync(async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
-    const { groupName, namespaceName } = ruleGroup;
-
-    const action = deleteRuleAction({ rule });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
-
-    const successMessage = t('alerting.rules.delete-rule.success', 'Rule successfully deleted');
-
-    // if we have no more rules left after reducing, remove the entire group
-    if (newRuleGroupDefinition.rules.length === 0) {
-      return deleteRuleGroup({
-        rulerConfig,
-        namespace: namespaceName,
-        group: groupName,
-        requestOptions: { successMessage },
-      }).unwrap();
-    }
-
-    // otherwise just update the group
-    return upsertRuleGroup({
-      rulerConfig,
-      namespace: namespaceName,
-      payload: newRuleGroupDefinition,
-      requestOptions: { successMessage },
-    }).unwrap();
-  });
-}
+import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 
 /**
  * Update an existing rule group, currently only supports updating the interval.

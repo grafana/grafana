@@ -54,8 +54,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     // Ex: 14px base font * 85% = about 12px
-    small: {
+    'small, .small': {
       fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: 'normal',
     },
 
     'b, strong': {
@@ -69,6 +70,62 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     cite: {
       fontStyle: 'normal',
+    },
+
+    blockquote: {
+      padding: theme.spacing(0, 0, 0, 2),
+      margin: theme.spacing(0, 0, 2),
+      borderLeft: `5px solid ${theme.v1.palette.gray3}`,
+      p: {
+        marginBottom: 0,
+        fontSize: theme.typography.fontSize * 1.25,
+        fontWeight: 300,
+        lineHeight: 1.25,
+      },
+      small: {
+        display: 'block',
+        lineHeight: theme.typography.body.lineHeight,
+        color: theme.v1.palette.gray2,
+        '&:before': {
+          content: "'\\2014 \\00A0'",
+        },
+      },
+    },
+
+    // Quotes
+    'q:before, q:after, blockquote:before, blockquote:after': {
+      content: "''",
+    },
+
+    // Addresses
+    address: {
+      display: 'block',
+      marginBottom: theme.spacing(2),
+      fontStyle: 'normal',
+      lineHeight: theme.typography.body.lineHeight,
+    },
+
+    'a.external-link': {
+      color: theme.colors.text.link,
+      textDecoration: 'normal',
+
+      '&:hover': {
+        color: theme.colors.text.link,
+        textDecoration: 'underline',
+      },
+    },
+
+    '.link': {
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+    },
+
+    '.link:hover': {
+      color: theme.colors.text.maxContrast,
+    },
+
+    '.pointer': {
+      cursor: 'pointer',
     },
 
     'audio, canvas, progress, video': {
@@ -86,6 +143,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     // Address styling not present in Safari.
     'abbr[title]': {
       borderBottom: '1px dotted',
+      cursor: 'help',
     },
     dfn: {
       fontStyle: 'italic',
@@ -103,6 +161,37 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
     sub: {
       bottom: '-0.25em',
+    },
+
+    hr: {
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+      border: 0,
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+    },
+
+    'mark, .mark': {
+      background: theme.colors.warning.main,
+    },
+
+    'ul, ol': {
+      padding: 0,
+    },
+    'ul ul, ul ol, ol ol, ol ul': {
+      marginBottom: 0,
+    },
+    li: {
+      lineHeight: theme.typography.body.lineHeight,
+    },
+
+    dl: {
+      marginBottom: theme.spacing(2),
+    },
+    'dt, dd': {
+      lineHeight: theme.typography.body.lineHeight,
+    },
+    dt: {
+      fontWeight: theme.typography.fontWeightMedium,
     },
 
     // 1. Correct color not being inherited.
@@ -141,6 +230,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
     table: {
       borderCollapse: 'collapse',
       borderSpacing: 0,
+    },
+
+    th: {
+      fontWeight: theme.typography.fontWeightMedium,
     },
 
     'td, th': {
