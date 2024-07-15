@@ -97,6 +97,7 @@ const (
 type SnapshotResourceStats struct {
 	CountsByType   map[MigrateDataType]int
 	CountsByStatus map[ItemStatus]int
+	Total          int
 }
 
 // Deprecated, use GetSnapshotResult for the async workflow

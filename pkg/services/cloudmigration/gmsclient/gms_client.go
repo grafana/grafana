@@ -162,12 +162,12 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 	return &result, nil
 }
 
-func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot, offset int) (*cloudmigration.GetSnapshotStatusResponse, error) {
 	c.getStatusMux.Lock()
 	defer c.getStatusMux.Unlock()
 	logger := c.log.FromContext(ctx)
 
-	path := fmt.Sprintf("%s/api/v1/status/%s/status", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID)
+	path := fmt.Sprintf("%s/api/v1/status/%s/status?offset=%d", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID, offset)
 
 	// Send the request to gms with the associated auth token
 	req, err := http.NewRequest(http.MethodGet, path, nil)
