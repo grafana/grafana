@@ -68,13 +68,11 @@ The following video provides a visual walkthrough of the options you can set in 
 
 {{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
 
-
 ## Annotation and alert support
 
 {{< admonition type="note" >}}
 Annotations and alerts are not currently supported for tables.
 {{< /admonition >}}
-
 
 ## Sort column
 
