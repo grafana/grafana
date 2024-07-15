@@ -334,22 +334,15 @@ func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *def
 	}
 
 	// Current provisioning works on the integration level, so we need some way to determine the provenance of the
-	// entire receiver. All integrations in a receiver should have the same provenance, so we use the first one and
-	// ensure all others match.
-	firstProvenance := models.ProvenanceNone
-	if p, exists := storedProvenances[r.GrafanaManagedReceivers[0].UID]; exists {
-		firstProvenance = p
-	}
+	// entire receiver. All integrations in a receiver should have the same provenance, but we don't want to rely on
+	// this assumption in case the first provenance is None and a later one is not. To this end, we return the first
+	// non-zero provenance we find.
 	for _, contactPoint := range r.GrafanaManagedReceivers {
-		provenance := models.ProvenanceNone
-		if p, exists := storedProvenances[contactPoint.UID]; exists {
-			provenance = p
-		}
-		if provenance != firstProvenance {
-			return "", fmt.Errorf("all integrations must have the same provenance")
+		if p, exists := storedProvenances[contactPoint.UID]; exists && p != models.ProvenanceNone {
+			return p, nil
 		}
 	}
-	return firstProvenance, nil
+	return models.ProvenanceNone, nil
 }
 
 // getReceiverByUID returns the index and receiver with the given UID.
