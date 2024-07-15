@@ -330,7 +330,7 @@ func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentia
 				"ActiveDirectoryPassword",
 			)
 		} else {
-			return "", fmt.Errorf("Azure Entra password authentication is not enabled")
+			return "", fmt.Errorf("azure entra password authentication is not enabled")
 		}
 	default:
 		return "", fmt.Errorf("unsupported azure authentication type")
