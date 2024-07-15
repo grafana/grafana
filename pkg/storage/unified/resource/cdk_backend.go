@@ -19,7 +19,7 @@ import (
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -164,14 +164,14 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	if raw == nil && req.ResourceVersion > 0 {
 		if req.ResourceVersion > s.rv.Load() {
 			return nil, &apierrors.StatusError{
-				ErrStatus: v1.Status{
-					Reason:  v1.StatusReasonTimeout, // match etcd behavior
+				ErrStatus: metav1.Status{
+					Reason:  metav1.StatusReasonTimeout, // match etcd behavior
 					Code:    http.StatusGatewayTimeout,
 					Message: "ResourceVersion is larger than max",
-					Details: &v1.StatusDetails{
-						Causes: []v1.StatusCause{
+					Details: &metav1.StatusDetails{
+						Causes: []metav1.StatusCause{
 							{
-								Type:    v1.CauseTypeResourceVersionTooLarge,
+								Type:    metav1.CauseTypeResourceVersionTooLarge,
 								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
 							},
 						},
