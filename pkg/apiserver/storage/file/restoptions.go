@@ -92,7 +92,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, r.client, keyFunc, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
+			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,

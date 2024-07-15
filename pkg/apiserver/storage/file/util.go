@@ -142,20 +142,23 @@ func testKeyParser(val string) (*resource.ResourceKey, error) {
 		if strings.HasPrefix(val, "pods/") {
 			parts := strings.Split(val, "/")
 			if len(parts) == 2 {
+				err = nil
 				k = &grafanaregistry.Key{
 					Resource: parts[0], // pods
 					Name:     parts[1],
 				}
 			} else if len(parts) == 3 {
+				err = nil
 				k = &grafanaregistry.Key{
 					Resource:  parts[0], // pods
 					Namespace: parts[1],
 					Name:      parts[2],
 				}
-			} else {
-				return nil, err
 			}
 		}
+	}
+	if err != nil {
+		return nil, err
 	}
 	if k.Group == "" {
 		k.Group = "example.apiserver.k8s.io"

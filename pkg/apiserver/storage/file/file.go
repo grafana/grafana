@@ -66,6 +66,7 @@ func NewStorage(
 	config *storagebackend.ConfigForResource,
 	store resource.ResourceStoreClient,
 	keyFunc func(obj runtime.Object) (string, error),
+	keyParser func(key string) (*resource.ResourceKey, error),
 	newFunc func() runtime.Object,
 	newListFunc func() runtime.Object,
 	getAttrsFunc storage.AttrFunc,
@@ -84,12 +85,23 @@ func NewStorage(
 		indexers:     indexers,
 
 		watchSet: NewWatchSet(),
+		getKey:   keyParser,
 
-		// This allows for testing with k8s key expectations
-		getKey: func(key string) (*resource.ResourceKey, error) {
+		versioner: &storage.APIObjectVersioner{},
+	}
+
+	// The key parsing callback allows us to support the hardcoded paths from upstream tests
+	if s.getKey == nil {
+		s.getKey = func(key string) (*resource.ResourceKey, error) {
 			k, err := grafanaregistry.ParseKey(key)
 			if err != nil {
 				return nil, err
+			}
+			if k.Group == "" {
+				return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
+			}
+			if k.Resource == "" {
+				return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 			}
 			return &resource.ResourceKey{
 				Namespace: k.Namespace,
@@ -97,9 +109,7 @@ func NewStorage(
 				Resource:  k.Resource,
 				Name:      k.Name,
 			}, err
-		},
-
-		versioner: &storage.APIObjectVersioner{},
+		}
 	}
 
 	return s, func() {
@@ -257,7 +267,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
 	}
 
-	parsedkey, err := grafanaregistry.ParseKey(key)
+	parsedkey, err := s.getKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -339,12 +349,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	if maybeUpdatedRV == 0 {
 		rsp, err := s.store.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Group:     parsedkey.Group,
-					Namespace: parsedkey.Namespace,
-					Resource:  parsedkey.Resource,
-					Name:      parsedkey.Name,
-				},
+				Key: parsedkey,
 			},
 			Limit: 1, // we ignore the results, just look at the RV
 		})

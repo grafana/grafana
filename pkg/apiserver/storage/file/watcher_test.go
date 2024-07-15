@@ -110,6 +110,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 			}
 			return storagetesting.KeyFunc(accessor.GetNamespace(), accessor.GetName()), nil
 		},
+		testKeyParser, // will fallback to hardcoded /pods/... keys
 		setupOpts.newFunc,
 		setupOpts.newListFunc,
 		storage.DefaultNamespaceScopedAttr,
