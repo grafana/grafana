@@ -245,6 +245,8 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 		return ErrNotFound // TODO: nil?
 	}
 
+	// TODO: Implement + check optimistic concurrency.
+
 	storedProvenance, err := rs.getContactPointProvenance(ctx, recv, orgID)
 	if err != nil {
 		return err
@@ -258,10 +260,6 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 		return ErrReceiverInUse.Errorf("")
 	}
 
-	err = rs.checkOptimisticConcurrency(recv, models.Provenance(callerProvenance), version, "delete")
-	if err != nil {
-		return err
-	}
 	// Remove the receiver from the configuration.
 	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:idx], cfg.AlertmanagerConfig.Receivers[idx+1:]...)
 
@@ -354,21 +352,6 @@ func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *def
 	return firstProvenance, nil
 }
 
-func (rs *ReceiverService) checkOptimisticConcurrency(current *definitions.PostableApiReceiver, provenance models.Provenance, desiredVersion string, action string) error {
-	if desiredVersion == "" {
-		if provenance != models.ProvenanceFile {
-			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
-			rs.log.Debug("ignoring optimistic concurrency check because version was not provided", "receiver", current.Name, "operation", action)
-		}
-		return nil
-	}
-	currentVersion := calculateReceiverFingerprint(current)
-	if currentVersion != desiredVersion {
-		return ErrVersionConflict.Errorf("provided version %s of receiver %s does not match current version %s", desiredVersion, current.Name, currentVersion)
-	}
-	return nil
-}
-
 // getReceiverByUID returns the index and receiver with the given UID.
 func getReceiverByUID(cfg definitions.PostableUserConfig, uid string) (int, *definitions.PostableApiReceiver) {
 	for i, r := range cfg.AlertmanagerConfig.Receivers {
@@ -402,10 +385,4 @@ func isReceiverInUse(name string, routes []*definitions.Route) bool {
 		}
 	}
 	return false
-}
-
-// calculateReceiverFingerprint returns a unique fingerprint for a PostableApiReceiver. Used for optimistic concurrency checks.
-func calculateReceiverFingerprint(recv *definitions.PostableApiReceiver) string {
-	// TODO: Stub + requires Version on GettableApiReceiver.
-	return recv.Name
 }
