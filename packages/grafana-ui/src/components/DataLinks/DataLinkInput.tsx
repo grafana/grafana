@@ -132,6 +132,14 @@ export const DataLinkInput = memo(
 
       switch (event.key) {
         case 'Backspace':
+          const precedingChar: string = getCharactersAroundCaret();
+
+          if (precedingChar === '=' || precedingChar === '$') {
+            next();
+            setShowingSuggestions(false);
+            setSuggestionsIndex(0);
+          }
+          return;
         case 'Escape':
           setShowingSuggestions(false);
           return setSuggestionsIndex(0);
