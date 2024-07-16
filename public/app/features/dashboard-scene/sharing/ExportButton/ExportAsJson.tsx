@@ -35,7 +35,6 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
     await model.onSaveAsFile();
     const message = t('export.json.download-successful_toast_message', 'Your JSON has been downloaded');
     dispatch(notifyApp(createSuccessNotification(message)));
-    dashboard.closeModal();
   };
 
   const switchLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
