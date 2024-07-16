@@ -792,7 +792,7 @@ func TestStore_StoreActionSet(t *testing.T) {
 	}
 }
 
-func TestStore_DeclareActionSet(t *testing.T) {
+func TestStore_RegisterActionSet(t *testing.T) {
 	type actionSetTest struct {
 		desc               string
 		features           featuremgmt.FeatureToggles

@@ -94,13 +94,13 @@ func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (
 	return p, nil
 }
 
-// RegisterActionSets implements an InitializeFunc for registering plugin roles.
+// RegisterActionSets implements an InitializeFunc for registering plugin action sets.
 type RegisterActionSets struct {
 	log          log.Logger
 	roleRegistry plugins.ActionSetRegistry
 }
 
-// RegisterActionSetsStep returns a new InitializeFunc for registering plugin roles.
+// RegisterActionSetsStep returns a new InitializeFunc for registering plugin action sets.
 func RegisterActionSetsStep(actionRegistry plugins.ActionSetRegistry) initialization.InitializeFunc {
 	return newRegisterActionSets(actionRegistry).Register
 }
