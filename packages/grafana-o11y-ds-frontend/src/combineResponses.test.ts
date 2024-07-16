@@ -508,7 +508,7 @@ describe('combineResponses', () => {
     };
     expect(combineResponses(responseA, responseB)).toEqual({
       data: [metricFrameA, metricFrameB],
-    })
+    });
   });
 
   it('does not combine frames with different refId', () => {
@@ -523,7 +523,7 @@ describe('combineResponses', () => {
     };
     expect(combineResponses(responseA, responseB)).toEqual({
       data: [metricFrameA, metricFrameB],
-    })
+    });
   });
 });
 

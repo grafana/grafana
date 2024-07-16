@@ -130,7 +130,7 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
 }
 
 function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
-  if ((frame1.refId !== frame2.refId) || (frame1.name !== frame2.name)) {
+  if (frame1.refId !== frame2.refId || frame1.name !== frame2.name) {
     return false;
   }
 
