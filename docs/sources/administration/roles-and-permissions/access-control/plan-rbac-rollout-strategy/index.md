@@ -181,7 +181,7 @@ By default, only a Grafana Server Admin can create and manage custom roles. If y
   As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
 
   ```bash
-  # Fetch the role and modify it to remove the undesired permissions, increase its version add the new permission
+  # Fetch the role, modify it to add the desired permissions and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
     -X GET http://localhost:3000/api/access-control/roles/basic_editor | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
@@ -226,7 +226,7 @@ If you want your `Viewers` to create reports, [update the `Viewer` basic role pe
   As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
 
   ```bash
-  # Fetch the role and modify it to remove the undesired permissions, increase its version add the new permission
+  # Fetch the role, modify it to add the desired permissions and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
     -X GET http://localhost:3000/api/access-control/roles/basic_viewer | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
@@ -272,7 +272,7 @@ There are two ways to achieve this:
   As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
 
   ```bash
-  # Fetch the role and modify it to remove the undesired permissions and increase its version
+  # Fetch the role, modify it to remove the undesired permissions and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
     -X GET http://localhost:3000/api/access-control/roles/basic_grafana_admin | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
@@ -334,7 +334,7 @@ Here are two ways to achieve this:
   As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
 
   ```bash
-  # Fetch the role and modify it to remove the undesired permissions, increase its version add the new permission
+  # Fetch the role, modify it to remove the undesired permissions, add the new permission and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
     -X GET http://localhost:3000/api/access-control/roles/basic_viewer | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
