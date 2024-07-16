@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { AriaRole, HTMLAttributes, ReactNode } from 'react';
 import * as React from 'react';
+import { useTheme2 } from 'src/themes';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useTheme2 } from '../../themes';
-import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
@@ -150,7 +149,7 @@ const getStyles = (
         zIndex: -1,
       },
     }),
-    iconWrapper: css({ alignSelf: 'center',}),
+    iconWrapper: css({ alignSelf: 'center' }),
     icon: css({
       color: color.text,
     }),

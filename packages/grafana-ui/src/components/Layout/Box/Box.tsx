@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { ElementType, forwardRef, PropsWithChildren } from 'react';
 import * as React from 'react';
+import { useStyles2 } from 'src/themes';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
-import {AlignItems, AlignSelf, Direction, FlexProps, JustifyContent} from '../types';
+import { AlignItems, AlignSelf, Direction, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 import { getSizeStyles, SizeProps } from '../utils/styles';
 
