@@ -5,6 +5,7 @@ import (
 	context "context"
 	"fmt"
 	"io"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -136,7 +138,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	rv := req.ResourceVersion
 
-	path := s.getPath(req.Key, req.ResourceVersion)
+	path := s.getPath(req.Key, rv)
 	if rv < 1 {
 		iter := s.bucket.List(&blob.ListOptions{Prefix: path + "/", Delimiter: "/"})
 		for {
@@ -159,13 +161,42 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	}
 
 	raw, err := s.bucket.ReadAll(ctx, path)
-	if raw == nil || (err == nil && isDeletedMarker(raw)) {
+	if raw == nil && req.ResourceVersion > 0 {
+		if req.ResourceVersion > s.rv.Load() {
+			return nil, &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Reason:  metav1.StatusReasonTimeout, // match etcd behavior
+					Code:    http.StatusGatewayTimeout,
+					Message: "ResourceVersion is larger than max",
+					Details: &metav1.StatusDetails{
+						Causes: []metav1.StatusCause{
+							{
+								Type:    metav1.CauseTypeResourceVersionTooLarge,
+								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
+							},
+						},
+					},
+				},
+			}
+		}
+
+		// If the there was an explicit request, get the latest
+		rsp, _ := s.Read(ctx, &ReadRequest{Key: req.Key})
+		if rsp != nil && len(rsp.Value) > 0 {
+			raw = rsp.Value
+			rv = rsp.ResourceVersion
+			err = nil
+		}
+	}
+	if err == nil && isDeletedMarker(raw) {
+		raw = nil
+	}
+	if raw == nil {
 		return nil, apierrors.NewNotFound(schema.GroupResource{
 			Group:    req.Key.Group,
 			Resource: req.Key.Resource,
 		}, req.Key.Name)
 	}
-
 	return &ReadResponse{
 		ResourceVersion: rv,
 		Value:           raw,
