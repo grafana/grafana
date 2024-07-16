@@ -321,6 +321,17 @@ func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentia
 			c.ClientSecret,
 			"ActiveDirectoryApplication",
 		)
+	case *azcredentials.AzureEntraPasswordCredentials:
+		if cfg.Azure.AzureEntraPasswordCredentialsEnabled {
+			connStr += fmt.Sprintf("user id=%s;password=%s;applicationclientid=%s;fedauth=%s;",
+				c.UserId,
+				c.Password,
+				c.ClientId,
+				"ActiveDirectoryPassword",
+			)
+		} else {
+			return "", fmt.Errorf("azure entra password authentication is not enabled")
+		}
 	default:
 		return "", fmt.Errorf("unsupported azure authentication type")
 	}

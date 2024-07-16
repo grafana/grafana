@@ -309,6 +309,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		},
 		UserIdentityFallbackCredentialsEnabled: true,
 		ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"},
+		AzureEntraPasswordCredentialsEnabled:   true,
 	}
 
 	t.Run("uses the azure settings for an Azure plugin", func(t *testing.T) {
@@ -389,6 +390,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_ID")
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_SECRET")
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_ASSERTION")
+		require.NotContains(t, m, "GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED")
 	})
 
 	t.Run("uses the azure settings for a non-Azure user-specified plugin", func(t *testing.T) {
@@ -413,6 +415,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
+			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
 		})
 	})
 }
