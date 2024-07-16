@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"gocloud.dev/blob"
 	"gocloud.dev/blob/fileblob"
+	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -37,12 +39,18 @@ func NewRESTOptionsGetter(path string,
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
 
-	bucket, err := fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
-		CreateDir: true,
-		Metadata:  fileblob.MetadataDontWrite, // skip
-	})
-	if err != nil {
-		return nil, err
+	var bucket *blob.Bucket
+	if path == ":mem:" {
+		bucket = memblob.OpenBucket(&memblob.Options{})
+	} else {
+		var err error
+		bucket, err = fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
+			CreateDir: true,
+			Metadata:  fileblob.MetadataDontWrite, // skip
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: bucket,

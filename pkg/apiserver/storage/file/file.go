@@ -504,7 +504,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 // However, the implementations have to retry in case suggestion is stale.
 func (s *Storage) GuaranteedUpdate(
 	ctx context.Context,
-	keystring string,
+	key string,
 	destination runtime.Object,
 	ignoreNotFound bool,
 	preconditions *storage.Preconditions,
@@ -519,7 +519,7 @@ func (s *Storage) GuaranteedUpdate(
 		err         error
 	)
 	req := &resource.UpdateRequest{}
-	req.Key, err = s.getKey(keystring)
+	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
@@ -561,7 +561,7 @@ func (s *Storage) GuaranteedUpdate(
 			}
 			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
 
-			if err := preconditions.Check(keystring, objFromDisk); err != nil {
+			if err := preconditions.Check(key, objFromDisk); err != nil {
 				if attempt >= MaxUpdateAttempts {
 					return fmt.Errorf("precondition failed: %w", err)
 				}

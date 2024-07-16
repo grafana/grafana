@@ -52,7 +52,7 @@ func (o *AggregatorServerOptions) Validate() []error {
 	return nil
 }
 
-func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions, dataPath string) error {
+func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions) error {
 	genericConfig := aggregatorConfig.GenericConfig
 
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
@@ -80,8 +80,8 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
-	// override the RESTOptionsGetter to use the file storage options getter
-	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig)
+	// override the RESTOptionsGetter to use the in memory storage options
+	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(":mem:", etcdOptions.StorageConfig)
 	if err != nil {
 		return err
 	}

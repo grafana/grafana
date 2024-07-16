@@ -1479,9 +1479,10 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 				require.NoError(t, err, "failed to add a pod: %v")
 				createdPods = append(createdPods, out)
 			}
-			// fails with timeout???
-			// testCheckResultsInStrictOrder(t, w, scenario.expectedEventsAfterEstablishingWatch(createdPods))
-			// testCheckNoMoreResults(t, w)
+			testCheckResultsInStrictOrder(t, w, scenario.expectedEventsAfterEstablishingWatch(createdPods))
+
+			// TestEtcdWatchSemantics fails with timeout???
+			//testCheckNoMoreResults(t, w)
 		})
 	}
 }
