@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var ErrValidation = fmt.Errorf("invalid object specification")
@@ -20,7 +21,7 @@ var (
 	ErrTimeIntervalNotFound = errutil.NotFound("alerting.notifications.time-intervals.notFound")
 	ErrTimeIntervalExists   = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
 	ErrTimeIntervalInvalid  = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
-	ErrTimeIntervalInUse    = errutil.Conflict("alerting.notifications.time-intervals.used", errutil.WithPublicMessage("Time interval is used by one or many notification policies"))
+	ErrTimeIntervalInUse    = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate("Time interval is used")
 
 	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
 	ErrContactPointUsedInRule = errutil.Conflict("alerting.notifications.contact-points.used-by-rule", errutil.WithPublicMessage("Contact point is currently used in the notification settings of one or many alert rules."))
@@ -46,4 +47,18 @@ func MakeErrTimeIntervalInvalid(err error) error {
 	}
 
 	return ErrTimeIntervalInvalid.Build(data)
+}
+
+func MakeErrTimeIntervalInUse(usedInRoutes bool, rules []models.AlertRuleKey) error {
+	uids := make([]string, 0, len(rules))
+	for _, key := range rules {
+		uids = append(uids, key.UID)
+	}
+	return ErrTimeIntervalInUse.Build(errutil.TemplateData{
+		Public: map[string]any{
+			"usedByRoutes": usedInRoutes,
+			"usedByRules":  uids,
+		},
+		Error: nil,
+	})
 }

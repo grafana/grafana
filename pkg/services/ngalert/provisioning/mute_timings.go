@@ -10,6 +10,7 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -18,20 +19,22 @@ import (
 )
 
 type MuteTimingService struct {
-	configStore     alertmanagerConfigStore
-	provenanceStore ProvisioningStore
-	xact            TransactionManager
-	log             log.Logger
-	validator       validation.ProvenanceStatusTransitionValidator
+	configStore            alertmanagerConfigStore
+	provenanceStore        ProvisioningStore
+	xact                   TransactionManager
+	log                    log.Logger
+	validator              validation.ProvenanceStatusTransitionValidator
+	ruleNotificationsStore AlertRuleNotificationSettingsStore
 }
 
-func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *MuteTimingService {
+func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger, ns AlertRuleNotificationSettingsStore) *MuteTimingService {
 	return &MuteTimingService{
-		configStore:     &alertmanagerConfigStoreImpl{store: config},
-		provenanceStore: prov,
-		xact:            xact,
-		log:             log,
-		validator:       validation.ValidateProvenanceRelaxed,
+		configStore:            &alertmanagerConfigStoreImpl{store: config},
+		provenanceStore:        prov,
+		xact:                   xact,
+		log:                    log,
+		validator:              validation.ValidateProvenanceRelaxed,
+		ruleNotificationsStore: ns,
 	}
 }
 
@@ -198,7 +201,9 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	}
 
 	if isMuteTimeInUseInRoutes(name, revision.cfg.AlertmanagerConfig.Route) {
-		return ErrTimeIntervalInUse.Errorf("")
+		ns, _ := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+		// ignore error here because it's not important
+		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if name != existing.Name {
@@ -213,6 +218,14 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	}
 
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
+		keys, err := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+		if err != nil {
+			return err
+		}
+		if len(keys) > 0 {
+			return MakeErrTimeIntervalInUse(false, maps.Keys(keys))
+		}
+
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
