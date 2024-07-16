@@ -68,7 +68,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           alignItems="stretch"
           boxShadow={elevated ? 'z3' : undefined}
         >
-          <Box paddingRight={2} alignSelf="center">
+          <Box paddingTop={children ? 1 : 0} paddingRight={2} alignSelf={children ? 'auto' : 'center'}>
             <div className={styles.icon}>
               <Icon size="xl" name={getIconFromSeverity(severity)} />
             </div>
