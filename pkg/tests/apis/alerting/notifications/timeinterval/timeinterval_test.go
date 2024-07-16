@@ -32,8 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 //go:embed test-data/*.*
@@ -650,7 +648,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use time interval
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig apimodels.PostableUserConfig
+	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	success, err := legacyCli.PostConfiguration(t, amConfig)
@@ -658,7 +656,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
-	var ruleGroup apimodels.PostableRuleGroupConfig
+	var ruleGroup definitions.PostableRuleGroupConfig
 	require.NoError(t, json.Unmarshal(postGroupRaw, &ruleGroup))
 
 	folderUID := "test-folder"
