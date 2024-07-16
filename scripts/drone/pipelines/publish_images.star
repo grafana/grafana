@@ -30,46 +30,46 @@ def publish_image_public_step():
     Returns:
       A drone step which publishes Docker images for a public release.
     """
-    commands = [
-        "echo=",
-        "if [[ -z ${DRY_RUN} ]];  then echo=echo; fi",
-        "docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}",
+    command ="""
+    echo=
+    if [[ -z ${DRY_RUN} ]];  then echo="echo"; fi
+    docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}
 
-        # Push the grafana-image-tags images
-        "$echo docker push grafana/grafana-image-tags:${TAG}-amd64",
-        "$echo docker push grafana/grafana-image-tags:${TAG}-arm64",
-        "$echo docker push grafana/grafana-image-tags:${TAG}-armv7",
-        "$echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-amd64",
-        "$echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-arm64",
-        "$echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-armv7",
+    # Push the grafana-image-tags images
+    $echo docker push grafana/grafana-image-tags:${TAG}-amd64
+    $echo docker push grafana/grafana-image-tags:${TAG}-arm64
+    $echo docker push grafana/grafana-image-tags:${TAG}-armv7
+    $echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-amd64
+    $echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-arm64
+    $echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-armv7
 
-        # Create the grafana manifests
-        "$echo docker manifest create grafana/grafana:${TAG} " +
-        "grafana/grafana-image-tags:${TAG}-amd64 " +
-        "grafana/grafana-image-tags:${TAG}-arm64 " +
-        "grafana/grafana-image-tags:${TAG}-armv7",
+    # Create the grafana manifests
+    $echo docker manifest create grafana/grafana:${TAG} \
+    grafana/grafana-image-tags:${TAG}-amd64 \
+    grafana/grafana-image-tags:${TAG}-arm64 \
+    grafana/grafana-image-tags:${TAG}-armv7
 
-        "$echo docker manifest create grafana/grafana:${TAG}-ubuntu " +
-        "grafana/grafana-image-tags:${TAG}-ubuntu-amd64 " +
-        "grafana/grafana-image-tags:${TAG}-ubuntu-arm64 " +
-        "grafana/grafana-image-tags:${TAG}-ubuntu-armv7",
+    $echo docker manifest create grafana/grafana:${TAG}-ubuntu \
+    grafana/grafana-image-tags:${TAG}-ubuntu-amd64 \
+    grafana/grafana-image-tags:${TAG}-ubuntu-arm64 \
+    grafana/grafana-image-tags:${TAG}-ubuntu-armv7
 
-        # Push the grafana manifests
-        "$echo docker manifest push grafana/grafana:${TAG}",
-        "$echo docker manifest push grafana/grafana:${TAG}-ubuntu",
+    # Push the grafana manifests
+    $echo docker manifest push grafana/grafana:${TAG}
+    $echo docker manifest push grafana/grafana:${TAG}-ubuntu
 
-        # if LATEST is set, then also create & push latest
-        "if [[ -z ${LATEST} ]]; then " +
-            "$echo docker manifest create grafana/grafana:${TAG} " +
-            "grafana/grafana-image-tags:${TAG}-amd64 " +
-            "grafana/grafana-image-tags:${TAG}-arm64 " +
-            "grafana/grafana-image-tags:${TAG}-armv7; " +
-            "$echo docker manifest create grafana/grafana:${TAG}-ubuntu " +
-            "grafana/grafana-image-tags:${TAG}-ubuntu-amd64 " +
-            "grafana/grafana-image-tags:${TAG}-ubuntu-arm64 " +
-            "grafana/grafana-image-tags:${TAG}-ubuntu-armv7;" +
-        "fi",
-    ]
+    # if LATEST is set, then also create & push latest
+    "if [[ -z ${LATEST} ]]; then " +
+        $echo docker manifest create grafana/grafana:${TAG} \
+        grafana/grafana-image-tags:${TAG}-amd64 \
+        grafana/grafana-image-tags:${TAG}-arm64 \
+        grafana/grafana-image-tags:${TAG}-armv7
+        $echo docker manifest create grafana/grafana:${TAG}-ubuntu \
+        grafana/grafana-image-tags:${TAG}-ubuntu-amd64 \
+        grafana/grafana-image-tags:${TAG}-ubuntu-arm64 \
+        grafana/grafana-image-tags:${TAG}-ubuntu-armv7
+    fi
+    """
     return {
         "environment": {
           "DOCKER_USER": from_secret("docker_username"),
@@ -78,7 +78,7 @@ def publish_image_public_step():
         "name": "publish-images-grafana",
         "image": images["docker"],
         "depends_on": ["fetch-images"],
-        "commands": commands,
+        "commands": [command],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
