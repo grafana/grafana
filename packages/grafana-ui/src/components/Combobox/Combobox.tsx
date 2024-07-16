@@ -47,7 +47,7 @@ function estimateSize() {
 export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
-  const listRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef(null);
 
   const theme = useTheme2();
@@ -55,7 +55,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
 
   const rowVirtualizer = useVirtualizer({
     count: items.length,
-    getScrollElement: () => listRef.current,
+    getScrollElement: () => floatingRef.current,
     estimateSize,
     overscan: 2,
   });
@@ -85,24 +85,34 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       fallbackPlacements: ['top'],
     }),
   ];
-
-  const { refs } = useFloating({
+  const { floatingStyles } = useFloating({
     open: isOpen,
     placement: 'bottom',
     middleware,
+    elements: {
+      reference: inputRef.current,
+      floating: floatingRef.current,
+    },
     whileElementsMounted: autoUpdate,
   });
-  refs.reference = listRef;
-  refs.floating = floatingRef;
 
   const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= 400;
 
   return (
     <div>
-      <Input suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />} {...restProps} {...getInputProps()} />
-      <div className={cx(styles.menu, hasMinHeight && styles.menuHeight)} {...getMenuProps({ ref: listRef })}>
+      {/* @ts-expect-error */}
+      <Input
+        suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+        {...restProps}
+        {...getInputProps({ ref: inputRef })}
+      />
+      <div
+        className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
+        style={{ ...floatingStyles }}
+        {...getMenuProps({ ref: floatingRef })}
+      >
         {isOpen && (
-          <ul className={styles.valueContainer} style={{ height: rowVirtualizer.getTotalSize() }} ref={floatingRef}>
+          <ul className={styles.valueContainer} style={{ height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
