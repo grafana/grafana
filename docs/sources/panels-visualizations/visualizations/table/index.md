@@ -58,7 +58,7 @@ refs:
 
 # Table
 
-Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options. In addition to formatting and coloring options, Grafana also provides a variety of _Cell types_ which you can use to display gauges, sparklines, and other rich data displays.
+Tables are a highly flexible visualization designed to display data in columns and rows. They support various data types, including tables, time series, annotations, and raw JSON data. The table visualization can even take multiple data sets and provide the option to switch between them. With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
@@ -68,15 +68,21 @@ The following video provides a visual walkthrough of the options you can set in 
 
 {{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
 
-## Annotation and alert support
-
-Annotations and alerts are not currently supported in tables.
+{{< admonition type="note" >}}
+Annotations and alerts are not currently supported for tables.
+{{< /admonition >}}
 
 ## Sort column
 
 Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
+
+## Data set selector
+
+If the data queried contains multiple data sets, a table displays a drop-down list at the bottom, so you can select the data set you want to visualize.
+
+![Table visualization with multiple data sets](/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png)
 
 ## Panel options
 
@@ -156,6 +162,10 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 #### Gauge
 
 Cells can be displayed as a graphical gauge, with several different presentation types.
+
+{{< admonition type="note" >}}
+The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole data set. If you don't want the max/min values to be pulled from the whole data set, you can configure them for each column with field overrides.
+{{< /admonition >}}
 
 ##### Basic
 
