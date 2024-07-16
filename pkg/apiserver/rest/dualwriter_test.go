@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	// nolint:depguard
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 )
 
