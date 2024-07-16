@@ -82,42 +82,42 @@ def publish_image_public_step():
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def publish_image_steps():
-    """Generates the steps used for publising Docker images using grabpl.
-
-    Args:
-      docker_repo: the Docker image name.
-        It is combined with the 'grafana/' library prefix.
-
-    Returns:
-      List of Drone steps.
-    """
-    steps = [
-        identify_runner_step(),
-        download_grabpl_step(),
-        compile_build_cmd(),
-        fetch_images_step(),
-        publish_image_public_step(),
-        publish_images_step("release", "grafana-oss"),
-    ]
-
-    return steps
-
 def publish_image_pipelines_public():
     """Generates the pipeline used for publising public Docker images.
 
     Returns:
       Drone pipeline
     """
-    trigger = {
-        "event": ["promote"],
-        "target": ["public"],
-    }
     return [
         pipeline(
             name = "publish-docker-public",
-            trigger = trigger,
-            steps = publish_image_steps(),
+            trigger = {
+                "event": ["promote"],
+                "target": ["public"],
+            },
+            steps = [
+                identify_runner_step(),
+                download_grabpl_step(),
+                compile_build_cmd(),
+                fetch_images_step(),
+                publish_image_public_step(),
+                publish_images_step("release", "grafana-oss"),
+            ],
+            environment = {"EDITION": "oss"},
+        ),
+        pipeline(
+            name = "manually-publish-docker-public",
+            trigger = {
+                "event": ["promote"],
+                "target": ["publish-docker-public"],
+            },
+            steps = [
+                identify_runner_step(),
+                download_grabpl_step(),
+                compile_build_cmd(),
+                fetch_images_step(),
+                publish_image_public_step(),
+            ],
             environment = {"EDITION": "oss"},
         ),
     ]

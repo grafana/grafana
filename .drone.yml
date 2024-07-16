@@ -2925,6 +2925,100 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: manually-publish-docker-public
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.22.4-alpine
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition oss
+  depends_on:
+  - compile-build-cmd
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_grafanauploads
+  image: google/cloud-sdk:431.0.0
+  name: fetch-images
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - echo=
+  - if [[ -z ${DRY_RUN} ]];  then echo=echo; fi
+  - docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}
+  - $echo docker push grafana/grafana-image-tags:${TAG}-amd64
+  - $echo docker push grafana/grafana-image-tags:${TAG}-arm64
+  - $echo docker push grafana/grafana-image-tags:${TAG}-armv7
+  - $echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-amd64
+  - $echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-arm64
+  - $echo docker push grafana/grafana-image-tags:${TAG}-ubuntu-armv7
+  - $echo docker manifest create grafana/grafana:${TAG} grafana/grafana-image-tags:${TAG}-amd64
+    grafana/grafana-image-tags:${TAG}-arm64 grafana/grafana-image-tags:${TAG}-armv7
+  - $echo docker manifest create grafana/grafana:${TAG}-ubuntu grafana/grafana-image-tags:${TAG}-ubuntu-amd64
+    grafana/grafana-image-tags:${TAG}-ubuntu-arm64 grafana/grafana-image-tags:${TAG}-ubuntu-armv7
+  - $echo docker manifest push grafana/grafana:${TAG}
+  - $echo docker manifest push grafana/grafana:${TAG}-ubuntu
+  - if [[ -z ${LATEST} ]]; then $echo docker manifest create grafana/grafana:${TAG}
+    grafana/grafana-image-tags:${TAG}-amd64 grafana/grafana-image-tags:${TAG}-arm64
+    grafana/grafana-image-tags:${TAG}-armv7; $echo docker manifest create grafana/grafana:${TAG}-ubuntu
+    grafana/grafana-image-tags:${TAG}-ubuntu-amd64 grafana/grafana-image-tags:${TAG}-ubuntu-arm64
+    grafana/grafana-image-tags:${TAG}-ubuntu-armv7;fi
+  depends_on:
+  - fetch-images
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+  image: docker:27-cli
+  name: publish-images-grafana
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+  - promote
+  target:
+  - publish-docker-public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
 image_pull_secrets:
 - gcr
 - gar
@@ -5420,6 +5514,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1d6665b4081f85589ee387cd28d7d33407ba12dd6ca00dc1895c097a8ec5d5ab
+hmac: 90152f8b2489453a7dd3eb6bc361a0470c5d39706063e978f4dd2d0aa70e0193
 
 ...
