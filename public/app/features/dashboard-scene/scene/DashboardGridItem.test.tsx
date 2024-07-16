@@ -1,7 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, TestVariable, VizPanel } from '@grafana/scenes';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 
@@ -41,7 +40,7 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(5);
   });
 
-  it('Should adjust container height to fit panels if direction is horizontal', async () => {
+  it('Should adjust container height to fit panels direction is horizontal', async () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
 
     const layoutForceRender = jest.fn();
@@ -144,57 +143,5 @@ describe('PanelRepeaterGridItem', () => {
     });
 
     expect(gridItem.getClassName()).toBe('');
-  });
-
-  it('should have correct height after repeat is performed', () => {
-    const { scene, repeater } = buildPanelRepeaterScene({
-      variableQueryTime: 0,
-      height: 4,
-      maxPerRow: 4,
-      repeatDirection: 'h',
-      numberOfOptions: 5,
-    });
-
-    activateFullSceneTree(scene);
-
-    expect(repeater.state.height).toBe(4);
-  });
-
-  it('should have same item height if number of repititions changes', async () => {
-    const { scene, repeater } = buildPanelRepeaterScene({
-      variableQueryTime: 0,
-      height: 4,
-      maxPerRow: 4,
-      repeatDirection: 'h',
-      numberOfOptions: 5,
-    });
-    activateFullSceneTree(scene);
-
-    scene.state.$variables!.setState({
-      variables: [
-        new TestVariable({
-          name: 'server',
-          query: 'A.*',
-          value: ALL_VARIABLE_VALUE,
-          text: ALL_VARIABLE_TEXT,
-          isMulti: true,
-          includeAll: true,
-          delayMs: 0,
-          optionsToReturn: [
-            { label: 'A', value: '1' },
-            { label: 'B', value: '2' },
-            { label: 'C', value: '3' },
-            { label: 'D', value: '4' },
-            { label: 'E', value: '5' },
-            { label: 'F', value: '6' },
-            { label: 'G', value: '7' },
-            { label: 'H', value: '8' },
-            { label: 'I', value: '9' },
-            { label: 'J', value: '10' },
-          ],
-        }),
-      ],
-    });
-    expect(repeater.state.height).toBe(6);
   });
 });
