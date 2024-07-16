@@ -187,15 +187,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
-      "alertRule_other": "{{count}} äľęřŧ řūľę",
+      "alertRule_other": "{{count}} äľęřŧ řūľęş",
       "dashboard_one": "{{count}} đäşĥþőäřđ",
-      "dashboard_other": "{{count}} đäşĥþőäřđ",
+      "dashboard_other": "{{count}} đäşĥþőäřđş",
       "folder_one": "{{count}} ƒőľđęř",
-      "folder_other": "{{count}} ƒőľđęř",
+      "folder_other": "{{count}} ƒőľđęřş",
       "libraryPanel_one": "{{count}} ľįþřäřy päŉęľ",
-      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľ",
+      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľş",
       "total_one": "{{count}} įŧęm",
-      "total_other": "{{count}} įŧęm"
+      "total_other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
@@ -1731,7 +1731,7 @@
       "restore": "Ŗęşŧőřę"
     },
     "page": {
-      "no-deleted-dashboards": "Ÿőū ĥävęŉ'ŧ đęľęŧęđ äŉy đäşĥþőäřđş řęčęŉŧľy.",
+      "no-deleted-dashboards": "Ÿőū ĥävęŉ'ŧ đęľęŧęđ äŉy đäşĥþőäřđş řęčęŉŧľy. Ŵĥęŉ yőū đęľęŧę ä đäşĥþőäřđ, įŧ ŵįľľ äppęäř ĥęřę ƒőř 30 đäyş þęƒőřę þęįŉģ pęřmäŉęŉŧľy đęľęŧęđ. Ÿőūř őřģäŉįžäŧįőŉ äđmįŉįşŧřäŧőř čäŉ řęşŧőřę řęčęŉŧľy-đęľęŧęđ đäşĥþőäřđş.",
       "no-search-result": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
     },
     "permanently-delete-modal": {
