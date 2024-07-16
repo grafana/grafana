@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
+import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 
 import { InstallControlsWarning } from '../components/InstallControls';
@@ -34,6 +36,18 @@ export const PluginSubtitle = ({ plugin }: Props) => {
         </Alert>
       )}
       {plugin?.description && <div>{plugin?.description}</div>}
+      {!config.featureToggles.pluginsDetailsRightPanel && !!plugin?.details?.links?.length && (
+        <span>
+          {plugin.details.links.map((link, index) => (
+            <Fragment key={index}>
+              {index > 0 && ' | '}
+              <a href={link.url} className="external-link">
+                {link.name}
+              </a>
+            </Fragment>
+          ))}
+        </span>
+      )}
       {hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion) && (
         <InstallControlsWarning
           plugin={plugin}

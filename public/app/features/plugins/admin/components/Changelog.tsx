@@ -3,18 +3,16 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { CatalogPlugin } from '../types';
-
 interface Props {
-  plugin: CatalogPlugin;
+  sanitizedHTML: string;
 }
 
-export const Changelog = ({ plugin }: Props) => {
+export const Changelog = ({ sanitizedHTML }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div
-      dangerouslySetInnerHTML={{ __html: plugin.details?.changelog ?? 'No changelog was found' }}
+      dangerouslySetInnerHTML={{ __html: sanitizedHTML ?? 'No changelog was found' }}
       className={cx(styles.changelog)}
     ></div>
   );

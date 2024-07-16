@@ -75,31 +75,28 @@ export function PluginDetailsPage({
   }
 
   const conditionalProps = !config.featureToggles.pluginsDetailsRightPanel ? { info: info } : {};
-  const widthPage = !config.featureToggles.pluginsDetailsRightPanel ? '100%' : '80%';
 
   return (
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
-      <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
-        <div style={{ display: 'block', width: widthPage }}>
-          <Page.Contents>
-            <TabContent className={styles.tabContent}>
-              {plugin.angularDetected && (
-                <AngularDeprecationPluginNotice
-                  className={styles.alert}
-                  angularSupportEnabled={config?.angularSupportEnabled}
-                  pluginId={plugin.id}
-                  pluginType={plugin.type}
-                  showPluginDetailsLink={false}
-                  interactionElementId="plugin-details-page"
-                />
-              )}
-              <PluginDetailsSignature plugin={plugin} className={styles.alert} />
-              <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
-              <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
-              <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
-            </TabContent>
-          </Page.Contents>
-        </div>
+      <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }} grow={8}>
+        <Page.Contents>
+          <TabContent className={styles.tabContent}>
+            {plugin.angularDetected && (
+              <AngularDeprecationPluginNotice
+                className={styles.alert}
+                angularSupportEnabled={config?.angularSupportEnabled}
+                pluginId={plugin.id}
+                pluginType={plugin.type}
+                showPluginDetailsLink={false}
+                interactionElementId="plugin-details-page"
+              />
+            )}
+            <PluginDetailsSignature plugin={plugin} className={styles.alert} />
+            <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
+            <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
+            <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
+          </TabContent>
+        </Page.Contents>
         {config.featureToggles.pluginsDetailsRightPanel && <PluginDetailsRightPanel info={info} plugin={plugin} />}
       </Stack>
     </Page>

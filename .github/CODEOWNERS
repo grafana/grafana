@@ -341,6 +341,7 @@
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/PluginSignatureBadge/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/Sparkline/ @grafana/grafana-frontend-platform @grafana/app-o11y-visualizations
 /packages/grafana-ui/src/components/Table/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/SparklineCell.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations

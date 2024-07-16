@@ -61,12 +61,8 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     );
   }
 
-  if (pageId === PluginTabIds.CHANGELOG) {
-    return (
-      <div className={styles.container}>
-        <Changelog plugin={plugin} />
-      </div>
-    );
+  if (pageId === PluginTabIds.CHANGELOG && plugin?.details?.changelog) {
+    return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
   }
 
   if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
