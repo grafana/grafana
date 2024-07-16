@@ -1,6 +1,7 @@
 package receiver
 
 import (
+	"encoding/json"
 	"fmt"
 	"hash/fnv"
 
@@ -48,7 +49,7 @@ func convertToK8sResource(orgID int64, receiver definitions.GettableApiReceiver,
 			Uid:                   &integration.UID,
 			Type:                  integration.Type,
 			DisableResolveMessage: &integration.DisableResolveMessage,
-			Settings:              integration.Settings,
+			Settings:              json.RawMessage(integration.Settings),
 			SecureFields:          integration.SecureFields,
 		})
 	}
@@ -83,7 +84,7 @@ func convertToDomainModel(receiver *model.Receiver) (definitions.GettableApiRece
 		grafanaIntegration := definitions.GettableGrafanaReceiver{
 			Name:         receiver.Spec.Title,
 			Type:         integration.Type,
-			Settings:     integration.Settings,
+			Settings:     definitions.RawMessage(integration.Settings),
 			SecureFields: integration.SecureFields,
 			//Provenance:   "", //TODO: Convert provenance?
 		}

@@ -170,7 +170,7 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
   {
     parent: 'applications',
-    metadata: { name: 'applications.clusters' },
+    metadata: { name: 'applications-clusters' },
     spec: {
       nodeType: 'container',
       title: 'Clusters',
@@ -180,8 +180,8 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
     },
   },
   {
-    parent: 'applications.clusters',
-    metadata: { name: 'applications.clusters-slothClusterNorth' },
+    parent: 'applications-clusters',
+    metadata: { name: 'applications-clusters-slothClusterNorth' },
     spec: {
       nodeType: 'leaf',
       title: 'slothClusterNorth',
@@ -191,8 +191,8 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
     },
   },
   {
-    parent: 'applications.clusters',
-    metadata: { name: 'applications.clusters-slothClusterSouth' },
+    parent: 'applications-clusters',
+    metadata: { name: 'applications-clusters-slothClusterSouth' },
     spec: {
       nodeType: 'leaf',
       title: 'slothClusterSouth',
@@ -236,7 +236,7 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
   {
     parent: 'clusters',
-    metadata: { name: 'clusters.applications' },
+    metadata: { name: 'clusters-applications' },
     spec: {
       nodeType: 'container',
       title: 'Applications',
@@ -244,8 +244,8 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
     },
   },
   {
-    parent: 'clusters.applications',
-    metadata: { name: 'clusters.applications-slothPictureFactory' },
+    parent: 'clusters-applications',
+    metadata: { name: 'clusters-applications-slothPictureFactory' },
     spec: {
       nodeType: 'leaf',
       title: 'slothPictureFactory',
@@ -255,8 +255,8 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
     },
   },
   {
-    parent: 'clusters.applications',
-    metadata: { name: 'clusters.applications-slothVoteTracker' },
+    parent: 'clusters-applications',
+    metadata: { name: 'clusters-applications-slothVoteTracker' },
     spec: {
       nodeType: 'leaf',
       title: 'slothVoteTracker',
@@ -386,15 +386,15 @@ export const queryPersistedApplicationsSlothVoteTrackerTitle = () =>
 export const getPersistedApplicationsSlothVoteTrackerTitle = () =>
   screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
 export const queryResultApplicationsClustersTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications.clusters', 'result'));
+  screen.queryByTestId(selectors.tree.title('applications-clusters', 'result'));
 export const getResultApplicationsClustersSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications.clusters', 'result'));
+  screen.getByTestId(selectors.tree.select('applications-clusters', 'result'));
 export const getResultApplicationsClustersExpand = () =>
-  screen.getByTestId(selectors.tree.expand('applications.clusters', 'result'));
+  screen.getByTestId(selectors.tree.expand('applications-clusters', 'result'));
 export const getResultApplicationsClustersSlothClusterNorthSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterNorth', 'result'));
+  screen.getByTestId(selectors.tree.select('applications-clusters-slothClusterNorth', 'result'));
 export const getResultApplicationsClustersSlothClusterSouthSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterSouth', 'result'));
+  screen.getByTestId(selectors.tree.select('applications-clusters-slothClusterSouth', 'result'));
 
 export const getResultClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters', 'result'));
 export const getResultClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters', 'result'));

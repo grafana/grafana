@@ -167,7 +167,7 @@ func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.List
 		OrgID:    info.OrgID,
 		Limit:    int(req.Limit),
 		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		MinID:    token.id,
+		LastID:   token.id,
 		Labels:   req.Options.Labels,
 	}
 
@@ -258,7 +258,7 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 		OrgID:    info.OrgID,
 		Limit:    int(req.Limit),
 		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		MinID:    token.id,
+		LastID:   token.id,
 		UID:      req.Key.Name,
 	}
 	if req.ShowDeleted {

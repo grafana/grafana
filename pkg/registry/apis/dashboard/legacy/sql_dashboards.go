@@ -142,8 +142,8 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		if query.Version > 0 {
 			args = append(args, query.Version)
 			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version=$%d", sqlcmd, len(args))
-		} else if query.MinID > 0 {
-			args = append(args, query.MinID)
+		} else if query.LastID > 0 {
+			args = append(args, query.LastID)
 			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version<$%d", sqlcmd, len(args))
 		}
 
@@ -155,8 +155,8 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		if query.UID != "" {
 			args = append(args, query.UID)
 			sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-		} else if query.MinID > 0 {
-			args = append(args, query.MinID)
+		} else if query.LastID > 0 {
+			args = append(args, query.LastID)
 			sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
 		}
 		if query.GetTrash {

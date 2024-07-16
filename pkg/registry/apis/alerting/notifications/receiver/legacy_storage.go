@@ -93,9 +93,8 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	q := models.GetReceiverQuery{
+	q := models.GetReceiversQuery{
 		OrgID: info.OrgID,
-		Name:  uid, // TODO: Name/UID mapping or change signature of service.
 		//Decrypt: ctx.QueryBool("decrypt"), // TODO: Query params.
 	}
 
@@ -104,12 +103,18 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	res, err := s.service.GetReceiver(ctx, q, user)
+	res, err := s.service.GetReceivers(ctx, q, user)
 	if err != nil {
 		return nil, err
 	}
 
-	return convertToK8sResource(info.OrgID, res, s.namespacer)
+	for _, r := range res {
+		if getUID(r) == uid {
+			return convertToK8sResource(info.OrgID, r, s.namespacer)
+		}
+	}
+
+	return nil, errors.NewNotFound(resourceInfo.GroupResource(), uid)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -211,13 +216,9 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
 		version = *options.Preconditions.ResourceVersion
 	}
-	p, ok := old.(*notifications.Receiver)
-	if !ok {
-		return nil, false, fmt.Errorf("expected receiver but got %s", old.GetObjectKind().GroupVersionKind())
-	}
 
-	err = s.service.DeleteReceiver(ctx, p.Spec.Title, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                                // false - will be deleted async
+	err = s.service.DeleteReceiver(ctx, uid, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
+	return old, false, err                                                                                       // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

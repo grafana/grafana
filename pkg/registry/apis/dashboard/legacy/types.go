@@ -14,7 +14,10 @@ type DashboardQuery struct {
 	UID      string // to select a single dashboard
 	Limit    int
 	MaxBytes int
-	MinID    int64 // from continue token
+
+	// Included in the continue token
+	// This is the ID from the last dashboard sent in the previous page
+	LastID int64
 
 	// List dashboards with a deletion timestamp
 	GetTrash bool
