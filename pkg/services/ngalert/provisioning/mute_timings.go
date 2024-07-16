@@ -197,7 +197,8 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
 		return nil
 	}
-	if isMuteTimeInUse(name, []*definitions.Route{revision.cfg.AlertmanagerConfig.Route}) {
+
+	if isMuteTimeInUseInRoutes(name, revision.cfg.AlertmanagerConfig.Route) {
 		return ErrTimeIntervalInUse.Errorf("")
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
@@ -220,17 +221,15 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	})
 }
 
-func isMuteTimeInUse(name string, routes []*definitions.Route) bool {
-	if len(routes) == 0 {
+func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
+	if route == nil {
 		return false
 	}
-	for _, route := range routes {
-		for _, mtName := range route.MuteTimeIntervals {
-			if mtName == name {
-				return true
-			}
-		}
-		if isMuteTimeInUse(name, route.Routes) {
+	if slices.Contains(route.MuteTimeIntervals, name) {
+		return true
+	}
+	for _, route := range route.Routes {
+		if isMuteTimeInUseInRoutes(name, route) {
 			return true
 		}
 	}
