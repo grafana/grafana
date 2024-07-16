@@ -201,8 +201,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       options: prevOptions,
       fieldConfig: prevFieldConfig,
       pluginId: prevPluginId,
-      ...restOfOldState
-    } = sceneUtils.cloneSceneObjectState(this.state.panel.state);
+    } = this.state.panel.state;
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {
@@ -222,13 +221,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       newFieldConfig = restoreCustomOverrideRules(newFieldConfig, cachedFieldConfig);
     }
 
-    const newPanel = new VizPanel({
-      options: cachedOptions ?? {},
-      fieldConfig: newFieldConfig,
-      pluginId: pluginId,
-      ...restOfOldState,
-    });
-
     // When changing from non-data to data panel, we need to add a new data provider
     if (!this.state.panel.state.$data && !config.panels[pluginId].skipDataQuery) {
       let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
@@ -237,7 +229,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         ds = config.defaultDatasource;
       }
 
-      newPanel.setState({
+      this.state.panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
             datasource: {
@@ -250,26 +242,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
-    const newPlugin = newPanel.getPlugin();
-    const panel: PanelModel = {
-      title: newPanel.state.title,
-      options: newPanel.state.options,
-      fieldConfig: newPanel.state.fieldConfig,
-      id: 1,
-      type: pluginId,
-    };
-
-    const newOptions = newPlugin?.onPanelTypeChanged?.(panel, prevPluginId, prevOptions, prevFieldConfig);
-
-    if (newOptions) {
-      newPanel.onOptionsChange(newOptions, true, true);
-    }
-
-    if (newPlugin?.onPanelMigration) {
-      newPanel.setState({ pluginVersion: getPluginVersion(newPlugin) });
-    }
-
-    this.setState({ panel: newPanel });
+    this.state.panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
     this.loadDataSource();
   }
 
