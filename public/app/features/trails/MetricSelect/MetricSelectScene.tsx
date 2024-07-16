@@ -416,6 +416,18 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.buildLayout();
   };
 
+  public reportPrefixFilterInteraction = (isMenuOpen: boolean) => {
+    const trail = getTrailFor(this);
+    const { steps, currentStep } = trail.state.history.state;
+    const previousMetric = steps[currentStep]?.trailState.metric;
+    const isRelatedMetricSelector = previousMetric !== undefined;
+
+    reportExploreMetrics('prefix_filter_clicked', {
+      from: isRelatedMetricSelector ? 'related_metrics' : 'metric_list',
+      action: isMenuOpen ? 'open' : 'close',
+    });
+  };
+
   public onTogglePreviews = () => {
     this.setState({ showPreviews: !this.state.showPreviews });
     this.buildLayout();
@@ -480,6 +492,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
             <Select
               onChange={model.onPrefixFilterChange}
               value={metricPrefix}
+              onOpenMenu={() => model.reportPrefixFilterInteraction(true)}
+              onCloseMenu={() => model.reportPrefixFilterInteraction(false)}
               options={[
                 {
                   label: 'All',
