@@ -1508,6 +1508,14 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "info": "<0>{infoItem.label}: </0>",
+        "links": "<0>{link.name}</0>",
+        "reportAbuse": "<0>Report Abuse</0>",
+        "updatedAt": "<0>Last updated: </0> "
+      }
+    },
     "empty-state": {
       "message": "No plugins found"
     }
