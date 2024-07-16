@@ -591,7 +591,7 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 		for _, group := range body.Groups {
 			gr := group
 			toHashedGruopIdx := append([]byte(gr.Name), []byte(gr.FolderUID)...)
-			hash, err := fnv.New32().Write(toHashedGruopIdx)
+			hash, err := fnv.New64().Write(toHashedGruopIdx)
 			if err != nil {
 				resources = append(resources, hcl.Resource{
 					Type: "grafana_rule_group",
