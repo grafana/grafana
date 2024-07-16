@@ -39,7 +39,6 @@ func Test_NoopServiceDoesNothing(t *testing.T) {
 }
 
 func Test_CreateGetAndDeleteToken(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false)
 
 	createResp, err := s.CreateToken(context.Background())
@@ -62,7 +61,6 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 }
 
 func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, true)
 
 	createTokenResp, err := s.CreateToken(context.Background())
@@ -117,7 +115,6 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false).(*Service)
 
 	gmsClientMock := &gmsClientMock{}
@@ -293,7 +290,6 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 }
 
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false).(*Service)
 
 	gmsClientMock := &gmsClientMock{
@@ -474,7 +470,7 @@ func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudM
 	return nil, nil
 }
 
-func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.CloudMigrationSnapshot, _ int) (*cloudmigration.GetSnapshotStatusResponse, error) {
 	m.getStatusCalled++
 	return m.getSnapshotResponse, nil
 }

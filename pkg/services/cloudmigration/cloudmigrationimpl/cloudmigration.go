@@ -524,9 +524,11 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		return nil, fmt.Errorf("fetching session for uid %s: %w", sessionUid, err)
 	}
 
+	// Ask GMS for snapshot status while the source of truth is in the cloud
 	if snapshot.ShouldQueryGMS() {
-		// ask GMS for status if it's in the cloud
-		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot)
+		// Calculate offset based on how many results we currently have responses for
+		pending := snapshot.StatsRollup.CountsByStatus[cloudmigration.ItemStatusPending]
+		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot, snapshot.StatsRollup.Total-pending)
 		if err != nil {
 			return snapshot, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
 		}
