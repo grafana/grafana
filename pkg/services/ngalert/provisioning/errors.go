@@ -49,16 +49,21 @@ func MakeErrTimeIntervalInvalid(err error) error {
 	return ErrTimeIntervalInvalid.Build(data)
 }
 
-func MakeErrTimeIntervalInUse(usedInRoutes bool, rules []models.AlertRuleKey) error {
+func MakeErrTimeIntervalInUse(usedByRoutes bool, rules []models.AlertRuleKey) error {
 	uids := make([]string, 0, len(rules))
 	for _, key := range rules {
 		uids = append(uids, key.UID)
 	}
+	data := make(map[string]any, 2)
+	if len(uids) > 0 {
+		data["UsedByRules"] = uids
+	}
+	if usedByRoutes {
+		data["UsedByRoutes"] = true
+	}
+
 	return ErrTimeIntervalInUse.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"usedByRoutes": usedInRoutes,
-			"usedByRules":  uids,
-		},
-		Error: nil,
+		Public: data,
+		Error:  nil,
 	})
 }
