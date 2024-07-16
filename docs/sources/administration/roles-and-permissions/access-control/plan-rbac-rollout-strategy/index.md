@@ -183,13 +183,13 @@ By default, only a Grafana Server Admin can create and manage custom roles. If y
   ```bash
   # Fetch the role, modify it to add the desired permissions and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
-    -X GET http://localhost:3000/api/access-control/roles/basic_editor | \
+    -X GET '<grafana_url>/api/access-control/roles/basic_editor' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq '.permissions += [{"action": "roles:read", "scope": "roles:*"}, {"action": "roles:write", "scope": "permissions:type:delegate"}, {"action": "roles:delete", "scope": "permissions:type:delegate"}]' > /tmp/basic_editor.json
 
   # Update the role
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
-    -X PUT-d @/tmp/basic_editor.json http://localhost:3000/api/access-control/roles/basic_editor
+    -X PUT-d @/tmp/basic_editor.json '<grafana_url>/api/access-control/roles/basic_editor'
   ```
 
 - Or add the `fixed:roles:writer` role permissions to the `basic:editor` role using the `role > from` list of your provisioning file:
@@ -228,13 +228,13 @@ If you want your `Viewers` to create reports, [update the `Viewer` basic role pe
   ```bash
   # Fetch the role, modify it to add the desired permissions and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
-    -X GET http://localhost:3000/api/access-control/roles/basic_viewer | \
+    -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq '.permissions += [{"action": "reports:create"}, {"action": "reports:read", "scope": "reports:*"}, {"action": "reports:write", "scope": "reports:*"}, {"action": "reports:send", "scope": "reports:*"}]' > /tmp/basic_viewer.json
 
   # Update the role
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
-    -X PUT-d @/tmp/basic_viewer.json http://localhost:3000/api/access-control/roles/basic_viewer
+    -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
 - Or add the `fixed:reports:writer` role permissions to the `basic:viewer` role using the `role > from` list of your provisioning file:
@@ -274,13 +274,13 @@ There are two ways to achieve this:
   ```bash
   # Fetch the role, modify it to remove the undesired permissions and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
-    -X GET http://localhost:3000/api/access-control/roles/basic_grafana_admin | \
+    -X GET '<grafana_url>/api/access-control/roles/basic_grafana_admin' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "users:create")) | del(.permissions[] | select (.action == "org.users:add" and .scope == "users:*"))' > /tmp/basic_grafana_admin.json
 
   # Update the role
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
-    -X PUT-d @/tmp/basic_grafana_admin.json http://localhost:3000/api/access-control/roles/basic_grafana_admin
+    -X PUT-d @/tmp/basic_grafana_admin.json '<grafana_url>/api/access-control/roles/basic_grafana_admin'
   ```
 
 - Or use the `role > from` list and `permission > state` option of your provisioning file:
@@ -336,14 +336,14 @@ Here are two ways to achieve this:
   ```bash
   # Fetch the role, modify it to remove the undesired permissions, add the new permission and increment its version
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
-    -X GET http://localhost:3000/api/access-control/roles/basic_viewer | \
+    -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
     jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
     jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:*"))' | \
     jq '.permissions += [{"action": "plugins.app:access", "scope": "plugins:id:kentik-connect-app"}]' > /tmp/basic_viewer.json
 
   # Update the role
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
-    -X PUT-d @/tmp/basic_viewer.json http://localhost:3000/api/access-control/roles/basic_viewer
+    -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
 - Or use the `role > from` list and `permission > state` option of your provisioning file:
