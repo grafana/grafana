@@ -11,6 +11,8 @@ export type AlignItems =
   | 'self-start'
   | 'self-end';
 
+export type AlignSelf = 'auto' | 'flex-start' | 'flex-end' | 'center' | 'baseline' | 'stretch' | 'start' | 'end';
+
 export type JustifyContent =
   | 'flex-start'
   | 'flex-end'

@@ -68,7 +68,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           alignItems="stretch"
           boxShadow={elevated ? 'z3' : undefined}
         >
-          <Box paddingTop={1} paddingRight={2}>
+          <Box paddingRight={2} alignSelf="center">
             <div className={styles.icon}>
               <Icon size="xl" name={getIconFromSeverity(severity)} />
             </div>
@@ -150,6 +150,7 @@ const getStyles = (
         zIndex: -1,
       },
     }),
+    iconWrapper: css({ alignSelf: 'center',}),
     icon: css({
       color: color.text,
     }),
