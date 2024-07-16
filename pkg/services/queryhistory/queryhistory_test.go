@@ -193,7 +193,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 func testScenarioWithMixedQueriesInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
-	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
+	testScenario(t, desc, false, func(t *testing.T, sc scenarioContext) {
 		start := time.Now()
 		sc.service.now = func() time.Time { return start }
 		command1 := CreateQueryInQueryHistoryCommand{
