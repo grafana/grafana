@@ -1258,3 +1258,121 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		Cfg:           cfg.UnifiedAlerting,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        &logtest.Fake{},
+	}
+	generator := models.RuleGen
+	generator = generator.With(generator.WithIntervalMatching(store.Cfg.BaseInterval), generator.WithUniqueOrgID())
+
+	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
+		rule := createRule(t, store, generator)
+		firstNewRule := models.CopyRule(rule)
+		firstNewRule.Title = util.GenerateShortUID()
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *firstNewRule,
+		},
+		})
+		require.NoError(t, err)
+		firstNewRule.Version = firstNewRule.Version + 1
+		secondNewRule := models.CopyRule(firstNewRule)
+		secondNewRule.Title = util.GenerateShortUID()
+		err = store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: firstNewRule,
+			New:      *secondNewRule,
+		},
+		})
+		require.NoError(t, err)
+		titleMap := map[string]bool{
+			secondNewRule.Title: true,
+			rule.Title:          true,
+		}
+		rowsAffected, err := store.deleteOldAlertRuleVersions(context.Background(), rule.UID, rule.OrgID, 10)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), rowsAffected)
+
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			var alertRuleVersions []*models.AlertRuleVersion
+			_, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).OrderBy("id").Get(&alertRuleVersions)
+			if err != nil {
+				return err
+			}
+			require.NoError(t, err)
+			assert.Len(t, alertRuleVersions, 2)
+			for _, value := range alertRuleVersions {
+				assert.False(t, titleMap[value.Title])
+				titleMap[value.Title] = true
+			}
+			assert.Equal(t, true, titleMap[firstNewRule.Title])
+			assert.Equal(t, true, titleMap[secondNewRule.Title])
+			return err
+		})
+
+	})
+
+	t.Run("only oldest records surpassing the limit should be deleted", func(t *testing.T) {
+		rule := createRule(t, store, generator)
+		oldRule := models.CopyRule(rule)
+		oldRule.Title = "old-record"
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *oldRule,
+		}}) // first entry in `rule_version_history` table happens here
+		require.NoError(t, err)
+
+		rule.Version = rule.Version + 1
+		middleRule := models.CopyRule(rule)
+		middleRule.Title = "middle-record"
+		err = store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *middleRule,
+		}}) //second entry in `rule_version_history` table happens here
+		require.NoError(t, err)
+
+		rule.Version = rule.Version + 1
+		newerRule := models.CopyRule(rule)
+		newerRule.Title = "newer-record"
+		err = store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *newerRule,
+		}}) //second entry in `rule_version_history` table happens here
+		require.NoError(t, err)
+
+		// only the `old-record` should be deleted since limit is set to 1 and there are total 2 records
+		rowsAffected, err := store.deleteOldAlertRuleVersions(context.Background(), rule.UID, rule.OrgID, 1)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rowsAffected)
+
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			var alertRuleVersions []*models.AlertRuleVersion
+			_, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).OrderBy("id").Get(&alertRuleVersions)
+			if err != nil {
+				return err
+			}
+			require.NoError(t, err)
+			assert.Len(t, alertRuleVersions, 1)
+			assert.Equal(t, "newer-record", alertRuleVersions[0].Title)
+			return err
+		})
+	})
+
+	t.Run("limit set to 0 should fail", func(t *testing.T) {
+		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, 0)
+		require.Error(t, err)
+	})
+	t.Run("limit set to negative should fail", func(t *testing.T) {
+		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, -1)
+		require.Error(t, err)
+	})
+}
