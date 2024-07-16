@@ -8,33 +8,26 @@ package file
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync/atomic"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// Copied from https://github.com/grafana/grafana/blob/main/pkg/storage/unified/resource/validation.go#L11
-var validNameCharPattern = `a-zA-Z0-9\-\_`
-var validNamePattern = regexp.MustCompile(`^[` + validNameCharPattern + `]*$`).MatchString
-
-func (s *Storage) filePath(key string) (string, error) {
-	parts := strings.Split(key, "/")
-	for _, part := range parts {
-		if len(part) > 64 {
-			return "", fmt.Errorf("invalid key (too log)")
-		}
-	}
-	if !validNamePattern(parts[len(parts)-1]) {
-		return "", fmt.Errorf("name includes invalid characters // %s", key)
-	}
-
+func (s *Storage) filePath(key string) string {
+	// Replace backslashes with underscores to avoid creating bogus subdirectories
+	key = strings.Replace(key, "\\", "_", -1)
 	fileName := filepath.Join(s.root, filepath.Clean(key+".json"))
-	return fileName, nil
+	return fileName
+}
+
+// this is for constructing dirPath in a sanitized way provided you have
+// already calculated the key. In order to go in the other direction, from a file path
+// key to its dir, use the go standard library: filepath.Dir
+func (s *Storage) dirPath(key string) string {
+	return dirPath(s.root, key)
 }
 
 func writeFile(codec runtime.Codec, path string, obj runtime.Object) error {
@@ -97,6 +90,13 @@ func deleteFile(path string) error {
 func exists(filepath string) bool {
 	_, err := os.Stat(filepath)
 	return err == nil
+}
+
+func dirPath(root string, key string) string {
+	// Replace backslashes with underscores to avoid creating bogus subdirectories
+	key = strings.Replace(key, "\\", "_", -1)
+	dirName := filepath.Join(root, filepath.Clean(key))
+	return dirName
 }
 
 func ensureDir(dirname string) error {
