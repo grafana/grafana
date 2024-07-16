@@ -2,11 +2,12 @@ import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneObject } from '@grafana/scenes';
-import { Menu } from '@grafana/ui';
+import { IconName, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { ShareDrawerMenuItem } from '../ShareButton/ShareMenu';
+import { DashboardInteractions } from '../../utils/interactions';
 import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
 import { SceneShareDrawerState } from '../types';
 
@@ -16,9 +17,19 @@ const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportBu
 
 type CustomDashboardDrawer = new (...args: SceneShareDrawerState[]) => SceneObject;
 
-const customShareDrawerItem: ShareDrawerMenuItem[] = [];
+export interface ExportDrawerMenuItem {
+  shareId: string;
+  testId: string;
+  label: string;
+  description?: string;
+  icon: IconName;
+  renderCondition: boolean;
+  onClick: (d: DashboardScene) => void;
+}
 
-export function addDashboardExportDrawerItem(item: ShareDrawerMenuItem) {
+const customShareDrawerItem: ExportDrawerMenuItem[] = [];
+
+export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
   customShareDrawerItem.push(item);
 }
 
@@ -36,11 +47,12 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
   );
 
   const buildMenuItems = useCallback(() => {
-    const menuItems: ShareDrawerMenuItem[] = [];
+    const menuItems: ExportDrawerMenuItem[] = [];
 
     customShareDrawerItem.forEach((d) => menuItems.push(d));
 
     menuItems.push({
+      shareId: shareDashboardType.export,
       testId: newExportButtonSelector.exportAsJson,
       icon: 'arrow',
       label: t('share-dashboard.menu.export-json-title', 'Export as JSON'),
@@ -51,6 +63,15 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
     return menuItems.filter((item) => item.renderCondition);
   }, [onMenuItemClick]);
 
+  const onClick = (item: ExportDrawerMenuItem) => {
+    DashboardInteractions.sharingCategoryClicked({
+      item: item.shareId,
+      shareResource: getTrackingSource(),
+    });
+
+    item.onClick(dashboard);
+  };
+
   return (
     <Menu data-testid={newExportButtonSelector.container}>
       {buildMenuItems().map((item) => (
@@ -60,7 +81,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
           label={item.label}
           icon={item.icon}
           description={item.description}
-          onClick={() => item.onClick(dashboard)}
+          onClick={() => onClick(item)}
         />
       ))}
     </Menu>
