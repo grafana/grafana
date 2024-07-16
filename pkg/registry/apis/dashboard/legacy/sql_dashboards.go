@@ -93,7 +93,7 @@ const selector = `SELECT
 const history = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid, dashboard.folder_uid,
-	dashboard_version.created,CreatedUSER.uid as created_by,
+	dashboard.created,CreatedUSER.uid as created_by,
 	dashboard_version.created,CreatedUSER.uid as updated_by,
 	NULL, plugin_id,
 	dashboard_provisioning.name as origin_name,
@@ -104,7 +104,8 @@ const history = `SELECT
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
   LEFT OUTER JOIN dashboard_version  ON dashboard.id = dashboard_version.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard_version.created_by = CreatedUSER.id
+  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
+  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard_version.created_by = UpdatedUSER.id
   WHERE dashboard.is_folder = false`
 
 func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, int, error) {
@@ -167,8 +168,6 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		args = append(args, (limit + 2)) // add more so we can include a next token
 		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc LIMIT $%d", sqlcmd, len(args))
 	}
-
-	fmt.Printf("%s // %v\n", sqlcmd, args)
 
 	rows, err := a.doQuery(ctx, sqlcmd, args...)
 	if err != nil {
