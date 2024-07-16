@@ -34,8 +34,8 @@ export const PluginActions = ({ plugin }: Props) => {
       ? PluginStatus.UPDATE
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
-  const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || plugin.isProvisioned ||
-    !isInstallControlsEnabled();
+  const isInstallControlsDisabled =
+    plugin.isCore || plugin.isDisabled || plugin.isProvisioned || !isInstallControlsEnabled();
 
   return (
     <VerticalGroup>
