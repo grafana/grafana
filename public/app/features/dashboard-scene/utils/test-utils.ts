@@ -15,7 +15,6 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 import { DashboardDTO } from 'app/types';
 
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
@@ -105,7 +104,7 @@ interface SceneOptions {
   useRowRepeater?: boolean;
 }
 
-export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
+export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel) {
   const defaults = { usePanelRepeater: true, ...options };
 
   const withRepeat = new DashboardGridItem({

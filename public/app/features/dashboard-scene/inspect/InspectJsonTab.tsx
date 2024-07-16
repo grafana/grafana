@@ -27,10 +27,15 @@ import { reportPanelInspectInteraction } from 'app/features/search/page/reportin
 
 import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isLibraryPanel,
+} from '../utils/utils';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -142,7 +147,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     const panel = this.state.panelRef.resolve();
 
     // Library panels are not editable from the inspect
-    if (panel.parent instanceof LibraryVizPanel) {
+    if (isLibraryPanel(panel)) {
       return false;
     }
 
@@ -206,11 +211,11 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
     case 'panel-json': {
       reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
 
-      const isInspectingLibraryPanel = panel.parent instanceof LibraryVizPanel;
-      const gridItem = isInspectingLibraryPanel ? panel.parent.parent : panel.parent;
+      const isInspectingLibraryPanel = isLibraryPanel(panel);
+      const gridItem = panel.parent;
 
       if (isInspectingLibraryPanel) {
-        objToStringify = libraryPanelChildToLegacyRepresentation(panel);
+        objToStringify = libraryPanelToLegacyRepresentation(panel);
         break;
       }
 
@@ -256,19 +261,20 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
 /**
  *
- * @param panel Must be child of a LibraryVizPanel that is in turn the child of a DashboardGridItem
+ * @param panel Must hold a LibraryPanel behavior
  * @returns object representation of the legacy library panel structure.
  */
-function libraryPanelChildToLegacyRepresentation(panel: VizPanel<{}, {}>) {
-  if (!(panel.parent instanceof LibraryVizPanel)) {
-    throw 'Panel not child of LibraryVizPanel';
+function libraryPanelToLegacyRepresentation(panel: VizPanel<{}, {}>) {
+  if (!isLibraryPanel(panel)) {
+    throw 'Panel not a library panel';
   }
 
-  if (!(panel.parent.parent instanceof DashboardGridItem)) {
+  const gridItem = panel.parent;
+
+  if (!(gridItem instanceof DashboardGridItem)) {
     throw 'LibraryPanel not child of DashboardGridItem';
   }
 
-  const gridItem = panel.parent.parent;
   const gridPos = {
     x: gridItem.state.x || 0,
     y: gridItem.state.y || 0,
@@ -282,13 +288,20 @@ function libraryPanelChildToLegacyRepresentation(panel: VizPanel<{}, {}>) {
 }
 
 function vizPanelToLibraryPanel(panel: VizPanel): LibraryPanel {
-  if (!(panel.parent instanceof LibraryVizPanel)) {
-    throw new Error('Panel not a child of LibraryVizPanel');
+  if (!isLibraryPanel(panel)) {
+    throw new Error('Panel not a Library panel');
   }
-  if (!panel.parent.state._loadedPanel) {
+
+  const libraryPanel = getLibraryPanelBehavior(panel);
+
+  if (!libraryPanel) {
+    throw new Error('Library panel behavior not found');
+  }
+
+  if (!libraryPanel.state._loadedPanel) {
     throw new Error('Library panel not loaded');
   }
-  return panel.parent.state._loadedPanel;
+  return libraryPanel.state._loadedPanel;
 }
 
 function hasGridPosChanged(a: SceneGridItemStateLike, b: SceneGridItemStateLike) {

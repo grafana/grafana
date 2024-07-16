@@ -61,6 +61,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
     let parentLibPanelCleanUp: undefined | CancelActivationHandler;
 
+    //TODO V
     if (!sourcePanelQueryRunner) {
       if (!(panel.parent instanceof LibraryVizPanel)) {
         throw new Error('Could not find SceneQueryRunner for panel');

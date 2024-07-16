@@ -24,10 +24,9 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 
@@ -39,7 +38,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
-    const parent = panel.parent;
     const plugin = panel.getPlugin();
 
     const items: PanelMenuItem[] = [];
@@ -111,14 +109,14 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     }
 
     if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
-      if (parent instanceof LibraryVizPanel) {
+      if (isLibraryPanel(panel)) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
           onClick: () => {
             DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
             dashboard.showModal(
               new UnlinkLibraryPanelModal({
-                panelRef: parent.getRef(),
+                panelRef: panel.getRef(),
               })
             );
           },
@@ -128,7 +126,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
           onClick: () => {
             DashboardInteractions.panelMenuItemClicked('replaceLibraryPanel');
-            dashboard.onShowAddLibraryPanelDrawer(parent.getRef());
+            dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
           },
         });
       } else {

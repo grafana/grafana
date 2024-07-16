@@ -34,11 +34,10 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
@@ -140,22 +139,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   return sortedDeepCloneWithoutNulls(dashboard);
 }
 
-export function libraryVizPanelToPanel(libPanel: LibraryVizPanel, gridPos: GridPos): Panel {
-  if (!libPanel.state.panel) {
-    throw new Error('Library panel has no panel');
-  }
-
-  return {
-    id: getPanelIdForVizPanel(libPanel.state.panel),
-    title: libPanel.state.title,
-    gridPos: gridPos,
-    libraryPanel: {
-      name: libPanel.state.name,
-      uid: libPanel.state.uid,
-    },
-  } as Panel;
-}
-
 export function gridItemToPanel(
   gridItem: DashboardGridItem,
   sceneState?: DashboardSceneState,
@@ -166,16 +149,6 @@ export function gridItemToPanel(
     y = 0,
     w = 0,
     h = 0;
-
-  // Handle library panels, early exit
-  if (gridItem.state.body instanceof LibraryVizPanel) {
-    x = gridItem.state.x ?? 0;
-    y = gridItem.state.y ?? 0;
-    w = gridItem.state.width ?? 0;
-    h = gridItem.state.height ?? 0;
-
-    return libraryVizPanelToPanel(gridItem.state.body, { x, y, w, h });
-  }
 
   let gridItem_ = gridItem;
 
@@ -217,18 +190,37 @@ export function vizPanelToPanel(
   isSnapshot = false,
   gridItem?: SceneGridItemLike
 ) {
-  const panel: Panel = {
-    id: getPanelIdForVizPanel(vizPanel),
-    type: vizPanel.state.pluginId,
-    title: vizPanel.state.title,
-    description: vizPanel.state.description ?? undefined,
-    gridPos,
-    fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
-    transformations: [],
-    transparent: vizPanel.state.displayMode === 'transparent',
-    pluginVersion: vizPanel.state.pluginVersion,
-    ...vizPanelDataToPanel(vizPanel, isSnapshot),
-  };
+  let panel: Panel;
+
+  if (isLibraryPanel(vizPanel)) {
+    const libPanel = getLibraryPanelBehavior(vizPanel);
+
+    panel = {
+      id: getPanelIdForVizPanel(vizPanel),
+      type: vizPanel.state.pluginId,
+      title: vizPanel.state.title,
+      gridPos: gridPos ?? { x: 0, y: 0, w: 0, h: 0 },
+      libraryPanel: {
+        name: libPanel!.state.name,
+        uid: libPanel!.state.uid,
+      },
+    };
+
+    return panel;
+  } else {
+    panel = {
+      id: getPanelIdForVizPanel(vizPanel),
+      type: vizPanel.state.pluginId,
+      title: vizPanel.state.title,
+      description: vizPanel.state.description ?? undefined,
+      gridPos,
+      fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
+      transformations: [],
+      transparent: vizPanel.state.displayMode === 'transparent',
+      pluginVersion: vizPanel.state.pluginVersion,
+      ...vizPanelDataToPanel(vizPanel, isSnapshot),
+    };
+  }
 
   if (vizPanel.state.options) {
     const { angularOptions, ...rest } = vizPanel.state.options as any;
@@ -342,9 +334,10 @@ export function panelRepeaterToPanels(
   if (!isSnapshot) {
     return [gridItemToPanel(repeater, sceneState)];
   } else {
-    if (repeater.state.body instanceof LibraryVizPanel) {
+    // return early if the repeated panel is a library panel
+    if (repeater.state.body instanceof VizPanel && isLibraryPanel(repeater.state.body)) {
       const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
-      return [libraryVizPanelToPanel(repeater.state.body, { x, y, w, h })];
+      return [vizPanelToPanel(repeater.state.body, { x, y, w, h }, isSnapshot)];
     }
 
     if (repeater.state.repeatedPanels) {

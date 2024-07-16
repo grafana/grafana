@@ -19,7 +19,6 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -54,6 +53,8 @@ export class DashboardSceneChangeTracker {
     }
     // VizPanelManager includes the repeat configuration
     if (payload.changedObject instanceof VizPanelManager) {
+      console.log(payload);
+
       if (
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeat') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeatDirection') ||
@@ -76,11 +77,6 @@ export class DashboardSceneChangeTracker {
     }
     if (payload.changedObject instanceof VizPanelLinks) {
       return true;
-    }
-    if (payload.changedObject instanceof LibraryVizPanel) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
-        return true;
-      }
     }
     if (payload.changedObject instanceof SceneRefreshPicker) {
       if (

@@ -16,9 +16,8 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene } from '../../scene/DashboardScene';
-import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
 
 import { Randomize, randomizeData } from './randomizer';
 
@@ -64,11 +63,10 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
 
 export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRange: TimeRange) {
   let saveModel: ReturnType<typeof gridItemToPanel> = { type: '' };
-  const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
-  const gridItem = (isLibraryPanel ? panel.parent.parent : panel.parent) as DashboardGridItem;
+  const gridItem = panel.parent as DashboardGridItem;
   const scene = panel.getRoot() as DashboardScene;
 
-  if (isLibraryPanel) {
+  if (isLibraryPanel(panel)) {
     saveModel = {
       ...gridItemToPanel(gridItem),
       ...vizPanelToPanel(panel),
@@ -78,7 +76,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     // we want the debug dashboard to include the panel with any changes that were made while
     // in panel edit mode.
     const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
-    const dashGridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
+    const dashGridItem = sourcePanel.parent;
     if (dashGridItem instanceof DashboardGridItem) {
       saveModel = {
         ...gridItemToPanel(dashGridItem),

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { PanelData } from '@grafana/data';
+import { VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import {
@@ -9,7 +10,8 @@ import {
   getVisualizationOptions2,
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { VizPanelManager } from './VizPanelManager';
 import { getPanelFrameCategory2 } from './getPanelFrameOptions';
@@ -49,8 +51,14 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
   }, [panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
-    if (parent instanceof LibraryVizPanel) {
-      return getLibraryVizPanelOptionsCategory(parent);
+    if (parent instanceof VizPanel && isLibraryPanel(parent)) {
+      const behavior = getLibraryPanelBehavior(parent);
+
+      if (!(behavior instanceof LibraryPanelBehavior)) {
+        return;
+      }
+
+      return getLibraryVizPanelOptionsCategory(behavior);
     }
     return;
   }, [parent]);

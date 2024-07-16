@@ -12,7 +12,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene } from '../../scene/DashboardScene';
-import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
 
 export const getUnsupportedDashboardDatasources = async (types: string[]): Promise<string[]> => {
   let unsupportedDS = new Set<string>();
@@ -64,12 +63,10 @@ function rowTypes(gridRow: SceneGridRow) {
 }
 
 function panelDatasourceTypes(gridItem: SceneGridItemLike) {
-  let vizPanel: VizPanel | LibraryVizPanel | undefined;
+  let vizPanel: VizPanel | undefined;
 
   if (gridItem instanceof DashboardGridItem) {
-    if (gridItem.state.body instanceof LibraryVizPanel) {
-      vizPanel = gridItem.state.body.state.panel;
-    } else if (gridItem.state.body instanceof VizPanel) {
+    if (gridItem.state.body instanceof VizPanel) {
       vizPanel = gridItem.state.body;
     } else {
       throw new Error('DashboardGridItem body expected to be VizPanel');

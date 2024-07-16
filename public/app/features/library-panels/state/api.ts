@@ -1,10 +1,12 @@
 import { lastValueFrom } from 'rxjs';
 
-import { defaultDashboard } from '@grafana/schema';
+import { VizPanel } from '@grafana/scenes';
+import { LibraryPanel, defaultDashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { VizPanelManager } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
-import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
+import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { DashboardSearchItem } from '../../search/types';
@@ -137,13 +139,20 @@ export async function getConnectedDashboards(uid: string): Promise<DashboardSear
   return searchHits;
 }
 
-export function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
-  const { panel, uid, name, _loadedPanel } = libraryPanel.state;
+export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
+  const libraryPanelBehavior = getLibraryPanelBehavior(vizPanel);
+  console.log(vizPanel, libraryPanelBehavior);
 
-  const gridItem = libraryPanel.parent;
+  const { uid, name, _loadedPanel } = libraryPanelBehavior!.state;
+
+  let gridItem = vizPanel.parent;
+
+  if (gridItem instanceof VizPanelManager) {
+    gridItem = gridItem.state.sourcePanel.resolve().parent as DashboardGridItem;
+  }
 
   if (!gridItem || !(gridItem instanceof DashboardGridItem)) {
-    throw new Error('LibraryVizPanel must be a child of DashboardGridItem');
+    throw new Error('Trying to save a library panel that does not have a DashboardGridItem parent');
   }
 
   const saveModel = {
@@ -151,8 +160,9 @@ export function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
     folderUID: _loadedPanel?.folderUid,
     name,
     version: _loadedPanel?.version || 0,
+    type: vizPanel.state.pluginId,
     model: vizPanelToPanel(
-      panel!,
+      vizPanel,
       {
         x: gridItem.state.x ?? 0,
         y: gridItem.state.y ?? 0,
@@ -167,9 +177,10 @@ export function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
   return saveModel;
 }
 
-export async function updateLibraryVizPanel(libraryPanel: LibraryVizPanel): Promise<LibraryElementDTO> {
-  const { uid, folderUID, name, model, version, kind } = libraryVizPanelToSaveModel(libraryPanel);
+export async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<LibraryPanel> {
+  const { uid, folderUID, name, model, version, kind } = libraryVizPanelToSaveModel(vizPanel);
 
+  console.log('updateLibraryVizPanel', model);
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
     folderUID,
     name,

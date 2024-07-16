@@ -5,7 +5,6 @@ import { config, locationService } from '@grafana/runtime';
 import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -106,15 +105,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const panelManager = this.state.vizManager;
     const sourcePanel = panelManager.state.sourcePanel.resolve();
-    const sourcePanelParent = sourcePanel!.parent;
-    const isLibraryPanel = sourcePanelParent instanceof LibraryVizPanel;
-
-    const gridItem = isLibraryPanel ? sourcePanelParent.parent : sourcePanelParent;
-
-    if (isLibraryPanel) {
-      // Library panels handled separately
-      return;
-    }
+    const gridItem = sourcePanel!.parent;
 
     if (!(gridItem instanceof DashboardGridItem)) {
       console.error('Unsupported scene object type');

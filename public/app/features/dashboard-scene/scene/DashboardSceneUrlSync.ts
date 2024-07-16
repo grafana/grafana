@@ -16,10 +16,16 @@ import { KioskMode } from 'app/types';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanel, isPanelClone } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  isLibraryPanel,
+  isPanelClone,
+} from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -74,7 +80,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (getLibraryPanel(panel)) {
+      if (isLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => {
           if (p.state.key === undefined) {
             // Inspect drawer require a panel key to be set
@@ -113,7 +119,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (getLibraryPanel(panel)) {
+      if (isLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => this._buildLibraryPanelViewScene(p));
         return;
       }
@@ -141,7 +147,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       if (!isEditing) {
         this._scene.onEnterEditMode();
       }
-      if (getLibraryPanel(panel)) {
+      if (isLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => {
           this._scene.setState({ editPanel: buildPanelEditScene(p) });
         });
@@ -179,17 +185,21 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   private _handleLibraryPanel(vizPanel: VizPanel, cb: (p: VizPanel) => void): void {
-    if (!(vizPanel.parent instanceof LibraryVizPanel)) {
-      throw new Error('Panel is not a child of a LibraryVizPanel');
+    const libraryPanel = getLibraryPanelBehavior(vizPanel);
+
+    if (!(libraryPanel instanceof LibraryPanelBehavior)) {
+      throw new Error('Panel is not a library panel');
     }
-    const libraryPanel = vizPanel.parent;
+
     if (libraryPanel.state.isLoaded) {
       cb(vizPanel);
     } else {
-      libraryPanel.subscribeToState((n) => {
-        cb(n.panel!);
-      });
-      libraryPanel.activate();
+      console.log('TODO V 3');
+      //TODO V
+      // libraryPanel.subscribeToState((n) => {
+      //   cb(n.parent!);
+      // });
+      // libraryPanel.activate();
     }
   }
 

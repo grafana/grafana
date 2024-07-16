@@ -7,7 +7,7 @@ import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
-import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
@@ -61,7 +61,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
   const { sourcePanel } = vizManager.useState();
-  const libraryPanel = getLibraryPanel(sourcePanel.resolve());
+  const libraryPanel = getLibraryPanelBehavior(sourcePanel.resolve());
   const { controls, scopes } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
