@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash/fnv"
+	"slices"
 	"unsafe"
 
 	"github.com/prometheus/alertmanager/config"
@@ -69,9 +70,9 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, or
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	mt, _, err := getMuteTiming(rev, name)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+	mt, idx := getMuteTiming(rev, name)
+	if idx == -1 {
+		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
 
 	result := definitions.MuteTimeInterval{
@@ -98,13 +99,9 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
-		revision.cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{}
-	}
-	for _, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		if mt.Name == existing.Name {
-			return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
-		}
+	_, idx := getMuteTiming(revision, mt.Name)
+	if idx != -1 {
+		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(revision.cfg.AlertmanagerConfig.MuteTimeIntervals, mt.MuteTimeInterval)
 
@@ -148,9 +145,9 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, nil
 	}
 
-	old, idx, err := getMuteTiming(revision, mt.Name)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+	old, idx := getMuteTiming(revision, mt.Name)
+	if idx == -1 {
+		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
 
 	err = svc.checkOptimisticConcurrency(old, models.Provenance(mt.Provenance), mt.Version, "update")
@@ -236,16 +233,14 @@ func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
 	return false
 }
 
-func getMuteTiming(rev *cfgRevision, name string) (config.MuteTimeInterval, int, error) {
-	if rev.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
-		return config.MuteTimeInterval{}, -1, ErrTimeIntervalNotFound.Errorf("")
+func getMuteTiming(rev *cfgRevision, name string) (config.MuteTimeInterval, int) {
+	idx := slices.IndexFunc(rev.cfg.AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
+		return interval.Name == name
+	})
+	if idx == -1 {
+		return config.MuteTimeInterval{}, idx
 	}
-	for idx, mt := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		if mt.Name == name {
-			return mt, idx, nil
-		}
-	}
-	return config.MuteTimeInterval{}, -1, ErrTimeIntervalNotFound.Errorf("")
+	return rev.cfg.AlertmanagerConfig.MuteTimeIntervals[idx], idx
 }
 
 func calculateMuteTimeIntervalFingerprint(interval config.MuteTimeInterval) string {
