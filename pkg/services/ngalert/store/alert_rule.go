@@ -298,7 +298,7 @@ func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string
 			return err
 		}
 		if !ok {
-			// No alert rule versions exist. Nothing to clean up.
+			// No alert rule versions past the limit exist. Nothing to clean up.
 			affectedRows = 0
 			return nil
 		}
@@ -400,7 +400,7 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, _ identity.Requester) (int64, error) {
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
