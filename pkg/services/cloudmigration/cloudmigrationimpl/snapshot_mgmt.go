@@ -242,7 +242,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 }
 
 // asynchronous process for and updating the snapshot status
-func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot) (err error) {
+func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot, uploadUrl string) (err error) {
 	// TODO -- make sure we can only upload one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
@@ -281,7 +281,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		for _, fileName := range fileNames {
 			filePath := filepath.Join(snapshotMeta.LocalDir, fileName)
 			key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
-			if err := s.uploadUsingPresignedURL(ctx, snapshotMeta.UploadURL, key, filePath); err != nil {
+			if err := s.uploadUsingPresignedURL(ctx, uploadUrl, key, filePath); err != nil {
 				return fmt.Errorf("uploading snapshot file using presigned url: %w", err)
 			}
 		}
@@ -293,7 +293,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		return fmt.Errorf("seeking to beginning of index file: %w", err)
 	}
 
-	if err := s.objectStorage.PresignedURLUpload(ctx, snapshotMeta.UploadURL, key, indexFile); err != nil {
+	if err := s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, indexFile); err != nil {
 		return fmt.Errorf("uploading file using presigned url: %w", err)
 	}
 
