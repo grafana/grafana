@@ -343,6 +343,7 @@ The Night / Day layer displays night and day regions based on the current time r
 
 ### Options
 
+- **Data** configures the data set for the layer. For more information check [Data](#data).
 - **Show** toggles the time source from panel time range.
 - **Night region color** picks the color for the night region.
 - **Display sun** toggles the sun icon.
