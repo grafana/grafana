@@ -34,11 +34,6 @@ const AlertRuleMaxTitleLength = 190
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
 
-// RuleVersionRecordLimits defines the limit of how many alert rule versions
-// should be stored in the database for each alert_rule in an organization including the current one.
-// Has to be > 0
-const RuleVersionRecordLimits = 100
-
 var (
 	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
 )
@@ -275,7 +270,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 
 			for _, rule := range ruleVersions {
 				// delete old versions of alert rule
-				_, err = st.deleteOldAlertRuleVersions(ctx, rule.RuleUID, rule.RuleOrgID, RuleVersionRecordLimits)
+				_, err = st.deleteOldAlertRuleVersions(ctx, rule.RuleUID, rule.RuleOrgID, st.Cfg.RuleVersionRecordLimit)
 				if err != nil {
 					st.Logger.Warn("Failed to delete old alert rule versions", "org", rule.RuleOrgID, "rule", rule.RuleUID, "error", err)
 				}
@@ -286,7 +281,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 	})
 }
 
-func (st *DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
+func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
 	}

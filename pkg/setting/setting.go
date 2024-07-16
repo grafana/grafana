@@ -507,10 +507,11 @@ type Cfg struct {
 	FeatureManagement FeatureMgmtSettings
 
 	// Alerting
-	AlertingEvaluationTimeout   time.Duration
-	AlertingNotificationTimeout time.Duration
-	AlertingMaxAttempts         int
-	AlertingMinInterval         int64
+	AlertingEvaluationTimeout      time.Duration
+	AlertingNotificationTimeout    time.Duration
+	AlertingMaxAttempts            int
+	AlertingMinInterval            int64
+	AlertingRuleVersionRecordLimit int
 
 	// Explore UI
 	ExploreEnabled bool

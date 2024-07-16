@@ -1137,7 +1137,9 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second,
+	}
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore:      sqlStore,
@@ -1149,6 +1151,11 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	generator = generator.With(generator.WithIntervalMatching(store.Cfg.BaseInterval), generator.WithUniqueOrgID())
 
 	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
+		alertingCfgSnapshot := cfg.UnifiedAlerting
+		defer func() {
+			cfg.UnifiedAlerting = alertingCfgSnapshot
+		}()
+		cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: alertingCfgSnapshot.BaseInterval, RuleVersionRecordLimit: 10}
 		rule := createRule(t, store, generator)
 		firstNewRule := models.CopyRule(rule)
 		firstNewRule.Title = util.GenerateShortUID()
@@ -1171,9 +1178,6 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 			secondNewRule.Title: true,
 			rule.Title:          true,
 		}
-		rowsAffected, err := store.deleteOldAlertRuleVersions(context.Background(), rule.UID, rule.OrgID, 10)
-		require.NoError(t, err)
-		require.Equal(t, int64(0), rowsAffected)
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			var alertRuleVersions []*models.AlertRuleVersion
@@ -1195,6 +1199,11 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	})
 
 	t.Run("only oldest records surpassing the limit should be deleted", func(t *testing.T) {
+		alertingCfgSnapshot := cfg.UnifiedAlerting
+		defer func() {
+			cfg.UnifiedAlerting = alertingCfgSnapshot
+		}()
+		cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: alertingCfgSnapshot.BaseInterval, RuleVersionRecordLimit: 1}
 		rule := createRule(t, store, generator)
 		oldRule := models.CopyRule(rule)
 		oldRule.Title = "old-record"
