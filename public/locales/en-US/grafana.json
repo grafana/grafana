@@ -226,6 +226,9 @@
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
+    "hard-delete": {
+      "success": "Dashboard {{name}} deleted"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -239,6 +242,9 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    },
+    "soft-delete": {
+      "success": "Dashboard {{name}} moved to trash"
     }
   },
   "clipboard-button": {

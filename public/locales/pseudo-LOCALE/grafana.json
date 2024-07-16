@@ -226,6 +226,9 @@
       "search-placeholder": "Ŝęäřčĥ ƒőľđęřş",
       "unknown-error": "Ůŉĸŉőŵŉ ęřřőř"
     },
+    "hard-delete": {
+      "success": "Đäşĥþőäřđ {{name}} đęľęŧęđ"
+    },
     "manage-folder-nav": {
       "alert-rules": "Åľęřŧ řūľęş",
       "dashboards": "Đäşĥþőäřđş",
@@ -239,6 +242,9 @@
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
+    },
+    "soft-delete": {
+      "success": "Đäşĥþőäřđ {{name}} mővęđ ŧő ŧřäşĥ"
     }
   },
   "clipboard-button": {
