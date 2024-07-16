@@ -8,7 +8,13 @@ import { Select } from '@grafana/ui';
 import { CloudWatchDatasource } from '../../../../datasource';
 import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../../../hooks';
 import { STATISTICS } from '../../../../language/cloudwatch-sql/language';
-import { CloudWatchMetricsQuery } from '../../../../types';
+import {
+  CloudWatchMetricsQuery,
+  QueryEditorArrayExpression,
+  QueryEditorExpression,
+  QueryEditorExpressionType,
+  QueryEditorPropertyType,
+} from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 import { Account } from '../../../shared/Account';
 
@@ -23,6 +29,7 @@ import {
   setNamespace,
   setSchemaLabels,
   setWithSchema,
+  splitWheresOnAccountId,
   stringArrayToDimensions,
 } from './utils';
 
@@ -99,9 +106,31 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
               accountId={query.accountId}
               accountOptions={accountState.value || []}
               onChange={(accountId) => {
+                // get all the where clauses except the AccountId
+                const { nonAccountWheres } = splitWheresOnAccountId(sql.where?.expressions || []);
+
+                // create an account Id where clause based on current selection
+                const newAccountWhereClause: QueryEditorExpression = {
+                  property: { name: 'AccountId', type: QueryEditorPropertyType.String },
+                  operator: { name: '=', value: accountId },
+                  type: QueryEditorExpressionType.Operator,
+                };
+
+                const newWheres: QueryEditorArrayExpression = {
+                  type: QueryEditorExpressionType.And,
+                  expressions:
+                    // we don't keep app in the where clause because we don't need to add it to the preview/sql string query
+                    // we still select account id in the query object so we can use it in the dropdown
+                    accountId === 'all' ? nonAccountWheres : [...nonAccountWheres, newAccountWhereClause],
+                };
+
                 onQueryChange({
                   ...query,
                   accountId,
+                  sql: {
+                    ...query.sql,
+                    where: newWheres.expressions.length ? newWheres : undefined,
+                  },
                 });
               }}
             />

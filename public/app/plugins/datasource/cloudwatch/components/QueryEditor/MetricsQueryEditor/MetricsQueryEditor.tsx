@@ -3,10 +3,12 @@ import * as React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_METRICS_QUERY } from '../../../defaultQueries';
+import { useIsMonitoringAccount } from '../../../hooks';
 import useMigratedMetricsQuery from '../../../migrations/useMigratedMetricsQuery';
 import {
   CloudWatchJsonData,
@@ -43,6 +45,11 @@ export const MetricsQueryEditor = (props: Props) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [codeEditorIsDirty, setCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
+  const isMonitoringAccount = useIsMonitoringAccount(datasource.resources, query.region);
+  const shouldAddAccount =
+    isMonitoringAccount &&
+    config.featureToggles.cloudWatchCrossAccountQuerying &&
+    config.featureToggles.cloudwatchMetricInsightsCrossAccount;
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: MetricEditorMode) => {
@@ -100,6 +107,7 @@ export const MetricsQueryEditor = (props: Props) => {
             onChange({
               ...query,
               ...DEFAULT_METRICS_QUERY,
+              ...(shouldAddAccount ? { accountId: 'all' } : {}),
               metricQueryType: MetricQueryType.Insights,
               metricEditorMode: MetricEditorMode.Builder,
             });
@@ -122,6 +130,7 @@ export const MetricsQueryEditor = (props: Props) => {
     extraHeaderElementRight,
     showConfirm,
     onEditorModeChange,
+    shouldAddAccount,
   ]);
 
   return (

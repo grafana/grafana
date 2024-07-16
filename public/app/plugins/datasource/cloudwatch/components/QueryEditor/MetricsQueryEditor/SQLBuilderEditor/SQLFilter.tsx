@@ -19,6 +19,7 @@ import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 
 import {
+  filterOutAccountId,
   getFlattenedFilters,
   getMetricNameFromExpression,
   getNamespaceFromExpression,
@@ -27,6 +28,7 @@ import {
   setOperatorExpressionProperty,
   setOperatorExpressionValue,
   setSql,
+  splitWheresOnAccountId,
 } from './utils';
 
 interface SQLFilterProps {
@@ -38,7 +40,7 @@ interface SQLFilterProps {
 const OPERATORS = COMPARISON_OPERATORS.map(toOption);
 
 const SQLFilter = ({ query, onQueryChange, datasource }: SQLFilterProps) => {
-  const filtersFromQuery = useMemo(() => getFlattenedFilters(query.sql ?? {}), [query.sql]);
+  const filtersFromQuery = useMemo(() => filterOutAccountId(getFlattenedFilters(query.sql ?? {})), [query.sql]);
   const [filters, setFilters] = useState<QueryEditorOperatorExpression[]>(filtersFromQuery);
 
   const onChange = (newItems: Array<Partial<QueryEditorOperatorExpression>>) => {
@@ -62,6 +64,12 @@ const SQLFilter = ({ query, onQueryChange, datasource }: SQLFilterProps) => {
       if (validated) {
         validExpressions.push(validated);
       }
+    }
+
+    const { oldAccountWhere } = splitWheresOnAccountId(query.sql?.where?.expressions || []);
+
+    if (oldAccountWhere) {
+      validExpressions.push(oldAccountWhere);
     }
 
     const where = validExpressions.length
@@ -140,11 +148,12 @@ const FilterItem = (props: FilterItemProps) => {
       });
   };
 
-  const [state, loadOptions] = useAsyncFn(loadDimensionValues, [
+  const [values, loadOptions] = useAsyncFn(loadDimensionValues, [
     query.region,
     namespace,
     metricName,
     filter.property?.name,
+    query.accountId,
   ]);
 
   const propertyNameError = useEnsureVariableHasSingleSelection(datasource, filter.property?.name);
@@ -173,13 +182,13 @@ const FilterItem = (props: FilterItemProps) => {
 
         <Select
           width="auto"
-          isLoading={state.loading}
+          isLoading={values.loading}
           value={
             filter.operator?.value && typeof filter.operator?.value === 'string'
               ? toOption(filter.operator?.value)
               : null
           }
-          options={state.value}
+          options={values.value}
           allowCustomValue
           onOpenMenu={loadOptions}
           onChange={({ value }) => value && onChange(setOperatorExpressionValue(filter, value))}

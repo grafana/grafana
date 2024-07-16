@@ -9,7 +9,7 @@ import {
   QueryEditorGroupByExpression,
 } from '../../../../expressions';
 import { SCHEMA } from '../../../../language/cloudwatch-sql/language';
-import { SQLExpression, CloudWatchMetricsQuery, Dimensions } from '../../../../types';
+import { SQLExpression, CloudWatchMetricsQuery, Dimensions, QueryEditorExpression } from '../../../../types';
 
 export function getMetricNameFromExpression(selectExpression: SQLExpression['select']): string | undefined {
   return selectExpression?.parameters?.[0].name;
@@ -123,6 +123,30 @@ function flattenGroupByExpressions(
 export function getFlattenedGroupBys(sql: SQLExpression): QueryEditorGroupByExpression[] {
   const groupBy = sql.groupBy;
   return flattenGroupByExpressions(groupBy?.expressions ?? []);
+}
+
+/** Removes the AccountId filter from the list of filters */
+export function filterOutAccountId(filters: QueryEditorOperatorExpression[]): QueryEditorOperatorExpression[] {
+  return filters.filter((exp) => {
+    return exp?.property.name !== 'AccountId';
+  });
+}
+
+/** takes an array of where expressions and separates out the account expression from the rest of the where expressions */
+export function splitWheresOnAccountId(whereExps: QueryEditorExpression[]): {
+  oldAccountWhere: QueryEditorOperatorExpression | undefined;
+  nonAccountWheres: QueryEditorExpression[];
+} {
+  let oldAccountWhere;
+  const nonAccountWheres: QueryEditorExpression[] = [];
+  for (const where of whereExps) {
+    if (where.type === QueryEditorExpressionType.Operator && where?.property.name === 'AccountId') {
+      oldAccountWhere = where;
+    } else {
+      nonAccountWheres.push(where);
+    }
+  }
+  return { oldAccountWhere, nonAccountWheres };
 }
 
 /** Converts a string array to a Dimensions object with null values  **/
