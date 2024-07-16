@@ -5,12 +5,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginExtensionsHook } from '@grafana/runtime';
-import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
-import { getCloudRule, getGrafanaRule, getMockPluginMeta } from '../../mocks';
+import { getCloudRule, getGrafanaRule } from '../../mocks';
 
 import { RulesTable } from './RulesTable';
 
@@ -49,14 +49,9 @@ function renderRulesTable(rule: CombinedRule) {
 }
 
 const user = userEvent.setup();
-const server = setupMswServer();
+setupMswServer();
 
 describe('RulesTable RBAC', () => {
-  beforeEach(() => {
-    mockApi(server).plugins.getPluginSettings({
-      ...getMockPluginMeta('grafana-incident-app', 'Grafana Incident'),
-    });
-  });
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
 
