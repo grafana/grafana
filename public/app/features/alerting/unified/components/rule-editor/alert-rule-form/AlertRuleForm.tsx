@@ -45,7 +45,7 @@ import {
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
-import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameInput } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -157,13 +157,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (!existing) {
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition);
     } else {
-      const ruleIdentifier = fromRulerRule(
-        ruleGroupIdentifier.dataSourceName,
-        ruleGroupIdentifier.namespaceName,
-        ruleGroupIdentifier.groupName,
-        existing.rule
-      );
-
+      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
 
       // check if the existing rule and the form values have the same rule group identifier
