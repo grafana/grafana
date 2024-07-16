@@ -2,7 +2,15 @@ import { render, screen } from '@testing-library/react';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { CoreApp, createTheme, DataSourceApi, EventBusSrv, LoadingState, PluginExtensionTypes } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  DataSourceApi,
+  EventBusSrv,
+  LoadingState,
+  PluginExtensionTypes,
+  store,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { usePluginLinkExtensions } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
@@ -223,6 +231,16 @@ describe('Explore', () => {
       const dataSourcePicker = await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
       expect(dataSourcePicker).toBeInTheDocument();
+    });
+  });
+
+  describe('Content Outline', () => {
+    it('should retrieve the last visible state from local storage', async () => {
+      const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
+      setup();
+      const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
+      expect(showContentOutlineButton).not.toBeInTheDocument();
+      getBoolMock.mockRestore();
     });
   });
 });
