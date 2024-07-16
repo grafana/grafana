@@ -1,16 +1,16 @@
 import { css, cx } from '@emotion/css';
 import { AriaRole, HTMLAttributes, ReactNode } from 'react';
 import * as React from 'react';
-import { useTheme2 } from 'src/themes';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { useTheme2 } from '../../themes';
+import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Text } from '../Text/Text';
-
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
