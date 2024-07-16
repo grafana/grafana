@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -123,17 +122,6 @@ func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object)
 	}
 
 	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
-}
-
-var _ watch.Interface = (*dummyWatch)(nil)
-
-type dummyWatch struct{}
-
-func (d *dummyWatch) Stop() {}
-func (d *dummyWatch) ResultChan() <-chan watch.Event {
-	stream := make(chan watch.Event)
-	close(stream)
-	return stream
 }
 
 func testKeyParser(val string) (*resource.ResourceKey, error) {

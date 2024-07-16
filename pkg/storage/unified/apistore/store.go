@@ -247,13 +247,7 @@ func (s *Storage) Delete(
 	return nil
 }
 
-// Watch begins watching the specified key. Events are decoded into API objects,
-// and any items selected by 'p' are sent down to returned watch.Interface.
-// resourceVersion may be used to specify what version to begin watching,
-// which should be the current resourceVersion, and no longer rv+1
-// (e.g. reconnecting without missing any updates).
-// If resource version is "0", this interface will get current object at given key
-// and send it in an "ADDED" event, before watch starts.
+// This version is not yet passing the watch tests
 func (s *Storage) WatchNEXT(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
 	k, err := s.getKey(key)
 	if err != nil {
@@ -303,30 +297,28 @@ func (s *Storage) WatchNEXT(ctx context.Context, key string, opts storage.ListOp
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	p := opts.Predicate
+	k, err := s.getKey(key)
+	if err != nil {
+		return watch.NewEmptyWatch(), nil
+	}
+
+	req, predicate, err := toListRequest(k, opts)
+	if err != nil {
+		return watch.NewEmptyWatch(), nil
+	}
+
 	listObj := s.newListFunc()
 
 	if ctx.Err() != nil {
-		return &dummyWatch{}, nil
-	}
-
-	// Parses to 0 for opts.ResourceVersion == 0
-	requestedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
-	if err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
-	}
-
-	parsedkey, err := s.getKey(key)
-	if err != nil {
-		return nil, err
+		return watch.NewEmptyWatch(), nil
 	}
 
 	var namespace *string
-	if parsedkey.Namespace != "" {
-		namespace = &parsedkey.Namespace
+	if k.Namespace != "" {
+		namespace = &k.Namespace
 	}
 
-	if (opts.SendInitialEvents == nil && requestedRV == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
+	if (opts.SendInitialEvents == nil && req.ResourceVersion == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
 		if err := s.GetList(ctx, key, opts, listObj); err != nil {
 			return nil, err
 		}
@@ -343,7 +335,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return nil, err
 		}
 
-		jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, p, s.versioner, namespace)
+		jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, predicate, s.versioner, namespace)
 
 		initEvents := make([]watch.Event, 0)
 		listPtr, err := meta.GetItemsPtr(listObj)
@@ -367,7 +359,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			})
 		}
 
-		if p.AllowWatchBookmarks && len(initEvents) > 0 {
+		if predicate.AllowWatchBookmarks && len(initEvents) > 0 {
 			listRV, err := s.versioner.ParseResourceVersion(listAccessor.GetResourceVersion())
 			if err != nil {
 				return nil, fmt.Errorf("could not get last init event's revision for bookmark: %v", err)
@@ -394,11 +386,11 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return jw, nil
 	}
 
-	maybeUpdatedRV := requestedRV
+	maybeUpdatedRV := uint64(req.ResourceVersion)
 	if maybeUpdatedRV == 0 {
 		rsp, err := s.store.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
-				Key: parsedkey,
+				Key: k,
 			},
 			Limit: 1, // we ignore the results, just look at the RV
 		})
@@ -410,7 +402,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return nil, fmt.Errorf("expecting a non-zero resource version")
 		}
 	}
-	jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, p, s.versioner, namespace)
+	jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, predicate, s.versioner, namespace)
 
 	jw.Start()
 	return jw, nil
