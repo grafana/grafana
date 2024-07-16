@@ -11,11 +11,76 @@ load(
     "publish_images_step",
 )
 load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+)
+load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
 
-def publish_image_steps(docker_repo):
+
+def publish_image_public_step():
+    """Returns a step which publishes images
+
+    Returns:
+      A drone step which publishes Docker images for a public release.
+    """
+    commands = [
+        "docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}",
+
+        # Push the grafana-image-tags images
+        "docker push grafana/grafana-image-tags:${TAG}-amd64",
+        "docker push grafana/grafana-image-tags:${TAG}-arm64",
+        "docker push grafana/grafana-image-tags:${TAG}-armv7",
+        "docker push grafana/grafana-image-tags:${TAG}-ubuntu-amd64",
+        "docker push grafana/grafana-image-tags:${TAG}-ubuntu-arm64",
+        "docker push grafana/grafana-image-tags:${TAG}-ubuntu-armv7",
+
+        # Create the grafana manifests
+        "docker manifest create grafana/grafana:${TAG} " +
+        "grafana/grafana-image-tags:${TAG}-amd64 " +
+        "grafana/grafana-image-tags:${TAG}-arm64 " +
+        "grafana/grafana-image-tags:${TAG}-armv7",
+
+        "docker manifest create grafana/grafana:${TAG}-ubuntu " +
+        "grafana/grafana-image-tags:${TAG}-ubuntu-amd64 " +
+        "grafana/grafana-image-tags:${TAG}-ubuntu-arm64 " +
+        "grafana/grafana-image-tags:${TAG}-ubuntu-armv7",
+
+        # Push the grafana manifests
+        "docker manifest push grafana/grafana:${TAG}",
+        "docker manifest push grafana/grafana:${TAG}-ubuntu",
+
+        # if LATEST is set, then also create & push latest
+        "if [[ -z ${LATEST} ]]; then " +
+            "docker manifest create grafana/grafana:${TAG} " +
+            "grafana/grafana-image-tags:${TAG}-amd64 " +
+            "grafana/grafana-image-tags:${TAG}-arm64 " +
+            "grafana/grafana-image-tags:${TAG}-armv7; " +
+            "docker manifest create grafana/grafana:${TAG}-ubuntu " +
+            "grafana/grafana-image-tags:${TAG}-ubuntu-amd64 " +
+            "grafana/grafana-image-tags:${TAG}-ubuntu-arm64 " +
+            "grafana/grafana-image-tags:${TAG}-ubuntu-armv7;" +
+        "fi",
+    ]
+    return {
+        "environment": {
+          "DOCKER_USER": from_secret("docker_username"),
+          "DOCKER_PASSWORD": from_secret("docker_password"),
+        },
+        "name": "publish-images-grafana",
+        "image": images["docker"],
+        "depends_on": ["fetch-images"],
+        "commands": commands,
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+    }
+
+def publish_image_steps():
     """Generates the steps used for publising Docker images using grabpl.
 
     Args:
@@ -30,7 +95,7 @@ def publish_image_steps(docker_repo):
         download_grabpl_step(),
         compile_build_cmd(),
         fetch_images_step(),
-        publish_images_step("release", docker_repo),
+        publish_image_public_step(),
         publish_images_step("release", "grafana-oss"),
     ]
 
@@ -42,16 +107,15 @@ def publish_image_pipelines_public():
     Returns:
       Drone pipeline
     """
-    mode = "public"
     trigger = {
         "event": ["promote"],
-        "target": [mode],
+        "target": ["public"],
     }
     return [
         pipeline(
-            name = "publish-docker-{}".format(mode),
+            name = "publish-docker-public",
             trigger = trigger,
-            steps = publish_image_steps(docker_repo = "grafana"),
+            steps = publish_image_steps(),
             environment = {"EDITION": "oss"},
         ),
     ]
