@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
 type MuteTimingService struct {
@@ -20,7 +21,7 @@ type MuteTimingService struct {
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger
-	validator       ProvenanceStatusTransitionValidator
+	validator       validation.ProvenanceStatusTransitionValidator
 }
 
 func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *MuteTimingService {
@@ -29,7 +30,7 @@ func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact Tra
 		provenanceStore: prov,
 		xact:            xact,
 		log:             log,
-		validator:       ValidateProvenanceRelaxed,
+		validator:       validation.ValidateProvenanceRelaxed,
 	}
 }
 

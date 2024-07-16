@@ -1,5 +1,7 @@
 package v0alpha1
 
+import "encoding/json"
+
 // Integration defines model for Integration.
 // +k8s:openapi-gen=true
 type Integration struct {
@@ -7,9 +9,9 @@ type Integration struct {
 	// +mapType=atomic
 	SecureFields map[string]bool `json:"SecureFields,omitempty"`
 	// +listType=atomic
-	Settings []byte  `json:"settings"`
-	Type     string  `json:"type"`
-	Uid      *string `json:"uid,omitempty"`
+	Settings json.RawMessage `json:"settings"`
+	Type     string          `json:"type"`
+	Uid      *string         `json:"uid,omitempty"`
 }
 
 // ReceiverSpec defines model for Spec.
