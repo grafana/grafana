@@ -205,17 +205,12 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		// ignore error here because it's not important
 		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
 	}
-	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		if name != existing.Name {
-			continue
-		}
-		err = svc.checkOptimisticConcurrency(existing, models.Provenance(provenance), version, "delete")
-		if err != nil {
-			return err
-		}
-		intervals := revision.cfg.AlertmanagerConfig.MuteTimeIntervals
-		revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(intervals[:i], intervals[i+1:]...)
+
+	err = svc.checkOptimisticConcurrency(existing, models.Provenance(provenance), version, "delete")
+	if err != nil {
+		return err
 	}
+	revision.cfg.AlertmanagerConfig.MuteTimeIntervals = slices.Delete(revision.cfg.AlertmanagerConfig.MuteTimeIntervals, idx, idx+1)
 
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		keys, err := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
