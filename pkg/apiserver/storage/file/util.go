@@ -23,13 +23,14 @@ var validNameCharPattern = `a-zA-Z0-9\-\_`
 var validNamePattern = regexp.MustCompile(`^[` + validNameCharPattern + `]*$`).MatchString
 
 func (s *Storage) filePath(key string) (string, error) {
-	for _, part := range strings.Split(key, "/") {
+	parts := strings.Split(key, "/")
+	for _, part := range parts {
 		if len(part) > 64 {
 			return "", fmt.Errorf("invalid key (too log)")
 		}
-		if !validNamePattern(part) {
-			return "", fmt.Errorf("name includes invalid characters")
-		}
+	}
+	if !validNamePattern(parts[len(parts)-1]) {
+		return "", fmt.Errorf("name includes invalid characters // %s", key)
 	}
 
 	fileName := filepath.Join(s.root, filepath.Clean(key+".json"))
