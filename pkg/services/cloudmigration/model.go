@@ -91,12 +91,12 @@ const (
 	ItemStatusOK      ItemStatus = "OK"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
-	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 type SnapshotResourceStats struct {
 	CountsByType   map[MigrateDataType]int
 	CountsByStatus map[ItemStatus]int
+	Total          int
 }
 
 // Deprecated, use GetSnapshotResult for the async workflow

@@ -339,7 +339,13 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 		Count  int    `json:"count"`
 		Status string `json:"status"`
 	}, 0)
+	total := 0
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if t, err := sess.Count(cloudmigration.CloudMigrationResource{SnapshotUID: snapshotUid}); err != nil {
+			return err
+		} else {
+			total = int(t)
+		}
 		sess.Select("count(uid) as 'count', resource_type as 'type'").
 			Table(tableName).
 			GroupBy("type").
@@ -360,6 +366,7 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 	stats := &cloudmigration.SnapshotResourceStats{
 		CountsByType:   make(map[cloudmigration.MigrateDataType]int, len(typeCounts)),
 		CountsByStatus: make(map[cloudmigration.ItemStatus]int, len(statusCounts)),
+		Total:          total,
 	}
 	for _, c := range typeCounts {
 		stats.CountsByType[cloudmigration.MigrateDataType(c.Type)] = c.Count
