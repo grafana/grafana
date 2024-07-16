@@ -153,21 +153,26 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		qdr = &backend.QueryDataResponse{}
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if err != nil {
-			return
-		}
 	default:
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
-		if err != nil {
-			return
-		}
 	}
 
+	var expErr error
 	if len(req.Expressions) > 0 {
-		qdr, err = b.handleExpressions(ctx, req, qdr)
-		if err != nil {
-			return
-		}
+		qdr, expErr = b.handleExpressions(ctx, req, qdr)
+	}
+
+	// If we have an error in the expression engine but also an error in the
+	// handling of queries, we know that the expression error came from a failed
+	// query. So we can wrap those errors to give the caller more insights about
+	// what went wrong.
+	if err != nil && expErr != nil {
+		err = fmt.Errorf("%w: %w", expErr, err)
+	}
+
+	// If there was no error with queries, set any error of the expression handling to be returned.
+	if err == nil {
+		err = expErr
 	}
 
 	// Remove hidden results
