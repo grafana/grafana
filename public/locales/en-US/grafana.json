@@ -1,5 +1,6 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
+  "{unit}": "{unit}",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
