@@ -1481,8 +1481,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 			}
 			testCheckResultsInStrictOrder(t, w, scenario.expectedEventsAfterEstablishingWatch(createdPods))
 
-			// TestEtcdWatchSemantics fails with timeout???
-			//testCheckNoMoreResults(t, w)
+			testCheckNoMoreResults(t, w)
 		})
 	}
 }
