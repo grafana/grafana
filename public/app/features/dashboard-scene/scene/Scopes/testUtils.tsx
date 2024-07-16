@@ -236,7 +236,7 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
   {
     parent: 'clusters',
-    metadata: { name: 'clusters.applications' },
+    metadata: { name: 'clusters-applications' },
     spec: {
       nodeType: 'container',
       title: 'Applications',
@@ -244,8 +244,8 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
     },
   },
   {
-    parent: 'clusters.applications',
-    metadata: { name: 'clusters.applications-slothPictureFactory' },
+    parent: 'clusters-applications',
+    metadata: { name: 'clusters-applications-slothPictureFactory' },
     spec: {
       nodeType: 'leaf',
       title: 'slothPictureFactory',
@@ -255,8 +255,8 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
     },
   },
   {
-    parent: 'clusters.applications',
-    metadata: { name: 'clusters.applications-slothVoteTracker' },
+    parent: 'clusters-applications',
+    metadata: { name: 'clusters-applications-slothVoteTracker' },
     spec: {
       nodeType: 'leaf',
       title: 'slothVoteTracker',

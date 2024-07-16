@@ -46,7 +46,7 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
-        "name": "clusters.application"
+        "name": "clusters-application"
       },
       "spec": {
         "description": "Clusters/Application Scopes",
