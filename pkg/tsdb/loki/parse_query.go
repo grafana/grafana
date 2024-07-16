@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -124,7 +125,20 @@ func parseSupportingQueryType(jsonPointerValue *string) SupportingQueryType {
 }
 
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
-	qs := []*lokiQuery{}
+	qs := make([]*lokiQuery, 0, len(queryContext.Queries))
+
+	var headers map[string]string
+	// If request coming from Alerting, get all headers that contain rule metadata
+	if queryContext.Headers[models.FromAlertHeaderName] == "true" {
+		headers = make(map[string]string, len(queryContext.Queries))
+		headers[models.FromAlertHeaderName] = "true"
+		for header, value := range queryContext.Headers {
+			if strings.HasPrefix(header, "X-Rule-") {
+				headers[header] = value
+			}
+		}
+	}
+
 	for _, query := range queryContext.Queries {
 		model, err := parseQueryModel(query.JSON)
 		if err != nil {
@@ -182,6 +196,7 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			End:                 end,
 			RefID:               query.RefID,
 			SupportingQueryType: supportingQueryType,
+			Headers:             headers,
 		})
 	}
 
