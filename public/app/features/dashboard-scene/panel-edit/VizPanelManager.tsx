@@ -226,6 +226,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       options: cachedOptions ?? {},
       fieldConfig: newFieldConfig,
       pluginId: pluginId,
+      isAfterPluginChange: true,
       ...restOfOldState,
     });
 
