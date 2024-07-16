@@ -18,6 +18,9 @@ import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 const addSuccessMessage = t('alerting.rules.add-rule.success', 'Rule added successfully');
 const updateSuccessMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
 
+/**
+ * This hook will add a single rule to a rule group – a new rule group will be created if it does not already exist.
+ */
 export function useAddRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
@@ -26,7 +29,6 @@ export function useAddRuleToRuleGroup() {
     const { namespaceName, dataSourceName } = ruleGroup;
 
     const action = addRuleAction({ rule });
-
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
     const result = upsertRuleGroup({
@@ -43,12 +45,15 @@ export function useAddRuleToRuleGroup() {
   });
 }
 
+/**
+ * This hook will update an existing rule within a rule group, does not support moving the rule to another namespace / group
+ */
 export function useUpdateRuleInRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
   return useAsync(async (ruleGroup: RuleGroupIdentifier, identifier: EditableRuleIdentifier, rule: PostableRuleDTO) => {
-    const { namespaceName, dataSourceName } = ruleGroup;
+    const { dataSourceName, namespaceName } = ruleGroup;
 
     const action = updateRuleAction({ identifier, rule });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
@@ -67,8 +72,10 @@ export function useUpdateRuleInRuleGroup() {
   });
 }
 
-// @TODO if we're updating a Grafana-managed rule, we can do a single atomic move operation by re-using the rule UID when adding it to the new target group.
-// The backend will automatically remove that rule from the current rule group.
+/**
+ * This hook will move an existing rule to another namespace or group. The rule definition can also be modified.
+ * For Grafana-managed rules we can perform a single atomic move operation by copying the rule UID from the previous rule definition.
+ */
 export function useMoveRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [_deleteRuleState, deleteRuleFromGroup] = useDeleteRuleFromGroup();

@@ -120,8 +120,8 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
       keepFiringFor = `${keepFiringForTime}${keepFiringForTimeUnit}`;
     }
 
-    const annotations = values.annotations.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
-    const labels = values.labels.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
+    const annotations = cleanKeyValuePairs(values.annotations);
+    const labels = cleanKeyValuePairs(values.labels);
 
     return {
       alert: name,
@@ -205,8 +205,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
 
-  const annotations = values.annotations.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
-  const labels = values.labels.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
+  const annotations = cleanKeyValuePairs(values.annotations);
+  const labels = cleanKeyValuePairs(values.labels);
 
   return {
     grafana_alert: {
@@ -224,12 +224,12 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   };
 }
 
+const cleanKeyValuePairs = (kvs: KVObject[]) => kvs.map(trimKeyAndValue).filter(nonEmptyKeyValue);
+const nonEmptyKeyValue = ({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value);
 const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
   key: key.trim(),
   value: value.trim(),
 });
-
-const nonEmptyKeyvalue = ({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value);
 
 export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
   const contactPoint: ContactPoint | undefined = ga.notification_settings

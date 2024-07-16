@@ -1,9 +1,10 @@
 import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
 import { remove } from 'lodash';
 
-import { EditableRuleIdentifier } from 'app/types/unified-alerting';
+import { EditableRuleIdentifier, GrafanaRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
 import {
   isCloudRuleIdentifier,
@@ -42,65 +43,25 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     .addCase(updateRuleAction, (draft, { payload }) => {
       const { identifier, rule } = payload;
 
-      const grafanaManagedIdentifier = isGrafanaRuleIdentifier(identifier);
-      const dataSourceManagedIdentifier = isCloudRuleIdentifier(identifier);
-
-      const ruleIndex = draft.rules.findIndex((rule) => {
-        const isGrafanaManagedRule = isGrafanaRulerRule(rule);
-        const isDataSourceManagedRule = isCloudRulerRule(rule);
-
-        if (grafanaManagedIdentifier && isGrafanaManagedRule) {
-          return rule.grafana_alert.uid === identifier.uid;
-        }
-
-        if (isDataSourceManagedRule && dataSourceManagedIdentifier) {
-          return hashRulerRule(rule) === identifier.rulerRuleHash;
-        }
-
-        return;
-      });
-
-      if (ruleIndex === -1) {
-        // @TODO add error details
-        throw new Error('No such rule with identifier found in group');
-      }
-
+      const ruleIndex = draft.rules.findIndex(ruleFinder(identifier));
       draft.rules[ruleIndex] = rule;
     })
     .addCase(deleteRuleAction, (draft, { payload }) => {
       const { identifier } = payload;
 
-      const grafanaManagedIdentifier = isGrafanaRuleIdentifier(identifier);
-      const dataSourceManagedIdentifier = isCloudRuleIdentifier(identifier);
-
-      remove(draft.rules, (rule) => {
-        const isGrafanaManagedRule = isGrafanaRulerRule(rule);
-        const isDataSourceManagedRule = isCloudRulerRule(rule);
-
-        if (grafanaManagedIdentifier && isGrafanaManagedRule) {
-          return rule.grafana_alert.uid === identifier.uid;
-        } else if (isDataSourceManagedRule && dataSourceManagedIdentifier) {
-          return hashRulerRule(rule) === identifier.rulerRuleHash;
-        }
-
-        throw new Error('No such rule with identifier found in group');
-      });
+      remove(draft.rules, ruleFinder(identifier));
     })
     .addCase(pauseRuleAction, (draft, { payload }) => {
       const { uid, pause } = payload;
 
-      let match = false;
+      const identifier: GrafanaRuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid };
+      const ruleIndex = draft.rules.findIndex(ruleFinder(identifier));
+      const matchingRule = draft.rules[ruleIndex];
 
-      for (const rule of draft.rules) {
-        if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === uid) {
-          match = true;
-          rule.grafana_alert.is_paused = pause;
-          break;
-        }
-      }
-
-      if (!match) {
-        throw new Error(`No rule with UID ${uid} found in group ${draft.name}`);
+      if (isGrafanaRulerRule(matchingRule)) {
+        matchingRule.grafana_alert.is_paused = pause;
+      } else {
+        throw new Error('Matching rule is not a Grafana-managed rule');
       }
     })
     .addCase(reorderRulesInRuleGroupAction, () => {
@@ -124,3 +85,28 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
       throw new Error(`Unknown action for rule group reducer: ${action.type}`);
     });
 });
+
+/**
+ * Utility function for finding rules matching a identifier, pass this into .find, .findIndex, .remove
+ * or any other function with matching predicate.
+ */
+const ruleFinder = (identifier: RuleIdentifier) => {
+  const grafanaManagedIdentifier = isGrafanaRuleIdentifier(identifier);
+  const dataSourceManagedIdentifier = isCloudRuleIdentifier(identifier);
+
+  return (rule: PostableRuleDTO) => {
+    const isGrafanaManagedRule = isGrafanaRulerRule(rule);
+    const isDataSourceManagedRule = isCloudRulerRule(rule);
+
+    if (grafanaManagedIdentifier && isGrafanaManagedRule) {
+      return rule.grafana_alert.uid === identifier.uid;
+    }
+
+    if (isDataSourceManagedRule && dataSourceManagedIdentifier) {
+      return hashRulerRule(rule) === identifier.rulerRuleHash;
+    }
+
+    // @TODO more error info
+    throw new Error('No such rule with identifier found in group');
+  };
+};
