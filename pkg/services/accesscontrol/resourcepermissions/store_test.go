@@ -918,12 +918,12 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			desc:     "should not be able to register action set that is not a dashboard or folder action set",
+			desc:     "should not be able to register action set that is not in the allow list",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
 			pluginID: "test-app",
 			pluginActions: []plugins.ActionSet{
 				{
-					Action:  "datasources:view",
+					Action:  "folders:super-admin",
 					Actions: []string{"test-app.resource:read"},
 				},
 			},
