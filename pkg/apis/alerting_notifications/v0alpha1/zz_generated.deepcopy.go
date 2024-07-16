@@ -8,6 +8,8 @@
 package v0alpha1
 
 import (
+	json "encoding/json"
+
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -28,7 +30,7 @@ func (in *Integration) DeepCopyInto(out *Integration) {
 	}
 	if in.Settings != nil {
 		in, out := &in.Settings, &out.Settings
-		*out = make([]byte, len(*in))
+		*out = make(json.RawMessage, len(*in))
 		copy(*out, *in)
 	}
 	if in.Uid != nil {
