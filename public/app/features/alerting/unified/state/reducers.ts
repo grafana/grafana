@@ -11,7 +11,6 @@ import {
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchRulesSourceBuildInfoAction,
-  saveRuleFormAction,
   testReceiversAction,
   updateAlertManagerConfigAction,
 } from './actions';
@@ -25,9 +24,6 @@ export const reducer = combineReducers({
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,
-  ruleForm: combineReducers({
-    saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
-  }),
   grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
   deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,

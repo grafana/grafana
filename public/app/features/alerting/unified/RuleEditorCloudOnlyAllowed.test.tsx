@@ -11,7 +11,7 @@ import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { discoverFeatures } from './api/buildInfo';
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
@@ -115,7 +115,6 @@ const mocks = {
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
-    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
     fetchRulerRules: jest.mocked(fetchRulerRules),
     fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),

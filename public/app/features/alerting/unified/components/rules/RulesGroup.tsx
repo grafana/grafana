@@ -6,17 +6,16 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
+import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
-import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule, rulesSourceToDataSourceName } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -40,8 +39,8 @@ interface Props {
 
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
-  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const [_deleteRuleGroupState, deleteRuleGroup] = useDeleteRuleGroup();
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
@@ -74,9 +73,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
 
-  const deleteGroup = () => {
-    dispatch(deleteRulesGroupAction(namespace, group));
-    setIsDeletingGroup(false);
+  const deleteGroup = async () => {
+    const namespaceName = decodeGrafanaNamespace(namespace).name;
+    const groupName = group.name;
+    const dataSourceName = rulesSourceToDataSourceName(namespace.rulesSource);
+
+    const ruleGroupIdentifier: RuleGroupIdentifier = { namespaceName, groupName, dataSourceName };
+    try {
+      await deleteRuleGroup.execute(ruleGroupIdentifier);
+      setIsDeletingGroup(false);
+    } catch (_err) {}
   };
 
   const actionIcons: React.ReactNode[] = [];

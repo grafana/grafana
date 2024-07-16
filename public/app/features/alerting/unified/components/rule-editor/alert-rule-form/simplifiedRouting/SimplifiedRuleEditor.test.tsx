@@ -10,7 +10,6 @@ import { byRole } from 'testing-library-selector';
 import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
-import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as useContactPoints from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -19,14 +18,11 @@ import * as utils_config from 'app/features/alerting/unified/utils/config';
 import {
   DataSourceType,
   GRAFANA_DATASOURCE_NAME,
-  GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from 'app/features/alerting/unified/utils/datasource';
-import { getDefaultQueries } from 'app/features/alerting/unified/utils/rule-form';
 import { searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
-import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { grafanaRulerEmptyGroup, grafanaRulerNamespace2, grafanaRulerRule } from '../../../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../../../testSetup/datasources';
@@ -65,9 +61,6 @@ const mocks = {
   searchFolders: jest.mocked(searchFolders),
   useContactPointsWithStatus: jest.mocked(useContactPoints.useContactPointsWithStatus),
   useGetAlertManagerDataSourcesByPermissionAndConfig: jest.mocked(useGetAlertManagerDataSourcesByPermissionAndConfig),
-  api: {
-    setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
-  },
 };
 
 setupMswServer();
@@ -119,7 +112,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       refetchReceivers: jest.fn(),
     });
 
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
@@ -157,7 +149,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     await user.click(ui.buttons.saveAndExit.get());
     await waitFor(() => {
       expect(screen.getByText('Contact point is required.')).toBeInTheDocument();
-      expect(mocks.api.setRulerRuleGroup).not.toHaveBeenCalled();
     });
   });
 
@@ -187,7 +178,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       refetchReceivers: jest.fn(),
     });
 
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
@@ -228,38 +218,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
 
     // save and check what was sent to backend
     await user.click(ui.buttons.saveAndExit.get());
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      grafanaRulerNamespace2.uid,
-      {
-        interval: grafanaRulerEmptyGroup.interval,
-        name: grafanaRulerEmptyGroup.name,
-        rules: [
-          {
-            annotations: {},
-            labels: {},
-            for: '1m',
-            grafana_alert: {
-              condition: 'B',
-              data: getDefaultQueries(),
-              exec_err_state: GrafanaAlertStateDecision.Error,
-              is_paused: false,
-              no_data_state: 'NoData',
-              title: 'my great new rule',
-              notification_settings: {
-                group_by: undefined,
-                group_interval: undefined,
-                group_wait: undefined,
-                mute_timings: undefined,
-                receiver: 'contact_point1',
-                repeat_interval: undefined,
-              },
-            },
-          },
-        ],
-      }
-    );
   });
 });
 

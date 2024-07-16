@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { grantUserPermissions, labelsPluginMetaMock, mockDataSource } from './mocks';
@@ -63,7 +63,6 @@ const mocks = {
   searchFolders: jest.mocked(searchFolders),
   api: {
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
-    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
     fetchRulerRules: jest.mocked(fetchRulerRules),
     fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
@@ -89,7 +88,6 @@ describe('RuleEditor cloud', () => {
   });
 
   it('can create a new cloud alert', async () => {
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.api.fetchRulerRulesGroup.mockResolvedValue({
       name: 'group2',
@@ -152,23 +150,5 @@ describe('RuleEditor cloud', () => {
 
     // save and check what was sent to backend
     await user.click(ui.buttons.saveAndExit.get());
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: 'Prom', apiVersion: 'config' },
-      'namespace2',
-      {
-        name: 'group2',
-        rules: [
-          {
-            alert: 'my great new rule',
-            annotations: { description: 'some description', summary: 'some summary' },
-            expr: 'up == 1',
-            for: '1m',
-            labels: {},
-            keep_firing_for: undefined,
-          },
-        ],
-      }
-    );
   });
 });

@@ -1,6 +1,7 @@
 import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockRulerAlertingRule, mockRulerGrafanaRule, mockRulerRecordingRule } from '../../mocks';
+import { fromRulerRule } from '../../utils/rule-id';
 
 import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from './ruleGroups';
 
@@ -55,8 +56,9 @@ describe('removing a rule', () => {
       interval: '5m',
       rules: [mockRulerGrafanaRule({}, { uid: '1' }), ruleToDelete, mockRulerGrafanaRule({}, { uid: '3' })],
     };
+    const ruleIdentifier = fromRulerRule('my-datasource', 'my-namespace', 'group-1', ruleToDelete);
 
-    const action = deleteRuleAction({ rule: ruleToDelete });
+    const action = deleteRuleAction({ identifier: ruleIdentifier });
     const output = ruleGroupReducer(initialGroup, action);
 
     expect(output).toHaveProperty('rules');
@@ -83,8 +85,9 @@ describe('removing a rule', () => {
         }),
       ],
     };
+    const ruleIdentifier = fromRulerRule('my-datasource', 'my-namespace', 'group-1', ruleToDelete);
 
-    const action = deleteRuleAction({ rule: ruleToDelete });
+    const action = deleteRuleAction({ identifier: ruleIdentifier });
     const output = ruleGroupReducer(initialGroup, action);
 
     expect(output).toHaveProperty('rules');

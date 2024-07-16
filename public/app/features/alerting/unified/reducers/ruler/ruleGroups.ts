@@ -1,19 +1,24 @@
 import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
 import { remove } from 'lodash';
 
-import { RuleIdentifier } from 'app/types/unified-alerting';
-import { PostableRuleDTO, PostableRulerRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { EditableRuleIdentifier } from 'app/types/unified-alerting';
+import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { hashRulerRule } from '../../utils/rule-id';
-import { isCloudRulerRule, isGrafanaRulerRule } from '../../utils/rules';
+import {
+  isCloudRuleIdentifier,
+  isCloudRulerRule,
+  isGrafanaRuleIdentifier,
+  isGrafanaRulerRule,
+} from '../../utils/rules';
 
 // rule-scoped actions
 export const addRuleAction = createAction<{ rule: PostableRuleDTO }>('ruleGroup/rules/add');
-export const updateRuleAction = createAction<{ identifier: RuleIdentifier; rule: PostableRuleDTO }>(
+export const updateRuleAction = createAction<{ identifier: EditableRuleIdentifier; rule: PostableRuleDTO }>(
   'ruleGroup/rules/update'
 );
 export const pauseRuleAction = createAction<{ uid: string; pause: boolean }>('ruleGroup/rules/pause');
-export const deleteRuleAction = createAction<{ rule: RulerRuleDTO }>('ruleGroup/rules/delete');
+export const deleteRuleAction = createAction<{ identifier: EditableRuleIdentifier }>('ruleGroup/rules/delete');
 
 // group-scoped actions
 export const updateRuleGroupAction = createAction<{ interval?: string }>('ruleGroup/update');
@@ -30,26 +35,56 @@ const initialState: PostableRulerRuleGroupDTO = {
 
 export const ruleGroupReducer = createReducer(initialState, (builder) => {
   builder
-    .addCase(addRuleAction, () => {
-      throw new Error('not yet implemented');
+    .addCase(addRuleAction, (draft, { payload }) => {
+      const { rule } = payload;
+      draft.rules.push(rule);
     })
-    .addCase(updateRuleAction, () => {
-      throw new Error('not yet implemented');
+    .addCase(updateRuleAction, (draft, { payload }) => {
+      const { identifier, rule } = payload;
+
+      const grafanaManagedIdentifier = isGrafanaRuleIdentifier(identifier);
+      const dataSourceManagedIdentifier = isCloudRuleIdentifier(identifier);
+
+      const ruleIndex = draft.rules.findIndex((rule) => {
+        const isGrafanaManagedRule = isGrafanaRulerRule(rule);
+        const isDataSourceManagedRule = isCloudRulerRule(rule);
+
+        if (grafanaManagedIdentifier && isGrafanaManagedRule) {
+          return rule.grafana_alert.uid === identifier.uid;
+        }
+
+        if (isDataSourceManagedRule && dataSourceManagedIdentifier) {
+          return hashRulerRule(rule) === identifier.rulerRuleHash;
+        }
+
+        return;
+      });
+
+      if (ruleIndex === -1) {
+        // @TODO add error details
+        throw new Error('No such rule with identifier found in group');
+      }
+
+      draft.rules[ruleIndex] = rule;
     })
     .addCase(deleteRuleAction, (draft, { payload }) => {
-      const { rule } = payload;
+      const { identifier } = payload;
 
-      // deleting a Grafana managed rule is by using the UID
-      if (isGrafanaRulerRule(rule)) {
-        const ruleUID = rule.grafana_alert.uid;
-        remove(draft.rules, (rule) => isGrafanaRulerRule(rule) && rule.grafana_alert.uid === ruleUID);
-      }
+      const grafanaManagedIdentifier = isGrafanaRuleIdentifier(identifier);
+      const dataSourceManagedIdentifier = isCloudRuleIdentifier(identifier);
 
-      // deleting a Data-source managed rule is by computing the rule hash
-      if (isCloudRulerRule(rule)) {
-        const ruleHash = hashRulerRule(rule);
-        remove(draft.rules, (rule) => isCloudRulerRule(rule) && hashRulerRule(rule) === ruleHash);
-      }
+      remove(draft.rules, (rule) => {
+        const isGrafanaManagedRule = isGrafanaRulerRule(rule);
+        const isDataSourceManagedRule = isCloudRulerRule(rule);
+
+        if (grafanaManagedIdentifier && isGrafanaManagedRule) {
+          return rule.grafana_alert.uid === identifier.uid;
+        } else if (isDataSourceManagedRule && dataSourceManagedIdentifier) {
+          return hashRulerRule(rule) === identifier.rulerRuleHash;
+        }
+
+        throw new Error('No such rule with identifier found in group');
+      });
     })
     .addCase(pauseRuleAction, (draft, { payload }) => {
       const { uid, pause } = payload;

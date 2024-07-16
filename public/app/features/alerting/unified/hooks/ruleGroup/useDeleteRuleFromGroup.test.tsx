@@ -19,6 +19,7 @@ import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setUpdateRulerRuleNamespaceHandler, setRulerRuleGroupHandler } from '../../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../../mocks/server/handlers/mimirRuler';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 import { SerializeState } from '../useAsync';
 
@@ -136,8 +137,9 @@ const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
 
   // always handle your errors!
   const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
+  const ruleID = fromRulerRuleAndRuleGroupIdentifier(ruleGroupID, rule.rulerRule!);
   const onClick = () => {
-    deleteRuleFromGroup.execute(ruleGroupID, rule.rulerRule!);
+    deleteRuleFromGroup.execute(ruleGroupID, ruleID);
   };
 
   return (

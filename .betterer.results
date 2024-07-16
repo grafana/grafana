@@ -2523,9 +2523,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"]
     ],
-    "public/app/features/alerting/unified/utils/rulerClient.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/alerting/unified/utils/rules.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],

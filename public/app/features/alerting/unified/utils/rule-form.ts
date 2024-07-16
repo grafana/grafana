@@ -40,6 +40,8 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+type KVObject = { key: string; value: string };
+
 import { EvalFunction } from '../../state/alertDef';
 import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
 
@@ -71,7 +73,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     uid: '',
     labels: [{ key: '', value: '' }],
     annotations: defaultAnnotations,
-    dataSourceName: null,
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME, // let's use Grafana-managed alert rule by default
     type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
     group: '',
 
@@ -118,12 +120,15 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
       keepFiringFor = `${keepFiringForTime}${keepFiringForTimeUnit}`;
     }
 
+    const annotations = values.annotations.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
+    const labels = values.labels.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
+
     return {
       alert: name,
       for: `${forTime}${forTimeUnit}`,
       keep_firing_for: keepFiringFor,
-      annotations: arrayToRecord(values.annotations || []),
-      labels: arrayToRecord(values.labels || []),
+      annotations: arrayToRecord(annotations),
+      labels: arrayToRecord(labels),
       expr: expression,
     };
   } else if (type === RuleFormType.cloudRecording) {
@@ -136,10 +141,7 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-export function listifyLabelsOrAnnotations(
-  item: Labels | Annotations | undefined,
-  addEmpty: boolean
-): Array<{ key: string; value: string }> {
+export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
   const list = [...recordToArray(item || {})];
   if (addEmpty) {
     list.push({ key: '', value: '' });
@@ -148,7 +150,7 @@ export function listifyLabelsOrAnnotations(
 }
 
 //make sure default annotations are always shown in order even if empty
-export function normalizeDefaultAnnotations(annotations: Array<{ key: string; value: string }>) {
+export function normalizeDefaultAnnotations(annotations: KVObject[]) {
   const orderedAnnotations = [...annotations];
   const defaultAnnotationKeys = defaultAnnotations.map((annotation) => annotation.key);
 
@@ -196,29 +198,38 @@ export function getNotificationSettingsForDTO(
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused, contactPoints, manualRouting } =
     values;
-  if (condition) {
-    const notificationSettings: GrafanaNotificationSettings | undefined = getNotificationSettingsForDTO(
-      manualRouting,
-      contactPoints
-    );
 
-    return {
-      grafana_alert: {
-        title: name,
-        condition,
-        no_data_state: noDataState,
-        exec_err_state: execErrState,
-        data: queries.map(fixBothInstantAndRangeQuery),
-        is_paused: Boolean(isPaused),
-        notification_settings: notificationSettings,
-      },
-      for: evaluateFor,
-      annotations: arrayToRecord(values.annotations || []),
-      labels: arrayToRecord(values.labels || []),
-    };
+  if (!condition) {
+    throw new Error('You cannot create an alert rule without specifying the alert condition');
   }
-  throw new Error('Cannot create rule without specifying alert condition');
+
+  const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
+
+  const annotations = values.annotations.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
+  const labels = values.labels.map(trimKeyAndValue).filter(nonEmptyKeyvalue);
+
+  return {
+    grafana_alert: {
+      title: name,
+      condition,
+      no_data_state: noDataState,
+      exec_err_state: execErrState,
+      data: queries.map(fixBothInstantAndRangeQuery),
+      is_paused: Boolean(isPaused),
+      notification_settings: notificationSettings,
+    },
+    for: evaluateFor,
+    annotations: arrayToRecord(annotations),
+    labels: arrayToRecord(labels),
+  };
 }
+
+const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
+  key: key.trim(),
+  value: value.trim(),
+});
+
+const nonEmptyKeyvalue = ({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value);
 
 export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
   const contactPoint: ContactPoint | undefined = ga.notification_settings

@@ -14,7 +14,7 @@ import { PromApplication } from 'app/types/unified-alerting-dto';
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { discoverFeatures } from './api/buildInfo';
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace } from './api/ruler';
 import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
 import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
@@ -85,7 +85,6 @@ const mocks = {
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
-    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
     fetchRulerRules: jest.mocked(fetchRulerRules),
     fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
@@ -117,7 +116,6 @@ describe('RuleEditor recording rules', () => {
   it('can create a new cloud recording rule', async () => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.api.fetchRulerRulesGroup.mockResolvedValue({
       name: 'group2',
@@ -168,7 +166,6 @@ describe('RuleEditor recording rules', () => {
         ).get()
       ).toBeInTheDocument()
     );
-    expect(mocks.api.setRulerRuleGroup).not.toBeCalled();
 
     // fix name and re-submit
     await userEvent.clear(await ui.inputs.name.find());
@@ -176,20 +173,5 @@ describe('RuleEditor recording rules', () => {
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.saveAndExit.get());
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: 'Prom', apiVersion: 'legacy' },
-      'namespace2',
-      {
-        name: 'group2',
-        rules: [
-          {
-            record: 'my:great:new:recording:rule',
-            labels: {},
-            expr: 'up == 1',
-          },
-        ],
-      }
-    );
   });
 });
