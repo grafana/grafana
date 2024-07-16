@@ -82,7 +82,7 @@ Click a column title to change the sort order from default to descending to asce
 
 If the data queried contains multiple data sets, a table displays a drop-down list at the bottom, so you can select the data set you want to visualize.
 
-![Table Panel with multiple data sets](/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png)
+![Table visualization with multiple data sets](/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png)
 
 ## Panel options
 
