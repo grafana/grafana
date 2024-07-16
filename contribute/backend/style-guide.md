@@ -5,7 +5,7 @@ Grafana's backend has been developed for a long time with a mix of code styles. 
 Unless stated otherwise, use the guidelines listed in the following articles:
 
 - [Effective Go](https://golang.org/doc/effective_go.html)
-- [Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
+- [Code Review Comments](https://go.dev/wiki/CodeReviewComments)
 - [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style)
 
 ## Linting and formatting
