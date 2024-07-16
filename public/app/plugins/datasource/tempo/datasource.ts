@@ -822,7 +822,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     const appliedQuery = this.applyVariables(query, {});
-    return generateQueryFromFilters(appliedQuery.filters);
+    return appliedQuery.filters ? generateQueryFromFilters(appliedQuery.filters) : '';
   }
 }
 
