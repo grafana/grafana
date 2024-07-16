@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 
@@ -49,8 +51,9 @@ var (
 	errOAuthMissingState = errutil.BadRequest("auth.oauth.state.missing", errutil.WithPublicMessage("Missing saved oauth state"))
 	errOAuthInvalidState = errutil.Unauthorized("auth.oauth.state.invalid", errutil.WithPublicMessage("Provided state does not match stored state"))
 
-	errOAuthTokenExchange = errutil.Internal("auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
-	errOAuthUserInfo      = errutil.Internal("auth.oauth.userinfo.error")
+	errOAuthImplicitCallback = errutil.Internal("auth.oauth.token.implicit_callback", errutil.WithPublicMessage("Failed to handle implicit callback"))
+	errOAuthTokenExchange    = errutil.Internal("auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
+	errOAuthUserInfo         = errutil.Internal("auth.oauth.userinfo.error")
 
 	errOAuthMissingRequiredEmail = errutil.Unauthorized("auth.oauth.email.missing", errutil.WithPublicMessage("Provider didn't return an email address"))
 	errOAuthEmailNotAllowed      = errutil.Unauthorized("auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
@@ -133,12 +136,39 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
-	// exchange auth code to a valid token
-	token, err := connector.Exchange(clientCtx, r.HTTPRequest.URL.Query().Get("code"), opts...)
-	if err != nil {
-		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
+	query := r.HTTPRequest.URL.Query()
+	var token *oauth2.Token
+	if query.Has("access_token") {
+		if !query.Has("id_token") {
+			return nil, errOAuthImplicitCallback.Errorf("missing id_token")
+		}
+		if !query.Has("token_type") {
+			return nil, errOAuthImplicitCallback.Errorf("missing token_type")
+		}
+		if !query.Has("expires_in") {
+			return nil, errOAuthImplicitCallback.Errorf("missing expires_in")
+		}
+
+		expires_in_str := query.Get("expires_in")
+		var expires_in int64
+		if expires_in, err = strconv.ParseInt(expires_in_str, 10, 32); err != nil {
+			return nil, errOAuthImplicitCallback.Errorf("failed to parse expires_in %v: %w", expires_in_str, err)
+		}
+		token = (&oauth2.Token{
+			AccessToken:  query.Get("access_token"),
+			TokenType:    query.Get("token_type"),
+			RefreshToken: "",
+			Expiry:       time.Now().Add(time.Second * time.Duration(expires_in)),
+		}).WithExtra(query)
+	} else {
+		// exchange auth code to a valid token
+		var err error
+		token, err = connector.Exchange(clientCtx, query.Get("code"), opts...)
+		if err != nil {
+			return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
+		}
+		token.TokenType = "Bearer"
 	}
-	token.TokenType = "Bearer"
 
 	userInfo, err := connector.UserInfo(ctx, connector.Client(clientCtx, token), token)
 	if err != nil {
@@ -234,6 +264,12 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	connector, err := c.socialService.GetConnector(c.providerName)
 	if err != nil {
 		return nil, errOAuthInternal.Errorf("failed to get %s oauth connector: %w", c.name, err)
+	}
+
+	if oauthCfg.ClientSecret == "" {
+		// Use OAuth2 implicit flow if no client secret available.
+		opts = append(opts, oauth2.SetAuthURLParam("response_type", "token id_token"))
+		opts = append(opts, oauth2.SetAuthURLParam("nonce", hashedSate))
 	}
 
 	return &authn.Redirect{

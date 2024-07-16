@@ -26,10 +26,11 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 		return
 	}
 
-	code := reqCtx.Query("code")
-
+	query := reqCtx.Req.URL.Query()
 	req := &authn.Request{HTTPRequest: reqCtx.Req}
-	if code == "" {
+
+	// Handle initiate login.
+	if query.Has("initiate") {
 		redirect, err := hs.authnService.RedirectURL(reqCtx.Req.Context(), authn.ClientWithPrefix(name), req)
 		if err != nil {
 			reqCtx.Redirect(hs.redirectURLWithErrorCookie(reqCtx, err))
@@ -45,6 +46,29 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 		reqCtx.Redirect(redirect.URL)
 		return
 	}
+
+	// Handle implicit callback, or old (cached?) initiate URL without "?initiate".
+	if !query.Has("code") && !query.Has("access_token") {
+		resp := reqCtx.Resp
+		resp.Header().Add("Content-Type", "text/html")
+		resp.Write([]byte(`<html>
+			<body>
+				<script>
+					var hash_query = document.location.hash.slice(1);
+					var params = new URLSearchParams(hash_query);
+					var is_implicit_callback = params.has("access_token") || params.has("error");
+					document.location.replace(document.location.origin + document.location.pathname + (
+						is_implicit_callback
+							? ("?" + hash_query)
+							: "?initiate"
+					));
+				</script>
+			</body>
+		</html>`))
+		return
+	}
+
+	// Handle implicit callback 2nd stage (if "access_token" presents) or access code flow (if "code" presents).
 
 	identity, err := hs.authnService.Login(reqCtx.Req.Context(), authn.ClientWithPrefix(name), req)
 	// NOTE: always delete these cookies, even if login failed

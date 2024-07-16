@@ -156,7 +156,7 @@ export const LoginServiceButtons = () => {
             <LinkButton
               key={key}
               className={getButtonStyleFor(service, styles, theme)}
-              href={`login/${service.hrefName ? service.hrefName : key}`}
+              href={`login/${service.hrefName ? service.hrefName : key}?initiate`}
               target="_self"
               fullWidth
             >
