@@ -149,7 +149,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	s.rvMutex.Lock()
 	defer s.rvMutex.Unlock()
 
-	fpath := s.filePath(key)
+	fpath, err := s.filePath(key)
+	if err != nil {
+		return err
+	}
 	if exists(fpath) {
 		return storage.NewKeyExistsError(key, 0)
 	}
@@ -215,7 +218,10 @@ func (s *Storage) Delete(
 	s.rvMutex.Lock()
 	defer s.rvMutex.Unlock()
 
-	fpath := s.filePath(key)
+	fpath, err := s.filePath(key)
+	if err != nil {
+		return err
+	}
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
 	}
@@ -360,7 +366,10 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	// No RV generation locking in single item get since its read from the disk
-	fpath := s.filePath(key)
+	fpath, err := s.filePath(key)
+	if err != nil {
+		return err
+	}
 
 	rv, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
 	if err != nil {
@@ -402,6 +411,10 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	resourceVersionInt := uint64(0)
+	fpath, err := s.filePath(key)
+	if err != nil {
+		return err
+	}
 
 	// read state protected by mutex
 	objs, err := func() ([]runtime.Object, error) {
@@ -410,8 +423,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 		resourceVersionInt = s.getCurrentResourceVersion()
 
-		var fpath string
-		dirpath := s.dirPath(key)
+		dirpath := filepath.Dir(fpath)
 		// Since it's a get, check if the dir exists and return early as needed
 		if !exists(dirpath) {
 			// We may have gotten the key targeting an individual item
@@ -420,7 +432,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 				// ensure we return empty list in listObj instead of a not found error
 				return []runtime.Object{}, nil
 			}
-			fpath = s.filePath(key)
 		}
 
 		var objs []runtime.Object
@@ -524,9 +535,12 @@ func (s *Storage) GuaranteedUpdate(
 		updatedObj  runtime.Object
 		objFromDisk runtime.Object
 		created     bool
-		fpath       = s.filePath(key)
-		dirpath     = filepath.Dir(fpath)
 	)
+	fpath, err := s.filePath(key)
+	if err != nil {
+		return err
+	}
+	dirpath := filepath.Dir(fpath)
 
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		var err error
