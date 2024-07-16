@@ -1,5 +1,5 @@
 [run]
-timeout = "10m"
+timeout = "20m"
 concurrency = 10
 
 [linters-settings.exhaustive]
