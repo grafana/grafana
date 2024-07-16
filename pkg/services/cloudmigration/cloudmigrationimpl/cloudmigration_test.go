@@ -38,7 +38,6 @@ func Test_NoopServiceDoesNothing(t *testing.T) {
 }
 
 func Test_CreateGetAndDeleteToken(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false)
 
 	createResp, err := s.CreateToken(context.Background())
@@ -61,7 +60,6 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 }
 
 func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, true)
 
 	createTokenResp, err := s.CreateToken(context.Background())
@@ -116,7 +114,6 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false).(*Service)
 
 	gmsClientMock := &gmsClientMock{}
@@ -292,7 +289,6 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 }
 
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false).(*Service)
 
 	gmsClientMock := &gmsClientMock{
