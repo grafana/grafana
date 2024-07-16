@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { autoUpdate, flip, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { useMemo, useRef, useState } from 'react';
@@ -6,7 +7,8 @@ import { useMemo, useRef, useState } from 'react';
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
-import { getSelectStyles } from '../Select/getSelectStyles';
+
+import { getComboboxStyles } from './getComboboxStyles';
 
 export type Value = string | number;
 export type Option = {
@@ -46,9 +48,10 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
   const listRef = useRef(null);
+  const floatingRef = useRef(null);
 
   const theme = useTheme2();
-  const styles = getSelectStyles(theme);
+  const styles = getComboboxStyles(theme);
 
   const rowVirtualizer = useVirtualizer({
     count: items.length,
@@ -66,13 +69,40 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       setItems(options.filter(itemFilter(inputValue)));
     },
     onSelectedItemChange: ({ selectedItem }) => onChange(selectedItem),
+    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
+        rowVirtualizer.scrollToIndex(highlightedIndex);
+      }
+    },
   });
+
+  // the order of middleware is important!
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+      fallbackPlacements: ['top'],
+    }),
+  ];
+
+  const { refs } = useFloating({
+    open: isOpen,
+    placement: 'bottom',
+    middleware,
+    whileElementsMounted: autoUpdate,
+  });
+  refs.reference = listRef;
+  refs.floating = floatingRef;
+
+  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= 400;
+
   return (
     <div>
       <Input suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />} {...restProps} {...getInputProps()} />
-      <div className={styles.menu} {...getMenuProps({ ref: listRef })}>
+      <div className={cx(styles.menu, hasMinHeight && styles.menuHeight)} {...getMenuProps({ ref: listRef })}>
         {isOpen && (
-          <ul className={styles.valueContainer} style={{ height: rowVirtualizer.getTotalSize() }}>
+          <ul className={styles.valueContainer} style={{ height: rowVirtualizer.getTotalSize() }} ref={floatingRef}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
