@@ -5,9 +5,9 @@ import (
 )
 
 var (
-	_ DiagnosticsServer   = &noopService{}
-	_ ResourceIndexServer = &noopService{}
-	_ LifecycleHooks      = &noopService{}
+	_ DiagnosticsServer   = (*noopService)(nil)
+	_ ResourceIndexServer = (*noopService)(nil)
+	_ LifecycleHooks      = (*noopService)(nil)
 )
 
 // noopService is a helper implementation to simplify tests
