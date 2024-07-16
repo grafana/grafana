@@ -7,108 +7,103 @@ package file
 
 import (
 	"bytes"
-	"fmt"
-	"strconv"
+	"errors"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync/atomic"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/apiserver/pkg/storage"
-
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func errorWrap(status *resource.ErrorResult) error {
-	if status != nil {
-		err := &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    status.Code,
-			Reason:  metav1.StatusReason(status.Reason),
-			Message: status.Message,
-		}}
-		if status.Details != nil {
-			err.ErrStatus.Details = &metav1.StatusDetails{
-				Group:             status.Details.Group,
-				Kind:              status.Details.Kind,
-				Name:              status.Details.Name,
-				UID:               types.UID(status.Details.Uid),
-				RetryAfterSeconds: status.Details.RetryAfterSeconds,
-			}
-			for _, c := range status.Details.Causes {
-				err.ErrStatus.Details.Causes = append(err.ErrStatus.Details.Causes, metav1.StatusCause{
-					Type:    metav1.CauseType(c.Reason),
-					Message: c.Message,
-					Field:   c.Field,
-				})
-			}
-		}
-		return err
-	}
-	return nil
+func (s *Storage) filePath(key string) string {
+	// Replace backslashes with underscores to avoid creating bogus subdirectories
+	key = strings.Replace(key, "\\", "_", -1)
+	fileName := filepath.Join(s.root, filepath.Clean(key+".json"))
+	return fileName
 }
 
-func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource.ListRequest, storage.SelectionPredicate, error) {
-	predicate := opts.Predicate
-	req := &resource.ListRequest{
-		Limit: opts.Predicate.Limit,
-		Options: &resource.ListOptions{
-			Key: k,
-		},
-		NextPageToken: predicate.Continue,
+// this is for constructing dirPath in a sanitized way provided you have
+// already calculated the key. In order to go in the other direction, from a file path
+// key to its dir, use the go standard library: filepath.Dir
+func (s *Storage) dirPath(key string) string {
+	return dirPath(s.root, key)
+}
+
+func writeFile(codec runtime.Codec, path string, obj runtime.Object) error {
+	buf := new(bytes.Buffer)
+	if err := codec.Encode(obj, buf); err != nil {
+		return err
 	}
+	return os.WriteFile(path, buf.Bytes(), 0600)
+}
 
-	if opts.Predicate.Label != nil && !opts.Predicate.Label.Empty() {
-		requirements, selectable := opts.Predicate.Label.Requirements()
-		if !selectable {
-			return nil, predicate, nil // not selectable
-		}
+var fileReadCount uint64 = 0
 
-		for _, r := range requirements {
-			v := r.Key()
+//func getReadsAndReset() uint64 {
+//return atomic.SwapUint64(&fileReadCount, 0)
+//}
 
-			req.Options.Labels = append(req.Options.Labels, &resource.Requirement{
-				Key:      v,
-				Operator: string(r.Operator()),
-				Values:   r.Values().List(),
-			})
-		}
+func readFile(codec runtime.Codec, path string, newFunc func() runtime.Object) (runtime.Object, error) {
+	atomic.AddUint64(&fileReadCount, 1)
+	content, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		return nil, err
 	}
-
-	if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
-		requirements := opts.Predicate.Field.Requirements()
-		for _, r := range requirements {
-			requirement := &resource.Requirement{Key: r.Field, Operator: string(r.Operator)}
-			if r.Value != "" {
-				requirement.Values = append(requirement.Values, r.Value)
-			}
-			req.Options.Labels = append(req.Options.Labels, requirement)
-		}
+	newObj := newFunc()
+	decodedObj, _, err := codec.Decode(content, nil, newObj)
+	if err != nil {
+		return nil, err
 	}
+	return decodedObj, nil
+}
 
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+func readDirRecursive(codec runtime.Codec, path string, newFunc func() runtime.Object) ([]runtime.Object, error) {
+	var objs []runtime.Object
+	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+			return err
 		}
-		req.ResourceVersion = rv
+		if info.IsDir() || filepath.Ext(path) != ".json" {
+			return nil
+		}
+		obj, err := readFile(codec, path, newFunc)
+		if err != nil {
+			return err
+		}
+		objs = append(objs, obj)
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return objs, nil
+		}
+		return nil, err
 	}
+	return objs, nil
+}
 
-	switch opts.ResourceVersionMatch {
-	case "", metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
-	case metav1.ResourceVersionMatchExact:
-		req.VersionMatch = resource.ResourceVersionMatch_Exact
-	default:
-		return nil, predicate, apierrors.NewBadRequest(
-			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
-		)
+func deleteFile(path string) error {
+	return os.Remove(path)
+}
+
+func exists(filepath string) bool {
+	_, err := os.Stat(filepath)
+	return err == nil
+}
+
+func dirPath(root string, key string) string {
+	// Replace backslashes with underscores to avoid creating bogus subdirectories
+	key = strings.Replace(key, "\\", "_", -1)
+	dirName := filepath.Join(root, filepath.Clean(key))
+	return dirName
+}
+
+func ensureDir(dirname string) error {
+	if !exists(dirname) {
+		return os.MkdirAll(dirname, 0700)
 	}
-
-	return req, predicate, nil
+	return nil
 }
 
 func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object) (bool, error) {
@@ -123,53 +118,4 @@ func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object)
 	}
 
 	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
-}
-
-var _ watch.Interface = (*dummyWatch)(nil)
-
-type dummyWatch struct{}
-
-func (d *dummyWatch) Stop() {}
-func (d *dummyWatch) ResultChan() <-chan watch.Event {
-	stream := make(chan watch.Event)
-	close(stream)
-	return stream
-}
-
-func testKeyParser(val string) (*resource.ResourceKey, error) {
-	k, err := grafanaregistry.ParseKey(val)
-	if err != nil {
-		if strings.HasPrefix(val, "pods/") {
-			parts := strings.Split(val, "/")
-			if len(parts) == 2 {
-				err = nil
-				k = &grafanaregistry.Key{
-					Resource: parts[0], // pods
-					Name:     parts[1],
-				}
-			} else if len(parts) == 3 {
-				err = nil
-				k = &grafanaregistry.Key{
-					Resource:  parts[0], // pods
-					Namespace: parts[1],
-					Name:      parts[2],
-				}
-			}
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	if k.Group == "" {
-		k.Group = "example.apiserver.k8s.io"
-	}
-	if k.Resource == "" {
-		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
-	}
-	return &resource.ResourceKey{
-		Namespace: k.Namespace,
-		Group:     k.Group,
-		Resource:  k.Resource,
-		Name:      k.Name,
-	}, err
 }

@@ -15,7 +15,7 @@ import (
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -81,7 +81,7 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 		return err
 	}
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(":mem:", etcdOptions.StorageConfig)
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig)
 	if err != nil {
 		return err
 	}

@@ -3,30 +3,20 @@
 package file
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"time"
 
-	"gocloud.dev/blob"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
-	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
-	"k8s.io/client-go/tools/cache"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	client   resource.ResourceStoreClient
+	path     string
 	original storagebackend.Config
 }
 
@@ -34,46 +24,33 @@ type RESTOptionsGetter struct {
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
 func NewRESTOptionsGetter(path string,
-	originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	originalStorageConfig storagebackend.Config,
+	createResourceDirs ...string) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
 
-	var bucket *blob.Bucket
-	if path == ":mem:" {
-		bucket = memblob.OpenBucket(&memblob.Options{})
-	} else {
-		var err error
-		bucket, err = fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		if err != nil {
-			return nil, err
+	if err := initializeDirs(path, createResourceDirs); err != nil {
+		return nil, err
+	}
+
+	return &RESTOptionsGetter{path: path, original: originalStorageConfig}, nil
+}
+
+func initializeDirs(root string, createResourceDirs []string) error {
+	for _, dir := range createResourceDirs {
+		if err := ensureDir(filepath.Join(root, dir)); err != nil {
+			return err
 		}
 	}
-	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-		Bucket: bucket,
-	})
-	if err != nil {
-		return nil, err
-	}
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
-	})
-	if err != nil {
-		return nil, err
-	}
-	client := resource.NewLocalResourceStoreClient(server)
-
-	return &RESTOptionsGetter{client: client, original: originalStorageConfig}, nil
+	return nil
 }
 
 func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
-			Type:                      "resource",
-			Prefix:                    "resource/", // Not actually used
+			Type:                      "file",
+			Prefix:                    r.path,
 			Transport:                 storagebackend.TransportConfig{},
 			Codec:                     r.original.Codec,
 			EncodeVersioner:           r.original.EncodeVersioner,
@@ -89,19 +66,8 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 	}
 
 	ret := generic.RESTOptions{
-		StorageConfig: storageConfig,
-		Decorator: func(
-			config *storagebackend.ConfigForResource,
-			resourcePrefix string,
-			keyFunc func(obj runtime.Object) (string, error),
-			newFunc func() runtime.Object,
-			newListFunc func() runtime.Object,
-			getAttrsFunc storage.AttrFunc,
-			trigger storage.IndexerFuncs,
-			indexers *cache.Indexers,
-		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
-		},
+		StorageConfig:           storageConfig,
+		Decorator:               NewStorage,
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
