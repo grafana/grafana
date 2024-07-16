@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/';
-import { Button, useStyles2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, Stack } from '@grafana/ui';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import appEvents from '../../../core/app_events';
@@ -17,8 +16,6 @@ import { PermanentlyDeleteModal } from './PermanentlyDeleteModal';
 import { RestoreModal } from './RestoreModal';
 
 export function RecentlyDeletedActions() {
-  const styles = useStyles2(getStyles);
-
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
   const [, stateManager] = useRecentlyDeletedStateManager();
@@ -75,6 +72,11 @@ export function RecentlyDeletedActions() {
   };
 
   const showRestoreModal = () => {
+    reportInteraction('grafana_restore_clicked', {
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
+    });
     appEvents.publish(
       new ShowModalReactEvent({
         component: RestoreModal,
@@ -88,6 +90,11 @@ export function RecentlyDeletedActions() {
   };
 
   const showDeleteModal = () => {
+    reportInteraction('grafana_delete_permanently_clicked', {
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
+    });
     appEvents.publish(
       new ShowModalReactEvent({
         component: PermanentlyDeleteModal,
@@ -101,26 +108,13 @@ export function RecentlyDeletedActions() {
   };
 
   return (
-    <div className={styles.row}>
+    <Stack gap={1}>
       <Button onClick={showRestoreModal} variant="secondary">
         <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
       </Button>
       <Button onClick={showDeleteModal} variant="destructive">
         <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
       </Button>
-    </div>
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(1),
-    margin: theme.spacing(2, 0),
-
-    [theme.breakpoints.up('md')]: {
-      marginTop: 0,
-    },
-  }),
-});

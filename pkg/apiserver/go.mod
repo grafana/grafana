@@ -3,7 +3,6 @@ module github.com/grafana/grafana/pkg/apiserver
 go 1.21.10
 
 require (
-	github.com/bwmarrin/snowflake v0.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701135906-559738ce6ae1
 	github.com/prometheus/client_golang v1.19.1
