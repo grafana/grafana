@@ -325,7 +325,9 @@ export const browseDashboardsAPI = createApi({
           if (name) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
-              payload: [t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to trash', { name })],
+              payload: [
+                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
+              ],
             });
           }
         }

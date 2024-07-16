@@ -244,7 +244,7 @@
       "text": "No results found for your query"
     },
     "soft-delete": {
-      "success": "Dashboard {{name}} moved to trash"
+      "success": "Dashboard {{name}} moved to Recently deleted"
     }
   },
   "clipboard-button": {
