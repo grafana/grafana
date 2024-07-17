@@ -126,7 +126,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	err = s.Versioner().PrepareObjectForStorage(obj)
+	err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -503,6 +503,11 @@ func (s *Storage) GuaranteedUpdate(
 		return apierrors.NewInternalError(
 			fmt.Errorf("could not successfully update object. key=%s, err=%s", k.String(), err.Error()),
 		)
+	}
+
+	err = s.prepareObjectForUpdate(ctx, updatedObj, destination)
+	if err != nil {
+		return err
 	}
 
 	var buf bytes.Buffer

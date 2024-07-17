@@ -44,7 +44,7 @@ type writeEventBuilder struct {
 	Type    WatchEvent_Type
 
 	Requester identity.Requester
-	Object    *unstructured.Unstructured
+	Value     []byte
 
 	// Access the raw metadata values
 	Meta    utils.GrafanaMetaAccessor
@@ -53,13 +53,14 @@ type writeEventBuilder struct {
 
 func newEventFromBytes(value, oldValue []byte) (*writeEventBuilder, error) {
 	builder := &writeEventBuilder{
-		Object: &unstructured.Unstructured{},
+		Value: value,
 	}
-	err := builder.Object.UnmarshalJSON(value)
+	obj := &unstructured.Unstructured{}
+	err := obj.UnmarshalJSON(value)
 	if err != nil {
 		return nil, err
 	}
-	builder.Meta, err = utils.MetaAccessor(builder.Object)
+	builder.Meta, err = utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +88,6 @@ func (b *writeEventBuilder) toEvent() (event WriteEvent, err error) {
 	event.Type = b.Type
 	event.ObjectOld = b.OldMeta
 	event.Object = b.Meta
-	event.Value, err = b.Object.MarshalJSON()
+	event.Value = b.Value
 	return // includes the named values
 }

@@ -10,12 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -218,7 +216,6 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	obj.SetGenerateName("")
 	err = validateName(obj.GetName())
 	if err != nil {
 		return nil, err
@@ -240,16 +237,6 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 		if err != nil {
 			return nil, err
 		}
-	}
-	obj.SetOriginInfo(origin)
-
-	// Ensure old values do not mutate things they should not
-	if event.OldMeta != nil {
-		old := event.OldMeta
-
-		obj.SetUID(old.GetUID())
-		obj.SetCreatedBy(old.GetCreatedBy())
-		obj.SetCreationTimestamp(old.GetCreationTimestamp())
 	}
 	return event, nil
 }
@@ -277,13 +264,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
-
-	obj := builder.Meta
-	obj.SetCreatedBy(builder.Requester.GetUID().String())
-	obj.SetUpdatedBy("")
-	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreationTimestamp(metav1.NewTime(time.UnixMilli(s.now())))
-	obj.SetUID(types.UID(uuid.New().String()))
 
 	event, err := builder.toEvent()
 	if err != nil {
@@ -372,10 +352,6 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
-
-	obj := builder.Meta
-	obj.SetUpdatedBy(builder.Requester.GetUID().String())
-	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 	event, err := builder.toEvent()
 	if err != nil {
