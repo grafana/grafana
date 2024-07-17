@@ -130,7 +130,7 @@
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/query/ @grafana/grafana-app-platform-squad
-/pkg/services/queryhistory/ @grafana/grafana-app-platform-squad
+/pkg/services/queryhistory/ @grafana/explore-squad
 /pkg/services/quota/ @grafana/grafana-search-and-storage
 /pkg/services/screenshot/ @grafana/grafana-backend-group
 /pkg/services/search/ @grafana/grafana-search-and-storage
