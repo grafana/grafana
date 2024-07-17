@@ -12,6 +12,11 @@ import { AddNewConnection } from './ConnectData';
 
 jest.mock('app/features/datasources/api');
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+}));
+
 const renderPage = (plugins: CatalogPlugin[] = []): RenderResult => {
   return render(
     <TestProvider storeState={{ plugins: getPluginsStateMock(plugins) }}>
