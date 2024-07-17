@@ -1,5 +1,5 @@
 import { systemDateFormats } from '../datetime/formats';
-import { createTheme } from '../themes';
+import { createTheme } from '../themes/createTheme';
 import { FieldConfig, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { ThresholdsMode } from '../types/thresholds';

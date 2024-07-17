@@ -448,6 +448,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/access-squad
 /public/app/features/variables/ @grafana/dashboards-squad
+/public/app/features/preferences/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
@@ -550,6 +551,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
+/scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 
 /scripts/**/generate-transformations* @grafana/dataviz-squad
@@ -709,8 +711,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-kinds-release.yml @grafana/platform-cat
 /.github/workflows/verify-kinds.yml @grafana/platform-cat
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
-/.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
-/.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-backend-services-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-release-guild
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
@@ -719,6 +720,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/run-scenes-e2e.yml @grafana/dashboards-squad
 /.github/workflows/go_lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
+/.github/workflows/changelog.yml @zserge
+/.github/workflows/actions/changelog @zserge
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

@@ -1,5 +1,5 @@
 [run]
-timeout = "10m"
+timeout = "20m"
 concurrency = 10
 
 [linters-settings.exhaustive]
@@ -150,7 +150,6 @@ enable = [
   "revive",
   "staticcheck",
   "stylecheck",
-  "typecheck",
   "unconvert",
   "unused",
   "whitespace",

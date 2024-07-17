@@ -1,10 +1,11 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { isTruthy, locationUtil } from '@grafana/data';
+import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -21,6 +22,7 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
+import { t } from '../../../core/internationalization';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -309,14 +311,25 @@ export const browseDashboardsAPI = createApi({
             },
           });
         }
-
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          await baseQuery({
+          const response = await baseQuery({
             url: `/dashboards/uid/${dashboardUID}`,
             method: 'DELETE',
+            showSuccessAlert: false,
           });
+          // @ts-expect-error
+          const name = response?.data?.title;
+
+          if (name) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: [
+                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
+              ],
+            });
+          }
         }
         return { data: undefined };
       },
@@ -389,10 +402,25 @@ export const browseDashboardsAPI = createApi({
 
     // permanently delete a dashboard. used in PermanentlyDeleteModal.
     hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
-      query: ({ dashboardUID }) => ({
-        url: `/dashboards/uid/${dashboardUID}/trash`,
-        method: 'DELETE',
-      }),
+      queryFn: async ({ dashboardUID }, _api, _extraOptions, baseQuery) => {
+        const response = await baseQuery({
+          url: `/dashboards/uid/${dashboardUID}/trash`,
+          method: 'DELETE',
+          showSuccessAlert: false,
+        });
+
+        // @ts-expect-error
+        const name = response?.data?.title;
+
+        if (name) {
+          appEvents.publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [t('browse-dashboards.hard-delete.success', 'Dashboard {{name}} deleted', { name })],
+          });
+        }
+
+        return { data: undefined };
+      },
       onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents([dashboardUID]));

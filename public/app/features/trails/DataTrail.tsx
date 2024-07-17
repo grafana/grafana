@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
@@ -212,7 +212,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, topScene, history, settings, metric } = model.useState();
-    const styles = useStyles2(getStyles);
+    const chromeHeaderHeight = useChromeHeaderHeight();
+    const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
@@ -266,13 +267,12 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
   });
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
   return {
     container: css({
       flexGrow: 1,
       display: 'flex',
       gap: theme.spacing(1),
-      minHeight: '100%',
       flexDirection: 'column',
       background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       padding: theme.spacing(2, 3, 2, 3),
@@ -291,7 +291,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
       zIndex: theme.zIndex.navbarFixed,
-      top: 0,
+      top: chromeHeaderHeight,
     }),
   };
 }

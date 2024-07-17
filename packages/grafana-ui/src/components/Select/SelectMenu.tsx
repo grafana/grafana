@@ -81,13 +81,25 @@ export const VirtualizedSelectMenu = ({
 
   // flatten the children to account for any categories
   // these will have array children that are the individual options
-  const flattenedChildren = children.flatMap((child) => {
+  const flattenedChildren = children.flatMap((child, index) => {
     if (hasArrayChildren(child)) {
       // need to remove the children from the category else they end up in the DOM twice
       const childWithoutChildren = React.cloneElement(child, {
         children: null,
       });
-      return [childWithoutChildren, ...child.props.children];
+      return [
+        childWithoutChildren,
+        ...child.props.children.slice(0, -1),
+        // add a bottom divider to the last item in the category
+        React.cloneElement(child.props.children.at(-1), {
+          innerProps: {
+            style: {
+              borderBottom: `1px solid ${theme.colors.border.weak}`,
+              height: VIRTUAL_LIST_ITEM_HEIGHT,
+            },
+          },
+        }),
+      ];
     }
     return [child];
   });

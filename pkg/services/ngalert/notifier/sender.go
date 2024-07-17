@@ -26,16 +26,6 @@ func (s sender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhookSetti
 }
 
 func (s sender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
-	var attached []*notifications.SendEmailAttachFile
-	if cmd.AttachedFiles != nil {
-		attached = make([]*notifications.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
-		for _, file := range cmd.AttachedFiles {
-			attached = append(attached, &notifications.SendEmailAttachFile{
-				Name:    file.Name,
-				Content: file.Content,
-			})
-		}
-	}
 	return s.ns.SendEmailCommandHandlerSync(ctx, &notifications.SendEmailCommandSync{
 		SendEmailCommand: notifications.SendEmailCommand{
 			To:            cmd.To,
@@ -43,10 +33,8 @@ func (s sender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings)
 			Template:      cmd.Template,
 			Subject:       cmd.Subject,
 			Data:          cmd.Data,
-			Info:          cmd.Info,
 			ReplyTo:       cmd.ReplyTo,
 			EmbeddedFiles: cmd.EmbeddedFiles,
-			AttachedFiles: attached,
 		},
 	})
 }
