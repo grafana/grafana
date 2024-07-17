@@ -146,11 +146,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("other error %+v", rsp.Error)
 	}
 
-	// TODO? can we just copy?
-	_, _, err = s.codec.Decode(req.Value, nil, out)
-	if err != nil {
-		return err
-	}
 	meta, err := utils.MetaAccessor(out)
 	if err != nil {
 		return err
@@ -656,28 +651,26 @@ func (s *Storage) GuaranteedUpdate(
 		rv = rsp2.ResourceVersion
 	}
 
+	if err := s.versioner.UpdateObject(updatedObj, uint64(rv)); err != nil {
+		return err
+	}
+
 	if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
 		return err
 	}
 
-	if err := s.versioner.UpdateObject(destination, uint64(rv)); err != nil {
-		return err
-	}
-
-	eventType := watch.Modified
 	if created {
-		eventType = watch.Added
 		s.watchSet.notifyWatchers(watch.Event{
 			Object: destination.DeepCopyObject(),
-			Type:   eventType,
+			Type:   watch.Added,
 		}, nil)
 		return nil
 	}
 
 	s.watchSet.notifyWatchers(watch.Event{
 		Object: destination.DeepCopyObject(),
-		Type:   eventType,
-	}, updatedObj.DeepCopyObject())
+		Type:   watch.Modified,
+	}, existingObj.DeepCopyObject())
 
 	return nil
 }
