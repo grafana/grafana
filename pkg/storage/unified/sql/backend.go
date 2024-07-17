@@ -630,12 +630,15 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 	if err != nil {
 		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
-
+	nextRV := rv.ResourceVersion + 1
 	// 2. Increment the resource version
 	res, err := exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       key.Group,
 		Resource:    key.Resource,
+		resourceVersion: &resourceVersion{
+			ResourceVersion: nextRV,
+		},
 	})
 	if err != nil {
 		return 0, fmt.Errorf("increase resource version: %w", err)
@@ -646,7 +649,7 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 	}
 
 	// 3. Retun the incremended value
-	return rv.ResourceVersion + 1, nil
+	return nextRV, nil
 }
 
 // exec uses `req` as input for a non-data returning query generated with

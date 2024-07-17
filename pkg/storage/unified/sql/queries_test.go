@@ -296,6 +296,9 @@ func TestQueries(t *testing.T) {
 				Name: "increment resource version",
 				Data: &sqlResourceVersionRequest{
 					SQLTemplate: new(sqltemplate.SQLTemplate),
+					resourceVersion: &resourceVersion{
+						ResourceVersion: 123,
+					},
 				},
 				Expected: expected{
 					"resource_version_inc_mysql_sqlite.sql": dialects{
