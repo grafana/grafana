@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 
@@ -1243,10 +1244,90 @@ func TestResults_Error(t *testing.T) {
 	}
 }
 
+func TestCreate(t *testing.T) {
+	t.Run("should generate headers from metadata", func(t *testing.T) {
+		orgID := rand.Int63()
+		ctx := models.WithRuleKey(context.Background(), models.GenerateRuleKey(orgID))
+		q := models.CreateClassicConditionExpression("A", "B", "avg", "gt", 1)
+		condition := models.Condition{
+			Condition: q.RefID,
+			Data: []models.AlertQuery{
+				q,
+			},
+			Metadata: map[string]string{
+				"Test1": "data1",
+				"Test2": "музыка 🎶",
+				"Test3": "",
+			},
+		}
+
+		expectedHeaders := map[string]string{
+			"X-Rule-Test1":             "data1",
+			"X-Rule-Test2":             "%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D0%B0+%F0%9F%8E%B6",
+			"X-Rule-Test3":             "",
+			models.FromAlertHeaderName: "true",
+			models.CacheSkipHeaderName: "true",
+			"X-Grafana-Org-Id":         strconv.FormatInt(orgID, 10),
+		}
+
+		var request *expr.Request
+
+		factory := evaluatorImpl{
+			expressionService: fakeExpressionService{
+				buildHook: func(req *expr.Request) (expr.DataPipeline, error) {
+					if request != nil {
+						assert.Fail(t, "BuildPipeline was called twice but should be only once")
+					}
+					request = req
+					return expr.DataPipeline{
+						fakeNode{refID: q.RefID},
+					}, nil
+				},
+			},
+		}
+
+		_, err := factory.Create(NewContext(ctx, &user.SignedInUser{}), condition)
+		require.NoError(t, err)
+
+		require.NotNil(t, request)
+
+		require.Equal(t, expectedHeaders, request.Headers)
+	})
+}
+
 type fakeExpressionService struct {
-	hook func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+	hook      func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+	buildHook func(req *expr.Request) (expr.DataPipeline, error)
 }
 
 func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 	return f.hook(ctx, now, pipeline)
+}
+
+func (f fakeExpressionService) BuildPipeline(req *expr.Request) (expr.DataPipeline, error) {
+	return f.buildHook(req)
+}
+
+type fakeNode struct {
+	refID string
+}
+
+func (f fakeNode) ID() int64 {
+	return 0
+}
+
+func (f fakeNode) NodeType() expr.NodeType {
+	return expr.TypeCMDNode
+}
+
+func (f fakeNode) RefID() string {
+	return f.refID
+}
+
+func (f fakeNode) String() string {
+	return "Fake"
+}
+
+func (f fakeNode) NeedsVars() []string {
+	return nil
 }

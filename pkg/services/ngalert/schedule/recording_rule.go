@@ -272,7 +272,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {
 	start := r.clock.Now()
-	evaluator, err := r.evalFactory.Create(evalCtx, ev.rule.GetEvalCondition())
+	evaluator, err := r.evalFactory.Create(evalCtx, ev.rule.GetEvalCondition().WithSource("scheduler").WithFolder(ev.folderTitle))
 	if err != nil {
 		logger.Error("Failed to build rule evaluator", "error", err)
 		return nil, err
