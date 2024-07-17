@@ -34,13 +34,34 @@ jobs:
           output_file: changelog_items.md
       - name: "Patch CHANGELOG.md"
         run: |
-          # Replace text between version delimiters with new changelog_items.md content
-          sed -i '/${{ inputs.version }} START/,/${{ inputs.version }} END/{
-            //!d
-            a <!-- ${{ inputs.version}} START -->
-            e cat changelog_items.md
-            a <!-- ${{ inputs.version}} END -->
-          }' CHANGELOG.md
+          # Prepare CHANGELOG.md content with version delimiters
+          (
+            echo
+            echo "# ${{ inputs.version}} $(date '+%F')"
+            echo
+            cat changelog_items.md
+          ) > CHANGELOG.part
+
+          cat CHANGELOG.part
+
+          # Check if a version exists in the changelog
+          if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
+            # Replace the content between START and END delimiters
+            echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
+            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
+                   -e '/${{ inputs.version }} START/r changelog_items.md' CHANGELOG.md
+          else
+            # Prepend changelog part to the main changelog file
+            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
+            (
+              echo "<!-- ${{ inputs.version }} START -->
+              cat CHANGELOG.part
+              echo "<!-- ${{ inputs.version }} END -->
+              cat CHANGELOG.md
+            ) > CHANGELOG.tmp
+            mv CHANGELOG.tmp CHANGELOG.md
+          fi
+
           git diff CHANGELOG.md
       - name: "Draft Github Release"
         env:
