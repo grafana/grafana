@@ -154,6 +154,14 @@ func TestGetMuteTiming(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 
 		prov.AssertCalled(t, "GetProvenance", mock.Anything, &result, orgID)
+
+		t.Run("and by UID", func(t *testing.T) {
+			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
+
+			require.NoError(t, err)
+
+			require.Equal(t, result, result2)
+		})
 	})
 
 	t.Run("service returns ErrTimeIntervalNotFound if no mute timings", func(t *testing.T) {

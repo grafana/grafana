@@ -71,13 +71,16 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 }
 
 // GetMuteTiming returns a mute timing by name
-func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error) {
+func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
 	mt, idx := getMuteTimingByName(rev, nameOrUID)
+	if idx == -1 {
+		mt, idx = getMuteTimingByUID(rev, nameOrUID)
+	}
 	if idx == -1 {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
@@ -251,6 +254,16 @@ func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
 func getMuteTimingByName(rev *cfgRevision, name string) (config.MuteTimeInterval, int) {
 	idx := slices.IndexFunc(rev.cfg.AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
 		return interval.Name == name
+	})
+	if idx == -1 {
+		return config.MuteTimeInterval{}, idx
+	}
+	return rev.cfg.AlertmanagerConfig.MuteTimeIntervals[idx], idx
+}
+
+func getMuteTimingByUID(rev *cfgRevision, uid string) (config.MuteTimeInterval, int) {
+	idx := slices.IndexFunc(rev.cfg.AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
+		return getIntervalUID(interval) == uid
 	})
 	if idx == -1 {
 		return config.MuteTimeInterval{}, idx
