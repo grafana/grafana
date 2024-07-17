@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Slack
 title: Configure Slack for Alerting
-weight: 300
+weight: 80
 refs:
   nested-policy:
     - pattern: /docs/grafana/
