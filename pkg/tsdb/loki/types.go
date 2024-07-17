@@ -39,5 +39,4 @@ type lokiQuery struct {
 	End                 time.Time
 	RefID               string
 	SupportingQueryType SupportingQueryType
-	Headers             map[string]string
 }

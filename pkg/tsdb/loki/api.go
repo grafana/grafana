@@ -22,7 +22,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/promlib/converter"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
@@ -97,13 +96,6 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 	req, err := http.NewRequestWithContext(ctx, "GET", lokiUrl.String(), nil)
 	if err != nil {
 		return nil, err
-	}
-
-	if query.Headers != nil {
-		// set headers from upstream first so they do not override ones below
-		for header, value := range query.Headers {
-			req.Header.Set(header, value)
-		}
 	}
 
 	if query.SupportingQueryType != SupportingQueryNone {
