@@ -1,14 +1,12 @@
-name: 'Ephemeral instances: PR comment'
+name: 'Ephemeral instances'
 on:
   issue_comment:
     types: [created]
+  pull_request:
+    types: [closed]
 jobs:
   config:
-    if: github.event.sender.type == 'User' &&
-        github.event.issue.pull_request &&
-        startsWith(github.event.comment.body, '/deploy-to-hg')
-    runs-on:
-      labels: ubuntu-latest-8-cores
+    runs-on: "ubuntu-latest"
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
     steps:
@@ -30,9 +28,7 @@ jobs:
   handle-pull-request-event:
     needs: config
     if: needs.config.outputs.has-secrets &&
-        github.event.sender.type == 'User' &&
-        github.event.issue.pull_request &&
-        startsWith(github.event.comment.body, '/deploy-to-hg')
+        ${{ github.event.issue.pull_request && (startsWith(github.event.comment.body, '/deploy-to-hg') || github.event.action == 'closed') }}
     runs-on:
       labels: ubuntu-latest-8-cores
     continue-on-error: true
@@ -52,34 +48,14 @@ jobs:
           ref: main
           path: ephemeral
 
-      - name: Setup Go
-        uses: actions/setup-go@v4
+      - name: build and deploy ephemeral instance
+        uses: ./ephemeral
         with:
-          go-version-file: ephemeral/go.mod
-
-      - name: Get latest grafana version number
-        run: |
-          # if package.json contains e.g. 11.0.0-pre, this writes 11.0.0 to version.txt
-          curl https://raw.githubusercontent.com/grafana/grafana/main/package.json | jq -r .version | grep -o  '^[0-9\.]*' > version.txt
-
-      - name: Run action
-        env:
-          GITHUB_EVENT: ${{ toJson(github.event)}}
-        run: |
-          # Create a prerelease version number using the latest version from the package.json in the grafana repo.
-          export GRAFANA_VERSION="$(cat version.txt)"
-          echo "${GRAFANA_VERSION}"
-
-          cd $GITHUB_WORKSPACE/ephemeral/src
-          go run . \
-            -GITHUB_TOKEN="${{ steps.generate_token.outputs.token }}" \
-            -GITHUB_WORKFLOW_RUN_ID="${{ github.run_id }}" \
-            -GITHUB_EVENT="$GITHUB_EVENT" \
-            -GITHUB_TRIGGERING_ACTOR="${{ github.triggering_actor }}" \
-            -GCOM_HOST="${{ secrets.EI_GCOM_HOST }}" \
-            -GCOM_TOKEN="${{ secrets.EI_GCOM_TOKEN }}" \
-            -HOSTED_GRAFANA_IMAGE_TAG="$GRAFANA_VERSION-ephemeral-oss-${{ github.event.issue.number}}-${{ github.run_number }}-${{ github.run_attempt }}" \
-            -REGISTRY="${{ secrets.EI_EPHEMERAL_INSTANCES_REGISTRY }}" \
-            -GRAFANA_VERSION="$GRAFANA_VERSION" \
-            -GCP_SERVICE_ACCOUNT_KEY_BASE64="${{ secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 }}" \
-            -EPHEMERAL_ORG_ID="${{ secrets.EI_EPHEMERAL_ORG_ID }}" || true
+          github-token:  ${{ steps.generate_token.outputs.token }}
+          gcom-host: ${{ secrets.EI_GCOM_HOST }}
+          gcom-token: ${{ secrets.EI_GCOM_TOKEN }}
+          registry: "${{ secrets.EI_EPHEMERAL_INSTANCES_REGISTRY }}"
+          gcp-service-account-key: "${{ secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 }}"
+          ephemeral-org-id: "${{ secrets.EI_EPHEMERAL_ORG_ID }}"
+          oss-or-enterprise: oss
+          verbose: true
