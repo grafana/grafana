@@ -37,7 +37,6 @@ export function hasVisibleLegendSeries(data: DataFrame[]) {
 
 export const BarChartLegend = memo(
   ({ data, placement, calcs, displayMode, colorField, ...vizLayoutLegendProps }: BarChartLegend2Props) => {
-    console.log({ data });
     const theme = useTheme2();
 
     if (colorField != null) {

@@ -23,11 +23,12 @@ export const VizLegend2 = ({ data, placement, calcs, displayMode, ...vizLayoutLe
     const yAxis = field.config.custom?.axisPlacement === AxisPlacement.Right ? 2 : 1;
 
     return {
-      fieldIndex, // { frameIndex, fieldIndex } - didn't find a usage of fieldIndex; it's only used in getItemKey
+      fieldIndex, // IHOR: { frameIndex, fieldIndex } - didn't find a usage of fieldIndex; it's only used in getItemKey
       label,
       color,
       yAxis,
       getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
+      // IHOR: getItemKey used in List component to assign a `key` to the item
       getItemKey: () => `${label}-${fieldIndex?.frameIndex}-${fieldIndex?.fieldIndex}`,
     };
   });
