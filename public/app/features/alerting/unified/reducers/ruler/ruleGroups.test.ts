@@ -3,7 +3,7 @@ import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { mockRulerAlertingRule, mockRulerGrafanaRule, mockRulerRecordingRule } from '../../mocks';
 import { fromRulerRule } from '../../utils/rule-id';
 
-import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from './ruleGroups';
+import { deleteRuleAction, pauseRuleAction, reorder, ruleGroupReducer, SwapOperation } from './ruleGroups';
 
 describe('pausing rules', () => {
   // pausing only works for Grafana managed rules
@@ -97,5 +97,16 @@ describe('removing a rule', () => {
     expect(output.rules[1]).toStrictEqual(initialGroup.rules[2]);
 
     expect(output).toMatchSnapshot();
+  });
+});
+
+describe('reorder', () => {
+  it('should reorder arrays', () => {
+    const original = [1, 2, 3];
+    const expected = [1, 3, 2];
+    const operations = [[1, 2]] satisfies SwapOperation[];
+
+    expect(reorder(original, operations)).toEqual(expected);
+    expect(original).toEqual(expected); // make sure it mutates so we can use it in produce functions
   });
 });

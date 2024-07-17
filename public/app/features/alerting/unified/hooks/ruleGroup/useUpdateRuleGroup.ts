@@ -4,11 +4,18 @@ import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { notFoundToNullOrThrow } from '../../api/util';
-import { updateRuleGroupAction, moveRuleGroupAction, renameRuleGroupAction } from '../../reducers/ruler/ruleGroups';
+import {
+  updateRuleGroupAction,
+  moveRuleGroupAction,
+  renameRuleGroupAction,
+  reorderRulesInRuleGroupAction,
+} from '../../reducers/ruler/ruleGroups';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
+
+const ruleUpdateSuccessMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
 
 /**
  * Update an existing rule group, currently only supports updating the interval.
@@ -24,13 +31,11 @@ export function useUpdateRuleGroupConfiguration() {
     const action = updateRuleGroupAction({ interval });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-    const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
-
     return upsertRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage },
+      requestOptions: { successMessage: ruleUpdateSuccessMessage },
     }).unwrap();
   });
 }
@@ -159,5 +164,25 @@ export function useRenameRuleGroup() {
     }).unwrap();
 
     return result;
+  });
+}
+
+export function useReorderRuleForRuleGroup() {
+  const [produceNewRuleGroup] = useProduceNewRuleGroup();
+  const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, operations: Array<[number, number]>) => {
+    const { namespaceName } = ruleGroup;
+
+    const action = reorderRulesInRuleGroupAction({ operations });
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+
+    // @TODO re-fetch so we clear cache
+    return upsertRuleGroup({
+      rulerConfig,
+      namespace: namespaceName,
+      payload: newRuleGroupDefinition,
+      requestOptions: { successMessage: ruleUpdateSuccessMessage },
+    }).unwrap();
   });
 }

@@ -1,5 +1,5 @@
 import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
-import { remove } from 'lodash';
+import { inRange, remove } from 'lodash';
 
 import { EditableRuleIdentifier, GrafanaRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -27,7 +27,7 @@ export const moveRuleGroupAction = createAction<{ namespaceName: string; groupNa
   'ruleGroup/move'
 );
 export const renameRuleGroupAction = createAction<{ groupName: string; interval?: string }>('ruleGroup/rename');
-export const reorderRulesInRuleGroupAction = createAction('ruleGroup/rules/reorder');
+export const reorderRulesInRuleGroupAction = createAction<{ operations: SwapOperation[] }>('ruleGroup/rules/reorder');
 
 const initialState: PostableRulerRuleGroupDTO = {
   name: 'initial',
@@ -64,8 +64,9 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
         throw new Error('Matching rule is not a Grafana-managed rule');
       }
     })
-    .addCase(reorderRulesInRuleGroupAction, () => {
-      throw new Error('not yet implemented');
+    .addCase(reorderRulesInRuleGroupAction, (draft, { payload }) => {
+      const { operations } = payload;
+      reorder(draft.rules, operations);
     })
     // rename and move should allow updating the group's name
     .addMatcher(isAnyOf(renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
@@ -110,3 +111,25 @@ const ruleFinder = (identifier: RuleIdentifier) => {
     throw new Error('No such rule with identifier found in group');
   };
 };
+
+// [oldIndex, newIndex]
+export type SwapOperation = [number, number];
+
+export function reorder<T>(items: T[], operations: Array<[number, number]>) {
+  for (let operation of operations) {
+    swap(items, operation);
+  }
+  return items;
+}
+
+export function swap<T>(items: T[], [oldIndex, newIndex]: SwapOperation) {
+  const inBounds = inRange(oldIndex, items.length) && inRange(newIndex, items.length);
+  if (!inBounds) {
+    throw new Error('Invalid operation: index out of bounds');
+  }
+
+  const [movedItem] = items.splice(oldIndex, 1);
+  items.splice(newIndex, 0, movedItem);
+
+  return items;
+}

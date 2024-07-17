@@ -274,6 +274,7 @@
     }
   },
   "common": {
+    "cancel": "Cancel",
     "locale": {
       "default": "Default"
     },
