@@ -65,6 +65,7 @@ interface BaseProps {
    * Debounce the event handler, if possible
    */
   onMouseMove?: () => void;
+  onMouseEnter?: () => void;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -132,6 +133,7 @@ export function PanelChrome({
   onToggleCollapse,
   onFocus,
   onMouseMove,
+  onMouseEnter,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -262,6 +264,7 @@ export function PanelChrome({
       tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
       onFocus={onFocus}
       onMouseMove={onMouseMove}
+      onMouseEnter={onMouseEnter}
       ref={ref}
     >
       <div className={styles.loadingBarContainer}>

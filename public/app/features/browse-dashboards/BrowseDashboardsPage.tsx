@@ -130,14 +130,22 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       }
     >
       <Page.Contents className={styles.pageContents}>
-        <FilterInput
-          placeholder={getSearchPlaceholder(searchState.includePanels)}
-          value={searchState.query}
-          escapeRegex={false}
-          onChange={(e) => stateManager.onQueryChange(e)}
-        />
+        <div>
+          <FilterInput
+            placeholder={getSearchPlaceholder(searchState.includePanels)}
+            value={searchState.query}
+            escapeRegex={false}
+            onChange={(e) => stateManager.onQueryChange(e)}
+          />
+        </div>
 
-        {hasSelection ? <BrowseActions /> : <BrowseFilters />}
+        {hasSelection ? (
+          <BrowseActions />
+        ) : (
+          <div className={styles.filters}>
+            <BrowseFilters />
+          </div>
+        )}
 
         <div className={styles.subView}>
           <AutoSizer>
@@ -163,15 +171,23 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
-    display: 'grid',
-    gridTemplateRows: 'auto auto 1fr',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
     height: '100%',
-    rowGap: theme.spacing(1),
   }),
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
     height: '100%',
+  }),
+
+  filters: css({
+    display: 'none',
+
+    [theme.breakpoints.up('md')]: {
+      display: 'block',
+    },
   }),
 });
 
