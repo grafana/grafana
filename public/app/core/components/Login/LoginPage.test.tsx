@@ -13,6 +13,7 @@ jest.mock('@grafana/runtime', () => ({
     post: postMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     auth: {
       disableLogin: false,
     },
