@@ -449,9 +449,10 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 }
 
 type gmsClientMock struct {
-	validateKeyCalled   int
-	startSnapshotCalled int
-	getStatusCalled     int
+	validateKeyCalled     int
+	startSnapshotCalled   int
+	getStatusCalled       int
+	createUploadUrlCalled int
 
 	getSnapshotResponse *cloudmigration.GetSnapshotStatusResponse
 }
@@ -473,4 +474,9 @@ func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudM
 func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.CloudMigrationSnapshot, _ int) (*cloudmigration.GetSnapshotStatusResponse, error) {
 	m.getStatusCalled++
 	return m.getSnapshotResponse, nil
+}
+
+func (m *gmsClientMock) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	m.createUploadUrlCalled++
+	return "http://localhost:3000", nil
 }

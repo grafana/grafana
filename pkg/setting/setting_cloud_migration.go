@@ -12,6 +12,7 @@ type CloudMigrationSettings struct {
 	GMSDomain                   string
 	GMSStartSnapshotTimeout     time.Duration
 	GMSGetSnapshotStatusTimeout time.Duration
+	GMSCreateUploadUrlTimeout   time.Duration
 	GMSValidateKeyTimeout       time.Duration
 	FetchInstanceTimeout        time.Duration
 	CreateAccessPolicyTimeout   time.Duration
@@ -34,6 +35,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.GMSValidateKeyTimeout = cloudMigration.Key("validate_key_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.GMSStartSnapshotTimeout = cloudMigration.Key("start_snapshot_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.GMSGetSnapshotStatusTimeout = cloudMigration.Key("get_snapshot_status_timeout").MustDuration(5 * time.Second)
+	cfg.CloudMigration.GMSCreateUploadUrlTimeout = cloudMigration.Key("create_upload_url_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.FetchInstanceTimeout = cloudMigration.Key("fetch_instance_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.CreateAccessPolicyTimeout = cloudMigration.Key("create_access_policy_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.FetchAccessPolicyTimeout = cloudMigration.Key("fetch_access_policy_timeout").MustDuration(5 * time.Second)

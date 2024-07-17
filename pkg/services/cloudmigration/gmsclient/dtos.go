@@ -44,3 +44,7 @@ type MigrateDataResponseItemDTO struct {
 	Status ItemStatus `json:"status"`
 	Error  string     `json:"error,omitempty"`
 }
+
+type CreateSnapshotUploadUrlResponseDTO struct {
+	UploadUrl string `json:"uploadUrl"`
+}
