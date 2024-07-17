@@ -4,7 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { useMemo, useRef, useState } from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
@@ -45,6 +45,7 @@ function estimateSize() {
 }
 
 export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
+  const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -93,7 +94,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     whileElementsMounted: autoUpdate,
   });
 
-  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= 400;
+  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_WIDTH;
 
   return (
     <div>
