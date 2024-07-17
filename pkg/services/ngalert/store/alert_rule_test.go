@@ -1195,7 +1195,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 			assert.Equal(t, true, titleMap[secondNewRule.Title])
 			return err
 		})
-
+		require.NoError(t, err)
 	})
 
 	t.Run("only oldest records surpassing the limit should be deleted", func(t *testing.T) {
@@ -1247,6 +1247,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 			assert.Equal(t, "newer-record", alertRuleVersions[0].Title)
 			return err
 		})
+		require.NoError(t, err)
 	})
 
 	t.Run("limit set to 0 should fail", func(t *testing.T) {

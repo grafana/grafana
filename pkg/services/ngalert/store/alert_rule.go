@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -292,7 +291,7 @@ func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string
 
 	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		highest := &models.AlertRuleVersion{}
+		highest := &ngmodels.AlertRuleVersion{}
 		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).OrderBy("id").Limit(1, limit).Get(highest)
 		if err != nil {
 			return err
