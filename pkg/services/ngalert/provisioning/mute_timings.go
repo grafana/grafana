@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"slices"
@@ -138,8 +139,30 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
+	revision, err := svc.configStore.Get(ctx, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
+	var old config.MuteTimeInterval
+	var idx int
+	if mt.UID != "" {
+		old, idx = getMuteTimingByUID(revision, mt.UID)
+	} else {
+		old, idx = getMuteTimingByName(revision, mt.Name)
+	}
+	if idx == -1 {
+		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
+	}
+
+	// check optimistic concurrency
+	err = svc.checkOptimisticConcurrency(old, models.Provenance(mt.Provenance), mt.Version, "update")
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
 	// check that provenance is not changed in an invalid way
-	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &mt, orgID)
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &definitions.MuteTimeInterval{MuteTimeInterval: old}, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
@@ -147,23 +170,10 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	revision, err := svc.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-
-	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
-		return definitions.MuteTimeInterval{}, nil
-	}
-
-	old, idx := getMuteTimingByName(revision, mt.Name)
-	if idx == -1 {
-		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
-	}
-
-	err = svc.checkOptimisticConcurrency(old, models.Provenance(mt.Provenance), mt.Version, "update")
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+	// if the name of the time interval changed
+	if old.Name != mt.Name {
+		// TODO implement support for renaming.
+		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(errors.New("name change is not allowed"))
 	}
 
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval

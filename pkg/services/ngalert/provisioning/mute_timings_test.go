@@ -410,6 +410,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 	}
 	expectedProvenance := models.ProvenanceAPI
 	expectedVersion := calculateMuteTimeIntervalFingerprint(expected)
+	expectedUID := getIntervalUID(expected)
 	timing := definitions.MuteTimeInterval{
 		MuteTimeInterval: expected,
 		Version:          originalVersion,
@@ -431,7 +432,51 @@ func TestUpdateMuteTimings(t *testing.T) {
 	})
 
 	t.Run("rejects mute timings if provenance is not right", func(t *testing.T) {
-		sut, _, prov := createMuteTimingSvcSut()
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		expectedErr := errors.New("test")
+		sut.validator = func(from, to models.Provenance) error {
+			return expectedErr
+		}
+		timing := definitions.MuteTimeInterval{
+			MuteTimeInterval: expected,
+			Provenance:       definitions.Provenance(models.ProvenanceFile),
+		}
+
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+		require.ErrorIs(t, err, expectedErr)
+	})
+
+	t.Run("rejects if mute timing is renamed", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		interval := expected
+		interval.Name = "another-time-interval"
+		timing := definitions.MuteTimeInterval{
+			UID:              expectedUID,
+			MuteTimeInterval: interval,
+			Version:          originalVersion,
+			Provenance:       definitions.Provenance(expectedProvenance),
+		}
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+		require.ErrorIs(t, err, ErrTimeIntervalInvalid)
+	})
+
+	t.Run("rejects mute timings if provenance is not right", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
 		expectedErr := errors.New("test")
 		sut.validator = func(from, to models.Provenance) error {
 			return expectedErr
@@ -483,6 +528,39 @@ func TestUpdateMuteTimings(t *testing.T) {
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
 
 		require.Truef(t, ErrTimeIntervalNotFound.Is(err), "expected ErrTimeIntervalNotFound but got %s", err)
+	})
+
+	t.Run("returns ErrMuteTimingsNotFound if mute timing does not exist", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		t.Run("when UID is specified", func(t *testing.T) {
+			timing := definitions.MuteTimeInterval{
+				UID:              "not-found",
+				MuteTimeInterval: expected,
+				Provenance:       definitions.Provenance(expectedProvenance),
+			}
+
+			_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+			require.ErrorIs(t, err, ErrTimeIntervalNotFound)
+		})
+
+		t.Run("when only Name is specified", func(t *testing.T) {
+			timing := definitions.MuteTimeInterval{
+				MuteTimeInterval: config.MuteTimeInterval{
+					Name: "not-found",
+				},
+				Provenance: definitions.Provenance(expectedProvenance),
+			}
+
+			_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+			require.ErrorIs(t, err, ErrTimeIntervalNotFound)
+		})
 	})
 
 	t.Run("saves mute timing and provenance in a transaction if optimistic concurrency passes", func(t *testing.T) {
