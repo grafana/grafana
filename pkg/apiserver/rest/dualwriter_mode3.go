@@ -77,7 +77,7 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 
 // List overrides the behavior of the generic DualWriter and reads only from Unified Store.
 func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion, "kind", options.Kind)
+	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion)
 	ctx = klog.NewContext(ctx, log)
 	var method = "list"
 
