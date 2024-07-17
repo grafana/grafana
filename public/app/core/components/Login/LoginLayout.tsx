@@ -3,10 +3,10 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { LoginFooter } from 'app/percona/shared/components/LoginFooter';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
-import LoginFooter from '../Footer/LoginFooter';
 
 interface InnerBoxProps {
   enterAnimation?: boolean;
