@@ -18,7 +18,7 @@ import * as utils from './utils';
 const mockTransformationsVariableSupport = jest.spyOn(utils, 'transformationsVariableSupport');
 mockTransformationsVariableSupport.mockReturnValue(false);
 
-global.console.warn = jest.fn();
+jest.spyOn(console, 'warn').mockImplementation();
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
