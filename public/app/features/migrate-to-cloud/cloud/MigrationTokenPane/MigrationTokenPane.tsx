@@ -12,13 +12,11 @@ import { TokenStatus } from './TokenStatus';
 
 // TODO: candidate to hoist and share
 function maybeAPIError(err: unknown) {
-  console.log('maybe api error', err);
   if (!isFetchError<unknown>(err) || typeof err.data !== 'object' || !err.data) {
     return null;
   }
 
   const data = err?.data;
-
   const message = 'message' in data && typeof data.message === 'string' ? data.message : null;
   const messageId = 'messageId' in data && typeof data.messageId === 'string' ? data.messageId : null;
   const statusCode = 'statusCode' in data && typeof data.statusCode === 'number' ? data.statusCode : null;
@@ -35,9 +33,7 @@ export const MigrationTokenPane = () => {
   const getTokenQuery = useGetCloudMigrationTokenQuery();
   const [createTokenMutation, createTokenResponse] = useCreateCloudMigrationTokenMutation();
 
-  console.log('getTokenQuery', getTokenQuery);
   const getTokenQueryError = maybeAPIError(getTokenQuery.error);
-  console.log('getTokenQueryError', getTokenQueryError);
 
   const hasToken = Boolean(createTokenResponse.data?.token) || Boolean(getTokenQuery.data?.id);
   const isLoading = getTokenQuery.isFetching || createTokenResponse.isLoading;
