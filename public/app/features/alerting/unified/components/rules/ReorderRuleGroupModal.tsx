@@ -172,6 +172,7 @@ interface ListItemProps extends React.HTMLAttributes<HTMLDivElement> {
 const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListItemProps) => {
   const styles = useStyles2(getStyles);
 
+  // @TODO does this work with Grafana-managed recording rules too? Double check that.
   return (
     <div
       data-testid="reorder-alert-rule"

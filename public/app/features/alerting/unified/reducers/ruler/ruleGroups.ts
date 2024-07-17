@@ -48,6 +48,7 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     })
     .addCase(deleteRuleAction, (draft, { payload }) => {
       const { identifier } = payload;
+
       const index = findRuleIndex(draft.rules, identifier);
       draft.rules.splice(index, 1);
     })
@@ -71,16 +72,12 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     // rename and move should allow updating the group's name
     .addMatcher(isAnyOf(renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
       const { groupName } = payload;
-      if (groupName) {
-        draft.name = groupName;
-      }
+      draft.name = groupName ?? draft.name;
     })
     // update, rename and move should all allow updating the interval of the group
     .addMatcher(isAnyOf(updateRuleGroupAction, renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
       const { interval } = payload;
-      if (interval) {
-        draft.interval = interval;
-      }
+      draft.interval = interval ?? draft.interval;
     })
     .addDefaultCase((_draft, action) => {
       throw new Error(`Unknown action for rule group reducer: ${action.type}`);
@@ -142,7 +139,7 @@ export function swapItems<T>(items: T[], [oldIndex, newIndex]: SwapOperation): v
 function findRuleIndex(rules: PostableRuleDTO[], identifier: EditableRuleIdentifier) {
   const index = rules.findIndex(ruleFinder(identifier));
   if (index === -1) {
-    throw new Error('no such rule');
+    throw new Error('no rule matching identifier found');
   }
 
   return index;
