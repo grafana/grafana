@@ -280,7 +280,7 @@ func RunTestConditionalDelete(ctx context.Context, t *testing.T, store storage.I
 		expectInvalidObjErr bool
 	}{{
 		name:                "UID match",
-		precondition:        storage.NewUIDPreconditions("Z"),
+		precondition:        storage.NewUIDPreconditions("A"),
 		expectInvalidObjErr: false,
 	}, {
 		name:                "UID mismatch",
@@ -290,10 +290,6 @@ func RunTestConditionalDelete(ctx context.Context, t *testing.T, store storage.I
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "UID match" {
-				// The UID changes on CREATE
-				tt.precondition = storage.NewUIDPreconditions(string(storedObj.UID))
-			}
 
 			out := &example.Pod{}
 			err := store.Delete(ctx, key, out, tt.precondition, storage.ValidateAllObjectFunc, nil)

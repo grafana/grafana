@@ -532,6 +532,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 // If 'cachedExistingObject' is non-nil, it can be used as a suggestion about the
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
+// nolint:gocyclo
 func (s *Storage) GuaranteedUpdate(
 	ctx context.Context,
 	key string,
@@ -544,7 +545,7 @@ func (s *Storage) GuaranteedUpdate(
 	var (
 		res         storage.ResponseMeta
 		updatedObj  runtime.Object
-		objFromDisk runtime.Object
+		existingObj runtime.Object
 		created     bool
 		err         error
 	)
@@ -578,20 +579,20 @@ func (s *Storage) GuaranteedUpdate(
 		}
 
 		created = true
-		objFromDisk = s.newFunc()
+		existingObj = s.newFunc()
 		if len(rsp.Value) > 0 {
 			created = false
-			_, _, err = s.codec.Decode(rsp.Value, nil, objFromDisk)
+			_, _, err = s.codec.Decode(rsp.Value, nil, existingObj)
 			if err != nil {
 				return err
 			}
-			mmm, err := utils.MetaAccessor(objFromDisk)
+			mmm, err := utils.MetaAccessor(existingObj)
 			if err != nil {
 				return err
 			}
 			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
 
-			if err := preconditions.Check(key, objFromDisk); err != nil {
+			if err := preconditions.Check(key, existingObj); err != nil {
 				if attempt >= MaxUpdateAttempts {
 					return fmt.Errorf("precondition failed: %w", err)
 				}
@@ -601,7 +602,7 @@ func (s *Storage) GuaranteedUpdate(
 			return apierrors.NewNotFound(s.gr, req.Key.Name)
 		}
 
-		updatedObj, _, err = tryUpdate(objFromDisk, res)
+		updatedObj, _, err = tryUpdate(existingObj, res)
 		if err != nil {
 			if attempt >= MaxUpdateAttempts {
 				return err
@@ -611,8 +612,7 @@ func (s *Storage) GuaranteedUpdate(
 		break
 	}
 
-	// TODO? should isUnchanged be supported by the backend?
-	unchanged, err := isUnchanged(s.codec, objFromDisk, updatedObj)
+	unchanged, err := isUnchanged(s.codec, existingObj, updatedObj)
 	if err != nil {
 		return err
 	}
@@ -625,9 +625,8 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	rv := int64(0)
-	var value []byte
 	if created {
-		value, err = s.prepareObjectForStorage(ctx, updatedObj)
+		value, err := s.prepareObjectForStorage(ctx, updatedObj)
 		if err != nil {
 			return err
 		}
@@ -643,7 +642,7 @@ func (s *Storage) GuaranteedUpdate(
 		}
 		rv = rsp2.ResourceVersion
 	} else {
-		value, err = s.prepareObjectForUpdate(ctx, updatedObj, objFromDisk)
+		req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
 			return err
 		}
@@ -657,11 +656,10 @@ func (s *Storage) GuaranteedUpdate(
 		rv = rsp2.ResourceVersion
 	}
 
-	// TODO? can we just copy?
-	_, _, err = s.codec.Decode(value, nil, destination)
-	if err != nil {
+	if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
 		return err
 	}
+
 	if err := s.versioner.UpdateObject(destination, uint64(rv)); err != nil {
 		return err
 	}
@@ -669,11 +667,17 @@ func (s *Storage) GuaranteedUpdate(
 	eventType := watch.Modified
 	if created {
 		eventType = watch.Added
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: destination.DeepCopyObject(),
+			Type:   eventType,
+		}, nil)
+		return nil
 	}
+
 	s.watchSet.notifyWatchers(watch.Event{
 		Object: destination.DeepCopyObject(),
 		Type:   eventType,
-	}, nil)
+	}, updatedObj.DeepCopyObject())
 
 	return nil
 }
