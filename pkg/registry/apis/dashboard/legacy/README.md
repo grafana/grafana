@@ -10,6 +10,3 @@ but it is good enough to drive the UI needs and let kubectl list work!
 
 1. Results are always sorted by internal id ascending
   - this ensures everything is returned
-
-1. The history objects have createdTimestamp == updatedTimestamp
-  - not real, but good enough
