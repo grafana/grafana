@@ -34,10 +34,12 @@ jobs:
           output_file: changelog_items.md
       - name: "Patch CHANGELOG.md"
         run: |
-          # Replace text between the delimiters with new changelog_items.md content
+          # Replace text between version delimiters with new changelog_items.md content
           sed -i '/${{ inputs.version }} START/,/${{ inputs.version }} END/{
             //!d
+            a <!-- ${{ inputs.version}} START -->
             e cat changelog_items.md
+            a <!-- ${{ inputs.version}} END -->
           }' CHANGELOG.md
           git diff CHANGELOG.md
       - name: "Draft Github Release"
