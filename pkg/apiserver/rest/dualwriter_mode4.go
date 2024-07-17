@@ -55,9 +55,7 @@ func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.
 }
 
 func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	//TODO: implement List
-	klog.Error("List not implemented")
-	return nil, nil
+	return d.Storage.List(ctx, options)
 }
 
 func (d *DualWriterMode4) Destroy() {

@@ -1,0 +1,43 @@
+name: Generate changelog
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: 'Target release version (git tag)'
+      prev_version:
+        required: true
+        description: 'Previous release version (git tag)'
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: "Checkout Grafana repo"
+        uses: "actions/checkout@v4"
+        with:
+          sparse-checkout: .github/workflows
+          fetch-depth: 0
+          fetch-tags: true
+      - name: "Generate changelog"
+        id: changelog
+        uses: ./.github/workflows/actions/changelog
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          version: ${{ inputs.version }}
+          prev_version: ${{ inputs.prev_version }}
+          output_file: _changelog.md
+      - name: "Draft Github Release"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          cat _changelog.md
+          # skip for now
+          # gh release create --draft ${{ inputs.version }} --notes-file _changelog.md

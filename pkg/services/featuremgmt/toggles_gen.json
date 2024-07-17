@@ -825,7 +825,8 @@
       "metadata": {
         "name": "datasourceQueryMultiStatus",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-05-03T16:02:20Z"
+        "creationTimestamp": "2022-05-03T16:02:20Z",
+        "deletionTimestamp": "2024-07-08T14:46:08Z"
       },
       "spec": {
         "description": "Introduce HTTP 207 Multi Status for api/ds/query",
@@ -1125,7 +1126,8 @@
       "metadata": {
         "name": "flameGraphItemCollapsing",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-09T14:31:07Z"
+        "creationTimestamp": "2023-11-09T14:31:07Z",
+        "deletionTimestamp": "2024-07-08T14:17:01Z"
       },
       "spec": {
         "description": "Allow collapsing of flame graph items",
@@ -1219,14 +1221,18 @@
     {
       "metadata": {
         "name": "groupToNestedTableTransformation",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-07T14:28:26Z"
+        "resourceVersion": "1720568606781",
+        "creationTimestamp": "2024-02-07T14:28:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-09 23:43:26.781894 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the group to nested table transformation",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {

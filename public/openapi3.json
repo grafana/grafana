@@ -4116,7 +4116,7 @@
         },
         "type": "object"
       },
-      "CreateOrUpdateReportConfig": {
+      "CreateOrUpdateReport": {
         "properties": {
           "dashboards": {
             "items": {
@@ -5685,6 +5685,9 @@
           "sessionUid": {
             "type": "string"
           },
+          "stats": {
+            "$ref": "#/components/schemas/SnapshotResourceStats"
+          },
           "status": {
             "enum": [
               "INITIALIZING",
@@ -5694,6 +5697,7 @@
               "PENDING_PROCESSING",
               "PROCESSING",
               "FINISHED",
+              "CANCELED",
               "ERROR",
               "UNKNOWN"
             ],
@@ -9132,7 +9136,6 @@
         "type": "object"
       },
       "Report": {
-        "description": "ConfigDTO is model representation in transfer",
         "properties": {
           "created": {
             "format": "date-time",
@@ -10462,6 +10465,7 @@
               "PENDING_PROCESSING",
               "PROCESSING",
               "FINISHED",
+              "CANCELED",
               "ERROR",
               "UNKNOWN"
             ],
@@ -10480,6 +10484,25 @@
               "$ref": "#/components/schemas/SnapshotDTO"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotResourceStats": {
+        "properties": {
+          "statuses": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "types": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -21385,7 +21408,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -21672,7 +21695,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -21805,7 +21828,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
