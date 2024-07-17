@@ -57,7 +57,11 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 	result := make([]definitions.MuteTimeInterval, 0, len(rev.cfg.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		version := calculateMuteTimeIntervalFingerprint(interval)
-		def := definitions.MuteTimeInterval{MuteTimeInterval: interval, Version: version}
+		def := definitions.MuteTimeInterval{
+			UID:              getIntervalUID(interval),
+			MuteTimeInterval: interval,
+			Version:          version,
+		}
 		if prov, ok := provenances[def.ResourceID()]; ok {
 			def.Provenance = definitions.Provenance(prov)
 		}
@@ -79,6 +83,7 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, or
 	}
 
 	result := definitions.MuteTimeInterval{
+		UID:              getIntervalUID(mt),
 		MuteTimeInterval: mt,
 		Version:          calculateMuteTimeIntervalFingerprint(mt),
 	}
@@ -321,4 +326,10 @@ func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTime
 		return ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", desiredVersion, current.Name, currentVersion)
 	}
 	return nil
+}
+
+func getIntervalUID(t config.MuteTimeInterval) string {
+	sum := fnv.New64()
+	_, _ = sum.Write([]byte(t.Name))
+	return fmt.Sprintf("%016x", sum.Sum64())
 }
