@@ -145,10 +145,7 @@ const AnnotationsStep = () => {
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                        {...register(`annotations.${index}.value`, {
-                          validate: (value: string) =>
-                            isUrl && !value.startsWith('http') ? 'URL must start with http' : true,
-                        })}
+                        {...register(`annotations.${index}.value`)}
                         placeholder={
                           isUrl
                             ? 'https://'
