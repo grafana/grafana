@@ -6,7 +6,6 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -20,14 +19,14 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -69,14 +68,31 @@ func NewStorage(
 	}, nil, nil
 }
 
-func errorWrap(status *resource.StatusResult) error {
+func errorWrap(status *resource.ErrorResult) error {
 	if status != nil {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
+		err := &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
 			Code:    status.Code,
 			Reason:  metav1.StatusReason(status.Reason),
 			Message: status.Message,
 		}}
+		if status.Details != nil {
+			err.ErrStatus.Details = &metav1.StatusDetails{
+				Group:             status.Details.Group,
+				Kind:              status.Details.Kind,
+				Name:              status.Details.Name,
+				UID:               types.UID(status.Details.Uid),
+				RetryAfterSeconds: status.Details.RetryAfterSeconds,
+			}
+			for _, c := range status.Details.Causes {
+				err.ErrStatus.Details.Causes = append(err.ErrStatus.Details.Causes, metav1.StatusCause{
+					Type:    metav1.CauseType(c.Reason),
+					Message: c.Message,
+					Field:   c.Field,
+				})
+			}
+		}
+		return err
 	}
 	return nil
 }
@@ -109,39 +125,30 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	err = s.Versioner().PrepareObjectForStorage(obj)
+	value, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
-
-	var buf bytes.Buffer
-	err = s.codec.Encode(obj, &buf)
-	if err != nil {
-		return err
-	}
-
 	cmd := &resource.CreateRequest{
 		Key:   k,
-		Value: buf.Bytes(),
+		Value: value,
 	}
-
-	// TODO?? blob from context?
 
 	rsp, err := s.store.Create(ctx, cmd)
 	if err != nil {
 		return err
 	}
-	err = errorWrap(rsp.Status)
+	err = errorWrap(rsp.Error)
 	if err != nil {
 		return err
 	}
 
-	if rsp.Status != nil {
-		return fmt.Errorf("error in status %+v", rsp.Status)
+	if rsp.Error != nil {
+		return fmt.Errorf("error in status %+v", rsp.Error)
 	}
 
-	// Create into the out value
-	_, _, err = s.codec.Decode(rsp.Value, nil, out)
+	// Decode into the result (can we just copy?)
+	_, _, err = s.codec.Decode(cmd.Value, nil, out)
 	if err != nil {
 		return err
 	}
@@ -185,7 +192,7 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 	if err != nil {
 		return err
 	}
-	err = errorWrap(rsp.Status)
+	err = errorWrap(rsp.Error)
 	if err != nil {
 		return err
 	}
@@ -262,7 +269,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	if err != nil {
 		return err
 	}
-	err = errorWrap(rsp.Status)
+	err = errorWrap(rsp.Error)
 	if err != nil {
 		return err
 	}
@@ -488,24 +495,23 @@ func (s *Storage) GuaranteedUpdate(
 		)
 	}
 
-	var buf bytes.Buffer
-	err = s.codec.Encode(updatedObj, &buf)
+	value, err := s.prepareObjectForUpdate(ctx, updatedObj, destination)
 	if err != nil {
 		return err
 	}
 
-	req := &resource.UpdateRequest{Key: k, Value: buf.Bytes()}
+	req := &resource.UpdateRequest{Key: k, Value: value}
 	rsp, err := s.store.Update(ctx, req)
 	if err != nil {
 		return err
 	}
-	err = errorWrap(rsp.Status)
+	err = errorWrap(rsp.Error)
 	if err != nil {
 		return err
 	}
 
-	// Read the mutated fields the response field
-	_, _, err = s.codec.Decode(rsp.Value, nil, destination)
+	// Decode into the response (can we just copy?)
+	_, _, err = s.codec.Decode(value, nil, destination)
 	if err != nil {
 		return err
 	}

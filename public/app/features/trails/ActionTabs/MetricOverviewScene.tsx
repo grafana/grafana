@@ -8,15 +8,14 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Stack, Text, TextLink } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
-import { ALL_VARIABLE_VALUE } from '../../variables/constants';
+import { getUnitFromMetric } from '../AutomaticMetricQueries/units';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
-
-import { getLabelOptions } from './utils';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
   metadata?: PromMetricsMetadataItem;
@@ -67,29 +66,58 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
     const { metadata, metadataLoading } = model.useState();
     const variable = model.getVariable();
-    const { loading: labelsLoading } = variable.useState();
-    const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
+    const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
+    // Get unit name from the metric name
+    const metricScene = getMetricSceneFor(model);
+    const metric = metricScene.state.metric;
+    let unit = getUnitFromMetric(metric) ?? 'Unknown';
     return (
       <StatusWrapper isLoading={labelsLoading || metadataLoading}>
         <Stack gap={6}>
           <>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Description</Text>
+              <Text weight={'medium'}>
+                <Trans>Description</Trans>
+              </Text>
               <div style={{ maxWidth: 360 }}>
-                {metadata?.help ? <div>{metadata?.help}</div> : <i>No description available</i>}
+                {metadata?.help ? (
+                  <div>{metadata?.help}</div>
+                ) : (
+                  <i>
+                    <Trans>No description available</Trans>
+                  </i>
+                )}
               </div>
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Type</Text>
-              {metadata?.type ? <div>{metadata?.type}</div> : <i>Unknown</i>}
+              <Text weight={'medium'}>
+                <Trans>Type</Trans>
+              </Text>
+              {metadata?.type ? (
+                <div>{metadata?.type}</div>
+              ) : (
+                <i>
+                  <Trans>Unknown</Trans>
+                </i>
+              )}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Unit</Text>
-              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>Unknown</i>}
+              <Text weight={'medium'}>
+                <Trans>Unit</Trans>
+              </Text>
+              {metadata?.unit ? (
+                <div>{metadata?.unit}</div>
+              ) : (
+                <i>
+                  <Trans>{unit}</Trans>
+                </i>
+              )}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <Text weight={'medium'}>Labels</Text>
+              <Text weight={'medium'}>
+                <Trans>Labels</Trans>
+              </Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (
                 <TextLink

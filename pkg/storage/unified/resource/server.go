@@ -6,15 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -178,18 +178,42 @@ func (s *server) Stop() {
 }
 
 // Old value indicates an update -- otherwise a create
-func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*writeEventBuilder, error) {
-	event, err := newEventFromBytes(value, oldValue)
-	if err != nil {
-		return nil, err
-	}
-	event.Key = key
-	event.Requester, err = identity.GetRequester(ctx)
+func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, ErrUserNotFoundInContext
 	}
+	tmp := &unstructured.Unstructured{}
+	err = tmp.UnmarshalJSON(value)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := utils.MetaAccessor(tmp)
+	if err != nil {
+		return nil, err
+	}
 
-	obj := event.Meta
+	event := &WriteEvent{
+		Value:  value,
+		Key:    key,
+		Object: obj,
+	}
+	if oldValue == nil {
+		event.Type = WatchEvent_ADDED
+	} else {
+		event.Type = WatchEvent_MODIFIED
+
+		temp := &unstructured.Unstructured{}
+		err = temp.UnmarshalJSON(oldValue)
+		if err != nil {
+			return nil, err
+		}
+		event.ObjectOld, err = utils.MetaAccessor(temp)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if key.Namespace != obj.GetNamespace() {
 		return nil, apierrors.NewBadRequest("key/namespace do not match")
 	}
@@ -217,7 +241,6 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	obj.SetGenerateName("")
 	err = validateName(obj.GetName())
 	if err != nil {
 		return nil, err
@@ -225,7 +248,7 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 
 	folder := obj.GetFolder()
 	if folder != "" {
-		err = s.access.CanWriteFolder(ctx, event.Requester, folder)
+		err = s.access.CanWriteFolder(ctx, user, folder)
 		if err != nil {
 			return nil, err
 		}
@@ -235,20 +258,10 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 		return nil, apierrors.NewBadRequest("invalid origin info")
 	}
 	if origin != nil {
-		err = s.access.CanWriteOrigin(ctx, event.Requester, origin.Name)
+		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
 		if err != nil {
 			return nil, err
 		}
-	}
-	obj.SetOriginInfo(origin)
-
-	// Ensure old values do not mutate things they should not
-	if event.OldMeta != nil {
-		old := event.OldMeta
-
-		obj.SetUID(old.GetUID())
-		obj.SetCreatedBy(old.GetCreatedBy())
-		obj.SetCreationTimestamp(old.GetCreationTimestamp())
 	}
 	return event, nil
 }
@@ -262,51 +275,60 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
-	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, nil)
+	found, _ := s.backend.Read(ctx, &ReadRequest{Key: req.Key})
+	if found != nil && len(found.Value) > 0 {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusConflict,
+			Message: "key already exists",
+		}
+		return rsp, nil
+	}
+
+	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
 	if err != nil {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
 
-	obj := builder.Meta
-	obj.SetCreatedBy(builder.Requester.GetUID().String())
-	obj.SetUpdatedBy("")
-	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreationTimestamp(metav1.NewTime(time.UnixMilli(s.now())))
-	obj.SetUID(types.UID(uuid.New().String()))
-
-	event, err := builder.toEvent()
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
-		rsp.Status, err = errToStatus(err)
-		return rsp, err
-	}
-
-	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	if err == nil {
-		rsp.Value = event.Value // with mutated fields
-	} else {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
 }
 
 // Convert golang errors to status result errors that can be returned to a client
-func errToStatus(err error) (*StatusResult, error) {
+func errToStatus(err error) (*ErrorResult, error) {
 	if err != nil {
 		apistatus, ok := err.(apierrors.APIStatus)
 		if ok {
 			s := apistatus.Status()
-			return &StatusResult{
-				Status:  s.Status,
+			res := &ErrorResult{
 				Message: s.Message,
 				Reason:  string(s.Reason),
 				Code:    s.Code,
-			}, nil
+			}
+			if s.Details != nil {
+				res.Details = &ErrorDetails{
+					Group:             s.Details.Group,
+					Kind:              s.Details.Kind,
+					Name:              s.Details.Name,
+					Uid:               string(s.Details.UID),
+					RetryAfterSeconds: s.Details.RetryAfterSeconds,
+				}
+				for _, c := range s.Details.Causes {
+					res.Details.Causes = append(res.Details.Causes, &ErrorCause{
+						Reason:  string(c.Type),
+						Message: c.Message,
+						Field:   c.Field,
+					})
+				}
+			}
+			return res, nil
 		}
 
-		// TODO... better conversion!!!
-		return &StatusResult{
-			Status:  "Failure",
+		// TODO... better conversion??
+		return &ErrorResult{
 			Message: err.Error(),
 			Code:    500,
 		}, nil
@@ -324,7 +346,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	rsp := &UpdateResponse{}
 	if req.ResourceVersion < 0 {
-		rsp.Status, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
+		rsp.Error, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
 
@@ -338,31 +360,23 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return nil, apierrors.NewBadRequest("current value does not exist")
 	}
 
-	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, latest.Value)
-	if err != nil {
-		rsp.Status, err = errToStatus(err)
-		return rsp, err
+	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
+		return nil, ErrOptimisticLockingFailed
 	}
 
-	obj := builder.Meta
-	obj.SetUpdatedBy(builder.Requester.GetUID().String())
-	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
-
-	event, err := builder.toEvent()
+	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
 	if err != nil {
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
 
 	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
-	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Status, err = errToStatus(err)
-	if err == nil {
-		rsp.Value = event.Value // with mutated fields
-	} else {
-		rsp.Status, err = errToStatus(err)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
+	rsp.Error, err = errToStatus(err)
+	if err != nil {
+		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
 }
@@ -427,7 +441,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Status, err = errToStatus(err)
+	rsp.Error, err = errToStatus(err)
 	return rsp, err
 }
 
@@ -442,7 +456,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	// }
 	if req.Key.Resource == "" {
 		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
-		return &ReadResponse{Status: status}, nil
+		return &ReadResponse{Error: status}, nil
 	}
 
 	rsp, err := s.backend.Read(ctx, req)
@@ -450,7 +464,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		if rsp == nil {
 			rsp = &ReadResponse{}
 		}
-		rsp.Status, err = errToStatus(err)
+		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
 }

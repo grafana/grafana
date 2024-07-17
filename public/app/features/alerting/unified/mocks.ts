@@ -20,7 +20,7 @@ import {
 import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertManagerCortexConfig,
@@ -174,20 +174,6 @@ export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): Ru
   rules: [mockRulerAlertingRule()],
   ...partial,
 });
-
-export const promRuleFromRulerRule = (
-  rulerRule: RulerAlertingRuleDTO,
-  override?: Partial<AlertingRule>
-): AlertingRule => {
-  return mockPromAlertingRule({
-    name: rulerRule.alert,
-    query: rulerRule.expr,
-    labels: rulerRule.labels,
-    annotations: rulerRule.annotations,
-    type: PromRuleType.Alerting,
-    ...override,
-  });
-};
 
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
