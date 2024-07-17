@@ -52,24 +52,27 @@ export function useUpdateRuleInRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
-  return useAsync(async (ruleGroup: RuleGroupIdentifier, identifier: EditableRuleIdentifier, rule: PostableRuleDTO) => {
-    const { dataSourceName, namespaceName } = ruleGroup;
+  return useAsync(
+    async (ruleGroup: RuleGroupIdentifier, ruleIdentifier: EditableRuleIdentifier, ruleDefinition: PostableRuleDTO) => {
+      const { dataSourceName, namespaceName } = ruleGroup;
+      const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
 
-    const action = updateRuleAction({ identifier, rule });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+      const action = updateRuleAction({ identifier: ruleIdentifier, rule: finalRuleDefinition });
+      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-    const result = upsertRuleGroup({
-      rulerConfig,
-      namespace: namespaceName,
-      payload: newRuleGroupDefinition,
-      requestOptions: { successMessage: updateSuccessMessage },
-    }).unwrap();
+      const result = upsertRuleGroup({
+        rulerConfig,
+        namespace: namespaceName,
+        payload: newRuleGroupDefinition,
+        requestOptions: { successMessage: updateSuccessMessage },
+      }).unwrap();
 
-    // @TODO remove
-    await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
+      // @TODO remove
+      await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
 
-    return result;
-  });
+      return result;
+    }
+  );
 }
 
 /**
@@ -88,17 +91,7 @@ export function useMoveRuleToRuleGroup() {
       ruleIdentifier: EditableRuleIdentifier,
       ruleDefinition: PostableRuleDTO
     ) => {
-      const isGrafanaManagedRuleIdentifier = isGrafanaRuleIdentifier(ruleIdentifier);
-
-      // by copying over the rule UID the backend will perform an atomic move operation
-      // so there is no need for us to manually remove it from the previous group
-      const finalRuleDefinition = produce(ruleDefinition, (draft) => {
-        const isGrafanaManagedRuleDefinition = isGrafanaRulerRule(draft);
-
-        if (isGrafanaManagedRuleIdentifier && isGrafanaManagedRuleDefinition) {
-          draft.grafana_alert.uid = ruleIdentifier.uid;
-        }
-      });
+      const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
 
       // 1. add the rule to the new namespace / group / ruler target
       const addRuleToGroup = addRuleAction({ rule: finalRuleDefinition });
@@ -115,7 +108,7 @@ export function useMoveRuleToRuleGroup() {
       }).unwrap();
 
       // 2. if not Grafana-managed: remove the rule from the existing namespace / group / ruler
-      if (!isGrafanaManagedRuleIdentifier) {
+      if (!isGrafanaRuleIdentifier(ruleIdentifier)) {
         await deleteRuleFromGroup.execute(currentRuleGroup, ruleIdentifier);
       }
 
@@ -132,4 +125,18 @@ export function useMoveRuleToRuleGroup() {
       return result;
     }
   );
+}
+
+function copyGrafanaUID(ruleIdentifier: EditableRuleIdentifier, ruleDefinition: PostableRuleDTO) {
+  const isGrafanaManagedRuleIdentifier = isGrafanaRuleIdentifier(ruleIdentifier);
+
+  // by copying over the rule UID the backend will perform an atomic move operation
+  // so there is no need for us to manually remove it from the previous group
+  return produce(ruleDefinition, (draft) => {
+    const isGrafanaManagedRuleDefinition = isGrafanaRulerRule(draft);
+
+    if (isGrafanaManagedRuleIdentifier && isGrafanaManagedRuleDefinition) {
+      draft.grafana_alert.uid = ruleIdentifier.uid;
+    }
+  });
 }
