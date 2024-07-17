@@ -65,7 +65,58 @@ func TestQuerySplitting(t *testing.T) {
 		require.Equal(t, "now-6h", split.Requests[0].Request.From)
 		require.Equal(t, "now", split.Requests[0].Request.To)
 	})
+	t.Run("applies query time range if present", func(t *testing.T) {
+		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{}, // missing
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							Type: "x",
+							UID:  "abc",
+						},
+						TimeRange: &data.TimeRange{
+							From: "now-1d",
+							To:   "now",
+						},
+					},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, split.Requests, 1)
+		require.Equal(t, "now-1d", split.Requests[0].Request.From)
+		require.Equal(t, "now", split.Requests[0].Request.To)
+	})
 
+	t.Run("applies query time range if all time ranges are present", func(t *testing.T) {
+		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{
+					From: "now-1h",
+					To:   "now",
+				},
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							Type: "x",
+							UID:  "abc",
+						},
+						TimeRange: &data.TimeRange{
+							From: "now-1d",
+							To:   "now",
+						},
+					},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, split.Requests, 1)
+		require.Equal(t, "now-1d", split.Requests[0].Request.From)
+		require.Equal(t, "now", split.Requests[0].Request.To)
+	})
 	t.Run("verify tests", func(t *testing.T) {
 		files, err := os.ReadDir("testdata")
 		require.NoError(t, err)
