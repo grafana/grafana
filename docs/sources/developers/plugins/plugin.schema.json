@@ -179,7 +179,7 @@
           "items": {
             "type": "object",
             "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
-            "required": ["id", "name", "type", "version"],
+            "required": ["id", "name", "type"],
             "properties": {
               "id": {
                 "type": "string",
@@ -193,7 +193,8 @@
                 "type": "string"
               },
               "version": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
               }
             }
           }
@@ -337,10 +338,10 @@
     },
     "routes": {
       "type": "array",
-      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
+      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
       "items": {
         "type": "object",
-        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
+        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
         "additionalProperties": false,
         "properties": {
           "path": {

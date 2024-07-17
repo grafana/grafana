@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode, useMemo } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -13,15 +13,18 @@ interface Props {
   value: ReactNode;
   color?: string;
   size?: LabelSize;
+  onClick?: (label: string, value: string) => void;
 }
 
 // TODO allow customization with color prop
-const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
+const Label = ({ label, value, icon, color, size = 'md', onClick }: Props) => {
   const styles = useStyles2(getStyles, color, size);
   const ariaLabel = `${label}: ${value}`;
+  const labelStr = label?.toString() ?? '';
+  const valueStr = value?.toString() ?? '';
 
-  return (
-    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
+  const innerLabel = useMemo(
+    () => (
       <Stack direction="row" gap={0} alignItems="stretch">
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">
@@ -37,6 +40,32 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
           {value ?? '-'}
         </div>
       </Stack>
+    ),
+    [icon, label, value, styles]
+  );
+
+  return (
+    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
+      {onClick ? (
+        <div
+          className={styles.clickable}
+          role="button" // role="button" and tabIndex={0} is needed for keyboard navigation
+          tabIndex={0} // Make it focusable
+          key={labelStr + valueStr}
+          onClick={() => onClick(labelStr, valueStr)}
+          onKeyDown={(e) => {
+            // needed for accessiblity: handle keyboard navigation
+            if (e.key === 'Enter') {
+              onClick(labelStr, valueStr);
+              e.preventDefault();
+            }
+          }}
+        >
+          {innerLabel}
+        </div>
+      ) : (
+        innerLabel
+      )}
     </div>
   );
 };
@@ -94,6 +123,12 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       borderTopLeftRadius: theme.shape.borderRadius(2),
       borderBottomLeftRadius: theme.shape.borderRadius(2),
     }),
+    clickable: css({
+      '&:hover': {
+        opacity: 0.8,
+        cursor: 'pointer',
+      },
+    }),
     value: css({
       color: 'inherit',
       padding: padding,
@@ -102,7 +137,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       borderLeft: 'none',
       borderTopRightRadius: theme.shape.borderRadius(2),
       borderBottomRightRadius: theme.shape.borderRadius(2),
-      whiteSpace: 'nowrap',
+      whiteSpace: 'pre',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '300px',

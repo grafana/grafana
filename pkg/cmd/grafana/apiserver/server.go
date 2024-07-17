@@ -76,7 +76,7 @@ func (o *APIServerOptions) loadAPIGroupBuilders(ctx context.Context, tracer trac
 	return nil
 }
 
-func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error) {
+func (o *APIServerOptions) Config(tracer tracing.Tracer) (*genericapiserver.RecommendedConfig, error) {
 	if err := o.Options.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts(
 		"localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")},
 	); err != nil {
@@ -122,6 +122,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		setting.BuildVersion,
 		setting.BuildCommit,
 		setting.BuildBranch,
+		o.factory.GetOptionalMiddlewares(tracer)...,
 	)
 	return serverConfig, err
 }
@@ -165,7 +166,9 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 
 	// Install the API Group+version
 	// #TODO figure out how to configure storage type in o.Options.StorageOptions
-	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, o.Options.StorageOptions, o.Options.MetricsOptions.MetricsRegisterer)
+	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, o.Options.StorageOptions,
+		o.Options.MetricsOptions.MetricsRegisterer, nil, nil, // no need for server lock in standalone
+	)
 	if err != nil {
 		return err
 	}

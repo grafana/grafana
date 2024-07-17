@@ -66,12 +66,13 @@ type FrontendSettingsLicenseInfoDTO struct {
 }
 
 type FrontendSettingsAzureDTO struct {
-	Cloud                                  string                      `json:"cloud"`
-	Clouds                                 []azsettings.AzureCloudInfo `json:"clouds"`
-	ManagedIdentityEnabled                 bool                        `json:"managedIdentityEnabled"`
-	WorkloadIdentityEnabled                bool                        `json:"workloadIdentityEnabled"`
-	UserIdentityEnabled                    bool                        `json:"userIdentityEnabled"`
-	UserIdentityFallbackCredentialsEnabled bool                        `json:"userIdentityFallbackCredentialsEnabled"`
+	Cloud                                  string                      `json:"cloud,omitempty"`
+	Clouds                                 []azsettings.AzureCloudInfo `json:"clouds,omitempty"`
+	ManagedIdentityEnabled                 bool                        `json:"managedIdentityEnabled,omitempty"`
+	WorkloadIdentityEnabled                bool                        `json:"workloadIdentityEnabled,omitempty"`
+	UserIdentityEnabled                    bool                        `json:"userIdentityEnabled,omitempty"`
+	UserIdentityFallbackCredentialsEnabled bool                        `json:"userIdentityFallbackCredentialsEnabled,omitempty"`
+	AzureEntraPasswordCredentialsEnabled   bool                        `json:"azureEntraPasswordCredentialsEnabled,omitempty"`
 }
 
 type FrontendSettingsCachingDTO struct {
@@ -231,6 +232,7 @@ type FrontendSettingsDTO struct {
 	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
+	ReportingStaticContext           map[string]string              `json:"reportingStaticContext"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
