@@ -40,11 +40,10 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       if (activeChildIndex > 0) {
         const activeChild = node.children?.[activeChildIndex];
         if (activeChild) {
-          crumbs.unshift({ text: `${node.text} (${activeChild.text})`, href: activeChild.url ?? '' });
+          crumbs.unshift({ text: activeChild.text, href: activeChild.url ?? '' });
         }
-      } else {
-        crumbs.unshift({ text: node.text, href: node.url ?? '' });
       }
+      crumbs.unshift({ text: node.text, href: node.url ?? '' });
     }
 
     if (node.parentItem) {
