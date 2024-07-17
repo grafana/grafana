@@ -82,25 +82,26 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     }
 
     if (config.featureToggles.newDashboardSharingComponent) {
+      const subMenu: PanelMenuItem[] = [];
+      subMenu.push({
+        text: 'Link',
+        iconClassName: 'link',
+        shortcut: 'p u',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            title: 'Link settings',
+            body: new SharePanelInternally({ panelRef: panel.getRef() }),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+
       items.push({
         type: 'submenu',
         text: t('panel.header-menu.share', 'Share'),
         iconClassName: 'share-alt',
-        subMenu: [
-          {
-            text: 'Link',
-            iconClassName: 'link',
-            shortcut: 'p u',
-            onClick: () => {
-              const drawer = new ShareDrawer({
-                title: 'Link settings',
-                body: new SharePanelInternally({ panelRef: panel.getRef() }),
-              });
-
-              dashboard.showModal(drawer);
-            },
-          },
-        ],
+        subMenu,
         onClick: (e) => {
           e.preventDefault();
         },

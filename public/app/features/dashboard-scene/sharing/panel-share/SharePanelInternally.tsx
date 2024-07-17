@@ -66,7 +66,6 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
               variant="secondary"
               fill="solid"
               disabled={!config.rendererAvailable || !isDashboardSaved}
-              // onClick={onRevokeClick}
             >
               <Trans i18nKey="link.share-panel.render-image">Render image</Trans>
             </LinkButton>
