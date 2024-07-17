@@ -122,7 +122,9 @@ export function PlacementEditor({ item }: Props) {
           {places.map((p) => {
             const v = placement![p];
             if (v == null) {
-              return null;
+              if (p !== 'rotation') {
+                return null;
+              }
             }
 
             // Need to set explicit min/max for rotation as logic only can handle 0-360
@@ -132,7 +134,7 @@ export function PlacementEditor({ item }: Props) {
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput min={min} max={max} value={v} onChange={(v) => onPositionChange(v, p)} />
+                  <NumberInput min={min} max={max} value={v ?? min} onChange={(v) => onPositionChange(v, p)} />
                 </InlineField>
               </InlineFieldRow>
             );
