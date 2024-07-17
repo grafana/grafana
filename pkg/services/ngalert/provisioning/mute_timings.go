@@ -73,7 +73,7 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, or
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	mt, idx := getMuteTiming(rev, name)
+	mt, idx := getMuteTimingByName(rev, nameOrUID)
 	if idx == -1 {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
@@ -102,7 +102,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	_, idx := getMuteTiming(revision, mt.Name)
+	_, idx := getMuteTimingByName(revision, mt.Name)
 	if idx != -1 {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
@@ -148,7 +148,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, nil
 	}
 
-	old, idx := getMuteTiming(revision, mt.Name)
+	old, idx := getMuteTimingByName(revision, mt.Name)
 	if idx == -1 {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
@@ -184,7 +184,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		return err
 	}
 
-	existing, idx := getMuteTiming(revision, name)
+	existing, idx := getMuteTimingByName(revision, name)
 	if idx == -1 {
 		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", name)
 		return nil
@@ -243,7 +243,7 @@ func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
 	return false
 }
 
-func getMuteTiming(rev *cfgRevision, name string) (config.MuteTimeInterval, int) {
+func getMuteTimingByName(rev *cfgRevision, name string) (config.MuteTimeInterval, int) {
 	idx := slices.IndexFunc(rev.cfg.AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
 		return interval.Name == name
 	})
