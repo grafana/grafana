@@ -189,8 +189,8 @@ func getTimeRangeForQuery(parentTimerange, queryTimerange *data.TimeRange) data.
 		return *parentTimerange
 	}
 	return data.TimeRange{
-		From: "now-6h",
-		To:   "now",
+		From: "0",
+		To:   "0",
 	}
 }
 

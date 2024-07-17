@@ -45,7 +45,7 @@ func TestQuerySplitting(t *testing.T) {
 		require.Empty(t, split.Requests)
 	})
 
-	t.Run("applies default time range", func(t *testing.T) {
+	t.Run("applies zero time range if time range is missing", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
 			QueryDataRequest: data.QueryDataRequest{
 				TimeRange: data.TimeRange{}, // missing
@@ -62,8 +62,8 @@ func TestQuerySplitting(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, split.Requests, 1)
-		require.Equal(t, "now-6h", split.Requests[0].Request.From)
-		require.Equal(t, "now", split.Requests[0].Request.To)
+		require.Equal(t, "0", split.Requests[0].Request.From)
+		require.Equal(t, "0", split.Requests[0].Request.To)
 	})
 	t.Run("applies query time range if present", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
