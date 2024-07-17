@@ -39,7 +39,7 @@ func (rs *ReplStore) DB() *SQLStore {
 // ReadReplica returns the read-only SQLStore. If no read replica is configured,
 // it returns the main SQLStore.
 func (rs *ReplStore) ReadReplica() *SQLStore {
-	if rs.repls == nil {
+	if rs.repls == nil || len(rs.repls) == 0 {
 		rs.log.Debug("ReadReplica not configured, using main SQLStore")
 		return rs.SQLStore
 	}
@@ -83,7 +83,10 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 	if err != nil {
 		return nil, err
 	}
-	replStore.repls = make([]*SQLStore, len(replCfgs))
+
+	if len(replCfgs) > 0 {
+		replStore.repls = make([]*SQLStore, len(replCfgs))
+	}
 
 	for i, replCfg := range replCfgs {
 		s, err := newReadOnlySQLStore(cfg, replCfg, features, bus, tracer)
