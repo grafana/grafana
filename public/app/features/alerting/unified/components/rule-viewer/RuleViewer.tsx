@@ -149,7 +149,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   if (runbookUrl) {
     metadata.push({
-      label: 'Runbook',
+      label: 'Runbook URL',
       value: (
         <TextLink variant="bodySmall" href={runbookUrl} external>
           {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}

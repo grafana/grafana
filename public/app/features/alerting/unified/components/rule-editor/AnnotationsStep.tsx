@@ -5,7 +5,7 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state';
 import { RuleFormValues } from '../../types/rule-form';
@@ -145,7 +145,10 @@ const AnnotationsStep = () => {
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                        {...register(`annotations.${index}.value`)}
+                        {...register(`annotations.${index}.value`, {
+                          validate: (value: string) =>
+                            isUrl && !value.startsWith('http') ? 'URL must start with http' : true,
+                        })}
                         placeholder={
                           isUrl
                             ? 'https://'
