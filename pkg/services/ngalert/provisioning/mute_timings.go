@@ -127,6 +127,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 	return definitions.MuteTimeInterval{
+		UID:              getIntervalUID(mt.MuteTimeInterval),
 		MuteTimeInterval: mt.MuteTimeInterval,
 		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
 		Provenance:       mt.Provenance,
@@ -189,6 +190,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 	return definitions.MuteTimeInterval{
+		UID:              getIntervalUID(mt.MuteTimeInterval),
 		MuteTimeInterval: mt.MuteTimeInterval,
 		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
 		Provenance:       mt.Provenance,
