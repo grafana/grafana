@@ -235,9 +235,9 @@ const prevVersionTag = versionToTag(prevVersion);
 LOG(`Previous version: ${prevVersion} (tag ${prevVersionTag})`);
 
 // Get all changelog items from Grafana OSS
-const oss = await getChangeLogItems('grafana', 'grafana', prevVersion, version);
+const oss = await getChangeLogItems('grafana', 'grafana', prevVersionTag, versionTag);
 // Get all changelog items from Grafana Enterprise
-const entr = await getChangeLogItems('grafana-enterprise', 'grafana', prevVersion, version);
+const entr = await getChangeLogItems('grafana-enterprise', 'grafana', prevVersionTag, versionTag);
 
 LOG(`Found OSS PRs: ${oss.length}`);
 LOG(`Found Enterprise PRs: ${entr.length}`);
