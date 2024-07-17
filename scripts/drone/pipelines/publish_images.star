@@ -58,7 +58,7 @@ def publish_image_public_step():
     $debug docker manifest push grafana/grafana:$${TAG}-ubuntu
 
     # if LATEST is set, then also create & push latest
-    if [[ -n $${LATEST} ]]; then  +
+    if [[ -n $${LATEST} ]]; then
         $debug docker manifest create grafana/grafana:$${TAG} \
           grafana/grafana-image-tags:$${TAG}-amd64 \
           grafana/grafana-image-tags:$${TAG}-arm64 \

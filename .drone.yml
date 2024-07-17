@@ -2869,8 +2869,8 @@ steps:
     \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
     \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
     \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
-    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then  +\n
-    \       $debug docker manifest create grafana/grafana:$${TAG}           grafana/grafana-image-tags:$${TAG}-amd64
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then\n        $debug
+    docker manifest create grafana/grafana:$${TAG}           grafana/grafana-image-tags:$${TAG}-amd64
     \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
     \       $debug docker manifest create grafana/grafana:$${TAG}-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
     \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n
@@ -2985,8 +2985,8 @@ steps:
     \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
     \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
     \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
-    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then  +\n
-    \       $debug docker manifest create grafana/grafana:$${TAG}           grafana/grafana-image-tags:$${TAG}-amd64
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then\n        $debug
+    docker manifest create grafana/grafana:$${TAG}           grafana/grafana-image-tags:$${TAG}-amd64
     \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
     \       $debug docker manifest create grafana/grafana:$${TAG}-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
     \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n
@@ -5512,6 +5512,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 557821e19d665e2e7e13ea04fb48141579d9225b84e67590404d0b68d31f1e11
+hmac: d1a4f138bb10318e45696801e0589de2e7ca2f76e7025d499edd9956daf01ed5
 
 ...
