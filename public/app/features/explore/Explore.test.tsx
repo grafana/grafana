@@ -83,6 +83,10 @@ const dummyProps: Props = {
   syncedTimes: false,
   updateTimeRange: jest.fn(),
   graphResult: [],
+  absoluteRange: {
+    from: 0,
+    to: 0,
+  },
   timeZone: 'UTC',
   queryResponse: makeEmptyQueryResponse(LoadingState.NotStarted),
   addQueryRow: jest.fn(),
