@@ -214,8 +214,6 @@ const getChangeLogItems = async (name, owner, from, to) => {
 // ======================================================
 //                 GENERATE CHANGELOG
 // ======================================================
-const tagToVersion = tag => tag.replace(/^v/, '');
-const versionToTag = ver => 'v' + tagToVersion(ver);
 
 LOG(`Changelog action started`);
 
@@ -224,20 +222,17 @@ if (!ghtoken) {
   throw 'GITHUB_TOKEN is not set and "github_token" input is empty';
 }
 
-const version = tagToVersion(process.argv[2] || process.env.INPUT_VERSION);
-const versionTag = versionToTag(version);
+const target = process.argv[2] || process.env.INPUT_VERSION;
+LOG(`Target version tag/branch/commit: ${target}`);
 
-LOG(`Target version: ${version} (tag ${versionTag})`);
+const previous = process.argv[3] || process.env.INPUT_PREV_VERSION || (await getPreviousVersion(target));
 
-const prevVersion = tagToVersion(process.argv[3] || process.env.INPUT_PREV_VERSION || (await getPreviousVersion(version)));
-const prevVersionTag = versionToTag(prevVersion);
-
-LOG(`Previous version: ${prevVersion} (tag ${prevVersionTag})`);
+LOG(`Previous version tag: ${previous}`);
 
 // Get all changelog items from Grafana OSS
-const oss = await getChangeLogItems('grafana', 'grafana', prevVersionTag, versionTag);
+const oss = await getChangeLogItems('grafana', 'grafana', previous, target);
 // Get all changelog items from Grafana Enterprise
-const entr = await getChangeLogItems('grafana-enterprise', 'grafana', prevVersionTag, versionTag);
+const entr = await getChangeLogItems('grafana-enterprise', 'grafana', previous, target);
 
 LOG(`Found OSS PRs: ${oss.length}`);
 LOG(`Found Enterprise PRs: ${entr.length}`);
