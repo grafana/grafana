@@ -6,7 +6,6 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -126,23 +125,14 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	err = s.Versioner().PrepareObjectForStorage(obj)
+	value, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
-
-	var buf bytes.Buffer
-	err = s.codec.Encode(obj, &buf)
-	if err != nil {
-		return err
-	}
-
 	cmd := &resource.CreateRequest{
 		Key:   k,
-		Value: buf.Bytes(),
+		Value: value,
 	}
-
-	// TODO?? blob from context?
 
 	rsp, err := s.store.Create(ctx, cmd)
 	if err != nil {
@@ -157,8 +147,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("error in status %+v", rsp.Error)
 	}
 
-	// Create into the out value
-	_, _, err = s.codec.Decode(rsp.Value, nil, out)
+	// Decode into the result (can we just copy?)
+	_, _, err = s.codec.Decode(cmd.Value, nil, out)
 	if err != nil {
 		return err
 	}
@@ -505,13 +495,12 @@ func (s *Storage) GuaranteedUpdate(
 		)
 	}
 
-	var buf bytes.Buffer
-	err = s.codec.Encode(updatedObj, &buf)
+	value, err := s.prepareObjectForUpdate(ctx, updatedObj, destination)
 	if err != nil {
 		return err
 	}
 
-	req := &resource.UpdateRequest{Key: k, Value: buf.Bytes()}
+	req := &resource.UpdateRequest{Key: k, Value: value}
 	rsp, err := s.store.Update(ctx, req)
 	if err != nil {
 		return err
@@ -521,8 +510,8 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	// Read the mutated fields the response field
-	_, _, err = s.codec.Decode(rsp.Value, nil, destination)
+	// Decode into the response (can we just copy?)
+	_, _, err = s.codec.Decode(value, nil, destination)
 	if err != nil {
 		return err
 	}
