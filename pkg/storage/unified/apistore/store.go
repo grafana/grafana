@@ -146,6 +146,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("other error %+v", rsp.Error)
 	}
 
+	if err := copyModifiedObjectToDestination(obj, out); err != nil {
+		return err
+	}
+
 	meta, err := utils.MetaAccessor(out)
 	if err != nil {
 		return err
@@ -664,14 +668,12 @@ func (s *Storage) GuaranteedUpdate(
 			Object: destination.DeepCopyObject(),
 			Type:   watch.Added,
 		}, nil)
-		return nil
+	} else {
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: destination.DeepCopyObject(),
+			Type:   watch.Modified,
+		}, existingObj.DeepCopyObject())
 	}
-
-	s.watchSet.notifyWatchers(watch.Event{
-		Object: destination.DeepCopyObject(),
-		Type:   watch.Modified,
-	}, existingObj.DeepCopyObject())
-
 	return nil
 }
 
