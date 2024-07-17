@@ -670,7 +670,8 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	ReceiverName string
+	ReceiverName     string
+	TimeIntervalName string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

@@ -1,0 +1,47 @@
+{
+  "template_files": {},
+  "template_file_provenances": {},
+  "alertmanager_config": {
+    "route": {
+      "receiver": "grafana-default-email",
+      "routes": [
+        {
+          "object_matchers": [
+            [
+              "test",
+              "=",
+              "test"
+            ]
+          ],
+          "mute_time_intervals": [
+            "test-interval"
+          ]
+        }
+      ]
+    },
+    "mute_time_intervals": [
+      {
+        "name": "test-interval",
+        "time_intervals": [
+          {
+            "start_time": "06:00",
+            "end_time": "23:59"
+          }
+        ]
+      }
+    ],
+    "receivers": [
+      {
+        "name": "grafana-default-email",
+        "grafana_managed_receiver_configs": [
+          {
+            "type": "email",
+            "settings": {
+              "addresses": "<example@email.com>"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

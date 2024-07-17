@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -635,31 +636,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		}
 	}
 
-	t.Run("re-saves config and deletes provenance if mute timing does not exist", func(t *testing.T) {
-		sut, store, prov := createMuteTimingSvcSut()
-		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
-			return &cfgRevision{cfg: initialConfig()}, nil
-		}
-		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceAPI), "")
-		require.NoError(t, err)
-
-		require.Len(t, store.Calls, 2)
-		require.Equal(t, "Get", store.Calls[0].Method)
-		require.Equal(t, orgID, store.Calls[0].Args[1])
-
-		require.Equal(t, "Save", store.Calls[1].Method)
-		require.Equal(t, orgID, store.Calls[1].Args[2])
-		revision := store.Calls[1].Args[1].(*cfgRevision)
-
-		require.EqualValues(t, initialConfig().AlertmanagerConfig.MuteTimeIntervals, revision.cfg.AlertmanagerConfig.MuteTimeIntervals)
-
-		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: "no-timing"}, Provenance: definitions.Provenance(models.ProvenanceAPI)}, orgID)
-	})
-
-	t.Run("fails if it was created with different provenance", func(t *testing.T) {
+	t.Run("fails if provenance check fails", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		expectedErr := errors.New("test")
 		sut.validator = func(from, to models.Provenance) error {
@@ -669,15 +646,12 @@ func TestDeleteMuteTimings(t *testing.T) {
 			return &cfgRevision{cfg: initialConfig()}, nil
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
-		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceNone), correctVersion)
+		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, definitions.Provenance(models.ProvenanceNone), correctVersion)
 		require.ErrorIs(t, err, expectedErr)
-
-		require.Len(t, store.Calls, 0)
 	})
 
-	t.Run("returns ErrTimeIntervalInUse if mute timing is used", func(t *testing.T) {
+	t.Run("returns ErrTimeIntervalInUse if mute timing is used by a route", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return &cfgRevision{cfg: initialConfig()}, nil
@@ -689,7 +663,36 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
-		require.Truef(t, ErrTimeIntervalInUse.Is(err), "expected ErrTimeIntervalInUse but got %s", err)
+		require.ErrorIs(t, err, ErrTimeIntervalInUse)
+	})
+
+	t.Run("returns ErrTimeIntervalInUse if mute timing is used by rules", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		ruleNsStore := fakeAlertRuleNotificationStore{
+			ListNotificationSettingsFn: func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+				assertInTransaction(t, ctx)
+				assert.Equal(t, orgID, q.OrgID)
+				assert.Equal(t, timingToDelete.Name, q.TimeIntervalName)
+				assert.Empty(t, q.ReceiverName)
+				return map[models.AlertRuleKey][]models.NotificationSettings{
+					models.GenerateRuleKey(orgID): nil,
+				}, nil
+			},
+		}
+		sut.ruleNotificationsStore = &ruleNsStore
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, definitions.Provenance(models.ProvenanceAPI), correctVersion)
+
+		require.Len(t, store.Calls, 1)
+		require.Equal(t, "Get", store.Calls[0].Method)
+		require.Equal(t, orgID, store.Calls[0].Args[1])
+		require.ErrorIs(t, err, ErrTimeIntervalInUse)
+		require.Len(t, ruleNsStore.Calls, 1)
+		require.Equal(t, "ListNotificationSettings", ruleNsStore.Calls[0].Method)
 	})
 
 	t.Run("returns ErrVersionConflict if provided version does not match", func(t *testing.T) {
@@ -828,5 +831,6 @@ func createMuteTimingSvcSut() (*MuteTimingService, *alertmanagerConfigStoreFake,
 		validator: func(from, to models.Provenance) error {
 			return nil
 		},
+		ruleNotificationsStore: &fakeAlertRuleNotificationStore{},
 	}, store, prov
 }
