@@ -8,6 +8,9 @@ import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 
+const rulePausedMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
+const ruleResumedMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
+
 /**
  * Pause a single rule in a (ruler) group. This hook will ensure that mutations on the rule group are safe and will always
  * use the latest definition of the ruler group identifier.
@@ -22,15 +25,12 @@ export function usePauseRuleInGroup() {
     const action = pauseRuleAction({ uid, pause });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-    const rulePauseMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
-    const ruleResumeMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
-
     return upsertRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
       requestOptions: {
-        successMessage: pause ? rulePauseMessage : ruleResumeMessage,
+        successMessage: pause ? rulePausedMessage : ruleResumedMessage,
       },
     }).unwrap();
   });

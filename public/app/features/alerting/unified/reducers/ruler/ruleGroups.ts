@@ -56,6 +56,10 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
 
       const identifier: GrafanaRuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid };
       const ruleIndex = draft.rules.findIndex(ruleFinder(identifier));
+      if (notFound(ruleIndex)) {
+        throw new Error(`No rule with UID ${uid} found`);
+      }
+
       const matchingRule = draft.rules[ruleIndex];
 
       if (isGrafanaRulerRule(matchingRule)) {
@@ -132,4 +136,8 @@ export function swap<T>(items: T[], [oldIndex, newIndex]: SwapOperation) {
   items.splice(newIndex, 0, movedItem);
 
   return items;
+}
+
+function notFound(index: number) {
+  return index === -1;
 }
