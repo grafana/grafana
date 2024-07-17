@@ -149,7 +149,6 @@ const getStyles = (
         zIndex: -1,
       },
     }),
-    iconWrapper: css({ alignSelf: 'center' }),
     icon: css({
       color: color.text,
       position: 'relative',
