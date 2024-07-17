@@ -6,7 +6,6 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -126,22 +125,11 @@ func (s *Storage) Versioner() storage.Versioner {
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	metaObj, err := meta.Accessor(obj)
+	var err error
+	req := &resource.CreateRequest{}
+	req.Value, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
-	}
-	metaObj.SetSelfLink("")
-	if metaObj.GetResourceVersion() != "" {
-		return storage.ErrResourceVersionSetOnCreate
-	}
-
-	var val bytes.Buffer
-	err = s.codec.Encode(obj, &val)
-	if err != nil {
-		return err
-	}
-	req := &resource.CreateRequest{
-		Value: val.Bytes(),
 	}
 	req.Key, err = s.getKey(key)
 	if err != nil {
@@ -158,7 +146,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("other error %+v", rsp.Error)
 	}
 
-	_, _, err = s.codec.Decode(rsp.Value, nil, out)
+	// TODO? can we just copy?
+	_, _, err = s.codec.Decode(req.Value, nil, out)
 	if err != nil {
 		return err
 	}
@@ -636,16 +625,15 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	rv := int64(0)
-	var out []byte
-	var val bytes.Buffer
-	err = s.codec.Encode(updatedObj, &val)
-	if err != nil {
-		return err
-	}
+	var value []byte
 	if created {
+		value, err = s.prepareObjectForStorage(ctx, updatedObj)
+		if err != nil {
+			return err
+		}
 		rsp2, err := s.store.Create(ctx, &resource.CreateRequest{
 			Key:   req.Key,
-			Value: val.Bytes(),
+			Value: value,
 		})
 		if err != nil {
 			return err
@@ -653,10 +641,12 @@ func (s *Storage) GuaranteedUpdate(
 		if rsp2.Error != nil {
 			return fmt.Errorf("backend update error: %+v", rsp2.Error)
 		}
-		out = rsp2.Value
 		rv = rsp2.ResourceVersion
 	} else {
-		req.Value = val.Bytes()
+		value, err = s.prepareObjectForUpdate(ctx, updatedObj, objFromDisk)
+		if err != nil {
+			return err
+		}
 		rsp2, err := s.store.Update(ctx, req)
 		if err != nil {
 			return err
@@ -664,11 +654,11 @@ func (s *Storage) GuaranteedUpdate(
 		if rsp2.Error != nil {
 			return fmt.Errorf("backend update error: %+v", rsp2.Error)
 		}
-		out = rsp2.Value
 		rv = rsp2.ResourceVersion
 	}
 
-	_, _, err = s.codec.Decode(out, nil, destination)
+	// TODO? can we just copy?
+	_, _, err = s.codec.Decode(value, nil, destination)
 	if err != nil {
 		return err
 	}
@@ -679,17 +669,11 @@ func (s *Storage) GuaranteedUpdate(
 	eventType := watch.Modified
 	if created {
 		eventType = watch.Added
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: destination.DeepCopyObject(),
-			Type:   eventType,
-		}, nil)
-		return nil
 	}
-
 	s.watchSet.notifyWatchers(watch.Event{
 		Object: destination.DeepCopyObject(),
 		Type:   eventType,
-	}, objFromDisk.DeepCopyObject())
+	}, nil)
 
 	return nil
 }
