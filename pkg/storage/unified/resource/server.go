@@ -108,7 +108,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(identity.WithRequester(context.Background(),
 		&identity.StaticRequester{
-			Kind:           identity.TypeServiceAccount,
+			Type:           identity.TypeServiceAccount,
 			Login:          "watcher", // admin user for watch
 			UserID:         1,
 			IsGrafanaAdmin: true,

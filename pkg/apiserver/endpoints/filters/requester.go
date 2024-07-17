@@ -26,7 +26,7 @@ func WithRequester(handler http.Handler) http.Handler {
 		if ok {
 			if info.GetName() == user.Anonymous {
 				requester = &identity.StaticRequester{
-					Kind:        identity.TypeAnonymous,
+					Type:        identity.TypeAnonymous,
 					Name:        info.GetName(),
 					Login:       info.GetName(),
 					Permissions: map[int64]map[string][]string{},
@@ -37,7 +37,7 @@ func WithRequester(handler http.Handler) http.Handler {
 				slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 				orgId := int64(1)
 				requester = &identity.StaticRequester{
-					Kind:    identity.TypeServiceAccount, // system:apiserver
+					Type:    identity.TypeServiceAccount, // system:apiserver
 					UserID:  1,
 					OrgID:   orgId,
 					Name:    info.GetName(),
