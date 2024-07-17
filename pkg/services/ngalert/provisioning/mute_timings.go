@@ -196,15 +196,18 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
-func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error {
+func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, provenance definitions.Provenance, version string) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	existing, idx := getMuteTimingByName(revision, name)
+	existing, idx := getMuteTimingByName(revision, nameOrUID)
 	if idx == -1 {
-		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", name)
+		existing, idx = getMuteTimingByUID(revision, nameOrUID)
+	}
+	if idx == -1 {
+		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", nameOrUID)
 		return nil
 	}
 
@@ -218,7 +221,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		return err
 	}
 
-	if isMuteTimeInUseInRoutes(name, revision.cfg.AlertmanagerConfig.Route) {
+	if isMuteTimeInUseInRoutes(existing.Name, revision.cfg.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
 		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
