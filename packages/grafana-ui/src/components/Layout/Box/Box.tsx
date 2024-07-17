@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { AlignItems, AlignSelf, Direction, FlexProps, JustifyContent } from '../types';
+import { AlignItems, Direction, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 import { getSizeStyles, SizeProps } from '../utils/styles';
 
@@ -56,7 +56,6 @@ interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLE
 
   // Flex Props
   alignItems?: ResponsiveProp<AlignItems>;
-  alignSelf?: ResponsiveProp<AlignSelf>;
   direction?: ResponsiveProp<Direction>;
   justifyContent?: ResponsiveProp<JustifyContent>;
   gap?: ResponsiveProp<ThemeSpacingTokens>;
@@ -98,7 +97,6 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     direction,
     justifyContent,
     alignItems,
-    alignSelf,
     boxShadow,
     element,
     gap,
@@ -138,7 +136,6 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     direction,
     justifyContent,
     alignItems,
-    alignSelf,
     boxShadow,
     gap
   );
@@ -206,7 +203,6 @@ const getStyles = (
   direction: BoxProps['direction'],
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
-  alignSelf: BoxProps['alignSelf'],
   boxShadow: BoxProps['boxShadow'],
   gap: BoxProps['gap']
 ) => {
@@ -293,9 +289,6 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, alignItems, (val) => ({
         alignItems: val,
-      })),
-      getResponsiveStyle(theme, alignSelf, (val) => ({
-        alignSelf: val,
       })),
       getResponsiveStyle(theme, borderRadius, (val) => ({
         borderRadius: theme.shape.radius[val],
