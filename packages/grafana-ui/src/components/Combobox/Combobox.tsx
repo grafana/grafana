@@ -85,14 +85,12 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       fallbackPlacements: ['top'],
     }),
   ];
+  const elements = { reference: inputRef.current, floating: floatingRef.current };
   const { floatingStyles } = useFloating({
     open: isOpen,
     placement: 'bottom',
     middleware,
-    elements: {
-      reference: inputRef.current,
-      floating: floatingRef.current,
-    },
+    elements,
     whileElementsMounted: autoUpdate,
   });
 
@@ -108,11 +106,11 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
-        style={{ ...floatingStyles }}
+        style={{ ...floatingStyles, width: elements.reference?.getBoundingClientRect().width }}
         {...getMenuProps({ ref: floatingRef })}
       >
         {isOpen && (
-          <ul className={styles.valueContainer} style={{ height: rowVirtualizer.getTotalSize() }}>
+          <ul className={styles.valueContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
