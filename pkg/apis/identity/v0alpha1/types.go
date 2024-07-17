@@ -21,14 +21,6 @@ import (
 //
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type IdentityDisplay struct {
-	NamespacedUID string `json:"uid"`          // The namespaced UID, eg `user:xyz`
-	NamespacedID  string `json:"id,omitempty"` // The namespaced ID (should be deprecated, but find for now)
-	Display       string `json:"display"`
-	Avatar        string `json:"avatar,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type User struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -71,4 +63,21 @@ type TeamList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []Team `json:"items,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type IdentityDisplayList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []IdentityDisplay `json:"items,omitempty"`
+}
+
+type IdentityDisplay struct {
+	NamespacedUID string `json:"uid"` // The namespaced UID, eg `user:xyz`
+	Display       string `json:"display"`
+	Avatar        string `json:"avatar,omitempty"`
+
+	// Legacy internal ID -- usage of this value should be phased out
+	LegacyID int64 `json:"legacyId,omitempty"`
 }

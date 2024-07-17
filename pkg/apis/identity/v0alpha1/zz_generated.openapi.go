@@ -16,13 +16,14 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay": schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team":            schema_pkg_apis_identity_v0alpha1_Team(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamList":        schema_pkg_apis_identity_v0alpha1_TeamList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec":        schema_pkg_apis_identity_v0alpha1_TeamSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.User":            schema_pkg_apis_identity_v0alpha1_User(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserList":        schema_pkg_apis_identity_v0alpha1_UserList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserSpec":        schema_pkg_apis_identity_v0alpha1_UserSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay":     schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplayList": schema_pkg_apis_identity_v0alpha1_IdentityDisplayList(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team":                schema_pkg_apis_identity_v0alpha1_Team(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamList":            schema_pkg_apis_identity_v0alpha1_TeamList(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec":            schema_pkg_apis_identity_v0alpha1_TeamSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.User":                schema_pkg_apis_identity_v0alpha1_User(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserList":            schema_pkg_apis_identity_v0alpha1_UserList(ref),
+		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserSpec":            schema_pkg_apis_identity_v0alpha1_UserSpec(ref),
 	}
 }
 
@@ -39,16 +40,9 @@ func schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref common.ReferenceCallb
 							Format:  "",
 						},
 					},
-					"id": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The namespaced UID, eg `user:xyz`",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"display": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The namespaced ID (should be deprecated, but find for now)",
+							Description: "The namespaced UID, eg `user:xyz`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -60,10 +54,64 @@ func schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref common.ReferenceCallb
 							Format: "",
 						},
 					},
+					"legacyId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Legacy internal ID -- usage of this value should be phased out",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
 				Required: []string{"uid", "display"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_identity_v0alpha1_IdentityDisplayList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
