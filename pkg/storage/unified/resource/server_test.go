@@ -19,7 +19,7 @@ import (
 
 func TestSimpleServer(t *testing.T) {
 	testUserA := &identity.StaticRequester{
-		Kind:           identity.TypeUser,
+		Type:           identity.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
