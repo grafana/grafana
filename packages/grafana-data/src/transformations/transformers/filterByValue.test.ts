@@ -18,6 +18,8 @@ import * as utils from './utils';
 const mockTransformationsVariableSupport = jest.spyOn(utils, 'transformationsVariableSupport');
 mockTransformationsVariableSupport.mockReturnValue(false);
 
+global.console.warn = jest.fn();
+
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
   length: 7,
@@ -151,6 +153,8 @@ describe('FilterByValue transformer', () => {
           state: {},
         },
       ]);
+
+      expect(global.console.warn).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -205,6 +209,8 @@ describe('FilterByValue transformer', () => {
           state: {},
         },
       ]);
+
+      expect(global.console.warn).toHaveBeenCalledTimes(3);
     });
   });
 
