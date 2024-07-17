@@ -4,10 +4,7 @@ on:
     inputs:
       version:
         required: true
-        description: 'Target release version (git tag)'
-      prev_version:
-        required: true
-        description: 'Previous release version (git tag)'
+        description: 'Target release version (semver, git tag, branch or commit)'
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -23,7 +20,9 @@ jobs:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
-          sparse-checkout: .github/workflows
+          sparse-checkout: |
+            .github/workflows
+            CHANGELOG.md
           fetch-depth: 0
           fetch-tags: true
       - name: "Generate changelog"
@@ -31,13 +30,20 @@ jobs:
         uses: ./.github/workflows/actions/changelog
         with:
           github_token: ${{ steps.generate_token.outputs.token }}
-          version: ${{ inputs.version }}
-          prev_version: ${{ inputs.prev_version }}
-          output_file: _changelog.md
+          target: v${{ inputs.version }}
+          output_file: changelog_items.md
+      - name: "Patch CHANGELOG.md"
+        run: |
+          # Replace text between the delimiters with new changelog_items.md content
+          sed -i '/${{ inputs.version }} START/,/${{ inputs.version }} END/{
+            //!d
+            e cat changelog_items.md
+          }' CHANGELOG.md
+          git diff CHANGELOG.md
       - name: "Draft Github Release"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          cat _changelog.md
+          cat changelog_items.md
           # skip for now
           # gh release create --draft ${{ inputs.version }} --notes-file _changelog.md

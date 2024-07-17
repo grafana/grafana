@@ -52,7 +52,10 @@ const getPreviousVersion = async (version) => {
     .filter((tag) => tag)
     .sort(semverCompare)
     .find((tag) => semverCompare(tag, semverParse(version)) > 0);
-  return prev;
+	if (!prev) {
+		throw `Could not find previous git tag for ${version}`;
+	}
+  return prev[4];
 };
 
 // A helper for Github GraphQL API endpoint
@@ -96,9 +99,8 @@ const getCommitishDate = async (name, owner, target) => {
 // Using Github GraphQL API get a list of PRs between the two "commitish" items.
 // This resoves the "since" item's timestamp first and iterates over all PRs
 // till "target" using naïve pagination.
-const getHistory = async (name, owner, target, since) => {
-  const sinceDate = await getCommitishDate(name, owner, since);
-  LOG(`Fetching ${owner}/${name} PRs since ${since} (${sinceDate}) till ${target}`);
+const getHistory = async (name, owner, target, sinceDate) => {
+  LOG(`Fetching ${owner}/${name} PRs since ${sinceDate} till ${target}`);
   const query = `
   query findCommitsWithAssociatedPullRequests(
     $name: String!
@@ -173,11 +175,11 @@ const getHistory = async (name, owner, target, since) => {
 // feature, deprecation, breaking change and plugin fixes/enhancements).
 //
 // PR grouping relies on Github labels only, not on the PR contents.
-const getChangeLogItems = async (name, owner, from, to) => {
+const getChangeLogItems = async (name, owner, sinceDate, to) => {
   // check if a node contains a certain label
   const hasLabel = ({ labels }, label) => labels.nodes.some(({ name }) => name === label);
   // get all the PRs between the two "commitish" items
-  const history = await getHistory(name, owner, to, from);
+  const history = await getHistory(name, owner, to, sinceDate);
 
   const items = history.flatMap((node) => {
     // discard PRs without a "changelog" label
@@ -222,17 +224,20 @@ if (!ghtoken) {
   throw 'GITHUB_TOKEN is not set and "github_token" input is empty';
 }
 
-const target = process.argv[2] || process.env.INPUT_VERSION;
-LOG(`Target version tag/branch/commit: ${target}`);
+const target = process.argv[2] || process.env.INPUT_TARGET;
+LOG(`Target tag/branch/commit: ${target}`);
 
-const previous = process.argv[3] || process.env.INPUT_PREV_VERSION || (await getPreviousVersion(target));
+const previous = process.argv[3] || process.env.INPUT_PREVIOUS || (await getPreviousVersion(target));
 
-LOG(`Previous version tag: ${previous}`);
+LOG(`Previous tag/commit: ${previous}`);
+
+const sinceDate = await getCommitishDate('grafana', 'grafana', previous);
+LOG(`Previous tag/commit timestamp: ${sinceDate}`);
 
 // Get all changelog items from Grafana OSS
-const oss = await getChangeLogItems('grafana', 'grafana', previous, target);
+const oss = await getChangeLogItems('grafana', 'grafana', sinceDate, target);
 // Get all changelog items from Grafana Enterprise
-const entr = await getChangeLogItems('grafana-enterprise', 'grafana', previous, target);
+const entr = await getChangeLogItems('grafana-enterprise', 'grafana', sinceDate, target);
 
 LOG(`Found OSS PRs: ${oss.length}`);
 LOG(`Found Enterprise PRs: ${entr.length}`);
