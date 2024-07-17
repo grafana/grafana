@@ -163,16 +163,12 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
 
-	// update snapshot status to creating, add some retries since this is a background task
-	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-			UID:    snapshotMeta.UID,
-			Status: cloudmigration.SnapshotStatusCreating,
-		})
-		return retryer.FuncComplete, err
-	}, 10, time.Millisecond*100, time.Second*10); err != nil {
-		s.log.Error("failed to set snapshot status to 'creating'", "err", err)
-		return fmt.Errorf("setting snapshot status to creating: snapshotUID=%s %w", snapshotMeta.UID, err)
+	// Update status to snapshot creating with retries
+	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:    snapshotMeta.UID,
+		Status: cloudmigration.SnapshotStatusCreating,
+	}); err != nil {
+		return err
 	}
 
 	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
@@ -232,17 +228,13 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
 	}
 
-	// update snapshot status to pending upload with retry
-	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-			UID:       snapshotMeta.UID,
-			Status:    cloudmigration.SnapshotStatusPendingUpload,
-			Resources: localSnapshotResource,
-		})
-		return retryer.FuncComplete, err
-	}, 10, time.Millisecond*100, time.Second*10); err != nil {
-		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
-		return fmt.Errorf("setting snapshot status to pending upload: snapshotID=%s %w", snapshotMeta.UID, err)
+	// update snapshot status to pending upload with retries
+	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:       snapshotMeta.UID,
+		Status:    cloudmigration.SnapshotStatusPendingUpload,
+		Resources: localSnapshotResource,
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -254,15 +246,12 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
 
-	// update snapshot status to uploading, add some retries since this is a background task
-	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-			UID:    snapshotMeta.UID,
-			Status: cloudmigration.SnapshotStatusUploading,
-		})
-		return retryer.FuncComplete, err
-	}, 10, time.Millisecond*100, time.Second*10); err != nil {
-		return fmt.Errorf("failed to set snapshot status to 'creating': %w", err)
+	// update snapshot status to uploading with retries
+	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:    snapshotMeta.UID,
+		Status: cloudmigration.SnapshotStatusUploading,
+	}); err != nil {
+		return err
 	}
 
 	indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
@@ -304,11 +293,12 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		return fmt.Errorf("uploading file using presigned url: %w", err)
 	}
 
-	if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+	// update snapshot status to processing with retries
+	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:    snapshotMeta.UID,
 		Status: cloudmigration.SnapshotStatusProcessing,
 	}); err != nil {
-		return fmt.Errorf("updating snapshot: %w", err)
+		return err
 	}
 
 	return nil
@@ -331,5 +321,16 @@ func (s *Service) uploadUsingPresignedURL(ctx context.Context, uploadURL, key st
 		return fmt.Errorf("uploading file using presigned url: %w", err)
 	}
 
+	return nil
+}
+
+func (s *Service) updateStatusWithRetries(ctx context.Context, cmd cloudmigration.UpdateSnapshotCmd) (err error) {
+	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
+		err := s.store.UpdateSnapshot(ctx, cmd)
+		return retryer.FuncComplete, err
+	}, 10, time.Millisecond*100, time.Second*10); err != nil {
+		s.log.Error("failed to update snapshot status", "snapshotUid", cmd.UID, "status", cmd.Status, "num_resources", len(cmd.Resources), "error", err.Error())
+		return fmt.Errorf("failed to update snapshot status: %w", err)
+	}
 	return nil
 }
