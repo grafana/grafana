@@ -298,13 +298,13 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 
 	listObj := s.newListFunc()
 
-	if ctx.Err() != nil {
-		return watch.NewEmptyWatch(), nil
-	}
-
 	var namespace *string
 	if k.Namespace != "" {
 		namespace = &k.Namespace
+	}
+
+	if ctx.Err() != nil {
+		return watch.NewEmptyWatch(), nil
 	}
 
 	if (opts.SendInitialEvents == nil && req.ResourceVersion == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {

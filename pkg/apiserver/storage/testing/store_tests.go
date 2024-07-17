@@ -290,7 +290,6 @@ func RunTestConditionalDelete(ctx context.Context, t *testing.T, store storage.I
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			out := &example.Pod{}
 			err := store.Delete(ctx, key, out, tt.precondition, storage.ValidateAllObjectFunc, nil)
 			if tt.expectInvalidObjErr {
