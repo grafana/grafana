@@ -295,7 +295,7 @@ describe('DataSourcePicker', () => {
 
       expect(await screen.findByText('Configure a new data source')).toBeInTheDocument();
       // It should point to the new data source page including any sub url configured
-      expect(screen.getByRole('link')).toHaveAttribute('href', '/my-sub-url/datasources/new');
+      expect(screen.getByRole('link')).toHaveAttribute('href', '/my-sub-path/connections/datasources/new');
     });
 
     it('should call onChange with the default query when add csv is clicked', async () => {
