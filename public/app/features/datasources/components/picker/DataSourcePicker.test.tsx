@@ -59,7 +59,7 @@ async function setupOpenDropdown(user: UserEvent, props: DataSourcePickerProps) 
 }
 
 locationUtil.initialize({
-  config: { appSubUrl: '/my-sub-url' } as GrafanaConfig,
+  config: { appSubUrl: '/my-sub-path' } as GrafanaConfig,
   getVariablesUrlParams: jest.fn(),
   getTimeRangeForUrl: jest.fn(),
 });
