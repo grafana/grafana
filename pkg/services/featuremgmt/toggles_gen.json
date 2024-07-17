@@ -1291,7 +1291,7 @@
         "name": "clientTokenRotation",
         "resourceVersion": "1707928895402",
         "creationTimestamp": "2024-02-14T16:41:35Z",
-        "deletionTimestamp": "2024-02-16T15:38:59Z"
+        "deletionTimestamp": "2024-07-17T19:01:22Z"
       },
       "spec": {
         "description": "Replaces the current in-request token rotation so that the client initiates the rotation",
@@ -2139,6 +2139,18 @@
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusAzureOverrideAudience",
+        "resourceVersion": "1721242859311",
+        "creationTimestamp": "2024-07-17T19:00:59Z"
+      },
+      "spec": {
+        "description": "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/partner-datasources"
       }
     }
   ]

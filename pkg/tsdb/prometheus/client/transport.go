@@ -38,6 +38,8 @@ func CreateTransportOptions(ctx context.Context, settings backend.DataSourceInst
 		opts.SigV4.Service = "aps"
 	}
 
+	audienceOverride := backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("prometheusAzureOverrideAudience")
+
 	azureSettings, err := azsettings.ReadSettings(ctx)
 	if err != nil {
 		logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
@@ -46,7 +48,7 @@ func CreateTransportOptions(ctx context.Context, settings backend.DataSourceInst
 
 	// Set Azure authentication
 	if azureSettings.AzureAuthEnabled {
-		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, &opts)
+		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, &opts, audienceOverride, logger)
 		if err != nil {
 			return nil, fmt.Errorf("error configuring Azure auth: %v", err)
 		}
