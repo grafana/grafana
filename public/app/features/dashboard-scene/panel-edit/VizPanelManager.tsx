@@ -7,7 +7,6 @@ import {
   DataSourceInstanceSettings,
   FieldConfigSource,
   GrafanaTheme2,
-  PanelModel,
   filterFieldConfigOverrides,
   getDataSourceRef,
   isStandardFieldProp,
@@ -26,11 +25,9 @@ import {
   SceneQueryRunner,
   SceneVariables,
   VizPanel,
-  sceneUtils,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { updateLibraryVizPanel } from 'app/features/library-panels/state/api';
@@ -197,11 +194,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public changePluginType(pluginId: string) {
-    const {
-      options: prevOptions,
-      fieldConfig: prevFieldConfig,
-      pluginId: prevPluginId,
-    } = this.state.panel.state;
+    const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = this.state.panel.state;
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {

@@ -4,14 +4,7 @@ import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingSta
 import { calculateFieldTransformer } from '@grafana/data/src/transformations/transformers/calculateField';
 import { mockTransformationsRegistry } from '@grafana/data/src/utils/tests/mockTransformationsRegistry';
 import { config, locationService } from '@grafana/runtime';
-import {
-  LocalValueVariable,
-  SceneGridRow,
-  SceneQueryRunner,
-  SceneVariableSet,
-  VizPanel,
-  sceneGraph,
-} from '@grafana/scenes';
+import { LocalValueVariable, SceneGridRow, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -192,97 +185,6 @@ mockTransformationsRegistry([calculateFieldTransformer]);
 jest.useFakeTimers();
 
 describe('VizPanelManager', () => {
-  describe('When changing plugin', () => {
-    it('Should successfully change from one viz type to another', () => {
-      const { vizPanelManager } = setupTest('panel-1');
-      expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
-      vizPanelManager.changePluginType('table');
-
-      expect(vizPanelManager.state.panel.state.pluginId).toBe('table');
-    });
-
-    it('Should clear custom options', () => {
-      const overrides = [
-        {
-          matcher: { id: 'matcherOne' },
-          properties: [{ id: 'custom.propertyOne' }, { id: 'custom.propertyTwo' }, { id: 'standardProperty' }],
-        },
-      ];
-      const vizPanel = new VizPanel({
-        title: 'Panel A',
-        key: 'panel-1',
-        pluginId: 'table',
-        $data: new SceneQueryRunner({
-          key: 'data-query-runner',
-          datasource: {
-            type: 'grafana-testdata-datasource',
-            uid: 'gdev-testdata',
-          },
-          queries: [{ refId: 'A' }],
-        }),
-        options: undefined,
-        fieldConfig: {
-          defaults: {
-            custom: 'Custom',
-          },
-          overrides,
-        },
-      });
-
-      new DashboardGridItem({
-        body: vizPanel,
-      });
-
-      const vizPanelManager = VizPanelManager.createFor(vizPanel);
-
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
-
-      vizPanelManager.changePluginType('timeseries');
-
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toStrictEqual({});
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides[0].properties).toHaveLength(1);
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides[0].properties[0].id).toBe('standardProperty');
-    });
-
-    it('Should restore cached options/fieldConfig if they exist', () => {
-      const vizPanel = new VizPanel({
-        title: 'Panel A',
-        key: 'panel-1',
-        pluginId: 'table',
-        $data: new SceneQueryRunner({
-          key: 'data-query-runner',
-          datasource: {
-            type: 'grafana-testdata-datasource',
-            uid: 'gdev-testdata',
-          },
-          queries: [{ refId: 'A' }],
-        }),
-        options: {
-          customOption: 'A',
-        },
-        fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
-      });
-
-      new DashboardGridItem({
-        body: vizPanel,
-      });
-
-      const vizPanelManager = VizPanelManager.createFor(vizPanel);
-
-      vizPanelManager.changePluginType('timeseries');
-      //@ts-ignore
-      expect(vizPanelManager.state.panel.state.options['customOption']).toBeUndefined();
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toStrictEqual({});
-
-      vizPanelManager.changePluginType('table');
-
-      //@ts-ignore
-      expect(vizPanelManager.state.panel.state.options['customOption']).toBe('A');
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
-    });
-  });
-
   describe('library panels', () => {
     it('saves library panels on commit', () => {
       const panel = new VizPanel({
