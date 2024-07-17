@@ -60,7 +60,7 @@ describe('SelectField::', () => {
       </FormWrapper>
     );
 
-    const menuOptions = screen.getAllByLabelText('Select option');
+    const menuOptions = screen.getAllByRole('option');
 
     fireEvent.click(menuOptions[0]);
     expect(screen.getByTestId('test-field-error-message')).toHaveTextContent('Must contain at least 13 characters');
