@@ -8,6 +8,6 @@ import (
 
 func TestVersionHacks(t *testing.T) {
 	rv := getResourceVersion(123, 456)
-	require.Equal(t, int64(123000456), rv)
+	require.Equal(t, int64(1230000456), rv)
 	require.Equal(t, int64(456), getVersionFromRV(rv))
 }
