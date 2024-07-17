@@ -12,14 +12,14 @@ Legend options control the series names and statistics that appear under or to t
 
 Toggle the switch to turn the legend on or off.
 
-### Mode
+### Mode {#legend-mode}
 
 Use these settings to define how the legend appears in your visualization.
 
 - **List -** Displays the legend as a list. This is a default display mode of the legend.
 - **Table -** Displays the legend as a table.
 
-### Placement
+### Placement {#legend-placement}
 
 Choose where to display the legend.
 
