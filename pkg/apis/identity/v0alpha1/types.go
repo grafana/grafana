@@ -74,9 +74,10 @@ type IdentityDisplayList struct {
 }
 
 type IdentityDisplay struct {
-	NamespacedUID string `json:"uid"` // The namespaced UID, eg `user:xyz`
-	Display       string `json:"display"`
-	Avatar        string `json:"avatar,omitempty"`
+	IdentityType string `json:"type"` // The namespaced UID, eg `user:xyz`
+	UID          string `json:"uid"`  // The namespaced UID, eg `user:xyz`
+	Display      string `json:"display"`
+	Avatar       string `json:"avatar,omitempty"`
 
 	// Legacy internal ID -- usage of this value should be phased out
 	LegacyID int64 `json:"legacyId,omitempty"`
