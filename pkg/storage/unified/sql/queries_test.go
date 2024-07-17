@@ -281,8 +281,10 @@ func TestQueries(t *testing.T) {
 					resourceVersion: new(resourceVersion),
 				},
 				Expected: expected{
-					"resource_version_get_mysql_sqlite.sql": dialects{
+					"resource_version_get_mysql.sql": dialects{
 						sqltemplate.MySQL,
+					},
+					"resource_version_get_sqlite.sql": dialects{
 						sqltemplate.SQLite,
 					},
 				},

@@ -605,7 +605,33 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
-	// 1. Increment the resource version
+	// TODO: refactor this code to run in a multi-statement transaction in order to minimise the number of roundtrips.
+	// 1 Lock the row for update
+	req := sqlResourceVersionRequest{
+		SQLTemplate:     sqltemplate.New(d),
+		Group:           key.Group,
+		Resource:        key.Resource,
+		resourceVersion: new(resourceVersion),
+	}
+	rv, err := queryRow(ctx, x, sqlResourceVersionGet, req)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// if there wasn't a row associated with the given resource, we create one with
+		// version 1
+		if _, err = exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
+			SQLTemplate: sqltemplate.New(d),
+			Group:       key.Group,
+			Resource:    key.Resource,
+		}); err != nil {
+			return 0, fmt.Errorf("insert into resource_version: %w", err)
+		}
+		return 1, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("increase resource version: %w", err)
+	}
+
+	// 2. Increment the resource version
 	res, err := exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       key.Group,
@@ -614,48 +640,13 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 	if err != nil {
 		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
-	// if there wasn't a row associated with the given resource, we create one with
-	// version 1
-	count, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("increase resource version: %w", err)
-	}
-	if count == 0 {
-		// NOTE: there is a marginal chance that we race with another writer
-		// trying to create the same row. This is only possible when onboarding
-		// a new (Group, Resource) to the cell, which should be very unlikely,
-		// and the workaround is simply retrying. The alternative would be to
-		// use INSERT ... ON CONFLICT DO UPDATE ..., but that creates a
-		// requirement for support in Dialect only for this marginal case, and
-		// we would rather keep Dialect as small as possible. Another
-		// alternative is to simply check if the INSERT returns a DUPLICATE KEY
-		// error and then retry the original SELECT, but that also adds some
-		// complexity to the code. That would be preferrable to changing
-		// Dialect, though. The current alternative, just retrying, seems to be
-		// enough for now.
-		if _, err = exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
-			SQLTemplate: sqltemplate.New(d),
-			Group:       key.Group,
-			Resource:    key.Resource,
-		}); err != nil {
-			return 0, fmt.Errorf("insert into resource_version: %w", err)
-		}
 
-		return 1, nil
+	if count, err := res.RowsAffected(); err != nil || count == 0 {
+		return 0, fmt.Errorf("increase resource version did not affect any rows: %w", err)
 	}
 
-	// 2. Get the new version
-	req := sqlResourceVersionRequest{
-		SQLTemplate:     sqltemplate.New(d),
-		Group:           key.Group,
-		Resource:        key.Resource,
-		resourceVersion: new(resourceVersion),
-	}
-	if _, err = queryRow(ctx, x, sqlResourceVersionGet, req); err != nil {
-		return 0, fmt.Errorf("get the new resource version: %w", err)
-	}
-
-	return req.ResourceVersion, nil
+	// 3. Retun the incremended value
+	return rv.ResourceVersion + 1, nil
 }
 
 // exec uses `req` as input for a non-data returning query generated with
