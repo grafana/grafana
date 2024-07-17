@@ -11,11 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -26,9 +27,14 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 var EXPIRED_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestService_HasOAuthEntry(t *testing.T) {
 	testCases := []struct {
@@ -115,13 +121,16 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 
 	authInfoStore := &FakeAuthInfoStore{ExpectedOAuth: &login.UserAuth{}}
 	authInfoService := authinfoimpl.ProvideService(authInfoStore, remotecache.NewFakeCacheStorage(), secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+
+	store := db.InitTestDB(t)
+
 	return &Service{
 		Cfg:                  setting.NewCfg(),
 		SocialService:        socialService,
 		AuthInfoService:      authInfoService,
-		singleFlightGroup:    &singleflight.Group{},
+		serverLock:           serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
-		cache:                localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+		cache:                remotecache.NewFakeCacheStorage(),
 	}, authInfoStore, socialConnector
 }
 
@@ -154,7 +163,8 @@ func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.Delet
 func TestService_TryTokenRefresh(t *testing.T) {
 	type environment struct {
 		authInfoService *authinfotest.FakeService
-		cache           *localcache.CacheService
+		cache           remotecache.CacheStorage
+		serverLock      *serverlock.ServerLockService
 		identity        identity.Requester
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
@@ -211,7 +221,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			desc: "should skip token refresh if the expiration check has already been cached",
 			setup: func(env *environment) {
 				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
-				env.cache.Set("oauth-refresh-token-1234", true, 1*time.Minute)
+				_ = env.cache.Set(context.Background(), "oauth-refresh-token-1234", []byte{}, 1*time.Minute)
 			},
 		},
 		{
@@ -332,9 +342,12 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := &socialtest.MockSocialConnector{}
 
+			store := db.InitTestDB(t)
+
 			env := environment{
 				authInfoService: &authinfotest.FakeService{},
-				cache:           localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				cache:           remotecache.NewFakeCacheStorage(),
+				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
@@ -349,7 +362,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				AuthInfoService:      env.authInfoService,
 				Cfg:                  setting.NewCfg(),
 				cache:                env.cache,
-				singleFlightGroup:    &singleflight.Group{},
+				serverLock:           env.serverLock,
 				SocialService:        env.socialService,
 				tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
 			}
@@ -491,7 +504,8 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 	}
 	type environment struct {
 		authInfoService *authinfotest.FakeService
-		cache           *localcache.CacheService
+		cache           remotecache.CacheStorage
+		serverLock      *serverlock.ServerLockService
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
 
@@ -512,7 +526,7 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 				OAuthExpiry:      timeNow,
 			},
 			setup: func(env *environment) {
-				env.cache.Set("token-check-1234", token, 1*time.Minute)
+				_ = env.cache.Set(context.Background(), "token-check-1234", []byte{}, 1*time.Minute)
 			},
 			expectedToken: &oauth2.Token{
 				AccessToken: "new_access_token",
@@ -576,9 +590,12 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := &socialtest.MockSocialConnector{}
 
+			store := db.InitTestDB(t)
+
 			env := environment{
 				authInfoService: &authinfotest.FakeService{},
-				cache:           localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				cache:           remotecache.NewFakeCacheStorage(),
+				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
@@ -593,7 +610,7 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 				AuthInfoService:      env.authInfoService,
 				Cfg:                  setting.NewCfg(),
 				cache:                env.cache,
-				singleFlightGroup:    &singleflight.Group{},
+				serverLock:           env.serverLock,
 				SocialService:        env.socialService,
 				tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
 			}

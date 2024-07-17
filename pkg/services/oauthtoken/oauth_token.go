@@ -10,11 +10,11 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/oauth2"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -34,11 +34,11 @@ var (
 const maxOAuthTokenCacheTTL = 10 * time.Minute
 
 type Service struct {
-	Cfg               *setting.Cfg
-	SocialService     social.Service
-	AuthInfoService   login.AuthInfoService
-	singleFlightGroup *singleflight.Group
-	cache             *localcache.CacheService
+	Cfg             *setting.Cfg
+	SocialService   social.Service
+	AuthInfoService login.AuthInfoService
+	serverLock      *serverlock.ServerLockService
+	cache           remotecache.CacheStorage
 
 	tokenRefreshDuration *prometheus.HistogramVec
 }
@@ -52,13 +52,13 @@ type OAuthTokenService interface {
 	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
 
-func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer) *Service {
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer, cache remotecache.CacheStorage, serverLockService *serverlock.ServerLockService) *Service {
 	return &Service{
 		AuthInfoService:      authInfoService,
 		Cfg:                  cfg,
 		SocialService:        socialService,
-		cache:                localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
-		singleFlightGroup:    new(singleflight.Group),
+		cache:                cache,
+		serverLock:           serverLockService,
 		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
 	}
 }
@@ -154,12 +154,14 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 	ctxLogger = ctxLogger.New("userID", userID)
 
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
-	if _, ok := o.cache.Get(lockKey); ok {
+	if _, err := o.cache.Get(ctx, lockKey); err == nil {
 		ctxLogger.Debug("Expiration check has been cached, no need to refresh")
 		return nil
 	}
-	_, err, _ = o.singleFlightGroup.Do(lockKey, func() (any, error) {
-		ctxLogger.Debug("Singleflight request for getting a new access token", "key", lockKey)
+
+	var cmdErr error
+	lockErr := o.serverLock.LockExecuteAndRelease(ctx, lockKey, time.Second*30, func(ctx context.Context) {
+		ctxLogger.Debug("serverlock request for getting a new access token", "key", lockKey)
 
 		authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
 		if !exists {
@@ -167,15 +169,15 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 				ctxLogger.Debug("Failed to fetch oauth entry", "error", err)
 			} else {
 				// User is not logged in via OAuth no need to check
-				o.cache.Set(lockKey, struct{}{}, maxOAuthTokenCacheTTL)
+				_ = o.cache.Set(ctx, lockKey, []byte{}, maxOAuthTokenCacheTTL)
 			}
-			return nil, nil
+			return
 		}
 
 		_, needRefresh, ttl := needTokenRefresh(authInfo)
 		if !needRefresh {
-			o.cache.Set(lockKey, struct{}{}, ttl)
-			return nil, nil
+			_ = o.cache.Set(ctx, lockKey, []byte{}, ttl)
+			return
 		}
 
 		// get the token's auth provider (f.e. azuread)
@@ -183,23 +185,28 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
 		if currentOAuthInfo == nil {
 			ctxLogger.Warn("OAuth provider not found", "provider", provider)
-			return nil, nil
+			return
 		}
 
 		// if refresh token handling is disabled for this provider, we can skip the refresh
 		if !currentOAuthInfo.UseRefreshToken {
 			ctxLogger.Debug("Skipping token refresh", "provider", provider)
-			return nil, nil
+			return
 		}
 
-		return o.tryGetOrRefreshOAuthToken(ctx, authInfo)
+		_, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, authInfo)
 	})
+	if lockErr != nil {
+		ctxLogger.Error("Failed to obtain token refresh lock", "error", err)
+		return lockErr
+	}
+
 	// Silence ErrNoRefreshTokenFound
-	if errors.Is(err, ErrNoRefreshTokenFound) {
+	if errors.Is(cmdErr, ErrNoRefreshTokenFound) {
 		return nil
 	}
 
-	return err
+	return cmdErr
 }
 
 func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
@@ -251,7 +258,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, usr *login.User
 	ctxLogger := logger.FromContext(ctx).New("userID", usr.UserId)
 
 	key := getCheckCacheKey(usr.UserId)
-	if _, ok := o.cache.Get(key); ok {
+	if _, err := o.cache.Get(ctx, key); err == nil {
 		ctxLogger.Debug("Expiration check has been cached", "userID", usr.UserId)
 		return buildOAuthTokenFromAuthInfo(usr), nil
 	}
@@ -262,7 +269,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, usr *login.User
 
 	persistedToken, refreshNeeded, ttl := needTokenRefresh(usr)
 	if !refreshNeeded {
-		o.cache.Set(key, struct{}{}, ttl)
+		_ = o.cache.Set(ctx, key, []byte{}, ttl)
 		return persistedToken, nil
 	}
 
