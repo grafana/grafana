@@ -7,7 +7,7 @@ inputs:
   prev_version:
     description: Previous version number
     required: false
-  token:
+  github_token:
     description: GitHub token with read/write access to all necessary repositories
     required: true
   output_file:

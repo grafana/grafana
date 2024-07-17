@@ -56,13 +56,13 @@ const getPreviousVersion = async (version) => {
 };
 
 // A helper for Github GraphQL API endpoint
-const graphql = async (token, query, variables) => {
+const graphql = async (ghtoken, query, variables) => {
   const { env } = process;
   const results = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${ghtoken}`,
     },
     body: JSON.stringify({ query, variables }),
   });
@@ -76,7 +76,7 @@ const graphql = async (token, query, variables) => {
 // "commitish" items and get a list of PRs in between them.
 const getCommitishDate = async (name, owner, target) => {
   const result = await graphql(
-    token,
+    ghtoken,
     `
       query getCommitDate($owner: String!, $name: String!, $target: String!) {
         repository(owner: $owner, name: $name) {
@@ -150,7 +150,7 @@ const getHistory = async (name, owner, target, since) => {
   let cursor;
   let nodes = [];
   for (;;) {
-    const result = await graphql(token, query, {
+    const result = await graphql(ghtoken, query, {
       name,
       owner,
       target,
@@ -214,17 +214,25 @@ const getChangeLogItems = async (name, owner, from, to) => {
 // ======================================================
 //                 GENERATE CHANGELOG
 // ======================================================
+const tagToVersion = tag => tag.replace(/^v/, '');
+const versionToTag = ver => 'v' + tagToVersion(ver);
 
 LOG(`Changelog action started`);
-const version = process.argv[2] || process.env.INPUT_VERSION;
-LOG(`Target version: ${version}`);
-const prevVersion = process.argv[3] || process.env.INPUT_PREV_VERSION || (await getPreviousVersion(version));
-LOG(`Previous version: ${prevVersion}`);
-const token = process.env.GITHUB_TOKEN || process.env.INPUT_TOKEN;
 
-if (!token) {
-  throw 'GITHUB_TOKEN is not set and "token" input is empty';
+const ghtoken = process.env.GITHUB_TOKEN || process.env.INPUT_GITHUB_TOKEN;
+if (!ghtoken) {
+  throw 'GITHUB_TOKEN is not set and "github_token" input is empty';
 }
+
+const version = tagToVersion(process.argv[2] || process.env.INPUT_VERSION);
+const versionTag = versionToTag(version);
+
+LOG(`Target version: ${version} (tag ${versionTag})`);
+
+const prevVersion = tagToVersion(process.argv[3] || process.env.INPUT_PREV_VERSION || (await getPreviousVersion(version)));
+const prevVersionTag = versionToTag(prevVersion);
+
+LOG(`Previous version: ${prevVersion} (tag ${prevVersionTag})`);
 
 // Get all changelog items from Grafana OSS
 const oss = await getChangeLogItems('grafana', 'grafana', prevVersion, version);
@@ -251,13 +259,10 @@ const changelog = [...oss, ...entr]
       return changelog;
     },
     {
-      version,
       breaking: [],
       plugins: [],
       bugfixes: [],
       features: [],
-      // looks like JS doesn't have a nicer way to format date as YYYY-MM-DD
-      releaseDate: new Date().toISOString().split('T')[0],
     }
   );
 
@@ -287,9 +292,7 @@ ${items
   `;
 
   // Render all present sections for the given changelog
-  return `# ${changelog.version} (${changelog.releaseDate})
-
-${section('Breaking changes', changelog.breaking)}
+  return `${section('Breaking changes', changelog.breaking)}
 ${section('Bug fixes', changelog.bugfixes)}
 ${section('Plugin development fixes & changes', changelog.plugins)}
 ${section('Features and enhancements', changelog.features)}

@@ -30,7 +30,7 @@ jobs:
         id: changelog
         uses: ./.github/workflows/actions/changelog
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          github_token: ${{ steps.generate_token.outputs.token }}
           version: ${{ inputs.version }}
           prev_version: ${{ inputs.prev_version }}
           output_file: _changelog.md
