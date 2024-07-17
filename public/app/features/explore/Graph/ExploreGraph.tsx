@@ -1,7 +1,6 @@
 import { identity } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
-import { usePrevious } from 'react-use';
 
 import {
   AbsoluteTimeRange,
@@ -9,7 +8,6 @@ import {
   createFieldConfigRegistry,
   DashboardCursorSync,
   DataFrame,
-  dateTime,
   EventBus,
   FieldColorModeId,
   FieldConfigSource,
@@ -17,6 +15,7 @@ import {
   LoadingState,
   SplitOpen,
   ThresholdsConfig,
+  TimeRange,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
@@ -44,7 +43,7 @@ interface Props {
   data: DataFrame[];
   height: number;
   width: number;
-  absoluteRange: AbsoluteTimeRange;
+  timeRange: TimeRange;
   timeZone: TimeZone;
   loadingState: LoadingState;
   annotations?: DataFrame[];
@@ -67,7 +66,7 @@ export function ExploreGraph({
   height,
   width,
   timeZone,
-  absoluteRange,
+  timeRange,
   onChangeTime,
   loadingState,
   annotations,
@@ -84,19 +83,6 @@ export function ExploreGraph({
   toggleLegendRef,
 }: Props) {
   const theme = useTheme2();
-  const previousTimeRange = usePrevious(absoluteRange);
-  const baseTimeRange = loadingState === LoadingState.Loading && previousTimeRange ? previousTimeRange : absoluteRange;
-  const timeRange = useMemo(
-    () => ({
-      from: dateTime(baseTimeRange.from),
-      to: dateTime(baseTimeRange.to),
-      raw: {
-        from: dateTime(baseTimeRange.from),
-        to: dateTime(baseTimeRange.to),
-      },
-    }),
-    [baseTimeRange.from, baseTimeRange.to]
-  );
 
   const fieldConfigRegistry = useMemo(
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
