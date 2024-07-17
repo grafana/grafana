@@ -224,7 +224,6 @@ func (r *rowsWrapper) Next() (*dashboardRow, error) {
 			if !r.canReadDashboard(scopes...) {
 				continue
 			}
-			d.token.bytes = r.total // size before next!
 			r.total += int64(d.Bytes)
 		}
 
