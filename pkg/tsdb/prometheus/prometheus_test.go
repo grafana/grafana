@@ -28,7 +28,7 @@ func TestExtendClientOpts(t *testing.T) {
 		}
 		ctx := backend.WithGrafanaConfig(context.Background(), cfg)
 		opts := &sdkhttpclient.Options{}
-		err := extendClientOpts(ctx, settings, opts)
+		err := extendClientOpts(ctx, settings, opts, backend.Logger)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(opts.Middlewares))
 	})
@@ -47,7 +47,7 @@ func TestExtendClientOpts(t *testing.T) {
 				SecretKey: "secretkey",
 			},
 		}
-		err := extendClientOpts(context.Background(), settings, opts)
+		err := extendClientOpts(context.Background(), settings, opts, backend.Logger)
 		require.NoError(t, err)
 		require.Equal(t, "aps", opts.SigV4.Service)
 	})

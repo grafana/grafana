@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,7 +61,7 @@ func getMockPromTestSDKProvider(f *fakeHTTPClientProvider) *sdkhttpclient.Provid
 	return sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{mid}})
 }
 
-func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error {
 	return nil
 }
 
@@ -103,7 +104,7 @@ func TestService(t *testing.T) {
 	t.Run("extendOptions function provided", func(t *testing.T) {
 		f := &fakeHTTPClientProvider{}
 		httpProvider := getMockPromTestSDKProvider(f)
-		service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+		service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error {
 			fmt.Println(ctx, settings, clientOpts)
 			require.NotNil(t, ctx)
 			require.NotNil(t, settings)
