@@ -180,6 +180,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
   reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset = '1h';
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

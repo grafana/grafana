@@ -20,7 +20,7 @@ import {
   URLRange,
   URLRangeValue,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistory';
@@ -36,7 +36,7 @@ import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
 
 export const DEFAULT_RANGE = {
-  from: 'now-1h',
+  from: `now-${config.exploreDefaultTimeOffset}`,
   to: 'now',
 };
 
