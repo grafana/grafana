@@ -29,6 +29,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
       position: isBodyScrolling ? 'unset' : 'absolute',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
+      ...theme.typography.body,
       ...(isBodyScrolling && {
         // react select tries prevent scrolling by setting overflow/padding-right on the body
         // Need type assertion here due to the use of !important
@@ -45,7 +46,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
           padding: 0,
         },
       }),
-      ...getVariantStyles(theme.typography.body),
     },
 
     'h1, .h1': getVariantStyles(theme.typography.h1),
