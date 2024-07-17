@@ -148,9 +148,6 @@ message CreateResponse {
 
   // The updated resource version
   int64 resource_version = 2;
-
-  // The resource JSON.  With managed annotations included
-  bytes value = 3;
 }
 
 message UpdateRequest {
@@ -170,9 +167,6 @@ message UpdateResponse {
 
   // The updated resource version
   int64 resource_version = 2;
-
-  // The resource JSON.  With managed annotations included
-  bytes value = 3;
 }
 
 message DeleteRequest {
