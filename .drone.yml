@@ -2856,24 +2856,24 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - "\n    echo=\n    if [[ -z ${DRY_RUN} ]];  then echo=\"echo\"; fi\n    docker
-    login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
-    images\n    $echo docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $echo
-    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $echo docker push grafana/grafana-image-tags:$${TAG}-armv7\n
-    \   $echo docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $echo
-    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $echo docker
+  - "\n    debug=\n    if [[ -n $${DRY_RUN} ]];  then debug=echo; fi\n    docker login
+    -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
+    images\n    $debug docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $debug docker push grafana/grafana-image-tags:$${TAG}-armv7\n
+    \   $debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $debug docker
     push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n    # Create the grafana
-    manifests\n    $echo docker manifest create grafana/grafana:${TAG}     grafana/grafana-image-tags:$${TAG}-amd64
-    \    grafana/grafana-image-tags:$${TAG}-arm64     grafana/grafana-image-tags:$${TAG}-armv7\n\n
-    \   $echo docker manifest create grafana/grafana:${TAG}-ubuntu     grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-    \    grafana/grafana-image-tags:$${TAG}-ubuntu-arm64     grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
-    \   # Push the grafana manifests\n    $echo docker manifest push grafana/grafana:$${TAG}\n
-    \   $echo docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
-    is set, then also create & push latest\n    \"if [[ -z ${LATEST} ]]; then \" +\n
-    \       $echo docker manifest create grafana/grafana:$${TAG}         grafana/grafana-image-tags:$${TAG}-amd64
-    \        grafana/grafana-image-tags:$${TAG}-arm64         grafana/grafana-image-tags:$${TAG}-armv7\n
-    \       $echo docker manifest create grafana/grafana:$${TAG}-ubuntu         grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-    \        grafana/grafana-image-tags:$${TAG}-ubuntu-arm64         grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n
+    manifests\n    $debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64
+    \      grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7\n\n
+    \   $debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
+    \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then  +\n
+    \       $debug docker manifest create grafana/grafana:$${TAG}           grafana/grafana-image-tags:$${TAG}-amd64
+    \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
+    \       $debug docker manifest create grafana/grafana:$${TAG}-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n
     \   fi\n    "
   depends_on:
   - fetch-images
@@ -2972,24 +2972,24 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - "\n    echo=\n    if [[ -z ${DRY_RUN} ]];  then echo=\"echo\"; fi\n    docker
-    login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
-    images\n    $echo docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $echo
-    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $echo docker push grafana/grafana-image-tags:$${TAG}-armv7\n
-    \   $echo docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $echo
-    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $echo docker
+  - "\n    debug=\n    if [[ -n $${DRY_RUN} ]];  then debug=echo; fi\n    docker login
+    -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
+    images\n    $debug docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $debug docker push grafana/grafana-image-tags:$${TAG}-armv7\n
+    \   $debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $debug docker
     push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n    # Create the grafana
-    manifests\n    $echo docker manifest create grafana/grafana:${TAG}     grafana/grafana-image-tags:$${TAG}-amd64
-    \    grafana/grafana-image-tags:$${TAG}-arm64     grafana/grafana-image-tags:$${TAG}-armv7\n\n
-    \   $echo docker manifest create grafana/grafana:${TAG}-ubuntu     grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-    \    grafana/grafana-image-tags:$${TAG}-ubuntu-arm64     grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
-    \   # Push the grafana manifests\n    $echo docker manifest push grafana/grafana:$${TAG}\n
-    \   $echo docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
-    is set, then also create & push latest\n    \"if [[ -z ${LATEST} ]]; then \" +\n
-    \       $echo docker manifest create grafana/grafana:$${TAG}         grafana/grafana-image-tags:$${TAG}-amd64
-    \        grafana/grafana-image-tags:$${TAG}-arm64         grafana/grafana-image-tags:$${TAG}-armv7\n
-    \       $echo docker manifest create grafana/grafana:$${TAG}-ubuntu         grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-    \        grafana/grafana-image-tags:$${TAG}-ubuntu-arm64         grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n
+    manifests\n    $debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64
+    \      grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7\n\n
+    \   $debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
+    \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then  +\n
+    \       $debug docker manifest create grafana/grafana:$${TAG}           grafana/grafana-image-tags:$${TAG}-amd64
+    \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
+    \       $debug docker manifest create grafana/grafana:$${TAG}-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n
     \   fi\n    "
   depends_on:
   - fetch-images
@@ -5512,6 +5512,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9ff4df607981003a9b20f83c7b0383159d3d401c1891f459a4eb974edea47c64
+hmac: 557821e19d665e2e7e13ea04fb48141579d9225b84e67590404d0b68d31f1e11
 
 ...
