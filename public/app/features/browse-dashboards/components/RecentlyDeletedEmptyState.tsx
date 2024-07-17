@@ -1,5 +1,5 @@
 import { EmptyState } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { SearchState } from 'app/features/search/types';
 
 interface RecentlyDeletedEmptyStateProps {
@@ -13,13 +13,15 @@ export const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyS
       message={
         userIsSearching
           ? t('recently-deleted.page.no-search-result', 'No results found for your query')
-          : t(
-              'recently-deleted.page.no-deleted-dashboards',
-              "You haven't deleted any dashboards recently. When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization administrator can restore recently-deleted dashboards."
-            )
+          : t('recently-deleted.page.no-deleted-dashboards', "You haven't deleted any dashboards recently.")
       }
       variant={userIsSearching ? 'not-found' : 'completed'}
       role="alert"
-    />
+    >
+      <Trans i18nKey={'recently-deleted.page.no-deleted-dashboards-text'}>
+        When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization
+        administrator can restore recently-deleted dashboards.
+      </Trans>
+    </EmptyState>
   );
 };
