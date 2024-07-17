@@ -399,7 +399,14 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		if query.ReceiverName != "" {
-			q, err = st.filterByReceiverName(query.ReceiverName, q)
+			q, err = st.filterByContentInNotificationSettings(query.ReceiverName, q)
+			if err != nil {
+				return err
+			}
+		}
+
+		if query.TimeIntervalName != "" {
+			q, err = st.filterByContentInNotificationSettings(query.TimeIntervalName, q)
 			if err != nil {
 				return err
 			}
@@ -428,6 +435,13 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			if query.ReceiverName != "" { // remove false-positive hits from the result
 				if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
 					return settings.Receiver == query.ReceiverName
+				}) {
+					continue
+				}
+			}
+			if query.TimeIntervalName != "" {
+				if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
+					return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName)
 				}) {
 					continue
 				}
@@ -720,13 +734,24 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	var rules []ngmodels.AlertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)
+		hasFilter := false
 		if q.ReceiverName != "" {
 			var err error
-			query, err = st.filterByReceiverName(q.ReceiverName, query)
+			query, err = st.filterByContentInNotificationSettings(q.ReceiverName, query)
 			if err != nil {
 				return err
 			}
-		} else {
+			hasFilter = true
+		}
+		if q.TimeIntervalName != "" {
+			var err error
+			query, err = st.filterByContentInNotificationSettings(q.TimeIntervalName, query)
+			if err != nil {
+				return err
+			}
+			hasFilter = true
+		}
+		if !hasFilter {
 			query = query.And("notification_settings IS NOT NULL AND notification_settings <> 'null'")
 		}
 		return query.Find(&rules)
@@ -736,16 +761,15 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	}
 	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
 	for _, rule := range rules {
-		var ns []ngmodels.NotificationSettings
-		if q.ReceiverName != "" { // if filter by receiver name is specified, perform fine filtering on client to avoid false-positives
-			for _, setting := range rule.NotificationSettings {
-				if q.ReceiverName == setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
-					ns = rule.NotificationSettings
-					break
-				}
+		ns := make([]ngmodels.NotificationSettings, 0, len(rule.NotificationSettings))
+		for _, setting := range rule.NotificationSettings {
+			if q.ReceiverName != "" && q.ReceiverName != setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
+				continue
 			}
-		} else {
-			ns = rule.NotificationSettings
+			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) {
+				continue
+			}
+			ns = append(ns, setting)
 		}
 		if len(ns) > 0 {
 			key := ngmodels.AlertRuleKey{
@@ -758,14 +782,14 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	return result, nil
 }
 
-func (st DBstore) filterByReceiverName(receiver string, sess *xorm.Session) (*xorm.Session, error) {
-	if receiver == "" {
+func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm.Session) (*xorm.Session, error) {
+	if value == "" {
 		return sess, nil
 	}
 	// marshall string according to JSON rules so we follow escaping rules.
-	b, err := json.Marshal(receiver)
+	b, err := json.Marshal(value)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshall receiver name query: %w", err)
+		return nil, fmt.Errorf("failed to marshall string for notification settings content filter: %w", err)
 	}
 	var search = string(b)
 	if st.SQLStore.GetDialect().DriverName() != migrator.SQLite {

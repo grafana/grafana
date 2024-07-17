@@ -487,7 +487,6 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		SessionUID:     sessionUid,
 		Status:         cloudmigration.SnapshotStatusCreating,
 		EncryptionKey:  initResp.EncryptionKey,
-		UploadURL:      initResp.UploadURL,
 		GMSSnapshotUID: initResp.SnapshotID,
 		LocalDir:       filepath.Join(s.cfg.CloudMigration.SnapshotFolder, "grafana", "snapshots", initResp.SnapshotID),
 	}
@@ -601,11 +600,16 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 		return fmt.Errorf("fetching snapshot with uid %s: %w", snapshotUid, err)
 	}
 
-	s.log.Info("Uploading snapshot in local directory", "gmsSnapshotUID", snapshot.GMSSnapshotUID, "localDir", snapshot.LocalDir, "uploadURL", snapshot.UploadURL)
+	uploadUrl, err := s.gmsClient.CreatePresignedUploadUrl(ctx, *session, *snapshot)
+	if err != nil {
+		return fmt.Errorf("creating presigned upload url for snapshot %s: %w", snapshotUid, err)
+	}
+
+	s.log.Info("Uploading snapshot in local directory", "gmsSnapshotUID", snapshot.GMSSnapshotUID, "localDir", snapshot.LocalDir, "uploadURL", uploadUrl)
 
 	// start uploading the snapshot asynchronously while we return a success response to the client
 	go func() {
-		if err := s.uploadSnapshot(context.Background(), session, snapshot); err != nil {
+		if err := s.uploadSnapshot(context.Background(), session, snapshot, uploadUrl); err != nil {
 			s.log.Error("uploading snapshot", "err", err)
 		}
 	}()
