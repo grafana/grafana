@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
-import React, { ChangeEvent, PureComponent } from 'react';
+import { ChangeEvent, PureComponent } from 'react';
+import * as React from 'react';
 
 import {
   GrafanaTheme2,

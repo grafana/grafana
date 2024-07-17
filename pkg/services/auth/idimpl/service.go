@@ -11,11 +11,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -96,6 +96,8 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
+			claims.Rest.Username = id.GetLogin()
+			claims.Rest.UID = id.GetUID().String()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)

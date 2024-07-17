@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Select, Button, Field } from '@grafana/ui';

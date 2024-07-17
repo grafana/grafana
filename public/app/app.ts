@@ -9,7 +9,7 @@ import 'vendor/bootstrap/bootstrap';
 import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-import React from 'react';
+import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -38,11 +38,13 @@ import {
   setAppEvents,
   setReturnToPreviousHook,
   setPluginExtensionsHook,
+  setPluginComponentHook,
+  setCurrentUser,
+  setChromeHeaderHeightHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
-import { getScrollbarWidth } from '@grafana/ui';
 import config, { updateConfig } from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -54,7 +56,7 @@ import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
-import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
+import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
@@ -87,6 +89,8 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
 import { createPluginExtensionsHook } from './features/plugins/extensions/usePluginExtensions';
 import { createExtensionLinkConfig } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
@@ -139,10 +143,6 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      if (!config.featureToggles.betterPageScrolling) {
-        addClassIfNoOverlayScrollbar();
-      }
-
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
@@ -152,6 +152,7 @@ export class GrafanaApp {
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
+      setCurrentUser(contextSrv.user);
 
       initAuthConfig();
 
@@ -291,7 +292,8 @@ export class GrafanaApp {
       }
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
-      setPluginExtensionsHook(createPluginExtensionsHook(extensionsRegistry));
+      setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
+      setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -320,10 +322,11 @@ export class GrafanaApp {
       };
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
+      setChromeHeaderHeightHook(useChromeHeaderHeight);
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
-        React.createElement(AppWrapper, {
+        createElement(AppWrapper, {
           app: this,
         })
       );
@@ -426,12 +429,6 @@ function initEchoSrv() {
         endpointUrl: config.applicationInsightsEndpointUrl,
       })
     );
-  }
-}
-
-function addClassIfNoOverlayScrollbar() {
-  if (getScrollbarWidth() > 0) {
-    document.body.classList.add('no-overlay-scrollbar');
   }
 }
 

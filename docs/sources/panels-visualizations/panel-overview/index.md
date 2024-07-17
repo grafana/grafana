@@ -146,7 +146,7 @@ To access the panel editor, hover over the top-right corner of any panel. Click 
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/ui-extensions/) to the panel menu.
+- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
 - **More**: Access other panel actions.
   - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](ref:share) instead.
   - **Copy**: Copy the panel to the clipboard.
@@ -175,9 +175,12 @@ To add a panel in a new dashboard click **+ Add visualization** in the middle of
 
 ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down:
+To add a panel to an existing dashboard, follow these steps:
 
-![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click the **Add** drop-down and select **Visualization**:
+
+   ![Add dropdown](/media/docs/grafana/panels-visualizations/screenshot-add-dropdown-11.2.png)
 
 ## Panel configuration
 

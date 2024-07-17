@@ -1,14 +1,12 @@
 import { Action, KBarProvider } from 'kbar';
-import React, { ComponentType } from 'react';
-import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Redirect, Switch, RouteComponentProps, MemoryRouter } from 'react-router-dom';
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
-import { DataQuery, getNextRefId } from '@grafana/data';
+import { DataQuery } from '@grafana/data';
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer } from '@grafana/ui';
-import { IconButton } from '@grafana/ui/';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack, IconButton } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { dispatch, getState, store } from 'app/store/store';
 
@@ -51,7 +49,7 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
+export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   constructor(props: AppWrapperProps) {
     super(props);
     this.state = {};
@@ -95,28 +93,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     dispatch(changeQueries({ exploreId, queries: newQueries }));
   };
 
-  onDragEnd = (result: DropResult) => {
-    // TODO: This is a temporary solution to add a query to the explore pane
-    // Currently DragDropContext doesn't have ability to send a payload with the drop event
-    // For now, regardless of what is sent from query library app, we always add a flame_graph
-    if (result.source.droppableId === 'query-history-app') {
-      const payload = {
-        datasource: {
-          type: 'grafana-testdata-datasource',
-          uid: 'PD8C576611E62080A',
-        },
-        scenarioId: 'flame_graph',
-      };
-
-      const exploreId = Object.keys(getState().explore.panes)[0];
-      const queries = getState().explore.panes[exploreId]?.queries;
-
-      if (queries) {
-        this.onChangeQueries([...queries, { ...payload, refId: getNextRefId(queries) }]);
-      }
-    }
-  };
-
   render() {
     const { app } = this.props;
     const { ready } = this.state;
@@ -131,24 +107,22 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     };
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
-        <Provider store={store}>
-          <ErrorBoundaryAlert style="page">
-            <GrafanaContext.Provider value={app.context}>
-              <ThemeProvider value={config.theme2}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <div className="grafana-app">
-                    <WindowSplitWrapper routes={ready && this.renderRoutes()} />
-                  </div>
-                </KBarProvider>
-              </ThemeProvider>
-            </GrafanaContext.Provider>
-          </ErrorBoundaryAlert>
-        </Provider>
-      </DragDropContext>
+      <Provider store={store}>
+        <ErrorBoundaryAlert style="page">
+          <GrafanaContext.Provider value={app.context}>
+            <ThemeProvider value={config.theme2}>
+              <KBarProvider
+                actions={[]}
+                options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+              >
+                <div className="grafana-app">
+                  <WindowSplitWrapper routes={ready && this.renderRoutes()} />
+                </div>
+              </KBarProvider>
+            </ThemeProvider>
+          </GrafanaContext.Provider>
+        </ErrorBoundaryAlert>
+      </Provider>
     );
   }
 }
@@ -172,12 +146,14 @@ function WindowSplitWrapper(props: { routes: React.ReactNode }) {
           <ModalsContextProvider>
             <GlobalStyles />
             <AppChrome>
-              {pageBanners.map((Banner, index) => (
-                <Banner key={index.toString()} />
-              ))}
               <AngularRoot />
               <AppNotificationList />
-              {props.routes}
+              <Stack gap={0} grow={1} direction="column">
+                {pageBanners.map((Banner, index) => (
+                  <Banner key={index.toString()} />
+                ))}
+                {props.routes}
+              </Stack>
               {bodyRenderHooks.map((Hook, index) => (
                 <Hook key={index.toString()} />
               ))}

@@ -406,6 +406,99 @@ func TestProvisioningApi(t *testing.T) {
 		})
 	})
 
+	t.Run("recording rules", func(t *testing.T) {
+		t.Run("are enabled", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
+
+			t.Run("POST returns 201", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 201, response.Status())
+			})
+
+			t.Run("PUT returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 200, response.Status())
+			})
+		})
+
+		t.Run("are not enabled", func(t *testing.T) {
+			t.Run("POST returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
+
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
+		})
+	})
+
 	t.Run("alert rule groups", func(t *testing.T) {
 		t.Run("are present", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -1380,9 +1473,26 @@ func TestProvisioningApi(t *testing.T) {
 }
 
 func TestProvisioningApiContactPointExport(t *testing.T) {
+	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
+		env := createTestEnv(t, testConfig)
+		env.ac = &recordingAccessControlFake{
+			Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+				if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingNotificationsRead) {
+					return true, nil
+				}
+				if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversList) {
+					return true, nil
+				}
+				return false, nil
+			},
+		}
+		return env
+	}
+
 	t.Run("contact point export", func(t *testing.T) {
 		t.Run("are present, GET returns 200", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			response := sut.RouteGetContactPointsExport(&rc)
@@ -1391,7 +1501,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Header.Add("Accept", "application/yaml")
@@ -1403,7 +1514,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("accept header contains json, GET returns json", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Header.Add("Accept", "application/json")
@@ -1415,7 +1527,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
@@ -1427,7 +1540,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Form.Set("download", "true")
@@ -1439,7 +1553,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Form.Set("download", "false")
@@ -1451,7 +1566,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			response := sut.RouteGetContactPointsExport(&rc)
@@ -1644,6 +1760,7 @@ type testEnvironment struct {
 	ac               *recordingAccessControlFake
 	user             *user.SignedInUser
 	rulesAuthz       *fakes.FakeRuleService
+	features         featuremgmt.FeatureToggles
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1668,7 +1785,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	replDB, cfg := db.InitTestReplDBWithCfg(t)
+	sqlStore := replDB.DB()
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -1692,7 +1810,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := database.ProvideDashboardStore(replDB, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -1738,6 +1856,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 
 	ruleAuthz := &fakes.FakeRuleService{}
 
+	features := featuremgmt.WithFeatures()
+
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
@@ -1751,6 +1871,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		ac:               ac,
 		user:             user,
 		rulesAuthz:       ruleAuthz,
+		features:         features,
 	}
 }
 
@@ -1770,9 +1891,10 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		policies:            newFakeNotificationPolicyService(),
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
+		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
 		folderSvc:           env.folderService,
+		featureManager:      env.features,
 	}
 }
 
@@ -1969,6 +2091,32 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 			GroupInterval:     util.Pointer(model.Duration(5 * time.Second)),
 			RepeatInterval:    util.Pointer(model.Duration(5 * time.Minute)),
 			MuteTimeIntervals: []string{"test-mute"},
+		},
+	}
+}
+
+func createTestRecordingRule(title string, orgID int64) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
+		UID:       title,
+		OrgID:     orgID,
+		Title:     title,
+		Condition: "A",
+		Data: []definitions.AlertQuery{
+			{
+				RefID: "A",
+				Model: json.RawMessage(testModel),
+				RelativeTimeRange: definitions.RelativeTimeRange{
+					From: definitions.Duration(60),
+					To:   definitions.Duration(0),
+				},
+			},
+		},
+		RuleGroup: "my-cool-group",
+		FolderUID: "folder-uid",
+		For:       model.Duration(60),
+		Record: &definitions.Record{
+			Metric: "test_record",
+			From:   "A",
 		},
 	}
 }

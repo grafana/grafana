@@ -15,9 +15,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -30,7 +32,7 @@ func NewScopeAPIBuilder() *ScopeAPIBuilder {
 	return &ScopeAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ScopeAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *ScopeAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -45,11 +47,6 @@ func (b *ScopeAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *ScopeAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return scope.SchemeGroupVersion
-}
-
-func (b *ScopeAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -120,7 +117,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode, // dual write desired mode (not relevant)
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
 

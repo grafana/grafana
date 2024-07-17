@@ -196,6 +196,9 @@ This transformation has the following options:
   - **Numeric** - attempts to make the values numbers
   - **String** - will make the values strings
   - **Time** - attempts to parse the values as time
+    - The input will be parsed according to the [Moment.js parsing format](https://momentjs.com/docs/#/parsing/)
+    - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
+      You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
@@ -634,7 +637,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     },
   },
   groupToNestedTable: {
-    name: 'Group to nested table',
+    name: 'Group to nested tables',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.

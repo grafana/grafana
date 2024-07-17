@@ -1,12 +1,38 @@
 import { startCase, uniq } from 'lodash';
 
-import { AdHocVariableFilter, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, ScopedVars, SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
 
+export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: ScopedVars) => {
+  const interpolatedFilters = filters.map((filter) => {
+    const updatedFilter = {
+      ...filter,
+      tag: getTemplateSrv().replace(filter.tag ?? '', scopedVars ?? {}),
+    };
+
+    if (filter.value) {
+      updatedFilter.value =
+        typeof filter.value === 'string'
+          ? getTemplateSrv().replace(filter.value ?? '', scopedVars ?? {}, VariableFormatID.Pipe)
+          : filter.value.map((v) => getTemplateSrv().replace(v ?? '', scopedVars ?? {}, VariableFormatID.Pipe));
+    }
+
+    return updatedFilter;
+  });
+
+  return interpolatedFilters;
+};
+
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
+  if (!filters) {
+    return '';
+  }
+
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
     .map((f) => `${scopeHelper(f)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)

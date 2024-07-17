@@ -148,6 +148,8 @@ The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.htm
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
 
+You can use the `org_mapping` configuration option to assign the user to multiple organizations and specify their role based on their GitLab group membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.
+
 If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 

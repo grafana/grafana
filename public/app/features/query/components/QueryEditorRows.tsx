@@ -1,14 +1,14 @@
-import React, { PureComponent, ReactNode } from 'react';
-import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, DragStart, Droppable, DropResult } from '@hello-pangea/dnd';
+import { PureComponent, ReactNode } from 'react';
 
 import {
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
-  DataSourceRef,
   EventBusExtended,
   HistoryItem,
   PanelData,
+  getDataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
@@ -65,10 +65,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           return item;
         }
 
-        const dataSourceRef: DataSourceRef = {
-          type: dataSource.type,
-          uid: dataSource.uid,
-        };
+        const dataSourceRef = getDataSourceRef(dataSource);
 
         if (item.datasource) {
           const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
@@ -149,46 +146,48 @@ export class QueryEditorRows extends PureComponent<Props> {
     } = this.props;
 
     return (
-      <Droppable droppableId="transformations-list" direction="vertical">
-        {(provided) => {
-          return (
-            <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
-              {queries.map((query, index) => {
-                const dataSourceSettings = getDataSourceSettings(query, dsSettings);
-                const onChangeDataSourceSettings = dsSettings.meta.mixed
-                  ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
-                  : undefined;
+      <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {(provided) => {
+            return (
+              <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
+                {queries.map((query, index) => {
+                  const dataSourceSettings = getDataSourceSettings(query, dsSettings);
+                  const onChangeDataSourceSettings = dsSettings.meta.mixed
+                    ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
+                    : undefined;
 
-                const queryEditorRow = (
-                  <QueryEditorRow
-                    id={query.refId}
-                    index={index}
-                    key={query.refId}
-                    data={data}
-                    query={query}
-                    dataSource={dataSourceSettings}
-                    onChangeDataSource={onChangeDataSourceSettings}
-                    onChange={(query) => this.onChangeQuery(query, index)}
-                    onRemoveQuery={this.onRemoveQuery}
-                    onAddQuery={onAddQuery}
-                    onRunQuery={onRunQueries}
-                    onQueryCopied={onQueryCopied}
-                    onQueryRemoved={onQueryRemoved}
-                    onQueryToggled={onQueryToggled}
-                    queries={queries}
-                    app={app}
-                    history={history}
-                    eventBus={eventBus}
-                  />
-                );
+                  const queryEditorRow = (
+                    <QueryEditorRow
+                      id={query.refId}
+                      index={index}
+                      key={query.refId}
+                      data={data}
+                      query={query}
+                      dataSource={dataSourceSettings}
+                      onChangeDataSource={onChangeDataSourceSettings}
+                      onChange={(query) => this.onChangeQuery(query, index)}
+                      onRemoveQuery={this.onRemoveQuery}
+                      onAddQuery={onAddQuery}
+                      onRunQuery={onRunQueries}
+                      onQueryCopied={onQueryCopied}
+                      onQueryRemoved={onQueryRemoved}
+                      onQueryToggled={onQueryToggled}
+                      queries={queries}
+                      app={app}
+                      history={history}
+                      eventBus={eventBus}
+                    />
+                  );
 
-                return queryRowWrapper ? queryRowWrapper(queryEditorRow, query.refId) : queryEditorRow;
-              })}
-              {provided.placeholder}
-            </div>
-          );
-        }}
-      </Droppable>
+                  return queryRowWrapper ? queryRowWrapper(queryEditorRow, query.refId) : queryEditorRow;
+                })}
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
     );
   }
 }

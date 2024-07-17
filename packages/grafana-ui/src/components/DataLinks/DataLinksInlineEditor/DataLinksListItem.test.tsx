@@ -1,5 +1,5 @@
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { DataLinksListItem, DataLinksListItemProps } from './DataLinksListItem';
 
@@ -18,10 +18,23 @@ function setupTestContext(options: Partial<DataLinksListItemProps>) {
     onChange: jest.fn(),
     onEdit: jest.fn(),
     onRemove: jest.fn(),
+    itemKey: 'itemKey',
   };
 
+  const onDragEnd = jest.fn();
+
   const props = { ...defaults, ...options };
-  const { rerender } = render(<DataLinksListItem {...props} />);
+  const { rerender } = render(
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Droppable droppableId="sortable-links" direction="vertical">
+        {(provided) => (
+          <div ref={provided.innerRef} {...provided.droppableProps}>
+            <DataLinksListItem {...props} />
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
+  );
 
   return { rerender, props };
 }

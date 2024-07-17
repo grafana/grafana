@@ -11,14 +11,16 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -49,6 +51,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
+	reg prometheus.Registerer,
 	sql db.DB,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -73,19 +76,12 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return v0alpha1.DashboardResourceInfo.GroupVersion()
 }
 
-func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.Dashboard{},
 		&v0alpha1.DashboardList{},
-		&v0alpha1.DashboardAccessInfo{},
+		&v0alpha1.DashboardWithAccessInfo{},
 		&v0alpha1.DashboardVersionList{},
-		&v0alpha1.DashboardSummary{},
-		&v0alpha1.DashboardSummaryList{},
 		&v0alpha1.VersionsQueryOptions{},
 	)
 }
@@ -114,7 +110,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	desiredMode grafanarest.DualWriterMode,
+	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -132,7 +128,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
-	storage[resourceInfo.StoragePath("access")] = &AccessREST{
+	storage[resourceInfo.StoragePath("dto")] = &DTOConnector{
 		builder: b,
 	}
 	storage[resourceInfo.StoragePath("versions")] = &VersionsREST{
@@ -140,20 +136,15 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// Dual writes if a RESTOptionsGetter is provided
-	if desiredMode != grafanarest.Mode0 && optsGetter != nil {
+	if optsGetter != nil && dualWriteBuilder != nil {
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store)
-	}
-
-	// Summary
-	resourceInfo2 := v0alpha1.DashboardSummaryResourceInfo
-	storage[resourceInfo2.StoragePath()] = &summaryStorage{
-		resource:       resourceInfo2,
-		access:         b.access,
-		tableConverter: store.TableConvertor,
+		storage[resourceInfo.StoragePath()], err = dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
@@ -174,7 +165,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Hide the ability to list or watch across all tenants
 	delete(oas.Paths.Paths, root+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+v0alpha1.DashboardSummaryResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]

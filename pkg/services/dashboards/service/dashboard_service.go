@@ -7,16 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/client_golang/prometheus"
-
 	"golang.org/x/exp/slices"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -734,7 +732,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 		if item.Deleted != nil {
-			hit.RemainingTrashAtAge = util.RemainingDaysUntil((*item.Deleted).Add(daysInTrash))
+			deletedDate := (*item.Deleted).Add(daysInTrash)
+			hit.IsDeleted = true
+			hit.PermanentlyDeleteDate = &deletedDate
 		}
 	}
 	return hitList

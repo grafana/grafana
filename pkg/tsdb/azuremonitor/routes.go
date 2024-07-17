@@ -19,6 +19,7 @@ const (
 	azureResourceGraph = "Azure Resource Graph"
 	azureTraces        = "Azure Traces"
 	azurePortal        = "Azure Portal"
+	traceExemplar      = "traceql"
 )
 
 func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
@@ -82,6 +83,7 @@ func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcre
 		azureLogAnalytics:  logAnalyticsRoute,
 		azureResourceGraph: resourceManagerRoute,
 		azureTraces:        logAnalyticsRoute,
+		traceExemplar:      logAnalyticsRoute,
 		azurePortal:        portalRoute,
 	}
 

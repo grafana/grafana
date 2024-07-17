@@ -84,7 +84,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       iconClassName: 'share-alt',
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('share');
-        dashboard.showModal(new ShareModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
+        dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
       },
       shortcut: 'p s',
     });
@@ -123,6 +123,14 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
             );
           },
         });
+
+        moreSubMenu.push({
+          text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('replaceLibraryPanel');
+            dashboard.onShowAddLibraryPanelDrawer(parent.getRef());
+          },
+        });
       } else {
         moreSubMenu.push({
           text: t('panel.header-menu.create-library-panel', `Create library panel`),
@@ -131,7 +139,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
             dashboard.showModal(
               new ShareModal({
                 panelRef: panel.getRef(),
-                dashboardRef: dashboard.getRef(),
                 activeTab: shareDashboardType.libraryPanel,
               })
             );

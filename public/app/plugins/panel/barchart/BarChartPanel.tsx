@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { PanelProps, VizOrientation } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -92,12 +92,13 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
+  const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
 
   let { builder, prepData } = useMemo(
     () => {
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -105,6 +106,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       timeZone,
       props.data.structureRev,
 
+      totalSeries,
       seriesCount,
       xGroupsCount,
 

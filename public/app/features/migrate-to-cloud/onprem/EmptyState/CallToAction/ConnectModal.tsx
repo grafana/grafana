@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
-import React, { useId } from 'react';
+import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2, Alert } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { CreateMigrationApiArg } from '../../../api';
+import { CreateSessionApiArg } from '../../../api';
 
 interface Props {
   isOpen: boolean;
   isLoading: boolean;
   isError: boolean;
   hideModal: () => void;
-  onConfirm: (connectStackData: CreateMigrationApiArg) => Promise<unknown>;
+  onConfirm: (connectStackData: CreateSessionApiArg) => Promise<unknown>;
 }
 
 interface FormData {
@@ -39,7 +39,7 @@ export const ConnectModal = ({ isOpen, isLoading, isError, hideModal, onConfirm 
 
   const onConfirmConnect: SubmitHandler<FormData> = (formData) => {
     onConfirm({
-      cloudMigrationRequest: {
+      cloudMigrationSessionRequestDto: {
         authToken: formData.token,
       },
     }).then((resp) => {

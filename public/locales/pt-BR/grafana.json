@@ -25,6 +25,14 @@
       "user": "Usuário"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "",
+      "show": {
+        "tooltip": ""
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -70,6 +78,7 @@
       "delete-button": "Excluir",
       "delete-modal-invalid-text": "Uma ou mais pastas contêm painéis de biblioteca, ou regras de alerta. Exclua-as primeiro para prosseguir.",
       "delete-modal-invalid-title": "Não é possível excluir pasta",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
       "delete-modal-title": "Excluir",
       "deleting": "Excluindo...",
@@ -136,6 +145,16 @@
     "no-results": {
       "clear": "Limpar busca e filtros",
       "text": ""
+    }
+  },
+  "central-alert-history": {
+    "error": "",
+    "filter": {
+      "button": {
+        "clear": ""
+      },
+      "label": "",
+      "placeholder": ""
     }
   },
   "clipboard-button": {
@@ -453,6 +472,16 @@
       "title": "Versões"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "",
+          "title": ""
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "",
@@ -496,6 +525,18 @@
       "query": "",
       "title": "",
       "visibility": ""
+    },
+    "logs": {
+      "maximum-pinned-logs": "",
+      "no-logs-found": "",
+      "scan-for-older-logs": "",
+      "stop-scan": ""
+    },
+    "query-library": {
+      "delete-query": "",
+      "delete-query-text": "",
+      "delete-query-title": "",
+      "query-deleted": ""
     },
     "rich-history": {
       "close-tooltip": "Fechar histórico de consultas",
@@ -1150,7 +1191,7 @@
     "public": {
       "title": "Painéis de controle públicos"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "",
       "title": ""
     },
@@ -1270,6 +1311,7 @@
       "new-alert-rule": "Nova regra de alerta",
       "query": "Consulta",
       "remove": "Remover",
+      "replace-library-panel": "",
       "share": "Compartilhar",
       "show-legend": "Mostrar legenda",
       "unlink-library-panel": "Desvincular painel de biblioteca",
@@ -1367,6 +1409,16 @@
       "revoke-public-URL-button-title": "Revogar URL público",
       "settings-title": "Configurações"
     },
+    "configuration": {
+      "display-annotations-label": "",
+      "enable-time-range-label": "",
+      "settings-label": "",
+      "success-pause": "",
+      "success-resume": "",
+      "success-update": "",
+      "success-update-old": "",
+      "time-range-tooltip": ""
+    },
     "create-page": {
       "generate-public-url-button": "Gerar URL público",
       "unsupported-features-desc": "Atualmente, não oferecemos suporte a variáveis de modelo ou fontes de dados frontend",
@@ -1378,15 +1430,32 @@
       "revoke-title": "Revogar URL público"
     },
     "email-sharing": {
+      "accept-button": "",
+      "alert-text": "",
+      "bill-ack": "",
+      "cancel-button": "",
       "input-invalid-email-text": "E-mail inválido",
       "input-required-email-text": "O e-mail é obrigatório",
       "invite-button": "Convidar",
       "invite-field-desc": "Convidar pessoas por e-mail",
       "invite-field-label": "Convidar",
+      "learn-more-button": "",
+      "recipient-email-placeholder": "",
+      "recipient-invalid-email-text": "",
+      "recipient-invitation-button": "",
+      "recipient-invitation-description": "",
+      "recipient-invitation-tooltip": "",
+      "recipient-list-description": "",
+      "recipient-list-title": "",
+      "recipient-required-email-text": "",
       "resend-button": "Reenviar",
       "resend-button-title": "Reenviar",
+      "resend-invite-label": "",
+      "revoke-access-label": "",
       "revoke-button": "Revogar",
-      "revoke-button-title": "Revogar"
+      "revoke-button-title": "Revogar",
+      "success-creation": "",
+      "success-share-type-change": ""
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Entre em contato com seu administrador para obter permissão para painéis de controle {{mode}} públicos",
@@ -1397,6 +1466,15 @@
       "unsupported-data-source-alert-title": "Fontes de dados não suportadas",
       "unsupported-template-variable-alert-desc": "Este painel de controle público pode não funcionar, pois ele usa variáveis de modelo",
       "unsupported-template-variable-alert-title": "As variáveis de modelo não são suportadas"
+    },
+    "public-sharing": {
+      "accept-button": "",
+      "alert-text": "",
+      "cancel-button": "",
+      "learn-more-button": "",
+      "public-ack": "",
+      "success-creation": "",
+      "success-share-type-change": ""
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Recolher configurações",
@@ -1416,6 +1494,29 @@
       "time-range-picker-disabled-text": "Seletor de intervalo de tempo = desativado",
       "time-range-picker-enabled-text": "Seletor de intervalo de tempo = ativado",
       "time-range-text": "Intervalo de tempo = "
+    },
+    "share": {
+      "success-delete": "",
+      "success-delete-old": ""
+    },
+    "share-configuration": {
+      "access-label": "",
+      "share-type-label": ""
+    },
+    "share-externally": {
+      "copy-link-button": "",
+      "email-share-type-option-description": "",
+      "email-share-type-option-label": "",
+      "pause-access-button": "",
+      "pause-access-tooltip": "",
+      "public-share-type-option-description": "",
+      "public-share-type-option-label": "",
+      "resume-access-button": "",
+      "revoke-access-button": "",
+      "revoke-access-description": ""
+    },
+    "sharing": {
+      "success-creation": ""
     }
   },
   "public-dashboard-list": {
@@ -1464,6 +1565,9 @@
       "role-label": "Função"
     }
   },
+  "query-library": {
+    "delete-query-button": ""
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Recolher linha de consulta",
@@ -1478,9 +1582,25 @@
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
   },
-  "recentlyDeleted": {
-    "filter": {
-      "placeholder": ""
+  "recently-deleted": {
+    "buttons": {
+      "delete": "",
+      "restore": ""
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "",
+      "delete-button": "",
+      "delete-loading": "",
+      "title": "",
+      "text_one": "",
+      "text_other": ""
+    },
+    "restore-modal": {
+      "restore-button": "",
+      "restore-loading": "",
+      "title": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "refresh-picker": {
@@ -1511,6 +1631,31 @@
     },
     "dismissable-button": "Fechar"
   },
+  "scopes": {
+    "filters": {
+      "apply": "",
+      "cancel": "",
+      "input": {
+        "placeholder": "",
+        "removeAll": ""
+      },
+      "title": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": "",
+      "toggle": {
+        "collapse": "",
+        "expand": ""
+      }
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "headline": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Incluir painéis",
@@ -1528,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Fonte de dados",
+      "deleted-less-than-1-min": "",
+      "deleted-remaining-header": "",
       "location-header": "Localização",
       "name-header": "Nome",
       "tags-header": "Tags",
@@ -1546,6 +1693,11 @@
       "message": "",
       "more-info": "",
       "title": ""
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": ""
     }
   },
   "share-modal": {
@@ -1669,6 +1821,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {
@@ -1703,6 +1870,8 @@
       "apply-button": "Aplicar intervalo de tempo",
       "cancel-button": "Cancelar",
       "close": "Fechar calendário",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Selecionar um intervalo de tempo"
     },
     "content": {

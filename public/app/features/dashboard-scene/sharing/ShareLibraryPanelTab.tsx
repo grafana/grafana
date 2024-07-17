@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { t } from 'app/core/internationalization';
@@ -9,6 +7,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -26,16 +25,17 @@ export class ShareLibraryPanelTab extends SceneObjectBase<ShareLibraryPanelTabSt
 }
 
 function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibraryPanelTab>) {
-  const { panelRef, dashboardRef, modalRef } = model.useState();
+  const { panelRef, modalRef } = model.useState();
 
   if (!panelRef) {
     return null;
   }
 
-  const parent = panelRef.resolve().parent;
+  const panel = panelRef.resolve();
+  const parent = panel.parent;
 
   if (parent instanceof DashboardGridItem) {
-    const dashboardScene = dashboardRef.resolve();
+    const dashboardScene = getDashboardSceneFor(model);
     const panelJson = gridItemToPanel(parent);
     const panelModel = new PanelModel(panelJson);
 
@@ -50,7 +50,7 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
         onDismiss={() => {
           modalRef?.resolve().onDismiss();
         }}
-        onCreateLibraryPanel={(libPanel: LibraryPanel) => dashboardScene.createLibraryPanel(parent, libPanel)}
+        onCreateLibraryPanel={(libPanel: LibraryPanel) => dashboardScene.createLibraryPanel(panel, libPanel)}
       />
     );
   }

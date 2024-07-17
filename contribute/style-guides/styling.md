@@ -13,7 +13,6 @@ To access the theme in your styles, use the `useStyles` hook. It provides basic 
 > Please remember to put `getStyles` function at the end of the file!
 
 ```tsx
-import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -40,7 +39,6 @@ Let's say you need to style a component that has a different background dependin
 
 ```tsx
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';

@@ -42,9 +42,20 @@ export function isAlertStateWithReason(
   return state !== null && state !== undefined && !propAlertingRuleStateValues.includes(state);
 }
 
+export function mapStateWithReasonToReason(state: GrafanaAlertStateWithReason): string {
+  const match = state.match(/\((.*?)\)/);
+  return match ? match[1] : '';
+}
+
+type StateWithReasonToBaseStateReturnType<T> = T extends GrafanaAlertStateWithReason
+  ? GrafanaAlertState
+  : T extends PromAlertingRuleState
+    ? PromAlertingRuleState
+    : never;
+
 export function mapStateWithReasonToBaseState(
   state: GrafanaAlertStateWithReason | PromAlertingRuleState
-): GrafanaAlertState | PromAlertingRuleState {
+): StateWithReasonToBaseStateReturnType<GrafanaAlertStateWithReason | PromAlertingRuleState> {
   if (isAlertStateWithReason(state)) {
     const fields = state.split(' ');
     return fields[0] as GrafanaAlertState;
@@ -225,23 +236,19 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   provenance?: string;
 }
 
-export interface RulerGrafanaRuleDTO {
-  grafana_alert: GrafanaRuleDefinition;
+export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
+  grafana_alert: T;
   for: string;
   annotations: Annotations;
   labels: Labels;
 }
 
-export interface PostableRuleGrafanaRuleDTO {
-  grafana_alert: PostableGrafanaRuleDefinition;
-  for: string;
-  annotations: Annotations;
-  labels: Labels;
-}
+export type PostableRuleGrafanaRuleDTO = RulerGrafanaRuleDTO<PostableGrafanaRuleDefinition>;
 
-export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | RulerGrafanaRuleDTO;
+export type RulerCloudRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO;
 
-export type PostableRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | PostableRuleGrafanaRuleDTO;
+export type RulerRuleDTO = RulerCloudRuleDTO | RulerGrafanaRuleDTO;
+export type PostableRuleDTO = RulerCloudRuleDTO | PostableRuleGrafanaRuleDTO;
 
 export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
   name: string;

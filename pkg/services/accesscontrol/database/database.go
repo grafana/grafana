@@ -36,17 +36,17 @@ const (
 	WHERE br.role = ?`
 )
 
-func ProvideService(sql db.DB) *AccessControlStore {
+func ProvideService(sql db.ReplDB) *AccessControlStore {
 	return &AccessControlStore{sql}
 }
 
 type AccessControlStore struct {
-	sql db.DB
+	sql db.ReplDB
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	result := make([]accesscontrol.Permission, 0)
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	err := s.sql.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
 			// no permission to fetch
 			return nil
@@ -104,7 +104,7 @@ func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query acce
 	orgID := query.OrgID
 	rolePrefixes := query.RolePrefixes
 	result := make([]teamPermission, 0)
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	err := s.sql.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		if len(teams) == 0 {
 			// no permission to fetch
 			return nil
@@ -172,7 +172,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		}
 	}
 
-	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	if err := s.sql.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		roleNameFilterJoin := ""
 		if len(options.RolePrefixes) > 0 {
 			roleNameFilterJoin = "INNER JOIN role AS r ON up.role_id = r.id"
@@ -198,7 +198,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			params = append(params, userID)
 		}
 
-		grafanaAdmin := fmt.Sprintf(grafanaAdminAssignsSQL, s.sql.Quote("user"))
+		grafanaAdmin := fmt.Sprintf(grafanaAdminAssignsSQL, s.sql.ReadReplica().Quote("user"))
 		params = append(params, accesscontrol.RoleGrafanaAdmin)
 		if options.NamespacedID != "" {
 			grafanaAdmin += " AND sa.user_id = ?"
@@ -228,10 +228,24 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		if options.ActionPrefix != "" {
 			q += ` AND p.action LIKE ?`
 			params = append(params, options.ActionPrefix+"%")
+			if len(options.ActionSets) > 0 {
+				q += ` OR p.action IN ( ? ` + strings.Repeat(", ?", len(options.ActionSets)-1) + ")"
+				for _, a := range options.ActionSets {
+					params = append(params, a)
+				}
+			}
 		}
 		if options.Action != "" {
-			q += ` AND p.action = ?`
-			params = append(params, options.Action)
+			if len(options.ActionSets) == 0 {
+				q += ` AND p.action = ?`
+				params = append(params, options.Action)
+			} else {
+				actions := append(options.ActionSets, options.Action)
+				q += ` AND p.action IN ( ? ` + strings.Repeat(", ?", len(actions)-1) + ")"
+				for _, a := range actions {
+					params = append(params, a)
+				}
+			}
 		}
 		if options.Scope != "" {
 			// Search for scope and wildcard that include the scope
@@ -270,11 +284,11 @@ func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter 
 		IsAdmin bool   `xorm:"is_admin"`
 	}
 	dbRoles := make([]UserOrgRole, 0)
-	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	if err := s.sql.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		// Find roles
 		q := `
 		SELECT u.id, ou.role, u.is_admin
-		FROM ` + s.sql.GetDialect().Quote("user") + ` AS u
+		FROM ` + s.sql.ReadReplica().GetDialect().Quote("user") + ` AS u
 		LEFT JOIN org_user AS ou ON u.id = ou.user_id
 		WHERE (u.is_admin OR ou.org_id = ?)
 		`
@@ -304,7 +318,7 @@ func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter 
 }
 
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	err := s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		roleDeleteQuery := "DELETE FROM user_role WHERE user_id = ?"
 		roleDeleteParams := []any{roleDeleteQuery, userID}
 		if orgID != accesscontrol.GlobalOrgID {
@@ -369,7 +383,7 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 }
 
 func (s *AccessControlStore) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	err := s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		roleDeleteQuery := "DELETE FROM team_role WHERE team_id = ? AND org_id = ?"
 		roleDeleteParams := []any{roleDeleteQuery, teamID, orgID}
 

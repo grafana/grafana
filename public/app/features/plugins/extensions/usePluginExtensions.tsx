@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from '../../../types';
 import { getPluginExtensions } from './getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 
-export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExtensionsRegistry) {
+export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExtensionsRegistry) {
   const observableRegistry = extensionsRegistry.asObservable();
   const cache: {
     id: string;

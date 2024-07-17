@@ -2,7 +2,8 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode } from 'react';
+import * as React from 'react';
 
 // Utils & Services
 import {
@@ -20,6 +21,7 @@ import {
   PluginExtensionLink,
   QueryResultMetaNotice,
   TimeRange,
+  getDataSourceRef,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -372,7 +374,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onClickExample = (query: TQuery) => {
     if (query.datasource === undefined) {
-      query.datasource = { type: this.props.dataSource.type, uid: this.props.dataSource.uid };
+      query.datasource = getDataSourceRef(this.props.dataSource);
     }
 
     this.props.onChange({

@@ -1,0 +1,365 @@
+syntax = "proto3";
+package resource;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/resource";
+
+message ResourceKey {
+  // Namespace (tenant)
+  string namespace = 2;
+  // Resource Group
+  string group = 1;
+  // The resource type
+  string resource = 3;
+  // Resource identifier (unique within namespace+group+resource)
+  string name = 4;
+}
+
+message ResourceWrapper {
+  // The resource version
+  int64 resource_version = 1;
+
+  // Full kubernetes json bytes (although the resource version may not be accurate)
+  bytes value = 2;
+}
+
+// The history and trash commands need access to commit messages
+message ResourceMeta {
+  // The resource version
+  int64 resource_version = 1;
+
+  // Size of the full resource body
+  int32 size = 3;
+
+  // Hash for the resource
+  string hash = 4;
+
+  // The kubernetes metadata section (not the full resource)
+  // https://github.com/kubernetes/kubernetes/blob/v1.30.2/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L1496
+  bytes partial_object_meta = 6;
+}
+
+// Status structure is copied from:
+// https://github.com/kubernetes/apimachinery/blob/v0.30.1/pkg/apis/meta/v1/generated.proto#L979
+// However, this is only used for error handling, never for succesful results
+message ErrorResult {
+  // A human-readable description of the status of this operation.
+  // +optional
+  string message = 1;
+
+  // A machine-readable description of why this operation is in the
+  // "Failure" status. If this value is empty there
+  // is no information available. A Reason clarifies an HTTP status
+  // code but does not override it.
+  // +optional
+  string reason = 2;
+
+  // Extended data associated with the reason.  Each reason may define its
+  // own extended details. This field is optional and the data returned
+  // is not guaranteed to conform to any schema except that defined by
+  // the reason type.
+  // +optional
+  // +listType=atomic
+  ErrorDetails details = 3;
+
+  // Suggested HTTP return code for this status, 0 if not set.
+  // +optional
+  int32 code = 4;
+}
+
+// ErrorDetails is a set of additional properties that MAY be set by the
+// server to provide additional information about a response. The Reason
+// field of a Status object defines what attributes will be set. Clients
+// must ignore fields that do not match the defined type of each attribute,
+// and should assume that any attribute may be empty, invalid, or under
+// defined.
+message ErrorDetails {
+  // The name attribute of the resource associated with the status StatusReason
+  // (when there is a single name which can be described).
+  // +optional
+  string name = 1;
+
+  // The group attribute of the resource associated with the status StatusReason.
+  // +optional
+  string group = 2;
+
+  // The kind attribute of the resource associated with the status StatusReason.
+  // On some operations may differ from the requested resource Kind.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  // +optional
+  string kind = 3;
+
+  // UID of the resource.
+  // (when there is a single resource which can be described).
+  // More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids
+  // +optional
+  string uid = 6;
+
+  // The Causes array includes more details associated with the StatusReason
+  // failure. Not all StatusReasons may provide detailed causes.
+  // +optional
+  // +listType=atomic
+  repeated ErrorCause causes = 4;
+
+  // If specified, the time in seconds before the operation should be retried. Some errors may indicate
+  // the client must take an alternate action - for those errors this field may indicate how long to wait
+  // before taking the alternate action.
+  // +optional
+  int32 retryAfterSeconds = 5;
+}
+
+message ErrorCause {
+	// A machine-readable description of the cause of the error. If this value is
+	// empty there is no information available.
+	string reason = 1;
+	// A human-readable description of the cause of the error.  This field may be
+	// presented as-is to a reader.
+	// +optional
+	string message = 2;
+	// The field of the resource that has caused this error, as named by its JSON
+	// serialization. May include dot and postfix notation for nested attributes.
+	// Arrays are zero-indexed.  Fields may appear more than once in an array of
+	// causes due to fields having multiple errors.
+	// Optional.
+	//
+	// Examples:
+	//   "name" - the field "name" on the current resource
+	//   "items[0].name" - the field "name" on the first array entry in "items"
+	// +optional
+	string field = 3;
+}
+
+// ----------------------------------
+// CRUD Objects
+// ----------------------------------
+
+message CreateRequest {
+  // Requires group+resource to be configuired
+  // If name is not set, a unique name will be generated
+  // The resourceVersion should not be set
+  ResourceKey key = 1;
+  
+  // The resource JSON.  
+  bytes value = 2;
+}
+
+message CreateResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The updated resource version
+  int64 resource_version = 2;
+}
+
+message UpdateRequest {
+  // Full key must be set
+  ResourceKey key = 1;
+
+  // The current resource version
+  int64 resource_version = 2;
+
+  // The resource JSON.  
+  bytes value = 3;
+}
+
+message UpdateResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The updated resource version
+  int64 resource_version = 2;
+}
+
+message DeleteRequest {
+  ResourceKey key = 1;
+
+  // The current resource version
+  int64 resource_version = 2;
+
+  // Preconditions: make sure the uid matches the current saved value
+  // +optional
+  string uid = 3;
+}
+
+message DeleteResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The resource version for the deletion marker
+  int64 resource_version = 2;
+}
+
+message ReadRequest {
+  ResourceKey key = 1;
+
+  // Optionally pick an explicit resource version
+  int64 resource_version = 3;
+}
+
+message ReadResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The new resource version
+  int64 resource_version = 2;
+
+  // The properties
+  bytes value = 3;
+}
+
+// ----------------------------------
+// List Request/Response
+// ----------------------------------
+
+// The label filtering requirements:
+// https://github.com/kubernetes/kubernetes/blob/v1.30.1/staging/src/k8s.io/apimachinery/pkg/labels/selector.go#L141
+message Requirement {
+  string key = 1;
+  string operator = 2; // See https://github.com/kubernetes/kubernetes/blob/v1.30.1/staging/src/k8s.io/apimachinery/pkg/selection/operator.go#L21
+  repeated string values = 3; // typically one value, but depends on the operator
+}
+
+
+message ListOptions {
+  // Group+Namespace+Resource (not name)
+  ResourceKey key = 1;
+
+  // (best effort) Match label
+  // Allowed to send more results than actually match because the filter will be appled
+  // to the resutls agin in the client.  That time with the full field selector
+  repeated Requirement labels = 2;
+
+  // (best effort) fields matcher
+  // Allowed to send more results than actually match because the filter will be appled
+  // to the resutls agin in the client.  That time with the full field selector
+  repeated Requirement fields = 3;
+}
+
+enum ResourceVersionMatch {
+  NotOlderThan = 0;
+  Exact = 1;
+}
+
+message ListRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // The resource version
+  int64 resource_version = 2;
+  
+  // List options
+  ResourceVersionMatch version_match = 3;
+
+  // Maximum number of items to return
+  // NOTE responses will also be limited by the response payload size
+  int64 limit = 4;
+
+  // Filtering
+  ListOptions options = 5;
+}
+
+message ListResponse {
+  repeated ResourceWrapper items = 1;
+
+  // When more results exist, pass this in the next request
+  string next_page_token = 2;
+
+  // ResourceVersion of the list response
+  int64 resource_version = 3;
+
+  // remainingItemCount is the number of subsequent items in the list which are not included in this
+  // list response. If the list request contained label or field selectors, then the number of
+  // remaining items is unknown and the field will be left unset and omitted during serialization.
+  // If the list is complete (either because it is not chunking or because this is the last chunk),
+  // then there are no more remaining items and this field will be left unset and omitted during
+  // serialization.
+  //
+  // The intended use of the remainingItemCount is *estimating* the size of a collection. Clients
+  // should not rely on the remainingItemCount to be set or to be exact.
+  // +optional
+  int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
+}
+
+message WatchRequest {
+  // ResourceVersion of last changes. Empty will default to full history
+  int64 since = 1;
+
+  // Additional options
+  ListOptions options = 3;
+
+  // Return initial events
+  bool send_initial_events = 4;
+
+  // When done with initial events, send a bookmark event
+  bool allow_watch_bookmarks = 5;
+}
+
+message WatchEvent {
+  enum Type {
+    UNKNOWN = 0;
+    ADDED = 1;
+    MODIFIED = 2;
+    DELETED = 3;
+    BOOKMARK = 4;  
+    ERROR = 5;  
+  }
+
+  message Resource {
+    int64 version = 1;
+    bytes value = 2;
+  }
+
+  // Timestamp the event was sent
+  int64 timestamp = 1;
+
+  // Timestamp the event was sent
+  Type type = 2;
+
+  // Resource version for the object
+  Resource resource = 3;
+
+  // Previous resource version (for update+delete)
+  Resource previous = 4;
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
+}
+
+
+// This provides the CRUD+List+Watch support needed for a k8s apiserver
+// The semantics and behaviors of this service are constrained by kubernetes
+// This does not understand the resource schemas, only deals with json bytes 
+// Clients should not use this interface directly; it is for use in API Servers
+service ResourceStore {
+  rpc Read(ReadRequest) returns (ReadResponse);
+  rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+  // The results *may* include values that should not be returned to the user
+  // This will perform best-effort filtering to increase performace. 
+  // NOTE: storage.Interface is ultimatly responsible for the final filtering
+  rpc List(ListRequest) returns (ListResponse);
+
+  // The results *may* include values that should not be returned to the user
+  // This will perform best-effort filtering to increase performace. 
+  // NOTE: storage.Interface is ultimatly responsible for the final filtering
+  rpc Watch(WatchRequest) returns (stream WatchEvent);
+}
+
+// Clients can use this service directly
+// NOTE: This is read only, and no read afer write guarantees
+service Diagnostics {
+  // Check if the service is healthy
+  rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
+}

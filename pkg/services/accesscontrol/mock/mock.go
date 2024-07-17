@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -120,7 +120,7 @@ func (m *Mock) Evaluate(ctx context.Context, usr identity.Requester, evaluator a
 		if err != nil {
 			return false, err
 		}
-		permissions = accesscontrol.GroupScopesByAction(userPermissions)
+		permissions = accesscontrol.GroupScopesByActionContext(ctx, userPermissions)
 	}
 
 	if evaluator.Evaluate(permissions) {
