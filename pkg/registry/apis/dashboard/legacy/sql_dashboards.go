@@ -31,7 +31,7 @@ var (
 
 type dashboardRow struct {
 	// The numeric version for this dashboard
-	Version int64
+	RV int64
 
 	// Dashboard resource
 	Dash *dashboardsV0.Dashboard
@@ -125,7 +125,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		limit = 15 //
 	}
 
-	if query.GetHistory {
+	if query.GetHistory || query.Version > 0 {
 		if query.GetTrash {
 			return nil, 0, fmt.Errorf("trash not included in history table")
 		}
@@ -168,6 +168,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		args = append(args, (limit + 2)) // add more so we can include a next token
 		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc LIMIT $%d", sqlcmd, len(args))
 	}
+	// fmt.Printf("%s // %v\n", sqlcmd, args)
 
 	rows, err := a.doQuery(ctx, sqlcmd, args...)
 	if err != nil {
@@ -269,8 +270,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
 	if err == nil {
-		row.Version = version
-		dash.ResourceVersion = fmt.Sprintf("%d", version)
+		row.RV = getResourceVersion(dashboard_id, version)
+		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(metav1.NewTime(created))
@@ -340,7 +341,7 @@ func getUserID(v sql.NullString) string {
 
 // DeleteDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, bool, error) {
-	dash, _, err := a.GetDashboard(ctx, orgId, uid)
+	dash, _, err := a.GetDashboard(ctx, orgId, uid, 0)
 	if err != nil {
 		return nil, false, err
 	}
@@ -403,6 +404,6 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	if out != nil {
 		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
 	}
-	dash, _, err = a.GetDashboard(ctx, orgId, out.UID)
+	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
 	return dash, created, err
 }

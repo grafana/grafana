@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -101,11 +102,12 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*dashboard.Dashboard, int64, error) {
+func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string, v int64) (*dashboard.Dashboard, int64, error) {
 	rows, _, err := a.getRows(ctx, &DashboardQuery{
-		OrgID: orgId,
-		UID:   uid,
-		Limit: 100, // will only be one!
+		OrgID:   orgId,
+		UID:     uid,
+		Limit:   2, // will only be one!
+		Version: v,
 	})
 	if err != nil {
 		return nil, 0, err
@@ -116,7 +118,7 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 	if err != nil || row == nil {
 		return nil, 0, err
 	}
-	return row.Dash, row.Version, nil
+	return row.Dash, row.RV, nil
 }
 
 // Read implements ResourceStoreServer.
@@ -128,13 +130,21 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	if err != nil {
 		return nil, err
 	}
+	version := int64(0)
 	if req.ResourceVersion > 0 {
-		return nil, fmt.Errorf("reading from history not yet supported")
+		version = getVersionFromRV(req.ResourceVersion)
 	}
 
-	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name)
+	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)
 	if err != nil {
 		return nil, err
+	}
+	if dash == nil {
+		return &resource.ReadResponse{
+			Error: &resource.ErrorResult{
+				Code: http.StatusNotFound,
+			},
+		}, err
 	}
 
 	value, err := json.Marshal(dash)
@@ -199,7 +209,7 @@ func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.List
 			return list, err
 		}
 		list.Items = append(list.Items, &resource.ResourceWrapper{
-			ResourceVersion: row.Version,
+			ResourceVersion: row.RV,
 			Value:           val,
 		})
 	}
@@ -286,7 +296,7 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 			// if query.Requirements.Folder != nil {
 			// 	row.token.folder = *query.Requirements.Folder
 			// }
-			row.token.id = row.Version              // Use the version as the increment
+			row.token.id = getVersionFromRV(row.RV) // Use the version as the increment
 			list.NextPageToken = row.token.String() // will skip this one but start here next time
 			return list, err
 		}
@@ -305,7 +315,7 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 			return list, err
 		}
 		list.Items = append(list.Items, &resource.ResourceMeta{
-			ResourceVersion:   row.Version,
+			ResourceVersion:   row.RV,
 			PartialObjectMeta: val,
 			Size:              int32(len(full)),
 			Hash:              "??", // hash the full?
