@@ -297,7 +297,14 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 }
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
-	mt.Name = name
+	// if body does not specify name, assume that the path contains the name
+	if mt.Name == "" {
+		mt.Name = name
+	}
+	// if body contains a name, and it's different from the one in the path, assume the latter to be UID
+	if mt.Name != name {
+		mt.UID = name
+	}
 	mt.Provenance = determineProvenance(c)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {

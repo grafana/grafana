@@ -25,10 +25,9 @@ var resourceInfo = notifications.TimeIntervalResourceInfo
 
 type TimeIntervalService interface {
 	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
+	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, provenance definitions.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -85,7 +84,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	for _, mt := range timings {
-		if getIntervalUID(mt) == uid {
+		if mt.UID == uid {
 			return convertToK8sResource(info.OrgID, mt, s.namespacer)
 		}
 	}
@@ -159,7 +158,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	if p.ObjectMeta.Name != getIntervalUID(interval) {
+	if p.ObjectMeta.Name != interval.UID {
 		return nil, false, errors.NewBadRequest("title of cannot be changed. Consider creating a new resource.")
 	}
 
@@ -196,8 +195,8 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		return nil, false, fmt.Errorf("expected time-interval but got %s", old.GetObjectKind().GroupVersionKind())
 	}
 
-	err = s.service.DeleteMuteTiming(ctx, p.Spec.Name, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                                 // false - will be deleted async
+	err = s.service.DeleteMuteTiming(ctx, p.ObjectMeta.Name, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
+	return old, false, err                                                                                                       // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
