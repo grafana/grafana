@@ -114,27 +114,28 @@ export const getDefautManualRouting = () => {
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, keepFiringForTime, keepFiringForTimeUnit, type } = values;
+
+  const annotations = arrayToRecord(cleanKeyValuePairs(values.annotations));
+  const labels = arrayToRecord(cleanKeyValuePairs(values.labels));
+
   if (type === RuleFormType.cloudAlerting) {
     let keepFiringFor: string | undefined;
     if (keepFiringForTime && keepFiringForTimeUnit) {
       keepFiringFor = `${keepFiringForTime}${keepFiringForTimeUnit}`;
     }
 
-    const annotations = cleanKeyValuePairs(values.annotations);
-    const labels = cleanKeyValuePairs(values.labels);
-
     return {
       alert: name,
       for: `${forTime}${forTimeUnit}`,
       keep_firing_for: keepFiringFor,
-      annotations: arrayToRecord(annotations),
-      labels: arrayToRecord(labels),
+      annotations,
+      labels,
       expr: expression,
     };
   } else if (type === RuleFormType.cloudRecording) {
     return {
       record: name,
-      labels: arrayToRecord(values.labels || []),
+      labels,
       expr: expression,
     };
   }
@@ -224,7 +225,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   };
 }
 
-const cleanKeyValuePairs = (kvs: KVObject[]) => kvs.map(trimKeyAndValue).filter(nonEmptyKeyValue);
+export const cleanKeyValuePairs = (kvs: KVObject[]) => kvs.map(trimKeyAndValue).filter(nonEmptyKeyValue);
 const nonEmptyKeyValue = ({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value);
 const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
   key: key.trim(),

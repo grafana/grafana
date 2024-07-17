@@ -8,6 +8,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
   MANUAL_ROUTING_KEY,
   alertingRulerRuleToRuleForm,
+  cleanKeyValuePairs,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
@@ -240,5 +241,17 @@ describe('getDefautManualRouting', () => {
     expect(getDefautManualRouting()).toBe(true);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
     expect(getDefautManualRouting()).toBe(true);
+  });
+});
+
+describe('cleanKeyValuePairs', () => {
+  it('should remove falsy KVs', () => {
+    const output = cleanKeyValuePairs([{ key: '', value: '' }]);
+    expect(output).toStrictEqual([]);
+  });
+
+  it('should trim keys and values', () => {
+    const output = cleanKeyValuePairs([{ key: ' spaces ', value: ' spaces too  ' }]);
+    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
   });
 });
