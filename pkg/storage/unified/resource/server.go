@@ -10,12 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -179,18 +178,42 @@ func (s *server) Stop() {
 }
 
 // Old value indicates an update -- otherwise a create
-func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*writeEventBuilder, error) {
-	event, err := newEventFromBytes(value, oldValue)
-	if err != nil {
-		return nil, err
-	}
-	event.Key = key
-	event.Requester, err = identity.GetRequester(ctx)
+func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, ErrUserNotFoundInContext
 	}
+	tmp := &unstructured.Unstructured{}
+	err = tmp.UnmarshalJSON(value)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := utils.MetaAccessor(tmp)
+	if err != nil {
+		return nil, err
+	}
 
-	obj := event.Meta
+	event := &WriteEvent{
+		Value:  value,
+		Key:    key,
+		Object: obj,
+	}
+	if oldValue == nil {
+		event.Type = WatchEvent_ADDED
+	} else {
+		event.Type = WatchEvent_MODIFIED
+
+		temp := &unstructured.Unstructured{}
+		err = temp.UnmarshalJSON(oldValue)
+		if err != nil {
+			return nil, err
+		}
+		event.ObjectOld, err = utils.MetaAccessor(temp)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if key.Namespace != obj.GetNamespace() {
 		return nil, apierrors.NewBadRequest("key/namespace do not match")
 	}
@@ -218,7 +241,6 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	obj.SetGenerateName("")
 	err = validateName(obj.GetName())
 	if err != nil {
 		return nil, err
@@ -226,7 +248,7 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 
 	folder := obj.GetFolder()
 	if folder != "" {
-		err = s.access.CanWriteFolder(ctx, event.Requester, folder)
+		err = s.access.CanWriteFolder(ctx, user, folder)
 		if err != nil {
 			return nil, err
 		}
@@ -236,20 +258,10 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 		return nil, apierrors.NewBadRequest("invalid origin info")
 	}
 	if origin != nil {
-		err = s.access.CanWriteOrigin(ctx, event.Requester, origin.Name)
+		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
 		if err != nil {
 			return nil, err
 		}
-	}
-	obj.SetOriginInfo(origin)
-
-	// Ensure old values do not mutate things they should not
-	if event.OldMeta != nil {
-		old := event.OldMeta
-
-		obj.SetUID(old.GetUID())
-		obj.SetCreatedBy(old.GetCreatedBy())
-		obj.SetCreationTimestamp(old.GetCreationTimestamp())
 	}
 	return event, nil
 }
@@ -272,29 +284,14 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
-	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, nil)
+	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
 	if err != nil {
 		rsp.Error, err = errToStatus(err)
 		return rsp, err
 	}
 
-	obj := builder.Meta
-	obj.SetCreatedBy(builder.Requester.GetUID().String())
-	obj.SetUpdatedBy("")
-	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreationTimestamp(metav1.NewTime(time.UnixMilli(s.now())))
-	obj.SetUID(types.UID(uuid.New().String()))
-
-	event, err := builder.toEvent()
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
-	}
-
-	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	if err == nil {
-		rsp.Value = event.Value // with mutated fields
-	} else {
 		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
@@ -367,17 +364,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return nil, ErrOptimisticLockingFailed
 	}
 
-	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, latest.Value)
-	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
-	}
-
-	obj := builder.Meta
-	obj.SetUpdatedBy(builder.Requester.GetUID().String())
-	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
-
-	event, err := builder.toEvent()
+	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
 	if err != nil {
 		rsp.Error, err = errToStatus(err)
 		return rsp, err
@@ -386,11 +373,9 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
-	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	rsp.Error, err = errToStatus(err)
-	if err == nil {
-		rsp.Value = event.Value // with mutated fields
-	} else {
+	if err != nil {
 		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
