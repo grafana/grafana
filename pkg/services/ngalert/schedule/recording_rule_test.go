@@ -271,6 +271,47 @@ func TestRecordingRule_Integration(t *testing.T) {
 			require.Zero(t, writeTarget.RequestsCount)
 		})
 	})
+
+	t.Run("nodata rule", func(t *testing.T) {
+		rule := gen.With(withQueryForHealth("nodata")).GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+		evalDoneChan := make(chan time.Time)
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+		now := time.Now()
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		t.Run("status shows no evaluations", func(t *testing.T) {
+			status := process.(*recordingRule).Status()
+
+			require.Equal(t, "unknown", status.Health)
+			require.Nil(t, status.LastError)
+			require.Zero(t, status.EvaluationTimestamp)
+			require.Zero(t, status.EvaluationDuration)
+		})
+
+		process.Eval(&Evaluation{
+			scheduledAt: now,
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+		_ = waitForTimeChannel(t, evalDoneChan)
+
+		t.Run("status shows evaluation", func(t *testing.T) {
+			status := process.(*recordingRule).Status()
+
+			// TODO: OK expected for nil result but having a point. Probably should change.
+			require.Equal(t, "ok", status.Health)
+		})
+	})
 }
 
 func withQueryForHealth(health string) models.AlertRuleMutator {
@@ -287,6 +328,12 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"$NOTEXIST"
+		}`
+	case "nodata":
+		expression = `{
+			"datasourceUid": "__expr__",
+			"type":"math",
+			"expression":"null()"
 		}`
 	default:
 		panic(fmt.Sprintf("Query generation for health %s is not supported yet", health))
