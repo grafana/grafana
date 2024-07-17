@@ -55,7 +55,7 @@ describe('AsyncSelectField::', () => {
     expect(screen.getByTestId('Spinner')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText('Select option')).toHaveLength(4);
+      expect(screen.getAllByRole('option')).toHaveLength(4);
     });
   });
 
@@ -73,7 +73,7 @@ describe('AsyncSelectField::', () => {
       </FormWrapper>
     );
 
-    const menuOptions = await waitFor(() => screen.getAllByLabelText('Select option'));
+    const menuOptions = await waitFor(() => screen.getAllByRole('option'));
 
     fireEvent.click(menuOptions[0]);
     expect(screen.getByTestId('test-field-error-message')).toHaveTextContent('Must contain at least 13 characters');
@@ -99,7 +99,7 @@ describe('AsyncSelectField::', () => {
       </FormWrapper>
     );
 
-    const menuOptions = await waitFor(() => screen.getAllByLabelText('Select option'));
+    const menuOptions = await waitFor(() => screen.getAllByRole('option'));
 
     fireEvent.click(menuOptions[0]);
     expect(screen.getByTestId('test-field-error-message')).toHaveTextContent('Must contain at least 13 characters');

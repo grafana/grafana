@@ -305,8 +305,8 @@ describe('Pagination', () => {
 
     fireEvent.keyDown(input, { key: 'ArrowDown' });
 
-    const optionsArray = screen.getAllByLabelText('Select option');
-    fireEvent.click(optionsArray[optionsArray.length - 1]);
+    const option = screen.getByTestId('100-select-option');
+    fireEvent.click(option);
 
     expect(cb).toHaveBeenCalledWith(100);
     expect(screen.getByTestId('page-button-active')).toHaveTextContent('1');
