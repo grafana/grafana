@@ -278,7 +278,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}

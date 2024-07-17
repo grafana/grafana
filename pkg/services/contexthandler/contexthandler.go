@@ -154,7 +154,7 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		namespace, id := ident.GetNamespacedID()
+		namespace, id := ident.GetTypedID()
 		if !identity.IsIdentityType(
 			namespace,
 			identity.TypeUser,

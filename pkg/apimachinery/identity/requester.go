@@ -8,10 +8,10 @@ import (
 type Requester interface {
 	// GetID returns namespaced id for the entity
 	GetID() TypedID
-	// GetNamespacedID returns the namespace and ID of the active entity.
+	// GetTypedID returns the namespace and ID of the active entity.
 	// The namespace is one of the constants defined in pkg/apimachinery/identity.
 	// Deprecated: use GetID instead
-	GetNamespacedID() (kind IdentityType, identifier string)
+	GetTypedID() (kind IdentityType, identifier string)
 	// GetUID returns namespaced uid for the entity
 	GetUID() TypedID
 	// GetDisplayName returns the display name of the active entity.

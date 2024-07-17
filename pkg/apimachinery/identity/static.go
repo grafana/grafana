@@ -114,9 +114,9 @@ func (u *StaticRequester) GetUID() TypedID {
 	return NewTypedIDString(u.Kind, u.UserUID)
 }
 
-// GetNamespacedID returns the namespace and ID of the active entity
+// GetTypedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *StaticRequester) GetNamespacedID() (IdentityType, string) {
+func (u *StaticRequester) GetTypedID() (IdentityType, string) {
 	return u.Kind, fmt.Sprintf("%d", u.UserID)
 }
 

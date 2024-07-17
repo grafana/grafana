@@ -98,7 +98,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 
 	if namespace == identity.TypeUser {
 		userID, err := identity.IntIdentifier(namespace, identifier)

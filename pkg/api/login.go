@@ -257,7 +257,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		return
 	}
 
-	_, id := c.SignedInUser.GetNamespacedID()
+	_, id := c.SignedInUser.GetTypedID()
 	hs.log.Info("Successful Logout", "userID", id)
 	c.Redirect(redirect.URL)
 }
@@ -305,7 +305,7 @@ func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err
 		var userID int64
 		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
 			var errID error
-			userID, errID = identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+			userID, errID = identity.UserIdentifier(c.SignedInUser.GetTypedID())
 			if errID != nil {
 				hs.log.Error("failed to retrieve user ID", "error", errID)
 			}

@@ -234,7 +234,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	userID := int64(0)
-	namespaceID, identifier := user.GetNamespacedID()
+	namespaceID, identifier := user.GetTypedID()
 	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
 	} else {
@@ -494,7 +494,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if !provisioned {
-		namespaceID, userIDstr := dto.User.GetNamespacedID()
+		namespaceID, userIDstr := dto.User.GetTypedID()
 		userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 
 		if err != nil {
@@ -528,7 +528,7 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if !provisioned {
-		namespaceID, userIDstr := cmd.SignedInUser.GetNamespacedID()
+		namespaceID, userIDstr := cmd.SignedInUser.GetTypedID()
 		userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 
 		if err != nil {

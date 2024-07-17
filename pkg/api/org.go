@@ -132,7 +132,7 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 	if namespace != identity.TypeUser {
 		return response.Error(http.StatusForbidden, "Only users can create organizations", nil)
 	}

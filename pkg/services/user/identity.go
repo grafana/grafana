@@ -98,7 +98,7 @@ func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
-	namespace, id := u.GetNamespacedID()
+	namespace, id := u.GetTypedID()
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
@@ -174,13 +174,13 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 
 // GetID returns namespaced id for the entity
 func (u *SignedInUser) GetID() identity.TypedID {
-	ns, id := u.GetNamespacedID()
+	ns, id := u.GetTypedID()
 	return identity.NewTypedIDString(ns, id)
 }
 
-// GetNamespacedID returns the namespace and ID of the active entity
+// GetTypedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *SignedInUser) GetNamespacedID() (identity.IdentityType, string) {
+func (u *SignedInUser) GetTypedID() (identity.IdentityType, string) {
 	switch {
 	case u.ApiKeyID != 0:
 		return identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)

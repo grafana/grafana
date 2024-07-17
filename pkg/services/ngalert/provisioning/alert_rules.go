@@ -660,7 +660,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, user identity.Requester) error {
 	// default to 0 if there is no user
 	userID := int64(0)
-	u, err := identity.UserIdentifier(user.GetNamespacedID())
+	u, err := identity.UserIdentifier(user.GetTypedID())
 	if err != nil {
 		return fmt.Errorf("failed to check alert rule quota: %w", err)
 	}

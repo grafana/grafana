@@ -76,7 +76,7 @@ func (i *Identity) GetID() identity.TypedID {
 	return i.ID
 }
 
-func (i *Identity) GetNamespacedID() (namespace identity.IdentityType, identifier string) {
+func (i *Identity) GetTypedID() (namespace identity.IdentityType, identifier string) {
 	return i.ID.Type(), i.ID.ID()
 }
 
@@ -93,7 +93,7 @@ func (i *Identity) GetAuthenticatedBy() string {
 }
 
 func (i *Identity) GetCacheKey() string {
-	namespace, id := i.GetNamespacedID()
+	namespace, id := i.GetTypedID()
 	if !i.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
@@ -189,7 +189,7 @@ func (i *Identity) HasRole(role org.RoleType) bool {
 }
 
 func (i *Identity) HasUniqueId() bool {
-	namespace, _ := i.GetNamespacedID()
+	namespace, _ := i.GetTypedID()
 	return namespace == identity.TypeUser ||
 		namespace == identity.TypeServiceAccount ||
 		namespace == identity.TypeAPIKey

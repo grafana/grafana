@@ -31,7 +31,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 	if namespace != identity.TypeUser {
 		return response.JSON(http.StatusOK, user.UserProfileDTO{
 			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
@@ -278,7 +278,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response.Response {
-	namespace, id := c.SignedInUser.GetNamespacedID()
+	namespace, id := c.SignedInUser.GetTypedID()
 	if !identity.IsIdentityType(namespace, identity.TypeUser) {
 		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
 	}
@@ -506,7 +506,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 		return
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 	if namespace != identity.TypeUser {
 		c.JsonApiErr(http.StatusForbidden, "Endpoint only available for users", nil)
 		return
@@ -632,7 +632,7 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 }
 
 func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 	if namespace != identity.TypeUser {
 		return 0, response.Error(http.StatusForbidden, "Endpoint only available for users", nil)
 	}

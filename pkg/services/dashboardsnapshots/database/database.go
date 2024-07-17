@@ -135,7 +135,7 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 			sess.Where("name LIKE ?", query.Name)
 		}
 
-		namespace, id := query.SignedInUser.GetNamespacedID()
+		namespace, id := query.SignedInUser.GetTypedID()
 		var userID int64
 
 		if namespace == identity.TypeServiceAccount || namespace == identity.TypeUser {

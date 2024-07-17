@@ -139,7 +139,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
-	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	userID, err := identity.UserIdentifier(user.GetTypedID())
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	ctx, span := s.tracer.Start(ctx, "authz.getUserDirectPermissions")
 	defer span.End()
 
-	namespace, identifier := user.GetNamespacedID()
+	namespace, identifier := user.GetTypedID()
 
 	var userID int64
 	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {

@@ -101,7 +101,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 	cmd.Name = inviteDto.Name
 	cmd.Status = tempuser.TmpUserInvitePending
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 	var userID int64
 	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		var err error

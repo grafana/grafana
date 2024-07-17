@@ -191,7 +191,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	var permissions []accesscontrol.SetResourcePermissionCommand
 	var userID int64
 
-	namespace, id := user.GetNamespacedID()
+	namespace, id := user.GetTypedID()
 	if namespace == identity.TypeUser {
 		var errID error
 		userID, errID = identity.IntIdentifier(namespace, id)
