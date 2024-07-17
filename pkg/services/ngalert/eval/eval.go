@@ -443,7 +443,7 @@ func IsNoData(res backend.DataResponse) bool {
 	if len(res.Frames) <= 1 {
 		hasNoFrames := len(res.Frames) == 0
 		hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
-		return hasNoFrames && hasNoFields
+		return hasNoFrames || hasNoFields
 	}
 	return false
 }
