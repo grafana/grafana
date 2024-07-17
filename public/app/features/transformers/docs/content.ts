@@ -637,7 +637,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     },
   },
   groupToNestedTable: {
-    name: 'Group to nested table',
+    name: 'Group to nested tables',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
