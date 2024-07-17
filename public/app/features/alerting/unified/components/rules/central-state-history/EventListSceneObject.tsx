@@ -519,18 +519,16 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
 
   const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
+    trackUseCentralHistoryFilterByClicking({ type, key, value });
     if (type === 'stateTo') {
       stateToFilterVariable.changeValueTo(value);
-      trackUseCentralHistoryFilterByClicking({ type: 'stateTo', key, value });
     }
     if (type === 'stateFrom') {
       stateFromFilterVariable.changeValueTo(value);
-      trackUseCentralHistoryFilterByClicking({ type: 'stateFrom', key, value });
     }
+    const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
     if (type === 'label') {
-      const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
       labelsFiltersVariable.setValue(finalFilter);
-      trackUseCentralHistoryFilterByClicking({ type: 'label', key, value });
     }
   };
 
