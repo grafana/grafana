@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/promlib"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
@@ -45,7 +46,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return s.lib.CheckHealth(ctx, req)
 }
 
-func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, plog log.Logger) error {
 	// Set SigV4 service namespace
 	if clientOpts.SigV4 != nil {
 		clientOpts.SigV4.Service = "aps"
@@ -56,9 +57,11 @@ func extendClientOpts(ctx context.Context, settings backend.DataSourceInstanceSe
 		return fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
 	}
 
+	audienceOverride := backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("prometheusAzureOverrideAudience")
+
 	// Set Azure authentication
 	if azureSettings.AzureAuthEnabled {
-		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, clientOpts)
+		err = azureauth.ConfigureAzureAuthentication(settings, azureSettings, clientOpts, audienceOverride, plog)
 		if err != nil {
 			return fmt.Errorf("error configuring Azure auth: %v", err)
 		}

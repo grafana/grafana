@@ -2250,6 +2250,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources"
       }
+    },
+    {
+      "metadata": {
+        "name": "prometheusAzureOverrideAudience",
+        "resourceVersion": "1721244697609",
+        "creationTimestamp": "2024-07-17T19:31:37Z"
+      },
+      "spec": {
+        "description": "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/partner-datasources"
+      }
     }
   ]
 }

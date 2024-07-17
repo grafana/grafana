@@ -192,4 +192,5 @@ export interface FeatureToggles {
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
+  prometheusAzureOverrideAudience?: boolean;
 }
