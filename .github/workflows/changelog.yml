@@ -54,9 +54,9 @@ jobs:
             # Prepend changelog part to the main changelog file
             echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
             (
-              echo "<!-- ${{ inputs.version }} START -->
+              echo "<!-- ${{ inputs.version }} START -->"
               cat CHANGELOG.part
-              echo "<!-- ${{ inputs.version }} END -->
+              echo "<!-- ${{ inputs.version }} END -->"
               cat CHANGELOG.md
             ) > CHANGELOG.tmp
             mv CHANGELOG.tmp CHANGELOG.md
