@@ -1,5 +1,5 @@
 import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
-import { inRange, remove } from 'lodash';
+import { inRange } from 'lodash';
 
 import { EditableRuleIdentifier, GrafanaRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -23,11 +23,11 @@ export const deleteRuleAction = createAction<{ identifier: EditableRuleIdentifie
 
 // group-scoped actions
 export const updateRuleGroupAction = createAction<{ interval?: string }>('ruleGroup/update');
-export const moveRuleGroupAction = createAction<{ namespaceName: string; groupName?: string; interval?: string }>(
+export const moveRuleGroupAction = createAction<{ newNamespaceName: string; groupName?: string; interval?: string }>(
   'ruleGroup/move'
 );
 export const renameRuleGroupAction = createAction<{ groupName: string; interval?: string }>('ruleGroup/rename');
-export const reorderRulesInRuleGroupAction = createAction<{ operations: SwapOperation[] }>('ruleGroup/rules/reorder');
+export const reorderRulesInRuleGroupAction = createAction<{ swaps: SwapOperation[] }>('ruleGroup/rules/reorder');
 
 const initialState: PostableRulerRuleGroupDTO = {
   name: 'initial',
@@ -43,24 +43,20 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     .addCase(updateRuleAction, (draft, { payload }) => {
       const { identifier, rule } = payload;
 
-      const ruleIndex = draft.rules.findIndex(ruleFinder(identifier));
-      draft.rules[ruleIndex] = rule;
+      const index = findRuleIndex(draft.rules, identifier);
+      draft.rules[index] = rule;
     })
     .addCase(deleteRuleAction, (draft, { payload }) => {
       const { identifier } = payload;
-
-      remove(draft.rules, ruleFinder(identifier));
+      const index = findRuleIndex(draft.rules, identifier);
+      draft.rules.splice(index, 1);
     })
     .addCase(pauseRuleAction, (draft, { payload }) => {
       const { uid, pause } = payload;
 
       const identifier: GrafanaRuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid };
-      const ruleIndex = draft.rules.findIndex(ruleFinder(identifier));
-      if (notFound(ruleIndex)) {
-        throw new Error(`No rule with UID ${uid} found`);
-      }
-
-      const matchingRule = draft.rules[ruleIndex];
+      const index = findRuleIndex(draft.rules, identifier);
+      const matchingRule = draft.rules[index];
 
       if (isGrafanaRulerRule(matchingRule)) {
         matchingRule.grafana_alert.is_paused = pause;
@@ -69,8 +65,8 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
       }
     })
     .addCase(reorderRulesInRuleGroupAction, (draft, { payload }) => {
-      const { operations } = payload;
-      reorder(draft.rules, operations);
+      const { swaps } = payload;
+      reorder(draft.rules, swaps);
     })
     // rename and move should allow updating the group's name
     .addMatcher(isAnyOf(renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
@@ -111,22 +107,29 @@ const ruleFinder = (identifier: RuleIdentifier) => {
       return hashRulerRule(rule) === identifier.rulerRuleHash;
     }
 
-    // @TODO more error info
-    throw new Error('No such rule with identifier found in group');
+    return;
   };
 };
 
 // [oldIndex, newIndex]
 export type SwapOperation = [number, number];
 
-export function reorder<T>(items: T[], operations: Array<[number, number]>) {
-  for (let operation of operations) {
-    swap(items, operation);
+/**
+ * ⚠️ This function mutates the input array
+ * reorder several items in a list, given a set of swap
+ */
+export function reorder<T>(items: T[], swaps: Array<[number, number]>) {
+  for (let swap of swaps) {
+    swapItems(items, swap);
   }
   return items;
 }
 
-export function swap<T>(items: T[], [oldIndex, newIndex]: SwapOperation) {
+/**
+ * ⚠️ This function mutates the input array
+ * swaps two items in an array of items
+ */
+export function swapItems<T>(items: T[], [oldIndex, newIndex]: SwapOperation): void {
   const inBounds = inRange(oldIndex, items.length) && inRange(newIndex, items.length);
   if (!inBounds) {
     throw new Error('Invalid operation: index out of bounds');
@@ -134,10 +137,13 @@ export function swap<T>(items: T[], [oldIndex, newIndex]: SwapOperation) {
 
   const [movedItem] = items.splice(oldIndex, 1);
   items.splice(newIndex, 0, movedItem);
-
-  return items;
 }
 
-function notFound(index: number) {
-  return index === -1;
+function findRuleIndex(rules: PostableRuleDTO[], identifier: EditableRuleIdentifier) {
+  const index = rules.findIndex(ruleFinder(identifier));
+  if (index === -1) {
+    throw new Error('no such rule');
+  }
+
+  return index;
 }

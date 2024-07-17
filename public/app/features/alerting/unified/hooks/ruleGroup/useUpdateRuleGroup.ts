@@ -61,11 +61,11 @@ export function useMoveRuleGroup() {
         throw new Error('Moving a Grafana-managed rule group to another folder is currently not supported.');
       }
 
-      const action = moveRuleGroupAction({ namespaceName, groupName, interval });
+      const action = moveRuleGroupAction({ newNamespaceName: namespaceName, groupName, interval });
       const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
       const oldNamespace = ruleGroup.namespaceName;
-      const targetNamespace = action.payload.namespaceName;
+      const targetNamespace = action.payload.newNamespaceName;
 
       const oldGroupName = ruleGroup.groupName;
       const targetGroupName = action.payload.groupName;
@@ -171,10 +171,10 @@ export function useReorderRuleForRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
-  return useAsync(async (ruleGroup: RuleGroupIdentifier, operations: Array<[number, number]>) => {
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, swaps: Array<[number, number]>) => {
     const { namespaceName } = ruleGroup;
 
-    const action = reorderRulesInRuleGroupAction({ operations });
+    const action = reorderRulesInRuleGroupAction({ swaps });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
     // @TODO re-fetch so we clear cache

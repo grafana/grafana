@@ -22,7 +22,7 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { useReorderRuleForRuleGroup } from '../../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading } from '../../hooks/useAsync';
-import { swap, SwapOperation } from '../../reducers/ruler/ruleGroups';
+import { swapItems, SwapOperation } from '../../reducers/ruler/ruleGroups';
 import { getDataSourceRulerConfig } from '../../state/actions';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
@@ -89,7 +89,7 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
 
       // re-order the rules list for the UI rendering
       const newOrderedRules = produce(rulesList, (draft) => {
-        swap(draft, swapOperation);
+        swapItems(draft, swapOperation);
       });
       setRulesList(newOrderedRules);
     },
