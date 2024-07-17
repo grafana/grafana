@@ -15,14 +15,13 @@ load(
     "images",
 )
 load(
-    "scripts/drone/vault.star",
-    "from_secret",
-)
-load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
-
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+)
 
 def publish_image_public_step():
     """Returns a step which publishes images
@@ -30,7 +29,7 @@ def publish_image_public_step():
     Returns:
       A drone step which publishes Docker images for a public release.
     """
-    command ="""
+    command = """
     echo=
     if [[ -z ${DRY_RUN} ]];  then echo="echo"; fi
     docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}
@@ -72,8 +71,8 @@ def publish_image_public_step():
     """
     return {
         "environment": {
-          "DOCKER_USER": from_secret("docker_username"),
-          "DOCKER_PASSWORD": from_secret("docker_password"),
+            "DOCKER_USER": from_secret("docker_username"),
+            "DOCKER_PASSWORD": from_secret("docker_password"),
         },
         "name": "publish-images-grafana",
         "image": images["docker"],
