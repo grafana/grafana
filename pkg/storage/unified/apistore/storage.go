@@ -147,8 +147,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("error in status %+v", rsp.Error)
 	}
 
-	// Create into the out value
-	_, _, err = s.codec.Decode(rsp.Value, nil, out)
+	// Decode into the result (can we just copy?)
+	_, _, err = s.codec.Decode(cmd.Value, nil, out)
 	if err != nil {
 		return err
 	}
@@ -510,8 +510,8 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	// Read the mutated fields the response field
-	_, _, err = s.codec.Decode(rsp.Value, nil, destination)
+	// Decode into the response (can we just copy?)
+	_, _, err = s.codec.Decode(value, nil, destination)
 	if err != nil {
 		return err
 	}
