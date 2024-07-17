@@ -20,17 +20,21 @@ export function ConfigCard({ config, handleActionClick, isLoading = false }: Con
       <div className={styles.cardContent}>
         <Stack direction={'column'} gap={1}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-            <Stack direction={'row'} gap={1} alignItems={'center'}>
-              {config.title}
-              {config.titleIcon && <Icon name={config.titleIcon} />}
-              {/* Only show check icon when not loading */}
-              {config.isDone && !isLoading && <Icon name="check-circle" color="green" size="lg" />}
-            </Stack>
-            {config.stepsDone && config.totalStepsToDo && !isLoading && (
-              <Stack direction="row" gap={0.5}>
-                <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-                complete
+            <div className="fs-unmask">
+              <Stack direction={'row'} gap={1} alignItems={'center'}>
+                {config.title}
+                {config.titleIcon && <Icon name={config.titleIcon} />}
+                {/* Only show check icon when not loading */}
+                {config.isDone && !isLoading && <Icon name="check-circle" color="green" size="lg" />}
               </Stack>
+            </div>
+            {config.stepsDone && config.totalStepsToDo && !isLoading && (
+              <div className="fs-unmask">
+                <Stack direction="row" gap={0.5}>
+                  <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+                  complete
+                </Stack>
+              </div>
             )}
           </Stack>
           <Stack direction={'column'}>

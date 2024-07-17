@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, useStyles2 } from '@grafana/ui';
@@ -9,21 +9,16 @@ export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; 
     return null;
   }
   return (
-    <div
-      className={cx('fs-unmask', styles.containerStyles)}
-      role="progressbar"
-      aria-valuenow={stepsDone}
-      aria-valuemax={totalStepsToDo}
-    >
-      <div className={cx('fs-unmask', styles.fillerStyles((stepsDone / totalStepsToDo) * 100))} />
+    <div className={styles.containerStyles} role="progressbar" aria-valuenow={stepsDone} aria-valuemax={totalStepsToDo}>
+      <div className={styles.fillerStyles((stepsDone / totalStepsToDo) * 100)} />
     </div>
   );
 }
 export function StepsStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
-    <div className="fs-unmask">
+    <span>
       <Text color="success">{stepsDone}</Text> of {totalStepsToDo}
-    </div>
+    </span>
   );
 }
 
