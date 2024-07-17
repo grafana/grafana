@@ -4,10 +4,15 @@ import { isFetchError } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { useCreateCloudMigrationTokenMutation, useGetCloudMigrationTokenQuery } from '../../api';
+import {
+  useCreateCloudMigrationTokenMutation,
+  useDeleteCloudMigrationTokenMutation,
+  useGetCloudMigrationTokenQuery,
+} from '../../api';
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
-import { MigrationTokenModal } from './MigrationTokenModal';
+import { CreateTokenModal } from './CreateTokenModal';
+import { DeleteTokenConfirmationModal } from './DeleteTokenConfirmationModal';
 import { TokenStatus } from './TokenStatus';
 
 // TODO: candidate to hoist and share
@@ -29,21 +34,40 @@ function maybeAPIError(err: unknown) {
 }
 
 export const MigrationTokenPane = () => {
-  const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const getTokenQuery = useGetCloudMigrationTokenQuery();
   const [createTokenMutation, createTokenResponse] = useCreateCloudMigrationTokenMutation();
+  const [deleteTokenMutation, deleteTokenResponse] = useDeleteCloudMigrationTokenMutation();
 
   const getTokenQueryError = maybeAPIError(getTokenQuery.error);
 
-  const hasToken = Boolean(createTokenResponse.data?.token) || Boolean(getTokenQuery.data?.id);
+  // GetCloudMigrationToken returns a 404 error if no token exists.
+  // When a token is deleted and the GetCloudMigrationToken query is refreshed, RTKQ will retain
+  // both the last successful data ("we have a token!") AND the new error. So we need to explicitly
+  // check that we don't have an error AND that we have a token.
+  const hasToken = Boolean(getTokenQuery.data?.id) && getTokenQueryError?.statusCode !== 404;
   const isLoading = getTokenQuery.isFetching || createTokenResponse.isLoading;
 
   const handleGenerateToken = useCallback(async () => {
     const resp = await createTokenMutation();
+
     if (!('error' in resp)) {
-      setShowModal(true);
+      setShowCreateModal(true);
     }
   }, [createTokenMutation]);
+
+  const handleDeleteToken = useCallback(async () => {
+    if (!getTokenQuery.data?.id) {
+      return;
+    }
+
+    const resp = await deleteTokenMutation({ uid: getTokenQuery.data.id });
+    if (!('error' in resp)) {
+      setShowDeleteModal(false);
+    }
+  }, [deleteTokenMutation, getTokenQuery.data]);
 
   return (
     <>
@@ -59,17 +83,30 @@ export const MigrationTokenPane = () => {
           </Text>
         )}
 
-        <Button disabled={isLoading || hasToken} onClick={handleGenerateToken}>
-          {createTokenResponse.isLoading
-            ? t('migrate-to-cloud.migration-token.generate-button-loading', 'Generating a migration token...')
-            : t('migrate-to-cloud.migration-token.generate-button', 'Generate a migration token')}
-        </Button>
+        {hasToken ? (
+          <Button onClick={() => setShowDeleteModal(true)} variant="destructive">
+            {t('migrate-to-cloud.migration-token.delete-button', 'Delete token')}
+          </Button>
+        ) : (
+          <Button disabled={isLoading} onClick={handleGenerateToken}>
+            {createTokenResponse.isLoading
+              ? t('migrate-to-cloud.migration-token.generate-button-loading', 'Generating a migration token...')
+              : t('migrate-to-cloud.migration-token.generate-button', 'Generate a migration token')}
+          </Button>
+        )}
       </Box>
 
-      <MigrationTokenModal
-        isOpen={showModal}
-        hideModal={() => setShowModal(false)}
+      <CreateTokenModal
+        isOpen={showCreateModal}
+        hideModal={() => setShowCreateModal(false)}
         migrationToken={createTokenResponse.data?.token}
+      />
+
+      <DeleteTokenConfirmationModal
+        isOpen={showDeleteModal}
+        onConfirm={handleDeleteToken}
+        onDismiss={() => setShowDeleteModal(false)}
+        hasError={Boolean(deleteTokenResponse.error)}
       />
     </>
   );
