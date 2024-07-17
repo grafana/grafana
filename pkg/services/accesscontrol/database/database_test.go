@@ -626,7 +626,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{
 				ActionPrefix: "teams:",
-				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
+				NamespacedID: fmt.Sprintf("%s:1", identity.TypeUser),
 			},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},

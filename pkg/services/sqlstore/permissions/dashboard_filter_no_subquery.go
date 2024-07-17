@@ -35,7 +35,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 	userID := int64(0)
 	namespace, identifier := f.user.GetNamespacedID()
-	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 

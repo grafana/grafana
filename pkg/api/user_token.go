@@ -33,7 +33,7 @@ import (
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
+	if namespace != identity.TypeUser {
 		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
 	}
 
@@ -64,7 +64,7 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 	}
 
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
+	if namespace != identity.TypeUser {
 		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
 	}
 

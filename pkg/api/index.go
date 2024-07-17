@@ -169,7 +169,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	namespace, _ := c.SignedInUser.GetNamespacedID()
 
 	// Anonymous users do not have an email or auth info
-	if namespace != identity.NamespaceUser {
+	if namespace != identity.TypeUser {
 		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
 	}
 

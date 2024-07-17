@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -211,7 +210,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	namespace, identifier := user.GetNamespacedID()
 
 	var userID int64
-	if namespace == authn.NamespaceUser || namespace == authn.NamespaceServiceAccount {
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {

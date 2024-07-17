@@ -11,13 +11,13 @@ import (
 
 func TestBasicEncodeDecode(t *testing.T) {
 	before := &identity.StaticRequester{
-		UserID:    123,
-		UserUID:   "abc",
-		Login:     "test",
-		Namespace: identity.NamespaceUser,
-		OrgID:     456,
-		OrgName:   "org",
-		OrgRole:   identity.RoleAdmin,
+		UserID:  123,
+		UserUID: "abc",
+		Login:   "test",
+		Kind:    identity.TypeUser,
+		OrgID:   456,
+		OrgName: "org",
+		OrgRole: identity.RoleAdmin,
 	}
 
 	auth := &Authenticator{}

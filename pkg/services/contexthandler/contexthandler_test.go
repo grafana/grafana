@@ -43,7 +43,7 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should set identity on successful authentication", func(t *testing.T) {
-		id := &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), OrgID: 1}
+		id := &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1), OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
@@ -68,7 +68,7 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should not set IsSignedIn on anonymous identity", func(t *testing.T) {
-		identity := &authn.Identity{ID: authn.AnonymousNamespaceID, OrgID: 1}
+		identity := &authn.Identity{ID: identity.AnonymousTypedID, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
@@ -148,7 +148,7 @@ func TestContextHandler(t *testing.T) {
 			handler := contexthandler.ProvideService(
 				cfg,
 				tracing.InitializeTracerForTest(),
-				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID(id)}},
+				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID(id)}},
 			)
 
 			server := webtest.NewServer(t, routing.NewRouteRegister())

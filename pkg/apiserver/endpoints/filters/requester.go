@@ -26,7 +26,7 @@ func WithRequester(handler http.Handler) http.Handler {
 		if ok {
 			if info.GetName() == user.Anonymous {
 				requester = &identity.StaticRequester{
-					Namespace:   identity.NamespaceAnonymous,
+					Kind:        identity.TypeAnonymous,
 					Name:        info.GetName(),
 					Login:       info.GetName(),
 					Permissions: map[int64]map[string][]string{},
@@ -37,12 +37,12 @@ func WithRequester(handler http.Handler) http.Handler {
 				slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 				orgId := int64(1)
 				requester = &identity.StaticRequester{
-					Namespace: identity.NamespaceServiceAccount, // system:apiserver
-					UserID:    1,
-					OrgID:     orgId,
-					Name:      info.GetName(),
-					Login:     info.GetName(),
-					OrgRole:   identity.RoleAdmin,
+					Kind:    identity.TypeServiceAccount, // system:apiserver
+					UserID:  1,
+					OrgID:   orgId,
+					Name:    info.GetName(),
+					Login:   info.GetName(),
+					OrgRole: identity.RoleAdmin,
 
 					IsGrafanaAdmin:             true,
 					AllowedKubernetesNamespace: "default",

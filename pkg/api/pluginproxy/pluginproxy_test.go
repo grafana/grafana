@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -79,7 +79,7 @@ func TestPluginProxy(t *testing.T) {
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login:        "test_user",
-					NamespacedID: authn.MustParseNamespaceID("user:1"),
+					NamespacedID: identity.MustParseTypedID("user:1"),
 				},
 				Context: &web.Context{
 					Req: httpReq,

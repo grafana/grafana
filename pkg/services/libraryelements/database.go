@@ -140,7 +140,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	userID := int64(0)
 	namespaceID, identifier := signedInUser.GetNamespacedID()
-	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
+	if namespaceID == identity.TypeUser || namespaceID == identity.TypeServiceAccount {
 		userID, err = identity.IntIdentifier(namespaceID, identifier)
 		if err != nil {
 			l.log.Warn("Error while parsing userID", "namespaceID", namespaceID, "userID", identifier)
@@ -594,7 +594,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 
 		var userID int64
 		namespaceID, identifier := signedInUser.GetNamespacedID()
-		if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
+		if namespaceID == identity.TypeUser || namespaceID == identity.TypeServiceAccount {
 			var errID error
 			userID, errID = identity.IntIdentifier(namespaceID, identifier)
 			if errID != nil {
@@ -802,7 +802,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 
 			namespaceID, identifier := signedInUser.GetNamespacedID()
 			userID := int64(0)
-			if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
+			if namespaceID == identity.TypeUser || namespaceID == identity.TypeServiceAccount {
 				userID, err = identity.IntIdentifier(namespaceID, identifier)
 				if err != nil {
 					l.log.Warn("Failed to parse user ID from namespace identifier", "namespace", namespaceID, "identifier", identifier, "error", err)

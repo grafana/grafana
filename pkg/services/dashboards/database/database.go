@@ -878,7 +878,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-	if query.SignedInUser == nil || query.SignedInUser.GetID().Namespace() != identity.NamespaceServiceAccount {
+	if query.SignedInUser == nil || query.SignedInUser.GetID().Type() != identity.TypeServiceAccount {
 		filters = append(filters, searchstore.K6FolderFilter{})
 	}
 

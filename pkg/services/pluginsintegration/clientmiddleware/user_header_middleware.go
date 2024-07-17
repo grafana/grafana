@@ -36,7 +36,7 @@ func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.Fo
 
 	h.DeleteHTTPHeader(proxyutil.UserHeaderName)
 	namespace, _ := reqCtx.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceAnonymous {
+	if namespace != identity.TypeAnonymous {
 		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.SignedInUser.GetLogin())
 	}
 }

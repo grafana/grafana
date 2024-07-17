@@ -100,7 +100,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
 
-	if namespace == identity.NamespaceUser {
+	if namespace == identity.TypeUser {
 		userID, err := identity.IntIdentifier(namespace, identifier)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)

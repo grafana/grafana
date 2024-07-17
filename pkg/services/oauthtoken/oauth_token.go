@@ -95,7 +95,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 	}
 
 	namespace, id := usr.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
+	if namespace != identity.TypeUser {
 		// Not a user, therefore no token.
 		return nil, false, nil
 	}
@@ -137,7 +137,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 	}
 
 	namespace, id := usr.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
+	if namespace != identity.TypeUser {
 		// Not a user, therefore no token.
 		logger.Warn("Can only refresh OAuth tokens for users", "namespace", namespace, "userId", id)
 		return nil

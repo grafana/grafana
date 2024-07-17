@@ -95,7 +95,7 @@ type Service interface {
 	// RegisterPreLogoutHook registers a hook that is called before a logout request.
 	RegisterPreLogoutHook(hook PreLogoutHookFn, priority uint)
 	// ResolveIdentity resolves an identity from org and namespace id.
-	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*Identity, error)
 
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
@@ -157,7 +157,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user Requester) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
 }
 
 type PasswordClient interface {
@@ -179,8 +179,8 @@ type UsageStatClient interface {
 // Clients that implements this interface can resolve an full identity from an orgID and namespaceID.
 type IdentityResolverClient interface {
 	Client
-	Namespace() string
-	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
+	IdentityType() identity.IdentityType
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*Identity, error)
 }
 
 type Request struct {

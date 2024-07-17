@@ -133,7 +133,7 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 	}
 
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
+	if namespace != identity.TypeUser {
 		return response.Error(http.StatusForbidden, "Only users can create organizations", nil)
 	}
 

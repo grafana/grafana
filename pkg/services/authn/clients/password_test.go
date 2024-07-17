@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
@@ -29,16 +30,16 @@ func TestPassword_AuthenticatePassword(t *testing.T) {
 			username:         "test",
 			password:         "test",
 			req:              &authn.Request{},
-			clients:          []authn.PasswordClient{authntest.FakePasswordClient{ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:1")}}},
-			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			clients:          []authn.PasswordClient{authntest.FakePasswordClient{ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:1")}}},
+			expectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 		},
 		{
 			desc:             "should success when found in second client",
 			username:         "test",
 			password:         "test",
 			req:              &authn.Request{},
-			clients:          []authn.PasswordClient{authntest.FakePasswordClient{ExpectedErr: errIdentityNotFound}, authntest.FakePasswordClient{ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2")}}},
-			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2")},
+			clients:          []authn.PasswordClient{authntest.FakePasswordClient{ExpectedErr: errIdentityNotFound}, authntest.FakePasswordClient{ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:2")}}},
+			expectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:2")},
 		},
 		{
 			desc:        "should fail for empty password",

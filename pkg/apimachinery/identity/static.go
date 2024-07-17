@@ -9,7 +9,7 @@ var _ Requester = &StaticRequester{}
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
-	Namespace                  Namespace
+	Kind                       IdentityType
 	UserID                     int64
 	UserUID                    string
 	OrgID                      int64
@@ -105,19 +105,19 @@ func (u *StaticRequester) HasUniqueId() bool {
 }
 
 // GetID returns namespaced id for the entity
-func (u *StaticRequester) GetID() NamespaceID {
-	return NewNamespaceIDString(u.Namespace, fmt.Sprintf("%d", u.UserID))
+func (u *StaticRequester) GetID() TypedID {
+	return NewTypedIDString(u.Kind, fmt.Sprintf("%d", u.UserID))
 }
 
 // GetUID returns namespaced uid for the entity
-func (u *StaticRequester) GetUID() NamespaceID {
-	return NewNamespaceIDString(u.Namespace, u.UserUID)
+func (u *StaticRequester) GetUID() TypedID {
+	return NewTypedIDString(u.Kind, u.UserUID)
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *StaticRequester) GetNamespacedID() (Namespace, string) {
-	return u.Namespace, fmt.Sprintf("%d", u.UserID)
+func (u *StaticRequester) GetNamespacedID() (IdentityType, string) {
+	return u.Kind, fmt.Sprintf("%d", u.UserID)
 }
 
 func (u *StaticRequester) GetAuthID() string {

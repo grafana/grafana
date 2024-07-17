@@ -235,7 +235,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	userID := int64(0)
 	namespaceID, identifier := user.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
 	} else {
 		var err error
@@ -499,7 +499,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
-		} else if namespaceID == identity.NamespaceUser && userID > 0 {
+		} else if namespaceID == identity.TypeUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
@@ -533,7 +533,7 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 
 		if err != nil {
 			dr.log.Error("Could not make user admin", "folder", cmd.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
-		} else if namespaceID == identity.NamespaceUser && userID > 0 {
+		} else if namespaceID == identity.TypeUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})

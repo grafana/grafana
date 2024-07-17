@@ -109,14 +109,14 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 		return 0, errors.New("namespacedID must be set")
 	}
 
-	id, err := identity.ParseNamespaceID(s.NamespacedID)
+	id, err := identity.ParseTypedID(s.NamespacedID)
 	if err != nil {
 		return 0, err
 	}
 
 	// Validate namespace type is user or service account
-	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	if id.Type() != identity.TypeUser && id.Type() != identity.TypeServiceAccount {
+		return 0, fmt.Errorf("invalid type: %s", id.Type())
 	}
 
 	return id.ParseInt()

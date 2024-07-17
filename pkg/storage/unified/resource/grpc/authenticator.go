@@ -76,7 +76,7 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
-		user.Namespace = identity.NamespaceUser
+		user.Kind = identity.TypeUser
 		user.UserID, err = strconv.ParseInt(getter("grafana-userid"), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("invalid user id: %w", err)
@@ -88,17 +88,17 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	ns, err := identity.ParseNamespaceID(getter(mdUserID))
+	ns, err := identity.ParseTypedID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.Namespace = ns.Namespace()
+	user.Kind = ns.Type()
 	user.UserID, err = ns.ParseInt()
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	ns, err = identity.ParseNamespaceID(getter(mdUserUID))
+	ns, err = identity.ParseTypedID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
