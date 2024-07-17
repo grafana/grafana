@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Opsgenie
 title: Configure Opsgenie for Alerting
-weight: 300
+weight: 60
 ---
 
 # Configure Opsgenie for Alerting
