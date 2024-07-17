@@ -22,14 +22,14 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   /** Control the page layout. */
   layout?: PageLayoutType;
   /**
+   * @deprecated this will be removed when bodyScrolling is enabled by default
    * Can be used to get the scroll container element to access scroll position
    * */
-  // TODO deprecate this when bodyScrolling is enabled by default
   scrollRef?: RefCallback<HTMLDivElement>;
   /**
+   * @deprecated this will be removed when bodyScrolling is enabled by default
    * Can be used to update the current scroll position
    * */
-  // TODO deprecate this when bodyScrolling is enabled by default
   scrollTop?: number;
 }
 
