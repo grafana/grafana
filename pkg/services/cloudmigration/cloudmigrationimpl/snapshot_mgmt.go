@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
@@ -57,7 +58,13 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
+	softDeleteEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
+
 	for _, dashboard := range dashboards {
+		if softDeleteEnabled && !dashboard.Deleted.IsZero() {
+			continue
+		}
+
 		dashboard.Data.Del("id")
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DashboardDataType,
@@ -190,6 +197,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		return fmt.Errorf("fetching migration data: %w", err)
 	}
 
+	localSnapshotResource := make([]cloudmigration.CloudMigrationResource, len(migrationData.Items))
 	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, 0)
 	for _, item := range migrationData.Items {
 		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], snapshot.MigrateDataRequestItemDTO{
@@ -197,6 +205,11 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 			RefID: item.RefID,
 			Name:  item.Name,
 			Data:  item.Data,
+		})
+		localSnapshotResource = append(localSnapshotResource, cloudmigration.CloudMigrationResource{
+			Type:   item.Type,
+			RefID:  item.RefID,
+			Status: cloudmigration.ItemStatusPending,
 		})
 	}
 
@@ -222,8 +235,9 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	// update snapshot status to pending upload with retry
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
 		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-			UID:    snapshotMeta.UID,
-			Status: cloudmigration.SnapshotStatusPendingUpload,
+			UID:       snapshotMeta.UID,
+			Status:    cloudmigration.SnapshotStatusPendingUpload,
+			Resources: localSnapshotResource,
 		})
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
