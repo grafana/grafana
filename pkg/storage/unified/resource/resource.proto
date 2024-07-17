@@ -321,6 +321,77 @@ message WatchEvent {
   Resource previous = 4;
 }
 
+message HistoryRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // Maximum number of items to return
+  int64 limit = 2;
+
+  // Resource identifier
+  ResourceKey key = 3;
+
+  // List the deleted values (eg, show trash)
+  bool show_deleted = 4;
+}
+
+message HistoryResponse {
+  repeated ResourceMeta items = 1;
+
+  // More results exist... pass this in the next request
+  string next_page_token = 2;
+
+  // ResourceVersion of the list response
+  int64 resource_version = 3;
+}
+
+message OriginRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // Maximum number of items to return
+  int64 limit = 2;
+
+  // Resource identifier
+  ResourceKey key = 3;
+
+  // List the deleted values (eg, show trash)
+  string origin = 4;
+}
+
+message ResourceOriginInfo {
+  // The resource
+  ResourceKey key = 1;
+
+  // Size of the full resource body
+  int32 resource_size = 2;
+
+  // Hash for the resource
+  string resource_hash = 3;
+
+  // The origin name
+  string origin = 4;
+
+  // Path on the origin
+  string path = 5;
+
+  // Verification hash from the origin
+  string hash = 6;
+
+  // Change time from the origin
+  int64 timestamp = 7;
+}
+
+message OriginResponse {
+  repeated ResourceOriginInfo items = 1;
+
+  // More results exist... pass this in the next request
+  string next_page_token = 2;
+
+  // ResourceVersion of the list response
+  int64 resource_version = 3;
+}
+
 message HealthCheckRequest {
   string service = 1;
 }
@@ -355,6 +426,20 @@ service ResourceStore {
   // This will perform best-effort filtering to increase performace. 
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
+}
+
+// Unlike the ResourceStore, this service can be exposed to clients directly
+// It should be implemented with efficient indexes and does not need read-after-write semantics
+service ResourceIndex {
+  // TODO: rpc Search(...) ... eventually a typed response
+
+  rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
+
+  // Show resource history (and trash)
+  rpc History(HistoryRequest) returns (HistoryResponse);
+
+  // Used for efficient provisioning
+  rpc Origin(OriginRequest) returns (OriginResponse);
 }
 
 // Clients can use this service directly

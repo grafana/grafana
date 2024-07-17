@@ -22,7 +22,7 @@ import (
 
 // Package-level errors.
 var (
-	ErrNotFound                 = errors.New("entity not found")
+	ErrNotFound                 = errors.New("resource not found")
 	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
 	ErrUserNotFoundInContext    = errors.New("user not found in context")
 	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
@@ -32,6 +32,7 @@ var (
 // ResourceServer implements all services
 type ResourceServer interface {
 	ResourceStoreServer
+	ResourceIndexServer
 	DiagnosticsServer
 	LifecycleHooks
 }
@@ -67,6 +68,9 @@ type ResourceServerOptions struct {
 	// Real storage backend
 	Backend StorageBackend
 
+	// Requests based on a search index
+	Index ResourceIndexServer
+
 	// Diagnostics
 	Diagnostics DiagnosticsServer
 
@@ -89,6 +93,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
+	if opts.Index == nil {
+		opts.Index = &noopService{}
+	}
 	if opts.Diagnostics == nil {
 		opts.Diagnostics = &noopService{}
 	}
@@ -110,6 +117,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		tracer:      opts.Tracer,
 		log:         slog.Default().With("logger", "resource-server"),
 		backend:     opts.Backend,
+		index:       opts.Index,
 		diagnostics: opts.Diagnostics,
 		access:      opts.WriteAccess,
 		lifecycle:   opts.Lifecycle,
@@ -125,6 +133,7 @@ type server struct {
 	tracer      trace.Tracer
 	log         *slog.Logger
 	backend     StorageBackend
+	index       ResourceIndexServer
 	diagnostics DiagnosticsServer
 	access      WriteAccessHooks
 	lifecycle   LifecycleHooks
@@ -552,6 +561,22 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 		}
 	}
+}
+
+// History implements ResourceServer.
+func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+	return s.index.History(ctx, req)
+}
+
+// Origin implements ResourceServer.
+func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+	return s.index.Origin(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

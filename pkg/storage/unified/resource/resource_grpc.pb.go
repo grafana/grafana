@@ -348,6 +348,181 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	ResourceIndex_Read_FullMethodName    = "/resource.ResourceIndex/Read"
+	ResourceIndex_History_FullMethodName = "/resource.ResourceIndex/History"
+	ResourceIndex_Origin_FullMethodName  = "/resource.ResourceIndex/Origin"
+)
+
+// ResourceIndexClient is the client API for ResourceIndex service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Unlike the ResourceStore, this service can be exposed to clients directly
+// It should be implemented with efficient indexes and does not need read-after-write semantics
+type ResourceIndexClient interface {
+	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
+	// Show resource history (and trash)
+	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
+	// Used for efficient provisioning
+	Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error)
+}
+
+type resourceIndexClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewResourceIndexClient(cc grpc.ClientConnInterface) ResourceIndexClient {
+	return &resourceIndexClient{cc}
+}
+
+func (c *resourceIndexClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_Read_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceIndexClient) History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HistoryResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_History_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OriginResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_Origin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ResourceIndexServer is the server API for ResourceIndex service.
+// All implementations should embed UnimplementedResourceIndexServer
+// for forward compatibility
+//
+// Unlike the ResourceStore, this service can be exposed to clients directly
+// It should be implemented with efficient indexes and does not need read-after-write semantics
+type ResourceIndexServer interface {
+	Read(context.Context, *ReadRequest) (*ReadResponse, error)
+	// Show resource history (and trash)
+	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
+	// Used for efficient provisioning
+	Origin(context.Context, *OriginRequest) (*OriginResponse, error)
+}
+
+// UnimplementedResourceIndexServer should be embedded to have forward compatible implementations.
+type UnimplementedResourceIndexServer struct {
+}
+
+func (UnimplementedResourceIndexServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+}
+func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
+}
+func (UnimplementedResourceIndexServer) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Origin not implemented")
+}
+
+// UnsafeResourceIndexServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ResourceIndexServer will
+// result in compilation errors.
+type UnsafeResourceIndexServer interface {
+	mustEmbedUnimplementedResourceIndexServer()
+}
+
+func RegisterResourceIndexServer(s grpc.ServiceRegistrar, srv ResourceIndexServer) {
+	s.RegisterService(&ResourceIndex_ServiceDesc, srv)
+}
+
+func _ResourceIndex_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceIndexServer).Read(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceIndex_Read_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceIndexServer).Read(ctx, req.(*ReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceIndex_History_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceIndexServer).History(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceIndex_History_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceIndexServer).History(ctx, req.(*HistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceIndex_Origin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OriginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceIndexServer).Origin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceIndex_Origin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceIndexServer).Origin(ctx, req.(*OriginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ResourceIndex_ServiceDesc is the grpc.ServiceDesc for ResourceIndex service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.ResourceIndex",
+	HandlerType: (*ResourceIndexServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Read",
+			Handler:    _ResourceIndex_Read_Handler,
+		},
+		{
+			MethodName: "History",
+			Handler:    _ResourceIndex_History_Handler,
+		},
+		{
+			MethodName: "Origin",
+			Handler:    _ResourceIndex_Origin_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "resource.proto",
+}
+
+const (
 	Diagnostics_IsHealthy_FullMethodName = "/resource.Diagnostics/IsHealthy"
 )
 
