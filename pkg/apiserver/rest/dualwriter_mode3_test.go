@@ -12,7 +12,6 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/apis/example"
 )
 
 func TestMode3_Create(t *testing.T) {
@@ -137,16 +136,26 @@ func TestMode3_Get(t *testing.T) {
 
 func TestMode3_List(t *testing.T) {
 	type testCase struct {
-		setupStorageFn func(m *mock.Mock)
+		setupStorageFn func(m *mock.Mock, options *metainternalversion.ListOptions)
 		name           string
+		options        *metainternalversion.ListOptions
 		wantErr        bool
 	}
 	tests :=
 		[]testCase{
 			{
-				name: "error when listing an object in the unified store is not implemented",
-				setupStorageFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(&example.PodList{}, errors.New("error"))
+				name:    "error when listing an object in the unified store is not implemented",
+				options: &metainternalversion.ListOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
+				setupStorageFn: func(m *mock.Mock, options *metainternalversion.ListOptions) {
+					m.On("List", mock.Anything, options).Return(nil, errors.New("error"))
+				},
+				wantErr: true,
+			},
+			{
+				name:    "list objects in the unified store",
+				options: &metainternalversion.ListOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
+				setupStorageFn: func(m *mock.Mock, options *metainternalversion.ListOptions) {
+					m.On("List", mock.Anything, options).Return(exampleList, nil)
 				},
 			},
 		}
@@ -161,17 +170,20 @@ func TestMode3_List(t *testing.T) {
 			us := storageMock{m, s}
 
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(m)
+				tt.setupStorageFn(m, tt.options)
 			}
 
 			dw := NewDualWriter(Mode3, ls, us, p)
 
-			_, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
+			res, err := dw.List(context.Background(), tt.options)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
+
+			assert.Equal(t, exampleList, res)
+			assert.NotEqual(t, anotherList, res)
 		})
 	}
 }

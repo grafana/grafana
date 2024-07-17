@@ -61,7 +61,7 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 
 // Get overrides the behavior of the generic DualWriter and retrieves an object from Storage.
 func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("kind", options.Kind)
+	log := d.Log.WithValues("kind", options.Kind, "name", name)
 	ctx = klog.NewContext(ctx, log)
 	var method = "get"
 
@@ -81,12 +81,12 @@ func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion
 	ctx = klog.NewContext(ctx, log)
 	var method = "list"
 
-	startLegacy := time.Now()
-	res, err := d.Legacy.List(ctx, options)
+	startStorage := time.Now()
+	res, err := d.Storage.List(ctx, options)
 	if err != nil {
 		log.Error(err, "unable to list object in storage")
 	}
-	d.recordStorageDuration(err != nil, mode3Str, options.Kind, method, startLegacy)
+	d.recordStorageDuration(err != nil, mode3Str, options.Kind, method, startStorage)
 
 	return res, err
 }
