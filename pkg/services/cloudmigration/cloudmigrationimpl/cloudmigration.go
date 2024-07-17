@@ -502,7 +502,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		if err := s.buildSnapshot(context.Background(), signedInUser, initResp.MaxItemsPerPartition, snapshot); err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
 			// Update status to error with retries
-			if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+			if err := s.updateStatusWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
 				UID:    snapshot.UID,
 				Status: cloudmigration.SnapshotStatusError,
 			}); err != nil {
@@ -617,8 +617,9 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 	// start uploading the snapshot asynchronously while we return a success response to the client
 	go func() {
 		if err := s.uploadSnapshot(context.Background(), session, snapshot, uploadUrl); err != nil {
+			s.log.Error("uploading snapshot", "err", err.Error())
 			// Update status to error with retries
-			if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+			if err := s.updateStatusWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
 				UID:    snapshot.UID,
 				Status: cloudmigration.SnapshotStatusError,
 			}); err != nil {
