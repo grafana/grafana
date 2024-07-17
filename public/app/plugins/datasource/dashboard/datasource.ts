@@ -7,7 +7,7 @@ import {
   DataSourceInstanceSettings,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { SafeSerializableSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 
 import { DashboardQuery } from './types';
@@ -25,7 +25,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
-    const scene: SceneObject | undefined = options.scopedVars?.__sceneObject?.value;
+    const scene: SceneObject | undefined = (
+      options.scopedVars?.__sceneObject as SafeSerializableSceneObject
+    )?.valueOf();
 
     if (options.requestId.indexOf('mixed') > -1) {
       throw new Error('Dashboard data source cannot be used with Mixed data source.');
@@ -85,6 +87,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
+    if (scene instanceof SafeSerializableSceneObject) {
+      debugger;
+    }
     return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
