@@ -170,7 +170,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		r.Get("/dashboard/recently-deleted", reqSignedIn, hs.Index)
+		r.Get("/dashboard/recently-deleted", reqOrgAdmin, hs.Index)
 	}
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
@@ -477,8 +477,8 @@ func (hs *HTTPServer) registerRoutes() {
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
 
 				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-					dashUidRoute.Patch("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDeletedDashboard))
-					dashUidRoute.Delete("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.HardDeleteDashboardByUID))
+					dashUidRoute.Patch("/trash", reqOrgAdmin, routing.Wrap(hs.RestoreDeletedDashboard))
+					dashUidRoute.Delete("/trash", reqOrgAdmin, routing.Wrap(hs.HardDeleteDashboardByUID))
 				}
 
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {

@@ -12,24 +12,30 @@ import (
 )
 
 const (
-	profilingEnabledEnvName = "GF_DIAGNOSTICS_PROFILING_ENABLED"
-	profilingAddrEnvName    = "GF_DIAGNOSTICS_PROFILING_ADDR"
-	profilingPortEnvName    = "GF_DIAGNOSTICS_PROFILING_PORT"
-	tracingEnabledEnvName   = "GF_DIAGNOSTICS_TRACING_ENABLED"
-	tracingFileEnvName      = "GF_DIAGNOSTICS_TRACING_FILE"
+	profilingEnabledEnvName   = "GF_DIAGNOSTICS_PROFILING_ENABLED"
+	profilingAddrEnvName      = "GF_DIAGNOSTICS_PROFILING_ADDR"
+	profilingPortEnvName      = "GF_DIAGNOSTICS_PROFILING_PORT"
+	profilingBlockRateEnvName = "GF_DIAGNOSTICS_PROFILING_BLOCK_RATE"
+	profilingMutexRateEnvName = "GF_DIAGNOSTICS_PROFILING_MUTEX_RATE"
+	tracingEnabledEnvName     = "GF_DIAGNOSTICS_TRACING_ENABLED"
+	tracingFileEnvName        = "GF_DIAGNOSTICS_TRACING_FILE"
 )
 
 type profilingDiagnostics struct {
-	enabled bool
-	addr    string
-	port    uint64
+	enabled   bool
+	addr      string
+	port      uint64
+	blockRate int
+	mutexRate int
 }
 
-func newProfilingDiagnostics(enabled bool, addr string, port uint64) *profilingDiagnostics {
+func newProfilingDiagnostics(enabled bool, addr string, port uint64, blockRate int, mutexRate int) *profilingDiagnostics {
 	return &profilingDiagnostics{
-		enabled: enabled,
-		addr:    addr,
-		port:    port,
+		enabled:   enabled,
+		addr:      addr,
+		port:      port,
+		blockRate: blockRate,
+		mutexRate: mutexRate,
 	}
 }
 
@@ -55,6 +61,24 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 			return fmt.Errorf("failed to parse %s environment variable to unsigned integer", profilingPortEnvName)
 		}
 		pd.port = port
+	}
+
+	blockRateEnv := os.Getenv(profilingBlockRateEnvName)
+	if blockRateEnv != "" {
+		blockRate, err := strconv.Atoi(blockRateEnv)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s environment variable as int", profilingBlockRateEnvName)
+		}
+		pd.blockRate = blockRate
+	}
+
+	mutexFractionEnv := os.Getenv(profilingMutexRateEnvName)
+	if mutexFractionEnv != "" {
+		mutexProfileFraction, err := strconv.Atoi(mutexFractionEnv)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s environment variable as int", profilingMutexRateEnvName)
+		}
+		pd.mutexRate = mutexProfileFraction
 	}
 
 	return nil
@@ -90,15 +114,17 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
-func setupProfiling(profile bool, profileAddr string, profilePort uint64) error {
-	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort)
+func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockRate int, mutexFraction int) error {
+	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, blockRate, mutexFraction)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
 		return err
 	}
 
 	if profileDiagnostics.enabled {
-		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
-		runtime.SetBlockProfileRate(1)
+		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port, "blockProfileRate", profileDiagnostics.blockRate, "mutexProfileRate", profileDiagnostics.mutexRate)
+		runtime.SetBlockProfileRate(profileDiagnostics.blockRate)
+		runtime.SetMutexProfileFraction(profileDiagnostics.mutexRate)
+
 		go func() {
 			// TODO: We should enable the linter and fix G114 here.
 			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)

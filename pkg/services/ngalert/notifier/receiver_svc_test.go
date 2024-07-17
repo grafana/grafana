@@ -13,11 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -29,10 +29,16 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
+	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead: nil,
+		},
+	}}
+
 	t.Run("service gets receiver from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receiver, err := sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), nil)
+		Receiver, err := sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), redactedUser)
 		require.NoError(t, err)
 		require.Equal(t, "slack receiver", Receiver.Name)
 		require.Len(t, Receiver.GrafanaManagedReceivers, 1)
@@ -42,7 +48,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 	t.Run("service returns error when receiver does not exist", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		_, err := sut.GetReceiver(context.Background(), singleQ(1, "nonexistent"), nil)
+		_, err := sut.GetReceiver(context.Background(), singleQ(1, "nonexistent"), redactedUser)
 		require.ErrorIs(t, err, ErrNotFound)
 	})
 }
@@ -51,10 +57,16 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
+	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead: nil,
+		},
+	}}
+
 	t.Run("service gets receivers from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1), nil)
+		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, Receivers, 2)
 		require.Equal(t, "grafana-default-email", Receivers[0].Name)
@@ -64,7 +76,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 	t.Run("service filters receivers by name", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1, "slack receiver"), nil)
+		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1, "slack receiver"), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, Receivers, 1)
 		require.Equal(t, "slack receiver", Receivers[0].Name)
@@ -74,7 +86,6 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 func TestReceiverService_DecryptRedact(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	getMethods := []string{"single", "multi"}
 
@@ -129,7 +140,6 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 		for _, method := range getMethods {
 			t.Run(fmt.Sprintf("%s %s", tc.name, method), func(t *testing.T) {
 				sut := createReceiverServiceSut(t, secretsService)
-				sut.ac = ac
 
 				var res definitions.GettableApiReceiver
 				var err error
@@ -174,12 +184,13 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	return &ReceiverService{
-		actest.FakeAccessControl{},
-		provisioningStore,
-		store,
-		encryptSvc,
-		xact,
-		log.NewNopLogger(),
+		ac:                acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		provisioningStore: provisioningStore,
+		cfgStore:          store,
+		encryptionService: encryptSvc,
+		xact:              xact,
+		log:               log.NewNopLogger(),
+		validator:         validation.ValidateProvenanceRelaxed,
 	}
 }
 

@@ -273,7 +273,6 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
       flexGrow: 1,
       display: 'flex',
       gap: theme.spacing(1),
-      minHeight: '100%',
       flexDirection: 'column',
       background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       padding: theme.spacing(2, 3, 2, 3),

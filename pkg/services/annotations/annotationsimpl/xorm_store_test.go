@@ -29,7 +29,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sql := db.InitTestDB(t)
+	sql := db.InitTestReplDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60

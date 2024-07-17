@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
@@ -34,8 +34,15 @@ function shouldBeActive(
   }
 }
 
+export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
+  visible: 'grafana.explore.contentOutline.visible',
+  expanded: 'grafana.explore.contentOutline.expanded',
+};
+
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
-  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
+  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
+    store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
+  );
   const styles = useStyles2(getStyles, contentOutlineExpanded);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
@@ -56,7 +63,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }, {});
   });
 
-  const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
+  const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
 
@@ -73,14 +80,28 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       top: scrollValue + customOffsetTop,
       behavior: 'smooth',
     });
+  };
 
-    reportInteraction('explore_toolbar_contentoutline_clicked', {
-      item: 'select_section',
-      type: itemPanelId,
-    });
+  const handleItemClicked = (item: ContentOutlineItemContextProps) => {
+    if (item.level === 'child' && item.type === 'filter') {
+      const activeParent = outlineItems.find((parent) => {
+        return parent.children?.find((child) => child.id === item.id);
+      });
+
+      if (activeParent) {
+        scrollIntoView(activeParent.ref, activeParent.customTopOffset);
+      }
+    } else {
+      scrollIntoView(item.ref, item.customTopOffset);
+      reportInteraction('explore_toolbar_contentoutline_clicked', {
+        item: 'select_section',
+        type: item.panelId,
+      });
+    }
   };
 
   const toggle = () => {
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, !contentOutlineExpanded);
     toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'outline',
@@ -131,16 +152,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   }, [outlineItems, verticalScroll]);
 
-  const activateFilter = (filterId: string) => {
-    const activeParent = outlineItems.find((item) => {
-      return item.children?.find((child) => child.id === filterId);
-    });
-
-    if (activeParent) {
-      scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.customTopOffset);
-    }
-  };
-
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
@@ -173,7 +184,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
                   })}
                   icon={item.icon}
-                  onClick={() => scrollIntoView(item.ref, item.panelId)}
+                  onClick={() => handleItemClicked(item)}
                   tooltip={item.title}
                   collapsible={isCollapsible(item)}
                   collapsed={!sectionsExpanded[item.id]}
@@ -208,9 +219,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                           })}
                           indentStyle={styles.indentChild}
                           onClick={(e) => {
-                            child.type === 'filter'
-                              ? activateFilter(child.id)
-                              : scrollIntoView(child.ref, child.panelId, child.customTopOffset);
+                            handleItemClicked(child);
                             child.onClick?.(e);
                           }}
                           tooltip={child.title}
