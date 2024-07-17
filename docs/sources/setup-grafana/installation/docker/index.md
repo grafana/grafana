@@ -221,7 +221,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
    For example:
 
    ```bash
-   version: "3.8"
+   version: "3.9"
    services:
      grafana:
        image: grafana/grafana-enterprise
@@ -279,7 +279,7 @@ To use Docker volumes for persistent storage, complete the following steps:
 1. Add the following code into the `docker-compose.yaml` file.
 
    ```yaml
-   version: '3.8'
+   version: '3.9'
    services:
      grafana:
        image: grafana/grafana-enterprise
@@ -324,7 +324,7 @@ To use bind mounts, complete the following steps:
 1. Now, add the following code into the `docker-compose.yaml` file.
 
    ```yaml
-   version: '3.8'
+   version: '3.9'
    services:
      grafana:
        image: grafana/grafana-enterprise
@@ -351,7 +351,7 @@ To use bind mounts, complete the following steps:
 The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the `grafana-storage` docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel/) plugin installed.
 
 ```bash
-version: "3.8"
+version: "3.9"
 services:
   grafana:
     image: grafana/grafana-enterprise
