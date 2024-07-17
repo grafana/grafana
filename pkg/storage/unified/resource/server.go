@@ -272,9 +272,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	if err == nil {
-		rsp.Value = event.Value // with mutated fields
-	} else {
+	if err != nil {
 		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err
@@ -364,9 +362,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	rsp.Error, err = errToStatus(err)
-	if err == nil {
-		rsp.Value = event.Value // with mutated fields
-	} else {
+	if err != nil {
 		rsp.Error, err = errToStatus(err)
 	}
 	return rsp, err

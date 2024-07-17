@@ -1,7 +1,9 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -11,49 +13,59 @@ import (
 )
 
 // Called on create
-func (s *Storage) prepareObjectForStorage(ctx context.Context, obj runtime.Object) error {
+func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) ([]byte, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = s.Versioner().PrepareObjectForStorage(obj)
+	obj, err := utils.MetaAccessor(newObject)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	access, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return err
+	if obj.GetName() == "" {
+		return nil, fmt.Errorf("new object must have a name")
 	}
+	obj.SetGenerateName("") // Clear the random name field
+	obj.SetResourceVersion("")
+	obj.SetSelfLink("")
 
 	// Read+write will verify that origin format is accurate
-	origin, err := access.GetOriginInfo()
+	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	access.SetOriginInfo(origin)
-	access.SetUpdatedBy("")
-	access.SetUpdatedTimestamp(nil)
-	access.SetCreatedBy(user.GetUID().String())
-	return nil
+	obj.SetOriginInfo(origin)
+	obj.SetUpdatedBy("")
+	obj.SetUpdatedTimestamp(nil)
+	obj.SetCreatedBy(user.GetUID().String())
+
+	var buf bytes.Buffer
+	err = s.codec.Encode(newObject, &buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // Called on update
-func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) error {
+func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) ([]byte, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	obj, err := utils.MetaAccessor(updateObject)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if obj.GetName() == "" {
+		return nil, fmt.Errorf("updated object must have a name")
 	}
 
 	previous, err := utils.MetaAccessor(previousObject)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	obj.SetUID(previous.GetUID())
 	obj.SetCreatedBy(previous.GetCreatedBy())
@@ -62,10 +74,16 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	obj.SetOriginInfo(origin)
 	obj.SetUpdatedBy(user.GetUID().String())
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
-	return nil
+
+	var buf bytes.Buffer
+	err = s.codec.Encode(updateObject, &buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

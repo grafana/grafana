@@ -6,7 +6,6 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -126,23 +125,14 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	err = s.prepareObjectForStorage(ctx, obj)
+	value, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
-
-	var buf bytes.Buffer
-	err = s.codec.Encode(obj, &buf)
-	if err != nil {
-		return err
-	}
-
 	cmd := &resource.CreateRequest{
 		Key:   k,
-		Value: buf.Bytes(),
+		Value: value,
 	}
-
-	// TODO?? blob from context?
 
 	rsp, err := s.store.Create(ctx, cmd)
 	if err != nil {
@@ -505,18 +495,12 @@ func (s *Storage) GuaranteedUpdate(
 		)
 	}
 
-	err = s.prepareObjectForUpdate(ctx, updatedObj, destination)
+	value, err := s.prepareObjectForUpdate(ctx, updatedObj, destination)
 	if err != nil {
 		return err
 	}
 
-	var buf bytes.Buffer
-	err = s.codec.Encode(updatedObj, &buf)
-	if err != nil {
-		return err
-	}
-
-	req := &resource.UpdateRequest{Key: k, Value: buf.Bytes()}
+	req := &resource.UpdateRequest{Key: k, Value: value}
 	rsp, err := s.store.Update(ctx, req)
 	if err != nil {
 		return err
