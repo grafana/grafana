@@ -481,7 +481,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
-	if options.NamespacedID != "" {
+	if options.TypedID.Type() != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
 			s.log.Error("Failed to resolve user ID", "error", err)
@@ -596,7 +596,7 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.NamespacedID == "" {
+	if searchOptions.TypedID.Type() == "" {
 		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 

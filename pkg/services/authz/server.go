@@ -5,6 +5,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -54,7 +55,16 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 	ctxLogger := s.logger.FromContext(ctx)
 	ctxLogger.Debug("Read", "action", action, "subject", subject, "stackID", stackID)
 
-	permissions, err := s.acSvc.SearchUserPermissions(ctx, stackID, accesscontrol.SearchOptions{NamespacedID: subject, Action: action})
+	var err error
+	opts := accesscontrol.SearchOptions{Action: action}
+	if subject != "" {
+		opts.TypedID, err = identity.ParseTypedID(subject)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	permissions, err := s.acSvc.SearchUserPermissions(ctx, stackID, opts)
 	if err != nil {
 		ctxLogger.Error("failed to search user permissions", "error", err)
 		return nil, tracing.Errorf(span, "failed to search user permissions: %w", err)

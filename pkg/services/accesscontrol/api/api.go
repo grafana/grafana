@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -71,15 +72,22 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
-		NamespacedID: c.Query("namespacedId"),
 	}
+	namespacedId := c.Query("namespacedId")
 
 	// Validate inputs
 	if searchOptions.ActionPrefix != "" && searchOptions.Action != "" {
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
-	if searchOptions.NamespacedID == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+	if namespacedId == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
+	}
+	if namespacedId != "" {
+		var err error
+		searchOptions.TypedID, err = identity.ParseTypedID(namespacedId)
+		if err != nil {
+			return response.Error(http.StatusBadGateway, "invalid namespacedId", err)
+		}
 	}
 
 	// Compute metadata
