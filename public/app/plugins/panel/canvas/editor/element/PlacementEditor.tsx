@@ -121,10 +121,8 @@ export function PlacementEditor({ item }: Props) {
         <>
           {places.map((p) => {
             const v = placement![p];
-            if (v == null) {
-              if (p !== 'rotation') {
-                return null;
-              }
+            if (v == null && p !== 'rotation') {
+              return null;
             }
 
             // Need to set explicit min/max for rotation as logic only can handle 0-360
