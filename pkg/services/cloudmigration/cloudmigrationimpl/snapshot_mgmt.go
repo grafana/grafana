@@ -38,7 +38,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Folders
-	folders, err := s.getFolders(ctx, signedInUser)
+	folders, err := s.getFolders(ctx, signedInUser, dashboards)
 	if err != nil {
 		s.log.Error("Failed to get folders", "err", err)
 		return nil, err
@@ -127,9 +127,19 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 	return result, err
 }
 
-func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUser) ([]folder.Folder, error) {
+func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUser, userDashboards []dashboards.Dashboard) ([]folder.Folder, error) {
+	folderUIDs := make([]string, 0)
+	for _, dashboard := range userDashboards {
+		if dashboard.IsFolder {
+			folderUIDs = append(folderUIDs, dashboard.UID)
+		}
+	}
+
+	// GetFolders return only folders available to user. So we can use is to check access.
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-		SignedInUser: signedInUser,
+		UIDs:             folderUIDs,
+		SignedInUser:     signedInUser,
+		WithFullpathUIDs: true,
 	})
 	if err != nil {
 		return nil, err
