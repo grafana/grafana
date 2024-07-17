@@ -50,8 +50,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef(null);
 
-  const theme = useTheme2();
-  const styles = getComboboxStyles(theme);
+  const styles = useStyles2(getComboboxStyles);
 
   const rowVirtualizer = useVirtualizer({
     count: items.length,
