@@ -1,10 +1,12 @@
 import { SetPanelAttentionEvent } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
@@ -45,12 +47,26 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   // Panel share
-  keybindings.addBinding({
-    key: 'p s',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
-    }),
-  });
+  if (config.featureToggles.newDashboardSharingComponent) {
+    keybindings.addBinding({
+      key: 'p u',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          title: 'Link settings',
+          body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+  } else {
+    keybindings.addBinding({
+      key: 'p s',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
+      }),
+    });
+  }
 
   // Panel inspect
   keybindings.addBinding({

@@ -13,7 +13,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { updateShareLinkConfiguration } from './ShareButton/utils';
 import { SceneShareTabState } from './types';
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
@@ -94,37 +93,22 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     return t('share-modal.tab-title.link', 'Link');
   }
 
-  onToggleLockedTime = async () => {
+  async onToggleLockedTime() {
     const useLockedTime = !this.state.useLockedTime;
-    updateShareLinkConfiguration({
-      useAbsoluteTimeRange: useLockedTime,
-      useShortUrl: this.state.useShortUrl,
-      theme: this.state.selectedTheme,
-    });
     this.setState({ useLockedTime });
     await this.buildUrl();
-  };
+  }
 
-  onUrlShorten = async () => {
+  async onUrlShorten() {
     const useShortUrl = !this.state.useShortUrl;
     this.setState({ useShortUrl });
-    updateShareLinkConfiguration({
-      useShortUrl,
-      useAbsoluteTimeRange: this.state.useLockedTime,
-      theme: this.state.selectedTheme,
-    });
     await this.buildUrl();
-  };
+  }
 
-  onThemeChange = async (value: string) => {
+  async onThemeChange(value: string) {
     this.setState({ selectedTheme: value });
-    updateShareLinkConfiguration({
-      theme: value,
-      useShortUrl: this.state.useShortUrl,
-      useAbsoluteTimeRange: this.state.useLockedTime,
-    });
     await this.buildUrl();
-  };
+  }
 
   getShareUrl = () => {
     return this.state.shareUrl;

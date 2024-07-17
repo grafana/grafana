@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { Alert, ClipboardButton, Divider, Label, Spinner, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
+import { Alert, ClipboardButton, Divider, Text, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 
+import ShareInternallyConfiguration from '../../ShareInternallyConfiguration';
 import { ShareLinkTab } from '../../ShareLinkTab';
-import { getShareLinkConfiguration } from '../utils';
+import { getShareLinkConfiguration, updateShareLinkConfiguration } from '../utils';
 
 export class ShareInternally extends ShareLinkTab {
   static Component = ShareInternallyRenderer;
@@ -21,6 +21,35 @@ export class ShareInternally extends ShareLinkTab {
       selectedTheme: theme,
     });
   }
+
+  onToggleLockedTime = async () => {
+    const useLockedTime = !this.state.useLockedTime;
+    updateShareLinkConfiguration({
+      useAbsoluteTimeRange: useLockedTime,
+      useShortUrl: this.state.useShortUrl,
+      theme: this.state.selectedTheme,
+    });
+    await super.onToggleLockedTime();
+  };
+
+  onUrlShorten = async () => {
+    const useShortUrl = !this.state.useShortUrl;
+    updateShareLinkConfiguration({
+      useShortUrl,
+      useAbsoluteTimeRange: this.state.useLockedTime,
+      theme: this.state.selectedTheme,
+    });
+    await super.onUrlShorten();
+  };
+
+  onThemeChange = async (value: string) => {
+    updateShareLinkConfiguration({
+      theme: value,
+      useShortUrl: this.state.useShortUrl,
+      useAbsoluteTimeRange: this.state.useLockedTime,
+    });
+    await super.onThemeChange(value);
+  };
 }
 
 function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>) {
@@ -42,41 +71,15 @@ function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>
           </Trans>
         </Text>
       </div>
-      <Stack justifyContent="space-between">
-        <Stack gap={2} direction="column">
-          <Stack gap={1} direction="column">
-            <Stack gap={1} alignItems="start">
-              <Switch
-                label={t('link.share.time-range-label', 'Lock time range')}
-                id="share-current-time-range"
-                value={useLockedTime}
-                onChange={model.onToggleLockedTime}
-              />
-              <Label
-                description={t(
-                  'link.share.time-range-description',
-                  'Change the current relative time range to an absolute time range'
-                )}
-              >
-                <Trans i18nKey="link.share.time-range-label">Lock time range</Trans>
-              </Label>
-            </Stack>
-            <Stack gap={1} alignItems="start">
-              <Switch
-                id="share-short-url"
-                value={useShortUrl}
-                label={t('link.share.short-url-label', 'Shorten link')}
-                onChange={model.onUrlShorten}
-              />
-              <Label>
-                <Trans i18nKey="link.share.short-url-label">Shorten link</Trans>
-              </Label>
-            </Stack>
-          </Stack>
-          <ThemePicker selectedTheme={selectedTheme} onChange={model.onThemeChange} />
-        </Stack>
-        {isBuildUrlLoading && <Spinner />}
-      </Stack>
+      <ShareInternallyConfiguration
+        useLockedTime={useLockedTime}
+        onToggleLockedTime={model.onToggleLockedTime}
+        useShortUrl={useShortUrl}
+        onUrlShorten={model.onUrlShorten}
+        selectedTheme={selectedTheme}
+        onChangeTheme={model.onThemeChange}
+        isLoading={isBuildUrlLoading}
+      />
       <Divider spacing={1} />
       <ClipboardButton
         icon="link"
