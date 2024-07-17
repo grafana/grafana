@@ -219,6 +219,7 @@ const AmRoutes = () => {
 
   return (
     <>
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
         <Tab
           label={'Notification Policies'}
@@ -249,7 +250,6 @@ const AmRoutes = () => {
           <>
             {policyTreeTabActive && (
               <>
-                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
