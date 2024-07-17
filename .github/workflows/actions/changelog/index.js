@@ -292,10 +292,10 @@ ${items
   `;
 
   // Render all present sections for the given changelog
-  return `${section('Breaking changes', changelog.breaking)}
+  return `${section('Features and enhancements', changelog.features)}
 ${section('Bug fixes', changelog.bugfixes)}
+${section('Breaking changes', changelog.breaking)}
 ${section('Plugin development fixes & changes', changelog.plugins)}
-${section('Features and enhancements', changelog.features)}
 `;
 };
 
