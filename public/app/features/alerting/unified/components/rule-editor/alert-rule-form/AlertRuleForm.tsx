@@ -32,7 +32,7 @@ import {
   useAddRuleToRuleGroup,
   useMoveRuleToRuleGroup,
   useUpdateRuleInRuleGroup,
-} from '../../../hooks/ruleGroup/useUpsertRuleToRuleGroup';
+} from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
   MANUAL_ROUTING_KEY,

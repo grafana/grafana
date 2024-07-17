@@ -167,6 +167,10 @@ export function useRenameRuleGroup() {
   });
 }
 
+/**
+ * Reorder rules within an existing rule group. Pass in an array of swap operations Array<[oldIndex, newIndex]>.
+ * This prevents rules from accidentally being updated and only allows indices to be moved around.
+ */
 export function useReorderRuleForRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
@@ -177,7 +181,6 @@ export function useReorderRuleForRuleGroup() {
     const action = reorderRulesInRuleGroupAction({ swaps });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-    // @TODO re-fetch so we clear cache
     return upsertRuleGroup({
       rulerConfig,
       namespace: namespaceName,
