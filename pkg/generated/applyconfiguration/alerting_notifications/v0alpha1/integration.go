@@ -4,14 +4,18 @@
 
 package v0alpha1
 
+import (
+	json "encoding/json"
+)
+
 // IntegrationApplyConfiguration represents an declarative configuration of the Integration type for use
 // with apply.
 type IntegrationApplyConfiguration struct {
-	DisableResolveMessage *bool           `json:"disableResolveMessage,omitempty"`
-	SecureFields          map[string]bool `json:"SecureFields,omitempty"`
-	Settings              []byte          `json:"settings,omitempty"`
-	Type                  *string         `json:"type,omitempty"`
-	Uid                   *string         `json:"uid,omitempty"`
+	DisableResolveMessage *bool            `json:"disableResolveMessage,omitempty"`
+	SecureFields          map[string]bool  `json:"SecureFields,omitempty"`
+	Settings              *json.RawMessage `json:"settings,omitempty"`
+	Type                  *string          `json:"type,omitempty"`
+	Uid                   *string          `json:"uid,omitempty"`
 }
 
 // IntegrationApplyConfiguration constructs an declarative configuration of the Integration type for use with
@@ -42,13 +46,11 @@ func (b *IntegrationApplyConfiguration) WithSecureFields(entries map[string]bool
 	return b
 }
 
-// WithSettings adds the given value to the Settings field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the Settings field.
-func (b *IntegrationApplyConfiguration) WithSettings(values ...byte) *IntegrationApplyConfiguration {
-	for i := range values {
-		b.Settings = append(b.Settings, values[i])
-	}
+// WithSettings sets the Settings field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Settings field is set to the value of the last call.
+func (b *IntegrationApplyConfiguration) WithSettings(value json.RawMessage) *IntegrationApplyConfiguration {
+	b.Settings = &value
 	return b
 }
 

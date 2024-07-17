@@ -513,7 +513,8 @@ type Cfg struct {
 	AlertingMinInterval         int64
 
 	// Explore UI
-	ExploreEnabled bool
+	ExploreEnabled           bool
+	ExploreDefaultTimeOffset string
 
 	// Help UI
 	HelpEnabled bool
@@ -1172,6 +1173,14 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	explore := iniFile.Section("explore")
 	cfg.ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	exploreDefaultTimeOffset := valueAsString(explore, "defaultTimeOffset", "1h")
+	// we want to ensure the value parses as a duration, but we send it forward as a string to the frontend
+	if _, err := gtime.ParseDuration(exploreDefaultTimeOffset); err != nil {
+		return err
+	} else {
+		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
+	}
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)

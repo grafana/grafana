@@ -76,7 +76,7 @@ export const ActionRow = ({
       : [];
 
   return (
-    <div className={styles.actionRow}>
+    <Stack justifyContent="space-between" alignItems="center">
       <Stack gap={2} alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.panelTitleSearch && (
@@ -129,7 +129,7 @@ export const ActionRow = ({
           isClearable
         />
       </Stack>
-    </div>
+    </Stack>
   );
 };
 
@@ -137,21 +137,10 @@ ActionRow.displayName = 'ActionRow';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    actionRow: css`
-      display: none;
-
-      ${theme.breakpoints.up('md')} {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-bottom: ${theme.spacing(2)};
-        width: 100%;
-      }
-    `,
-    checkboxWrapper: css`
-      label {
-        line-height: 1.2;
-      }
-    `,
+    checkboxWrapper: css({
+      label: {
+        lineHeight: '1.2',
+      },
+    }),
   };
 };
