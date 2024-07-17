@@ -30,7 +30,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.IsTarget = cloudMigration.Key("is_target").MustBool(false)
 	cfg.CloudMigration.GcomAPIToken = cloudMigration.Key("gcom_api_token").MustString("")
 	cfg.CloudMigration.SnapshotFolder = cloudMigration.Key("snapshot_folder").MustString("")
-	cfg.CloudMigration.GMSDomain = cloudMigration.Key("domain").MustString("grafana.net")
+	cfg.CloudMigration.GMSDomain = cloudMigration.Key("domain").MustString("")
 	cfg.CloudMigration.GMSValidateKeyTimeout = cloudMigration.Key("validate_key_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.GMSStartSnapshotTimeout = cloudMigration.Key("start_snapshot_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.GMSGetSnapshotStatusTimeout = cloudMigration.Key("get_snapshot_status_timeout").MustDuration(5 * time.Second)
