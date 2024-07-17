@@ -49,7 +49,7 @@ jobs:
             # Replace the content between START and END delimiters
             echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
             sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
-                   -e '/${{ inputs.version }} START/r changelog_items.md' CHANGELOG.md
+                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
           else
             # Prepend changelog part to the main changelog file
             echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
