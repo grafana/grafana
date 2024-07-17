@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
-import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
+import { LocationService, locationService, BackendSrv, config } from '@grafana/runtime';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
@@ -40,4 +40,19 @@ export function useReturnToPreviousInternal() {
     },
     [chrome]
   );
+}
+
+const SINGLE_HEADER_BAR_HEIGHT = 40;
+
+export function useChromeHeaderHeight() {
+  const { chrome } = useGrafana();
+  const { kioskMode, searchBarHidden, chromeless } = chrome.useState();
+
+  if (kioskMode || chromeless || !config.featureToggles.bodyScrolling) {
+    return 0;
+  } else if (searchBarHidden) {
+    return SINGLE_HEADER_BAR_HEIGHT;
+  } else {
+    return SINGLE_HEADER_BAR_HEIGHT * 2;
+  }
 }

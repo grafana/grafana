@@ -5,6 +5,9 @@ import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
+  // TODO can we get the feature toggle in a better way?
+  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
+
   return css({
     html: {
       MsOverflowStyle: 'scrollbar',
@@ -23,10 +26,26 @@ export function getElementStyles(theme: GrafanaTheme2) {
     body: {
       height: '100%',
       width: '100%',
-      position: 'absolute',
+      position: isBodyScrolling ? 'unset' : 'absolute',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
-      ...getVariantStyles(theme.typography.body),
+      ...theme.typography.body,
+      ...(isBodyScrolling && {
+        // react select tries prevent scrolling by setting overflow/padding-right on the body
+        // Need type assertion here due to the use of !important
+        // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        overflowY: 'scroll !important' as 'scroll',
+        paddingRight: '0 !important',
+        '@media print': {
+          overflow: 'visible',
+        },
+        '@page': {
+          margin: 0,
+          size: 'auto',
+          padding: 0,
+        },
+      }),
     },
 
     'h1, .h1': getVariantStyles(theme.typography.h1),

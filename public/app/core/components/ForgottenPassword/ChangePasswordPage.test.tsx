@@ -11,6 +11,7 @@ jest.mock('@grafana/runtime', () => ({
     post: postMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     loginError: false,
     buildInfo: {
       version: 'v1.0',
