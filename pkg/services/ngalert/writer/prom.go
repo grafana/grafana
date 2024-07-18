@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -98,6 +99,7 @@ type HttpClientProvider interface {
 
 type PrometheusWriter struct {
 	client  promremote.Client
+	clock   clock.Clock
 	logger  log.Logger
 	metrics *metrics.RemoteWriter
 }
@@ -105,6 +107,7 @@ type PrometheusWriter struct {
 func NewPrometheusWriter(
 	settings setting.RecordingRuleSettings,
 	httpClientProvider HttpClientProvider,
+	clock clock.Clock,
 	tracer tracing.Tracer,
 	l log.Logger,
 	metrics *metrics.RemoteWriter,
@@ -145,6 +148,7 @@ func NewPrometheusWriter(
 
 	return &PrometheusWriter{
 		client:  client,
+		clock:   clock,
 		logger:  l,
 		metrics: metrics,
 	}, nil
@@ -205,9 +209,9 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	l.Debug("Writing metric", "name", name)
-	writeStart := time.Now()
+	writeStart := w.clock.Now()
 	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
-	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(time.Since(writeStart).Seconds())
+	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(w.clock.Now().Sub(writeStart).Seconds())
 
 	lvs = append(lvs, fmt.Sprint(res.StatusCode))
 	w.metrics.WritesTotal.WithLabelValues(lvs...).Inc()
