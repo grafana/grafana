@@ -41,7 +41,6 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-	rest.Watcher
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -55,7 +54,6 @@ type LegacyStorage interface {
 	rest.CollectionDeleter
 	rest.TableConvertor
 	rest.Getter
-	rest.Watcher
 }
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.

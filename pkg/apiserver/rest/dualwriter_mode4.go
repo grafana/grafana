@@ -6,7 +6,6 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -103,11 +102,12 @@ func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion
 	return res, err
 }
 
-func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	var method = "watch"
-	d.Log.WithValues("kind", options.Kind, "method", method, "mode", mode4Str).Info("starting to watch")
-	return d.Storage.Watch(ctx, options)
-}
+//TODO: uncomment when storage watch is implemented
+// func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+// 	var method = "watch"
+// 	d.Log.WithValues("kind", options.Kind, "method", method, "mode", mode4Str).Info("starting to watch")
+// 	return d.Storage.Watch(ctx, options)
+// }
 
 func (d *DualWriterMode4) Destroy() {
 	d.Storage.Destroy()
