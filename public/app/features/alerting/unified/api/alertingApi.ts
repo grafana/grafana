@@ -1,5 +1,5 @@
-import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
-import { defaultsDeep } from 'lodash';
+import { BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
+import { defaultsDeep, omit } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
@@ -82,6 +82,11 @@ export const backendSrvBaseQuery =
 export const alertingApi = createApi({
   reducerPath: 'alertingApi',
   baseQuery: backendSrvBaseQuery(),
+  serializeQueryArgs: (args) => {
+    // alright so here's the deal –
+    // @TODO move all of the toast / message stuff outside of the base query as any configuration for its behaviour is now part of the cache key :(
+    return defaultSerializeQueryArgs(omit(args, 'queryArgs.requestOptions'));
+  },
   tagTypes: [
     'AlertingConfiguration',
     'AlertmanagerConfiguration',

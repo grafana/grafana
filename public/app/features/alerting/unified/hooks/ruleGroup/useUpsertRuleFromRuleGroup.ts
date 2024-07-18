@@ -1,5 +1,4 @@
 import { produce } from 'immer';
-import { uniq } from 'lodash';
 
 import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
@@ -54,7 +53,7 @@ export function useUpdateRuleInRuleGroup() {
 
   return useAsync(
     async (ruleGroup: RuleGroupIdentifier, ruleIdentifier: EditableRuleIdentifier, ruleDefinition: PostableRuleDTO) => {
-      const { dataSourceName, namespaceName } = ruleGroup;
+      const { namespaceName } = ruleGroup;
       const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
 
       const action = updateRuleAction({ identifier: ruleIdentifier, rule: finalRuleDefinition });
@@ -66,9 +65,6 @@ export function useUpdateRuleInRuleGroup() {
         payload: newRuleGroupDefinition,
         requestOptions: { successMessage: updateSuccessMessage },
       }).unwrap();
-
-      // @TODO remove
-      await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
 
       return result;
     }
@@ -111,16 +107,6 @@ export function useMoveRuleToRuleGroup() {
       if (!isGrafanaRuleIdentifier(ruleIdentifier)) {
         await deleteRuleFromGroup.execute(currentRuleGroup, ruleIdentifier);
       }
-
-      // @TODO remove when RTKQ tags
-      const refetchDataSources = uniq([currentRuleGroup.dataSourceName, targetRuleGroup.dataSourceName]).map(
-        (rulesSourceName) => {
-          return dispatch(fetchRulerRulesAction({ rulesSourceName }));
-        }
-      );
-
-      // using all-settled because we don't care if this fails, that doesn't incidate that the move itself has failed
-      await Promise.allSettled(refetchDataSources);
 
       return result;
     }

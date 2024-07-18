@@ -284,7 +284,13 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           { successMessage }
         );
       },
-      invalidatesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
+      invalidatesTags: (result, _error, { namespace, payload }) => [
+        { type: 'RuleNamespace', id: namespace },
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${payload.name}`,
+        },
+      ],
     }),
 
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({

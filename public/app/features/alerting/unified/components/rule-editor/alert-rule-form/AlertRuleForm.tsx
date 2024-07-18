@@ -173,6 +173,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           ruleIdentifier,
           ruleDefinition
         );
+
+        // since we can't be sure that the rule has been deployed instantly we redirect to the list view instead
+        locationService.push('/alerting/list');
       }
     }
 
