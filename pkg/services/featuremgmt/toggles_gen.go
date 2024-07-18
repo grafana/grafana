@@ -730,4 +730,8 @@ const (
 	// FlagDashboardRestoreUI
 	// Enables the frontend to be able to restore a recently deleted dashboard
 	FlagDashboardRestoreUI = "dashboardRestoreUI"
+
+	// FlagNewVizLegend
+	// Enchanced legend for visualizations
+	FlagNewVizLegend = "newVizLegend"
 )

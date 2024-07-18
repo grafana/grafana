@@ -199,4 +199,5 @@ export interface FeatureToggles {
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
   dashboardRestoreUI?: boolean;
+  newVizLegend?: boolean;
 }

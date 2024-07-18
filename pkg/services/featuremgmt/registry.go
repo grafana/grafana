@@ -1360,6 +1360,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false", // enabled by default
 		},
+		{
+			Name:         "newVizLegend",
+			Description:  "Enchanced legend for visualizations",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
 	}
 )
 

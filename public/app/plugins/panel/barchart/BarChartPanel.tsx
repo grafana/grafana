@@ -14,10 +14,11 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { config } from 'app/core/config';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
-import { hasVisibleLegendSeries } from './BarChartLegend';
+import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
 import { prepConfig, prepSeries } from './utils';
 
@@ -146,8 +147,17 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     );
   }
 
-  const legendComponent =
-    legend.showLegend && hasVisibleLegendSeries(data.series) ? <VizLegend2 data={data.series} {...legend} /> : null;
+  let legendComponent = null;
+
+  if (config.featureToggles.newVizLegend) {
+    legendComponent =
+      legend.showLegend && hasVisibleLegendSeries(data.series) ? <VizLegend2 data={data.series} {...legend} /> : null;
+  } else {
+    legendComponent =
+      legend.showLegend && hasVisibleLegendSeries(info.series!) ? (
+        <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
+      ) : null;
+  }
 
   return (
     <VizLayout width={props.width} height={props.height} legend={legendComponent}>
