@@ -489,7 +489,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	hs.log.Info("Plugin %s uninstall requested", "pluginId", pluginID, "user", c.Login)
+	hs.log.Info("Plugin uninstall requested", "pluginId", pluginID, "user", c.Login)
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
