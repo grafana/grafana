@@ -170,7 +170,7 @@ Geomaps need a source of geographical data gathered from a data source query whi
 
 ### Location mode
 
-There are four options to map the data returned by the selected query.
+There are four options to map the data returned by the selected query:
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”
