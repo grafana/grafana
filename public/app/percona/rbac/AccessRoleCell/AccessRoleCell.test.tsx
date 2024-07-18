@@ -13,6 +13,8 @@ import { stubRoles, stubUsers, stubUserSingleRole, stubUsersMap, subUserMultiple
 
 import AccessRoleCell from './AccessRoleCell';
 
+jest.mock('app/percona/shared/services/roles/Roles.service');
+
 const wrapWithProvider = (element: ReactElement, enableAccessControl = true) => (
   <Provider
     store={configureStore({
@@ -95,9 +97,11 @@ describe('AccessRoleCell', () => {
     const assignRoleActionSpy = jest.spyOn(RolesReducer, 'assignRoleAction');
     render(wrapWithProvider(<AccessRoleCell user={subUserMultipleRoles} />));
 
-    const removeButton = screen.getAllByLabelText('Remove')[0];
+    const removeButtons = screen.getAllByLabelText('Remove');
 
-    await waitFor(() => removeButton.click());
+    expect(removeButtons).toHaveLength(2);
+
+    await waitFor(() => removeButtons[0].click());
 
     expect(assignRoleActionSpy).toHaveBeenCalledWith({
       userId: 3,
