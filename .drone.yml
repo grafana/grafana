@@ -2672,8 +2672,26 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --version-tag
-    ${DRONE_TAG}
+  - "\n    debug=\n    if [[ -n $${DRY_RUN} ]];  then debug=echo; fi\n    docker login
+    -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
+    images\n    $debug docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $debug docker push grafana/grafana-image-tags:$${TAG}-armv7\n
+    \   $debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $debug docker
+    push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n    # Create the grafana
+    manifests\n    $debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64
+    \      grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7\n\n
+    \   $debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
+    \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then\n        $debug
+    docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64
+    \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
+    \       $debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \       $debug docker manifest push grafana/grafana:latest\n        $debug docker
+    manifest push grafana/grafana:latest-ubuntu\n\n    fi\n    "
   depends_on:
   - fetch-images
   environment:
@@ -2681,15 +2699,7 @@ steps:
       from_secret: docker_password
     DOCKER_USER:
       from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk:431.0.0
+  image: docker:27-cli
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -2722,6 +2732,100 @@ trigger:
   - promote
   target:
   - public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: manually-publish-docker-public
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.22.4-alpine
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition oss
+  depends_on:
+  - compile-build-cmd
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_grafanauploads
+  image: google/cloud-sdk:431.0.0
+  name: fetch-images
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - "\n    debug=\n    if [[ -n $${DRY_RUN} ]];  then debug=echo; fi\n    docker login
+    -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
+    images\n    $debug docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $debug docker push grafana/grafana-image-tags:$${TAG}-armv7\n
+    \   $debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $debug docker
+    push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n    # Create the grafana
+    manifests\n    $debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64
+    \      grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7\n\n
+    \   $debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
+    \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then\n        $debug
+    docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64
+    \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
+    \       $debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \       $debug docker manifest push grafana/grafana:latest\n        $debug docker
+    manifest push grafana/grafana:latest-ubuntu\n\n    fi\n    "
+  depends_on:
+  - fetch-images
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+  image: docker:27-cli
+  name: publish-images-grafana
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+  - promote
+  target:
+  - publish-docker-public
 type: docker
 volumes:
 - host:
@@ -4930,6 +5034,7 @@ steps:
   - name: config
     path: /root/.docker/
 - commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:27-cli
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.22.4-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
@@ -4966,6 +5071,7 @@ steps:
   - name: config
     path: /root/.docker/
 - commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL docker:27-cli
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.22.4-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:20.9.0-alpine
@@ -5223,6 +5329,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b5fcc6ae02e0b3367e4153e1e64bf599e934a75be2db574b805606204aa4d2d4
+hmac: 542c04f476c1edd5f3006b10f3b129ab0dcc3cef1688976b474f53c7686812da
 
 ...
