@@ -357,7 +357,7 @@ func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, 
 	start := a.clock.Now()
 
 	evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), a.newLoadedMetricsReader(e.rule))
-	ruleEval, err := a.evalFactory.Create(evalCtx, e.rule.GetEvalCondition())
+	ruleEval, err := a.evalFactory.Create(evalCtx, e.rule.GetEvalCondition().WithSource("scheduler").WithFolder(e.folderTitle))
 	var results eval.Results
 	var dur time.Duration
 	if err != nil {

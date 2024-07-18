@@ -74,15 +74,6 @@ func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFun
 	return ss.withDbSession(ctx, ss.engine, callback)
 }
 
-// WithNewDbSession calls the callback with a new session that is closed upon completion.
-// In case of sqlite3.ErrLocked or sqlite3.ErrBusy failure it will be retried at most five times before giving up.
-func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
-	defer sess.Close()
-	retry := 0
-	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
-}
-
 func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc, sess *DBSession, retry int) func() (retryer.RetrySignal, error) {
 	return func() (retryer.RetrySignal, error) {
 		retry++
