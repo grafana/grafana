@@ -4,11 +4,18 @@ import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/dist/query';
 import { generatedAPI } from './endpoints.gen';
 
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
-  addTagTypes: ['cloud-migration-session', 'cloud-migration-snapshot'],
+  addTagTypes: ['cloud-migration-token', 'cloud-migration-session', 'cloud-migration-snapshot'],
 
   endpoints: {
     // Cloud-side - create token
-    createCloudMigrationToken: suppressErrorsOnQuery,
+    createCloudMigrationToken(endpoint) {
+      suppressErrorsOnQuery(endpoint);
+      endpoint.invalidatesTags = ['cloud-migration-token'];
+    },
+    getCloudMigrationToken(endpoint) {
+      suppressErrorsOnQuery(endpoint);
+      endpoint.providesTags = ['cloud-migration-token'];
+    },
 
     // List Cloud Configs
     getSessionList: {

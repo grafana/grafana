@@ -126,7 +126,7 @@ export interface FetchError<T = any> {
   traceId?: string;
 }
 
-export function isFetchError(e: unknown): e is FetchError {
+export function isFetchError<T = any>(e: unknown): e is FetchError<T> {
   return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }
 
