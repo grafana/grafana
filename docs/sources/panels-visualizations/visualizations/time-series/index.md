@@ -34,8 +34,6 @@ title: Time series
 menuTitle: Time series
 weight: 10
 refs:
-<<<<<<< HEAD
-=======
   configure-standard-options:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
@@ -51,32 +49,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/#add-a-field-override
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/#add-a-field-override
->>>>>>> e3150b4eb8c (Docs: Refactor time series page - part 1 (#90098))
   configure-field-overrides:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
-<<<<<<< HEAD
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
-  add-a-field-override:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/#add-a-field-override
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/#add-a-field-override
-  configure-standard-options:
-=======
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
   link-alert:
->>>>>>> e3150b4eb8c (Docs: Refactor time series page - part 1 (#90098))
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
-  color-scheme:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
 ---
 
 # Time series
