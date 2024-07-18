@@ -16,8 +16,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
-	sqltemplateMocks "github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate/mocks"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	sqltemplateMocks "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 

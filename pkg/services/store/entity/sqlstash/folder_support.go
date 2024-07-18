@@ -8,7 +8,7 @@ import (
 
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 type folderInfo struct {

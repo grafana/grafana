@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"path"
-	"path/filepath"
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
-	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var (
@@ -272,27 +270,11 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 	case grafanaapiserveroptions.StorageTypeUnifiedNext:
-		// CDK (for now)
-		dir := filepath.Join(s.cfg.DataPath, "unistore", "resource")
-		if err := os.MkdirAll(dir, 0o750); err != nil {
-			return err
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		bucket, err := fileblob.OpenBucket(dir, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		if err != nil {
-			return err
-		}
-		backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-			Tracer: s.tracing,
-			Bucket: bucket,
-		})
-		if err != nil {
-			return err
-		}
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: backend})
+		server, err := sql.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
