@@ -590,15 +590,15 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 	convertToResources := func() error {
 		for _, group := range body.Groups {
 			gr := group
-			toHashedGruopIdx := append([]byte(gr.Name), []byte(gr.FolderUID)...)
-			hash, err := fnv.New64().Write(toHashedGruopIdx)
-			if err != nil {
-				resources = append(resources, hcl.Resource{
+           sum := fnv.New64()
+           _, _ = sum.Write([]byte(gr.Name))
+           _, _ = sum.Write([]byte(gr.FolderUID))
+           hash := sum.Sum64()
+           resources = append(resources, hcl.Resource{
 					Type: "grafana_rule_group",
 					Name: fmt.Sprintf("rule_group_%016x", hash),
 					Body: &gr,
 				})
-			}
 
 		}
 		for idx, cp := range body.ContactPoints {
