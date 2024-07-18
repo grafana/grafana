@@ -37,8 +37,21 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Separate folders from dashboards
+	folderUids := make([]string, 0)
+	for i := 0; i < len(dashboards); {
+		d := dashboards[i]
+		if d.IsFolder {
+			// Treat it as a folder and remove from the dashboard list
+			folderUids = append(folderUids, d.UID)
+			dashboards = append(dashboards[:i], dashboards[i+1:]...)
+			continue
+		}
+		i++
+	}
+
 	// Folders
-	folders, err := s.getFolders(ctx, signedInUser, dashboards)
+	folders, err := s.getFolders(ctx, signedInUser, folderUids)
 	if err != nil {
 		s.log.Error("Failed to get folders", "err", err)
 		return nil, err
@@ -127,15 +140,8 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 	return result, err
 }
 
-func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUser, userDashboards []dashboards.Dashboard) ([]folder.Folder, error) {
-	folderUIDs := make([]string, 0)
-	for _, dashboard := range userDashboards {
-		if dashboard.IsFolder {
-			folderUIDs = append(folderUIDs, dashboard.UID)
-		}
-	}
-
-	// GetFolders return only folders available to user. So we can use is to check access.
+func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) ([]folder.CreateFolderCommand, error) {
+	// GetFolders return only folders available to user. So we can use this to check access.
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUIDs,
 		SignedInUser:     signedInUser,
@@ -145,9 +151,14 @@ func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUse
 		return nil, err
 	}
 
-	result := make([]folder.Folder, len(folders))
-	for i, folder := range folders {
-		result[i] = *folder
+	result := make([]folder.CreateFolderCommand, len(folders))
+	for i, f := range folders {
+		result[i] = folder.CreateFolderCommand{
+			UID:         f.UID,
+			Title:       f.Title,
+			Description: f.Description,
+			ParentUID:   f.ParentUID,
+		}
 	}
 
 	return result, nil
