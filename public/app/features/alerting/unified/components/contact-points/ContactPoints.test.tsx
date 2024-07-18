@@ -15,7 +15,8 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
-import ContactPoints, { ContactPoint } from './ContactPoints';
+import { ContactPoint } from './ContactPoint';
+import ContactPointsPageContents from './ContactPoints';
 import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
 import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
@@ -43,12 +44,12 @@ const server = setupMswServer();
 
 const renderWithProvider = (
   providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>,
-  contactPointProps?: Partial<ComponentProps<typeof ContactPoints>>
+  contactPointProps?: Partial<ComponentProps<typeof ContactPointsPageContents>>
 ) =>
   render(
     <TestProvider>
       <AlertmanagerProvider accessType={'notification'} {...providerProps}>
-        <ContactPoints {...contactPointProps} />
+        <ContactPointsPageContents {...contactPointProps} />
       </AlertmanagerProvider>
     </TestProvider>
   );
@@ -272,7 +273,7 @@ describe('contact points', () => {
     it('should be able to search', async () => {
       renderWithProvider();
 
-      const searchInput = screen.getByRole('textbox', { name: 'search contact points' });
+      const searchInput = await screen.findByRole('textbox', { name: 'search contact points' });
       await userEvent.type(searchInput, 'slack');
       expect(searchInput).toHaveValue('slack');
 
@@ -370,7 +371,7 @@ describe('contact points', () => {
             accessType={'notification'}
             alertmanagerSourceName={VANILLA_ALERTMANAGER_DATASOURCE_UID}
           >
-            <ContactPoints />
+            <ContactPointsPageContents />
           </AlertmanagerProvider>
         </TestProvider>
       );
