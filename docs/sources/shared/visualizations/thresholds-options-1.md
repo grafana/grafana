@@ -10,10 +10,10 @@ A threshold is a value or limit you set for a metric that’s reflected visually
 
 Set the following options:
 
-- **Value** - Set the value for each threshold.
-- **Thresholds mode** - Choose from:
-  - **Absolute**
-  - **Percentage**
-- **Show thresholds** - Choose from a variety of display options including not displaying thresholds at all.
+| Option          | Description                                                                          |
+| --------------- | ------------------------------------------------------------------------------------ |
+| Value           | Set the value for each threshold.                                                    |
+| Thresholds mode | Choose from **Absolute** and **Percentage**.                                         |
+| Show thresholds | Choose from a variety of display options including not displaying thresholds at all. |
 
 To learn more, refer to [Configure thresholds](../../configure-thresholds/).
