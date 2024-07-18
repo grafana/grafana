@@ -57,13 +57,13 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         ...filters.map((filter) => {
           if (filter.config.id === ValueMatcherID.between) {
             let valueFrom = filter.config.options.from;
-            let valueTo = filter.config.options.from;
+            let valueTo = filter.config.options.to;
 
             if (typeof filter.config.options.from === 'string') {
-              valueFrom = ctx.interpolate(filter.config.options.from);
+              valueFrom = ctx.interpolate(valueFrom);
             }
             if (typeof filter.config.options.to === 'string') {
-              valueTo = ctx.interpolate(filter.config.options.to);
+              valueTo = ctx.interpolate(valueTo);
             }
 
             return {
