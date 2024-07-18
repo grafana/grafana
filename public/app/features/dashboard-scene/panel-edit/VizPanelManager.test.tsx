@@ -185,6 +185,84 @@ mockTransformationsRegistry([calculateFieldTransformer]);
 jest.useFakeTimers();
 
 describe('VizPanelManager', () => {
+  describe('When changing plugin', () => {
+    it('Should set the cache', () => {
+      const { vizPanelManager } = setupTest('panel-1');
+      vizPanelManager.state.panel.changePluginType = jest.fn();
+
+      expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
+
+      vizPanelManager.changePluginType('table');
+
+      expect(vizPanelManager['_cachedPluginOptions']['timeseries']?.options).toBe(
+        vizPanelManager.state.panel.state.options
+      );
+      expect(vizPanelManager['_cachedPluginOptions']['timeseries']?.fieldConfig).toBe(
+        vizPanelManager.state.panel.state.fieldConfig
+      );
+    });
+
+    it('Should preserve correct field config', () => {
+      const { vizPanelManager } = setupTest('panel-1');
+      const mockFn = jest.fn();
+      vizPanelManager.state.panel.changePluginType = mockFn;
+      const fieldConfig = vizPanelManager.state.panel.state.fieldConfig;
+      fieldConfig.defaults = {
+        ...fieldConfig.defaults,
+        unit: 'flop',
+        decimals: 2,
+      };
+      fieldConfig.overrides = [
+        {
+          matcher: {
+            id: 'byName',
+            options: 'A-series',
+          },
+          properties: [
+            {
+              id: 'displayName',
+              value: 'test',
+            },
+          ],
+        },
+        {
+          matcher: { id: 'byName', options: 'D-series' },
+          //should be removed because it's custom
+          properties: [
+            {
+              id: 'custom.customPropNoExist',
+              value: 'google',
+            },
+          ],
+        },
+      ];
+      vizPanelManager.state.panel.setState({
+        fieldConfig: fieldConfig,
+      });
+
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.color?.mode).toBe('palette-classic');
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.thresholds?.mode).toBe('absolute');
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.unit).toBe('flop');
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.decimals).toBe(2);
+      expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toHaveLength(2);
+      expect(vizPanelManager.state.panel.state.fieldConfig.overrides[1].properties).toHaveLength(1);
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toHaveProperty('axisBorderShow');
+
+      vizPanelManager.changePluginType('table');
+
+      expect(mockFn).toHaveBeenCalled();
+      expect(mockFn.mock.calls[0][2].defaults.color?.mode).toBe('palette-classic');
+      expect(mockFn.mock.calls[0][2].defaults.thresholds?.mode).toBe('absolute');
+      expect(mockFn.mock.calls[0][2].defaults.unit).toBe('flop');
+      expect(mockFn.mock.calls[0][2].defaults.decimals).toBe(2);
+      expect(mockFn.mock.calls[0][2].overrides).toHaveLength(2);
+      //removed custom property
+      expect(mockFn.mock.calls[0][2].overrides[1].properties).toHaveLength(0);
+      //removed fieldConfig custom values as well
+      expect(mockFn.mock.calls[0][2].defaults.custom).toStrictEqual({});
+    });
+  });
+
   describe('library panels', () => {
     it('saves library panels on commit', () => {
       const panel = new VizPanel({
