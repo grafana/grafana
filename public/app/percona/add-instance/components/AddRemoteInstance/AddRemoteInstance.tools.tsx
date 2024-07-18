@@ -3,6 +3,7 @@ import { Databases } from 'app/percona/shared/core';
 import { logger } from 'app/percona/shared/helpers/logger';
 
 import { InstanceAvailableType, INSTANCE_TYPES_LABELS } from '../../panel.types';
+import { DiscoverAzureDatabaseType, DiscoverRDSEngine } from '../Discovery/Discovery.types';
 
 import { DEFAULT_PORTS } from './AddRemoteInstance.constants';
 import { InstanceData } from './AddRemoteInstance.types';
@@ -31,19 +32,19 @@ const getAzureCredentials = (credentials: any, instanceType: string) => {
   switch (instanceType) {
     case Databases.postgresql:
       instance.instanceType = INSTANCE_TYPES_LABELS[Databases.postgresql];
-      instance.discoverName = 'DISCOVER_AZURE_DATABASE_TYPE_POSTGRESQL';
+      instance.discoverName = DiscoverAzureDatabaseType.POSTGRESQL;
       instance.remoteInstanceCredentials.port =
         instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.postgresql];
       break;
     case Databases.mysql:
       instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mysql];
-      instance.discoverName = 'DISCOVER_AZURE_DATABASE_TYPE_MYSQL';
+      instance.discoverName = DiscoverAzureDatabaseType.MYSQL;
       instance.remoteInstanceCredentials.port =
         instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.mysql];
       break;
     case Databases.mariadb:
       instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mariadb];
-      instance.discoverName = 'DISCOVER_AZURE_DATABASE_TYPE_MARIADB';
+      instance.discoverName = DiscoverAzureDatabaseType.MARIADB;
       instance.remoteInstanceCredentials.port =
         instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.mysql];
       break;
@@ -72,13 +73,13 @@ const getRDSCredentials = (credentials: any, instanceType: InstanceAvailableType
   switch (instanceType) {
     case Databases.postgresql:
       instance.instanceType = INSTANCE_TYPES_LABELS[Databases.postgresql];
-      instance.discoverName = 'DISCOVER_RDS_POSTGRESQL';
+      instance.discoverName = DiscoverRDSEngine.POSTGRESQL;
       instance.remoteInstanceCredentials.port =
         instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.postgresql];
       break;
     case Databases.mysql:
       instance.instanceType = INSTANCE_TYPES_LABELS[Databases.mysql];
-      instance.discoverName = 'DISCOVER_RDS_MYSQL';
+      instance.discoverName = DiscoverRDSEngine.MYSQL;
       instance.remoteInstanceCredentials.port =
         instance.remoteInstanceCredentials.port || DEFAULT_PORTS[Databases.mysql];
       break;

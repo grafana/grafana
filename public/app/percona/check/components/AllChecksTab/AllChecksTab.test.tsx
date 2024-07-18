@@ -69,7 +69,7 @@ describe('AllChecksTab::', () => {
         store={configureStore({
           percona: {
             user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+            settings: { result: { advisorEnabled: true, isConnectedToPortal: false } },
             advisors: {
               loading: false,
               result: advisorsArray,
@@ -193,7 +193,7 @@ const AllChecksTabTesting = () => {
       store={configureStore({
         percona: {
           user: { isAuthorized: true, isPlatformUser: false },
-          settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          settings: { result: { advisorEnabled: true, isConnectedToPortal: false } },
           advisors: {
             loading: false,
             result: advisorsArray,

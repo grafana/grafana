@@ -1,8 +1,7 @@
+import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { payloadToCamelCase } from 'app/percona/shared/helpers/payloadToCamelCase';
 import {
-  AddCustomLabelsBody,
   ListServicesBody,
-  RemoveCustomLabelsBody,
   RemoveServiceBody,
   Service,
   ServiceListPayload,
@@ -56,58 +55,10 @@ export const toUpdateServiceBody = ({ serviceId, labels, current }: UpdateServic
   replication_set: toLabelValue(current.replication_set, labels.replication_set),
 });
 
-export const toCustomLabelsBodies = (params: UpdateServiceParams): [AddCustomLabelsBody, RemoveCustomLabelsBody] => {
-  const original = params.current.custom_labels;
-
-  if (!original) {
-    return [
-      {
-        service_id: params.serviceId,
-        custom_labels: params.custom_labels,
-      },
-      {
-        service_id: params.serviceId,
-        custom_label_keys: [],
-      },
-    ];
-  }
-
-  const toAddOrUpdate: Record<string, string> = {};
-  const toRemove: string[] = [];
-
-  for (const label of Object.keys({
-    ...original,
-    ...params.custom_labels,
-  })) {
-    if (original[label] !== undefined && params.custom_labels[label] === undefined) {
-      toRemove.push(label);
-    } else if (original[label] === undefined && params.custom_labels[label] !== undefined) {
-      toAddOrUpdate[label] = params.custom_labels[label];
-    } else if (original[label] !== params.custom_labels[label]) {
-      toAddOrUpdate[label] = params.custom_labels[label];
-    }
-  }
-
-  return [
-    {
-      service_id: params.serviceId,
-      custom_labels: toAddOrUpdate,
-    },
-    {
-      service_id: params.serviceId,
-      custom_label_keys: toRemove,
-    },
-  ];
-};
-
 export const didStandardLabelsChange = ({ current, labels }: UpdateServiceParams): boolean =>
   current.enviroment !== labels.environment ||
   current.cluster !== labels.cluster ||
   current.replication_set !== labels.replication_set;
-
-export const hasLabelsToAddOrUpdate = (body: AddCustomLabelsBody): boolean => !!Object.keys(body.custom_labels).length;
-
-export const hasLabelsToRemove = (body: RemoveCustomLabelsBody): boolean => !!body.custom_label_keys.length;
 
 export const toDbServicesModel = (serviceList: ServiceListPayload): Service[] => {
   const result: Service[] = [];
@@ -148,3 +99,5 @@ export const toDbServicesModel = (serviceList: ServiceListPayload): Service[] =>
 
   return result;
 };
+
+export const getServiceStatusText = (status: ServiceStatus): string => capitalizeText(status.split('_')[1] || '');

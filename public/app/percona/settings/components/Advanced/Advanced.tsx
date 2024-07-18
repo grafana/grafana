@@ -44,12 +44,12 @@ export const Advanced: FC = () => {
   const { result: settings } = useSelector(getPerconaSettings);
   const dispatch = useAppDispatch();
   const {
-    sttCheckIntervals,
+    advisorRunIntervals: sttCheckIntervals,
     dataRetention,
     telemetryEnabled,
-    updatesDisabled,
+    updatesEnabled,
     backupEnabled,
-    sttEnabled,
+    advisorEnabled: sttEnabled,
     azureDiscoverEnabled,
     publicAddress,
     alertingEnabled,
@@ -100,7 +100,7 @@ export const Advanced: FC = () => {
   const initialValues: AdvancedFormProps = {
     retention: convertSecondsToDays(dataRetention),
     telemetry: telemetryEnabled,
-    updates: !updatesDisabled,
+    updates: updatesEnabled,
     backup: backupEnabled,
     stt: sttEnabled,
     azureDiscover: azureDiscoverEnabled,
@@ -137,23 +137,15 @@ export const Advanced: FC = () => {
 
     const body: AdvancedChangePayload = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
-      disable_telemetry: !telemetry,
       enable_telemetry: telemetry,
-      disable_stt: !stt,
-      enable_stt: stt,
-      disable_azurediscover: !azureDiscover,
+      enable_advisor: stt,
       enable_azurediscover: azureDiscover,
       pmm_public_address: publicAddress,
-      remove_pmm_public_address: !publicAddress,
-      enable_alerting: alerting ? true : undefined,
-      disable_alerting: !alerting ? true : undefined,
-      stt_check_intervals: !!stt ? sttCheckIntervals : undefined,
+      enable_alerting: alerting,
+      advisor_run_intervals: !!stt ? sttCheckIntervals : undefined,
       enable_backup_management: backup,
-      disable_backup_management: !backup,
       enable_updates: updates,
-      disable_updates: !updates,
       enable_access_control: accessControl,
-      disable_access_control: !accessControl,
     };
 
     setLoading(true);

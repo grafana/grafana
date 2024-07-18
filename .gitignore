@@ -220,3 +220,6 @@ public/app/plugins/**/dist/
 
 # Locally enabling the Go race detector until we can globally do so
 .go-race-enabled-locally
+
+# NX
+.nx/cache

@@ -34,10 +34,8 @@ export interface ApiErrorResponse {
 }
 
 export interface PaginatedPayload {
-  page_totals: {
-    total_items: number;
-    total_pages: number;
-  };
+  total_items: number;
+  total_pages: number;
 }
 
 export interface ApiParamBody {

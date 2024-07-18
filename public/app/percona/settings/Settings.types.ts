@@ -19,19 +19,19 @@ export interface AlertingSettings {
   slack: SlackSettings;
 }
 
-export enum SttCheckIntervals {
+export enum AdvisorRunIntervals {
   rareInterval = 'rareInterval',
   standardInterval = 'standardInterval',
   frequentInterval = 'frequentInterval',
 }
 
-export interface SttCheckIntervalsSettings {
-  [SttCheckIntervals.rareInterval]: string;
-  [SttCheckIntervals.standardInterval]: string;
-  [SttCheckIntervals.frequentInterval]: string;
+export interface AdvisorRunIntervalsSettings {
+  [AdvisorRunIntervals.rareInterval]: string;
+  [AdvisorRunIntervals.standardInterval]: string;
+  [AdvisorRunIntervals.frequentInterval]: string;
 }
 
-export interface SttCheckIntervalsPayload {
+export interface AdvisorRunIntervalsPayload {
   rare_interval: string;
   standard_interval: string;
   frequent_interval: string;
@@ -56,21 +56,13 @@ export interface AdvancedPayload {
 
 export interface AdvancedChangePayload extends AdvancedPayload {
   enable_telemetry: boolean;
-  disable_telemetry: boolean;
-  enable_stt: boolean;
-  disable_stt: boolean;
-  remove_pmm_public_address: boolean;
   enable_alerting?: boolean;
-  disable_alerting?: boolean;
+  enable_advisor: boolean;
+  advisor_run_intervals?: AdvisorRunIntervalsPayload;
   enable_backup_management: boolean;
-  disable_backup_management: boolean;
-  disable_azurediscover?: boolean;
   enable_azurediscover?: boolean;
-  stt_check_intervals?: SttCheckIntervalsPayload;
   enable_updates?: boolean;
-  disable_updates?: boolean;
   enable_access_control?: boolean;
-  disable_access_control?: boolean;
 }
 
 export interface MetricsResolutionsPayload {
@@ -100,15 +92,17 @@ export interface SettingsPayload
     EmailPayload,
     SlackPayload,
     SSHPayload {
-  aws_partitions: string[];
+  aws_partitions: {
+    values: string[];
+  };
   platform_email: string;
-  updates_disabled: boolean;
+  enable_updates: boolean;
   telemetry_enabled: boolean;
-  stt_enabled: boolean;
+  advisor_enabled: boolean;
   alerting_enabled: boolean;
   backup_management_enabled: boolean;
   azurediscover_enabled: boolean;
-  stt_check_intervals: SttCheckIntervalsPayload;
+  advisor_run_intervals: AdvisorRunIntervalsPayload;
   connected_to_platform: boolean;
   telemetry_summaries: string[];
   default_role_id: number;
@@ -124,10 +118,10 @@ export type SettingsAPIChangePayload =
   | SSHPayload;
 
 export interface Settings {
-  sttEnabled: boolean;
+  advisorEnabled: boolean;
   backupEnabled: boolean;
   alertingEnabled: boolean;
-  updatesDisabled: boolean;
+  updatesEnabled: boolean;
   telemetryEnabled: boolean;
   metricsResolutions: MetricsResolutions;
   dataRetention: string;
@@ -139,7 +133,7 @@ export interface Settings {
   platformEmail?: string;
   publicAddress?: string;
   alertingSettings: AlertingSettings;
-  sttCheckIntervals: SttCheckIntervalsSettings;
+  advisorRunIntervals: AdvisorRunIntervalsSettings;
   isConnectedToPortal?: boolean;
   telemetrySummaries: string[];
   defaultRoleId: number;

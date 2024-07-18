@@ -7,7 +7,7 @@ import { getCronStringFromValues } from '../shared/helpers/cron/cron';
 import { BackupMode, BackupType, DataModel, RetryMode } from './Backup.types';
 import { AddBackupFormProps } from './components/AddBackupPage/AddBackupPage.types';
 
-const BASE_URL = '/v1/management/backup/Backups';
+const BASE_URL = '/v1/backups';
 
 export const BackupService = {
   backup(values: AddBackupFormProps, token?: CancelToken) {
@@ -98,7 +98,7 @@ export const BackupService = {
     token?: CancelToken
   ) {
     return api.post(
-      `${BASE_URL}/Start`,
+      `${BASE_URL}:start`,
       {
         service_id: serviceId,
         location_id: locationId,
@@ -127,7 +127,7 @@ export const BackupService = {
     dataModel: DataModel,
     folder: string
   ) {
-    return api.post(`${BASE_URL}/Schedule`, {
+    return api.post(`${BASE_URL}:schedule`, {
       service_id: serviceId,
       location_id: locationId,
       cron_expression: cronExpression,
@@ -152,7 +152,7 @@ export const BackupService = {
     retryTimes: number,
     retention: number
   ) {
-    return api.post(`${BASE_URL}/ChangeScheduled`, {
+    return api.put(`${BASE_URL}:changeScheduled`, {
       scheduled_backup_id: id,
       enabled,
       cron_expression: cronExpression,

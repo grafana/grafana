@@ -27,7 +27,7 @@ const MockWrapper: FC<PropsWithChildren> = ({ children }) => {
 
 describe('Contact widget', () => {
   it('render contact when data were fetched successfully', async () => {
-    jest.spyOn(ContactService, 'getContact').mockImplementationOnce((undefined) => {
+    jest.spyOn(ContactService, 'getContact').mockImplementationOnce(() => {
       return Promise.resolve({
         name: 'Test name',
         email: 'test@test.com',

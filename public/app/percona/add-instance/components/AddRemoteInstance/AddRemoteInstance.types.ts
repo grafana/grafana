@@ -221,6 +221,16 @@ export type RemoteInstancePayload =
   | MongoDBPayload
   | ExternalPayload;
 
+export type AddServicePayload = {
+  mysql?: MySQLPayload;
+  mongodb?: MongoDBPayload;
+  postgresql?: PostgreSQLPayload;
+  proxysql?: ProxySQLPayload;
+  haproxy?: HaProxyPayload;
+  external?: ExternalPayload;
+  rds?: RDSPayload;
+};
+
 export interface ErrorResponse {
   error: string;
   code: number;

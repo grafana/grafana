@@ -21,7 +21,7 @@ import {
   getBadgeTextForServiceStatus,
   getBadgeIconForServiceStatus,
   getNodeLink,
-  stripServiceId,
+  getTagsFromLabels,
 } from '../Services.utils';
 import { getStyles } from '../Tabs.styles';
 
@@ -148,7 +148,7 @@ const ServicesTable: FC<ServicesTableProps> = ({
         accessor: 'agentsStatus',
         width: '70px',
         Cell: ({ value, row }) => (
-          <StatusLink type="services" strippedId={stripServiceId(row.original.serviceId)} agentsStatus={value} />
+          <StatusLink type="services" strippedId={row.original.serviceId} agentsStatus={value} />
         ),
         type: FilterFieldTypes.RADIO_BUTTON,
         options: [
@@ -188,11 +188,7 @@ const ServicesTable: FC<ServicesTableProps> = ({
         <DetailsRow>
           {!!agents.length && (
             <DetailsRow.Contents title={Messages.services.details.agents}>
-              <StatusBadge
-                strippedId={stripServiceId(row.original.serviceId)}
-                type={'services'}
-                agents={row.original.agents || []}
-              />
+              <StatusBadge strippedId={row.original.serviceId} type={'services'} agents={row.original.agents || []} />
             </DetailsRow.Contents>
           )}
           <DetailsRow.Contents title={Messages.services.details.serviceId}>
@@ -200,11 +196,7 @@ const ServicesTable: FC<ServicesTableProps> = ({
           </DetailsRow.Contents>
           {!!labelKeys.length && (
             <DetailsRow.Contents title={Messages.services.details.labels} fullRow>
-              <TagList
-                colorIndex={9}
-                className={styles.tagList}
-                tags={labelKeys.map((label) => `${label}=${labels![label]}`)}
-              />
+              <TagList colorIndex={9} className={styles.tagList} tags={getTagsFromLabels(labelKeys, labels)} />
             </DetailsRow.Contents>
           )}
         </DetailsRow>

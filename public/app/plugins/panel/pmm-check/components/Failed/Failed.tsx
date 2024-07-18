@@ -55,7 +55,7 @@ export const Failed: FC = () => {
     );
   }
 
-  if (!settings?.sttEnabled) {
+  if (!settings?.advisorEnabled) {
     return (
       <div className={styles.Empty} data-testid="db-check-panel-settings-link">
         {Messages.featureDisabled}

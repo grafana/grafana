@@ -3,7 +3,7 @@ import { Settings, SettingsAPIChangePayload } from '../Settings.types';
 
 export const SettingsService = jest.genMockFromModule<typeof settingsService>('../Settings.service').SettingsService;
 export const stub: Settings = {
-  updatesDisabled: true,
+  updatesEnabled: false,
   telemetryEnabled: true,
   backupEnabled: false,
   enableAccessControl: false,
@@ -18,7 +18,7 @@ export const stub: Settings = {
   awsPartitions: [],
   alertManagerUrl: 'alert.foo.com',
   alertManagerRules: '',
-  sttEnabled: true,
+  advisorEnabled: true,
   alertingEnabled: true,
   alertingSettings: {
     email: {
@@ -31,7 +31,7 @@ export const stub: Settings = {
       url: 'slack.foo.com',
     },
   },
-  sttCheckIntervals: {
+  advisorRunIntervals: {
     rareInterval: '10s',
     standardInterval: '10s',
     frequentInterval: '10s',

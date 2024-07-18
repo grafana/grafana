@@ -6,11 +6,11 @@ import { BackupLogResponse, BackupLogs } from '../../Backup.types';
 
 import { Restore, RestoreResponse } from './RestoreHistory.types';
 
-const BASE_URL = '/v1/management/backup';
+const BASE_URL = '/v1/backups';
 
 export const RestoreHistoryService = {
-  async list(token?: CancelToken): Promise<Restore[]> {
-    const { items = [] } = await api.post<RestoreResponse, object>(`${BASE_URL}/RestoreHistory/List`, {}, false, token);
+  async list(cancelToken?: CancelToken): Promise<Restore[]> {
+    const { items = [] } = await api.get<RestoreResponse, object>(`${BASE_URL}/restores`, false, { cancelToken });
     return items.map(
       ({
         restore_id,
@@ -43,16 +43,11 @@ export const RestoreHistoryService = {
       })
     );
   },
-  async getLogs(restoreId: string, offset: number, limit: number, token?: CancelToken): Promise<BackupLogs> {
-    const { logs = [], end } = await api.post<BackupLogResponse, Object>(
-      `${BASE_URL}/Backups/GetLogs`,
-      {
-        restore_id: restoreId,
-        offset,
-        limit,
-      },
+  async getLogs(restoreId: string, offset: number, limit: number, cancelToken?: CancelToken): Promise<BackupLogs> {
+    const { logs = [], end } = await api.get<BackupLogResponse, { offset: number; limit: number }>(
+      `${BASE_URL}/${restoreId}/logs`,
       false,
-      token
+      { cancelToken, params: { offset, limit } }
     );
 
     return {

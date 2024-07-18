@@ -16,9 +16,6 @@ import {
 } from './services.types';
 import {
   didStandardLabelsChange,
-  hasLabelsToAddOrUpdate,
-  hasLabelsToRemove,
-  toCustomLabelsBodies,
   toDbServicesModel,
   toListServicesBody,
   toRemoveServiceBody,
@@ -113,22 +110,10 @@ export const updateServiceAction = createAsyncThunk('percona/updateService', (pa
   withSerializedError(
     (async (): Promise<void> => {
       const updateBody = toUpdateServiceBody(params);
-      const [addLabelsBody, removeLabelsBody] = toCustomLabelsBodies(params);
-      const requests: Array<Promise<{}>> = [];
 
       if (didStandardLabelsChange(params)) {
-        requests.push(ServicesService.updateService(updateBody));
+        await ServicesService.updateService(updateBody);
       }
-
-      if (hasLabelsToAddOrUpdate(addLabelsBody)) {
-        requests.push(ServicesService.addCustomLabels(addLabelsBody));
-      }
-
-      if (hasLabelsToRemove(removeLabelsBody)) {
-        requests.push(ServicesService.removeCustomLabels(removeLabelsBody));
-      }
-
-      await Promise.all(requests);
 
       thunkAPI.dispatch(fetchServicesAction({}));
     })()

@@ -68,7 +68,7 @@ export const getProductTourSteps = (
       </SidebarStep>
     ),
   },
-  ...(isPmmAdmin && !!settings?.sttEnabled
+  ...(isPmmAdmin && !!settings?.advisorEnabled
     ? [
         {
           selector: '[aria-label="Advisors"]',

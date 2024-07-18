@@ -10,9 +10,9 @@ export type StrongOpaque<T, S extends string> = WeakOpaque<T, S> | SuperOpaque<S
 
 export type ISOTimestamp = WeakOpaque<string, 'ISOTimestamp'>;
 
-export interface GetUpdatesBody {
+export interface GetUpdatesParams {
   force: boolean;
-  onlyInstalledVersion?: boolean;
+  only_installed_version?: boolean;
 }
 
 export interface GetUpdateStatusBody {
@@ -70,7 +70,7 @@ export type CurrentOrNextVersionDetails = [
   string,
   boolean,
   boolean,
-  (body?: GetUpdatesBody) => void,
+  (body?: GetUpdatesParams) => void,
 ];
 
 export interface ProgressModalProps {

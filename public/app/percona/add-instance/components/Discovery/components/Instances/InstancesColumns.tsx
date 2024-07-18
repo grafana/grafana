@@ -5,18 +5,18 @@ import { Button } from '@grafana/ui';
 import { SelectInstance } from 'app/percona/add-instance/panel.types';
 import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
 
-import { Instance } from '../../Discovery.types';
+import { DiscoverRDSEngine, Instance } from '../../Discovery.types';
 import { RDSCredentialsForm } from '../Credentials/Credentials.types';
 
 import { styles } from './Instances.styles';
 
 const getEngineType = (type?: string) => {
   switch (type) {
-    case 'DISCOVER_RDS_MYSQL':
+    case DiscoverRDSEngine.MYSQL:
       return DATABASE_LABELS[Databases.mysql];
-    case 'DISCOVER_RDS_POSTGRESQL':
+    case DiscoverRDSEngine.POSTGRESQL:
       return DATABASE_LABELS[Databases.postgresql];
-    case 'DISCOVER_RDS_INVALID':
+    case DiscoverRDSEngine.UNSPECIFIED:
       return 'Unknown type';
     default:
       return 'Unknown type';
@@ -25,9 +25,9 @@ const getEngineType = (type?: string) => {
 
 const getDatabaseType = (type?: string) => {
   switch (type) {
-    case 'DISCOVER_RDS_MYSQL':
+    case DiscoverRDSEngine.MYSQL:
       return Databases.mysql;
-    case 'DISCOVER_RDS_POSTGRESQL':
+    case DiscoverRDSEngine.POSTGRESQL:
       return Databases.postgresql;
     default:
       return '';

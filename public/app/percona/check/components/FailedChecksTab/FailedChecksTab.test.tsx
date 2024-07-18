@@ -31,7 +31,7 @@ describe('FailedChecksTab::', () => {
         store={configureStore({
           percona: {
             user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+            settings: { result: { advisorEnabled: true, isConnectedToPortal: false } },
           },
         } as StoreState)}
       >
@@ -54,7 +54,7 @@ describe('FailedChecksTab::', () => {
         store={configureStore({
           percona: {
             user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+            settings: { result: { advisorEnabled: true, isConnectedToPortal: false } },
           },
         } as StoreState)}
       >
@@ -72,7 +72,7 @@ describe('FailedChecksTab::', () => {
         store={configureStore({
           percona: {
             user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+            settings: { result: { advisorEnabled: true, isConnectedToPortal: false } },
           },
         } as StoreState)}
       >

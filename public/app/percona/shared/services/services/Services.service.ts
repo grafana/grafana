@@ -3,10 +3,8 @@ import { CancelToken } from 'axios';
 import { api } from 'app/percona/shared/helpers/api';
 
 import {
-  AddCustomLabelsBody,
   ListServicesBody,
   ListTypesPayload,
-  RemoveCustomLabelsBody,
   RemoveServiceBody,
   ServiceListPayload,
   UpdateServiceBody,
@@ -14,21 +12,19 @@ import {
 
 export const ServicesService = {
   getActive(token?: CancelToken, disableNotifications?: boolean) {
-    return api.post<ListTypesPayload, {}>('/v1/inventory/Services/ListTypes', {}, disableNotifications, token);
+    return api.post<ListTypesPayload, {}>('/v1/inventory/services:getTypes', {}, disableNotifications, token);
   },
-  getServices(body: Partial<ListServicesBody> = {}, token?: CancelToken) {
-    return api.post<ServiceListPayload, Partial<ListServicesBody>>('/v1/management/Service/List', body, false, token);
+  getServices(params: Partial<ListServicesBody> = {}, token?: CancelToken) {
+    return api.get<ServiceListPayload, Partial<ListServicesBody>>('/v1/management/services', false, {
+      cancelToken: token,
+      params,
+    });
   },
   removeService(body: RemoveServiceBody, token?: CancelToken) {
-    return api.post<{}, RemoveServiceBody>('/v1/inventory/Services/Remove', body, false, token);
+    return api.delete<{}>(`/v1/inventory/services/${body.service_id}`, false, token, { force: body.force });
   },
   updateService(body: UpdateServiceBody, token?: CancelToken) {
-    return api.post<{}, UpdateServiceBody>('/v1/inventory/Services/Change', body, false, token);
-  },
-  addCustomLabels(body: AddCustomLabelsBody, token?: CancelToken) {
-    return api.post<{}, UpdateServiceBody>('/v1/inventory/Services/CustomLabels/Add', body, false, token);
-  },
-  removeCustomLabels(body: RemoveCustomLabelsBody, token?: CancelToken) {
-    return api.post<{}, UpdateServiceBody>('/v1/inventory/Services/CustomLabels/Remove', body, false, token);
+    const serviceId = body.service_id.replace('/service_id/', '');
+    return api.put<{}, UpdateServiceBody>(`/v1/inventory/services/${serviceId}`, body, false, token);
   },
 };

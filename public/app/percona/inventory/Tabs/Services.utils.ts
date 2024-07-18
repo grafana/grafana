@@ -4,8 +4,6 @@ import { DbAgent, ServiceStatus } from 'app/percona/shared/services/services/Ser
 
 import { FlattenService, MonitoringStatus, ServiceAgentStatus } from '../Inventory.types';
 
-import { stripNodeId } from './Nodes.utils';
-
 const SERVICE_STATUS_TO_BADGE_COLOR: Record<ServiceStatus, BadgeColor> = {
   [ServiceStatus.UP]: 'green',
   [ServiceStatus.DOWN]: 'red',
@@ -39,7 +37,7 @@ export const getBadgeTextForServiceStatus = (status: ServiceStatus): string => {
     return 'N/A';
   }
 
-  return capitalizeText(status);
+  return capitalizeText(status.split('_')[1] || '');
 };
 
 export const getAgentsMonitoringStatus = (agents: DbAgent[]) => {
@@ -50,18 +48,10 @@ export const getAgentsMonitoringStatus = (agents: DbAgent[]) => {
   return allAgentsOk ? MonitoringStatus.OK : MonitoringStatus.FAILED;
 };
 
-export const stripServiceId = (serviceId: string) => {
-  const regex = /\/service_id\/(.*)/gm;
-  const match = regex.exec(serviceId);
-
-  if (match && match.length > 0) {
-    return match[1] || '';
-  }
-
-  return '';
-};
-
 export const getNodeLink = (service: FlattenService) => {
-  const nodeId = service.nodeId === 'pmm-server' ? 'pmm-server' : stripNodeId(service.nodeId);
+  const nodeId = service.nodeId === 'pmm-server' ? 'pmm-server' : service.nodeId;
   return `/inventory/nodes?search-text-input=${nodeId}&search-select=nodeId`;
 };
+
+export const getTagsFromLabels = (labelKeys: string[], labels: Record<string, string>) =>
+  labelKeys.filter((label) => labels[label] !== '').map((label) => `${label}=${labels![label]}`);

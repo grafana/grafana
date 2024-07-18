@@ -5,7 +5,7 @@ import { formatDateWithYear, formatDateWithTime } from '../UpdatePanel.utils';
 import { useApiCall } from '../hooks';
 import {
   CurrentOrNextVersionDetails,
-  GetUpdatesBody,
+  GetUpdatesParams,
   GetUpdatesResponse,
   InstalledVersionDetails,
   NextVersionDetails,
@@ -26,10 +26,10 @@ export const useVersionDetails = (initialForceUpdate = false): CurrentOrNextVers
   });
   const [lastCheckDate, setLastCheckDate] = useState('');
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
-  const [data, errorMessage, isLoading, getVersionDetails] = useApiCall<GetUpdatesResponse | void, GetUpdatesBody>(
+  const [data, errorMessage, isLoading, getVersionDetails] = useApiCall<GetUpdatesResponse | void, GetUpdatesParams>(
     getCurrentVersion,
     { force: initialForceUpdate },
-    { force: initialForceUpdate, onlyInstalledVersion: true }
+    { force: initialForceUpdate, only_installed_version: true }
   );
 
   useEffect(() => {

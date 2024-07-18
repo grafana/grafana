@@ -1,5 +1,5 @@
 import { Messages } from 'app/percona/settings/Settings.messages';
-import { SttCheckIntervals } from 'app/percona/settings/Settings.types';
+import { AdvisorRunIntervals } from 'app/percona/settings/Settings.types';
 
 import { AdvancedFormProps } from './Advanced.types';
 
@@ -20,15 +20,15 @@ const {
 export const STT_CHECK_INTERVALS = [
   {
     label: sttRareIntervalLabel,
-    name: SttCheckIntervals.rareInterval,
+    name: AdvisorRunIntervals.rareInterval,
   },
   {
     label: sttStandardIntervalLabel,
-    name: SttCheckIntervals.standardInterval,
+    name: AdvisorRunIntervals.standardInterval,
   },
   {
     label: sttFrequentIntervalLabel,
-    name: SttCheckIntervals.frequentInterval,
+    name: AdvisorRunIntervals.frequentInterval,
   },
 ];
 

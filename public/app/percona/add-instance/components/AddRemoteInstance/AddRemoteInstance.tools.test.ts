@@ -1,5 +1,7 @@
 import { Databases } from 'app/percona/shared/core';
 
+import { DiscoverRDSEngine } from '../Discovery/Discovery.types';
+
 import { getInstanceData } from './AddRemoteInstance.tools';
 
 describe('Get instance data:: ', () => {
@@ -41,7 +43,7 @@ describe('Get instance data:: ', () => {
     };
     const testInstance = {
       instanceType: 'PostgreSQL',
-      discoverName: 'DISCOVER_RDS_POSTGRESQL',
+      discoverName: DiscoverRDSEngine.POSTGRESQL,
       remoteInstanceCredentials: {
         isRDS: true,
         address: 'test address',
