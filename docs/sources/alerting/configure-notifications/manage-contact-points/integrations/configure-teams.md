@@ -22,15 +22,13 @@ Use the Grafana Alerting - Microsoft Teams integration to receive notifications 
 
 ## Before you begin
 
-To set up Microsoft Teams for integration with Grafana Alerting, you need to create an incoming Webhook. This allows Grafana to send alert notifications to Microsoft Teams channels.
+To set up Microsoft Teams for integration with Grafana Alerting, you need to create a new Workflow that accepts a webhook requests. This allows Grafana to send alert notifications to Microsoft Teams channels.
 
-### Create an incoming Webhook in Microsoft Teams
+### Create a new Workflow in Microsoft Teams
 
-1. To add an incoming Webhook to a Teams channel, follow the steps in the [Create an Incoming Webhook guide](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook?tabs=newteams%2Cdotnet#create-an-incoming-webhook).
-
-   Note: The steps to create incoming Webhooks may vary depending on the version of Microsoft Teams you are using. You can switch between the "New Teams" and "Classic Teams" tabs to view the relevant instructions for your version.
-
-1. Copy the Webhook URL.
+1. To create a new workflow follow the steps in [Create flows in Microsoft Teams](https://learn.microsoft.com/en-us/power-automate/teams/teams-app-create)
+2. Microsoft provides template library. You can use template "Post to a channel when a webhook request is received" 
+3. At the end of workflow creation wizard, copy the provided URL
 
 ## Procedure
 
