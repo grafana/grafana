@@ -54,6 +54,9 @@ Grafana enables you to share dashboards and panels with other users within an or
 - A Snapshot
 - An embedded link (for panels only)
 - An export link (for dashboards only)
+- A report
+
+<!-- has any of the information in these next 3 sentences changed? -->
 
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
@@ -63,54 +66,134 @@ The same permission is also required to view embedded links unless you have anon
 As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
 {{< /admonition >}}
 
-When you share a panel or dashboard as a snapshot, a snapshot (which is a panel or dashboard at the moment you take the snapshot) is publicly available on the web. Anyone with a link to it can access it. Because snapshots do not require any authorization to view, Grafana removes information related to the account it came from, as well as any sensitive data from the snapshot.
-
 ## Share a dashboard
 
-You can share a dashboard as a direct link or as a snapshot. You can also export a dashboard.
+You can share dashboards in the following ways:
 
-{{< admonition type="note" >}}
-If you change a dashboard, ensure that you save the changes before sharing.
-{{< /admonition >}}
+- Internally with a link
+- Externally with a link (to anyone)
+- Externally by email (to specific people)
+- As a snapshot
+- As a report
+- As a JSON file
+
+When you share a dashboard externally as a link or by email, those dashboards are included a list of your public dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Public dashboards**.
+
+<!-- image of list here -->
+
+### Share internally
+
+Share a personalized, direct link to your dashboard within your organization.
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click **Share** in the top-right corner.
+1. Click the **Share** drop-down in the top-right corner and select **Share internally**.
+1. (Optional) Set the following options (they're enabled by default):
+   - **Lock time range** - Change the current relative time range to an absolute time range.
+   - **Shorten link** - Shorten the dashboard link.
+1. Select the **Current**, **Dark**, or **Light** theme for the dashboard.
+1. Click **Copy link**.
+1. Send the copied link to a Grafana user with authorization to view the link.
+1. Click the **X** at the top-right corner to close the share drawer.
 
-   The share dialog opens and shows the Link tab.
+### Share externally with specific people
 
-### Share a direct link
+To share with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people instead of anyone who navigates to the link. Sharing a link by email creates a 30-day token associated with that external user.
 
-The **Link** tab shows the current time range, template variables, and the default theme. You can also share a shortened URL.
+When you share a dashboard with an email link, your organization is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.
 
-1. Click **Copy**.
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
+1. In the **Link access** drop-down, select **Anyone with the link**.
+1. Click the checkbox confirming that you understand payment is required to add users.
+1. Click **Accept**.
+1. In the **Invite** field, enter the email address of the person you want to invite and click **Invite**.
 
-   This action copies the default or the shortened URL to the clipboard.
+   You can only invite one person at a time.
 
-1. Send the copied URL to a Grafana user with authorization to view the link.
+1. (Optional) Set the following options:
+   - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
+   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
+1. Click **Copy external link**.
+1. Send the copied URL to any external user.
+1. Click the **X** at the top-right corner to close the share drawer.
 
-### Publish a snapshot
+### Share externally to anyone with a link
 
-A dashboard snapshot shares an interactive dashboard publicly. Grafana strips sensitive data such as queries (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded in the dashboard. Dashboard snapshots can be accessed by anyone with the link.
+To share your dashboard so that anyone with the link can access it, follow these steps.
+
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
+1. In the **Link access** drop-down, select **Anyone with the link**.
+1. Click the checkbox confirming that you understand the entire dashboard will be public.
+1. Click **Accept**.
+1. (Optional) Set the following options:
+   - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
+   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
+1. Each recipient will receive an email with link to the dashboard that's valid for 30 days.
+1. Click the **X** at the top-right corner to close the share drawer.
+
+### Update access to an external dashboard link
+
+You can update the access to externally shared dashboard links by following these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
+1. Do one of the following:
+   - Click **Pause access** so that people can't access the dashboard, but the link is maintained.
+   - Click **Resume access** so that people can access the dashboard again.
+   - Click **Revoke access** so that people can't access the dashboard unless a new external link is generated. Confirm that you want to revoke the link.
+1. Click the **X** at the top-right corner to close the share drawer.
+
+### Schedule a report
+
+To share your dashboard as a report, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** drop-down in the top-right corner and select **Schedule a report**.
+1. [Configure the report](ref:configure-report).
+1. Depending on your schedule settings, click **Schedule send** or **Send now**.
+
+You can also save the report as a draft.
+
+To manage your reports, navigate to **Dashboards > Reporting > Reports**.
+
+### Share a snapshot
+
+A dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
+
+<!-- is the following para still true? -->
 
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
-1. Click the **Snapshot** tab.
-1. Click **Publish to snapshots.raintank.io** or **Publish Snapshot**.
+To share your dashboard with anyone as a snapshot, follow these steps.
 
-   Grafana generates a link of the snapshot.
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** drop-down in the top-right corner and select **Share snapshot**.
+1. In the **Snapshot name** field, enter a descriptive title for the snapshot.
+1. Select one of the following expiration options for the snapshot:
+   - **1 Hour**
+   - **1 Day**
+   - **1 Week**
+   - **Never**
+1. Click **Publish snapshot**.
+1. (Optional) If you want to see the other snapshots shared from your organization, click the **View all snapshots** link.
 
-1. Copy the snapshot link, and share it either within your organization or publicly on the web.
+   You can also navigate to **Dashboards > Snapshots** in the primary menu.
 
-If you created a snapshot by mistake, click **Delete snapshot** in the dialog box to remove the snapshot from your Grafana instance.
+1. Click the **X** at the top-right corner to close the share drawer.
 
-#### Delete a snapshot
+### Delete a snapshot
 
 To delete existing snapshots, follow these steps:
 
-1. Click **Dashboards** in the main menu.
-1. Click **Snapshots** to go to the snapshots management page.
-1. Click the red **x** next to the snapshot URL that you want to delete.
+1. Navigate to **Dashboards > Snapshots** in the main menu.
+1. Click the red **x** next to the snapshot that you want to delete.
 
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
 
@@ -120,36 +203,10 @@ The dashboard export action creates a Grafana JSON file that contains everything
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click **Share** in the top-right corner.
-1. Click **Export**.
-
-   If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
-
-1. Click **Save to file**.
-
-Grafana downloads a JSON file to your local machine.
-
-#### Make a dashboard portable
-
-If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
-
-A template variable of the type `Constant` is automatically hidden in the dashboard, and is also added as a required input when the dashboard is imported.
-
-## Export dashboard as PDF
-
-You can generate and save PDF files of any dashboard.
-
-{{< admonition type="note" >}}
-Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-{{< /admonition >}}
-
-1. Click **Dashboards** in the main menu.
-1. Click the dashboard you want to share.
-1. Click **Share** in the top-right corner.
-1. On the **PDF** tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
-1. Click **Save as PDF** to render the dashboard as a PDF file.
-
-   Grafana opens the PDF file in a new window or browser tab.
+1. Click the **Export** drop-down in the top-right corner and select **Export as JSON**.
+1. If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
+1. Click **Download file** or **Copy to clipboard**.
+1. Click the **X** at the top-right corner to close the share drawer.
 
 ## Share a panel
 
