@@ -6,6 +6,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -16,6 +17,8 @@ type DualWriterMode4 struct {
 	*dualWriterMetrics
 	Log klog.Logger
 }
+
+const mode4Str = "4"
 
 // newDualWriterMode4 returns a new DualWriter in mode 4.
 // Mode 4 represents writing and reading from Storage.
@@ -56,6 +59,12 @@ func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.
 
 func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	return d.Storage.List(ctx, options)
+}
+
+func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	var method = "watch"
+	d.Log.WithValues("kind", options.Kind, "method", method, "mode", mode4Str).Info("starting to watch")
+	return d.Storage.Watch(ctx, options)
 }
 
 func (d *DualWriterMode4) Destroy() {
