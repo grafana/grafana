@@ -48,7 +48,7 @@ export const AlertRuleNameAndMetric = () => {
           <Input
             data-testid={selectors.components.AlertRules.ruleNameField}
             id="name"
-            width={35}
+            width={38}
             {...register('name', {
               required: { value: true, message: 'Must enter a name' },
             })}
@@ -60,7 +60,7 @@ export const AlertRuleNameAndMetric = () => {
           <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
             <Input
               id="metric"
-              width={35}
+              width={38}
               {...register('metric', {
                 required: { value: true, message: 'Must enter a metric name' },
                 pattern: recordingRuleMetricValidationPattern,
