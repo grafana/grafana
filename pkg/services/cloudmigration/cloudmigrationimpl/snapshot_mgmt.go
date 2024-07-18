@@ -24,36 +24,16 @@ import (
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	// Data sources
-	dataSources, err := s.getDataSources(ctx)
+	dataSources, err := s.getDataSourceCommands(ctx)
 	if err != nil {
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
 	}
 
-	// Dashboards
-	dashboards, err := s.getDashboards(ctx)
+	// Dashboards and folders are linked via the schema, so we need to get both
+	dashboards, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
 	if err != nil {
-		s.log.Error("Failed to get dashboards", "err", err)
-		return nil, err
-	}
-
-	// Separate folders from dashboards
-	folderUids := make([]string, 0)
-	for i := 0; i < len(dashboards); {
-		d := dashboards[i]
-		if d.IsFolder {
-			// Treat it as a folder and remove from the dashboard list
-			folderUids = append(folderUids, d.UID)
-			dashboards = append(dashboards[:i], dashboards[i+1:]...)
-			continue
-		}
-		i++
-	}
-
-	// Folders
-	folders, err := s.getFolders(ctx, signedInUser, folderUids)
-	if err != nil {
-		s.log.Error("Failed to get folders", "err", err)
+		s.log.Error("Failed to get dashboards and folders", "err", err)
 		return nil, err
 	}
 
@@ -71,13 +51,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	softDeleteEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
-
 	for _, dashboard := range dashboards {
-		if softDeleteEnabled && !dashboard.Deleted.IsZero() {
-			continue
-		}
-
 		dashboard.Data.Del("id")
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DashboardDataType,
@@ -103,7 +77,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	return migrationData, nil
 }
 
-func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
+func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
 	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
@@ -140,20 +114,42 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 	return result, err
 }
 
-func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) ([]folder.CreateFolderCommand, error) {
-	// GetFolders return only folders available to user. So we can use this to check access.
+func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]dashboards.Dashboard, []folder.CreateFolderCommand, error) {
+	dashs, err := s.dashboardService.GetAllDashboards(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dashboardCmds := make([]dashboards.Dashboard, 0)
+	folderUids := make([]string, 0)
+	softDeleteEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
+
+	// Folders need to be fetched by UID in a separate step, separate dashboards from folders
+	// If any result is in the trash bin, don't migrate it
+	for _, d := range dashs {
+		if softDeleteEnabled && !d.Deleted.IsZero() {
+			continue
+		}
+
+		if d.IsFolder {
+			folderUids = append(folderUids, d.UID)
+		} else {
+			dashboardCmds = append(dashboardCmds, *d)
+		}
+	}
+
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-		UIDs:             folderUIDs,
+		UIDs:             folderUids,
 		SignedInUser:     signedInUser,
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	result := make([]folder.CreateFolderCommand, len(folders))
+	folderCmds := make([]folder.CreateFolderCommand, len(folders))
 	for i, f := range folders {
-		result[i] = folder.CreateFolderCommand{
+		folderCmds[i] = folder.CreateFolderCommand{
 			UID:         f.UID,
 			Title:       f.Title,
 			Description: f.Description,
@@ -161,21 +157,7 @@ func (s *Service) getFolders(ctx context.Context, signedInUser *user.SignedInUse
 		}
 	}
 
-	return result, nil
-}
-
-func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, error) {
-	dashs, err := s.dashboardService.GetAllDashboards(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]dashboards.Dashboard, len(dashs))
-	for i, dashboard := range dashs {
-		result[i] = *dashboard
-	}
-
-	return result, nil
+	return dashboardCmds, folderCmds, nil
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
