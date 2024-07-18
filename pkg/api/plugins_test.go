@@ -109,6 +109,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.authnService = &authntest.FakeService{
 				ExpectedIdentity: expectedIdentity,
 			}
+
+			hs.log = log.NewNopLogger()
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
