@@ -378,11 +378,30 @@ describe('getStreamSelectorPositions', () => {
       },
     ]);
   });
-  it('should parse position of stream selector old way', () => {
+  it('should parse position of stream selectors', () => {
     expect(
-      getStreamSelectorPositions(
-        '__V_2__filters__V__ __V_2__patterns__V__ __V_2__logsFormat__V__ __V_2__fields__V__ __V_2__lineFilter__V__'
-      )
-    ).toEqual([]);
+      getStreamSelectorPositions('sum(rate({x="y", bar="baz"} | logfmt [5m])) + sum(rate({x="y", bar="baz"} [5m]))')
+    ).toEqual([
+      {
+        from: 9,
+        to: 27,
+        type: {
+          name: 'Selector',
+          props: {},
+          id: 40,
+          flags: 0,
+        },
+      },
+      {
+        from: 55,
+        to: 73,
+        type: {
+          name: 'Selector',
+          props: {},
+          id: 40,
+          flags: 0,
+        },
+      },
+    ]);
   });
 });
