@@ -107,7 +107,7 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 			return nil, err
 		}
 
-		m.log.Info("Updating plugin", "pluginID", pluginID, "from", plugin.Info.Version, "to",pluginArchiveInfo.Version)
+		m.log.Info("Updating plugin", "pluginId", pluginID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
 
 		// if existing plugin version is the same as the target update version
 		if pluginArchiveInfo.Version == plugin.Info.Version {
@@ -143,7 +143,7 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 		if err != nil {
 			return nil, err
 		}
-		m.log.Info("Installing plugin", "pluginID", pluginID, "version", version)
+		m.log.Info("Installing plugin", "pluginId", pluginID, "version", version)
 	}
 
 	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, m.pluginStorageDirFunc, pluginArchive.File)
