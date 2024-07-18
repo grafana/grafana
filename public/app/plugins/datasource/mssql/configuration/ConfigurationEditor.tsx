@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { SyntheticEvent } from 'react';
+import { SyntheticEvent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -108,7 +108,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     if (azureAuthIsSupported) {
       return [
         ...basicAuthenticationOptions,
-        { value: MSSQLAuthenticationType.azureAuth, label: 'Azure AD Authentication' },
+        { value: MSSQLAuthenticationType.azureAuth, label: MSSQLAuthenticationType.azureAuth },
       ];
     }
 

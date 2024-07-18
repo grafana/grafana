@@ -5,7 +5,7 @@ package oauthtokentest
 import (
 	context "context"
 
-	identity "github.com/grafana/grafana/pkg/services/auth/identity"
+	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasources "github.com/grafana/grafana/pkg/services/datasources"
 
 	login "github.com/grafana/grafana/pkg/services/login"

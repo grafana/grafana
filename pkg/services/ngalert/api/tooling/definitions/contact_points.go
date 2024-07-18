@@ -169,6 +169,27 @@ type SensugoIntegration struct {
 	Message   *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 }
 
+type SigV4Config struct {
+	Region    string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
+	AccessKey string `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
+	SecretKey string `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
+	Profile   string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
+	RoleARN   string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
+}
+
+type SnsIntegration struct {
+	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
+
+	APIUrl      *string            `yaml:"api_url,omitempty" json:"api_url,omitempty" hcl:"api_url"`
+	Sigv4       SigV4Config        `yaml:"sigv4" json:"sigv4" hcl:"sigv4,block"`
+	TopicARN    *string            `yaml:"topic_arn,omitempty" json:"topic_arn,omitempty" hcl:"topic_arn"`
+	PhoneNumber *string            `yaml:"phone_number,omitempty" json:"phone_number,omitempty" hcl:"phone_number"`
+	TargetARN   *string            `yaml:"target_arn,omitempty" json:"target_arn,omitempty" hcl:"target_arn"`
+	Subject     *string            `yaml:"subject,omitempty" json:"subject,omitempty" hcl:"subject"`
+	Message     *string            `yaml:"message,omitempty" json:"message,omitempty" hcl:"message"`
+	Attributes  *map[string]string `yaml:"attributes,omitempty" json:"attributes,omitempty" hcl:"attributes"`
+}
+
 type SlackIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
@@ -284,6 +305,7 @@ type ContactPoint struct {
 	Pushover     []PushoverIntegration     `json:"pushover" yaml:"pushover" hcl:"pushover,block"`
 	Sensugo      []SensugoIntegration      `json:"sensugo" yaml:"sensugo" hcl:"sensugo,block"`
 	Slack        []SlackIntegration        `json:"slack" yaml:"slack" hcl:"slack,block"`
+	Sns          []SnsIntegration          `json:"sns" yaml:"sns" hcl:"sns,block"`
 	Teams        []TeamsIntegration        `json:"teams" yaml:"teams" hcl:"teams,block"`
 	Telegram     []TelegramIntegration     `json:"telegram" yaml:"telegram" hcl:"telegram,block"`
 	Threema      []ThreemaIntegration      `json:"threema" yaml:"threema" hcl:"threema,block"`

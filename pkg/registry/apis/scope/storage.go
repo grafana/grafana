@@ -15,7 +15,7 @@ import (
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -31,14 +31,18 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Created At", Type: "date"},
+				{Name: "Title", Type: "string"},
+				{Name: "Filters", Type: "array"},
 			},
 			func(obj any) ([]interface{}, error) {
 				m, ok := obj.(*scope.Scope)
@@ -48,6 +52,8 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 				return []interface{}{
 					m.Name,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
+					m.Spec.Title,
+					m.Spec.Filters,
 				}, nil
 			},
 		),
@@ -69,23 +75,29 @@ func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Created At", Type: "date"},
+				{Name: "Dashboard", Type: "string"},
+				{Name: "Scope", Type: "string"},
 			},
 			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*scope.Scope)
+				m, ok := obj.(*scope.ScopeDashboardBinding)
 				if !ok {
-					return nil, fmt.Errorf("expected scope")
+					return nil, fmt.Errorf("expected scope dashboard binding")
 				}
 				return []interface{}{
 					m.Name,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
+					m.Spec.Dashboard,
+					m.Spec.Scope,
 				}, nil
 			},
 		),
@@ -107,14 +119,21 @@ func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsG
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Created At", Type: "date"},
+				{Name: "Title", Type: "string"},
+				{Name: "Parent Name", Type: "string"},
+				{Name: "Node Type", Type: "string"},
+				{Name: "Link Type", Type: "string"},
+				{Name: "Link ID", Type: "string"},
 			},
 			func(obj any) ([]interface{}, error) {
 				m, ok := obj.(*scope.ScopeNode)
@@ -124,6 +143,11 @@ func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsG
 				return []interface{}{
 					m.Name,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
+					m.Spec.Title,
+					m.Spec.ParentName,
+					m.Spec.NodeType,
+					m.Spec.LinkType,
+					m.Spec.LinkID,
 				}, nil
 			},
 		),
@@ -162,8 +186,7 @@ func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPre
 
 func SelectableScopeFields(obj *scope.Scope) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.type":     obj.Spec.Type,
-		"spec.category": obj.Spec.Category,
+		"spec.title": obj.Spec.Title,
 	})
 }
 
@@ -183,10 +206,4 @@ func SelectableScopeNodeFields(obj *scope.ScopeNode) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
 		"spec.parentName": parentName,
 	})
-}
-
-// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
-	//TODO: define the comparison logic between a scope returned by the storage and a scope returned by the legacy storage
-	return false
 }

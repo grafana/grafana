@@ -130,7 +130,7 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
 }
 
 function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
-  if (frame1.refId !== frame2.refId) {
+  if (frame1.refId !== frame2.refId || frame1.name !== frame2.name) {
     return false;
   }
 
@@ -159,8 +159,11 @@ function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
   // because we do not have a good "frametype" value for them yet.
   const customType1 = frame1.meta?.custom?.frameType;
   const customType2 = frame2.meta?.custom?.frameType;
-
+  // Legacy frames have this custom type
   if (customType1 === 'LabeledTimeValues' && customType2 === 'LabeledTimeValues') {
+    return true;
+  } else if (customType1 === customType2) {
+    // Data plane frames don't
     return true;
   }
 

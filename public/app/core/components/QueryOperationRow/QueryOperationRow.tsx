@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from '@hello-pangea/dnd';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';

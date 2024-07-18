@@ -183,21 +183,14 @@
         },
         "description": "(empty)"
       },
-      "cloudMigrationListResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/CloudMigrationListResponse"
-            }
-          }
-        },
+      "cloudMigrationDeleteTokenResponse": {
         "description": "(empty)"
       },
-      "cloudMigrationResponse": {
+      "cloudMigrationGetTokenResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/CloudMigrationResponse"
+              "$ref": "#/components/schemas/GetAccessTokenResponseDTO"
             }
           }
         },
@@ -207,7 +200,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/CloudMigrationRunList"
+              "$ref": "#/components/schemas/CloudMigrationRunListDTO"
             }
           }
         },
@@ -218,6 +211,26 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/MigrateDataResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationSessionListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationSessionListResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationSessionResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationSessionResponseDTO"
             }
           }
         },
@@ -406,6 +419,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ServiceAccountDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "createSnapshotResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateSnapshotResponseDTO"
             }
           }
         },
@@ -1238,6 +1261,16 @@
         },
         "description": "(empty)"
       },
+      "getSnapshotResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetSnapshotResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getStatusResponse": {
         "description": "(empty)"
       },
@@ -1542,6 +1575,16 @@
         },
         "description": "(empty)"
       },
+      "noContentResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "notFoundError": {
         "content": {
           "application/json": {
@@ -1712,7 +1755,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/receiver"
+                "$ref": "#/components/schemas/Receiver"
               },
               "type": "array"
             }
@@ -1884,6 +1927,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/RoleAssignmentsDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "snapshotListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SnapshotListResponseDTO"
             }
           }
         },
@@ -2368,10 +2421,10 @@
             "type": "string"
           },
           "annotations": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "state": {
             "type": "string"
@@ -2572,6 +2625,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "record": {
+            "$ref": "#/components/schemas/AlertRuleRecordExport"
+          },
           "title": {
             "type": "string"
           },
@@ -2721,6 +2777,18 @@
         "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
         "type": "object"
       },
+      "AlertRuleRecordExport": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          }
+        },
+        "title": "Record is the provisioned export of models.Record.",
+        "type": "object"
+      },
       "AlertingFileExport": {
         "properties": {
           "apiVersion": {
@@ -2769,7 +2837,7 @@
             "type": "array"
           },
           "annotations": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "duration": {
             "format": "double",
@@ -2783,7 +2851,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "lastError": {
             "type": "string"
@@ -2817,7 +2885,7 @@
             "type": "object"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -3645,24 +3713,43 @@
         },
         "type": "object"
       },
-      "CloudMigrationListResponse": {
+      "CloudMigrationRunListDTO": {
         "properties": {
-          "migrations": {
+          "runs": {
             "items": {
-              "$ref": "#/components/schemas/CloudMigrationResponse"
+              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
             },
             "type": "array"
           }
         },
         "type": "object"
       },
-      "CloudMigrationResponse": {
+      "CloudMigrationSessionListResponseDTO": {
+        "properties": {
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/CloudMigrationSessionResponseDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationSessionRequestDTO": {
+        "properties": {
+          "authToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationSessionResponseDTO": {
         "properties": {
           "created": {
             "format": "date-time",
             "type": "string"
           },
-          "stack": {
+          "slug": {
             "type": "string"
           },
           "uid": {
@@ -3671,17 +3758,6 @@
           "updated": {
             "format": "date-time",
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "CloudMigrationRunList": {
-        "properties": {
-          "runs": {
-            "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
-            },
-            "type": "array"
           }
         },
         "type": "object"
@@ -4040,7 +4116,7 @@
         },
         "type": "object"
       },
-      "CreateOrUpdateReportConfig": {
+      "CreateOrUpdateReport": {
         "properties": {
           "dashboards": {
             "items": {
@@ -4184,6 +4260,14 @@
               "Admin"
             ],
             "example": "Admin",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateSnapshotResponseDTO": {
+        "properties": {
+          "uid": {
             "type": "string"
           }
         },
@@ -5060,7 +5144,9 @@
         },
         "type": "object"
       },
-      "EvalQueriesResponse": {},
+      "EvalQueriesResponse": {
+        "type": "object"
+      },
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
@@ -5524,6 +5610,29 @@
         },
         "type": "object"
       },
+      "GetAccessTokenResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "firstUsedAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "GetAnnotationTagsResponse": {
         "properties": {
           "result": {
@@ -5556,6 +5665,49 @@
           }
         ],
         "title": "Get home dashboard response."
+      },
+      "GetSnapshotResponseDTO": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "finished": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
+            },
+            "type": "array"
+          },
+          "sessionUid": {
+            "type": "string"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/SnapshotResourceStats"
+          },
+          "status": {
+            "enum": [
+              "INITIALIZING",
+              "CREATING",
+              "PENDING_UPLOAD",
+              "UPLOADING",
+              "PENDING_PROCESSING",
+              "PROCESSING",
+              "FINISHED",
+              "CANCELED",
+              "ERROR",
+              "UNKNOWN"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "GettableAlertmanagers": {
         "properties": {
@@ -5961,6 +6113,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6141,10 +6296,14 @@
             "format": "int64",
             "type": "integer"
           },
+          "isDeleted": {
+            "type": "boolean"
+          },
           "isStarred": {
             "type": "boolean"
           },
-          "remainingTrashAtAge": {
+          "permanentlyDeleteDate": {
+            "format": "date-time",
             "type": "string"
           },
           "slug": {
@@ -6854,7 +7013,9 @@
           "status": {
             "enum": [
               "OK",
-              "ERROR"
+              "ERROR",
+              "PENDING",
+              "UNKNOWN"
             ],
             "type": "string"
           },
@@ -6981,6 +7142,18 @@
           },
           "type": "array"
         },
+        "type": "object"
+      },
+      "NavbarPreference": {
+        "properties": {
+          "savedItemIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "title": "NavbarPreference defines model for NavbarPreference.",
         "type": "object"
       },
       "NewApiKeyResult": {
@@ -7545,6 +7718,9 @@
           "language": {
             "type": "string"
           },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
+          },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
@@ -8101,6 +8277,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8132,6 +8311,9 @@
           "language": {
             "description": "Selected language (beta)",
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -8283,6 +8465,9 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "record": {
+            "$ref": "#/components/schemas/Record"
           },
           "ruleGroup": {
             "example": "eval_group_1",
@@ -8864,13 +9049,20 @@
       "Record": {
         "properties": {
           "from": {
+            "description": "Which expression node should be used as the input for the recorded metric.",
+            "example": "A",
             "type": "string"
           },
           "metric": {
+            "description": "Name of the recorded metric.",
+            "example": "grafana_alerts_ratio",
             "type": "string"
           }
         },
-        "title": "Record defines how data produced by a recording rule is written.",
+        "required": [
+          "metric",
+          "from"
+        ],
         "type": "object"
       },
       "RecordingRuleJSON": {
@@ -8944,7 +9136,6 @@
         "type": "object"
       },
       "Report": {
-        "description": "ConfigDTO is model representation in transfer",
         "properties": {
           "created": {
             "format": "date-time",
@@ -9427,7 +9618,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "lastError": {
             "type": "string"
@@ -9443,7 +9634,7 @@
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -9561,10 +9752,6 @@
         ],
         "type": "object"
       },
-      "RuleType": {
-        "title": "RuleType models the type of a rule.",
-        "type": "string"
-      },
       "SNSConfig": {
         "properties": {
           "api_url": {
@@ -9652,6 +9839,32 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SearchDTO": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "basicRole": {
+            "type": "string"
+          },
+          "onlyRoles": {
+            "type": "boolean"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -10065,6 +10278,20 @@
         "format": "int64",
         "type": "integer"
       },
+      "SilenceMetadata": {
+        "properties": {
+          "folder_uid": {
+            "type": "string"
+          },
+          "rule_title": {
+            "type": "string"
+          },
+          "rule_uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "SlackAction": {
         "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
         "properties": {
@@ -10215,6 +10442,71 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
+      "SnapshotDTO": {
+        "description": "Base snapshot without results",
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "finished": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sessionUid": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "INITIALIZING",
+              "CREATING",
+              "PENDING_UPLOAD",
+              "UPLOADING",
+              "PENDING_PROCESSING",
+              "PROCESSING",
+              "FINISHED",
+              "CANCELED",
+              "ERROR",
+              "UNKNOWN"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotListResponseDTO": {
+        "properties": {
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotResourceStats": {
+        "properties": {
+          "statuses": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "types": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "Span": {
         "properties": {
           "Length": {
@@ -10232,6 +10524,7 @@
         "type": "object"
       },
       "State": {
+        "description": "+enum",
         "type": "string"
       },
       "Status": {
@@ -10991,6 +11284,7 @@
         "type": "array"
       },
       "Type": {
+        "description": "+enum",
         "type": "string"
       },
       "TypeMeta": {
@@ -11289,6 +11583,9 @@
           },
           "language": {
             "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -11847,7 +12144,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11980,6 +12276,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12035,13 +12332,81 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
+      "gettableGrafanaSilence": {
+        "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "create": false,
+              "read": true,
+              "write": false
+            },
+            "type": "object"
+          },
+          "comment": {
+            "description": "comment",
+            "type": "string"
+          },
+          "createdBy": {
+            "description": "created by",
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "ends at",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "id",
+            "type": "string"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/matchers"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SilenceMetadata"
+          },
+          "startsAt": {
+            "description": "starts at",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/silenceStatus"
+          },
+          "updatedAt": {
+            "description": "updated at",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comment",
+          "createdBy",
+          "endsAt",
+          "matchers",
+          "startsAt",
+          "id",
+          "status",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "gettableGrafanaSilences": {
+        "items": {
+          "$ref": "#/components/schemas/gettableGrafanaSilence"
+        },
+        "type": "array"
+      },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12090,13 +12455,13 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12167,14 +12532,6 @@
         },
         "type": "array"
       },
-      "overrideLabels": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-        "title": "override the labels type with a map for generation.",
-        "type": "object"
-      },
       "peerStatus": {
         "description": "PeerStatus peer status",
         "properties": {
@@ -12240,6 +12597,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -14973,10 +15331,10 @@
     },
     "/cloudmigration/migration": {
       "get": {
-        "operationId": "getMigrationList",
+        "operationId": "getSessionList",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/cloudMigrationListResponse"
+            "$ref": "#/components/responses/cloudMigrationSessionListResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -14988,16 +15346,30 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get a list of all cloud migrations.",
+        "summary": "Get a list of all cloud migration sessions that have been created.",
         "tags": [
           "migrations"
         ]
       },
       "post": {
-        "operationId": "createMigration",
+        "operationId": "createSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationSessionRequestDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/cloudMigrationResponse"
+            "$ref": "#/components/responses/cloudMigrationSessionResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15009,7 +15381,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Create a migration.",
+        "summary": "Create a migration session.",
         "tags": [
           "migrations"
         ]
@@ -15033,6 +15405,9 @@
           "200": {
             "$ref": "#/components/responses/cloudMigrationRunResponse"
           },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15051,10 +15426,10 @@
     },
     "/cloudmigration/migration/{uid}": {
       "delete": {
-        "operationId": "deleteCloudMigration",
+        "operationId": "deleteSession",
         "parameters": [
           {
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "in": "path",
             "name": "uid",
             "required": true,
@@ -15064,6 +15439,9 @@
           }
         ],
         "responses": {
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15074,17 +15452,16 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Delete a migration.",
+        "summary": "Delete a migration session by its uid.",
         "tags": [
           "migrations"
         ]
       },
       "get": {
-        "description": "It returns migrations that has been created.",
-        "operationId": "getCloudMigration",
+        "operationId": "getSession",
         "parameters": [
           {
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "in": "path",
             "name": "uid",
             "required": true,
@@ -15095,7 +15472,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/cloudMigrationResponse"
+            "$ref": "#/components/responses/cloudMigrationSessionResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15107,7 +15487,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get a cloud migration.",
+        "summary": "Get a cloud migration session by its uid.",
         "tags": [
           "migrations"
         ]
@@ -15130,6 +15510,9 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationRunListResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15164,6 +15547,9 @@
           "200": {
             "$ref": "#/components/responses/cloudMigrationRunResponse"
           },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -15180,7 +15566,285 @@
         ]
       }
     },
+    "/cloudmigration/migration/{uid}/snapshot": {
+      "post": {
+        "description": "If the snapshot initialization is successful, the snapshot uid is returned.",
+        "operationId": "createSnapshot",
+        "parameters": [
+          {
+            "description": "UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Trigger the creation of an instance snapshot associated with the provided session.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}": {
+      "get": {
+        "operationId": "getSnapshot",
+        "parameters": [
+          {
+            "description": "ResultPage is used for pagination with ResultLimit",
+            "in": "query",
+            "name": "resultPage",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max limit for snapshot results returned.",
+            "in": "query",
+            "name": "resultLimit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of a snapshot",
+            "in": "path",
+            "name": "snapshotUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get metadata about a snapshot, including where it is in its processing and final results.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/cancel": {
+      "post": {
+        "description": "TODO: Implement",
+        "operationId": "cancelSnapshot",
+        "parameters": [
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of a snapshot",
+            "in": "path",
+            "name": "snapshotUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Cancel a snapshot, wherever it is in its processing chain.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/upload": {
+      "post": {
+        "operationId": "uploadSnapshot",
+        "parameters": [
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of a snapshot",
+            "in": "path",
+            "name": "snapshotUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Upload a snapshot to the Grafana Migration Service for processing.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshots": {
+      "get": {
+        "operationId": "getShapshotList",
+        "parameters": [
+          {
+            "description": "Page is used for pagination with limit",
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max limit for results returned.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Session UID of a session",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/snapshotListResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a list of snapshots for a session.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
     "/cloudmigration/token": {
+      "get": {
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Fetch the cloud migration token if it exists.",
+        "tags": [
+          "migrations"
+        ]
+      },
       "post": {
         "operationId": "createCloudMigrationToken",
         "responses": {
@@ -15198,6 +15862,43 @@
           }
         },
         "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "description": "UID of a cloud migration token",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Deletes a cloud migration token.",
         "tags": [
           "migrations"
         ]
@@ -20742,7 +21443,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -20818,6 +21519,78 @@
         ]
       }
     },
+    "/reports/images/:image": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`.",
+        "operationId": "getSettingsImage",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get custom branding report image.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/render/csvs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "operationId": "renderReportCSVs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dashboards",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          },
+          "204": {
+            "$ref": "#/components/responses/noContentResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Download a CSV report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -20825,7 +21598,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "dashboardID",
+            "name": "dashboards",
             "schema": {
               "type": "string"
             }
@@ -20905,7 +21678,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get settings.",
+        "summary": "Get report settings.",
         "tags": [
           "reports",
           "enterprise"
@@ -20957,7 +21730,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -21090,7 +21863,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -24567,6 +25340,21 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -24672,6 +25460,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Replace an existing mute timing.",

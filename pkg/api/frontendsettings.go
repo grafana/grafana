@@ -226,6 +226,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 		RootFolderUID:                       accesscontrol.GeneralFolderUID,
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
+		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
+		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -275,6 +277,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
 			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
 			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
+			AzureEntraPasswordCredentialsEnabled:   hs.Cfg.Azure.AzureEntraPasswordCredentialsEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
@@ -412,14 +415,15 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		}
 
 		dsDTO := plugins.DataSourceDTO{
-			ID:        ds.ID,
-			UID:       ds.UID,
-			Type:      ds.Type,
-			Name:      ds.Name,
-			URL:       url,
-			IsDefault: ds.IsDefault,
-			Access:    string(ds.Access),
-			ReadOnly:  ds.ReadOnly,
+			ID:         ds.ID,
+			UID:        ds.UID,
+			Type:       ds.Type,
+			Name:       ds.Name,
+			URL:        url,
+			IsDefault:  ds.IsDefault,
+			Access:     string(ds.Access),
+			ReadOnly:   ds.ReadOnly,
+			APIVersion: ds.APIVersion,
 		}
 
 		ap, exists := availablePlugins.Get(plugins.TypeDataSource, ds.Type)

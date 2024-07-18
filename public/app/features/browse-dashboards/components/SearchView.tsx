@@ -1,12 +1,12 @@
-import React, { useCallback } from 'react';
+import { ReactNode, useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
 import { Button, EmptyState } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { DashboardViewItemKind } from 'app/features/search/types';
+import { SearchStateManager } from 'app/features/search/state/SearchStateManager';
+import { DashboardViewItemKind, SearchState } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setAllSelection, setItemSelectionState, useHasSelection } from '../state';
@@ -15,9 +15,12 @@ interface SearchViewProps {
   height: number;
   width: number;
   canSelect: boolean;
+  searchState: SearchState;
+  searchStateManager: SearchStateManager;
+  emptyState?: ReactNode;
 }
 
-const NUM_PLACEHOLDER_ROWS = 50;
+const NUM_PLACEHOLDER_ROWS = 25;
 const initialLoadingView = {
   view: new DataFrameView(
     toDataFrame({
@@ -41,13 +44,19 @@ const initialLoadingView = {
   totalRows: NUM_PLACEHOLDER_ROWS,
 };
 
-export function SearchView({ width, height, canSelect }: SearchViewProps) {
+export function SearchView({
+  width,
+  height,
+  canSelect,
+  searchState,
+  searchStateManager: stateManager,
+  emptyState: emptyStateProp,
+}: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
   const hasSelection = useHasSelection();
 
   const { keyboardEvents } = useKeyNavigationListener();
-  const [searchState, stateManager] = useSearchStateManager();
 
   const value = searchState.result ?? initialLoadingView;
 
@@ -87,20 +96,20 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   );
 
   if (value.totalRows === 0) {
-    return (
-      <div style={{ width }}>
-        <EmptyState
-          button={
-            <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
-              <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
-            </Button>
-          }
-          message={t('browse-dashboards.no-results.text', 'No results found for your query')}
-          variant="not-found"
-          role="alert"
-        />
-      </div>
+    const emptyState = emptyStateProp ?? (
+      <EmptyState
+        button={
+          <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
+            <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
+          </Button>
+        }
+        message={t('browse-dashboards.no-results.text', 'No results found for your query')}
+        variant="not-found"
+        role="alert"
+      />
     );
+
+    return <div style={{ width }}>{emptyState}</div>;
   }
 
   const props: SearchResultsProps = {

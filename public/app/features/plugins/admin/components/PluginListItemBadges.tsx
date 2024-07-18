@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PluginType } from '@grafana/data';
 import { PluginSignatureBadge, Stack } from '@grafana/ui';
 

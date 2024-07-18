@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
@@ -589,6 +589,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         onCancelQuery={panelChromeProps.onCancelQuery}
         onOpenMenu={panelChromeProps.onOpenMenu}
         onFocus={() => this.setPanelAttention()}
+        onMouseEnter={() => this.setPanelAttention()}
         onMouseMove={() => this.debouncedSetPanelAttention()}
       >
         {(innerWidth, innerHeight) => (

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -67,7 +68,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
       {overrideGrouping && (
         <Field
           label="Group by"
-          description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
+          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy."
           {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}

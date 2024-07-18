@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';

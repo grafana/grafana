@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { BinaryOperationID, binaryOperators, SelectableValue } from '@grafana/data';
 import {
   BinaryOptions,

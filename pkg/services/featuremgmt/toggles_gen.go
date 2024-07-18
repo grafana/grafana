@@ -51,14 +51,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagExploreContentOutline
-	// Content outline sidebar
-	FlagExploreContentOutline = "exploreContentOutline"
-
-	// FlagDatasourceQueryMultiStatus
-	// Introduce HTTP 207 Multi Status for api/ds/query
-	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -95,10 +87,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagScenes
-	// Experimental framework to build interactive dashboards
-	FlagScenes = "scenes"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -119,14 +107,6 @@ const (
 	// SQL-based k8s storage
 	FlagUnifiedStorage = "unifiedStorage"
 
-	// FlagDualWritePlaylistsMode2
-	// Enables dual writing of playlists to both legacy and k8s storage in mode 2
-	FlagDualWritePlaylistsMode2 = "dualWritePlaylistsMode2"
-
-	// FlagDualWritePlaylistsMode3
-	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
-	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -146,10 +126,6 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
-
-	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
-	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
@@ -239,10 +215,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableElasticsearchBackendQuerying
-	// Enable the processing of queries and responses in the Elasticsearch data source through backend
-	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
-
 	// FlagFaroDatasourceSelector
 	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
@@ -271,10 +243,6 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
-	// FlagLokiFormatQuery
-	// Enables the ability to format Loki queries
-	FlagLokiFormatQuery = "lokiFormatQuery"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -282,10 +250,6 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
-
-	// FlagPrometheusIncrementalQueryInstrumentation
-	// Adds RudderStack events to incremental queries
-	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
 
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
@@ -403,6 +367,10 @@ const (
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
+
 	// FlagFormatString
 	// Enable format string transformer
 	FlagFormatString = "formatString"
@@ -418,6 +386,10 @@ const (
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
+	// FlagKubernetesDashboards
+	// Use the kubernetes API in the frontend for dashboards
+	FlagKubernetesDashboards = "kubernetesDashboards"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -531,10 +503,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagFlameGraphItemCollapsing
-	// Allow collapsing of flame graph items
-	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
-
 	// FlagExploreMetrics
 	// Enables the new Explore Metrics core app
 	FlagExploreMetrics = "exploreMetrics"
@@ -627,10 +595,6 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
-	// FlagBetterPageScrolling
-	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
-	FlagBetterPageScrolling = "betterPageScrolling"
-
 	// FlagAuthAPIAccessTokenAuth
 	// Enables the use of Auth API access tokens for authentication
 	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
@@ -671,10 +635,6 @@ const (
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
 
-	// FlagAutofixDSUID
-	// Automatically migrates invalid datasource UIDs
-	FlagAutofixDSUID = "autofixDSUID"
-
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
@@ -692,7 +652,7 @@ const (
 	FlagNotificationBanner = "notificationBanner"
 
 	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature
+	// Enables deleted dashboard restore feature (backend only)
 	FlagDashboardRestore = "dashboardRestore"
 
 	// FlagDatasourceProxyDisableRBAC
@@ -710,4 +670,68 @@ const (
 	// FlagAlertingCentralAlertHistory
 	// Enables the new central alert history.
 	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
+
+	// FlagAzureMonitorPrometheusExemplars
+	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
+
+	// FlagPinNavItems
+	// Enables pinning of nav items
+	FlagPinNavItems = "pinNavItems"
+
+	// FlagAuthZGRPCServer
+	// Enables the gRPC server for authorization
+	FlagAuthZGRPCServer = "authZGRPCServer"
+
+	// FlagOpenSearchBackendFlowEnabled
+	// Enables the backend query flow for Open Search datasource plugin
+	FlagOpenSearchBackendFlowEnabled = "openSearchBackendFlowEnabled"
+
+	// FlagSsoSettingsLDAP
+	// Use the new SSO Settings API to configure LDAP
+	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
+
+	// FlagFailWrongDSUID
+	// Throws an error if a datasource has an invalid UIDs
+	FlagFailWrongDSUID = "failWrongDSUID"
+
+	// FlagDatabaseReadReplica
+	// Use a read replica for some database queries.
+	FlagDatabaseReadReplica = "databaseReadReplica"
+
+	// FlagZanzana
+	// Use openFGA as authorization engine.
+	FlagZanzana = "zanzana"
+
+	// FlagPassScopeToDashboardApi
+	// Enables the passing of scopes to dashboards fetching in Grafana
+	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
+
+	// FlagAlertingApiServer
+	// Register Alerting APIs with the K8s API server
+	FlagAlertingApiServer = "alertingApiServer"
+
+	// FlagDashboardRestoreUI
+	// Enables the frontend to be able to restore a recently deleted dashboard
+	FlagDashboardRestoreUI = "dashboardRestoreUI"
+
+	// FlagCloudWatchRoundUpEndTime
+	// Round up end time for metric queries to the next minute to avoid missing data
+	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
+
+	// FlagBodyScrolling
+	// Adjusts Page to make body the scrollable element
+	FlagBodyScrolling = "bodyScrolling"
+
+	// FlagCloudwatchMetricInsightsCrossAccount
+	// Enables cross account observability for Cloudwatch Metric Insights
+	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
+
+	// FlagPrometheusAzureOverrideAudience
+	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
+	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 )

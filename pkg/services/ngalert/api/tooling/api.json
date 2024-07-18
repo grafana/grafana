@@ -14,10 +14,10 @@
      "type": "string"
     },
     "annotations": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "state": {
      "type": "string"
@@ -218,6 +218,9 @@
      "format": "int64",
      "type": "integer"
     },
+    "record": {
+     "$ref": "#/definitions/AlertRuleRecordExport"
+    },
     "title": {
      "type": "string"
     },
@@ -367,6 +370,18 @@
    "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
    "type": "object"
   },
+  "AlertRuleRecordExport": {
+   "properties": {
+    "from": {
+     "type": "string"
+    },
+    "metric": {
+     "type": "string"
+    }
+   },
+   "title": "Record is the provisioned export of models.Record.",
+   "type": "object"
+  },
   "AlertingFileExport": {
    "properties": {
     "apiVersion": {
@@ -415,7 +430,7 @@
      "type": "array"
     },
     "annotations": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "duration": {
      "format": "double",
@@ -429,7 +444,7 @@
      "type": "string"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "lastError": {
      "type": "string"
@@ -463,7 +478,7 @@
      "type": "object"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -967,7 +982,9 @@
    },
    "type": "object"
   },
-  "EvalQueriesResponse": {},
+  "EvalQueriesResponse": {
+   "type": "object"
+  },
   "ExplorePanelsState": {
    "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
   },
@@ -1698,6 +1715,9 @@
       "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2785,6 +2805,9 @@
       "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2921,6 +2944,9 @@
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
+    },
+    "record": {
+     "$ref": "#/definitions/Record"
     },
     "ruleGroup": {
      "example": "eval_group_1",
@@ -3256,13 +3282,20 @@
   "Record": {
    "properties": {
     "from": {
+     "description": "Which expression node should be used as the input for the recorded metric.",
+     "example": "A",
      "type": "string"
     },
     "metric": {
+     "description": "Name of the recorded metric.",
+     "example": "grafana_alerts_ratio",
      "type": "string"
     }
    },
-   "title": "Record defines how data produced by a recording rule is written.",
+   "required": [
+    "metric",
+    "from"
+   ],
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -3430,7 +3463,7 @@
      "type": "string"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "lastError": {
      "type": "string"
@@ -3446,7 +3479,7 @@
      "type": "string"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -3564,10 +3597,6 @@
    ],
    "type": "object"
   },
-  "RuleType": {
-   "title": "RuleType models the type of a rule.",
-   "type": "string"
-  },
   "SNSConfig": {
    "properties": {
     "api_url": {
@@ -3651,6 +3680,20 @@
     },
     "SecretKey": {
      "$ref": "#/definitions/Secret"
+    }
+   },
+   "type": "object"
+  },
+  "SilenceMetadata": {
+   "properties": {
+    "folder_uid": {
+     "type": "string"
+    },
+    "rule_title": {
+     "type": "string"
+    },
+    "rule_uid": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -4459,9 +4502,9 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/alertGroup",
+    "type": "object"
    },
    "type": "array"
   },
@@ -4564,6 +4607,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4619,13 +4663,82 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/gettableAlert"
+    "$ref": "#/definitions/gettableAlert",
+    "type": "object"
+   },
+   "type": "array"
+  },
+  "gettableGrafanaSilence": {
+   "properties": {
+    "accessControl": {
+     "additionalProperties": {
+      "type": "boolean"
+     },
+     "example": {
+      "create": false,
+      "read": true,
+      "write": false
+     },
+     "type": "object"
+    },
+    "comment": {
+     "description": "comment",
+     "type": "string"
+    },
+    "createdBy": {
+     "description": "created by",
+     "type": "string"
+    },
+    "endsAt": {
+     "description": "ends at",
+     "format": "date-time",
+     "type": "string"
+    },
+    "id": {
+     "description": "id",
+     "type": "string"
+    },
+    "matchers": {
+     "$ref": "#/definitions/matchers"
+    },
+    "metadata": {
+     "$ref": "#/definitions/SilenceMetadata"
+    },
+    "startsAt": {
+     "description": "starts at",
+     "format": "date-time",
+     "type": "string"
+    },
+    "status": {
+     "$ref": "#/definitions/silenceStatus"
+    },
+    "updatedAt": {
+     "description": "updated at",
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "required": [
+    "comment",
+    "createdBy",
+    "endsAt",
+    "matchers",
+    "startsAt",
+    "id",
+    "status",
+    "updatedAt"
+   ],
+   "type": "object"
+  },
+  "gettableGrafanaSilences": {
+   "items": {
+    "$ref": "#/definitions/gettableGrafanaSilence"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4674,13 +4787,14 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
-    "$ref": "#/definitions/gettableSilence"
+    "$ref": "#/definitions/gettableSilence",
+    "type": "object"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4751,14 +4865,6 @@
    },
    "type": "array"
   },
-  "overrideLabels": {
-   "additionalProperties": {
-    "type": "string"
-   },
-   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-   "title": "override the labels type with a map for generation.",
-   "type": "object"
-  },
   "peerStatus": {
    "description": "PeerStatus peer status",
    "properties": {
@@ -4824,6 +4930,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5756,6 +5863,17 @@
       "name": "name",
       "required": true,
       "type": "string"
+     },
+     {
+      "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+      "in": "query",
+      "name": "version",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5838,6 +5956,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
       }
      }
     },
@@ -6187,7 +6311,7 @@
    "description": "",
    "schema": {
     "items": {
-     "$ref": "#/definitions/receiver"
+     "$ref": "#/definitions/Receiver"
     },
     "type": "array"
    }

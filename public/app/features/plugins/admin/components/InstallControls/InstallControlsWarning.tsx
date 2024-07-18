@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';

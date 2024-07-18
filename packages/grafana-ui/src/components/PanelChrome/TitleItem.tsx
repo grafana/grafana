@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
 

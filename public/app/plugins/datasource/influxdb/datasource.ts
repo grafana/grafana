@@ -30,7 +30,6 @@ import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
   FetchResponse,
-  frameToMetricFindValue,
   getBackendSrv,
   getTemplateSrv,
   TemplateSrv,
@@ -48,7 +47,14 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
-import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
+import {
+  DEFAULT_POLICY,
+  InfluxOptions,
+  InfluxQuery,
+  InfluxQueryTag,
+  InfluxVariableQuery,
+  InfluxVersion,
+} from './types';
 import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -373,7 +379,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ).then(this.toMetricFindValue);
   }
 
-  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: InfluxVariableQuery, options?: any): Promise<MetricFindValue[]> {
     if (
       this.version === InfluxVersion.Flux ||
       this.version === InfluxVersion.SQL ||
@@ -381,37 +387,49 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ) {
       const target: InfluxQuery & SQLQuery = {
         refId: 'metricFindQuery',
-        query,
+        query: query.query,
         rawQuery: true,
-        ...(this.version === InfluxVersion.SQL ? { rawSql: query, format: QueryFormat.Table } : {}),
+        ...(this.version === InfluxVersion.SQL ? { rawSql: query.query, format: QueryFormat.Table } : {}),
       };
       return lastValueFrom(
         super.query({
           ...(options ?? {}), // includes 'range'
+          maxDataPoints: query.maxDataPoints,
           targets: [target],
         })
       ).then(this.toMetricFindValue);
     }
 
     const interpolated = this.templateSrv.replace(
-      query,
+      query.query,
       options?.scopedVars,
-      (value: string | string[] = [], variable: QueryVariableModel) => this.interpolateQueryExpr(value, variable, query)
+      (value: string | string[] = [], variable: QueryVariableModel) =>
+        this.interpolateQueryExpr(value, variable, query.query)
     );
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
-      return this.responseParser.parse(query, resp);
+      return this.responseParser.parse(query.query, resp);
     });
   }
 
   toMetricFindValue(rsp: DataQueryResponse): MetricFindValue[] {
-    const data = rsp.data ?? [];
+    const valueMap = new Map<string, MetricFindValue>();
     // Create MetricFindValue object for all frames
-    const values = data.map((d) => frameToMetricFindValue(d)).flat();
-    // Filter out duplicate elements
-    return values.filter((elm, idx, self) => idx === self.findIndex((t) => t.text === elm.text));
+    rsp?.data?.forEach((frame: DataFrame) => {
+      if (frame && frame.length > 0) {
+        let field = frame.fields.find((f) => f.type === FieldType.string);
+        if (!field) {
+          field = frame.fields.find((f) => f.type !== FieldType.time);
+        }
+        if (field) {
+          field.values.forEach((v) => {
+            valueMap.set(v.toString(), { text: v.toString() });
+          });
+        }
+      }
+    });
+    return Array.from(valueMap.values());
   }
-
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options?: DataSourceGetTagKeysOptions<InfluxQuery>) {
@@ -421,7 +439,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       database: this.database,
     });
 
-    return this.metricFindQuery(query);
+    return this.metricFindQuery({ refId: 'get-tag-keys', query });
   }
 
   getTagValues(options: DataSourceGetTagValuesOptions<InfluxQuery>) {
@@ -432,7 +450,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       withKey: options.key,
     });
 
-    return this.metricFindQuery(query);
+    return this.metricFindQuery({ refId: 'get-tag-values', query });
   }
 
   /**

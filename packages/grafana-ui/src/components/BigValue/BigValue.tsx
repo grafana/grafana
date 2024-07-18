@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
 import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';

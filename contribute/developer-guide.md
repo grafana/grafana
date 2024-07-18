@@ -19,6 +19,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 brew install git
 brew install go
 brew install node@20
+brew install corepack
 corepack enable
 ```
 
@@ -83,6 +84,33 @@ This command generates SASS theme files, builds all external plugins, and then b
 After `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
 
 > **Troubleshooting:** if your first build works, after pulling updates you may see unexpected errors in the "Type-checking in progress..." stage. These errors can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). In this case, you can enter `rm tsconfig.tsbuildinfo` and re-try.
+
+#### Plugins
+
+If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
+
+- azuremonitor
+- cloud-monitoring
+- grafana-postgresql-datasource
+- grafana-pyroscope-datasource
+- grafana-testdata-datasource
+- jaegar
+- mysql
+- parca
+- tempo
+- zipkin
+
+To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
+
+```
+yarn plugin:build:dev
+```
+
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+
+```
+yarn workspace <name_of_plugin> dev
+```
 
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
@@ -154,7 +182,7 @@ Running the backend tests on Windows currently needs some tweaking, so use the `
 go run build.go test
 ```
 
-### Run SQLLite, PostgreSQL and MySQL integration tests
+### Run SQLite, PostgreSQL and MySQL integration tests
 
 By default, grafana runs SQLite. To run test with SQLite:
 
@@ -208,7 +236,7 @@ yarn e2e:dev
 
 #### To run the Playwright tests:
 
-**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to install it, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
+**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to use reports to analyze failing tests, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
 
 Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers.
 
@@ -216,22 +244,16 @@ Each version of Playwright needs specific versions of browser binaries to operat
 yarn playwright install chromium
 ```
 
-To run all tests in a headless Chromium browser and display results in the terminal:
+To run all tests in a headless Chromium browser and display results in the terminal. This assumes you have Grafana running on port 3000.
 
 ```
 yarn e2e:playwright
 ```
 
-For a better developer experience, open the Playwright UI where you can visually walk through each step of the test and see what was happening before, during, and after each step.
+The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in Drone CI) on port 3001 and runs the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
 
 ```
-yarn e2e:playwright:ui
-```
-
-To open the HTML reporter for the last test run session:
-
-```
-yarn e2e:playwright:report
+yarn e2e:playwright:server
 ```
 
 ## Configure Grafana for development
