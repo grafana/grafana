@@ -303,6 +303,8 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		return fmt.Errorf("uploading file using presigned url: %w", err)
 	}
 
+	s.log.Info("successfully uploaded snapshot", "snapshotUid", snapshotMeta.UID, "cloud_snapshotUid", snapshotMeta.GMSSnapshotUID)
+
 	// update snapshot status to processing with retries
 	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:    snapshotMeta.UID,
