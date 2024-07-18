@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"path"
-	"path/filepath"
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
-	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +21,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -52,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var (
@@ -273,32 +270,17 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 	case grafanaapiserveroptions.StorageTypeUnifiedNext:
-		// CDK (for now)
-		dir := filepath.Join(s.cfg.DataPath, "unistore", "resource")
-		if err := os.MkdirAll(dir, 0o750); err != nil {
-			return err
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		bucket, err := fileblob.OpenBucket(dir, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
+		server, err := sql.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
-		backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-			Tracer: s.tracing,
-			Bucket: bucket,
-		})
-		if err != nil {
-			return err
-		}
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: backend})
-		if err != nil {
-			return err
-		}
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
-			o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		client := resource.NewLocalResourceStoreClient(server)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+			o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
@@ -312,7 +294,7 @@ func (s *service) start(ctx context.Context) error {
 
 		// Create a client instance
 		client := resource.NewResourceStoreClientGRPC(conn)
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnified, grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		var client entity.EntityStoreClient
@@ -347,8 +329,9 @@ func (s *service) start(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
-				o.RecommendedOptions.Etcd.StorageConfig.Codec)
+			client := resource.NewLocalResourceStoreClient(server)
+			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+				o.RecommendedOptions.Etcd.StorageConfig)
 		} else {
 			serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
 				client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
@@ -357,7 +340,7 @@ func (s *service) start(ctx context.Context) error {
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		restOptionsGetter, err := filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := apistore.NewRESTOptionsGetterForFile(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
 		if err != nil {
 			return err
 		}

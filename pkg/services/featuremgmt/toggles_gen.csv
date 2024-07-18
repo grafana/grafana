@@ -180,3 +180,4 @@ dashboardRestoreUI,experimental,@grafana/grafana-frontend-platform,false,false,f
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 bodyScrolling,experimental,@grafana/grafana-frontend-platform,false,false,true
 cloudwatchMetricInsightsCrossAccount,experimental,@grafana/aws-datasources,false,false,true
+prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false

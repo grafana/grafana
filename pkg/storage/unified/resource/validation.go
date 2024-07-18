@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-var validNameCharPattern = `a-zA-Z0-9\-\_`
+var validNameCharPattern = `a-zA-Z0-9\-\_\.`
 var validNamePattern = regexp.MustCompile(`^[` + validNameCharPattern + `]*$`).MatchString
 
 func validateName(name string) error {

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -43,13 +44,18 @@ type ConditionEvaluator interface {
 	Evaluate(ctx context.Context, now time.Time) (Results, error)
 }
 
-type expressionService interface {
+type expressionExecutor interface {
 	ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+}
+
+type expressionBuilder interface {
+	expressionExecutor
+	BuildPipeline(req *expr.Request) (expr.DataPipeline, error)
 }
 
 type conditionEvaluator struct {
 	pipeline          expr.DataPipeline
-	expressionService expressionService
+	expressionService expressionExecutor
 	condition         models.Condition
 	evalTimeout       time.Duration
 	evalResultLimit   int
@@ -105,7 +111,7 @@ type evaluatorImpl struct {
 	evaluationTimeout     time.Duration
 	evaluationResultLimit int
 	dataSourceCache       datasources.CacheService
-	expressionService     *expr.Service
+	expressionService     expressionBuilder
 	pluginsStore          pluginstore.Store
 }
 
@@ -324,22 +330,24 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
-func buildDatasourceHeaders(ctx context.Context) map[string]string {
-	headers := map[string]string{
-		// Many data sources check this in query method as sometimes alerting needs special considerations.
-		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
-		//
-		// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
-		// When sent over a network, the key of this header is canonicalized to "Fromalert".
-		// However, some datasources still compare against the string "FromAlert".
-		models.FromAlertHeaderName: "true",
+func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {
+	headers := make(map[string]string, len(metadata)+3)
 
-		models.CacheSkipHeaderName: "true",
+	for key, value := range metadata {
+		headers[fmt.Sprintf("X-Rule-%s", key)] = url.QueryEscape(value)
 	}
+
+	// Many data sources check this in query method as sometimes alerting needs special considerations.
+	// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
+	//
+	// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
+	// When sent over a network, the key of this header is canonicalized to "Fromalert".
+	// However, some datasources still compare against the string "FromAlert".
+	headers[models.FromAlertHeaderName] = "true"
+	headers[models.CacheSkipHeaderName] = "true"
 
 	key, ok := models.RuleKeyFromContext(ctx)
 	if ok {
-		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
 	}
 
@@ -350,7 +358,7 @@ func buildDatasourceHeaders(ctx context.Context) map[string]string {
 func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheService datasources.CacheService, reader AlertingResultsReader) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.GetOrgID(),
-		Headers: buildDatasourceHeaders(ctx.Ctx),
+		Headers: buildDatasourceHeaders(ctx.Ctx, condition.Metadata),
 		User:    ctx.User,
 	}
 	datasources := make(map[string]*datasources.DataSource, len(condition.Data))
@@ -387,8 +395,9 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 					return nil, fmt.Errorf("recovery threshold '%s' is only allowed to be the alert condition", q.RefID)
 				}
 				if reader != nil {
-					logger.FromContext(ctx.Ctx).Debug("Detected hysteresis threshold command. Populating with the results")
-					err = q.PatchHysteresisExpression(reader.Read())
+					active := reader.Read()
+					logger.FromContext(ctx.Ctx).Debug("Detected hysteresis threshold command. Populating with the results", "items", len(active))
+					err = q.PatchHysteresisExpression(active)
 					if err != nil {
 						return nil, fmt.Errorf("failed to amend hysteresis command '%s': %w", q.RefID, err)
 					}
@@ -430,6 +439,24 @@ type NumberValueCapture struct {
 	Value *float64
 }
 
+func IsNoData(res backend.DataResponse) bool {
+	// There are two possible frame formats for No Data:
+	//
+	// 1. A response with no frames
+	// 2. A response with 1 frame but no fields
+	//
+	// The first format is not documented in the data plane contract but needs to be
+	// supported for older datasource plugins. The second format is documented in
+	// https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/contract_docs/contract.md
+	// and is what datasource plugins should use going forward.
+	if len(res.Frames) <= 1 {
+		hasNoFrames := len(res.Frames) == 0
+		hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
+		return hasNoFrames || hasNoFields
+	}
+	return false
+}
+
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// captures contains the values of all instant queries and expressions for each dimension
 	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
@@ -459,27 +486,14 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	result.Error = FindConditionError(execResp, c.Condition)
 
 	for refID, res := range execResp.Responses {
-		// There are two possible frame formats for No Data:
-		//
-		// 1. A response with no frames
-		// 2. A response with 1 frame but no fields
-		//
-		// The first format is not documented in the data plane contract but needs to be
-		// supported for older datasource plugins. The second format is documented in
-		// https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/contract_docs/contract.md
-		// and is what datasource plugins should use going forward.
-		if len(res.Frames) <= 1 {
+		if IsNoData(res) {
 			// To make sure NoData is nil when Results are also nil we wait to initialize
 			// NoData until there is at least one query or expression that returned no data
 			if result.NoData == nil {
 				result.NoData = make(map[string]string)
 			}
-			hasNoFrames := len(res.Frames) == 0
-			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
-			if hasNoFrames || hasNoFields {
-				if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
-					result.NoData[refID] = s
-				}
+			if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
+				result.NoData[refID] = s
 			}
 		}
 
