@@ -200,10 +200,15 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> impleme
       blockingMessage: undefined,
     };
 
+    console.log('I am triggered');
+    console.log(variable);
+
     if (!variable.state.loading && variable.state.options.length) {
       stateUpdate.body = variable.hasAllValue()
-        ? buildAllLayout(options, this._query!)
-        : buildNormalLayout(this._query!);
+        ? buildAllLayout(options, this._query!, this.state.breakdownLayout, this.onBreakdownLayoutChange)
+        : buildNormalLayout(this._query!, this.state.breakdownLayout, this.onBreakdownLayoutChange);
+      stateUpdate.breakdownLayout =
+        variable.hasAllValue() && this.state.breakdownLayout === 'single' ? 'grid' : this.state.breakdownLayout;
     } else if (!variable.state.loading) {
       stateUpdate.body = undefined;
       stateUpdate.blockingMessage = 'Unable to retrieve label options for currently selected metric.';
@@ -213,6 +218,15 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> impleme
     // Setting the new panels will gradually end up calling reportBreakdownPanelData to update the new min & max
     this.setState(stateUpdate);
   }
+
+  public onBreakdownLayoutChange = (breakdownLayout: BreakdownLayoutType) => {
+    const variable = this.getVariable();
+    const options = getLabelOptions(this, variable);
+    const body = variable.hasAllValue()
+      ? buildAllLayout(options, this._query!, breakdownLayout, this.onBreakdownLayoutChange)
+      : buildNormalLayout(this._query!, breakdownLayout, this.onBreakdownLayoutChange);
+    this.setState({ body, breakdownLayout });
+  };
 
   public onChange = (value?: string) => {
     if (!value) {
@@ -287,7 +301,12 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef: AutoQueryDef) {
+export function buildAllLayout(
+  options: Array<SelectableValue<string>>,
+  queryDef: AutoQueryDef,
+  breakdownLayout: BreakdownLayoutType,
+  onBreakdownLayoutChange: (breakdownLayout: BreakdownLayoutType) => void
+) {
   const children: SceneFlexItemLike[] = [];
 
   for (const option of options) {
@@ -338,6 +357,8 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
+    breakdownLayout,
+    onBreakdownLayoutChange,
     layouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
@@ -358,7 +379,11 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
 
 const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 
-function buildNormalLayout(queryDef: AutoQueryDef) {
+function buildNormalLayout(
+  queryDef: AutoQueryDef,
+  breakdownLayout: BreakdownLayoutType,
+  onBreakdownLayoutChange: (breakdownLayout: BreakdownLayoutType) => void
+) {
   const unit = queryDef.unit;
 
   function getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem {
@@ -398,6 +423,8 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
+    breakdownLayout,
+    onBreakdownLayoutChange,
     layouts: [
       new SceneFlexLayout({
         direction: 'column',
