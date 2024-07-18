@@ -1891,7 +1891,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		policies:            newFakeNotificationPolicyService(),
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
+		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,

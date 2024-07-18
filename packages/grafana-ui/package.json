@@ -54,6 +54,7 @@
     "@grafana/e2e-selectors": "11.2.0-pre",
     "@grafana/faro-web-sdk": "^1.3.6",
     "@grafana/schema": "11.2.0-pre",
+    "@hello-pangea/dnd": "16.6.0",
     "@leeoniya/ufuzzy": "1.0.14",
     "@monaco-editor/react": "4.6.0",
     "@popperjs/core": "2.11.8",
@@ -110,7 +111,7 @@
     "uuid": "9.0.1"
   },
   "devDependencies": {
-    "@babel/core": "7.24.7",
+    "@babel/core": "7.24.9",
     "@faker-js/faker": "^8.4.1",
     "@grafana/tsconfig": "^1.3.0-rc1",
     "@rollup/plugin-node-resolve": "15.2.3",

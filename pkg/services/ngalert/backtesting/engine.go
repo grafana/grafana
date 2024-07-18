@@ -77,7 +77,7 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 
 	stateManager := e.createStateManager()
 
-	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition(), &schedule.AlertingResultsFromRuleState{
+	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition().WithSource("backtesting"), &schedule.AlertingResultsFromRuleState{
 		Manager: stateManager,
 		Rule:    rule,
 	})

@@ -11,7 +11,7 @@ interface Props {
   migrationToken?: string;
 }
 
-export const MigrationTokenModal = ({ isOpen, hideModal, migrationToken }: Props) => {
+export const CreateTokenModal = ({ isOpen, hideModal, migrationToken }: Props) => {
   return (
     <Modal
       isOpen={isOpen}

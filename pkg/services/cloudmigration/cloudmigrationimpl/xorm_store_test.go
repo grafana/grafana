@@ -173,7 +173,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		// create a snapshot
 		cmr := cloudmigration.CloudMigrationSnapshot{
 			SessionUID: sessionUid,
-			Status:     "initializing",
+			Status:     cloudmigration.SnapshotStatusCreating,
 		}
 
 		snapshotUid, err := s.CreateSnapshot(ctx, cmr)
@@ -183,7 +183,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		//retrieve it from the db
 		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
 		require.NoError(t, err)
-		require.Equal(t, cloudmigration.SnapshotStatusInitializing, string(snapshot.Status))
+		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// update its status
 		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
@@ -192,7 +192,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		//retrieve it again
 		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
 		require.NoError(t, err)
-		require.Equal(t, cloudmigration.SnapshotStatusCreating, string(snapshot.Status))
+		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// lists snapshots and ensures it's in there
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
@@ -257,6 +257,7 @@ func Test_SnapshotResources(t *testing.T) {
 			cloudmigration.ItemStatusOK:      3,
 			cloudmigration.ItemStatusPending: 1,
 		}, stats.CountsByStatus)
+		assert.Equal(t, 4, stats.Total)
 
 		// delete snapshot resources
 		err = s.DeleteSnapshotResources(ctx, "poiuy")
