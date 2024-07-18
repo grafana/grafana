@@ -181,7 +181,7 @@ func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
-		cnnstr, err := generateConnectionString(dsInfo, cfg.Azure.ManagedIdentityClientId, azureCredentials, kerberosAuth, logger)
+		cnnstr, err := generateConnectionString(dsInfo, cfg.Azure.ManagedIdentityClientId, cfg.Azure.AzureEntraPasswordCredentialsEnabled, azureCredentials, kerberosAuth, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +237,7 @@ func ParseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentityClientId string, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger) (string, error) {
+func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentityClientId string, azureEntraPasswordCredentialsEnabled bool, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dsInfo.URL != "" {
@@ -275,7 +275,7 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentity
 
 	switch dsInfo.JsonData.AuthenticationType {
 	case azureAuthentication:
-		azureCredentialDSNFragment, err := getAzureCredentialDSNFragment(azureCredentials, azureManagedIdentityClientId)
+		azureCredentialDSNFragment, err := getAzureCredentialDSNFragment(azureCredentials, azureManagedIdentityClientId, azureEntraPasswordCredentialsEnabled)
 		if err != nil {
 			return "", err
 		}
@@ -312,7 +312,7 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentity
 	return connStr, nil
 }
 
-func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentials, azureManagedIdentityClientId string) (string, error) {
+func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentials, azureManagedIdentityClientId string, azureEntraPasswordCredentialsEnabled bool) (string, error) {
 	connStr := ""
 	switch c := azureCredentials.(type) {
 	case *azcredentials.AzureManagedIdentityCredentials:
@@ -329,7 +329,7 @@ func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentia
 			"ActiveDirectoryApplication",
 		)
 	case *azcredentials.AzureEntraPasswordCredentials:
-		if cfg.Azure.AzureEntraPasswordCredentialsEnabled {
+		if azureEntraPasswordCredentialsEnabled {
 			connStr += fmt.Sprintf("user id=%s;password=%s;applicationclientid=%s;fedauth=%s;",
 				c.UserId,
 				c.Password,
