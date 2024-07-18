@@ -86,7 +86,10 @@ jobs:
           git diff CHANGELOG.md
       - name: "Commit changelog changes"
         run: git commit --allow-empty -m "Update changelog placeholder" CHANGELOG.md
-      - name: Create changelog PR
+      - name: "git push"
+        if: ${{ inputs.dry_run }} != true
+        run: git push
+      - name: "Create changelog PR"
         if: "${{ inputs.backport == '' }}"
         run: >
           gh pr create \
