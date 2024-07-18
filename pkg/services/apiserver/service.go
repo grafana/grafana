@@ -24,7 +24,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -297,8 +296,9 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
-			o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		client := resource.NewLocalResourceStoreClient(server)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+			o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
@@ -312,7 +312,7 @@ func (s *service) start(ctx context.Context) error {
 
 		// Create a client instance
 		client := resource.NewResourceStoreClientGRPC(conn)
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnified, grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		var client entity.EntityStoreClient
@@ -347,8 +347,9 @@ func (s *service) start(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForServer(server,
-				o.RecommendedOptions.Etcd.StorageConfig.Codec)
+			client := resource.NewLocalResourceStoreClient(server)
+			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+				o.RecommendedOptions.Etcd.StorageConfig)
 		} else {
 			serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
 				client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
@@ -357,7 +358,7 @@ func (s *service) start(ctx context.Context) error {
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		restOptionsGetter, err := filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := apistore.NewRESTOptionsGetterForFile(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
 		if err != nil {
 			return err
 		}

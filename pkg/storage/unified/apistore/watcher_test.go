@@ -3,16 +3,18 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
-package file
+package apistore
 
 import (
 	"context"
-	"io/fs"
+	"fmt"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob/fileblob"
+	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +29,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var scheme = runtime.NewScheme()
@@ -67,10 +70,39 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		opt(&setupOpts, t)
 	}
 
+	setupOpts.groupResource = schema.GroupResource{
+		Group:    "example.apiserver.k8s.io",
+		Resource: "pods",
+	}
+
+	bucket := memblob.OpenBucket(nil)
+	if true {
+		tmp, err := os.MkdirTemp("", "xxx-*")
+		require.NoError(t, err)
+
+		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
+			CreateDir: true,
+			Metadata:  fileblob.MetadataDontWrite, // skip
+		})
+		require.NoError(t, err)
+		fmt.Printf("ROOT: %s\n\n", tmp)
+	}
+	ctx := storagetesting.NewContext()
+	backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
+		Bucket: bucket,
+	})
+	require.NoError(t, err)
+
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend: backend,
+	})
+	require.NoError(t, err)
+	client := resource.NewLocalResourceStoreClient(server)
+
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
 	store, destroyFunc, err := NewStorage(
 		config.ForResource(setupOpts.groupResource),
-		setupOpts.resourcePrefix,
+		client,
 		func(obj runtime.Object) (string, error) {
 			accessor, err := meta.Accessor(obj)
 			if err != nil {
@@ -78,22 +110,16 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 			}
 			return storagetesting.KeyFunc(accessor.GetNamespace(), accessor.GetName()), nil
 		},
+		testKeyParser, // will fallback to hardcoded /pods/... keys
 		setupOpts.newFunc,
 		setupOpts.newListFunc,
 		storage.DefaultNamespaceScopedAttr,
 		make(map[string]storage.IndexerFunc, 0),
 		nil,
 	)
-
-	// Some tests may start reading before writing
-	if err := os.MkdirAll(path.Join(setupOpts.prefix, storagetesting.KeyFunc("test-ns", "")), fs.ModePerm); err != nil {
-		return nil, nil, nil, err
-	}
-
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	ctx := context.Background()
 	return ctx, store, destroyFunc, nil
 }
 

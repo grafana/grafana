@@ -3,7 +3,7 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
-package file
+package apistore
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
 	"k8s.io/apiserver/pkg/storage"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 )
 
@@ -27,6 +28,19 @@ func init() {
 	metav1.AddToGroupVersion(scheme, metav1.SchemeGroupVersion)
 	utilruntime.Must(example.AddToScheme(scheme))
 	utilruntime.Must(examplev1.AddToScheme(scheme))
+
+	// Make sure there is a user in every context
+	storagetesting.NewContext = func() context.Context {
+		testUserA := &identity.StaticRequester{
+			Namespace:      identity.NamespaceUser,
+			Login:          "testuser",
+			UserID:         123,
+			UserUID:        "u123",
+			OrgRole:        identity.RoleAdmin,
+			IsGrafanaAdmin: true, // can do anything
+		}
+		return identity.WithRequester(context.Background(), testUserA)
+	}
 }
 
 // GetPodAttrs returns labels and fields of a given object for filtering purposes.

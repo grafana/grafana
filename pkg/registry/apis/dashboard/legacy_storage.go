@@ -43,8 +43,8 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		return nil, err
 	}
 	client := resource.NewLocalResourceStoreClient(server)
-	optsGetter := apistore.NewRESTOptionsGetter(client,
-		defaultOpts.StorageConfig.Codec,
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
+		defaultOpts.StorageConfig.Config,
 	)
 
 	strategy := grafanaregistry.NewStrategy(scheme)

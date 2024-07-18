@@ -54,6 +54,12 @@ func TestParseKey(t *testing.T) {
 			expected: nil,
 			wantErr:  true,
 		},
+		{
+			name:     "Support kube-aggregator format",
+			raw:      "/group/test-group/resource/test-resource/test-name",
+			expected: &Key{Group: "test-group", Resource: "test-resource", Name: "test-name"},
+			wantErr:  false,
+		},
 	}
 
 	for _, tt := range tests {
