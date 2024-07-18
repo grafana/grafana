@@ -31,6 +31,10 @@ Gauges are single-value visualizations that can repeat a gauge for every series,
 
 {{< docs/play title="Grafana Gauge Visualization" url="https://play.grafana.org/d/KIhkVD6Gk/" >}}
 
+The following video provides beginner steps for creating gauge panels. You'll learn the data requirements and caveats, special customizations, and much more:
+
+{{< youtube id="QwXj3y_YpnE" >}}
+
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
