@@ -104,10 +104,9 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
         const processed: DataFrame[] = [];
 
-        const fieldIndexByName = groupFieldIndexByName(data);
-
         for (const frame of data) {
           const rows = new Set<number>();
+          const fieldIndexByName = groupFieldIndexByName(frame, data);
 
           let matchers;
           if (transformationsVariableSupport()) {
@@ -202,15 +201,13 @@ const createFilterValueMatchers = (
   });
 };
 
-const groupFieldIndexByName = (data: DataFrame[]) => {
+const groupFieldIndexByName = (frame: DataFrame, data: DataFrame[]) => {
   const lookup: Record<string, number> = {};
 
-  for (const frame of data) {
-    frame.fields.forEach((field, fieldIndex) => {
-      const fieldName = getFieldDisplayName(field, frame, data);
-      lookup[fieldName] = fieldIndex;
-    });
-  }
+  frame.fields.forEach((field, fieldIndex) => {
+    const fieldName = getFieldDisplayName(field, frame, data);
+    lookup[fieldName] = fieldIndex;
+  });
 
   return lookup;
 };
