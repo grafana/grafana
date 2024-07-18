@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
@@ -38,7 +39,7 @@ const wrapWithProvider = (element: ReactElement, enableAccessControl = true) => 
 );
 
 describe('AccessRoleCell', () => {
-  it('shows cell when access roles are enabled', () => {
+  it('shows cell when access roles are enabled', async () => {
     render(wrapWithProvider(<AccessRoleCell user={stubUserSingleRole} />));
 
     const select = screen.queryByLabelText('Access Roles');
@@ -78,7 +79,11 @@ describe('AccessRoleCell', () => {
 
     const roleSelect = screen.getByLabelText('Access Roles');
 
-    await selectEvent.select(roleSelect, ['Role #1', 'Role #2'], { container: document.body });
+    await userEvent.click(roleSelect);
+
+    await act(async () => {
+      await selectEvent.select(roleSelect, ['Role #1', 'Role #2'], { container: document.body });
+    });
 
     expect(assignRoleActionSpy).toHaveBeenCalledWith({
       userId: 2,
