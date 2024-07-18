@@ -284,7 +284,7 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
 function useCanSilence(rule: CombinedRule): [boolean, boolean] {
   const rulesSource = rule.namespace.rulesSource;
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
-  const isGrafanaRecording = rule.rulerRule && isGrafanaRecordingRule(rule.rulerRule);
+  const isGrafanaRecording = isGrafanaRecordingRule(rule.rulerRule);
 
   const { currentData: amConfigStatus, isLoading } =
     alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {

@@ -103,7 +103,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
     }
   }
 
-  if (rule.rulerRule && isGrafanaAlertingRule(rule.rulerRule)) {
+  if (isGrafanaAlertingRule(rule.rulerRule)) {
     buttons.push(
       <Fragment key="history">
         <Button

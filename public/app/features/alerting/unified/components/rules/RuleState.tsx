@@ -24,7 +24,7 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
   const { promRule, rulerRule } = rule;
   // return how long the rule has been in its firing state, if any
   const RecordingRuleState = () => {
-    if (isPaused && rulerRule && isGrafanaRecordingRule(rulerRule)) {
+    if (isPaused && isGrafanaRecordingRule(rulerRule)) {
       return (
         <Tooltip content={'Recording rule evaluation is currently paused'} placement="top">
           <StateTag state="warning">
