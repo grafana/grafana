@@ -456,7 +456,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	hs.log.Info(fmt.Sprintf("Plugin %s install/update requested", pluginID), "user", c.Login)
+	hs.log.Info("Plugin install/update requested", "pluginID", pluginID, "user", c.Login)
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
@@ -489,7 +489,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	hs.log.Info(fmt.Sprintf("Plugin %s uninstall requested", pluginID), "user", c.Login)
+	hs.log.Info("Plugin %s uninstall requested", "pluginID", pluginID, "user", c.Login)
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
