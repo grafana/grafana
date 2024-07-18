@@ -860,8 +860,8 @@ describe('templateSrv', () => {
       window.__grafanaSceneContext = new EmbeddedScene({
         $variables: new SceneVariableSet({
           variables: [
-            new QueryVariable({ name: 'server', value: 'serverA', text: 'Server A' }),
-            new QueryVariable({ name: 'pods', value: ['pA', 'pB'], text: ['podA', 'podB'] }),
+            new QueryVariable({ name: 'server', value: 'serverA', text: 'Server A', query: { refId: 'A' } }),
+            new QueryVariable({ name: 'pods', value: ['pA', 'pB'], text: ['podA', 'podB'], query: { refId: 'A' } }),
             new DataSourceVariable({ name: 'ds', value: 'dsA', text: 'dsA', pluginId: 'prometheus' }),
             new CustomVariable({ name: 'custom', value: 'A', text: 'A', query: 'A, B, C' }),
             new IntervalVariable({ name: 'interval', value: '1m', intervals: ['1m', '2m'] }),
