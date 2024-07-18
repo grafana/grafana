@@ -141,10 +141,10 @@ const expectedModifiedRule4 = (uid: string) => ({
       },
     ],
     is_paused: false,
-    notifications_settings: undefined,
+    notification_settings: undefined,
     record: {
-      Metric: 'Rule4 updated',
-      From: 'A',
+      metric: 'Rule4 updated',
+      from: 'A',
     },
     title: 'Rule4 updated',
     uid: uid,
