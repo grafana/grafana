@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
-func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, error) {
+func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
 	config := mysql.NewConfig()
 	config.User = getter.String("db_user")
 	config.Passwd = getter.String("db_pass")
@@ -54,7 +54,7 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 	return engine, nil
 }
 
-func getEnginePostgres(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, error) {
+func getEnginePostgres(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
 	dsnKV := map[string]string{
 		"user":     getter.String("db_user"),
 		"password": getter.String("db_pass"),

@@ -14,8 +14,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -23,12 +21,18 @@ import (
 
 const trace_prefix = "sql.resource."
 
-type backendOptions struct {
+type Backend interface {
+	resource.StorageBackend
+	resource.DiagnosticsServer
+	resource.LifecycleHooks
+}
+
+type BackendOptions struct {
 	DB     db.ResourceDBInterface
 	Tracer trace.Tracer
 }
 
-func NewBackendStore(opts backendOptions) (*backend, error) {
+func NewBackend(opts BackendOptions) (Backend, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	if opts.Tracer == nil {
@@ -38,29 +42,34 @@ func NewBackendStore(opts backendOptions) (*backend, error) {
 	return &backend{
 		db:     opts.DB,
 		log:    log.New("sql-resource-server"),
-		ctx:    ctx,
+		done:   ctx.Done(),
 		cancel: cancel,
 		tracer: opts.Tracer,
 	}, nil
 }
 
 type backend struct {
-	log     log.Logger
-	db      db.ResourceDBInterface // needed to keep xorm engine in scope
-	sess    *session.SessionDB
-	dialect migrator.Dialect
-	ctx     context.Context // TODO: remove
-	cancel  context.CancelFunc
-	tracer  trace.Tracer
+	// server lifecycle
 
-	//stream chan *resource.WatchEvent
+	done   <-chan struct{}
+	cancel context.CancelFunc
 
+	// o11y
+
+	log    log.Logger
+	tracer trace.Tracer
+
+	// database
+
+	db         db.ResourceDBInterface // used for deferred initialization
 	sqlDB      db.DB
 	sqlDialect sqltemplate.Dialect
+
+	//stream chan *resource.WatchEvent
 }
 
 func (b *backend) Init() error {
-	if b.sess != nil {
+	if b.sqlDB != nil {
 		return nil
 	}
 
@@ -91,19 +100,6 @@ func (b *backend) Init() error {
 	default:
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
-
-	sess, err := b.db.GetSession()
-	if err != nil {
-		return err
-	}
-
-	engine, err := b.db.GetEngine()
-	if err != nil {
-		return err
-	}
-
-	b.sess = sess
-	b.dialect = migrator.NewDialect(engine.DriverName())
 
 	return nil
 }
@@ -382,44 +378,32 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 			return err
 		}
 
-		// Fetch one extra row for Limit
-		lim := req.Limit
-		if req.Limit > 0 {
-			req.Limit++
-		}
 		listReq := sqlResourceListRequest{
 			SQLTemplate: sqltemplate.New(b.sqlDialect),
-			Request:     req,
+			Request:     new(resource.ListRequest),
 			Response:    new(resource.ResourceWrapper),
 		}
-		query, err := sqltemplate.Execute(sqlResourceList, listReq)
-		if err != nil {
-			return fmt.Errorf("execute SQL template to list resources: %w", err)
+		*listReq.Request = *req
+		if req.Limit > 0 {
+			listReq.Request.Limit++ // fetch one extra row for Limit
 		}
 
-		rows, err := tx.QueryContext(ctx, query, listReq.GetArgs()...)
+		items, err := query(ctx, tx, sqlResourceList, listReq)
 		if err != nil {
 			return fmt.Errorf("list latest resources: %w", err)
 		}
-		defer func() { _ = rows.Close() }()
-		for i := int64(1); rows.Next(); i++ {
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-			if err := rows.Scan(listReq.GetScanDest()...); err != nil {
-				return fmt.Errorf("scan row #%d: %w", i, err)
-			}
 
-			if lim > 0 && i > lim {
-				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: lim}
-				out.NextPageToken = continueToken.String()
-				break
-			}
-			out.Items = append(out.Items, &resource.ResourceWrapper{
-				ResourceVersion: listReq.Response.ResourceVersion,
-				Value:           listReq.Response.Value,
-			})
+		if req.Limit > 0 && int(req.Limit) < len(items) {
+			// remove the additional item we added synthetically above
+			clear(items[req.Limit:])
+			items = items[:req.Limit]
+
+			out.NextPageToken = ContinueToken{
+				ResourceVersion: out.ResourceVersion,
+				StartOffset:     req.Limit,
+			}.String()
 		}
+		out.Items = items
 
 		return nil
 	})
@@ -447,13 +431,6 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 	}
 
 	err := b.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		var err error
-
-		// Fetch one extra row for Limit
-		lim := req.Limit
-		if lim > 0 {
-			req.Limit++
-		}
 		listReq := sqlResourceHistoryListRequest{
 			SQLTemplate: sqltemplate.New(b.sqlDialect),
 			Request: &historyListRequest{
@@ -464,33 +441,26 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 			},
 			Response: new(resource.ResourceWrapper),
 		}
-		query, err := sqltemplate.Execute(sqlResourceHistoryList, listReq)
-		if err != nil {
-			return fmt.Errorf("execute SQL template to list resources at revision: %w", err)
+		if listReq.Request.Limit > 0 {
+			listReq.Request.Limit++ // fetch one extra row for Limit
 		}
-		rows, err := tx.QueryContext(ctx, query, listReq.GetArgs()...)
+
+		items, err := query(ctx, tx, sqlResourceHistoryList, listReq)
 		if err != nil {
 			return fmt.Errorf("list resources at revision: %w", err)
 		}
-		defer func() { _ = rows.Close() }()
-		for i := int64(1); rows.Next(); i++ {
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-			if err := rows.Scan(listReq.GetScanDest()...); err != nil {
-				return fmt.Errorf("scan row #%d: %w", i, err)
-			}
 
-			if lim > 0 && i > lim {
-				continueToken := &ContinueToken{ResourceVersion: out.ResourceVersion, StartOffset: offset + lim}
-				out.NextPageToken = continueToken.String()
-				break
-			}
-			out.Items = append(out.Items, &resource.ResourceWrapper{
-				ResourceVersion: listReq.Response.ResourceVersion,
-				Value:           listReq.Response.Value,
-			})
+		if req.Limit > 0 && int(req.Limit) < len(items) {
+			// remove the additional item we added synthetically above
+			clear(items[req.Limit:])
+			items = items[:req.Limit]
+
+			out.NextPageToken = ContinueToken{
+				ResourceVersion: out.ResourceVersion,
+				StartOffset:     req.Limit + offset,
+			}.String()
 		}
+		out.Items = items
 
 		return nil
 	})
@@ -521,7 +491,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 
 	for {
 		select {
-		case <-b.ctx.Done():
+		case <-b.done:
 			return
 		case <-t.C:
 			// List the latest RVs
@@ -741,19 +711,68 @@ func exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 	return res, nil
 }
 
+// query uses `req` as input for a set-returning query generated with `tmpl`,
+// and executed in `x`. The `Results` method of `req` should return a deep copy
+// since it will be used multiple times to decode each value.
+func query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) ([]T, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("query: invalid request for template %q: %w",
+			tmpl.Name(), err)
+	}
+
+	rawQuery, err := sqltemplate.Execute(tmpl, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
+	}
+	query := sqltemplate.FormatSQL(rawQuery)
+
+	rows, err := x.QueryContext(ctx, query, req.GetArgs()...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return []T{}, nil
+	}
+	if err != nil {
+		return nil, SQLError{
+			Err:          err,
+			CallType:     "Query",
+			TemplateName: tmpl.Name(),
+			arguments:    req.GetArgs(),
+			ScanDest:     req.GetScanDest(),
+			Query:        query,
+			RawQuery:     rawQuery,
+		}
+	}
+
+	ret := []T{}
+	for rows.Next() {
+		v, err := scanRow(rows, req)
+		if err != nil {
+			return nil, fmt.Errorf("scan %d-eth value: %w", len(ret)+1, err)
+		}
+		ret = append(ret, v)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error after reading %d values: %w",
+			len(ret), err)
+	}
+	// rows.Close() is not necessary. See that method's docs for more info
+
+	return ret, nil
+}
+
 // queryRow uses `req` as input and output for a single-row returning query
 // generated with `tmpl`, and executed in `x`.
 func queryRow[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) (T, error) {
 	var zero T
 
 	if err := req.Validate(); err != nil {
-		return zero, fmt.Errorf("query: invalid request for template %q: %w",
+		return zero, fmt.Errorf("queryRow: invalid request for template %q: %w",
 			tmpl.Name(), err)
 	}
 
 	rawQuery, err := sqltemplate.Execute(tmpl, req)
 	if err != nil {
-		return zero, fmt.Errorf("execute template: %w", err)
+		return zero, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
 	query := sqltemplate.FormatSQL(rawQuery)
 

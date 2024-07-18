@@ -1,34 +1,51 @@
-package sql
+package test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func newServer(t *testing.T) sql.Backend {
+	t.Helper()
+
+	dbstore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
+	tr := noop.NewTracerProvider().Tracer("integrationtests")
+
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, tr)
+	require.NoError(t, err)
+	require.NotNil(t, eDB)
+
+	ret, err := sql.NewBackend(sql.BackendOptions{
+		DB:     eDB,
+		Tracer: tr,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, ret)
+
+	return ret
+}
+
 func TestBackendHappyPath(t *testing.T) {
 	ctx := context.Background()
-	dbstore := db.InitTestDB(t)
-
-	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
-	assert.NoError(t, err)
-	store, err := NewBackendStore(backendOptions{
-		DB: rdb,
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, store)
+	store := newServer(t)
 
 	stream, err := store.WatchWriteEvents(ctx)
 	assert.NoError(t, err)
@@ -122,19 +139,10 @@ func TestBackendHappyPath(t *testing.T) {
 
 func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 	ctx := context.Background()
-	dbstore := db.InitTestDB(t)
-
-	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
-	assert.NoError(t, err)
-	store, err := NewBackendStore(backendOptions{
-		DB: rdb,
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, store)
+	store := newServer(t)
 
 	// Create a few resources before initing the watch
-	_, err = writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
+	_, err := writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
 	assert.NoError(t, err)
 
 	// Start the watch
@@ -149,16 +157,7 @@ func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 
 func TestBackendPrepareList(t *testing.T) {
 	ctx := context.Background()
-	dbstore := db.InitTestDB(t)
-
-	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
-	assert.NoError(t, err)
-	store, err := NewBackendStore(backendOptions{
-		DB: rdb,
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, store)
+	store := newServer(t)
 
 	// Create a few resources before initing the watch
 	_, _ = writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)    // rv=1
@@ -195,7 +194,7 @@ func TestBackendPrepareList(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 3)
-		continueToken, err := GetContinueToken(res.NextPageToken)
+		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(8), continueToken.ResourceVersion)
 		assert.Equal(t, int64(3), continueToken.StartOffset)
@@ -237,14 +236,14 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.Equal(t, "item4 ADDED", string(res.Items[1].Value))
 		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
 
-		continueToken, err := GetContinueToken(res.NextPageToken)
+		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(7), continueToken.ResourceVersion)
 		assert.Equal(t, int64(3), continueToken.StartOffset)
 	})
 
 	t.Run("fetch second page at revision", func(t *testing.T) {
-		continueToken := &ContinueToken{
+		continueToken := &sql.ContinueToken{
 			ResourceVersion: 8,
 			StartOffset:     2,
 		}
@@ -263,14 +262,14 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.Equal(t, "item5 ADDED", string(res.Items[0].Value))
 		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 
-		continueToken, err = GetContinueToken(res.NextPageToken)
+		continueToken, err = sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(8), continueToken.ResourceVersion)
 		assert.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
 
-func writeEvent(ctx context.Context, store *backend, name string, action resource.WatchEvent_Type) (int64, error) {
+func writeEvent(ctx context.Context, store sql.Backend, name string, action resource.WatchEvent_Type) (int64, error) {
 	return store.WriteEvent(ctx, resource.WriteEvent{
 		Type:  action,
 		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),

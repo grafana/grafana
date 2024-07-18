@@ -7,11 +7,13 @@ import (
 )
 
 type ContinueToken struct {
+	// TODO: there is no need to make this information opaque, move it to the API
+
 	StartOffset     int64 `json:"o"`
 	ResourceVersion int64 `json:"v"`
 }
 
-func (c *ContinueToken) String() string {
+func (c ContinueToken) String() string {
 	b, _ := json.Marshal(c)
 	return base64.StdEncoding.EncodeToString(b)
 }

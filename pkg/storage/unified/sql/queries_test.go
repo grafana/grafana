@@ -126,6 +126,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceUpdate: {
 			{
 				Name: "single path",
@@ -162,6 +163,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceList: {
 			{
 				Name: "filter on namespace",
@@ -185,6 +187,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryList: {
 			{
 				Name: "single path",
@@ -208,6 +211,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceUpdateRV: {
 			{
 				Name: "single path",
@@ -222,6 +226,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryRead: {
 			{
 				Name: "single path",
@@ -241,6 +246,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryUpdateRV: {
 			{
 				Name: "single path",
@@ -255,6 +261,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryInsert: {
 			{
 				Name: "insert into resource_history",

@@ -7,11 +7,11 @@ import (
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,7 +21,7 @@ import (
 
 var _ resourcedb.ResourceDBInterface = (*ResourceDB)(nil)
 
-func ProvideResourceDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (*ResourceDB, error) {
+func ProvideResourceDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (*ResourceDB, error) {
 	return &ResourceDB{
 		db:       db,
 		cfg:      cfg,
@@ -40,7 +40,7 @@ type ResourceDB struct {
 	engine   *xorm.Engine
 	cfg      *setting.Cfg
 	log      log.Logger
-	tracer   tracing.Tracer
+	tracer   trace.Tracer
 }
 
 func (db *ResourceDB) Init() error {
