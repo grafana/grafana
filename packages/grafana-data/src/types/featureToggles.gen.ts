@@ -193,6 +193,7 @@ export interface FeatureToggles {
   failWrongDSUID?: boolean;
   databaseReadReplica?: boolean;
   zanzana?: boolean;
+  noFrontendPermissionCache?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
   dashboardRestoreUI?: boolean;

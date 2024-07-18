@@ -1317,6 +1317,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "noFrontendPermissionCache",
+			Description:       "Do not use permission caching in frontend",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "passScopeToDashboardApi",
 			Description:       "Enables the passing of scopes to dashboards fetching in Grafana",
 			FrontendOnly:      false,

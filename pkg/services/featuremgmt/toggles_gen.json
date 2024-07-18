@@ -1771,6 +1771,20 @@
     },
     {
       "metadata": {
+        "name": "noFrontendPermissionCache",
+        "resourceVersion": "1721290625278",
+        "creationTimestamp": "2024-07-18T08:17:05Z"
+      },
+      "spec": {
+        "description": "Do not use permission caching in frontend",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nodeGraphDotLayout",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-31T16:26:12Z"
