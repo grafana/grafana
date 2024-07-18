@@ -28,6 +28,7 @@ var (
 	ExpiryDelta            = 10 * time.Second
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
+	ErrCouldntRefreshToken = errors.New("could not refresh token")
 )
 
 type Service struct {
@@ -123,7 +124,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 }
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
-// It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
+// It uses a server lock to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) error {
 	if usr == nil || usr.IsNil() {
 		logger.Warn("Can only refresh OAuth tokens for existing users", "user", "nil")
@@ -150,8 +151,22 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
 
+	lockTimeConfig := serverlock.LockTimeConfig{
+		MaxInterval: 30 * time.Second,
+		MinWait:     50 * time.Millisecond,
+		MaxWait:     250 * time.Millisecond,
+	}
+
+	retryOpt := func(attempts int) error {
+		if attempts < 5 {
+			return nil
+		}
+		return ErrCouldntRefreshToken
+	}
+
 	var cmdErr error
-	lockErr := o.serverLock.LockExecuteAndRelease(ctx, lockKey, time.Second*30, func(ctx context.Context) {
+
+	lockErr := o.serverLock.LockExecuteAndReleaseWithRetries(ctx, lockKey, lockTimeConfig, func(ctx context.Context) {
 		ctxLogger.Debug("serverlock request for getting a new access token", "key", lockKey)
 
 		authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
@@ -182,7 +197,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		}
 
 		_, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, authInfo)
-	})
+	}, retryOpt)
 	if lockErr != nil {
 		ctxLogger.Error("Failed to obtain token refresh lock", "error", err)
 		return lockErr
