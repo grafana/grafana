@@ -488,7 +488,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               suffix={metricNamesWarningIcon}
             />
           </Field>
-          <Field label={'Select Prefix'} className={styles.displayOption}>
+          <Field label={'View by'} className={styles.displayOption}>
             <Select
               onChange={model.onPrefixFilterChange}
               value={metricPrefix}
@@ -496,7 +496,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               onCloseMenu={() => model.reportPrefixFilterInteraction(false)}
               options={[
                 {
-                  label: 'All',
+                  label: 'All metric names',
                   value: METRIC_PREFIX_ALL,
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
@@ -565,6 +565,7 @@ function getStyles(theme: GrafanaTheme2) {
     displayOption: css({
       flexGrow: 0,
       marginBottom: 0,
+      minWidth: '184px',
     }),
     warningIcon: css({
       color: theme.colors.warning.main,
