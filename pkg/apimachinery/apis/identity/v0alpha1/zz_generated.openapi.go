@@ -42,7 +42,7 @@ func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplay(ref common.Refer
 					},
 					"uid": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The namespaced UID, eg `user:xyz`",
+							Description: "The namespaced UID, eg `user|api-key|...`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -50,13 +50,13 @@ func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplay(ref common.Refer
 					},
 					"display": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The namespaced UID, eg `user:xyz`",
+							Description: "The namespaced UID, eg `xyz`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"avatar": {
+					"avatarURL": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
