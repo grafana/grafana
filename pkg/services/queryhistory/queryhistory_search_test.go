@@ -264,8 +264,8 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMixedQueriesInQueryHistory(t, "When users tries to get queries with mixed data source it should return correct queries",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(sc.service.now().UnixMilli()-60, 10))
-			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(sc.service.now().UnixMilli()+60, 10))
+			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(sc.service.now().UnixMilli(), 10))
+			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(sc.service.now().UnixMilli()-60*1000, 10))
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
 
 			resp := sc.service.searchHandler(sc.reqContext)
