@@ -19,8 +19,6 @@ type DualWriterMode3 struct {
 	Log klog.Logger
 }
 
-const mode3Str = "3"
-
 // newDualWriterMode3 returns a new DualWriter in mode 3.
 // Mode 3 represents writing to LegacyStorage and Storage and reading from Storage.
 func newDualWriterMode3(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode3 {
