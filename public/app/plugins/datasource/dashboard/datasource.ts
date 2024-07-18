@@ -87,9 +87,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
-    if (scene instanceof SafeSerializableSceneObject) {
-      debugger;
-    }
     return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
