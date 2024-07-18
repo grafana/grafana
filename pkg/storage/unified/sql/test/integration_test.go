@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -44,7 +45,7 @@ func newServer(t *testing.T) sql.Backend {
 }
 
 func TestBackendHappyPath(t *testing.T) {
-	ctx := context.Background()
+	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
 
 	stream, err := store.WatchWriteEvents(ctx)
@@ -138,7 +139,7 @@ func TestBackendHappyPath(t *testing.T) {
 }
 
 func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
-	ctx := context.Background()
+	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
 
 	// Create a few resources before initing the watch
@@ -156,7 +157,7 @@ func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 }
 
 func TestBackendPrepareList(t *testing.T) {
-	ctx := context.Background()
+	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
 
 	// Create a few resources before initing the watch

@@ -68,7 +68,7 @@ type backend struct {
 	//stream chan *resource.WatchEvent
 }
 
-func (b *backend) Init() error {
+func (b *backend) Init(ctx context.Context) error {
 	if b.sqlDB != nil {
 		return nil
 	}
@@ -77,7 +77,7 @@ func (b *backend) Init() error {
 		return errors.New("missing db")
 	}
 
-	err := b.db.Init()
+	err := b.db.Init(ctx)
 	if err != nil {
 		return err
 	}
@@ -101,30 +101,33 @@ func (b *backend) Init() error {
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
-	return nil
+	return b.sqlDB.PingContext(ctx)
 }
 
 func (b *backend) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
+	if err := b.Init(ctx); err != nil {
+		return nil, err
+	}
 	// ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 
 	if err := b.sqlDB.PingContext(ctx); err != nil {
 		return nil, err
 	}
-	// TODO: check the status of the watcher implementation as well
+
 	return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_SERVING}, nil
 }
 
-func (b *backend) Stop() {
+func (b *backend) Stop(_ context.Context) {
 	b.cancel()
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
+	if err := b.Init(ctx); err != nil {
+		return 0, err
+	}
 	_, span := b.tracer.Start(ctx, trace_prefix+"WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
-	if err := b.Init(); err != nil {
-		return 0, err
-	}
 	switch event.Type {
 	case resource.WatchEvent_ADDED:
 		return b.create(ctx, event)
@@ -317,13 +320,13 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+	if err := b.Init(ctx); err != nil {
+		return nil, err
+	}
 	_, span := b.tracer.Start(ctx, trace_prefix+".Read")
 	defer span.End()
 
 	// TODO: validate key ?
-	if err := b.Init(); err != nil {
-		return nil, err
-	}
 
 	readReq := sqlResourceReadRequest{
 		SQLTemplate:  sqltemplate.New(b.sqlDialect),
@@ -348,6 +351,9 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resourc
 }
 
 func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+	if err := b.Init(ctx); err != nil {
+		return nil, err
+	}
 	_, span := b.tracer.Start(ctx, trace_prefix+"List")
 	defer span.End()
 
@@ -356,6 +362,8 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 	}
 
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
+
+	// TODO: add support for RemainingItemCount
 
 	if req.ResourceVersion > 0 || req.NextPageToken != "" {
 		return b.listAtRevision(ctx, req)
@@ -366,11 +374,11 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 // listLatest fetches the resources from the resource table.
 func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	out := &resource.ListResponse{
-		Items:           []*resource.ResourceWrapper{}, // TODO: we could pre-allocate the capacity if we estimate the number of items
+		Items:           make([]*resource.ResourceWrapper, 0, req.Limit),
 		ResourceVersion: 0,
 	}
 
-	err := b.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	err := b.sqlDB.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 
 		out.ResourceVersion, err = fetchLatestRV(ctx, tx, b.sqlDialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -426,11 +434,11 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 	}
 
 	out := &resource.ListResponse{
-		Items:           []*resource.ResourceWrapper{}, // TODO: we could pre-allocate the capacity if we estimate the number of items
+		Items:           make([]*resource.ResourceWrapper, 0, req.Limit),
 		ResourceVersion: rv,
 	}
 
-	err := b.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	err := b.sqlDB.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		listReq := sqlResourceHistoryListRequest{
 			SQLTemplate: sqltemplate.New(b.sqlDialect),
 			Request: &historyListRequest{
@@ -469,7 +477,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	if err := b.Init(); err != nil {
+	if err := b.Init(ctx); err != nil {
 		return nil, err
 	}
 	// Get the latest RV
@@ -746,7 +754,7 @@ func query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Templa
 	for rows.Next() {
 		v, err := scanRow(rows, req)
 		if err != nil {
-			return nil, fmt.Errorf("scan %d-eth value: %w", len(ret)+1, err)
+			return nil, fmt.Errorf("scan value #%d: %w", len(ret)+1, err)
 		}
 		ret = append(ret, v)
 	}

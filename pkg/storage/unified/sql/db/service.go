@@ -3,11 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-
-	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -18,15 +13,12 @@ const (
 )
 
 // ResourceDBInterface provides access to a database capable of supporting the
-// Entity Server.
+// Resource Server.
 type ResourceDBInterface interface {
-	Init() error
-	GetCfg() *setting.Cfg
+	// Init initializes	the Resource Database, running migrations if needed.
+	Init(context.Context) error
+	// GetDB returns the DB interface.
 	GetDB() (DB, error)
-
-	// TODO: deprecate.
-	GetSession() (*session.SessionDB, error)
-	GetEngine() (*xorm.Engine, error)
 }
 
 // DB is a thin abstraction on *sql.DB to allow mocking to provide better unit

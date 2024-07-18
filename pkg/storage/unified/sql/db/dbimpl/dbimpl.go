@@ -1,11 +1,12 @@
 package dbimpl
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
-	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
 	resourcedb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
@@ -41,25 +41,30 @@ type ResourceDB struct {
 	cfg      *setting.Cfg
 	log      log.Logger
 	tracer   trace.Tracer
+
+	rdb resourcedb.DB
 }
 
-func (db *ResourceDB) Init() error {
+func (db *ResourceDB) GetDB() (resourcedb.DB, error) {
+	if db.onceErr != nil {
+		return nil, db.onceErr
+	}
+	if db.rdb == nil {
+		return nil, errors.New("database not initialized")
+	}
+
+	return db.rdb, nil
+}
+
+func (db *ResourceDB) Init(ctx context.Context) error {
 	db.once.Do(func() {
-		db.onceErr = db.init()
+		db.onceErr = db.init(ctx)
 	})
 
 	return db.onceErr
 }
 
-func (db *ResourceDB) GetEngine() (*xorm.Engine, error) {
-	if err := db.Init(); err != nil {
-		return nil, err
-	}
-
-	return db.engine, db.onceErr
-}
-
-func (db *ResourceDB) init() error {
+func (db *ResourceDB) init(ctx context.Context) error {
 	if db.engine != nil {
 		return nil
 	}
@@ -112,15 +117,7 @@ func (db *ResourceDB) init() error {
 		}
 
 		// configure sql logging
-		debugSQL := getter.Key("log_queries").MustBool(false)
-		if !debugSQL {
-			engine.SetLogger(&xorm.DiscardLogger{})
-		} else {
-			// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
-			// engine.SetLogger(sqlstore.NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
-			engine.ShowSQL(true)
-			engine.ShowExecTime(true)
-		}
+		_ = getter.Key("log_queries").MustBool(false) // TODO
 
 		// otherwise, try to use the grafana db connection
 	} else {
@@ -133,34 +130,12 @@ func (db *ResourceDB) init() error {
 
 	db.engine = engine
 
-	if err := migrations.MigrateResourceStore(engine, db.cfg, db.features); err != nil {
+	if err := migrations.MigrateResourceStore(ctx, engine, db.cfg, db.features); err != nil {
 		db.engine = nil
 		return fmt.Errorf("run migrations: %w", err)
 	}
 
+	db.rdb = NewDB(engine.DB().DB, engine.Dialect().DriverName())
+
 	return nil
-}
-
-func (db *ResourceDB) GetSession() (*session.SessionDB, error) {
-	engine, err := db.GetEngine()
-	if err != nil {
-		return nil, err
-	}
-
-	return session.GetSession(sqlx.NewDb(engine.DB().DB, engine.DriverName())), nil
-}
-
-func (db *ResourceDB) GetCfg() *setting.Cfg {
-	return db.cfg
-}
-
-func (db *ResourceDB) GetDB() (resourcedb.DB, error) {
-	engine, err := db.GetEngine()
-	if err != nil {
-		return nil, err
-	}
-
-	ret := NewDB(engine.DB().DB, engine.Dialect().DriverName())
-
-	return ret, nil
 }
