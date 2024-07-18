@@ -99,7 +99,6 @@ export interface LinkModel<T = any> {
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
-  sortIndex?: number;
 }
 
 /**
@@ -129,4 +128,10 @@ export interface VariableSuggestion {
 
 export enum VariableSuggestionsScope {
   Values = 'values',
+}
+
+export enum OneClick {
+  Action = 'action',
+  Link = 'link',
+  Off = 'off',
 }

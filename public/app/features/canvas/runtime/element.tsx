@@ -1,8 +1,8 @@
-import { CSSProperties } from 'react';
 import * as React from 'react';
+import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import { FieldType, getLinksSupplier, LinkModel, ValueLinkConfig } from '@grafana/data';
+import { FieldType, getLinksSupplier, LinkModel, OneClick, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -584,13 +584,17 @@ export class ElementState implements LayerElement {
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
 
-    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen && !this.options.oneClickLinks) {
+    const shouldHandleTooltip =
+      !scene?.isEditingEnabled && !scene?.tooltip?.isOpen && this.options.oneClick === OneClick.Off;
+    if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
     }
 
-    if (this.options.oneClickLinks && this.div && this.options.links && this.options.links.length > 0) {
+    const shouldHandleOneClickLink =
+      this.options.oneClick === OneClick.Link && this.options.links && this.options.links.length > 0;
+    if (shouldHandleOneClickLink && this.div) {
       const primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         this.div.style.cursor = 'pointer';
@@ -602,8 +606,7 @@ export class ElementState implements LayerElement {
   getPrimaryDataLink = () => {
     if (this.getLinks) {
       const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
-      const primaryDataLink = links.find((link: LinkModel) => link.sortIndex === 0);
-      return primaryDataLink ?? links[0];
+      return links[0];
     }
 
     return undefined;
@@ -623,11 +626,11 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && !this.options.oneClickLinks) {
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && this.options.oneClick === OneClick.Off) {
       scene.tooltipCallback(undefined);
     }
 
-    if (this.options.oneClickLinks && this.div) {
+    if (this.options.oneClick !== OneClick.Off && this.div) {
       this.div.style.cursor = 'auto';
       this.div.title = '';
     }
@@ -635,7 +638,7 @@ export class ElementState implements LayerElement {
 
   onElementClick = (event: React.MouseEvent) => {
     // If one-click access is enabled, open the primary link
-    if (this.options.oneClickLinks) {
+    if (this.options.oneClick === OneClick.Link) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         window.open(primaryDataLink.href, primaryDataLink.target);

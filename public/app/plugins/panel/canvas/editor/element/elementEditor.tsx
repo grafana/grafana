@@ -1,5 +1,6 @@
-import { get as lodashGet } from 'lodash';
+import { capitalize, get as lodashGet } from 'lodash';
 
+import { OneClick } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
@@ -118,6 +119,20 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       if (shouldAddBorderEditor) {
         optionBuilder.addBorder(builder, ctx);
       }
+
+      builder.addRadio({
+        path: 'oneClick',
+        name: 'One-click',
+        description: 'When enabled, the first link or action works with a single click',
+        settings: {
+          options: [
+            { value: OneClick.Off, label: capitalize(OneClick.Off) },
+            { value: OneClick.Link, label: capitalize(OneClick.Link) },
+            { value: OneClick.Action, label: capitalize(OneClick.Action) },
+          ],
+        },
+        defaultValue: OneClick.Off,
+      });
 
       optionBuilder.addDataLinks(builder, ctx);
     },

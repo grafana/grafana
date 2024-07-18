@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { ReactNode, useEffect, useState } from 'react';
 
-import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLink, OneClick, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Button } from '../../Button';
@@ -17,7 +17,7 @@ interface DataLinksInlineEditorProps {
   onChange: (links: DataLink[]) => void;
   getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
-  oneClickEnabled?: boolean;
+  oneClick?: OneClick;
 }
 
 export const DataLinksInlineEditor = ({
@@ -25,13 +25,12 @@ export const DataLinksInlineEditor = ({
   onChange,
   getSuggestions,
   data,
-  oneClickEnabled = false,
+  oneClick = OneClick.Off,
 }: DataLinksInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const [linksSafe, setLinksSafe] = useState<DataLink[]>([]);
-  links?.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
 
   useEffect(() => {
     setLinksSafe(links ?? []);
@@ -83,10 +82,6 @@ export const DataLinksInlineEditor = ({
 
     const copy = [...linksSafe];
     const link = copy[result.source.index];
-    link.sortIndex = result.destination.index;
-
-    const swapLink = copy[result.destination.index];
-    swapLink.sortIndex = result.source.index;
 
     copy.splice(result.source.index, 1);
     copy.splice(result.destination.index, 0, link);
@@ -96,7 +91,7 @@ export const DataLinksInlineEditor = ({
   };
 
   const renderFirstLink = (linkJSX: ReactNode) => {
-    if (oneClickEnabled) {
+    if (oneClick === OneClick.Link) {
       return (
         <div className={styles.oneClickOverlay}>
           <span className={styles.oneClickSpan}>One-click</span>

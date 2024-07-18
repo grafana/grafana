@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 
-import { DataLink, RegistryItem } from '@grafana/data';
+import { DataLink, RegistryItem, OneClick } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
@@ -33,7 +33,7 @@ export interface CanvasElementOptions<TConfig = any> {
   border?: LineConfig;
   connections?: CanvasConnection[];
   links?: DataLink[];
-  oneClickLinks?: boolean;
+  oneClick?: OneClick;
 }
 
 // Unit is percentage from the middle of the element
