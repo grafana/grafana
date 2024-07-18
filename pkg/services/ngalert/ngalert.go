@@ -134,6 +134,7 @@ type AlertNG struct {
 	Log                 log.Logger
 	renderService       rendering.Service
 	ImageService        image.ImageService
+	RecordingWriter     schedule.RecordingWriter
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       folder.Service
@@ -347,6 +348,7 @@ func (ng *AlertNG) init() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
+	ng.RecordingWriter = recordingWriter
 
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
@@ -363,7 +365,7 @@ func (ng *AlertNG) init() error {
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
-		RecordingWriter:      recordingWriter,
+		RecordingWriter:      ng.RecordingWriter,
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
