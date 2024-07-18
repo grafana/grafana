@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Input, Stack, Text } from '@grafana/ui';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { isRecordingRulebyType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
@@ -30,7 +30,9 @@ export const AlertRuleNameAndMetric = () => {
     return null;
   }
   const isRecording = isRecordingRulebyType(ruleFormType);
-  const entityName = isRecording ? 'recording rule and metric' : 'alert rule';
+  const isGrafanaRecordingRule = ruleFormType === RuleFormType.grafanaRecording;
+  const recordingLabel = isGrafanaRecordingRule ? 'recording rule and metric' : 'recording rule';
+  const entityName = isRecording ? recordingLabel : 'alert rule';
   return (
     <RuleEditorSection
       stepNo={1}
@@ -54,18 +56,20 @@ export const AlertRuleNameAndMetric = () => {
             placeholder={`Give your ${entityName} a name`}
           />
         </Field>
-        <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
-          <Input
-            id="metric"
-            width={35}
-            {...register('metric', {
-              required: { value: true, message: 'Must enter a metric name' },
-              pattern: recordingRuleMetricValidationPattern,
-            })}
-            aria-label="metric"
-            placeholder={`Give your metric a name`}
-          />
-        </Field>
+        {isGrafanaRecordingRule && (
+          <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
+            <Input
+              id="metric"
+              width={35}
+              {...register('metric', {
+                required: { value: true, message: 'Must enter a metric name' },
+                pattern: recordingRuleMetricValidationPattern,
+              })}
+              aria-label="metric"
+              placeholder={`Give your metric a name`}
+            />
+          </Field>
+        )}
       </Stack>
     </RuleEditorSection>
   );

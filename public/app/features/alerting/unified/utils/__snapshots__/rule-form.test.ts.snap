@@ -36,8 +36,8 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     "is_paused": false,
     "notification_settings": undefined,
     "record": {
-      "From": "A",
-      "Metric": "",
+      "from": "A",
+      "metric": "",
     },
     "title": "",
   },
