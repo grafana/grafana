@@ -281,18 +281,18 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 }
 
 func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
-	if limit < 1 {
+	if limit < 0 {
 		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
 	}
 
 	if limit < 1 {
-		limit = ConfigRecordsLimit
+		return 0, nil
 	}
 
 	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		highest := &ngmodels.AlertRuleVersion{}
-		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).OrderBy("id").Limit(1, limit).Get(highest)
+		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).Limit(1, limit).Get(highest)
 		if err != nil {
 			return err
 		}

@@ -1175,13 +1175,13 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		titleMap := map[string]bool{
-			secondNewRule.Title: true,
-			rule.Title:          true,
+			secondNewRule.Title: false,
+			rule.Title:          false,
 		}
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			var alertRuleVersions []*models.AlertRuleVersion
-			_, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).OrderBy("id").Get(&alertRuleVersions)
+			alertRuleVersions := make([]*models.AlertRuleVersion, 0)
+			err := sess.Table(models.AlertRuleVersion{}).Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).Find(&alertRuleVersions)
 			if err != nil {
 				return err
 			}
@@ -1238,7 +1238,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			var alertRuleVersions []*models.AlertRuleVersion
-			_, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).OrderBy("id").Get(&alertRuleVersions)
+			err := sess.Table(models.AlertRuleVersion{}).Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).Find(&alertRuleVersions)
 			if err != nil {
 				return err
 			}
@@ -1250,9 +1250,10 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("limit set to 0 should fail", func(t *testing.T) {
-		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, 0)
-		require.Error(t, err)
+	t.Run("limit set to 0 should not fail", func(t *testing.T) {
+		count, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, 0)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), count)
 	})
 	t.Run("limit set to negative should fail", func(t *testing.T) {
 		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, -1)
