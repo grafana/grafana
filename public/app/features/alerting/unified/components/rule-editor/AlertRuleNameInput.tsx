@@ -4,15 +4,17 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Field, Input, Stack, Text } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { isRecordingRulebyType } from '../../utils/rules';
+import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRulebyType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
 
-const recordingRuleMetricValidationPattern = {
+const recordingRuleNameValidationPattern = (type: RuleFormType) => ({
   message:
-    'Recording rule metric must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+    type === RuleFormType.grafanaRecording
+      ? 'Recording rule metric must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
+      : 'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
-};
+});
 
 /**
  *  This component renders the input for the alert rule name.
@@ -30,7 +32,8 @@ export const AlertRuleNameAndMetric = () => {
     return null;
   }
   const isRecording = isRecordingRulebyType(ruleFormType);
-  const isGrafanaRecordingRule = ruleFormType === RuleFormType.grafanaRecording;
+  const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(ruleFormType);
+  const isCloudRecordingRule = isCloudRecordingRuleByType(ruleFormType);
   const recordingLabel = isGrafanaRecordingRule ? 'recording rule and metric' : 'recording rule';
   const entityName = isRecording ? recordingLabel : 'alert rule';
   return (
@@ -51,6 +54,9 @@ export const AlertRuleNameAndMetric = () => {
             width={38}
             {...register('name', {
               required: { value: true, message: 'Must enter a name' },
+              pattern: isCloudRecordingRule
+                ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
+                : undefined,
             })}
             aria-label="name"
             placeholder={`Give your ${entityName} a name`}
@@ -63,7 +69,7 @@ export const AlertRuleNameAndMetric = () => {
               width={38}
               {...register('metric', {
                 required: { value: true, message: 'Must enter a metric name' },
-                pattern: recordingRuleMetricValidationPattern,
+                pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
               })}
               aria-label="metric"
               placeholder={`Give your metric a name`}

@@ -358,6 +358,14 @@ export function isRecordingRulebyType(type: RuleFormType) {
   return type === RuleFormType.grafanaRecording || type === RuleFormType.cloudRecording;
 }
 
+export function isGrafanaRecordingRuleByType(type: RuleFormType) {
+  return type === RuleFormType.grafanaRecording;
+}
+
+export function isCloudRecordingRuleByType(type: RuleFormType) {
+  return type === RuleFormType.cloudRecording;
+}
+
 export function isDatatSourceManagedRuleByType(type: RuleFormType) {
   return type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording;
 }
