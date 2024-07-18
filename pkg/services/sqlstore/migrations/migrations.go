@@ -126,6 +126,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRecordingRuleColumns(mg)
 
 	basicResourceMigrations.AddBasicResourceMigrations(mg)
+	ualert.AddStateResolvedAtColumns(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

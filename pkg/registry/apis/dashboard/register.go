@@ -140,8 +140,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	desiredMode grafanarest.DualWriterMode,
-	reg prometheus.Registerer,
+	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboard.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -162,7 +161,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	)
 
 	// Dual writes if a RESTOptionsGetter is provided
-	if desiredMode != grafanarest.Mode0 && optsGetter != nil {
+	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := newStorage(scheme)
 		if err != nil {
 			return nil, err
@@ -172,7 +171,10 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[dash.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
+		storage[dash.StoragePath()], err = dualWriteBuilder(dash.GroupResource(), legacyStore, store)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage

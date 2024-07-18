@@ -5,6 +5,9 @@ import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
+  // TODO can we get the feature toggle in a better way?
+  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
+
   return css({
     html: {
       MsOverflowStyle: 'scrollbar',
@@ -23,10 +26,26 @@ export function getElementStyles(theme: GrafanaTheme2) {
     body: {
       height: '100%',
       width: '100%',
-      position: 'absolute',
+      position: isBodyScrolling ? 'unset' : 'absolute',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
-      ...getVariantStyles(theme.typography.body),
+      ...theme.typography.body,
+      ...(isBodyScrolling && {
+        // react select tries prevent scrolling by setting overflow/padding-right on the body
+        // Need type assertion here due to the use of !important
+        // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        overflowY: 'scroll !important' as 'scroll',
+        paddingRight: '0 !important',
+        '@media print': {
+          overflow: 'visible',
+        },
+        '@page': {
+          margin: 0,
+          size: 'auto',
+          padding: 0,
+        },
+      }),
     },
 
     'h1, .h1': getVariantStyles(theme.typography.h1),
@@ -54,8 +73,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     // Ex: 14px base font * 85% = about 12px
-    small: {
+    'small, .small': {
       fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: 'normal',
     },
 
     'b, strong': {
@@ -69,6 +89,62 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     cite: {
       fontStyle: 'normal',
+    },
+
+    blockquote: {
+      padding: theme.spacing(0, 0, 0, 2),
+      margin: theme.spacing(0, 0, 2),
+      borderLeft: `5px solid ${theme.v1.palette.gray3}`,
+      p: {
+        marginBottom: 0,
+        fontSize: theme.typography.fontSize * 1.25,
+        fontWeight: 300,
+        lineHeight: 1.25,
+      },
+      small: {
+        display: 'block',
+        lineHeight: theme.typography.body.lineHeight,
+        color: theme.v1.palette.gray2,
+        '&:before': {
+          content: "'\\2014 \\00A0'",
+        },
+      },
+    },
+
+    // Quotes
+    'q:before, q:after, blockquote:before, blockquote:after': {
+      content: "''",
+    },
+
+    // Addresses
+    address: {
+      display: 'block',
+      marginBottom: theme.spacing(2),
+      fontStyle: 'normal',
+      lineHeight: theme.typography.body.lineHeight,
+    },
+
+    'a.external-link': {
+      color: theme.colors.text.link,
+      textDecoration: 'normal',
+
+      '&:hover': {
+        color: theme.colors.text.link,
+        textDecoration: 'underline',
+      },
+    },
+
+    '.link': {
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+    },
+
+    '.link:hover': {
+      color: theme.colors.text.maxContrast,
+    },
+
+    '.pointer': {
+      cursor: 'pointer',
     },
 
     'audio, canvas, progress, video': {
@@ -86,6 +162,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     // Address styling not present in Safari.
     'abbr[title]': {
       borderBottom: '1px dotted',
+      cursor: 'help',
     },
     dfn: {
       fontStyle: 'italic',
@@ -103,6 +180,37 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
     sub: {
       bottom: '-0.25em',
+    },
+
+    hr: {
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+      border: 0,
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+    },
+
+    'mark, .mark': {
+      background: theme.colors.warning.main,
+    },
+
+    'ul, ol': {
+      padding: 0,
+    },
+    'ul ul, ul ol, ol ol, ol ul': {
+      marginBottom: 0,
+    },
+    li: {
+      lineHeight: theme.typography.body.lineHeight,
+    },
+
+    dl: {
+      marginBottom: theme.spacing(2),
+    },
+    'dt, dd': {
+      lineHeight: theme.typography.body.lineHeight,
+    },
+    dt: {
+      fontWeight: theme.typography.fontWeightMedium,
     },
 
     // 1. Correct color not being inherited.
@@ -141,6 +249,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
     table: {
       borderCollapse: 'collapse',
       borderSpacing: 0,
+    },
+
+    th: {
+      fontWeight: theme.typography.fontWeightMedium,
     },
 
     'td, th': {

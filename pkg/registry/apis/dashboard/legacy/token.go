@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type continueToken struct {
 	orgId  int64
 	id     int64  // the internal id (sort by!)
 	folder string // from the query
-	bytes  int64  // information, not a query
 }
 
 func readContinueToken(next string) (continueToken, error) {
@@ -62,6 +59,6 @@ func readContinueToken(next string) (continueToken, error) {
 }
 
 func (r *continueToken) String() string {
-	return fmt.Sprintf("org:%d/start:%d/folder:%s/%s",
-		r.orgId, r.id, r.folder, util.ByteCountSI(r.bytes))
+	return fmt.Sprintf("org:%d/start:%d/folder:%s",
+		r.orgId, r.id, r.folder)
 }

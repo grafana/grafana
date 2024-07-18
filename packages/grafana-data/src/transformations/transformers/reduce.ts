@@ -132,7 +132,12 @@ function reduceSeriesToRows(
 
       for (const info of calculators) {
         const v = results[info.id];
-        calcs[info.id][i] = v;
+        if (v === null) {
+          // NaN ensures proper row index, null results in shift
+          calcs[info.id][i] = NaN;
+        } else {
+          calcs[info.id][i] = v;
+        }
       }
     }
 

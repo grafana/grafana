@@ -36,7 +36,7 @@ func TestCDKBlobStore(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("can write then read a blob", func(t *testing.T) {
-		raw := testdata(t, "01_create_playlist.json")
+		raw := []byte(`{"hello": "world"}`)
 		key := &ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything
@@ -51,7 +51,7 @@ func TestCDKBlobStore(t *testing.T) {
 			Value:       raw,
 		})
 		require.NoError(t, err)
-		require.Equal(t, "4933beea0c6d6dfd73150451098c70f0", rsp.Hash)
+		require.Equal(t, "49dfdd54b01cbcd2d2ab5e9e5ee6b9b9", rsp.Hash)
 
 		found, err := store.GetBlob(ctx, key, &utils.BlobInfo{
 			UID:      rsp.Uid,

@@ -110,16 +110,13 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	// TODO, load the full spec from blob storage
-	if false {
-		blob, err := store.GetBlob(ctx, key, &utils.BlobInfo{UID: "dto"}, true)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(blob.Value, &dash.Spec)
-		if err != nil {
-			return nil, err
-		}
+	obj, err := utils.MetaAccessor(dash)
+	if err != nil {
+		return nil, err
+	}
+	blobInfo := obj.GetBlob()
+	if blobInfo != nil {
+		fmt.Printf("TODO, load full blob from storage %+v\n", blobInfo)
 	}
 
 	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))
