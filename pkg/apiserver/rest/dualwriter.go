@@ -55,6 +55,7 @@ type LegacyStorage interface {
 	rest.CollectionDeleter
 	rest.TableConvertor
 	rest.Getter
+	rest.Watcher
 }
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
