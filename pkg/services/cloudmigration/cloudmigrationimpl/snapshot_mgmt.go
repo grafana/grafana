@@ -167,7 +167,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	defer s.buildSnapshotMutex.Unlock()
 
 	// Update status to snapshot creating with retries
-	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:    snapshotMeta.UID,
 		Status: cloudmigration.SnapshotStatusCreating,
 	}); err != nil {
@@ -233,7 +233,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	}
 
 	// update snapshot status to pending upload with retries
-	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:       snapshotMeta.UID,
 		Status:    cloudmigration.SnapshotStatusPendingUpload,
 		Resources: localSnapshotResource,
@@ -251,7 +251,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	defer s.buildSnapshotMutex.Unlock()
 
 	// update snapshot status to uploading with retries
-	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:    snapshotMeta.UID,
 		Status: cloudmigration.SnapshotStatusUploading,
 	}); err != nil {
@@ -300,7 +300,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	s.log.Info("successfully uploaded snapshot", "snapshotUid", snapshotMeta.UID, "cloud_snapshotUid", snapshotMeta.GMSSnapshotUID)
 
 	// update snapshot status to processing with retries
-	if err := s.updateStatusWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:    snapshotMeta.UID,
 		Status: cloudmigration.SnapshotStatusProcessing,
 	}); err != nil {
@@ -330,7 +330,7 @@ func (s *Service) uploadUsingPresignedURL(ctx context.Context, uploadURL, key st
 	return nil
 }
 
-func (s *Service) updateStatusWithRetries(ctx context.Context, cmd cloudmigration.UpdateSnapshotCmd) (err error) {
+func (s *Service) updateSnapshotWithRetries(ctx context.Context, cmd cloudmigration.UpdateSnapshotCmd) (err error) {
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
 		err := s.store.UpdateSnapshot(ctx, cmd)
 		return retryer.FuncComplete, err
