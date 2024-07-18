@@ -27,6 +27,7 @@ import {
   PMM_INVENTORY_PAGE,
   PMM_TICKETS_PAGE,
   PMM_DUMP_PAGE,
+  PMM_EXPORT_DUMP_PAGE,
 } from './PerconaNavigation.constants';
 import {
   addAccessRolesLink,
@@ -52,7 +53,7 @@ const PerconaNavigation: FC = () => {
   const advisorsPage = buildAdvisorsNavItem(categorizedAdvisors);
 
   dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
-  dispatch(updateNavIndex(PMM_DUMP_PAGE));
+  dispatch(updateNavIndex(PMM_EXPORT_DUMP_PAGE));
   dispatch(updateNavIndex(PMM_BACKUP_PAGE));
   dispatch(updateNavIndex(PMM_INVENTORY_PAGE));
   dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
@@ -97,7 +98,13 @@ const PerconaNavigation: FC = () => {
     // PMM Dump
     const help = updatedNavTree.find((i) => i.id === 'help');
     if (help) {
-      help.children?.push(PMM_DUMP_PAGE);
+      PMM_DUMP_PAGE.parentItem = help;
+      PMM_DUMP_PAGE.children = [PMM_EXPORT_DUMP_PAGE];
+
+      help.children = help.children || [];
+      help.children.push(PMM_DUMP_PAGE);
+
+      dispatch(updateNavIndex(PMM_DUMP_PAGE));
       dispatch(updateNavIndex(help));
     }
 

@@ -7,7 +7,8 @@ import { Icon, IconName, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 export interface FooterLink {
-  target: LinkTarget;
+  // @PERCONA - make target optional
+  target?: LinkTarget;
   text: string;
   id: string;
   icon?: IconName;
@@ -22,7 +23,6 @@ export let getFooterLinks = (): FooterLink[] => {
       text: 'PMM Dump',
       icon: 'brain',
       url: '/graph/pmm-dump',
-      target: '_self',
     },
     {
       id: 'pmm-logs',

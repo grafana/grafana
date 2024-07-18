@@ -109,6 +109,12 @@ export const PMM_ADD_INSTANCE_CREATE_PAGE: NavModelItem = {
   isCreateAction: true,
 };
 
+export const PMM_EXPORT_DUMP_PAGE: NavModelItem = {
+  id: 'pmm-dump-export',
+  url: `${config.appSubUrl}/pmm-dump/new`,
+  text: 'Export new dataset',
+};
+
 export const PMM_DUMP_PAGE: NavModelItem = {
   id: 'pmm-dump',
   url: `${config.appSubUrl}/pmm-dump`,
