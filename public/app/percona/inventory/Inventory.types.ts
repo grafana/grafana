@@ -51,12 +51,12 @@ export enum AgentType {
 }
 
 export enum ServiceAgentStatus {
-  STARTING = 'STARTING',
-  RUNNING = 'RUNNING',
-  WAITING = 'WAITING',
-  STOPPING = 'STOPPING',
-  DONE = 'DONE',
-  UNKNOWN = 'UNKNOWN',
+  STARTING = 'AGENT_STATUS_STARTING',
+  RUNNING = 'AGENT_STATUS_RUNNING',
+  WAITING = 'AGENT_STATUS_WAITING',
+  STOPPING = 'AGENT_STATUS_STOPPING',
+  DONE = 'AGENT_STATUS_DONE',
+  UNKNOWN = 'AGENT_STATUS_UNKNOWN',
 }
 
 export enum MonitoringStatus {
@@ -92,8 +92,7 @@ export interface Agent {
 }
 
 export interface RemoveAgentBody {
-  agent_id: string;
-  force: boolean;
+  id: string;
 }
 export interface RemoveNodeBody {
   node_id: string;

@@ -4,7 +4,7 @@ import { api } from 'app/percona/shared/helpers/api';
 
 import { Ticket, TicketResponse } from './Tickets.types';
 
-const BASE_URL = '/v1/Platform';
+const BASE_URL = '/v1/platform';
 
 export const TicketsService = {
   async list(token?: CancelToken): Promise<Ticket[]> {

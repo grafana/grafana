@@ -3,7 +3,15 @@ export interface PTSummaryRequest {
 }
 
 export interface DatabaseSummaryRequest {
-  service_id: string;
+  pt_mongodb_summary?: {
+    service_id: string;
+  };
+  pt_mysql_summary?: {
+    service_id: string;
+  };
+  pt_postgres_summary?: {
+    service_id: string;
+  };
 }
 
 export interface PTSummaryResponse {

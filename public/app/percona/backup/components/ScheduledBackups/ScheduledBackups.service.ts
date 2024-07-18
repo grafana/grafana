@@ -6,16 +6,13 @@ import { BackupMode, DataModel } from '../../Backup.types';
 
 import { ScheduledBackup, ScheduledBackupResponse } from './ScheduledBackups.types';
 
-const BASE_URL = '/v1/management/backup/Backups';
+const BASE_URL = '/v1/backups';
 
 export const ScheduledBackupsService = {
-  async list(token?: CancelToken): Promise<ScheduledBackup[]> {
-    const { scheduled_backups = [] } = await api.post<ScheduledBackupResponse, Object>(
-      `${BASE_URL}/ListScheduled`,
-      {},
-      false,
-      token
-    );
+  async list(cancelToken?: CancelToken): Promise<ScheduledBackup[]> {
+    const { scheduled_backups = [] } = await api.get<ScheduledBackupResponse, void>(`${BASE_URL}/scheduled`, false, {
+      cancelToken,
+    });
 
     return scheduled_backups.map(
       ({
@@ -72,7 +69,7 @@ export const ScheduledBackupsService = {
     mode: BackupMode,
     dataModel: DataModel
   ) {
-    return api.post(`${BASE_URL}/Schedule`, {
+    return api.post(`${BASE_URL}:schedule`, {
       service_id: serviceId,
       location_id: locationId,
       cron_expression: cronExpression,
@@ -87,9 +84,9 @@ export const ScheduledBackupsService = {
     });
   },
   async toggle(id: string, enabled: boolean) {
-    return api.post(`${BASE_URL}/ChangeScheduled`, { scheduled_backup_id: id, enabled });
+    return api.put(`${BASE_URL}:changeScheduled`, { scheduled_backup_id: id, enabled });
   },
   async delete(id: string) {
-    return api.post(`${BASE_URL}/RemoveScheduled`, { scheduled_backup_id: id });
+    return api.delete(`${BASE_URL}/scheduled/${id}`);
   },
 };

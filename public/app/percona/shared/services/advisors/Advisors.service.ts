@@ -4,10 +4,10 @@ import { api } from '../../helpers/api';
 
 import { Advisor } from './Advisors.types';
 
-const BASE_URL = `/v1/management/Advisors`;
+const BASE_URL = `/v1/advisors`;
 
 export const AdvisorsService = {
   async list(token?: CancelToken, disableNotifications?: boolean): Promise<{ advisors: Advisor[] }> {
-    return api.post<{ advisors: Advisor[] }, void>(`${BASE_URL}/List`, undefined, disableNotifications, token);
+    return api.get<{ advisors: Advisor[] }, void>(`${BASE_URL}`, disableNotifications, { cancelToken: token });
   },
 };

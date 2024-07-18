@@ -3,19 +3,19 @@ import { ServiceAgentStatus } from 'app/percona/inventory/Inventory.types';
 import { Databases } from '../../core';
 
 export enum ServiceType {
-  invalid = 'SERVICE_TYPE_INVALID',
-  mysql = 'MYSQL_SERVICE',
-  mongodb = 'MONGODB_SERVICE',
-  posgresql = 'POSTGRESQL_SERVICE',
-  proxysql = 'PROXYSQL_SERVICE',
-  haproxy = 'HAPROXY_SERVICE',
-  external = 'EXTERNAL_SERVICE',
+  unspecified = 'SERVICE_TYPE_UNSPECIFIED',
+  mysql = 'SERVICE_TYPE_MYSQL_SERVICE',
+  mongodb = 'SERVICE_TYPE_MONGODB_SERVICE',
+  posgresql = 'SERVICE_TYPE_POSTGRESQL_SERVICE',
+  proxysql = 'SERVICE_TYPE_PROXYSQL_SERVICE',
+  haproxy = 'SERVICE_TYPE_HAPROXY_SERVICE',
+  external = 'SERVICE_TYPE_EXTERNAL_SERVICE',
 }
 
 export enum ServiceStatus {
-  UP = 'UP',
-  DOWN = 'DOWN',
-  UNKNOWN = 'UNKNOWN',
+  UP = 'STATUS_UP',
+  DOWN = 'STATUS_DOWN',
+  UNKNOWN = 'STATUS_UNKNOWN',
   NA = 'N/A',
 }
 
@@ -108,14 +108,4 @@ export interface UpdateServiceBody {
   cluster?: string;
   replication_set?: string;
   external_group?: string;
-}
-
-export interface AddCustomLabelsBody {
-  service_id: string;
-  custom_labels: Record<string, string>;
-}
-
-export interface RemoveCustomLabelsBody {
-  service_id: string;
-  custom_label_keys: string[];
 }

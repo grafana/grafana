@@ -17,14 +17,13 @@ import { logger } from 'app/percona/shared/helpers/logger';
 
 import { CheckService } from '../../Check.service';
 import { ServiceFailedCheck } from '../../types';
-import { formatServiceId } from '../FailedChecksTab/FailedChecksTab.utils';
 
 import { SERVICE_CHECKS_CANCEL_TOKEN, SERVICE_CHECKS_TABLE_ID } from './ServiceChecks.constants';
 import { Messages } from './ServiceChecks.messages';
 import { getStyles } from './ServiceChecks.styles';
 
 export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> = ({ match }) => {
-  const serviceId = formatServiceId(match.params.service);
+  const serviceId = match.params.service;
   const [pageSize, setPageSize] = useStoredTablePageSize(SERVICE_CHECKS_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);
   const [totalItems, setTotalItems] = useState(0);

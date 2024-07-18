@@ -24,69 +24,67 @@ import {
   HaProxyPayload,
   ProxySQLPayload,
   MongoDBPayload,
+  AddServicePayload,
 } from './AddRemoteInstance.types';
+
+const BASE_URL = '/services';
 
 class AddRemoteInstanceService {
   static async addMysql(body: MySQLPayload, token?: CancelToken) {
-    return apiManagement.post<MySQLInstanceResponse | ErrorResponse, RemoteInstancePayload>(
-      '/MySQL/Add',
-      body,
+    return apiManagement.post<MySQLInstanceResponse | ErrorResponse, AddServicePayload>(
+      BASE_URL,
+      { mysql: body },
       false,
       token
     );
   }
 
   static async addPostgresql(body: PostgreSQLPayload, token?: CancelToken) {
-    return apiManagement.post<PostgreSQLInstanceResponse | ErrorResponse, RemoteInstancePayload>(
-      '/PostgreSQL/Add',
-      body,
+    return apiManagement.post<PostgreSQLInstanceResponse | ErrorResponse, AddServicePayload>(
+      BASE_URL,
+      { postgresql: body },
       false,
       token
     );
   }
 
   static async addProxysql(body: ProxySQLPayload, token?: CancelToken) {
-    return apiManagement.post<ProxySQLInstanceResponse | ErrorResponse, RemoteInstancePayload>(
-      '/ProxySQL/Add',
-      body,
+    return apiManagement.post<ProxySQLInstanceResponse | ErrorResponse, AddServicePayload>(
+      BASE_URL,
+      { proxysql: body },
       false,
       token
     );
   }
 
   static async addHaproxy(body: HaProxyPayload, token?: CancelToken) {
-    return apiManagement.post<AddHaProxyResponse | ErrorResponse, RemoteInstancePayload>(
-      '/HAProxy/Add',
-      body,
+    return apiManagement.post<AddHaProxyResponse | ErrorResponse, AddServicePayload>(
+      BASE_URL,
+      { haproxy: body },
       false,
       token
     );
   }
 
   static async addMongodb(body: MongoDBPayload, token?: CancelToken) {
-    return apiManagement.post<AddMongoDbResponse | ErrorResponse, RemoteInstancePayload>(
-      '/MongoDB/Add',
-      body,
+    return apiManagement.post<AddMongoDbResponse | ErrorResponse, AddServicePayload>(
+      BASE_URL,
+      { mongodb: body },
       false,
       token
     );
   }
 
   static async addRDS(body: RDSPayload, token?: CancelToken) {
-    return apiManagement.post<AddRDSResponse | ErrorResponse, RemoteInstancePayload>('/RDS/Add', body, false, token);
+    return apiManagement.post<AddRDSResponse | ErrorResponse, AddServicePayload>(BASE_URL, { rds: body }, false, token);
   }
 
   static async addAzure(body: MSAzurePayload, token?: CancelToken) {
-    return apiManagement.post<{} | ErrorResponse, RemoteInstancePayload>(
-      '/azure/AzureDatabase/Add',
-      body,
-      false,
-      token
-    );
+    return apiManagement.post<{} | ErrorResponse, RemoteInstancePayload>(`${BASE_URL}/azure`, body, false, token);
   }
 
   static async addExternal(body: ExternalPayload, token?: CancelToken) {
-    return apiManagement.post<AddExternalResponse, ExternalPayload>('/External/Add', body, false, token);
+    return apiManagement.post<AddExternalResponse, AddServicePayload>(BASE_URL, { external: body }, false, token);
   }
 
   static addRemote(type: InstanceAvailableType, data: RemoteInstancePayload, token?: CancelToken) {
@@ -147,7 +145,7 @@ export const toPayload = (values: any, discoverName?: string, type?: InstanceAva
   if (!values.isAzure && data.add_node === undefined) {
     data.add_node = {
       node_name: data.service_name,
-      node_type: 'REMOTE_NODE',
+      node_type: 'NODE_TYPE_REMOTE_NODE',
     };
   }
 
@@ -214,7 +212,7 @@ export const toExternalServicePayload = (values: any): ExternalPayload => {
   if (data.add_node === undefined) {
     data.add_node = {
       node_name: data.service_name,
-      node_type: 'REMOTE_NODE',
+      node_type: 'NODE_TYPE_REMOTE_NODE',
     };
   }
 

@@ -43,7 +43,7 @@ import {
 const PerconaNavigation: FC = () => {
   const [folders, setFolders] = useState<FolderDTO[]>([]);
   const { result } = useSelector(getPerconaSettings);
-  const { alertingEnabled, sttEnabled, backupEnabled } = result || {};
+  const { alertingEnabled, advisorEnabled, backupEnabled } = result || {};
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const categorizedAdvisors = useSelector(getCategorizedAdvisors);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
@@ -123,7 +123,7 @@ const PerconaNavigation: FC = () => {
         dispatch(updateNavIndex(iaMenuItem));
       }
 
-      if (sttEnabled) {
+      if (advisorEnabled) {
         updatedNavTree.push(advisorsPage);
       }
 

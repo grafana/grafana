@@ -175,7 +175,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const featureSelector = useCallback(getPerconaSettingFlag('sttEnabled'), []);
+  const featureSelector = useCallback(getPerconaSettingFlag('advisorEnabled'), []);
 
   const isFilterSet = (queryParams: UrlQueryMap, advisorName: string) => {
     return Object.keys(queryParams).includes(advisorName);

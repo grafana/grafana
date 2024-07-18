@@ -9,7 +9,6 @@ import {
   CompatibleServiceListPayload,
   DBServiceList,
   NodeListDBPayload,
-  RemoveAgentBody,
   RemoveNodeBody,
   ServiceAgentListPayload,
 } from './Inventory.types';
@@ -18,24 +17,23 @@ const BASE_URL = `/v1/inventory`;
 
 export const InventoryService = {
   getAgents(serviceId: string | undefined, nodeId: string | undefined, token?: CancelToken) {
-    return api.post<ServiceAgentListPayload, object>(
-      '/v1/management/Agent/List',
-      { service_id: serviceId, node_id: nodeId },
-      false,
-      token
-    );
+    return api.get<ServiceAgentListPayload, object>('/v1/management/agents', false, {
+      cancelToken: token,
+      params: {
+        service_id: serviceId,
+        node_id: nodeId,
+      },
+    });
   },
-  removeAgent(body: RemoveAgentBody, token?: CancelToken) {
-    return api.post<void, object>(`${BASE_URL}/Agents/Remove`, body, false, token);
+  removeAgent(agentId: string, forceMode = false, token?: CancelToken) {
+    // todo: address forceMode
+    return api.delete<void>(`${BASE_URL}/agents/${agentId}`, false, token, { force: forceMode });
   },
   // TODO unify typings and this function with getServices()
   async getDbServices(token?: CancelToken): Promise<DBServiceList> {
-    const response = await api.post<CompatibleServiceListPayload, object>(
-      `${BASE_URL}/Services/List`,
-      {},
-      false,
-      token
-    );
+    const response = await api.get<CompatibleServiceListPayload, object>(`${BASE_URL}/services`, false, {
+      cancelToken: token,
+    });
     const result: DBServiceList = {};
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -53,13 +51,13 @@ export const InventoryService = {
 
     return result;
   },
-  getNodes(body = {}, token?: CancelToken) {
-    return api.post<NodeListDBPayload, object>(`/v1/management/Node/List`, body, false, token);
+  getNodes(token?: CancelToken) {
+    return api.get<NodeListDBPayload, object>(`/v1/management/nodes`, false, { cancelToken: token });
   },
   removeNode(body: RemoveNodeBody, token?: CancelToken) {
-    return api.post<void, RemoveNodeBody>(`/v1/management/Node/Unregister`, body, false, token);
+    return api.delete<void>(`${BASE_URL}/nodes/${body.node_id}`, false, token, { force: true });
   },
-  getService(serviceId: string, token?: CancelToken) {
-    return api.post<any, any>(`${BASE_URL}/Services/Get`, { service_id: serviceId }, false, token);
+  getService(serviceId: string, cancelToken?: CancelToken) {
+    return api.get<any, any>(`${BASE_URL}/services/${serviceId}`, false, { cancelToken });
   },
 };

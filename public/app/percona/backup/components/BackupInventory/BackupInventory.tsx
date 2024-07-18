@@ -287,7 +287,7 @@ export const BackupInventory: FC = () => {
 
   const onBackupClick = (backup: BackupRow | null) => {
     if (backup) {
-      locationService.push(`/backup${backup.id}/edit`);
+      locationService.push(`/backup/${backup.id}/edit`);
     } else {
       locationService.push(NEW_BACKUP_URL);
     }

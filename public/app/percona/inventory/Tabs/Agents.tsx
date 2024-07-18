@@ -7,7 +7,6 @@ import { AppEvents } from '@grafana/data';
 import { Badge, Button, HorizontalGroup, Icon, Link, Modal, TagList, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { formatServiceId } from 'app/percona/check/components/FailedChecksTab/FailedChecksTab.utils';
 import { Agent, FlattenAgent, ServiceAgentStatus } from 'app/percona/inventory/Inventory.types';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/AnotherTableInstance/Table.types';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
@@ -21,7 +20,6 @@ import { fetchNodesAction } from 'app/percona/shared/core/reducers/nodes/nodes';
 import { fetchServicesAction } from 'app/percona/shared/core/reducers/services';
 import { getNodes, getServices } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
-import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { getExpandAndActionsCol } from 'app/percona/shared/helpers/getExpandAndActionsCol';
 import { logger } from 'app/percona/shared/helpers/logger';
 import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpers/promises';
@@ -33,8 +31,8 @@ import { GET_AGENTS_CANCEL_TOKEN, GET_NODES_CANCEL_TOKEN, GET_SERVICES_CANCEL_TO
 import { Messages } from '../Inventory.messages';
 import { InventoryService } from '../Inventory.service';
 
-import { beautifyAgentType, getAgentStatusColor, toAgentModel } from './Agents.utils';
-import { formatNodeId } from './Nodes.utils';
+import { beautifyAgentType, getAgentStatusColor, getAgentStatusText, toAgentModel } from './Agents.utils';
+import { getTagsFromLabels } from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
 export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>> = ({ match }) => {
@@ -42,19 +40,18 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<Agent[]>([]);
   const [selected, setSelectedRows] = useState<any[]>([]);
-  const serviceId = match.params.serviceId ? formatServiceId(match.params.serviceId) : undefined;
   const nodeId = match.params.nodeId
     ? match.params.nodeId === 'pmm-server'
       ? 'pmm-server'
-      : formatNodeId(match.params.nodeId)
+      : match.params.nodeId
     : undefined;
-  const navModel = usePerconaNavModel(serviceId ? 'inventory-services' : 'inventory-nodes');
+  const navModel = usePerconaNavModel(match.params.serviceId ? 'inventory-services' : 'inventory-nodes');
   const [generateToken] = useCancelToken();
   const { isLoading: servicesLoading, services } = useSelector(getServices);
   const { isLoading: nodesLoading, nodes } = useSelector(getNodes);
   const styles = useStyles2(getStyles);
 
-  const service = services.find((s) => s.params.serviceId === serviceId);
+  const service = services.find((s) => s.params.serviceId === match.params.serviceId);
   const node = nodes.find((s) => s.nodeId === nodeId);
   const flattenAgents = useMemo(() => data.map((value) => ({ type: value.type, ...value.params })), [data]);
 
@@ -64,7 +61,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
         Header: Messages.agents.columns.status,
         accessor: 'status',
         Cell: ({ value }: { value: ServiceAgentStatus }) => (
-          <Badge text={capitalizeText(value)} color={getAgentStatusColor(value)} />
+          <Badge text={getAgentStatusText(value)} color={getAgentStatusColor(value)} />
         ),
         type: FilterFieldTypes.DROPDOWN,
         options: [
@@ -114,7 +111,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
     setLoading(true);
     try {
       const { agents = [] } = await InventoryService.getAgents(
-        serviceId,
+        match.params.serviceId,
         nodeId,
         generateToken(GET_AGENTS_CANCEL_TOKEN)
       );
@@ -138,11 +135,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
         <DetailsRow>
           {!!labelKeys.length && (
             <DetailsRow.Contents title={Messages.agents.details.properties} fullRow>
-              <TagList
-                colorIndex={9}
-                className={styles.tagList}
-                tags={labelKeys.map((label) => `${label}=${labels![label]}`)}
-              />
+              <TagList colorIndex={9} className={styles.tagList} tags={getTagsFromLabels(labelKeys, labels)} />
             </DetailsRow.Contents>
           )}
         </DetailsRow>
@@ -154,23 +147,21 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
   const deletionMsg = useMemo(() => Messages.agents.deleteConfirmation(selected.length), [selected]);
 
   useEffect(() => {
-    if (!service && serviceId) {
+    if (!service && match.params.serviceId) {
       dispatch(fetchServicesAction({ token: generateToken(GET_SERVICES_CANCEL_TOKEN) }));
     } else if (!node && nodeId) {
       dispatch(fetchNodesAction({ token: generateToken(GET_NODES_CANCEL_TOKEN) }));
     } else {
       loadData();
     }
-  }, [generateToken, loadData, service, nodeId, serviceId, node]);
+  }, [generateToken, loadData, service, nodeId, match.params.serviceId, node]);
 
   const removeAgents = useCallback(
     async (agents: Array<SelectedTableRows<FlattenAgent>>, forceMode: boolean) => {
       try {
         setLoading(true);
         // eslint-disable-next-line max-len
-        const requests = agents.map((agent) =>
-          InventoryService.removeAgent({ agent_id: agent.original.agentId, force: forceMode })
-        );
+        const requests = agents.map((agent) => InventoryService.removeAgent(agent.original.agentId, forceMode));
         const results = await processPromiseResults(requests);
 
         const successfullyDeleted = results.filter(filterFulfilled).length;

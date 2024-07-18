@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
-import axios, { CancelToken, AxiosInstance } from 'axios';
+import axios, { CancelToken, AxiosInstance, AxiosRequestConfig } from 'axios';
 
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
@@ -18,22 +18,28 @@ export class ApiRequest {
   async get<T, B>(
     path: string,
     disableNotifications = false,
-    query?: { params: B; cancelToken?: CancelToken }
+    query?: { params?: B; cancelToken?: CancelToken }
   ): Promise<T> {
     return this.axiosInstance
       .get<T>(path, query)
       .then((response): T => response.data)
       .catch((e) => {
-        if (!disableNotifications) {
+        if (!disableNotifications && !axios.isCancel(e)) {
           appEvents.emit(AppEvents.alertError, [e.message]);
         }
         throw e;
       });
   }
 
-  async post<T, B>(path: string, body: B, disableNotifications = false, cancelToken?: CancelToken): Promise<T> {
+  async post<T, B = any>(
+    path: string,
+    body: B,
+    disableNotifications = false,
+    cancelToken?: CancelToken,
+    params?: AxiosRequestConfig<B>['params']
+  ): Promise<T> {
     return this.axiosInstance
-      .post<T>(path, body, { cancelToken })
+      .post<T>(path, body, { cancelToken, params })
       .then((response): T => response.data)
       .catch((e) => {
         if (!disableNotifications && !axios.isCancel(e)) {
@@ -44,32 +50,43 @@ export class ApiRequest {
       });
   }
 
-  async delete<T>(path: string): Promise<T> {
+  async delete<T, B = any>(
+    path: string,
+    disableNotifications = false,
+    cancelToken?: CancelToken,
+    params?: AxiosRequestConfig<B>['params']
+  ): Promise<T> {
     return this.axiosInstance
-      .delete<T>(path)
+      .delete<T>(path, { cancelToken, params })
       .then((response): T => response.data)
       .catch((e) => {
-        // Notify.error(e.message);
+        if (!disableNotifications) {
+          appEvents.emit(AppEvents.alertError, [e.response.data?.message ?? 'Unknown error']);
+        }
         throw e;
       });
   }
 
-  async patch<T, B>(path: string, body: B): Promise<T> {
+  async patch<T, B>(path: string, body: B, disableNotifications = false, cancelToken?: CancelToken): Promise<T> {
     return this.axiosInstance
-      .patch<T>(path, body)
+      .patch<T>(path, body, { cancelToken })
       .then((response): T => response.data)
       .catch((e) => {
-        // Notify.error(e.message);
+        if (!disableNotifications) {
+          appEvents.emit(AppEvents.alertError, [e.response.data?.message ?? 'Unknown error']);
+        }
         throw e;
       });
   }
 
-  async put<T, B>(path: string, body: B): Promise<T> {
+  async put<T, B>(path: string, body: B, disableNotifications = false, cancelToken?: CancelToken): Promise<T> {
     return this.axiosInstance
-      .put<T>(path, body)
+      .put<T>(path, body, { cancelToken })
       .then((response): T => response.data)
       .catch((e) => {
-        // Notify.error(e.message);
+        if (!disableNotifications) {
+          appEvents.emit(AppEvents.alertError, [e.response.data?.message ?? 'Unknown error']);
+        }
         throw e;
       });
   }

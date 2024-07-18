@@ -5,6 +5,7 @@ import { Button } from '@grafana/ui';
 import { InstanceAvailableType, SelectInstance } from 'app/percona/add-instance/panel.types';
 import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
 
+import { DiscoverAzureDatabaseType } from '../../../Discovery/Discovery.types';
 import { Instance } from '../../Discovery.types';
 import { AzureCredentialsForm } from '../Credentials/Credentials.types';
 
@@ -13,13 +14,13 @@ import { styles } from './Instances.styles';
 
 const getEngineType = (type?: string) => {
   switch (type) {
-    case 'DISCOVER_AZURE_DATABASE_TYPE_MYSQL':
+    case DiscoverAzureDatabaseType.MYSQL:
       return DATABASE_LABELS[Databases.mysql];
-    case 'DISCOVER_AZURE_DATABASE_TYPE_MARIADB':
+    case DiscoverAzureDatabaseType.MARIADB:
       return DATABASE_LABELS[Databases.mariadb];
-    case 'DISCOVER_AZURE_DATABASE_TYPE_POSTGRESQL':
+    case DiscoverAzureDatabaseType.POSTGRESQL:
       return DATABASE_LABELS[Databases.postgresql];
-    case 'DISCOVER_AZURE_DATABASE_INVALID':
+    case DiscoverAzureDatabaseType.INVALID:
       return 'Unknown type';
     default:
       return 'Unknown type';
@@ -28,10 +29,10 @@ const getEngineType = (type?: string) => {
 
 const getDatabaseType = (type?: string): InstanceAvailableType => {
   switch (type) {
-    case 'DISCOVER_AZURE_DATABASE_TYPE_MYSQL':
-    case 'DISCOVER_AZURE_DATABASE_TYPE_MARIADB':
+    case DiscoverAzureDatabaseType.MYSQL:
+    case DiscoverAzureDatabaseType.MARIADB:
       return Databases.mysql;
-    case 'DISCOVER_AZURE_DATABASE_TYPE_POSTGRESQL':
+    case DiscoverAzureDatabaseType.POSTGRESQL:
       return Databases.postgresql;
     default:
       return '';

@@ -40,10 +40,7 @@ const EditInstancePage: FC = () => {
 
   const fetchService = async (serviceId: string) => {
     setIsLoading(true);
-    const result = await InventoryService.getService(
-      '/service_id/' + serviceId,
-      generateToken(FETCH_SERVICE_CANCEL_TOKEN)
-    );
+    const result = await InventoryService.getService(serviceId, generateToken(FETCH_SERVICE_CANCEL_TOKEN));
     const service = getService(result);
 
     setService(service);

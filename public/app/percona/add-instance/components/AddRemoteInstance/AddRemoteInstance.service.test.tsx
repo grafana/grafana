@@ -39,7 +39,7 @@ describe('AddRemoteInstanceService:: ', () => {
       },
       add_node: {
         node_name: 'localhost',
-        node_type: 'REMOTE_NODE',
+        node_type: 'NODE_TYPE_REMOTE_NODE',
       },
       listen_port: '80',
       metrics_mode: 1,
@@ -86,7 +86,7 @@ describe('AddRemoteInstanceService:: ', () => {
       },
       add_node: {
         node_name: 'localhost',
-        node_type: 'REMOTE_NODE',
+        node_type: 'NODE_TYPE_REMOTE_NODE',
       },
       pmm_agent_id: 'pmm-server',
       port: '80',

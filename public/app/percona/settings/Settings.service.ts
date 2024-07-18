@@ -10,14 +10,16 @@ export type SettingsCallback = (settings: Settings) => void;
 
 export const SettingsService = {
   async getSettings(token?: CancelToken, disableNotifications = false): Promise<Settings> {
-    const { settings }: SettingsAPIResponse = await api.post('/v1/Settings/Get', {}, disableNotifications, token);
+    const { settings }: SettingsAPIResponse = await api.get('/v1/server/settings', disableNotifications, {
+      cancelToken: token,
+    });
     return toModel(settings);
   },
   async setSettings(body: Partial<SettingsAPIChangePayload>, token?: CancelToken): Promise<Settings | undefined> {
     let response;
     try {
-      const { settings } = await api.post<SettingsAPIResponse, Partial<SettingsAPIChangePayload>>(
-        '/v1/Settings/Change',
+      const { settings } = await api.put<SettingsAPIResponse, Partial<SettingsAPIChangePayload>>(
+        '/v1/server/settings',
         body,
         false,
         token
@@ -32,8 +34,8 @@ export const SettingsService = {
 };
 
 const toModel = (response: SettingsPayload): Settings => ({
-  awsPartitions: response.aws_partitions,
-  updatesDisabled: response.updates_disabled,
+  awsPartitions: response.aws_partitions.values,
+  updatesEnabled: response.enable_updates,
   telemetryEnabled: response.telemetry_enabled,
   telemetrySummaries: response.telemetry_summaries || [],
   metricsResolutions: response.metrics_resolutions,
@@ -41,7 +43,7 @@ const toModel = (response: SettingsPayload): Settings => ({
   sshKey: response.ssh_key,
   alertManagerUrl: response.alert_manager_url,
   alertManagerRules: response.alert_manager_rules,
-  sttEnabled: response.stt_enabled,
+  advisorEnabled: response.advisor_enabled,
   platformEmail: response.platform_email,
   azureDiscoverEnabled: response.azurediscover_enabled,
   alertingEnabled: response.alerting_enabled,
@@ -50,10 +52,10 @@ const toModel = (response: SettingsPayload): Settings => ({
     slack: response.slack_alerting_settings || {},
   },
   publicAddress: response.pmm_public_address,
-  sttCheckIntervals: {
-    rareInterval: response.stt_check_intervals.rare_interval,
-    standardInterval: response.stt_check_intervals.standard_interval,
-    frequentInterval: response.stt_check_intervals.frequent_interval,
+  advisorRunIntervals: {
+    rareInterval: response.advisor_run_intervals.rare_interval,
+    standardInterval: response.advisor_run_intervals.standard_interval,
+    frequentInterval: response.advisor_run_intervals.frequent_interval,
   },
   backupEnabled: response.backup_management_enabled,
   isConnectedToPortal: response.connected_to_platform,

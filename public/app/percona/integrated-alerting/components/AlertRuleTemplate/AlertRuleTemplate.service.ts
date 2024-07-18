@@ -11,39 +11,44 @@ import {
   TemplatesListAPI,
 } from './AlertRuleTemplate.types';
 
-const BASE_URL = `/v1/management/alerting/Templates`;
+const BASE_URL = `/v1/alerting/templates`;
 
 export const AlertRuleTemplateService = {
   async upload(payload: UploadAlertRuleTemplatePayload, token?: CancelToken): Promise<void> {
-    return api.post(`${BASE_URL}/Create`, payload, false, token);
+    return api.post(BASE_URL, payload, false, token);
   },
   async list(payload: AlertRuleTemplateGetPayload, token?: CancelToken): Promise<TemplatesList> {
-    return api.post<TemplatesListAPI, Object>(`${BASE_URL}/List`, { ...payload, reload: true }, true, token).then(
-      ({ totals, templates = [] }): TemplatesList => ({
-        totals,
-        templates: templates.map((template) => ({
-          ...template,
-          params: template.params?.map((param) => ({
-            ...param,
-            float: param.float
-              ? {
-                  hasMin: param.float.has_min,
-                  hasDefault: param.float.has_default,
-                  hasMax: param.float.has_max,
-                  min: param.float.min,
-                  max: param.float.max,
-                  default: param.float.default,
-                }
-              : undefined,
-          })),
-        })),
+    return api
+      .get<TemplatesListAPI, AlertRuleTemplateGetPayload>(BASE_URL, false, {
+        cancelToken: token,
+        params: { ...payload },
       })
-    );
+      .then(
+        ({ totals, templates = [] }): TemplatesList => ({
+          totals,
+          templates: templates.map((template) => ({
+            ...template,
+            params: template.params?.map((param) => ({
+              ...param,
+              float: param.float
+                ? {
+                    hasMin: param.float.has_min,
+                    hasDefault: param.float.has_default,
+                    hasMax: param.float.has_max,
+                    min: param.float.min,
+                    max: param.float.max,
+                    default: param.float.default,
+                  }
+                : undefined,
+            })),
+          })),
+        })
+      );
   },
-  async update(payload: UpdateAlertRuleTemplatePayload, token?: CancelToken): Promise<void> {
-    return api.post(`${BASE_URL}/Update`, payload, false, token);
+  async update(payload: UpdateAlertRuleTemplatePayload): Promise<void> {
+    return api.put(`${BASE_URL}/${payload.name}`, { yaml: payload.yaml });
   },
   async delete(payload: DeleteAlertRuleTemplatePayload, token?: CancelToken): Promise<void> {
-    return api.post(`${BASE_URL}/Delete`, payload, false, token);
+    return api.delete(`${BASE_URL}/${payload.name}`, false, token);
   },
 };

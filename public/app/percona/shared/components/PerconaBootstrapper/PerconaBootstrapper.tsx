@@ -18,6 +18,7 @@ import { useAppDispatch } from 'app/store/store';
 
 import { Telemetry } from '../../../ui-events/components/Telemetry';
 import usePerconaTour from '../../core/hooks/tour';
+import { logger } from '../../helpers/logger';
 import { isPmmAdmin } from '../../helpers/permissions';
 
 import { Messages } from './PerconaBootstrapper.messages';
@@ -61,6 +62,8 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
         // @ts-ignore
         if (e.response?.status === 401) {
           setAuthorized(false);
+        } else {
+          logger.error(e);
         }
       }
     };

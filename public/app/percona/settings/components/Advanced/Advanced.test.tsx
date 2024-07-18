@@ -21,13 +21,17 @@ describe('Advanced::', () => {
             settings: {
               loading: false,
               result: {
-                sttCheckIntervals: { rareInterval: '280800s', standardInterval: '86400s', frequentInterval: '14400s' },
+                advisorRunIntervals: {
+                  rareInterval: '280800s',
+                  standardInterval: '86400s',
+                  frequentInterval: '14400s',
+                },
                 dataRetention: '2592000s',
                 telemetryEnabled: true,
                 telemetrySummaries: ['summary1', 'summary2'],
-                updatesDisabled: true,
+                updatesEnabled: false,
                 backupEnabled: false,
-                sttEnabled: true,
+                advisorEnabled: true,
                 azureDiscoverEnabled: true,
                 publicAddress: 'localhost',
                 alertingEnabled: true,
@@ -54,13 +58,17 @@ describe('Advanced::', () => {
             settings: {
               loading: false,
               result: {
-                sttCheckIntervals: { rareInterval: '280800s', standardInterval: '86400s', frequentInterval: '14400s' },
+                advisorRunIntervals: {
+                  rareInterval: '280800s',
+                  standardInterval: '86400s',
+                  frequentInterval: '14400s',
+                },
                 dataRetention: '2592000s',
                 telemetryEnabled: true,
                 telemetrySummaries: ['summary1', 'summary2'],
-                updatesDisabled: true,
+                updatesEnabled: false,
                 backupEnabled: false,
-                sttEnabled: true,
+                advisorEnabled: true,
                 azureDiscoverEnabled: true,
                 publicAddress: 'localhost',
                 alertingEnabled: true,
@@ -98,13 +106,17 @@ describe('Advanced::', () => {
             settings: {
               loading: false,
               result: {
-                sttCheckIntervals: { rareInterval: '280800s', standardInterval: '86400s', frequentInterval: '14400s' },
+                advisorRunIntervals: {
+                  rareInterval: '280800s',
+                  standardInterval: '86400s',
+                  frequentInterval: '14400s',
+                },
                 dataRetention: '2592000s',
                 telemetryEnabled: true,
                 telemetrySummaries: ['summary1', 'summary2'],
-                updatesDisabled: true,
+                updatesEnabled: false,
                 backupEnabled: false,
-                sttEnabled: true,
+                advisorEnabled: true,
                 azureDiscoverEnabled: true,
                 publicAddress: 'localhost',
                 alertingEnabled: true,
@@ -132,13 +144,17 @@ describe('Advanced::', () => {
             settings: {
               loading: false,
               result: {
-                sttCheckIntervals: { rareInterval: '280800s', standardInterval: '86400s', frequentInterval: '14400s' },
+                advisorRunIntervals: {
+                  rareInterval: '280800s',
+                  standardInterval: '86400s',
+                  frequentInterval: '14400s',
+                },
                 dataRetention: '2592000s',
                 telemetryEnabled: true,
                 telemetrySummaries: ['summary1', 'summary2'],
-                updatesDisabled: true,
+                updatesEnabled: false,
                 backupEnabled: false,
-                sttEnabled: false,
+                advisorEnabled: false,
                 azureDiscoverEnabled: true,
                 publicAddress: 'localhost',
                 alertingEnabled: true,
@@ -157,7 +173,11 @@ describe('Advanced::', () => {
 
     // expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeUndefined();
     expect(spy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ body: expect.objectContaining({ stt_check_intervals: undefined }) })
+      expect.objectContaining({
+        body: expect.objectContaining({
+          advisor_run_intervals: undefined,
+        }),
+      })
     );
   });
 
@@ -172,13 +192,17 @@ describe('Advanced::', () => {
             settings: {
               loading: false,
               result: {
-                sttCheckIntervals: { rareInterval: '280800s', standardInterval: '86400s', frequentInterval: '14400s' },
+                advisorRunIntervals: {
+                  rareInterval: '280800s',
+                  standardInterval: '86400s',
+                  frequentInterval: '14400s',
+                },
                 dataRetention: '2592000s',
                 telemetryEnabled: true,
                 telemetrySummaries: ['summary1', 'summary2'],
-                updatesDisabled: true,
+                updatesEnabled: false,
                 backupEnabled: false,
-                sttEnabled: true,
+                advisorEnabled: true,
                 azureDiscoverEnabled: true,
                 publicAddress: 'localhost',
                 alertingEnabled: true,
@@ -198,7 +222,15 @@ describe('Advanced::', () => {
 
     // expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeDefined();
     expect(spy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ body: expect.objectContaining({ stt_check_intervals: expect.anything() }) })
+      expect.objectContaining({
+        body: expect.objectContaining({
+          advisor_run_intervals: {
+            frequent_interval: '14400s',
+            rare_interval: '280800s',
+            standard_interval: '86400s',
+          },
+        }),
+      })
     );
   });
 });

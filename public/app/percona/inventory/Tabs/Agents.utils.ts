@@ -1,4 +1,5 @@
 import { BadgeColor } from '@grafana/ui';
+import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { payloadToCamelCase } from 'app/percona/shared/helpers/payloadToCamelCase';
 
 import { Agent, AgentType, ServiceAgentPayload, ServiceAgentStatus } from '../Inventory.types';
@@ -13,7 +14,7 @@ export const toAgentModel = (agentList: ServiceAgentPayload[]): Agent[] => {
     const extraLabels: Record<string, string> = {};
     let agentStatus = status || ServiceAgentStatus.UNKNOWN;
 
-    if (isConnected !== undefined) {
+    if (!status) {
       agentStatus = isConnected ? ServiceAgentStatus.RUNNING : ServiceAgentStatus.UNKNOWN;
     }
 
@@ -22,7 +23,7 @@ export const toAgentModel = (agentList: ServiceAgentPayload[]): Agent[] => {
       .forEach(([key, value]: [string, string | object | []]) => {
         if (Array.isArray(value) || typeof value !== 'object') {
           extraLabels[key] = value.toString();
-        } else {
+        } else if (!!value) {
           Object.entries(value).forEach(([nestedKey, nestedValue]: [string, string]) => {
             extraLabels[nestedKey] = nestedValue.toString();
           });
@@ -48,6 +49,8 @@ export const toAgentModel = (agentList: ServiceAgentPayload[]): Agent[] => {
 
   return result;
 };
+
+export const getAgentStatusText = (status: ServiceAgentStatus): string => capitalizeText(status.split('_')[2] || '');
 
 export const beautifyAgentType = (type: AgentType): string =>
   type.replace(/^\w/, (c) => c.toUpperCase()).replace(/[_-]/g, ' ');

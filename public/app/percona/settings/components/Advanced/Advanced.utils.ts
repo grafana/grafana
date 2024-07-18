@@ -1,6 +1,6 @@
 import moment from 'moment/moment';
 
-import { SttCheckIntervalsSettings } from 'app/percona/settings/Settings.types';
+import { AdvisorRunIntervalsSettings } from 'app/percona/settings/Settings.types';
 
 import { HOURS, MINUTES_IN_HOUR, SECONDS_IN_DAY } from './Advanced.constants';
 
@@ -24,7 +24,7 @@ export const convertSecondsStringToHour = (seconds: string) =>
 
 export const convertHoursStringToSeconds = (hours: string) => moment.duration(parseFloat(hours), 'hours').asSeconds();
 
-export const convertCheckIntervalsToHours = (sttCheckIntervals: SttCheckIntervalsSettings) => {
+export const convertCheckIntervalsToHours = (sttCheckIntervals: AdvisorRunIntervalsSettings) => {
   const {
     rareInterval: rawRareInterval,
     standardInterval: rawStandardInterval,

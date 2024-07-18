@@ -48,7 +48,7 @@ describe('Failed::', () => {
         store={configureStore({
           percona: {
             user: { isAuthorized: true },
-            settings: { loading: false, result: { sttEnabled: true, isConnectedToPortal: false } },
+            settings: { loading: false, result: { advisorEnabled: true, isConnectedToPortal: false } },
           },
         } as StoreState)}
       >
@@ -99,7 +99,7 @@ describe('Failed::', () => {
         store={configureStore({
           percona: {
             user: { isAuthorized: true },
-            settings: { loading: false, result: { sttEnabled: true, isConnectedToPortal: false } },
+            settings: { loading: false, result: { advisorEnabled: true, isConnectedToPortal: false } },
           },
         } as StoreState)}
       >
@@ -116,7 +116,7 @@ describe('Failed::', () => {
         store={configureStore({
           percona: {
             user: { isAuthorized: false },
-            settings: { loading: false, result: { sttEnabled: true, isConnectedToPortal: false } },
+            settings: { loading: false, result: { advisorEnabled: true, isConnectedToPortal: false } },
           },
         } as StoreState)}
       >

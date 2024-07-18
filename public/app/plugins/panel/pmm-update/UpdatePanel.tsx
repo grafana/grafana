@@ -55,7 +55,7 @@ export const UpdatePanel: FC<{}> = () => {
     <>
       <div className={styles.panel}>
         <CurrentVersion installedVersionDetails={installedVersionDetails} />
-        {isUpdateAvailable && !isDefaultView && !settings?.updatesDisabled && isAuthorized && !isLoading && isOnline ? (
+        {isUpdateAvailable && !isDefaultView && settings?.updatesEnabled && isAuthorized && !isLoading && isOnline ? (
           <AvailableUpdate nextVersionDetails={nextVersionDetails} />
         ) : null}
         {isLoading ? (
@@ -64,7 +64,7 @@ export const UpdatePanel: FC<{}> = () => {
           </div>
         ) : (
           <>
-            {(isUpdateAvailable || forceUpdate) && !settings?.updatesDisabled && isAuthorized && isOnline ? (
+            {(isUpdateAvailable || forceUpdate) && settings?.updatesEnabled && isAuthorized && isOnline ? (
               <div className={styles.middleSectionWrapper}>
                 {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
                 <Button onClick={handleUpdate} icon={'fa fa-download' as IconName} variant="secondary">
@@ -75,14 +75,14 @@ export const UpdatePanel: FC<{}> = () => {
               <InfoBox
                 upToDate={!isDefaultView && !forceUpdate}
                 hasNoAccess={!isAuthorized}
-                updatesDisabled={settings?.updatesDisabled}
+                updatesDisabled={!settings?.updatesEnabled}
                 isOnline={isOnline}
               />
             )}
           </>
         )}
         <LastCheck
-          disabled={isLoading || settings?.updatesDisabled || !isOnline}
+          disabled={isLoading || !settings?.updatesEnabled || !isOnline}
           onCheckForUpdates={handleCheckForUpdates}
           lastCheckDate={lastCheckDate}
         />
