@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -31,14 +30,11 @@ var (
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
 )
 
-const maxOAuthTokenCacheTTL = 10 * time.Minute
-
 type Service struct {
 	Cfg             *setting.Cfg
 	SocialService   social.Service
 	AuthInfoService login.AuthInfoService
 	serverLock      *serverlock.ServerLockService
-	cache           remotecache.CacheStorage
 
 	tokenRefreshDuration *prometheus.HistogramVec
 }
@@ -52,12 +48,11 @@ type OAuthTokenService interface {
 	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
 
-func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer, cache remotecache.CacheStorage, serverLockService *serverlock.ServerLockService) *Service {
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer, serverLockService *serverlock.ServerLockService) *Service {
 	return &Service{
 		AuthInfoService:      authInfoService,
 		Cfg:                  cfg,
 		SocialService:        socialService,
-		cache:                cache,
 		serverLock:           serverLockService,
 		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
 	}
@@ -154,10 +149,6 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 	ctxLogger = ctxLogger.New("userID", userID)
 
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
-	if _, err := o.cache.Get(ctx, lockKey); err == nil {
-		ctxLogger.Debug("Expiration check has been cached, no need to refresh")
-		return nil
-	}
 
 	var cmdErr error
 	lockErr := o.serverLock.LockExecuteAndRelease(ctx, lockKey, time.Second*30, func(ctx context.Context) {
@@ -167,16 +158,12 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		if !exists {
 			if err != nil {
 				ctxLogger.Debug("Failed to fetch oauth entry", "error", err)
-			} else {
-				// User is not logged in via OAuth no need to check
-				_ = o.cache.Set(ctx, lockKey, []byte{}, maxOAuthTokenCacheTTL)
 			}
 			return
 		}
 
-		_, needRefresh, ttl := needTokenRefresh(authInfo)
+		_, needRefresh := needTokenRefresh(authInfo)
 		if !needRefresh {
-			_ = o.cache.Set(ctx, lockKey, []byte{}, ttl)
 			return
 		}
 
@@ -257,19 +244,12 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth
 func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, usr *login.UserAuth) (*oauth2.Token, error) {
 	ctxLogger := logger.FromContext(ctx).New("userID", usr.UserId)
 
-	key := getCheckCacheKey(usr.UserId)
-	if _, err := o.cache.Get(ctx, key); err == nil {
-		ctxLogger.Debug("Expiration check has been cached", "userID", usr.UserId)
-		return buildOAuthTokenFromAuthInfo(usr), nil
-	}
-
 	if err := checkOAuthRefreshToken(usr); err != nil {
 		return nil, err
 	}
 
-	persistedToken, refreshNeeded, ttl := needTokenRefresh(usr)
+	persistedToken, refreshNeeded := needTokenRefresh(usr)
 	if !refreshNeeded {
-		_ = o.cache.Set(ctx, key, []byte{}, ttl)
 		return persistedToken, nil
 	}
 
@@ -359,8 +339,7 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1IdToken == t2IdToken
 }
 
-func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool, time.Duration) {
-	var accessTokenExpires, idTokenExpires time.Time
+func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool) {
 	var hasAccessTokenExpired, hasIdTokenExpired bool
 
 	persistedToken := buildOAuthTokenFromAuthInfo(usr)
@@ -369,44 +348,20 @@ func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool, time.Duration) 
 		logger.Warn("Could not get ID Token expiry", "error", err)
 	}
 	if !persistedToken.Expiry.IsZero() {
-		accessTokenExpires, hasAccessTokenExpired = getExpiryWithSkew(persistedToken.Expiry)
+		_, hasAccessTokenExpired = getExpiryWithSkew(persistedToken.Expiry)
 	}
 	if !idTokenExp.IsZero() {
-		idTokenExpires, hasIdTokenExpired = getExpiryWithSkew(idTokenExp)
+		_, hasIdTokenExpired = getExpiryWithSkew(idTokenExp)
 	}
 	if !hasAccessTokenExpired && !hasIdTokenExpired {
 		logger.Debug("Neither access nor id token have expired yet", "userID", usr.UserId)
-		return persistedToken, false, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires)
+		return persistedToken, false
 	}
 	if hasIdTokenExpired {
 		// Force refreshing token when id token is expired
 		persistedToken.AccessToken = ""
 	}
-	return persistedToken, true, time.Second
-}
-
-func getCheckCacheKey(usrID int64) string {
-	return fmt.Sprintf("token-check-%d", usrID)
-}
-
-func getOAuthTokenCacheTTL(accessTokenExpiry, idTokenExpiry time.Time) time.Duration {
-	min := maxOAuthTokenCacheTTL
-	if !accessTokenExpiry.IsZero() {
-		d := time.Until(accessTokenExpiry)
-		if d < min {
-			min = d
-		}
-	}
-	if !idTokenExpiry.IsZero() {
-		d := time.Until(idTokenExpiry)
-		if d < min {
-			min = d
-		}
-	}
-	if accessTokenExpiry.IsZero() && idTokenExpiry.IsZero() {
-		return maxOAuthTokenCacheTTL
-	}
-	return min
+	return persistedToken, true
 }
 
 // getIDTokenExpiry extracts the expiry time from the ID token
