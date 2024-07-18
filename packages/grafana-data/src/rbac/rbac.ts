@@ -1,4 +1,4 @@
-import { getBackendSrv } from '../../../grafana-runtime/src/services/backendSrv'; // hacky import for specific ask. Clean if kept.
+import { getBackendSrv } from '../../../grafana-runtime/src/services/backendSrv'; // can't be used here, userHasPermission would need to move
 import { WithAccessControlMetadata } from '../types/accesscontrol';
 import { CurrentUserDTO } from '../types/config';
 
