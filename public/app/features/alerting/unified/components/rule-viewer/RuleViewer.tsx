@@ -20,6 +20,7 @@ import {
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
+  isGrafanaRecordingRule,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRule,
@@ -186,6 +187,13 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
           }
         />
       ),
+    });
+  }
+  if (isGrafanaRecordingRule(rule.rulerRule)) {
+    const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
+    metadata.push({
+      label: 'Metric name',
+      value: <Text color="primary">{metric}</Text>,
     });
   }
 

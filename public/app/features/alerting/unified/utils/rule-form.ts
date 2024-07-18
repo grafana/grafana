@@ -205,6 +205,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     contactPoints,
     manualRouting,
     type,
+    metric,
   } = values;
   if (condition) {
     const notificationSettings: GrafanaNotificationSettings | undefined = getNotificationSettingsForDTO(
@@ -233,8 +234,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
           condition,
           data: queries.map(fixBothInstantAndRangeQuery),
           record: {
-            Metric: name,
-            From: condition,
+            metric: metric ?? name,
+            from: condition,
           },
           is_paused: Boolean(isPaused),
           notification_settings: undefined,
@@ -294,6 +295,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
+        metric: ga.record?.metric,
       };
     } else if (isGrafanaRulerRule(rule)) {
       // grafana alerting rule

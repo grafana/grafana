@@ -228,8 +228,8 @@ export interface PostableGrafanaRuleDefinition {
   is_paused?: boolean;
   notification_settings?: GrafanaNotificationSettings;
   record?: {
-    Metric: string;
-    From: string;
+    metric: string;
+    from: string;
   };
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {

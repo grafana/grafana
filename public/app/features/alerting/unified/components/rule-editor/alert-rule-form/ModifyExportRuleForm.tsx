@@ -21,8 +21,8 @@ import { DEFAULT_GROUP_EVALUATION_INTERVAL, formValuesToRulerGrafanaRuleDTO } fr
 import { isGrafanaRulerRule } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from '../../export/providers';
-import { AlertRuleNameInput } from '../AlertRuleNameInput';
+import { ExportFormats, allGrafanaExportProviders } from '../../export/providers';
+import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
 import { NotificationsStep } from '../NotificationsStep';
@@ -88,7 +88,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
             <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
               <Stack direction="column" gap={3}>
                 {/* Step 1 */}
-                <AlertRuleNameInput />
+                <AlertRuleNameAndMetric />
                 {/* Step 2 */}
                 <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
                 {/* Step 3-4-5 */}

@@ -43,7 +43,7 @@ import {
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
-import { AlertRuleNameInput } from '../AlertRuleNameInput';
+import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
@@ -246,7 +246,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <Stack direction="column" gap={3}>
               {/* Step 1 */}
-              <AlertRuleNameInput />
+              <AlertRuleNameAndMetric />
               {/* Step 2 */}
               <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
               {/* Step 3-4-5 */}

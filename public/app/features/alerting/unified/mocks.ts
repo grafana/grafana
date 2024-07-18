@@ -156,8 +156,8 @@ export const mockRulerGrafanaRecordingRule = (
       rule_group: 'my-group',
       condition: 'A',
       record: {
-        Metric: 'myalert',
-        From: 'A',
+        metric: 'myalert',
+        from: 'A',
       },
       data: [
         {

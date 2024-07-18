@@ -1,20 +1,24 @@
 import { useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, Input, Text } from '@grafana/ui';
+import { Field, Input, Stack, Text } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { isRecordingRulebyType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
 
-const recordingRuleNameValidationPattern = {
+const recordingRuleMetricValidationPattern = {
   message:
-    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+    'Recording rule metric must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
 };
 
-export const AlertRuleNameInput = () => {
+/**
+ *  This component renders the input for the alert rule name.
+ *  In case of recording rule, it also renders the input for the recording rule metric, and it validates this value.
+ */
+export const AlertRuleNameAndMetric = () => {
   const {
     register,
     watch,
@@ -26,7 +30,7 @@ export const AlertRuleNameInput = () => {
     return null;
   }
   const isRecording = isRecordingRulebyType(ruleFormType);
-  const entityName = isRecording ? 'recording rule' : 'alert rule';
+  const entityName = isRecording ? 'recording rule and metric' : 'alert rule';
   return (
     <RuleEditorSection
       stepNo={1}
@@ -37,19 +41,32 @@ export const AlertRuleNameInput = () => {
         </Text>
       }
     >
-      <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
-        <Input
-          data-testid={selectors.components.AlertRules.ruleNameField}
-          id="name"
-          width={35}
-          {...register('name', {
-            required: { value: true, message: 'Must enter a name' },
-            pattern: isRecording ? recordingRuleNameValidationPattern : undefined,
-          })}
-          aria-label="name"
-          placeholder={`Give your ${entityName} a name`}
-        />
-      </Field>
+      <Stack direction="column">
+        <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
+          <Input
+            data-testid={selectors.components.AlertRules.ruleNameField}
+            id="name"
+            width={35}
+            {...register('name', {
+              required: { value: true, message: 'Must enter a name' },
+            })}
+            aria-label="name"
+            placeholder={`Give your ${entityName} a name`}
+          />
+        </Field>
+        <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
+          <Input
+            id="metric"
+            width={35}
+            {...register('metric', {
+              required: { value: true, message: 'Must enter a metric name' },
+              pattern: recordingRuleMetricValidationPattern,
+            })}
+            aria-label="metric"
+            placeholder={`Give your metric a name`}
+          />
+        </Field>
+      </Stack>
     </RuleEditorSection>
   );
 };
