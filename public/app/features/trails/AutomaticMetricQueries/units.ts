@@ -15,7 +15,15 @@ export function getUnitFromMetric(metric: string) {
 }
 
 // Get unit from recording rule (e.g. "workload:memory_working_set_bytes:sum" -> "bytes")
-export function getUnitFromRecordingRule(recordingRule: string) {
+export function getUnitFromRecordingRule(recordingRule: string): string | null {
+  const units = ['bytes', 'seconds'];
+  const lowerCaseRule = recordingRule.toLowerCase();
+
+  for (const unit of units) {
+    if (lowerCaseRule.includes(unit)) {
+      return unit;
+    }
+  }
   return null;
 }
 
