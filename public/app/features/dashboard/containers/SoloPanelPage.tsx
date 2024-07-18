@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import { Component } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { Alert } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, useStyles2 } from '@grafana/ui';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -106,6 +108,7 @@ export interface SoloPanelProps extends State {
 }
 
 export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: SoloPanelProps) => {
+  const styles = useStyles2(getStyles);
   if (notFound) {
     return <Alert severity="error" title={`Panel with id ${panelId} not found`} />;
   }
@@ -115,7 +118,7 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: Sol
   }
 
   return (
-    <div className="panel-solo">
+    <div className={styles.container}>
       <AutoSizer>
         {({ width, height }) => {
           if (width === 0) {
@@ -142,3 +145,16 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: Sol
 };
 
 export default connector(SoloPanelPage);
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    position: 'fixed',
+    bottom: 0,
+    right: 0,
+    margin: 0,
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: '100%',
+  }),
+});
