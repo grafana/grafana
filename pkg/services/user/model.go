@@ -120,7 +120,7 @@ type SearchUserQueryResult struct {
 
 type UserSearchHitDTO struct {
 	ID            int64                `json:"id" xorm:"id"`
-	UID           string               `json:"uid" xorm:"id"`
+	UID           string               `json:"uid" xorm:"uid"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
@@ -204,6 +204,11 @@ type DeleteUserCommand struct {
 
 type GetUserByIDQuery struct {
 	ID int64
+}
+
+type GetUserByUIDQuery struct {
+	OrgID int64
+	UID   string
 }
 
 type StartVerifyEmailCommand struct {

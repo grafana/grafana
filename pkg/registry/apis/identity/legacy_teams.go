@@ -9,50 +9,50 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	identity "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
 var (
-	_ rest.Scoper               = (*legacyStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyStorage)(nil)
-	_ rest.Getter               = (*legacyStorage)(nil)
-	_ rest.Lister               = (*legacyStorage)(nil)
-	_ rest.Storage              = (*legacyStorage)(nil)
+	_ rest.Scoper               = (*legacyTeamStorage)(nil)
+	_ rest.SingularNameProvider = (*legacyTeamStorage)(nil)
+	_ rest.Getter               = (*legacyTeamStorage)(nil)
+	_ rest.Lister               = (*legacyTeamStorage)(nil)
+	_ rest.Storage              = (*legacyTeamStorage)(nil)
 )
 
-var resourceInfo = identity.TeamResourceInfo
-
-type legacyStorage struct {
+type legacyTeamStorage struct {
 	service        team.Service
 	tableConverter rest.TableConvertor
+	resourceInfo   common.ResourceInfo
 }
 
-func (s *legacyStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+func (s *legacyTeamStorage) New() runtime.Object {
+	return s.resourceInfo.NewFunc()
 }
 
-func (s *legacyStorage) Destroy() {}
+func (s *legacyTeamStorage) Destroy() {}
 
-func (s *legacyStorage) NamespaceScoped() bool {
+func (s *legacyTeamStorage) NamespaceScoped() bool {
 	return true // namespace == org
 }
 
-func (s *legacyStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+func (s *legacyTeamStorage) GetSingularName() string {
+	return s.resourceInfo.GetSingularName()
 }
 
-func (s *legacyStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+func (s *legacyTeamStorage) NewList() runtime.Object {
+	return s.resourceInfo.NewListFunc()
 }
 
-func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *legacyTeamStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) doList(ctx context.Context, ns string, query *team.ListTeamsCommand) (*identity.TeamList, error) {
+func (s *legacyTeamStorage) doList(ctx context.Context, ns string, query *team.ListTeamsCommand) (*identity.TeamList, error) {
 	if query.Limit < 1 {
 		query.Limit = 100
 	}
@@ -88,7 +88,7 @@ func (s *legacyStorage) doList(ctx context.Context, ns string, query *team.ListT
 	return list, nil
 }
 
-func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *legacyTeamStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	})
 }
 
-func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *legacyTeamStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -115,5 +115,5 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	if len(rsp.Items) > 0 {
 		return &rsp.Items[0], nil
 	}
-	return nil, resourceInfo.NewNotFound(name)
+	return nil, s.resourceInfo.NewNotFound(name)
 }

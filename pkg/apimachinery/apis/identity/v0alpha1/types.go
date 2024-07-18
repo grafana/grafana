@@ -4,22 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// UID                            string          `json:"uid"`
-// Email                          string          `json:"email"`
-// Name                           string          `json:"name"`
-// Login                          string          `json:"login"`
-// Theme                          string          `json:"theme"`
-// OrgID                          int64           `json:"orgId,omitempty"`
-// IsGrafanaAdmin                 bool            `json:"isGrafanaAdmin"`
-// IsDisabled                     bool            `json:"isDisabled"`
-// IsExternal                     bool            `json:"isExternal"`
-// IsExternallySynced             bool            `json:"isExternallySynced"`
-// IsGrafanaAdminExternallySynced bool            `json:"isGrafanaAdminExternallySynced"`
-// AuthLabels                     []string        `json:"authLabels"`
-// UpdatedAt                      time.Time       `json:"updatedAt"`
-// CreatedAt                      time.Time       `json:"createdAt"`
-//
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type User struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -74,10 +58,10 @@ type IdentityDisplayList struct {
 }
 
 type IdentityDisplay struct {
-	IdentityType string `json:"type"` // The namespaced UID, eg `user:xyz`
-	UID          string `json:"uid"`  // The namespaced UID, eg `user:xyz`
+	IdentityType string `json:"type"` // The namespaced UID, eg `user|api-key|...`
+	UID          string `json:"uid"`  // The namespaced UID, eg `xyz`
 	Display      string `json:"display"`
-	Avatar       string `json:"avatar,omitempty"`
+	AvatarURL    string `json:"avatarURL,omitempty"`
 
 	// Legacy internal ID -- usage of this value should be phased out
 	LegacyID int64 `json:"legacyId,omitempty"`

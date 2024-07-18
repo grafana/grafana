@@ -14,25 +14,31 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	identity "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAPIBuilder struct {
-	service team.Service
+	svcTeam team.Service
+	svcUser user.Service
 }
 
-func RegisterAPIService(svc team.Service,
+func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
+	svcTeam team.Service,
+	svcUser user.Service,
+
 ) *IdentityAPIBuilder {
 	builder := &IdentityAPIBuilder{
-		service: svc,
+		svcTeam: svcTeam,
+		svcUser: svcUser,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -68,12 +74,13 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
-	team := identity.TeamResourceInfo
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(identity.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	legacyStore := &legacyStorage{
-		service: b.service,
+	team := identity.TeamResourceInfo
+	teamStore := &legacyTeamStorage{
+		service:      b.svcTeam,
+		resourceInfo: team,
 		tableConverter: gapiutil.NewTableConverter(
 			team.GroupResource(),
 			[]metav1.TableColumnDefinition{
@@ -96,7 +103,35 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 			},
 		),
 	}
-	storage[team.StoragePath()] = legacyStore
+	storage[team.StoragePath()] = teamStore
+
+	user := identity.UserResourceInfo
+	userStore := &legacyUserStorage{
+		service:      b.svcUser,
+		resourceInfo: user,
+		tableConverter: gapiutil.NewTableConverter(
+			user.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Login", Type: "string", Format: "string", Description: "The user login"},
+				{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
+				{Name: "Created At", Type: "date"},
+			},
+			func(obj any) ([]interface{}, error) {
+				m, ok := obj.(*identity.User)
+				if !ok {
+					return nil, fmt.Errorf("expected playlist")
+				}
+				return []interface{}{
+					m.Name,
+					m.Spec.Login,
+					m.Spec.Email,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			},
+		),
+	}
+	storage[user.StoragePath()] = userStore
 
 	apiGroupInfo.VersionedResourcesStorageMap[identity.VERSION] = storage
 	return &apiGroupInfo, nil
