@@ -29,6 +29,10 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
 
+var NewContext = func() context.Context {
+	return context.Background()
+}
+
 // KeyFunc is a function that generates keys for tests.
 // All tests use the "pods" resource, so the resource is hardcoded to "pods".
 var KeyFunc = func(namespace, name string) string {
@@ -97,7 +101,7 @@ func testPropagateStore(ctx context.Context, t *testing.T, store storage.Interfa
 	}
 	setOutput := &example.Pod{}
 	if err := store.Create(ctx, key, obj, setOutput, 0); err != nil {
-		t.Fatalf("Set failed: %v", err)
+		t.Fatalf("Create failed: %v", err)
 	}
 	return key, setOutput
 }
