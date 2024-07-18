@@ -34,9 +34,9 @@ const mode3Str = "3"
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("kind", options.Kind)
-	ctx = klog.NewContext(ctx, log)
 	var method = "create"
+	log := d.Log.WithValues("kind", options.Kind, "method", method, "mode", mode3Str)
+	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
 	created, err := d.Storage.Create(ctx, obj, createValidation, options)
@@ -61,9 +61,9 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 
 // Get overrides the behavior of the generic DualWriter and retrieves an object from Storage.
 func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("kind", options.Kind, "name", name)
-	ctx = klog.NewContext(ctx, log)
 	var method = "get"
+	log := d.Log.WithValues("kind", options.Kind, "name", name, "method", method, "mode", mode3Str)
+	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
 	res, err := d.Storage.Get(ctx, name, options)
@@ -77,9 +77,9 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 
 // List overrides the behavior of the generic DualWriter and reads only from Unified Store.
 func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion)
-	ctx = klog.NewContext(ctx, log)
 	var method = "list"
+	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion, "method", method, "mode", mode3Str)
+	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
 	res, err := d.Storage.List(ctx, options)
@@ -92,9 +92,9 @@ func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion
 }
 
 func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	log := d.Log.WithValues("name", name, "kind", options.Kind)
-	ctx = klog.NewContext(ctx, d.Log)
 	var method = "delete"
+	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method, "mode", mode3Str)
+	ctx = klog.NewContext(ctx, d.Log)
 
 	startStorage := time.Now()
 	res, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
@@ -118,9 +118,9 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
 func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	log := d.Log.WithValues("name", name, "kind", options.Kind)
-	ctx = klog.NewContext(ctx, log)
 	var method = "update"
+	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method, "mode", mode3Str)
+	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
 	res, async, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
@@ -145,9 +145,9 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion)
-	ctx = klog.NewContext(ctx, log)
 	var method = "delete-collection"
+	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion, "method", method, "mode", mode3Str)
+	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
 	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
