@@ -166,6 +166,11 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
 
+	start := time.Now()
+	defer func() {
+		s.log.Debug("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds())
+	}()
+
 	// Update status to snapshot creating with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:    snapshotMeta.UID,
@@ -179,6 +184,8 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		return fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
 
+	s.log.Debug("buildSnapshot: generated keys in %d ms", time.Since(start).Milliseconds())
+
 	// Use GMS public key + the grafana generated private private key to encrypt snapshot files.
 	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
 		Public:  []byte(snapshotMeta.EncryptionKey),
@@ -191,10 +198,14 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		return fmt.Errorf("instantiating snapshot writer: %w", err)
 	}
 
+	s.log.Debug("buildSnapshot: created snapshot writing in %d ms", time.Since(start).Milliseconds())
+
 	migrationData, err := s.getMigrationDataJSON(ctx, signedInUser)
 	if err != nil {
 		return fmt.Errorf("fetching migration data: %w", err)
 	}
+
+	s.log.Debug("buildSnapshot: got migration data json in %d ms", time.Since(start).Milliseconds())
 
 	localSnapshotResource := make([]cloudmigration.CloudMigrationResource, len(migrationData.Items))
 	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, 0)
@@ -225,12 +236,16 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		}
 	}
 
+	s.log.Debug("buildSnapshot: wrote data files in %d ms", time.Since(start).Milliseconds())
+
 	// Add the grafana generated public key to the index file so gms can use it to decrypt the snapshot files later.
 	// This works because the snapshot files are being encrypted with
 	// the grafana generated private key + the gms public key.
 	if _, err := snapshotWriter.Finish(publicKey[:]); err != nil {
 		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
 	}
+
+	s.log.Debug("buildSnapshot: finished snapshot in %d ms", time.Since(start).Milliseconds())
 
 	// update snapshot status to pending upload with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
@@ -249,6 +264,11 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	// TODO -- make sure we can only upload one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
+
+	start := time.Now()
+	defer func() {
+		s.log.Debug("uploadSnapshot: method completed in %d ms", time.Since(start).Milliseconds())
+	}()
 
 	// update snapshot status to uploading with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
@@ -276,6 +296,8 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		return fmt.Errorf("reading index from file: %w", err)
 	}
 
+	s.log.Debug("uploadSnapshot: read index file in %d ms", time.Since(start).Milliseconds())
+
 	// Upload the data files.
 	for _, fileNames := range index.Items {
 		for _, fileName := range fileNames {
@@ -284,8 +306,11 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 			if err := s.uploadUsingPresignedURL(ctx, uploadUrl, key, filePath); err != nil {
 				return fmt.Errorf("uploading snapshot file using presigned url: %w", err)
 			}
+			s.log.Debug("uploadSnapshot: uploaded %s in %d ms", fileName, time.Since(start).Milliseconds())
 		}
 	}
+
+	s.log.Debug("uploadSnapshot: uploaded all data files in %d ms", time.Since(start).Milliseconds())
 
 	// Upload the index file. Must be done after uploading the data files.
 	key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, "index.json")
@@ -297,6 +322,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		return fmt.Errorf("uploading file using presigned url: %w", err)
 	}
 
+	s.log.Debug("uploadSnapshot: uploaded index file in %d ms", time.Since(start).Milliseconds())
 	s.log.Info("successfully uploaded snapshot", "snapshotUid", snapshotMeta.UID, "cloud_snapshotUid", snapshotMeta.GMSSnapshotUID)
 
 	// update snapshot status to processing with retries
