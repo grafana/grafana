@@ -162,12 +162,12 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 	return &result, nil
 }
 
-func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot, offset int) (*cloudmigration.GetSnapshotStatusResponse, error) {
 	c.getStatusMux.Lock()
 	defer c.getStatusMux.Unlock()
 	logger := c.log.FromContext(ctx)
 
-	path := fmt.Sprintf("%s/api/v1/status/%s/status", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID)
+	path := fmt.Sprintf("%s/api/v1/status/%s/status?offset=%d", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID, offset)
 
 	// Send the request to gms with the associated auth token
 	req, err := http.NewRequest(http.MethodGet, path, nil)
@@ -204,6 +204,47 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 	}
 
 	return &result, nil
+}
+
+func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	logger := c.log.FromContext(ctx)
+
+	path := fmt.Sprintf("%s/api/v1/status/%s/create-upload-url", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID)
+
+	// Send the request to gms with the associated auth token
+	req, err := http.NewRequest(http.MethodPost, path, nil)
+	if err != nil {
+		c.log.Error("error creating http request to create upload url", "err", err.Error())
+		return "", fmt.Errorf("http request error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
+
+	client := &http.Client{
+		Timeout: c.cfg.CloudMigration.GMSCreateUploadUrlTimeout,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.log.Error("error sending http request to create an upload url", "err", err.Error())
+		return "", fmt.Errorf("http request error: %w", err)
+	} else if resp.StatusCode >= 400 {
+		c.log.Error("received error response to create an upload url", "statusCode", resp.StatusCode)
+		return "", fmt.Errorf("http request error: %w", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("closing request body: %w", err)
+		}
+	}()
+
+	var result CreateSnapshotUploadUrlResponseDTO
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		logger.Error("unmarshalling response body: %w", err)
+		return "", fmt.Errorf("unmarshalling create upload url response: %w", err)
+	}
+
+	return result.UploadUrl, nil
 }
 
 func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
