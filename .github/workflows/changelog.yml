@@ -93,7 +93,7 @@ jobs:
         if: "${{ inputs.backport == '' }}"
         run: >
           gh pr create \
-            $( (( ${{ inputs.latest }} == "true" )) && printf %s '-l "release/latest"') \
+            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
             --dry-run=${{ inputs.dry_run }} \
             -B "${{ inputs.target }}" \
             --title "Release: ${{ inputs.version }}" \
