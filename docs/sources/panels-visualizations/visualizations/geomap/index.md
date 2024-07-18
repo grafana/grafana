@@ -166,7 +166,7 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 ### Data
 
-Geomaps need a source of geographical data gathered from a data source query which can return multiple data sets. By default Grafana picks the first data set, this field allows users to pick other data sets if the query returns more than one.
+Geomaps need a source of geographical data gathered from a data source query which can return multiple datasets. By default Grafana picks the first dataset, but this drop-down allows you to pick other datasets if the query returns more than one.
 
 ### Location mode
 
