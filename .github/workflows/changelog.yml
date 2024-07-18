@@ -13,6 +13,10 @@ on:
         required: false
         default: false
         type: bool
+      latest:
+        required: false
+        default: false
+        type: bool
 
 permissions:
   pull-requests: write
