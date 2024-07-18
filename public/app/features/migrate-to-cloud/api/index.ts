@@ -8,13 +8,17 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
 
   endpoints: {
     // Cloud-side - create token
+    getCloudMigrationToken(endpoint) {
+      suppressErrorsOnQuery(endpoint);
+      endpoint.providesTags = ['cloud-migration-token'];
+    },
     createCloudMigrationToken(endpoint) {
       suppressErrorsOnQuery(endpoint);
       endpoint.invalidatesTags = ['cloud-migration-token'];
     },
-    getCloudMigrationToken(endpoint) {
+    deleteCloudMigrationToken(endpoint) {
       suppressErrorsOnQuery(endpoint);
-      endpoint.providesTags = ['cloud-migration-token'];
+      endpoint.invalidatesTags = ['cloud-migration-token'];
     },
 
     // List Cloud Configs
