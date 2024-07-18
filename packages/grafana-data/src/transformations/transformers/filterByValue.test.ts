@@ -18,8 +18,6 @@ import * as utils from './utils';
 const mockTransformationsVariableSupport = jest.spyOn(utils, 'transformationsVariableSupport');
 mockTransformationsVariableSupport.mockReturnValue(false);
 
-jest.spyOn(console, 'warn').mockImplementation();
-
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
   length: 7,
@@ -48,9 +46,14 @@ const multiSeriesWithSingleField = [
   }),
 ];
 
+let spyConsoleWarn: jest.SpyInstance;
 describe('FilterByValue transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([filterByValueTransformer]);
+  });
+
+  beforeEach(() => {
+    spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   it('should exclude values', async () => {
@@ -154,8 +157,10 @@ describe('FilterByValue transformer', () => {
         },
       ]);
 
-      expect(global.console.warn).toHaveBeenCalledTimes(2);
+      expect(console.warn).toHaveBeenCalledTimes(2);
     });
+
+    spyConsoleWarn.mockRestore();
   });
 
   it('should not cross frame boundaries', async () => {
@@ -210,7 +215,7 @@ describe('FilterByValue transformer', () => {
         },
       ]);
 
-      expect(global.console.warn).toHaveBeenCalledTimes(3);
+      expect(console.warn).toHaveBeenCalledTimes(1);
     });
   });
 
