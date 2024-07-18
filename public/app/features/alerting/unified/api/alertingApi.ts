@@ -82,11 +82,16 @@ export const backendSrvBaseQuery =
 export const alertingApi = createApi({
   reducerPath: 'alertingApi',
   baseQuery: backendSrvBaseQuery(),
-  serializeQueryArgs: (args) => {
-    // alright so here's the deal –
-    // @TODO move all of the toast / message stuff outside of the base query as any configuration for its behaviour is now part of the cache key :(
-    return defaultSerializeQueryArgs(omit(args, 'queryArgs.requestOptions'));
-  },
+  // The `BasyQueryFn`` passes all args to `getBackendSrv().fetch()` and that includes configuration options for controlling
+  // when to show a "toast".
+  //
+  // By passing "requestOptions" such as "successMessage" etc those also get included in the cache key because
+  // those args are eventually passed in to the baseQueryFn where the cache key gets computed.
+  //
+  // @TODO
+  // Ideally we wouldn't pass any args in to the endpoint at all and toast message behaviour should be controlled
+  // in the hooks or components that consume the RTKQ endpoints.
+  serializeQueryArgs: (args) => defaultSerializeQueryArgs(omit(args, 'queryArgs.requestOptions')),
   tagTypes: [
     'AlertingConfiguration',
     'AlertmanagerConfiguration',
