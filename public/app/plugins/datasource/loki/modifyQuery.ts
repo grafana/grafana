@@ -172,6 +172,22 @@ export function addLabelToQuery(
     )
   );
 
+  // assert that every stream selector doesn't already have this added
+  const everyStreamSelectorAlreadyHasThisAdded = streamSelectorPositions.every((matcherPosition) => {
+    return hasStreamSelectorMatchers.some((matcher) => {
+      // Ignore quotes to check if value has already been added
+      const regex = /`|"|\\/g;
+      const substring = query.substring(matcher.from, matcher.to).replace(regex, '');
+      const valueEscaped = value.replace(regex, '');
+      return substring === `${key}${operator}${valueEscaped}`;
+    });
+  });
+
+  // If we've already added this as a stream selector to every stream selector, don't add it as a line-filter
+  if (hasStreamSelectorMatchers.length && everyStreamSelectorAlreadyHasThisAdded) {
+    return query;
+  }
+
   const filter = toLabelFilter(key, value, operator);
   if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
     const lastPositionsPerExpression = getLastPositionPerExpression(query, [
@@ -187,7 +203,7 @@ export function addLabelToQuery(
   } else {
     // labelType is not set, so we need to figure out where to add the label
     // if we don't have a parser, or have empty stream selectors, we will just add it to the stream selector
-    if (parserPositions.length === 0 || everyStreamSelectorHasMatcher === false) {
+    if (parserPositions.length === 0 || !everyStreamSelectorHasMatcher || everyStreamSelectorAlreadyHasThisAdded) {
       return addFilterToStreamSelector(query, streamSelectorPositions, filter);
     } else {
       // If `labelType` is not set, it indicates a potential metric query (`labelType` is present only in log queries that came from a Loki instance supporting the `categorize-labels` API). In case we are not adding the label to stream selectors we need to find the last position to add in each expression.
