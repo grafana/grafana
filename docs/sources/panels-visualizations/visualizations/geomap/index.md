@@ -100,7 +100,11 @@ The initial view configures how the geomap renders when the panel is first loade
 
 ### Share view
 
-The Share view option allows users to link multiple map panels' movement and zoom actions within the same dashboard. The map panels that have this option activated will act in tandem when one of them is moved or zoomed, leaving the deactivated ones independent. _Note: this may require a dashboard reload._
+The **Share view** option allows you to link the movement and zoom actions of multiple map visualizations within the same dashboard. The map visualizations that have this option enabled act in tandem when one of them is moved or zoomed, leaving the other ones independent.
+
+{{< admonition type="note" >}}
+You might need to reload the dashboard for this feature to work.
+{{< /admonition >}}
 
 ## Map layers
 
