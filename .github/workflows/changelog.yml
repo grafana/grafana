@@ -37,12 +37,10 @@ jobs:
           # Prepare CHANGELOG.md content with version delimiters
           (
             echo
-            echo "# ${{ inputs.version}} $(date '+%F')"
+            echo "# ${{ inputs.version}} ($(date '+%F'))"
             echo
             cat changelog_items.md
           ) > CHANGELOG.part
-
-          cat CHANGELOG.part
 
           # Check if a version exists in the changelog
           if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
