@@ -52,9 +52,9 @@ const getPreviousVersion = async (version) => {
     .filter((tag) => tag)
     .sort(semverCompare)
     .find((tag) => semverCompare(tag, semverParse(version)) > 0);
-	if (!prev) {
-		throw `Could not find previous git tag for ${version}`;
-	}
+  if (!prev) {
+    throw `Could not find previous git tag for ${version}`;
+  }
   return prev[4];
 };
 
@@ -317,4 +317,3 @@ if (process.env.INPUT_OUTPUT_FILE) {
   LOG(`Output to ${process.env.INPUT_OUTPUT_FILE}`);
   writeFileSync(process.env.INPUT_OUTPUT_FILE, md);
 }
-
