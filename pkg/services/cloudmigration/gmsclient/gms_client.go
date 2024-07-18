@@ -167,7 +167,7 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 	defer c.getStatusMux.Unlock()
 	logger := c.log.FromContext(ctx)
 
-	path := fmt.Sprintf("%s/api/v1/status/%s/status?offset=%d", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID, offset)
+	path := fmt.Sprintf("%s/api/v1/snapshots/%s/status?offset=%d", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID, offset)
 
 	// Send the request to gms with the associated auth token
 	req, err := http.NewRequest(http.MethodGet, path, nil)
@@ -209,7 +209,7 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
 	logger := c.log.FromContext(ctx)
 
-	path := fmt.Sprintf("%s/api/v1/status/%s/create-upload-url", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID)
+	path := fmt.Sprintf("%s/api/v1/snapshots/%s/create-upload-url", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID)
 
 	// Send the request to gms with the associated auth token
 	req, err := http.NewRequest(http.MethodPost, path, nil)
