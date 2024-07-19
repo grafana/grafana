@@ -96,8 +96,8 @@ func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (
 
 // RegisterActionSets implements an InitializeFunc for registering plugin action sets.
 type RegisterActionSets struct {
-	log          log.Logger
-	roleRegistry plugins.ActionSetRegistry
+	log               log.Logger
+	actionSetRegistry plugins.ActionSetRegistry
 }
 
 // RegisterActionSetsStep returns a new InitializeFunc for registering plugin action sets.
@@ -107,14 +107,14 @@ func RegisterActionSetsStep(actionRegistry plugins.ActionSetRegistry) initializa
 
 func newRegisterActionSets(registry plugins.ActionSetRegistry) *RegisterActionSets {
 	return &RegisterActionSets{
-		log:          log.New("plugins.actionsets.registration"),
-		roleRegistry: registry,
+		log:               log.New("plugins.actionsets.registration"),
+		actionSetRegistry: registry,
 	}
 }
 
 // Register registers the plugin action sets.
 func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if err := r.roleRegistry.RegisterActionSets(ctx, p.ID, p.ActionSets); err != nil {
+	if err := r.actionSetRegistry.RegisterActionSets(ctx, p.ID, p.ActionSets); err != nil {
 		r.log.Warn("Plugin action set registration failed", "pluginId", p.ID, "error", err)
 		return nil, err
 	}
