@@ -24,7 +24,7 @@ function DataTrailEmbeddedRenderer({ model }: SceneComponentProps<DataTrailEmbed
   return <model.trail.Component model={model.trail} />;
 }
 
-export function buildDataTrailFromState({ metric, filters, dataSourceUid, timeRange }: DataTrailEmbeddedState) {
+function buildDataTrailFromState({ metric, filters, dataSourceUid, timeRange }: DataTrailEmbeddedState) {
   return new DataTrail({
     $timeRange: timeRange,
     metric,
