@@ -67,9 +67,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     const backendQueries: TestDataDataQuery[] = [];
     const streams: Array<Observable<DataQueryResponse>> = [];
 
-    console.log('Something interpolated...', this.templateSrv.replace('$query0', options.scopedVars));
-    console.log('Something stringified...', JSON.stringify(options));
-
     // Start streams and prepare queries
     for (let target of options.targets) {
       if (target.hide) {
