@@ -43,7 +43,7 @@ The following sections provide detailed explanations on how to visualize and int
 
 ### Logs navigation
 
-Logs navigation, located at the right side of the log lines, can be used to easily request additional logs by clicking **Older logs** at the bottom of the navigation. This is especially useful when you reach the line limit and you want to see more logs. Each request run from the navigation displays in the navigation as separate page. Every page shows `from` and `to` timestamps of the incoming log lines. You can see previous results by clicking on each page. Explore caches the last five requests run from the logs navigation so you're not re-running the same queries when clicking on the pages, saving time and resources.
+Logs navigation, located at the right side of the log lines, can be used to easily request additional logs by clicking **Older logs** at the bottom of the navigation. This is especially useful when you reach the line limit and you want to see more logs. Each request run from the navigation displays in the navigation as separate page. Every page shows `from` and `to` timestamps of the incoming log lines. You can see previous results by clicking on each page. Explore caches the last five requests run from the logs navigation so you're not re-running the same queries when clicking on the pages, saving time and resources.  
 
 ![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
