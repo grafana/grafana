@@ -1,5 +1,5 @@
 ---
-description: Tracing in Explore
+description: Traces in Explore
 keywords:
   - explore
   - trace
@@ -8,15 +8,15 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Tracing in Explore
+title: Traces in Explore
 weight: 20
 ---
 
-# Tracing in Explore
+# Traces in Explore
 
 You can use Explore to query and visualize traces from tracing data sources.
 
-Supported data sources are:
+Supported data sources include:
 
 - [Tempo]({{< relref "../datasources/tempo/" >}}) (supported ingestion formats: OpenTelemetry, Jaeger, and Zipkin)
 - [Jaeger]({{< relref "../datasources/jaeger/" >}})
@@ -27,13 +27,11 @@ Supported data sources are:
 - [New Relic](https://grafana.com/grafana/plugins/grafana-newrelic-datasource)
 - [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource)
 
-For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
+For information on how to configure queries for these data sources, refer to the documentation for each individual data source.
 
 ## Query editor
 
-You can query and search tracing data using a data source's query editor.
-
-Each data source can have it's own query editor. The query editor for the Tempo data source is slightly different than the query editor for the Jaeger data source.
+You can query and search tracing data using a data source's query editor. The query editor is specific to the individual data source. 
 
 For information on querying each data source, refer to their documentation:
 
