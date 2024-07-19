@@ -2914,7 +2914,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.12"
-    "@grafana/lezer-logql": "npm:0.2.4"
+    "@grafana/lezer-logql": "npm:0.2.6"
     "@grafana/lezer-traceql": "npm:0.0.17"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
@@ -3269,12 +3269,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.2.4":
-  version: 0.2.4
-  resolution: "@grafana/lezer-logql@npm:0.2.4"
+"@grafana/lezer-logql@npm:0.2.6":
+  version: 0.2.6
+  resolution: "@grafana/lezer-logql@npm:0.2.6"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: 10/acc691f26e083fbe6bcb6798baf730749eda4a86634f3b06bae49f507f10ade1901d18218d990a11dcccdd7d55b01365369f08fafb59c8dd3f9adf1db5f1cca2
+  checksum: 10/09df02b9934f37e9e58731ce0806923618991dfb46510ab29299040860b590359c9083def93176b1076cb1880302a92e527fb5aad0cbf97557a8025c74a997ed
   languageName: node
   linkType: hard
 
@@ -17099,7 +17099,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.2"
-    "@grafana/lezer-logql": "npm:0.2.4"
+    "@grafana/lezer-logql": "npm:0.2.6"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:1.4.0"
