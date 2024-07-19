@@ -33,7 +33,7 @@ export interface CanvasElementOptions<TConfig = any> {
   border?: LineConfig;
   connections?: CanvasConnection[];
   links?: DataLink[];
-  oneClick?: OneClickMode;
+  oneClickMode?: OneClickMode;
 }
 
 // Unit is percentage from the middle of the element

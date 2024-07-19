@@ -181,7 +181,7 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       left: options?.placement?.left ?? 100,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClick: options?.oneClick ?? OneClickMode.Off,
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 

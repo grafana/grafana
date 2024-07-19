@@ -585,7 +585,7 @@ export class ElementState implements LayerElement {
     const scene = this.getScene();
 
     const shouldHandleTooltip =
-      !scene?.isEditingEnabled && !scene?.tooltip?.isOpen && this.options.oneClick === OneClickMode.Off;
+      !scene?.isEditingEnabled && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off;
     if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
@@ -593,7 +593,7 @@ export class ElementState implements LayerElement {
     }
 
     const shouldHandleOneClickLink =
-      this.options.oneClick === OneClickMode.Link && this.options.links && this.options.links.length > 0;
+      this.options.oneClickMode === OneClickMode.Link && this.options.links && this.options.links.length > 0;
     if (shouldHandleOneClickLink && this.div) {
       const primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
@@ -626,11 +626,11 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && this.options.oneClick === OneClickMode.Off) {
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off) {
       scene.tooltipCallback(undefined);
     }
 
-    if (this.options.oneClick !== OneClickMode.Off && this.div) {
+    if (this.options.oneClickMode !== OneClickMode.Off && this.div) {
       this.div.style.cursor = 'auto';
       this.div.title = '';
     }
@@ -638,7 +638,7 @@ export class ElementState implements LayerElement {
 
   onElementClick = (event: React.MouseEvent) => {
     // If one-click access is enabled, open the primary link
-    if (this.options.oneClick === OneClickMode.Link) {
+    if (this.options.oneClickMode === OneClickMode.Link) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         window.open(primaryDataLink.href, primaryDataLink.target);

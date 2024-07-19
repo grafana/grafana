@@ -16,7 +16,7 @@ export function DataLinksEditor({ value, onChange, item, context }: Props) {
       onChange={onChange}
       getSuggestions={() => (context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [])}
       data={[]}
-      oneClick={settings?.oneClick}
+      oneClickMode={settings?.oneClickMode}
     />
   );
 }

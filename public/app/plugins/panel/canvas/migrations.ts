@@ -68,12 +68,12 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
       }
     }
 
-    // migrate oneClickLinks to oneClick
+    // migrate oneClickLinks to oneClickMode
     const root = panel.options?.root;
     if (root?.elements) {
       for (const element of root.elements) {
         if (element.oneClickLinks) {
-          element.oneClick = OneClickMode.Link;
+          element.oneClickMode = OneClickMode.Link;
         }
       }
     }

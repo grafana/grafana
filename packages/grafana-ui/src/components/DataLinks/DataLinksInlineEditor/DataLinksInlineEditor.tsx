@@ -17,7 +17,7 @@ interface DataLinksInlineEditorProps {
   onChange: (links: DataLink[]) => void;
   getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
-  oneClick?: OneClickMode;
+  oneClickMode?: OneClickMode;
 }
 
 export const DataLinksInlineEditor = ({
@@ -25,7 +25,7 @@ export const DataLinksInlineEditor = ({
   onChange,
   getSuggestions,
   data,
-  oneClick = OneClickMode.Off,
+  oneClickMode = OneClickMode.Off,
 }: DataLinksInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -91,7 +91,7 @@ export const DataLinksInlineEditor = ({
   };
 
   const renderFirstLink = (linkJSX: ReactNode, key: string) => {
-    if (oneClick === OneClickMode.Link) {
+    if (oneClickMode === OneClickMode.Link) {
       return (
         <div className={styles.oneClickOverlay} key={key}>
           <span className={styles.oneClickSpan}>One-click</span>
