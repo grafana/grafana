@@ -109,18 +109,25 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
   const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
   return useMemo((): RuleTableColumnProps[] => {
+    const ruleIsDeleting = (rule: CombinedRule) => {
+      const { namespace, promRule, rulerRule } = rule;
+      const { rulesSource } = namespace;
+      return Boolean(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
+    };
+
+    const ruleIsCreating = (rule: CombinedRule) => {
+      const { namespace, promRule, rulerRule } = rule;
+      const { rulesSource } = namespace;
+      return Boolean(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
+    };
+
     const columns: RuleTableColumnProps[] = [
       {
         id: 'state',
         label: 'State',
-        // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
-          const { namespace } = rule;
-          const { rulesSource } = namespace;
-          const { promRule, rulerRule } = rule;
-
-          const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
-          const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
+          const isDeleting = ruleIsDeleting(rule);
+          const isCreating = ruleIsCreating(rule);
           const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
           return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
@@ -226,7 +233,16 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
       label: 'Actions',
       // eslint-disable-next-line react/display-name
       renderCell: ({ data: rule }) => {
-        return <RuleActionsButtons compact showViewButton rule={rule} rulesSource={rule.namespace.rulesSource} />;
+        const isDeleting = ruleIsDeleting(rule);
+        const isCreating = ruleIsCreating(rule);
+        return (
+          <RuleActionsButtons
+            compact
+            showViewButton={!isDeleting && !isCreating}
+            rule={rule}
+            rulesSource={rule.namespace.rulesSource}
+          />
+        );
       },
       size: '200px',
     });
