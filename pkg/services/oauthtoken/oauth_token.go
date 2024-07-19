@@ -379,7 +379,7 @@ func needTokenRefresh(authInfo *login.UserAuth) (*oauth2.Token, bool) {
 
 	persistedToken := buildOAuthTokenFromAuthInfo(authInfo)
 
-	idTokenExp, err := getIDTokenExpiry(authInfo.OAuthIdToken)
+	idTokenExp, err := GetIDTokenExpiry(persistedToken)
 	if err != nil {
 		logger.Warn("Could not get ID Token expiry", "error", err)
 	}
@@ -400,8 +400,13 @@ func needTokenRefresh(authInfo *login.UserAuth) (*oauth2.Token, bool) {
 	return persistedToken, true
 }
 
-// getIDTokenExpiry extracts the expiry time from the ID token
-func getIDTokenExpiry(idToken string) (time.Time, error) {
+// GetIDTokenExpiry extracts the expiry time from the ID token
+func GetIDTokenExpiry(token *oauth2.Token) (time.Time, error) {
+	idToken, ok := token.Extra("id_token").(string)
+	if !ok {
+		return time.Time{}, nil
+	}
+
 	if idToken == "" {
 		return time.Time{}, nil
 	}

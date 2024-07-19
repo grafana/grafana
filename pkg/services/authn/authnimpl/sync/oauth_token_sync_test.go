@@ -10,6 +10,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -112,6 +113,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				socialService:     socialService,
 				singleflightGroup: new(singleflight.Group),
 				tracer:            tracing.InitializeTracerForTest(),
+				cache:             localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
 			}
 
 			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
