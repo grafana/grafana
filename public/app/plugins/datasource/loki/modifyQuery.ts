@@ -3,25 +3,25 @@ import { sortBy } from 'lodash';
 
 import { QueryBuilderLabelFilter } from '@grafana/experimental';
 import {
+  Expr,
   Identifier,
+  JsonExpressionParser,
   LabelFilter,
+  LabelFormatExpr,
   LabelParser,
   LineComment,
   LineFilters,
   LogExpr,
+  LogfmtExpressionParser,
+  LogfmtParser,
   LogRangeExpr,
   Matcher,
   parser,
   PipelineExpr,
-  Selector,
-  UnwrapExpr,
-  String,
   PipelineStage,
-  LogfmtParser,
-  JsonExpressionParser,
-  LogfmtExpressionParser,
-  Expr,
-  LabelFormatExpr,
+  Selector,
+  String,
+  UnwrapExpr,
 } from '@grafana/lezer-logql';
 
 import { unescapeLabelValue } from './languageUtils';
@@ -162,31 +162,28 @@ export function addLabelToQuery(
 
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
+
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
   // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
   const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
+
+  // If the label type wasn't passed in from the calling function, we can use lezer to figure out if this label is already in the stream selectors
+  if (!labelType) {
+    const hasIdentifierSelectorMatchers = getIdentifierInStreamPositions(query);
+    const indexedKeys = hasIdentifierSelectorMatchers.map((match) => match.getExpression(query));
+    const alreadyAddedAValueForThisStreamSelectorLabel = indexedKeys.includes(key);
+
+    if (alreadyAddedAValueForThisStreamSelectorLabel) {
+      labelType = LabelType.Indexed;
+    }
+  }
+
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
       (matcherPosition) =>
         matcherPosition.from >= streamSelectorPosition.from && matcherPosition.to <= streamSelectorPosition.to
     )
   );
-
-  // assert that every stream selector doesn't already have this added
-  const everyStreamSelectorAlreadyHasThisAdded = streamSelectorPositions.every((matcherPosition) => {
-    return hasStreamSelectorMatchers.some((matcher) => {
-      // Ignore quotes to check if value has already been added
-      const regex = /`|"|\\/g;
-      const substring = query.substring(matcher.from, matcher.to).replace(regex, '');
-      const valueEscaped = value.replace(regex, '');
-      return substring === `${key}${operator}${valueEscaped}`;
-    });
-  });
-
-  // If we've already added this as a stream selector to every stream selector, don't add it as a line-filter
-  if (hasStreamSelectorMatchers.length && everyStreamSelectorAlreadyHasThisAdded) {
-    return query;
-  }
 
   const filter = toLabelFilter(key, value, operator);
   if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
@@ -203,7 +200,7 @@ export function addLabelToQuery(
   } else {
     // labelType is not set, so we need to figure out where to add the label
     // if we don't have a parser, or have empty stream selectors, we will just add it to the stream selector
-    if (parserPositions.length === 0 || !everyStreamSelectorHasMatcher || everyStreamSelectorAlreadyHasThisAdded) {
+    if (parserPositions.length === 0 || everyStreamSelectorHasMatcher === false) {
       return addFilterToStreamSelector(query, streamSelectorPositions, filter);
     } else {
       // If `labelType` is not set, it indicates a potential metric query (`labelType` is present only in log queries that came from a Loki instance supporting the `categorize-labels` API). In case we are not adding the label to stream selectors we need to find the last position to add in each expression.
@@ -632,6 +629,19 @@ function getMatcherInStreamPositions(query: string): NodePosition[] {
     enter: ({ node }): false | void => {
       if (node.type.id === Selector) {
         positions.push(...getAllPositionsInNodeByType(node, Matcher));
+      }
+    },
+  });
+  return positions;
+}
+
+function getIdentifierInStreamPositions(query: string): NodePosition[] {
+  const tree = parser.parse(query);
+  const positions: NodePosition[] = [];
+  tree.iterate({
+    enter: ({ node }): false | void => {
+      if (node.type.id === Selector) {
+        positions.push(...getAllPositionsInNodeByType(node, Identifier));
       }
     },
   });

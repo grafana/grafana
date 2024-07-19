@@ -1307,10 +1307,18 @@ describe('LokiDatasource', () => {
           condition: '',
         },
       ];
-      it('should not add indexed fields twice as index filter and line filter', () => {
+      it('should not add indexed fields twice as index filter and line filter, backtick', () => {
         assertAdHocFilters(
           '{service_name=`grafana/hosted-grafana-gateway`} | logfmt',
-          '{service_name=`grafana/hosted-grafana-gateway`} | logfmt',
+          '{service_name="grafana/hosted-grafana-gateway"} | logfmt',
+          ds,
+          defaultAdHocFilters
+        );
+      });
+      it('should not add indexed fields twice as index filter and line filter, quotes', () => {
+        assertAdHocFilters(
+          '{service_name="grafana/hosted-grafana-gateway"} | logfmt',
+          '{service_name="grafana/hosted-grafana-gateway"} | logfmt',
           ds,
           defaultAdHocFilters
         );
