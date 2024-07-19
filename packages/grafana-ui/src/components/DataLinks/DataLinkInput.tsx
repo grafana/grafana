@@ -206,6 +206,25 @@ export const DataLinkInput = memo(
       return precedingChar;
     };
 
+    const getUrlLength = () => {
+      const input: HTMLSpanElement | null = document.getElementById('data-link-input')!;
+      let length = 0,
+        sel: Selection | null,
+        range: Range;
+      if (window.getSelection) {
+        sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          range = sel.getRangeAt(0).cloneRange();
+          // Collapse to the start of the range
+          range.collapse(true);
+          range.setStart(input, 0);
+          length = range.toString().length;
+        }
+      }
+      return length;
+    };
+
+
     return (
       <div className={styles.wrapperOverrides}>
         <div className="slate-query-field__wrapper">
