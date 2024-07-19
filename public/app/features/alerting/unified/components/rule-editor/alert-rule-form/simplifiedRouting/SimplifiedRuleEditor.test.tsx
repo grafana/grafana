@@ -163,33 +163,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     });
   });
   it('simplified routing is not available when Grafana AM is not enabled', async () => {
-    mocks.useContactPointsWithStatus.mockReturnValue({
-      contactPoints: [],
-      isLoading: false,
-      error: undefined,
-      refetchReceivers: jest.fn(),
-    });
-
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.searchFolders.mockResolvedValue([
-      {
-        title: 'Folder A',
-        uid: grafanaRulerRule.grafana_alert.namespace_uid,
-        id: 1,
-        type: DashboardSearchItemType.DashDB,
-      },
-      {
-        title: 'Folder B',
-        id: 2,
-      },
-      {
-        title: 'Folder / with slash',
-        id: 2,
-        uid: 'b',
-        type: DashboardSearchItemType.DashDB,
-      },
-    ] as DashboardSearchHit[]);
-
     config.featureToggles.alertingSimplifiedRouting = true;
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
     renderSimplifiedRuleEditor();
