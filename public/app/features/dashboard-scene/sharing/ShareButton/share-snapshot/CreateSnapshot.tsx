@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import {
   Alert,
   Button,
@@ -19,7 +20,6 @@ import { Trans } from 'app/core/internationalization';
 
 import { SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
 import { getExpireOptions } from '../../ShareSnapshotTab';
-import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 
 const SNAPSHOT_URL = 'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot';
 
