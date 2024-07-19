@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -36,6 +36,11 @@ var (
 
 // make sure service implements authn.Service interface
 func ProvideAuthnService(s *Service) authn.Service {
+	return s
+}
+
+// make sure service also implements authn.ServiceAuthenticateOnly interface
+func ProvideAuthnServiceAuthenticateOnly(s *Service) authn.Authenticator {
 	return s
 }
 
@@ -57,6 +62,7 @@ func ProvideService(
 		tracer:                 tracer,
 		metrics:                newMetrics(registerer),
 		sessionService:         sessionService,
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
 	}
@@ -83,6 +89,8 @@ type Service struct {
 	postAuthHooks *queue[authn.PostAuthHookFn]
 	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
 	postLoginHooks *queue[authn.PostLoginHookFn]
+	// preLogoutHooks are called before a logout request is performed.
+	preLogoutHooks *queue[authn.PreLogoutHookFn]
 }
 
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -259,6 +267,10 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 	return redirectClient.RedirectURL(ctx, r)
 }
 
+func (s *Service) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {
+	s.preLogoutHooks.insert(hook, priority)
+}
+
 func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Logout")
 	defer span.End()
@@ -276,6 +288,12 @@ func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken
 	if err != nil {
 		s.log.FromContext(ctx).Debug("Invalid user id", "id", id, "err", err)
 		return redirect, nil
+	}
+
+	for _, hook := range s.preLogoutHooks.items {
+		if err := hook.v(ctx, user, sessionToken); err != nil {
+			s.log.Error("Failed to run pre logout hook. Skipping...", "error", err)
+		}
 	}
 
 	if authModule := user.GetAuthenticatedBy(); authModule != "" {
@@ -310,6 +328,9 @@ Default:
 }
 
 func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.ResolveIdentity")
+	defer span.End()
+
 	r := &authn.Request{}
 	r.OrgID = orgID
 	// hack to not update last seen
@@ -345,6 +366,9 @@ func (s *Service) IsClientEnabled(name string) bool {
 }
 
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
+	ctx, span := s.tracer.Start(ctx, "authn.SyncIdentity")
+	defer span.End()
+
 	r := &authn.Request{OrgID: identity.OrgID}
 	// hack to not update last seen on external syncs
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
@@ -352,6 +376,9 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 }
 
 func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
+	defer span.End()
+
 	if namespaceID.IsNamespace(authn.NamespaceUser) {
 		return &authn.Identity{
 			OrgID: orgID,

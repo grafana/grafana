@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
-import React, { ReactElement, useState } from 'react';
+import { ReactElement, useState } from 'react';
+import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
@@ -15,7 +16,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled } = props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -59,7 +60,9 @@ export const DefaultCell = (props: TableCellProps) => {
     inspectEnabled,
     isStringValue,
     textShouldWrap,
-    rowStyled
+    textWrapped,
+    rowStyled,
+    rowExpanded
   );
 
   if (isStringValue) {
@@ -72,9 +75,20 @@ export const DefaultCell = (props: TableCellProps) => {
     }
   }
 
+  if (height) {
+    cellProps.style = { ...cellProps.style, height };
+  }
+
+  if (textWrapped) {
+    cellProps.style = { ...cellProps.style, textWrap: 'wrap' };
+  }
+
+  const { key, ...rest } = cellProps;
+
   return (
     <div
-      {...cellProps}
+      key={key}
+      {...rest}
       onMouseEnter={showActions ? onMouseEnter : undefined}
       onMouseLeave={showActions ? onMouseLeave : undefined}
       className={cellStyle}
@@ -112,7 +126,9 @@ function getCellStyle(
   disableOverflowOnHover = false,
   isStringValue = false,
   shouldWrapText = false,
-  rowStyled = false
+  textWrapped = false,
+  rowStyled = false,
+  rowExpanded = false
 ) {
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -134,7 +150,9 @@ function getCellStyle(
     !disableOverflowOnHover,
     isStringValue,
     shouldWrapText,
-    rowStyled
+    textWrapped,
+    rowStyled,
+    rowExpanded
   );
 }
 

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { debounce, uniqueId } from 'lodash';
-import React, { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { parseMatchers } from '../../utils/alertmanager';
+import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
 
 const getQueryStringKey = () => uniqueId('query-string-');
@@ -30,7 +30,16 @@ export const SilencesFilter = () => {
     setTimeout(() => setQueryStringKey(getQueryStringKey()));
   };
 
-  const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;
+  let inputValid = queryString && queryString.length > 3;
+  try {
+    if (!queryString) {
+      inputValid = true;
+    } else {
+      parsePromQLStyleMatcherLoose(queryString);
+    }
+  } catch (err) {
+    inputValid = false;
+  }
 
   return (
     <div className={styles.flexRow}>
@@ -43,8 +52,8 @@ export const SilencesFilter = () => {
               <Tooltip
                 content={
                   <div>
-                    Filter silences by matchers using a comma separated list of matchers, ie:
-                    <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
+                    Filter silences by using a comma separated list of matchers, e.g.:
+                    <pre>severity=critical, env=production</pre>
                   </div>
                 }
               >
@@ -53,8 +62,8 @@ export const SilencesFilter = () => {
             </Stack>
           </Label>
         }
-        invalid={inputInvalid}
-        error={inputInvalid ? 'Query must use valid matcher syntax' : null}
+        invalid={!inputValid}
+        error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
           key={queryStringKey}

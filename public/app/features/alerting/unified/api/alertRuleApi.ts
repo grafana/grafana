@@ -1,4 +1,7 @@
+import { set } from 'lodash';
+
 import { RelativeTimeRange } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
@@ -6,22 +9,20 @@ import {
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
-  PostableRuleGrafanaRuleDTO,
+  PostableRulerRuleGroupDTO,
   PromRulesResponse,
-  RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { alertingApi } from './alertingApi';
+import { alertingApi, withRequestOptions, WithRequestOptions } from './alertingApi';
 import {
   FetchPromRulesFilter,
   groupRulesByFileName,
@@ -43,6 +44,13 @@ export interface Datasource {
 
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
+
+export enum PrometheusAPIFilters {
+  RuleGroup = 'rule_group',
+  Namespace = 'file',
+  FolderUID = 'folder_uid',
+  LimitAlerts = 'limit_alerts',
+}
 
 export interface Data {
   refId: string;
@@ -75,14 +83,7 @@ interface ExportRulesParams {
   ruleUid?: string;
 }
 
-export interface ModifyExportPayload {
-  rules: Array<RulerAlertingRuleDTO | RulerRecordingRuleDTO | PostableRuleGrafanaRuleDTO>;
-  name: string;
-  interval?: string | undefined;
-  source_tenants?: string[] | undefined;
-}
-
-export interface AlertRuleUpdated {
+export interface AlertGroupUpdated {
   message: string;
   /**
    * UIDs of rules updated from this request
@@ -144,12 +145,12 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         // if we're fetching for Grafana managed rules, we should add a limit to the number of alert instances
         // we do this because the response is large otherwise and we don't show all of them in the UI anyway.
         if (limitAlerts) {
-          searchParams.set('limit_alerts', String(limitAlerts));
+          searchParams.set(PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
         }
 
         if (identifier && (isPrometheusRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier))) {
-          searchParams.set('file', identifier.namespace);
-          searchParams.set('rule_group', identifier.groupName);
+          searchParams.set(PrometheusAPIFilters.Namespace, identifier.namespace);
+          searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
         }
 
         const params = prepareRulesFilterQueryParams(searchParams, filter);
@@ -170,16 +171,28 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         ruleName?: string;
         dashboardUid?: string;
         panelId?: number;
+        limitAlerts?: number;
       }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId }) => {
+      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId, limitAlerts }) => {
         const queryParams: Record<string, string | undefined> = {
-          file: namespace,
           rule_group: groupName,
           rule_name: ruleName,
           dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
           panel_id: panelId?.toString(), // Supported only by Grafana managed rules
         };
+
+        if (namespace) {
+          if (isGrafanaRulesSource(ruleSourceName)) {
+            set(queryParams, PrometheusAPIFilters.FolderUID, namespace);
+          } else {
+            set(queryParams, PrometheusAPIFilters.Namespace, namespace);
+          }
+        }
+
+        if (limitAlerts !== undefined) {
+          set(queryParams, PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
+        }
 
         return {
           url: `api/prometheus/${getDatasourceAPIUid(ruleSourceName)}/api/v1/rules`,
@@ -203,22 +216,82 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       providesTags: ['CombinedAlertRule'],
     }),
 
-    // TODO This should be probably a separate ruler API file
-    rulerRuleGroup: build.query<
-      RulerRuleGroupDTO,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
-    >({
-      query: ({ rulerConfig, namespace, group }) => {
-        const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+    rulerNamespace: build.query<RulerRulesConfigDTO, { rulerConfig: RulerDataSourceConfig; namespace: string }>({
+      query: ({ rulerConfig, namespace }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
         return { url: path, params };
       },
-      providesTags: ['CombinedAlertRule'],
+    }),
+
+    // TODO This should be probably a separate ruler API file
+    getRuleGroupForNamespace: build.query<
+      RulerRuleGroupDTO,
+      WithRequestOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
+    >({
+      query: ({ rulerConfig, namespace, group, requestOptions }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+        return withRequestOptions({ url: path, params }, requestOptions);
+      },
+      providesTags: (_result, _error, { namespace, group }) => [
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${group}`,
+        },
+        { type: 'RuleNamespace', id: namespace },
+      ],
+    }),
+
+    deleteRuleGroupFromNamespace: build.mutation<
+      RulerRuleGroupDTO,
+      WithRequestOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
+    >({
+      query: ({ rulerConfig, namespace, group, requestOptions }) => {
+        const successMessage = t('alerting.rule-groups.delete.success', 'Successfully deleted rule group');
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+
+        return withRequestOptions({ url: path, params, method: 'DELETE' }, requestOptions, { successMessage });
+      },
+      invalidatesTags: (_result, _error, { namespace, group }) => [
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${group}`,
+        },
+        { type: 'RuleNamespace', id: namespace },
+      ],
+    }),
+
+    upsertRuleGroupForNamespace: build.mutation<
+      AlertGroupUpdated,
+      WithRequestOptions<{
+        rulerConfig: RulerDataSourceConfig;
+        namespace: string;
+        payload: PostableRulerRuleGroupDTO;
+      }>
+    >({
+      query: ({ payload, namespace, rulerConfig, requestOptions }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+
+        const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
+
+        return withRequestOptions(
+          {
+            url: path,
+            params,
+            data: payload,
+            method: 'POST',
+          },
+          requestOptions,
+          { successMessage }
+        );
+      },
+      invalidatesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
     }),
 
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
       // TODO: In future, if supported in other rulers, parametrize ruler source name
       // For now, to make the consumption of this hook clearer, only support Grafana ruler
       query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}` }),
+      providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({
@@ -255,7 +328,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
     exportModifiedRuleGroup: build.mutation<
       string,
-      { payload: ModifyExportPayload; format: ExportFormats; nameSpaceUID: string }
+      { payload: PostableRulerRuleGroupDTO; format: ExportFormats; nameSpaceUID: string }
     >({
       query: ({ payload, format, nameSpaceUID }) => ({
         url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/export/`,
@@ -280,15 +353,6 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,
-    }),
-
-    updateRule: build.mutation<AlertRuleUpdated, { nameSpaceUID: string; payload: ModifyExportPayload }>({
-      query: ({ payload, nameSpaceUID }) => ({
-        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/`,
-        data: payload,
-        method: 'POST',
-      }),
-      invalidatesTags: ['CombinedAlertRule'],
     }),
   }),
 });

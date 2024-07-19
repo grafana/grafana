@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
+
+import { CoreApp, FieldType, LinkModel } from '@grafana/data';
+import { Field } from '@grafana/data/';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { createLogRow } from './__mocks__/logRow';
@@ -20,6 +23,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     displayedFields: [],
     row: createLogRow(),
     disableActions: false,
+    app: CoreApp.Explore,
   };
 
   Object.assign(props, propOverrides);
@@ -142,6 +146,36 @@ describe('LogDetailsRow', () => {
       // This tests a regression where the button was always visible.
       expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
       // Asserting visibility on mouse-over is currently not possible.
+    });
+  });
+
+  describe('datalinks', () => {
+    it('datalinks should pin and call the original link click', () => {
+      const onLinkClick = jest.fn();
+      const onPinLine = jest.fn();
+      const links: Array<LinkModel<Field>> = [
+        {
+          onClick: onLinkClick,
+          href: '#',
+          title: 'Hello link',
+          target: '_self',
+          origin: {
+            name: 'name',
+            type: FieldType.string,
+            config: {},
+            values: ['string'],
+          },
+        },
+      ];
+      setup({ links, onPinLine });
+
+      expect(onLinkClick).not.toHaveBeenCalled();
+      expect(onPinLine).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Hello link' }));
+
+      expect(onLinkClick).toHaveBeenCalled();
+      expect(onPinLine).toHaveBeenCalled();
     });
   });
 });

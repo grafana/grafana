@@ -10,19 +10,66 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder string, nfSettings *definitions.AlertRuleNotificationSettings) (definitions.PostableRuleGroupConfig, string) {
+	t.Helper()
+
+	interval, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+	doubleInterval := 2 * interval
+	rules := definitions.PostableRuleGroupConfig{
+		Name:     "arulegroup",
+		Interval: interval,
+		Rules: []definitions.PostableExtendedRuleNode{
+			{
+				ApiRuleNode: &definitions.ApiRuleNode{
+					For:         &doubleInterval,
+					Labels:      map[string]string{"label1": "val1"},
+					Annotations: map[string]string{"annotation1": "val1"},
+				},
+				GrafanaManagedAlert: &definitions.PostableGrafanaRule{
+					Title:     fmt.Sprintf("rule under folder %s", folder),
+					Condition: "A",
+					Data: []definitions.AlertQuery{
+						{
+							RefID: "A",
+							RelativeTimeRange: definitions.RelativeTimeRange{
+								From: definitions.Duration(time.Duration(5) * time.Hour),
+								To:   definitions.Duration(time.Duration(3) * time.Hour),
+							},
+							DatasourceUID: expr.DatasourceUID,
+							Model: json.RawMessage(`{
+								"type": "math",
+								"expression": "2 + 3 > 1"
+								}`),
+						},
+					},
+					NotificationSettings: nfSettings,
+				},
+			},
+		},
+	}
+	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules)
+	assert.Equal(t, http.StatusAccepted, status)
+	require.Len(t, resp.Created, 1)
+	return rules, resp.Created[0]
+}
 
 func TestIntegrationProvisioning(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
@@ -257,6 +304,113 @@ func TestIntegrationProvisioning(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			require.Equal(t, 202, resp.StatusCode)
+		})
+
+		createContactPoint := func(t *testing.T, name string) definitions.EmbeddedContactPoint {
+			cpBody := fmt.Sprintf(`
+			{
+				"name": "%s",
+				"type": "slack",
+				"settings": {
+					"recipient": "value_recipient",
+					"token": "value_token"
+				}
+			}`, name)
+
+			req := createTestRequest("POST", url, "admin", cpBody)
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.Equal(t, 202, resp.StatusCode)
+
+			ecp := definitions.EmbeddedContactPoint{}
+			require.NoError(t, json.NewDecoder(resp.Body).Decode(&ecp))
+			require.NoError(t, resp.Body.Close())
+
+			return ecp
+		}
+
+		createPolicyForContactPoint := func(t *testing.T, receiver string) {
+			url := fmt.Sprintf("http://%s/api/v1/provisioning/policies", grafanaListedAddr)
+			body := fmt.Sprintf(`
+			{
+				"receiver": "%s",
+				"group_by": [
+					"..."
+				],
+				"routes": []
+			}`, receiver)
+
+			req := createTestRequest("PUT", url, "admin", body)
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, 202, resp.StatusCode)
+		}
+
+		t.Run("viewer DELETE should 403", func(t *testing.T) {
+			ecp := createContactPoint(t, "my-contact-point")
+
+			deleteURL := fmt.Sprintf("http://%s/api/v1/provisioning/contact-points/%s", grafanaListedAddr, ecp.UID)
+			req := createTestRequest("DELETE", deleteURL, "viewer", body)
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, 403, resp.StatusCode)
+		})
+
+		t.Run("admin DELETE should succeed", func(t *testing.T) {
+			ecp := createContactPoint(t, "my-contact-point")
+
+			deleteURL := fmt.Sprintf("http://%s/api/v1/provisioning/contact-points/%s", grafanaListedAddr, ecp.UID)
+			req := createTestRequest("DELETE", deleteURL, "admin", "")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, 202, resp.StatusCode)
+		})
+
+		t.Run("admin DELETE should 409 when contact point used by notification policy", func(t *testing.T) {
+			ecp := createContactPoint(t, "my-cp-used-by-policy")
+
+			createPolicyForContactPoint(t, "my-cp-used-by-policy")
+
+			deleteURL := fmt.Sprintf("http://%s/api/v1/provisioning/contact-points/%s", grafanaListedAddr, ecp.UID)
+			deleteReq := createTestRequest("DELETE", deleteURL, "admin", "")
+
+			resp, err := http.DefaultClient.Do(deleteReq)
+			require.NoError(t, err)
+			require.Equal(t, 409, resp.StatusCode)
+			var validationError errutil.PublicError
+			assert.NoError(t, json.NewDecoder(resp.Body).Decode(&validationError))
+			require.NoError(t, resp.Body.Close())
+			assert.NotEmpty(t, validationError, validationError.Message)
+			assert.Equal(t, "alerting.notifications.contact-points.referenced", validationError.MessageID)
+		})
+
+		t.Run("admin DELETE should 409 when contact point used by rule", func(t *testing.T) {
+			ecp := createContactPoint(t, "my-cp-used-by-rule")
+
+			nfSettings := &definitions.AlertRuleNotificationSettings{
+				Receiver: "my-cp-used-by-rule",
+			}
+			apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+			createRuleWithNotificationSettings(t, apiClient, namespaceUID, nfSettings)
+
+			deleteURL := fmt.Sprintf("http://%s/api/v1/provisioning/contact-points/%s", grafanaListedAddr, ecp.UID)
+			deleteReq := createTestRequest("DELETE", deleteURL, "admin", "")
+
+			resp, err := http.DefaultClient.Do(deleteReq)
+			require.NoError(t, err)
+			require.Equal(t, 409, resp.StatusCode)
+			var validationError errutil.PublicError
+			assert.NoError(t, json.NewDecoder(resp.Body).Decode(&validationError))
+			require.NoError(t, resp.Body.Close())
+			assert.NotEmpty(t, validationError, validationError.Message)
+			assert.Equal(t, "alerting.notifications.contact-points.used-by-rule", validationError.MessageID)
 		})
 	})
 
@@ -527,7 +681,33 @@ func TestMuteTimings(t *testing.T) {
 		}
 	})
 
+	t.Run("should fail to update mute timing if version does not match", func(t *testing.T) {
+		tm := anotherMuteTiming
+		tm.Version = "wrong-version"
+		tm.TimeIntervals = []timeinterval.TimeInterval{
+			{
+				Times: []timeinterval.TimeRange{
+					{
+						StartMinute: 36,
+						EndMinute:   49,
+					},
+				},
+			},
+		}
+		_, status, body := apiClient.UpdateMuteTimingWithStatus(t, tm)
+		requireStatusCode(t, http.StatusConflict, status, body)
+		var validationError errutil.PublicError
+		assert.NoError(t, json.Unmarshal([]byte(body), &validationError))
+		assert.NotEmpty(t, validationError, validationError.Message)
+		assert.Equal(t, "alerting.notifications.conflict", validationError.MessageID)
+		if t.Failed() {
+			t.Fatalf("response: %s", body)
+		}
+	})
+
 	t.Run("should update existing mute timing", func(t *testing.T) {
+		mt, _, _ := apiClient.GetMuteTimingByNameWithStatus(t, anotherMuteTiming.Name)
+
 		anotherMuteTiming.TimeIntervals = []timeinterval.TimeInterval{
 			{
 				Times: []timeinterval.TimeRange{
@@ -538,6 +718,7 @@ func TestMuteTimings(t *testing.T) {
 				},
 			},
 		}
+		anotherMuteTiming.Version = mt.Version
 
 		mt, status, body := apiClient.UpdateMuteTimingWithStatus(t, anotherMuteTiming)
 		requireStatusCode(t, http.StatusAccepted, status, body)

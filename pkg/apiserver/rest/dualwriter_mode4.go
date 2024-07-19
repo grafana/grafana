@@ -17,12 +17,10 @@ type DualWriterMode4 struct {
 	Log klog.Logger
 }
 
-// NewDualWriterMode4 returns a new DualWriter in mode 4.
+// newDualWriterMode4 returns a new DualWriter in mode 4.
 // Mode 4 represents writing and reading from Storage.
-func NewDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 {
-	metrics := &dualWriterMetrics{}
-	metrics.init()
-	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: metrics}
+func newDualWriterMode4(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode4 {
+	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: dwm}
 }
 
 // Mode returns the mode of the dual writer.
@@ -57,9 +55,7 @@ func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.
 }
 
 func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	//TODO: implement List
-	klog.Error("List not implemented")
-	return nil, nil
+	return d.Storage.List(ctx, options)
 }
 
 func (d *DualWriterMode4) Destroy() {

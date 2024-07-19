@@ -16,18 +16,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
-
-var eslog = log.New("tsdb.elasticsearch")
 
 const (
 	// headerFromExpression is used by data sources to identify expression queries
@@ -39,49 +35,45 @@ const (
 )
 
 type Service struct {
-	httpClientProvider httpclient.Provider
-	im                 instancemgmt.InstanceManager
-	tracer             tracing.Tracer
-	logger             *log.ConcreteLogger
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
-		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		httpClientProvider: httpClientProvider,
-		tracer:             tracer,
-		logger:             eslog,
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		logger: backend.NewLoggerWith("logger", "tsdb.elasticsearch"),
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[headerFromAlert]
-	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
+	logger := s.logger.FromContext(ctx).With("fromAlert", fromAlert)
 
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req, dsInfo, logger, s.tracer)
+	return queryData(ctx, req, dsInfo, logger)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, logger)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, req, logger, tracer)
+	query := newElasticsearchDataQuery(ctx, client, req, logger)
 	return query.execute()
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -99,7 +91,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		// set the default middlewars from the httpClientProvider
-		httpCliOpts.Middlewares = httpClientProvider.(*sdkhttpclient.Provider).Opts.Middlewares
+		httpCliOpts.Middlewares = httpClientProvider.Opts.Middlewares
 		// enable experimental http client to support errors with source
 		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {
@@ -196,7 +188,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger := eslog.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
@@ -218,9 +210,9 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		logger.Error("Failed to create request url", "error", err, "url", ds.URL, "path", req.Path)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl, bytes.NewBuffer(req.Body))
 	if err != nil {
-		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
+		logger.Error("Failed to create request", "error", err, "url", esUrl)
 		return err
 	}
 
@@ -272,12 +264,19 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	})
 }
 
-func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (*url.URL, error) {
+func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (string, error) {
 	esUrl, err := url.Parse(ds.URL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
+		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
 	}
 
 	esUrl.Path = path.Join(esUrl.Path, req.Path)
-	return esUrl, nil
+	esUrlString := esUrl.String()
+	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
+	// This ensures that for version checks executed to the root URL, the URL ends with a slash.
+	// This is helpful, for example, for load balancers that expect URLs to match the pattern /.*.
+	if req.Path == "" && esUrlString[len(esUrlString)-1:] != "/" {
+		return esUrl.String() + "/", nil
+	}
+	return esUrlString, nil
 }

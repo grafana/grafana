@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { produce } from 'immer';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state';
 import { RuleFormValues } from '../../types/rule-form';

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -105,7 +104,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{
 				db:       db,
 				logger:   log.NewNopLogger(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagFailWrongDSUID),
 			}
 			cmd := defaultAddDatasourceCommand
 			cmd.UID = "test/uid"
@@ -233,28 +232,21 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run("updates UID with a valid one", func(t *testing.T) {
+		t.Run("fails to update a datasource with an invalid uid", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{
 				db:       db,
 				logger:   log.NewNopLogger(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagFailWrongDSUID),
 			}
 			require.NotEmpty(t, ds.UID)
 
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
 			cmd.UID = "new/uid"
-			res, err := ss.UpdateDataSource(context.Background(), &cmd)
-			require.NoError(t, err)
-			require.Equal(t, "new-uid", res.UID)
-
-			// Return the datasource with the valid UID
-			query := datasources.GetDataSourceQuery{UID: "new-uid", OrgID: 10}
-			dataSource, err := ss.GetDataSource(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, "new-uid", dataSource.UID)
+			_, err := ss.UpdateDataSource(context.Background(), &cmd)
+			require.ErrorContains(t, err, "invalid format of UID")
 		})
 	})
 
@@ -347,46 +339,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 		dataSources, err := ss.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 
-		require.Equal(t, 0, len(dataSources))
-	})
-
-	t.Run("DeleteDataSourceAccessControlPermissions", func(t *testing.T) {
-		store := db.InitTestDB(t)
-		ds := initDatasource(store)
-		ss := SqlStore{db: store}
-
-		// Init associated permission
-		errAddPermissions := store.WithTransactionalDbSession(context.TODO(), func(sess *db.Session) error {
-			_, err := sess.Table("permission").Insert(ac.Permission{
-				RoleID:  1,
-				Action:  "datasources:read",
-				Scope:   datasources.ScopeProvider.GetResourceScope(ds.UID),
-				Updated: time.Now(),
-				Created: time.Now(),
-			})
-			return err
-		})
-		require.NoError(t, errAddPermissions)
-		query := datasources.GetDataSourcesQuery{OrgID: 10}
-
-		errDeletingDS := ss.DeleteDataSource(context.Background(),
-			&datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgID},
-		)
-		require.NoError(t, errDeletingDS)
-
-		// Check associated permission
-		permCount := int64(0)
-		errGetPermissions := store.WithTransactionalDbSession(context.TODO(), func(sess *db.Session) error {
-			var err error
-			permCount, err = sess.Table("permission").Count()
-			return err
-		})
-		require.NoError(t, errGetPermissions)
-		require.Zero(t, permCount, "permissions associated to the data source should have been removed")
-
-		dataSources, err := ss.GetDataSources(context.Background(), &query)
-
-		require.NoError(t, err)
 		require.Equal(t, 0, len(dataSources))
 	})
 

@@ -125,14 +125,17 @@ func ProvideDashboardPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			wildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
+			scopes := []string(wildcards)
+
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
 			}
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
 			// nolint:staticcheck
-			if dashboard.FolderID > 0 {
-				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
+			if dashboard.FolderUID != "" {
+				query := &dashboards.GetDashboardQuery{UID: dashboard.FolderUID, OrgID: orgID}
 				queryResult, err := dashboardStore.GetDashboard(ctx, query)
 				if err != nil {
 					return nil, err
@@ -143,9 +146,12 @@ func ProvideDashboardPermissions(
 				if err != nil {
 					return nil, err
 				}
-				return append([]string{parentScope}, nestedScopes...), nil
+
+				scopes = append(scopes, parentScope)
+				scopes = append(scopes, nestedScopes...)
+				return scopes, nil
 			}
-			return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}, nil
+			return append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)), nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,

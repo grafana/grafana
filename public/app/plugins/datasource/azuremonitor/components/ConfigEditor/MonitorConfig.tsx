@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
@@ -7,22 +7,9 @@ import { config } from '@grafana/runtime';
 import { getCredentials, updateCredentials } from '../../credentials';
 import { AzureDataSourceSettings, AzureCredentials } from '../../types';
 
-import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';
 import { DefaultSubscription } from './DefaultSubscription';
-
-const legacyAzureClouds: SelectableValue[] = [
-  { value: 'azuremonitor', label: 'Azure' },
-  { value: 'govazuremonitor', label: 'Azure US Government' },
-  { value: 'chinaazuremonitor', label: 'Azure China' },
-];
-
-// This will be pulled from the azure-sdk in future
-const azureClouds: SelectableValue[] = [
-  { value: 'AzureCloud', label: 'Azure' },
-  { value: 'AzureUSGovernment', label: 'Azure US Government' },
-  { value: 'AzureChinaCloud', label: 'Azure China' },
-];
 
 export interface Props {
   options: AzureDataSourceSettings;
@@ -55,8 +42,8 @@ export const MonitorConfig = (props: Props) => {
 
   // The auth type needs to be set on the first load of the data source
   useEffectOnce(() => {
-    if (!options.jsonData.authType) {
-      onCredentialsChange(credentials);
+    if (!options.jsonData.authType || !credentials.authType) {
+      onCredentialsChange(credentials, options.jsonData.subscriptionId);
     }
   });
 
@@ -67,8 +54,7 @@ export const MonitorConfig = (props: Props) => {
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         userIdentityEnabled={config.azure.userIdentityEnabled}
         credentials={credentials}
-        azureCloudOptions={azureClouds}
-        legacyAzureCloudOptions={legacyAzureClouds}
+        azureCloudOptions={getAzureCloudOptions()}
         onCredentialsChange={onCredentialsChange}
         disabled={props.options.readOnly}
       >

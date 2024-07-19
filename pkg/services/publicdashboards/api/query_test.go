@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -40,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -127,7 +127,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, "Public dashboard not found", errResp.Message)
+				assert.Equal(t, "Dashboard not found", errResp.Message)
 				assert.Equal(t, "publicdashboards.notFound", errResp.MessageID)
 			}
 		})
@@ -254,7 +254,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, cfg := db.InitTestReplDBWithCfg(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db, guardian.ProvideGuardian())
 	qds := buildQueryDataService(t, cacheService, nil, db)

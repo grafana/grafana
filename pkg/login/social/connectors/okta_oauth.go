@@ -10,9 +10,8 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -62,13 +61,18 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *Or
 	return provider
 }
 
-func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info, requester)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
 	}
@@ -139,32 +143,41 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		return nil, errMissingGroupMembership
 	}
 
-	var role roletype.RoleType
-	var isGrafanaAdmin *bool
+	userInfo := &social.BasicUserInfo{
+		Id:     claims.ID,
+		Name:   claims.Name,
+		Email:  email,
+		Login:  email,
+		Groups: groups,
+	}
+
 	if !s.info.SkipOrgRoleSync {
-		var grafanaAdmin bool
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups)
+		directlyMappedRole, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, groups)
 		if err != nil {
-			return nil, err
+			s.log.Warn("Failed to extract role", "err", err)
 		}
 
 		if s.info.AllowAssignGrafanaAdmin {
-			isGrafanaAdmin = &grafanaAdmin
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		externalOrgs, err := s.extractOrgs(data.rawJSON)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
 	}
+
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	return &social.BasicUserInfo{
-		Id:             claims.ID,
-		Name:           claims.Name,
-		Email:          email,
-		Login:          email,
-		Role:           role,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		Groups:         groups,
-	}, nil
+	return userInfo, nil
 }
 
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {

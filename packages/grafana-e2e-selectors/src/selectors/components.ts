@@ -266,7 +266,7 @@ export const Components = {
     },
   },
   Tab: {
-    title: (title: string) => `Tab ${title}`,
+    title: (title: string) => `data-testid Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {
@@ -526,6 +526,9 @@ export const Components = {
   CodeEditor: {
     container: 'data-testid Code editor container',
   },
+  ReactMonacoEditor: {
+    editorLazy: 'data-testid ReactMonacoEditor editorLazy',
+  },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',
     submit: 'data-testid-load-dashboard',
@@ -569,6 +572,7 @@ export const Components = {
   },
   Variables: {
     variableOption: 'data-testid variable-option',
+    variableLinkWrapper: 'data-testid variable-link-wrapper',
   },
   Annotations: {
     annotationsTypeInput: 'data-testid annotations-type-input',
@@ -598,5 +602,8 @@ export const Components = {
     headerGroupSwitch: 'data-testid header-group-switch',
     headerOrderSwitch: 'data-testid header-order-switch',
     headerPreviewSwitch: 'data-testid header-preview-switch',
+  },
+  EntityNotFound: {
+    container: 'data-testid entity-not-found',
   },
 };

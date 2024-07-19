@@ -3,7 +3,8 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
@@ -15,6 +16,7 @@ import {
   isDateTime,
   dateTimeForTimeZone,
   getTimeZone,
+  TimeZone,
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
@@ -52,6 +54,8 @@ export interface Props {
   disabledSeconds?: () => number[];
   /** Can input be cleared/have empty values */
   clearable?: boolean;
+  /** Custom timezone for the date/time display */
+  timeZone?: TimeZone;
 }
 
 export const DateTimePicker = ({
@@ -63,6 +67,7 @@ export const DateTimePicker = ({
   disabledHours,
   disabledMinutes,
   disabledSeconds,
+  timeZone,
   showSeconds = true,
   clearable = false,
 }: Props) => {
@@ -135,6 +140,7 @@ export const DateTimePicker = ({
         ref={refs.setReference}
         showSeconds={showSeconds}
         clearable={clearable}
+        timeZone={timeZone}
       />
       {isOpen ? (
         isFullscreen ? (
@@ -154,6 +160,7 @@ export const DateTimePicker = ({
                   disabledHours={disabledHours}
                   disabledMinutes={disabledMinutes}
                   disabledSeconds={disabledSeconds}
+                  timeZone={timeZone}
                 />
               </div>
             </FocusScope>
@@ -175,6 +182,7 @@ export const DateTimePicker = ({
                     disabledHours={disabledHours}
                     disabledMinutes={disabledMinutes}
                     disabledSeconds={disabledSeconds}
+                    timeZone={timeZone}
                   />
                 </div>
               </div>
@@ -186,21 +194,14 @@ export const DateTimePicker = ({
   );
 };
 
-interface DateTimeCalendarProps {
-  date?: DateTime;
+interface DateTimeCalendarProps extends Omit<Props, 'label' | 'clearable' | 'onChange'> {
   onChange: (date: DateTime) => void;
   onClose: () => void;
   isFullscreen: boolean;
-  maxDate?: Date;
-  minDate?: Date;
   style?: React.CSSProperties;
-  showSeconds?: boolean;
-  disabledHours?: () => number[];
-  disabledMinutes?: () => number[];
-  disabledSeconds?: () => number[];
 }
 
-type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable'> & {
+type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable' | 'timeZone'> & {
   isFullscreen: boolean;
   onOpen: (event: FormEvent<HTMLElement>) => void;
 };
@@ -211,21 +212,25 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, onOpen, showSeconds = true, clearable = false }, ref) => {
+  ({ date, label, onChange, onOpen, timeZone, showSeconds = true, clearable = false }, ref) => {
     const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : !clearable ? dateTimeFormat(dateTime()) : '', invalid: false };
+      return {
+        value: date ? dateTimeFormat(date, { timeZone }) : !clearable ? dateTimeFormat(dateTime(), { timeZone }) : '',
+        invalid: false,
+      };
     });
 
     useEffect(() => {
       if (date) {
+        const formattedDate = dateTimeFormat(date, { format, timeZone });
         setInternalDate({
-          invalid: !isValid(dateTimeFormat(date, { format })),
-          value: isDateTime(date) ? dateTimeFormat(date, { format }) : date,
+          invalid: !isValid(formattedDate),
+          value: isDateTime(date) ? formattedDate : date,
         });
       }
-    }, [date, format]);
+    }, [date, format, timeZone]);
 
     const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
       const isInvalid = !isValid(event.currentTarget.value);
@@ -237,10 +242,10 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const onBlur = useCallback(() => {
       if (!internalDate.invalid && internalDate.value) {
-        const date = dateTimeForTimeZone(getTimeZone(), internalDate.value);
+        const date = dateTimeForTimeZone(getTimeZone({ timeZone }), internalDate.value);
         onChange(date);
       }
-    }, [internalDate, onChange]);
+    }, [internalDate, onChange, timeZone]);
 
     const clearInternalDate = useCallback(() => {
       setInternalDate({ value: '', invalid: false });
@@ -284,6 +289,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
       disabledHours,
       disabledMinutes,
       disabledSeconds,
+      timeZone,
     },
     ref
   ) => {
@@ -293,17 +299,17 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     // need to keep these 2 separate in state since react-calendar doesn't support different timezones
     const [timeOfDayDateTime, setTimeOfDayDateTime] = useState(() => {
       if (date && date.isValid()) {
-        return dateTimeForTimeZone(getTimeZone(), date);
+        return dateTimeForTimeZone(getTimeZone({ timeZone }), date);
       }
 
-      return dateTimeForTimeZone(getTimeZone(), new Date());
+      return dateTimeForTimeZone(getTimeZone({ timeZone }), new Date());
     });
     const [reactCalendarDate, setReactCalendarDate] = useState<Date>(() => {
       if (date && date.isValid()) {
-        return adjustDateForReactCalendar(date.toDate(), getTimeZone());
+        return adjustDateForReactCalendar(date.toDate(), getTimeZone({ timeZone }));
       }
 
-      return new Date();
+      return adjustDateForReactCalendar(new Date(), getTimeZone({ timeZone }));
     });
 
     const onChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>((date) => {

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -198,33 +199,21 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		return true
 	}
 
-	hasNamespace := func(r *models.AlertRule, namespaceUIDs []string) bool {
-		if len(namespaceUIDs) > 0 {
-			var ok bool
-			for _, uid := range q.NamespaceUIDs {
-				if uid == r.NamespaceUID {
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				return false
-			}
-		}
-		return true
-	}
-
 	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
 		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
 			continue
 		}
-		if !hasNamespace(r, q.NamespaceUIDs) {
+		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
 			continue
 		}
-		if q.RuleGroup != "" && r.RuleGroup != q.RuleGroup {
+		if len(q.RuleGroups) > 0 && !slices.Contains(q.RuleGroups, r.RuleGroup) {
 			continue
 		}
+		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
+			continue
+		}
+
 		ruleList = append(ruleList, r)
 	}
 

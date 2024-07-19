@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -174,6 +174,9 @@ export function LogsTable(props: Props) {
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
+      initialSortBy={[
+        { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
+      ]}
     />
   );
 }

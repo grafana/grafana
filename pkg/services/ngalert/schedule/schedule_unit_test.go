@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -459,6 +460,8 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		MaxAttempts:  1,
 	}
 
+	fakeRecordingWriter := writer.FakeWriter{}
+
 	schedCfg := SchedulerCfg{
 		BaseInterval:     cfg.BaseInterval,
 		MaxAttempts:      cfg.MaxAttempts,
@@ -471,6 +474,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AlertSender:      senderMock,
 		Tracer:           testTracer,
 		Log:              log.New("ngalert.scheduler"),
+		RecordingWriter:  fakeRecordingWriter,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),

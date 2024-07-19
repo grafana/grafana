@@ -8,8 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -161,7 +160,7 @@ type fakeRuleAccessControlService struct {
 	mu                             sync.Mutex
 	Calls                          []call
 	AuthorizeAccessToRuleGroupFunc func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeAccessInFolderFunc    func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error
+	AuthorizeAccessInFolderFunc    func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)
@@ -217,4 +216,41 @@ func (s *fakeRuleAccessControlService) CanWriteAllRules(ctx context.Context, use
 		return s.CanWriteAllRulesFunc(ctx, user)
 	}
 	return false, nil
+}
+
+type fakeAlertRuleNotificationStore struct {
+	Calls []call
+
+	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	ListNotificationSettingsFn             func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+}
+
+func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+	call := call{
+		Method: "RenameReceiverInNotificationSettings",
+		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.RenameReceiverInNotificationSettingsFn != nil {
+		return f.RenameReceiverInNotificationSettingsFn(ctx, orgID, oldReceiver, newReceiver)
+	}
+
+	// Default values when no function hook is provided
+	return 0, nil
+}
+
+func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	call := call{
+		Method: "ListNotificationSettings",
+		Args:   []interface{}{ctx, q},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.ListNotificationSettingsFn != nil {
+		return f.ListNotificationSettingsFn(ctx, q)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil
 }

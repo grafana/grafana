@@ -13,8 +13,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type ConditionValidator interface {
@@ -663,7 +663,7 @@ func (srv RulerSrv) getAuthorizedRuleGroup(ctx context.Context, c *contextmodel.
 	q := ngmodels.ListAlertRulesQuery{
 		OrgID:         ruleGroupKey.OrgID,
 		NamespaceUIDs: []string{ruleGroupKey.NamespaceUID},
-		RuleGroup:     ruleGroupKey.RuleGroup,
+		RuleGroups:    []string{ruleGroupKey.RuleGroup},
 	}
 	rules, err := srv.store.ListAlertRules(ctx, &q)
 	if err != nil {

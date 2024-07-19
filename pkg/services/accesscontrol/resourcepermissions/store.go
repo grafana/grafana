@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -671,7 +673,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	/*
 		Add ACTION SET of managed permissions to in-memory store
 	*/
-	if s.shouldStoreActionSet(permission) {
+	if s.shouldStoreActionSet(resource, permission) {
 		actionSetName := GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
@@ -683,13 +685,13 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 
 	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any actions
 	// we still want to add the action set (when permission != "")
-	if len(missingActions) == 0 && !s.shouldStoreActionSet(permission) {
+	if len(missingActions) == 0 && !s.shouldStoreActionSet(resource, permission) {
 		return nil
 	}
 
 	// if we have actionset feature enabled and are only working with action sets
 	// skip adding the missing actions to the permissions table
-	if !(s.shouldStoreActionSet(permission) && s.cfg.RBAC.OnlyStoreAccessActionSets) {
+	if !(s.shouldStoreActionSet(resource, permission) && s.cfg.RBAC.OnlyStoreAccessActionSets) {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)
 			p.RoleID = roleID
@@ -706,8 +708,12 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	return nil
 }
 
-func (s *store) shouldStoreActionSet(permission string) bool {
-	return (s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "")
+func (s *store) shouldStoreActionSet(resource, permission string) bool {
+	if !(s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "") {
+		return false
+	}
+	actionSetName := GetActionSetName(resource, permission)
+	return isFolderOrDashboardAction(actionSetName)
 }
 
 func deletePermissions(sess *db.Session, ids []int64) error {
@@ -735,6 +741,31 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 		Action: action,
 		Scope:  accesscontrol.Scope(resource, resourceAttribute, resourceID),
 	}
+}
+
+// ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
+func (s *InMemoryActionSets) ResolveActionPrefix(prefix string) []string {
+	if prefix == "" {
+		return []string{}
+	}
+
+	sets := make([]string, 0, len(s.actionSetToActions))
+
+	for set, actions := range s.actionSetToActions {
+		// Only use action sets for folders and dashboards for now
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
+		if !isFolderOrDashboardAction(set) {
+			continue
+		}
+		for _, action := range actions {
+			if strings.HasPrefix(action, prefix) {
+				sets = append(sets, set)
+				break
+			}
+		}
+	}
+
+	return sets
 }
 
 func (s *InMemoryActionSets) ResolveAction(action string) []string {
@@ -766,7 +797,17 @@ func isFolderOrDashboardAction(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
 }
 
+// ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
 func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
+	actionMatcher := func(_ string) bool {
+		return true
+	}
+	return s.ExpandActionSetsWithFilter(permissions, actionMatcher)
+}
+
+// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes a function for action filtering. When action sets are expanded into the underlying permissions,
+// only those permissions whose action is matched by actionMatcher are included.
+func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
 	var expandedPermissions []accesscontrol.Permission
 	for _, permission := range permissions {
 		resolvedActions := s.ResolveActionSet(permission.Action)
@@ -775,6 +816,9 @@ func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permis
 			continue
 		}
 		for _, action := range resolvedActions {
+			if !actionMatcher(action) {
+				continue
+			}
 			permission.Action = action
 			expandedPermissions = append(expandedPermissions, permission)
 		}
@@ -782,22 +826,12 @@ func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permis
 	return expandedPermissions
 }
 
-// GetActionSet returns the action set for the given action.
-func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
-	actionSet, ok := s.actionSetToActions[actionName]
-	if !ok {
-		return nil
-	}
-	return actionSet
-}
-
-func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
-	name := GetActionSetName(resource, permission)
+func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {
 	actionSet := &ActionSet{
 		Action:  name,
 		Actions: actions,
 	}
-	s.actionSetToActions[actionSet.Action] = actions
+	s.actionSetToActions[actionSet.Action] = append(s.actionSetToActions[actionSet.Action], actions...)
 
 	for _, action := range actions {
 		if _, ok := s.actionToActionSets[action]; !ok {
@@ -806,6 +840,21 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
 	}
 	s.log.Debug("stored action set", "action set name", actionSet.Action)
+}
+
+// RegisterActionSets allow the caller to expand the existing action sets with additional permissions
+// This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
+func (s *InMemoryActionSets) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) || !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
+		return nil
+	}
+	for _, reg := range registrations {
+		if err := pluginutils.ValidatePluginActionSet(pluginID, reg); err != nil {
+			return err
+		}
+		s.StoreActionSet(reg.Action, reg.Actions)
+	}
+	return nil
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.

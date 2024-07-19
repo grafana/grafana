@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Select, InlineField } from '@grafana/ui';
@@ -112,7 +111,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     await userEvent.click(input);
 
     // we expect 2 elemnts having "Option 2": the input itself and the option.
-    expect(screen.getByText('Option 2')).toBeInTheDocument();
-    expect(screen.getByRole('combobox')).toHaveValue('Option 2');
+    expect(screen.getAllByText('Option 2')).toHaveLength(2);
   });
 });

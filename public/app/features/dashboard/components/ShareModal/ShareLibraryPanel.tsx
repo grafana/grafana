@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
 import { Trans } from 'app/core/internationalization';
@@ -11,7 +11,7 @@ interface Props extends ShareModalTabProps {
   initialFolderUid?: string;
 }
 
-export const ShareLibraryPanel = ({ panel, initialFolderUid, onDismiss }: Props) => {
+export const ShareLibraryPanel = ({ panel, initialFolderUid, onCreateLibraryPanel, onDismiss }: Props) => {
   useEffect(() => {
     reportInteraction('grafana_dashboards_library_panel_share_viewed', { shareResource: getTrackingSource(panel) });
   }, [panel]);
@@ -25,7 +25,12 @@ export const ShareLibraryPanel = ({ panel, initialFolderUid, onDismiss }: Props)
       <p className="share-modal-info-text">
         <Trans i18nKey="share-modal.library.info">Create library panel.</Trans>
       </p>
-      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={onDismiss} />
+      <AddLibraryPanelContents
+        panel={panel}
+        initialFolderUid={initialFolderUid}
+        onCreateLibraryPanel={onCreateLibraryPanel}
+        onDismiss={onDismiss}
+      />
     </>
   );
 };

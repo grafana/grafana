@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,6 +42,7 @@ type LokiConfig struct {
 	ExternalLabels    map[string]string
 	Encoder           encoder
 	MaxQueryLength    time.Duration
+	MaxQuerySize      int
 }
 
 func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
@@ -76,6 +78,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		TenantID:          cfg.LokiTenantID,
 		ExternalLabels:    cfg.ExternalLabels,
 		MaxQueryLength:    cfg.LokiMaxQueryLength,
+		MaxQuerySize:      cfg.LokiMaxQuerySize,
 		// Snappy-compressed protobuf is the default, same goes for Promtail.
 		Encoder: SnappyProtoEncoder{},
 	}, nil
@@ -103,10 +106,11 @@ const (
 	NeqRegEx Operator = "!~"
 )
 
-func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *HttpLokiClient {
+func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger, tracer tracing.Tracer) *HttpLokiClient {
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
+	trc := client.NewTracedClient(tc, tracer, "ngalert.historian.client")
 	return &HttpLokiClient{
-		client:  tc,
+		client:  trc,
 		encoder: cfg.Encoder,
 		cfg:     cfg,
 		metrics: metrics,
@@ -277,6 +281,10 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 	}
 
 	return result, nil
+}
+
+func (c *HttpLokiClient) MaxQuerySize() int {
+	return c.cfg.MaxQuerySize
 }
 
 type QueryRes struct {

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -391,7 +391,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <RecordingRuleEditor
             dataSourceName={dataSourceName}
             queries={queries}
-            runQueries={runQueriesPreview}
+            runQueries={() => runQueriesPreview()}
             onChangeQuery={onChangeRecordingRulesQueries}
             panelData={queryPreviewData}
           />

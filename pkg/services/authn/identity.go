@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -47,6 +47,8 @@ type Identity struct {
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
+	// AllowedKubernetesNamespace
+	AllowedKubernetesNamespace string
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
 	// HelpFlags1 is the help flags for the entity.
@@ -125,6 +127,10 @@ func (i *Identity) GetIsGrafanaAdmin() bool {
 
 func (i *Identity) GetLogin() string {
 	return i.Login
+}
+
+func (i *Identity) GetAllowedKubernetesNamespace() string {
+	return i.AllowedKubernetesNamespace
 }
 
 func (i *Identity) GetOrgID() int64 {

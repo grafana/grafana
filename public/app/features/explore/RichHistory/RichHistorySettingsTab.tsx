@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';

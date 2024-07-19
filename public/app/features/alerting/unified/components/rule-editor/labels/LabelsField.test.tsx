@@ -1,13 +1,13 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
-import { mockAlertRuleApi, mockApi, setupMswServer } from '../../../mockApi';
-import { getGrafanaRule, labelsPluginMetaMock } from '../../../mocks';
+import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
+import { getGrafanaRule } from '../../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 import LabelsField, { LabelsWithSuggestions } from './LabelsField';
@@ -70,7 +70,6 @@ describe('LabelsField with suggestions', () => {
     clearPluginSettingsCache();
   });
   beforeEach(() => {
-    mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {
       [grafanaRule.namespace.name]: [{ name: grafanaRule.group.name, interval: '1m', rules: [grafanaRule.rulerRule!] }],
     });

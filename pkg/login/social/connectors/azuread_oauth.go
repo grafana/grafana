@@ -15,10 +15,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -121,26 +120,42 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrEmailNotFound
 	}
 
-	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
-	var role roletype.RoleType
-	var grafanaAdmin bool
-	if !s.info.SkipOrgRoleSync {
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
-		if err != nil {
-			return nil, err
-		}
-
-		if !role.IsValid() {
-			return nil, errInvalidRole.Errorf("AzureAD OAuth: invalid role %q", role)
-		}
-	}
-	s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
-
 	groups, err := s.extractGroups(ctx, client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
+
 	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
+
+	userInfo := &social.BasicUserInfo{
+		Id:     claims.ID,
+		Name:   claims.Name,
+		Email:  email,
+		Login:  email,
+		Groups: groups,
+	}
+
+	if !s.info.SkipOrgRoleSync {
+		directlyMappedRole, grafanaAdmin := s.extractRoleAndAdminOptional(claims)
+
+		s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", directlyMappedRole)
+
+		if s.info.AllowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
+
+		s.log.Debug("AzureAD OAuth: mapped org roles", "email", email, "roles", fmt.Sprintf("%v", userInfo.OrgRoles))
+	}
+
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
 	if !s.isGroupMember(groups) {
 		if len(groups) == 0 {
 			// either they do not have a group or misconfiguration
@@ -150,24 +165,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, errMissingGroupMembership
 	}
 
-	var isGrafanaAdmin *bool = nil
-	if s.info.AllowAssignGrafanaAdmin {
-		isGrafanaAdmin = &grafanaAdmin
-	}
-
-	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
-		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
-	}
-
-	return &social.BasicUserInfo{
-		Id:             claims.ID,
-		Name:           claims.Name,
-		Email:          email,
-		Login:          email,
-		Role:           role,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		Groups:         groups,
-	}, nil
+	return userInfo, nil
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -191,13 +189,18 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	return nil
 }
 
-func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info, requester)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
 	}
@@ -289,12 +292,9 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
+func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if s.info.RoleAttributeStrict {
-			return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: unset role")
-		}
-		return s.defaultRole(), false, nil
+		return "", false
 	}
 
 	roleOrder := []org.RoleType{social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
@@ -302,18 +302,14 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == social.RoleGrafanaAdmin {
-				return org.RoleAdmin, true, nil
+				return org.RoleAdmin, true
 			}
 
-			return role, false, nil
+			return role, false
 		}
 	}
 
-	if s.info.RoleAttributeStrict {
-		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
-	}
-
-	return s.defaultRole(), false, nil
+	return "", false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -69,7 +70,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to load configuration", err)
 	}
-	s, err := getSqlStore(cfg, tracer, features)
+	s, replstore, err := getSqlStore(cfg, tracer, features)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get to sql", err)
 	}
@@ -89,7 +90,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 	}
-	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, nil, features, tracer)
+	acService, err := acimpl.ProvideService(cfg, replstore, routing, nil, nil, nil, features, tracer, zanzana.NewNoopClient())
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}
@@ -98,9 +99,15 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	return &resolver, nil
 }
 
-func getSqlStore(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*sqlstore.SQLStore, error) {
+func getSqlStore(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*sqlstore.SQLStore, *sqlstore.ReplStore, error) {
 	bus := bus.ProvideBus(tracer)
-	return sqlstore.ProvideService(cfg, features, &migrations.OSSMigrations{}, bus, tracer)
+	ss, err := sqlstore.ProvideService(cfg, features, &migrations.OSSMigrations{}, bus, tracer)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	replStore, err := sqlstore.ProvideServiceWithReadReplica(ss, cfg, features, &migrations.OSSMigrations{}, bus, tracer)
+	return ss, replStore, err
 }
 
 func runListConflictUsers() func(context *cli.Context) error {

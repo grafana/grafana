@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { defaults, groupBy, isArray, sumBy, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { FC, Fragment, ReactNode, useState } from 'react';
+import * as React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,10 +16,12 @@ import {
   Menu,
   Stack,
   Text,
+  TextLink,
   Tooltip,
   getTagColorsFromName,
   useStyles2,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import {
   AlertmanagerGroup,
@@ -44,7 +46,6 @@ import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { Strong } from '../Strong';
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
@@ -269,12 +270,12 @@ const Policy = (props: PolicyComponentProps) => {
                               overlay={
                                 <Menu>
                                   <Menu.Item
-                                    label="Insert above"
+                                    label="New sibling above"
                                     icon="arrow-up"
                                     onClick={() => onAddPolicy(currentRoute, 'above')}
                                   />
                                   <Menu.Item
-                                    label="Insert below"
+                                    label="New sibling below"
                                     icon="arrow-down"
                                     onClick={() => onAddPolicy(currentRoute, 'below')}
                                   />
@@ -447,7 +448,7 @@ function MetadataRow({
             }}
             data-testid="matching-instances"
           >
-            <Strong>{numberOfAlertInstances ?? '-'}</Strong>
+            <Text color="primary">{numberOfAlertInstances ?? '-'}</Text>
             <span>{pluralize('instance', numberOfAlertInstances)}</span>
           </MetaText>
         )}
@@ -466,7 +467,7 @@ function MetadataRow({
             {customGrouping && (
               <MetaText icon="layer-group" data-testid="grouping">
                 <span>Grouped by</span>
-                <Strong>{groupBy.join(', ')}</Strong>
+                <Text color="primary">{groupBy.join(', ')}</Text>
               </MetaText>
             )}
             {singleGroup && (
@@ -670,19 +671,13 @@ const InheritedProperties: FC<{ properties: InheritableProperties }> = ({ proper
             return null;
           }
 
-          return (
-            <Label
-              key={key}
-              label={routePropertyToLabel(key)}
-              value={<Strong>{routePropertyToValue(key, value)}</Strong>}
-            />
-          );
+          return <Label key={key} label={routePropertyToLabel(key)} value={routePropertyToValue(key, value)} />;
         })}
       </Stack>
     }
   >
     <div>
-      <Strong>{pluralize('property', Object.keys(properties).length, true)}</Strong>
+      <Text color="primary">{pluralize('property', Object.keys(properties).length, true)}</Text>
     </div>
   </HoverCard>
 );
@@ -711,51 +706,99 @@ const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = (
   */
   return (
     <div>
-      <Strong>
-        {timings.map((timing) => (
-          <Link key={timing} to={createMuteTimingLink(timing, alertManagerSourceName)}>
-            {timing}
-          </Link>
-        ))}
-      </Strong>
+      {timings.map((timing) => (
+        <TextLink
+          key={timing}
+          href={createMuteTimingLink(timing, alertManagerSourceName)}
+          color="primary"
+          variant="bodySmall"
+          inline={false}
+        >
+          {timing}
+        </TextLink>
+      ))}
     </div>
   );
 };
 
-const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions }) => {
+interface TimingOptionsMetaProps {
+  timingOptions: TimingOptions;
+}
+export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => {
   const groupWait = timingOptions.group_wait;
   const groupInterval = timingOptions.group_interval;
+  const repeatInterval = timingOptions.repeat_interval;
 
   // we don't have any timing options to show – we're inheriting everything from the parent
   // and those show up in a separate "inherited properties" component
-  if (!groupWait && !groupInterval) {
+  if (!groupWait && !groupInterval && !repeatInterval) {
     return null;
+  }
+
+  const metaOptions: ReactNode[] = [];
+
+  if (groupWait) {
+    metaOptions.push(
+      <Tooltip
+        placement="top"
+        content={t(
+          'alerting.policies.metadata.timingOptions.groupWait.description',
+          'How long to initially wait to send a notification for a group of alert instances.'
+        )}
+      >
+        <span>
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupWait.label">
+            Wait <PrimaryText content={groupWait} /> to group instances
+          </Trans>
+        </span>
+      </Tooltip>
+    );
+  }
+
+  if (groupInterval) {
+    metaOptions.push(
+      <Tooltip
+        placement="top"
+        content={t(
+          'alerting.policies.metadata.timingOptions.groupInterval.description',
+          'How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.'
+        )}
+      >
+        <span>
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupInterval.label">
+            Wait <PrimaryText content={groupInterval} /> before sending updates
+          </Trans>
+        </span>
+      </Tooltip>
+    );
+  }
+
+  if (repeatInterval) {
+    metaOptions.push(
+      <Tooltip
+        placement="top"
+        content={t(
+          'alerting.policies.metadata.timingOptions.repeatInterval.description',
+          'How often notifications are sent if the group of alerts has not changed since the last notification.'
+        )}
+      >
+        <span>
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.repeatInterval.label">
+            Repeated every <PrimaryText content={repeatInterval} />
+          </Trans>
+        </span>
+      </Tooltip>
+    );
   }
 
   return (
     <MetaText icon="hourglass" data-testid="timing-options">
-      <span>Wait</span>
-      {groupWait && (
-        <Tooltip
-          placement="top"
-          content="How long to initially wait to send a notification for a group of alert instances."
-        >
-          <span>
-            <Strong>{groupWait}</Strong> <span>to group instances</span>
-            {groupWait && groupInterval && ','}
-          </span>
-        </Tooltip>
-      )}
-      {groupInterval && (
-        <Tooltip
-          placement="top"
-          content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
-        >
-          <span>
-            <Strong>{groupInterval}</Strong> <span>before sending updates</span>
-          </span>
-        </Tooltip>
-      )}
+      {metaOptions.map((meta, index) => (
+        <span key={uniqueId()}>
+          {meta}
+          {index < metaOptions.length - 1 && ' · '}
+        </span>
+      ))}
     </MetaText>
   );
 };
@@ -775,18 +818,28 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
   const details = receivers.find((receiver) => receiver.name === contactPoint);
   if (!details) {
     return (
-      <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
-        <Strong>{contactPoint}</Strong>
-      </Link>
+      <TextLink
+        href={createContactPointLink(contactPoint, alertManagerSourceName)}
+        color="primary"
+        variant="bodySmall"
+        inline={false}
+      >
+        {contactPoint}
+      </TextLink>
     );
   }
 
   const integrations = details.grafana_managed_receiver_configs;
   if (!integrations) {
     return (
-      <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
-        <Strong>{contactPoint}</Strong>
-      </Link>
+      <TextLink
+        href={createContactPointLink(contactPoint, alertManagerSourceName)}
+        color="primary"
+        variant="bodySmall"
+        inline={false}
+      >
+        {contactPoint}
+      </TextLink>
     );
   }
 
@@ -799,7 +852,7 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
       header={
         <MetaText icon="at">
           <div>Contact Point</div>
-          <Strong>{contactPoint}</Strong>
+          <Text color="primary">{contactPoint}</Text>
         </MetaText>
       }
       key={uniqueId()}
@@ -817,9 +870,14 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
         </Stack>
       }
     >
-      <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
-        <Strong>{contactPoint}</Strong>
-      </Link>
+      <TextLink
+        href={createContactPointLink(contactPoint, alertManagerSourceName)}
+        color="primary"
+        variant="bodySmall"
+        inline={false}
+      >
+        {contactPoint}
+      </TextLink>
     </HoverCard>
   );
 };
@@ -962,5 +1020,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1.5),
   }),
 });
+
+// This is a convencience component to deal with I18n shenanigans
+// see https://github.com/grafana/grafana/blob/main/contribute/internationalization.md#jsx
+const PrimaryText = ({ content }: { content: string }) => <Text color="primary">{content}</Text>;
 
 export { Policy };

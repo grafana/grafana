@@ -50,69 +50,56 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		// fmt.Printf("%s", string(disco))
 
 		require.JSONEq(t, `[
-			{
-			  "freshness": "Current",
-			  "resources": [
-				{
-				  "resource": "dashboards",
-				  "responseKind": {
-					"group": "",
-					"kind": "Dashboard",
-					"version": ""
-				  },
-				  "scope": "Namespaced",
-				  "singularResource": "dashboard",
-				  "subresources": [
-					{
-					  "responseKind": {
-						"group": "",
-						"kind": "DashboardAccessInfo",
-						"version": ""
-					  },
-					  "subresource": "access",
-					  "verbs": [
-						"get"
-					  ]
-					},
-					{
-					  "responseKind": {
-						"group": "",
-						"kind": "DashboardVersionList",
-						"version": ""
-					  },
-					  "subresource": "versions",
-					  "verbs": [
-						"get"
-					  ]
-					}
-				  ],
-				  "verbs": [
-					"create",
-					"delete",
-					"deletecollection",
-					"get",
-					"list",
-					"patch",
-					"update"
-				  ]
-				},
-				{
-				  "resource": "summary",
-				  "responseKind": {
-					"group": "",
-					"kind": "DashboardSummary",
-					"version": ""
-				  },
-				  "scope": "Namespaced",
-				  "singularResource": "summary",
-				  "verbs": [
-					"get",
-					"list"
-				  ]
-				}
-			  ],
-			  "version": "v0alpha1"
-			}
-		  ]`, disco)
+  {
+    "freshness": "Current",
+    "resources": [
+      {
+        "resource": "dashboards",
+        "responseKind": {
+          "group": "",
+          "kind": "Dashboard",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "dashboard",
+        "subresources": [
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "DashboardWithAccessInfo",
+              "version": ""
+            },
+            "subresource": "dto",
+            "verbs": [
+              "get"
+            ]
+          },
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "PartialObjectMetadataList",
+              "version": ""
+            },
+            "subresource": "history",
+            "verbs": [
+              "get"
+            ]
+          }
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      }
+    ],
+    "version": "v0alpha1"
+  }
+]`, disco)
 	})
 }

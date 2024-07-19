@@ -1,17 +1,15 @@
 import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import { setupServer } from 'msw/node';
-import React from 'react';
+import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors/src';
-import { config, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
+import { AccessControlAction } from '../../../types';
 import {
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
@@ -21,22 +19,22 @@ import {
 
 import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockApi, mockSearchApi } from './mockApi';
+import { mockFeatureDiscoveryApi, mockSearchApi, setupMswServer } from './mockApi';
 import {
-  labelsPluginMetaMock,
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   mockRulerAlertingRule,
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
-  mockStore,
 } from './mocks';
-import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
+import { setupDataSources } from './testSetup/datasources';
+import { buildInfoResponse } from './testSetup/featureDiscovery';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultFormValues } from './utils/rule-form';
 import { hashRulerRule } from './utils/rule-id';
 
@@ -55,20 +53,7 @@ jest.mock('./components/rule-editor/notificaton-preview/NotificationPreview', ()
 
 jest.spyOn(AlertingQueryRunner.prototype, 'run').mockImplementation(() => Promise.resolve());
 
-const server = setupServer();
-
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-beforeEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+const server = setupMswServer();
 
 const ui = {
   inputs: {
@@ -80,92 +65,37 @@ const ui = {
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
-  loadingIndicator: byText('Loading the rule'),
+  loadingIndicator: byText('Loading the rule...'),
 };
 
-function getProvidersWrapper() {
-  return function Wrapper({ children }: React.PropsWithChildren<{}>) {
-    const store = mockStore((store) => {
-      store.unifiedAlerting.dataSources['grafana'] = {
-        loading: false,
-        dispatched: true,
-        result: {
-          id: 'grafana',
-          name: 'grafana',
-          rulerConfig: {
-            dataSourceName: 'grafana',
-            apiVersion: 'legacy',
-          },
-        },
-      };
-      store.unifiedAlerting.dataSources['my-prom-ds'] = {
-        loading: false,
-        dispatched: true,
-        result: {
-          id: 'my-prom-ds',
-          name: 'my-prom-ds',
-          rulerConfig: {
-            dataSourceName: 'my-prom-ds',
-            apiVersion: 'config',
-          },
-        },
-      };
-    });
-
-    const formApi = useForm<RuleFormValues>({ defaultValues: getDefaultFormValues() });
-
-    return (
-      <TestProvider store={store}>
-        <FormProvider {...formApi}>{children}</FormProvider>
-      </TestProvider>
-    );
-  };
+function Wrapper({ children }: React.PropsWithChildren<{}>) {
+  const formApi = useForm<RuleFormValues>({ defaultValues: getDefaultFormValues() });
+  return (
+    <TestProvider>
+      <FormProvider {...formApi}>{children}</FormProvider>
+    </TestProvider>
+  );
 }
 
-const amConfig: AlertManagerCortexConfig = {
-  alertmanager_config: {
-    receivers: [{ name: 'default' }, { name: 'critical' }],
-    route: {
-      receiver: 'default',
-      group_by: ['alertname'],
-      routes: [
-        {
-          matchers: ['env=prod', 'region!=EU'],
-        },
-      ],
-    },
-    templates: [],
-  },
-  template_files: {},
-};
-
-mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
 describe('CloneRuleEditor', function () {
+  grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
       setDataSourceSrv(new MockDataSourceSrv({}));
 
-      const originRule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
-        {
-          for: '1m',
-          labels: { severity: 'critical', region: 'nasa' },
-          annotations: { [Annotation.summary]: 'This is a very important alert rule' },
-        },
-        { uid: 'grafana-rule-1', title: 'First Grafana Rule', data: [] }
-      );
-
-      mockRulerRulesApiResponse(server, 'grafana', {
-        'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
-      });
-
       mockSearchApi(server).search([
-        mockDashboardSearchItem({ title: 'folder-one', uid: '123', type: DashboardSearchItemType.DashDB }),
+        mockDashboardSearchItem({
+          title: 'folder-one',
+          uid: grafanaRulerRule.grafana_alert.namespace_uid,
+          type: DashboardSearchItemType.DashDB,
+        }),
       ]);
-      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
-      render(<CloneRuleEditor sourceRuleId={{ uid: 'grafana-rule-1', ruleSourceName: 'grafana' }} />, {
-        wrapper: getProvidersWrapper(),
-      });
+      render(
+        <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,
+        { wrapper: Wrapper }
+      );
 
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
       await waitFor(() => {
@@ -173,9 +103,9 @@ describe('CloneRuleEditor', function () {
       });
 
       await waitFor(() => {
-        expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');
+        expect(ui.inputs.name.get()).toHaveValue(`${grafanaRulerRule.grafana_alert.title} (copy)`);
         expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
-        expect(ui.inputs.group.get()).toHaveTextContent('group1');
+        expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerRule.grafana_alert.rule_group);
         expect(
           byRole('listitem', {
             name: 'severity: critical',
@@ -186,7 +116,7 @@ describe('CloneRuleEditor', function () {
             name: 'region: nasa',
           }).get()
         ).toBeInTheDocument();
-        expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
+        expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
       });
     });
   });
@@ -197,12 +127,8 @@ describe('CloneRuleEditor', function () {
         name: 'my-prom-ds',
         uid: 'my-prom-ds',
       });
-      config.datasources = {
-        'my-prom-ds': dsSettings,
-      };
-
-      setDataSourceSrv(new MockDataSourceSrv({ 'my-prom-ds': dsSettings }));
-
+      setupDataSources(dsSettings);
+      mockFeatureDiscoveryApi(server).discoverDsFeatures(dsSettings, buildInfoResponse.mimir);
       const originRule = mockRulerAlertingRule({
         for: '1m',
         alert: 'First Ruler Rule',
@@ -230,7 +156,6 @@ describe('CloneRuleEditor', function () {
           folderUid: '123',
         }),
       ]);
-      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
         <CloneRuleEditor
@@ -242,9 +167,7 @@ describe('CloneRuleEditor', function () {
             rulerRuleHash: hashRulerRule(originRule),
           }}
         />,
-        {
-          wrapper: getProvidersWrapper(),
-        }
+        { wrapper: Wrapper }
       );
 
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
