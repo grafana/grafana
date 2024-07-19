@@ -43,6 +43,9 @@ type Service struct {
 
 	buildSnapshotMutex sync.Mutex
 
+	cancelMutex sync.Mutex
+	cancelFunc  context.CancelFunc
+
 	features      featuremgmt.FeatureToggles
 	gmsClient     gmsclient.Client
 	objectStorage objectstorage.ObjectStorage
@@ -499,8 +502,24 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 
 	// start building the snapshot asynchronously while we return a success response to the client
 	go func() {
-		if err := s.buildSnapshot(context.Background(), signedInUser, initResp.MaxItemsPerPartition, snapshot); err != nil {
+		s.cancelMutex.Lock()
+		defer func() {
+			s.cancelFunc = nil
+			s.cancelMutex.Unlock()
+		}()
+
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		s.cancelFunc = cancelFunc
+
+		if err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, snapshot); err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
+			// Update status to error with retries
+			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
+				UID:    snapshot.UID,
+				Status: cloudmigration.SnapshotStatusError,
+			}); err != nil {
+				s.log.Error("critical failure during snapshot creation - please report any error logs")
+			}
 		}
 	}()
 
@@ -609,14 +628,53 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 	// start uploading the snapshot asynchronously while we return a success response to the client
 	go func() {
-		if err := s.uploadSnapshot(context.Background(), session, snapshot, uploadUrl); err != nil {
-			s.log.Error("uploading snapshot", "err", err)
+		s.cancelMutex.Lock()
+		defer func() {
+			s.cancelFunc = nil
+			s.cancelMutex.Unlock()
+		}()
+
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		s.cancelFunc = cancelFunc
+
+		if err := s.uploadSnapshot(ctx, session, snapshot, uploadUrl); err != nil {
+			s.log.Error("uploading snapshot", "err", err.Error())
+			// Update status to error with retries
+			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
+				UID:    snapshot.UID,
+				Status: cloudmigration.SnapshotStatusError,
+			}); err != nil {
+				s.log.Error("critical failure during snapshot upload - please report any error logs")
+			}
 		}
 	}()
 
 	return nil
 }
 
-func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
-	panic("not implemented")
+func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (err error) {
+	// The cancel func itself is protected by a mutex in the async threads, so it may or may not be set by the time CancelSnapshot is called
+	// Attempt to cancel and recover from the panic if the cancel function is nil
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("nothing to cancel")
+		}
+	}()
+	s.cancelFunc()
+
+	// Canceling will ensure that any goroutines holding the lock finish and release the lock
+	s.cancelMutex.Lock()
+	defer s.cancelMutex.Unlock()
+	s.cancelFunc = nil
+
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:    snapshotUid,
+		Status: cloudmigration.SnapshotStatusCanceled,
+	}); err != nil {
+		s.log.Error("critical failure during snapshot cancelation - please report any error logs")
+	}
+
+	s.log.Info("canceled snapshot", "sessionUid", sessionUid, "snapshotUid", snapshotUid)
+
+	return nil
 }
