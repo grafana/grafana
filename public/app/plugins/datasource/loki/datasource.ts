@@ -1064,8 +1064,6 @@ export class LokiDatasource
       return addLabelToQuery(acc, key, operator, value);
     }, expr);
 
-    console.log('addAdHocFilters output', expr);
-
     return returnVariables(expr);
   }
 
