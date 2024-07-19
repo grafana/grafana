@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 )
@@ -61,7 +62,7 @@ type FakeInstanceManager struct {
 }
 
 func (fakeInstanceManager *FakeInstanceManager) Get(tx context.Context, pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
-	httpClient, _ := sdkhttpclient.New(sdkhttpclient.Options{})
+	httpClient, _ := httpclient.New(httpclient.Options{})
 	httpClient.Transport = &FakeRoundTripper{isDsHealthy: fakeInstanceManager.isDsHealthy}
 
 	return es.DatasourceInfo{
@@ -75,6 +76,7 @@ func (*FakeInstanceManager) Do(_ context.Context, _ backend.PluginContext, _ ins
 
 func GetMockService(isDsHealthy bool) *Service {
 	return &Service{
-		im: &FakeInstanceManager{isDsHealthy: isDsHealthy},
+		im:     &FakeInstanceManager{isDsHealthy: isDsHealthy},
+		logger: log.New(),
 	}
 }

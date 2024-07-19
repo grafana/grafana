@@ -1007,6 +1007,12 @@
       "button": "Migrate this instance to Cloud",
       "header": "Let us manage your Grafana stack"
     },
+    "delete-migration-token-confirm": {
+      "body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
+      "confirm-button": "Delete token",
+      "error-title": "Error deleting token",
+      "title": "Delete migration token"
+    },
     "disconnect-modal": {
       "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
       "cancel": "Cancel",
@@ -1037,6 +1043,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migration-token": {
+      "delete-button": "Delete token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
       "delete-modal-cancel": "Cancel",
       "delete-modal-confirm": "Delete",

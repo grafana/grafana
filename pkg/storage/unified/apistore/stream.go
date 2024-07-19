@@ -17,10 +17,10 @@ import (
 )
 
 type streamDecoder struct {
-	client  resource.ResourceStore_WatchClient
-	newFunc func() runtime.Object
-	opts    storage.ListOptions
-	codec   runtime.Codec
+	client    resource.ResourceStore_WatchClient
+	newFunc   func() runtime.Object
+	predicate storage.SelectionPredicate
+	codec     runtime.Codec
 }
 
 func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Object, error) {
@@ -95,7 +95,7 @@ decode:
 		switch evt.Type {
 		case resource.WatchEvent_ADDED:
 			// apply any predicates not handled in storage
-			matches, err := d.opts.Predicate.Matches(obj)
+			matches, err := d.predicate.Matches(obj)
 			if err != nil {
 				klog.Errorf("error matching object: %s", err)
 				return watch.Error, nil, err
@@ -109,7 +109,7 @@ decode:
 			watchAction = watch.Modified
 
 			// apply any predicates not handled in storage
-			matches, err := d.opts.Predicate.Matches(obj)
+			matches, err := d.predicate.Matches(obj)
 			if err != nil {
 				klog.Errorf("error matching object: %s", err)
 				return watch.Error, nil, err
@@ -126,7 +126,7 @@ decode:
 				}
 
 				// apply any predicates not handled in storage
-				prevMatches, err = d.opts.Predicate.Matches(prevObj)
+				prevMatches, err = d.predicate.Matches(prevObj)
 				if err != nil {
 					klog.Errorf("error matching object: %s", err)
 					return watch.Error, nil, err
@@ -177,7 +177,7 @@ decode:
 			}
 
 			// apply any predicates not handled in storage
-			matches, err := d.opts.Predicate.Matches(obj)
+			matches, err := d.predicate.Matches(obj)
 			if err != nil {
 				klog.Errorf("error matching object: %s", err)
 				return watch.Error, nil, err
