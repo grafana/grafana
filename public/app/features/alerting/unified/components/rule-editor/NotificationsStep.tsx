@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -25,6 +26,12 @@ enum RoutingOptions {
   ContactPoint = 'contact point',
 }
 
+function useHasInternalAlertmanagerEnabled() {
+  const { currentData: amChoiceStatus } =
+    alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined);
+  return amChoiceStatus?.alertmanagersChoice === 'internal' || amChoiceStatus?.alertmanagersChoice === 'all';
+}
+
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
@@ -35,7 +42,10 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
-  const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
+  const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
+
+  const shouldAllowSimplifiedRouting =
+    type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
 
   function onCloseLabelsEditor(
     labelsToUpdate?: Array<{
