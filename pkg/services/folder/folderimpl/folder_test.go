@@ -2344,7 +2344,6 @@ func TestIntegration_canMove(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestSupportBundle(t *testing.T) {
