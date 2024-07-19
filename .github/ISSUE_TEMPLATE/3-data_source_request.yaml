@@ -16,7 +16,7 @@ body:
         
         Please check our [roadmap](https://github.com/orgs/grafana/projects/619?pane=info) for existing requests and subscribe to stay informed of our plans. If no request exists, please fill out the following information.
 
-        Please do not request support or file bug reports here.
+        Please do not request support or file bug reports and feature requests for existing plugins here.
         - For support, please use the community support resources [here](https://grafana.com/help/)
         - To report a bug, please use the [New Bug Report option here](https://github.com/grafana/grafana/issues/new/choose)
   - type: textarea
