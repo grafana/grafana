@@ -1970,6 +1970,14 @@
       "copy-button": "Copy to Clipboard"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "share-snapshot-title": "Share snapshot"
+    },
+    "menu": {
+      "share-snapshot-title": "Snapshot"
+    }
+  },
   "share-playlist": {
     "checkbox-description": "Panel heights will be adjusted to fit screen size",
     "checkbox-label": "Autofit",
@@ -2053,6 +2061,9 @@
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
       "view-all-button": "View all snapshots"
+    },
+    "share-panel": {
+      "info-alert": "A Grafana panel snapshot publicly shares a panel while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot."
     },
     "url-column-header": "Snapshot url",
     "view-button": "View"

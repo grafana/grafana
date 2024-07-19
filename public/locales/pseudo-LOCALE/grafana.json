@@ -1970,6 +1970,14 @@
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
+    },
+    "menu": {
+      "share-snapshot-title": "Ŝŉäpşĥőŧ"
+    }
+  },
   "share-playlist": {
     "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
     "checkbox-label": "Åūŧőƒįŧ",
@@ -2053,6 +2061,9 @@
       "success-creation": "Ÿőūř şŉäpşĥőŧ ĥäş þęęŉ čřęäŧęđ",
       "success-delete": "Ÿőūř şŉäpşĥőŧ ĥäş þęęŉ đęľęŧęđ",
       "view-all-button": "Vįęŵ äľľ şŉäpşĥőŧş"
+    },
+    "share-panel": {
+      "info-alert": "Å Ğřäƒäŉä päŉęľ şŉäpşĥőŧ pūþľįčľy şĥäřęş ä päŉęľ ŵĥįľę řęmővįŉģ şęŉşįŧįvę đäŧä şūčĥ äş qūęřįęş äŉđ päŉęľ ľįŉĸş, ľęävįŉģ őŉľy vįşįþľę męŧřįčş äŉđ şęřįęş ŉämęş. Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş ŧĥę şŉäpşĥőŧ."
     },
     "url-column-header": "Ŝŉäpşĥőŧ ūřľ",
     "view-button": "Vįęŵ"
