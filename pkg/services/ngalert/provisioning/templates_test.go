@@ -2,15 +2,18 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -91,6 +94,31 @@ func TestTemplateService(t *testing.T) {
 			require.ErrorIs(t, err, ErrValidation)
 		})
 
+		t.Run("rejects existing templates if provenance is not right", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			sut.configStore.store.(*MockAMConfigStore).EXPECT().
+				GetsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: configWithTemplates,
+				})
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+			expectedErr := errors.New("test")
+			sut.validator = func(from, to models.Provenance) error {
+				assert.Equal(t, models.ProvenanceAPI, from)
+				assert.Equal(t, models.ProvenanceNone, to)
+				return expectedErr
+			}
+			template := definitions.NotificationTemplate{
+				Name:     "a",
+				Template: "asdf-new",
+			}
+			template.Provenance = definitions.Provenance(models.ProvenanceNone)
+
+			_, err := sut.SetTemplate(context.Background(), 1, template)
+
+			require.ErrorIs(t, err, expectedErr)
+		})
+
 		t.Run("propagates errors", func(t *testing.T) {
 			t.Run("when unable to read config", func(t *testing.T) {
 				sut := createTemplateServiceSut()
@@ -98,6 +126,7 @@ func TestTemplateService(t *testing.T) {
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed"))
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
@@ -111,6 +140,7 @@ func TestTemplateService(t *testing.T) {
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: brokenConfig,
 					})
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
@@ -123,6 +153,7 @@ func TestTemplateService(t *testing.T) {
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, nil)
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
@@ -137,6 +168,7 @@ func TestTemplateService(t *testing.T) {
 						AlertmanagerConfiguration: configWithTemplates,
 					})
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 				sut.provenanceStore.(*MockProvisioningStore).EXPECT().
 					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save provenance"))
@@ -153,6 +185,7 @@ func TestTemplateService(t *testing.T) {
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithTemplates,
 					})
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().
 					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save config"))
@@ -172,6 +205,7 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: configWithTemplates,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
@@ -187,6 +221,7 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: defaultConfig,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
@@ -205,6 +240,7 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: defaultConfig,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			result, _ := sut.SetTemplate(context.Background(), 1, tmpl)
@@ -224,6 +260,7 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: defaultConfig,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			result, _ := sut.SetTemplate(context.Background(), 1, tmpl)
@@ -242,6 +279,7 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: defaultConfig,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
@@ -260,6 +298,7 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: defaultConfig,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
 			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
@@ -275,8 +314,9 @@ func TestTemplateService(t *testing.T) {
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed"))
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-				err := sut.DeleteTemplate(context.Background(), 1, "template")
+				err := sut.DeleteTemplate(context.Background(), 1, "template", definitions.Provenance(models.ProvenanceAPI))
 
 				require.Error(t, err)
 			})
@@ -287,8 +327,9 @@ func TestTemplateService(t *testing.T) {
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: brokenConfig,
 					})
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-				err := sut.DeleteTemplate(context.Background(), 1, "template")
+				err := sut.DeleteTemplate(context.Background(), 1, "template", definitions.Provenance(models.ProvenanceAPI))
 
 				require.Truef(t, ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
 			})
@@ -298,8 +339,9 @@ func TestTemplateService(t *testing.T) {
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil, nil)
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-				err := sut.DeleteTemplate(context.Background(), 1, "template")
+				err := sut.DeleteTemplate(context.Background(), 1, "template", definitions.Provenance(models.ProvenanceAPI))
 
 				require.Truef(t, ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
 			})
@@ -311,11 +353,12 @@ func TestTemplateService(t *testing.T) {
 						AlertmanagerConfiguration: configWithTemplates,
 					})
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 				sut.provenanceStore.(*MockProvisioningStore).EXPECT().
 					DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save provenance"))
 
-				err := sut.DeleteTemplate(context.Background(), 1, "template")
+				err := sut.DeleteTemplate(context.Background(), 1, "a", definitions.Provenance(models.ProvenanceAPI))
 
 				require.ErrorContains(t, err, "failed to save provenance")
 			})
@@ -329,9 +372,10 @@ func TestTemplateService(t *testing.T) {
 				sut.configStore.store.(*MockAMConfigStore).EXPECT().
 					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save config"))
+				sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 				sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
-				err := sut.DeleteTemplate(context.Background(), 1, "template")
+				err := sut.DeleteTemplate(context.Background(), 1, "a", definitions.Provenance(models.ProvenanceAPI))
 
 				require.ErrorContains(t, err, "failed to save config")
 			})
@@ -344,9 +388,10 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: configWithTemplates,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
-			err := sut.DeleteTemplate(context.Background(), 1, "a")
+			err := sut.DeleteTemplate(context.Background(), 1, "a", definitions.Provenance(models.ProvenanceAPI))
 
 			require.NoError(t, err)
 		})
@@ -358,9 +403,10 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: configWithTemplates,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
-			err := sut.DeleteTemplate(context.Background(), 1, "does not exist")
+			err := sut.DeleteTemplate(context.Background(), 1, "does not exist", definitions.Provenance(models.ProvenanceAPI))
 
 			require.NoError(t, err)
 		})
@@ -372,11 +418,28 @@ func TestTemplateService(t *testing.T) {
 					AlertmanagerConfiguration: defaultConfig,
 				})
 			sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceeds()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().SaveSucceeds()
 
-			err := sut.DeleteTemplate(context.Background(), 1, "a")
+			err := sut.DeleteTemplate(context.Background(), 1, "a", definitions.Provenance(models.ProvenanceAPI))
 
 			require.NoError(t, err)
+		})
+
+		t.Run("errors if provenance is not right", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+			expectedErr := errors.New("test")
+			sut.validator = func(from, to models.Provenance) error {
+				assert.Equal(t, models.ProvenanceAPI, from)
+				assert.Equal(t, models.ProvenanceNone, to)
+				return expectedErr
+			}
+
+			err := sut.DeleteTemplate(context.Background(), 1, "a", definitions.Provenance(models.ProvenanceNone))
+
+			require.ErrorIs(t, err, expectedErr)
 		})
 	})
 }
@@ -387,6 +450,7 @@ func createTemplateServiceSut() *TemplateService {
 		provenanceStore: &MockProvisioningStore{},
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
+		validator:       validation.ValidateProvenanceRelaxed,
 	}
 }
 
