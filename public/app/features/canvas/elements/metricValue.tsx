@@ -7,7 +7,7 @@ import {
   DataFrame,
   FieldNamePickerConfigSettings,
   GrafanaTheme2,
-  OneClick,
+  OneClickMode,
   StandardEditorsRegistryItem,
 } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
@@ -181,7 +181,7 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       left: options?.placement?.left ?? 100,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClick: options?.oneClick ?? OneClick.Off,
+    oneClick: options?.oneClick ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
