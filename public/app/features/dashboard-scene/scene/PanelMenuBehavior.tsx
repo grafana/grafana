@@ -21,6 +21,7 @@ import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
@@ -91,6 +92,20 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           const drawer = new ShareDrawer({
             title: 'Link settings',
             body: new SharePanelInternally({ panelRef: panel.getRef() }),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+
+      subMenu.push({
+        text: t('share-panel.menu.share-snapshot-title', 'Snapshot'),
+        iconClassName: 'camera',
+        shortcut: 'p s',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
+            body: new ShareSnapshot({ dashboardRef: dashboard.getRef(), panelRef: panel.getRef() }),
           });
 
           dashboard.showModal(drawer);
