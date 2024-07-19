@@ -56,39 +56,40 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       interpolatedFilters.push(
         ...filters.map((filter) => {
           if (filter.config.id === ValueMatcherID.between) {
+            let valueFrom = filter.config.options.from;
+            let valueTo = filter.config.options.to;
+
             if (typeof filter.config.options.from === 'string') {
-              filter.config.options.from = ctx.interpolate(filter.config.options.from);
+              valueFrom = ctx.interpolate(valueFrom);
             }
             if (typeof filter.config.options.to === 'string') {
-              filter.config.options.to = ctx.interpolate(filter.config.options.to);
+              valueTo = ctx.interpolate(valueTo);
             }
 
-            const newFilter = {
+            return {
               ...filter,
               config: {
                 ...filter.config,
                 options: {
                   ...filter.config.options,
-                  to: filter.config.options.to,
-                  from: filter.config.options.from,
+                  to: valueTo,
+                  from: valueFrom,
                 },
               },
             };
-
-            return newFilter;
           } else if (filter.config.id === ValueMatcherID.regex) {
             // Due to colliding syntaxes, interpolating regex filters will cause issues.
             return filter;
           } else if (filter.config.options.value) {
+            let value = filter.config.options.value;
             if (typeof filter.config.options.value === 'string') {
-              filter.config.options.value = ctx.interpolate(filter.config.options.value);
+              value = ctx.interpolate(value);
             }
 
-            const newFilter = {
+            return {
               ...filter,
-              config: { ...filter.config, options: { ...filter.config.options, value: filter.config.options.value } },
+              config: { ...filter.config, options: { ...filter.config.options, value } },
             };
-            return newFilter;
           }
 
           return filter;
