@@ -1,16 +1,11 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { render, userEvent, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginExtensionsHook } from '@grafana/runtime';
-import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { configureStore } from 'app/store/configureStore';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
-import { getCloudRule, getGrafanaRule, getMockPluginMeta } from '../../mocks';
+import { getCloudRule, getGrafanaRule } from '../../mocks';
 
 import { RulesTable } from './RulesTable';
 
@@ -36,27 +31,10 @@ const ui = {
   },
 };
 
-function renderRulesTable(rule: CombinedRule) {
-  const store = configureStore();
-
-  render(
-    <Provider store={store}>
-      <MemoryRouter>
-        <RulesTable rules={[rule]} />
-      </MemoryRouter>
-    </Provider>
-  );
-}
-
 const user = userEvent.setup();
-const server = setupMswServer();
+setupMswServer();
 
 describe('RulesTable RBAC', () => {
-  beforeEach(() => {
-    mockApi(server).plugins.getPluginSettings({
-      ...getMockPluginMeta('grafana-incident-app', 'Grafana Incident'),
-    });
-  });
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
 
@@ -64,7 +42,8 @@ describe('RulesTable RBAC', () => {
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, false] : [true, true];
       });
-      renderRulesTable(grafanaRule);
+
+      render(<RulesTable rules={[grafanaRule]} />);
 
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
@@ -74,7 +53,8 @@ describe('RulesTable RBAC', () => {
         return action === AlertRuleAction.Delete ? [true, false] : [true, true];
       });
 
-      renderRulesTable(grafanaRule);
+      render(<RulesTable rules={[grafanaRule]} />);
+
       await user.click(ui.actionButtons.more.get());
 
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
@@ -84,7 +64,8 @@ describe('RulesTable RBAC', () => {
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, true] : [false, false];
       });
-      renderRulesTable(grafanaRule);
+      render(<RulesTable rules={[grafanaRule]} />);
+
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
@@ -93,11 +74,55 @@ describe('RulesTable RBAC', () => {
         return action === AlertRuleAction.Delete ? [true, true] : [false, false];
       });
 
-      renderRulesTable(grafanaRule);
+      render(<RulesTable rules={[grafanaRule]} />);
 
       expect(ui.actionButtons.more.get()).toBeInTheDocument();
       await user.click(ui.actionButtons.more.get());
       expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
+    });
+
+    describe('rules in creating/deleting states', () => {
+      const { promRule, ...creatingRule } = grafanaRule;
+      const { rulerRule, ...deletingRule } = grafanaRule;
+      const rulesSource = 'grafana';
+
+      /**
+       * Preloaded state that implies the rulerRules have finished loading
+       *
+       * @todo Remove this state and test at a higher level to avoid mocking the store.
+       * We need to manually populate this, as the component hierarchy expects that we will
+       * have already called the necessary APIs to get the rulerRules data
+       */
+      const preloadedState = {
+        unifiedAlerting: { rulerRules: { [rulesSource]: { result: {}, loading: false, dispatched: true } } },
+      };
+
+      beforeEach(() => {
+        mocks.useAlertRuleAbility.mockImplementation(() => {
+          return [true, true];
+        });
+      });
+
+      it('does not render View button when rule is creating', async () => {
+        render(<RulesTable rules={[creatingRule]} />, {
+          // @ts-ignore
+          preloadedState,
+        });
+
+        expect(await screen.findByText('Creating')).toBeInTheDocument();
+        expect(ui.actionButtons.view.query()).not.toBeInTheDocument();
+      });
+
+      it('does not render View or Edit button when rule is deleting', async () => {
+        render(<RulesTable rules={[deletingRule]} />, {
+          // @ts-ignore
+          preloadedState,
+        });
+
+        expect(await screen.findByText('Deleting')).toBeInTheDocument();
+        expect(ui.actionButtons.view.query()).not.toBeInTheDocument();
+        expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -109,7 +134,8 @@ describe('RulesTable RBAC', () => {
         return action === AlertRuleAction.Update ? [true, false] : [true, true];
       });
 
-      renderRulesTable(cloudRule);
+      render(<RulesTable rules={[cloudRule]} />);
+
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
 
@@ -118,7 +144,8 @@ describe('RulesTable RBAC', () => {
         return action === AlertRuleAction.Delete ? [true, false] : [true, true];
       });
 
-      renderRulesTable(cloudRule);
+      render(<RulesTable rules={[cloudRule]} />);
+
       await user.click(ui.actionButtons.more.get());
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
     });
@@ -128,7 +155,8 @@ describe('RulesTable RBAC', () => {
         return action === AlertRuleAction.Update ? [true, true] : [false, false];
       });
 
-      renderRulesTable(cloudRule);
+      render(<RulesTable rules={[cloudRule]} />);
+
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
@@ -137,7 +165,8 @@ describe('RulesTable RBAC', () => {
         return action === AlertRuleAction.Delete ? [true, true] : [false, false];
       });
 
-      renderRulesTable(cloudRule);
+      render(<RulesTable rules={[cloudRule]} />);
+
       await user.click(ui.actionButtons.more.get());
       expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
     });
