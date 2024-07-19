@@ -98,6 +98,8 @@ jobs:
             mv CHANGELOG.tmp CHANGELOG.md
           fi
 
+          rm -f CHANGELOG.part changelog_items.md
+
           git diff CHANGELOG.md
 
       - name: Commit CHANGELOG.md changes
