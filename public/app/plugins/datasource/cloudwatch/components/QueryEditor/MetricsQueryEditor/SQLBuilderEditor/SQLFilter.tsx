@@ -66,8 +66,8 @@ const SQLFilter = ({ query, onQueryChange, datasource }: SQLFilterProps) => {
       }
     }
 
+    // preserve previous account id selection even if it's not visible in the filters themselves
     const { oldAccountWhere } = splitWheresOnAccountId(query.sql?.where?.expressions || []);
-
     if (oldAccountWhere) {
       validExpressions.push(oldAccountWhere);
     }

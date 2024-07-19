@@ -102,6 +102,13 @@ export function getFlattenedFilters(sql: SQLExpression): QueryEditorOperatorExpr
   return flattenOperatorExpressions(where?.expressions ?? []);
 }
 
+/** Removes the AccountId filter from the list of filters, as it is already visible in the account dropdown */
+export function filterOutAccountId(filters: QueryEditorOperatorExpression[]): QueryEditorOperatorExpression[] {
+  return filters.filter((exp) => {
+    return exp?.property.name !== 'AccountId';
+  });
+}
+
 /**
  * Given an array of Expressions, flattens them to the leaf Operator expressions.
  * Note, this loses context of any nested ANDs or ORs, so will not be useful once we support nested conditions */
@@ -123,13 +130,6 @@ function flattenGroupByExpressions(
 export function getFlattenedGroupBys(sql: SQLExpression): QueryEditorGroupByExpression[] {
   const groupBy = sql.groupBy;
   return flattenGroupByExpressions(groupBy?.expressions ?? []);
-}
-
-/** Removes the AccountId filter from the list of filters */
-export function filterOutAccountId(filters: QueryEditorOperatorExpression[]): QueryEditorOperatorExpression[] {
-  return filters.filter((exp) => {
-    return exp?.property.name !== 'AccountId';
-  });
 }
 
 /** takes an array of where expressions and separates out the account expression from the rest of the where expressions */

@@ -119,8 +119,9 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
                 const newWheres: QueryEditorArrayExpression = {
                   type: QueryEditorExpressionType.And,
                   expressions:
-                    // we don't keep app in the where clause because we don't need to add it to the preview/sql string query
-                    // we still select account id in the query object so we can use it in the dropdown
+                    // if the selection is all we remove it from the where clause (because it's absense means all),
+                    // we still store the account id in the top level of the query object so as to show the selection in the dropdown
+                    // otherwise we add the accountId to the where clauses so that it is included in the query and sql preview
                     accountId === 'all' ? nonAccountWheres : [...nonAccountWheres, newAccountWhereClause],
                 };
 
