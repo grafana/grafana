@@ -123,7 +123,7 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 
 	if engine == nil {
 		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString, ss.dbCfg.ConnectorCreator)
 		if err != nil {
 			ss.log.Error("failed to connect to database replica", "error", err)
 			return err

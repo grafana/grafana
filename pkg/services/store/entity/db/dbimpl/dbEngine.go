@@ -42,7 +42,7 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 	}
 
 	// FIXME: get rid of xorm
-	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
+	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
@@ -96,7 +96,7 @@ func getEnginePostgres(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, e
 	}
 
 	// FIXME: get rid of xorm
-	engine, err := xorm.NewEngine(db.DriverPostgres, dsn)
+	engine, err := xorm.NewEngine(db.DriverPostgres, dsn, nil)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}

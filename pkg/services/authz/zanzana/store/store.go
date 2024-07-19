@@ -34,7 +34,7 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	case migrator.SQLite:
 		connStr := grafanaDBCfg.ConnectionString
 		// Initilize connection using xorm engine so we can reuse it for both migrations and data store
-		engine, err := xorm.NewEngine(grafanaDBCfg.Type, connStr)
+		engine, err := xorm.NewEngine(grafanaDBCfg.Type, connStr, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}

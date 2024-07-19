@@ -1199,6 +1199,7 @@ clouds_config = `[
 				"portal":                  "https://portal.azure.cloud1.contoso.com",
 				"prometheusResourceId":    "https://prometheus.monitor.azure.cloud1.contoso.com",
 				"resourceManager":         "https://management.azure.cloud1.contoso.com"
+				"ossrdbmsResourceId":      "https://ossrdbms-aad.database.azure.cloud1.contoso.com"
 			}
 		}]`
 ```

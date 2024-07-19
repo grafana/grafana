@@ -9,7 +9,7 @@ import (
 
 func TestNewEngine(t *testing.T) {
 	t.Run("successfully create a new engine", func(t *testing.T) {
-		eng, err := NewEngine("sqlite3", "./test.db")
+		eng, err := NewEngine("sqlite3", "./test.db", nil)
 		require.NoError(t, err)
 		require.NotNil(t, eng)
 		require.Equal(t, "sqlite3", eng.DriverName())

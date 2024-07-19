@@ -13,7 +13,7 @@ import (
 )
 
 func Run(cfg *setting.Cfg, typ, connStr string, fs embed.FS, path string) error {
-	engine, err := xorm.NewEngine(typ, connStr)
+	engine, err := xorm.NewEngine(typ, connStr, nil)
 	if err != nil {
 		return fmt.Errorf("failed to parse database config: %w", err)
 	}

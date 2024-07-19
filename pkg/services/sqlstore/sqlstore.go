@@ -297,7 +297,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 	if engine == nil {
 		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString, ss.dbCfg.ConnectorCreator)
 		if err != nil {
 			return err
 		}
@@ -344,7 +344,7 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 			// replace with compatible system var for transaction isolation
 			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
 			// recreate the xorm engine with new connection string that is compatible
-			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString, ss.dbCfg.ConnectorCreator)
 			if err != nil {
 				return nil, err
 			}
@@ -584,7 +584,7 @@ func TestMain(m *testing.M) {
 		}
 
 		// need to get engine to clean db before we init
-		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String(), nil)
 		if err != nil {
 			return nil, err
 		}

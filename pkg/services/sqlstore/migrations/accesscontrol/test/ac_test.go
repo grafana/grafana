@@ -227,7 +227,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 
 	t.Cleanup(testDB.Cleanup)
 
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

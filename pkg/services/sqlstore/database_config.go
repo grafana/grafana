@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"net/url"
@@ -10,7 +12,11 @@ import (
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/aztokenprovider"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,6 +37,7 @@ type DatabaseConfig struct {
 	ClientCertPath              string
 	ServerCertName              string
 	ConnectionString            string
+	ConnectorCreator            func(connectionString string) (driver.Connector, error)
 	IsolationLevel              string
 	MaxOpenConn                 int
 	MaxIdleConn                 int
@@ -46,6 +53,8 @@ type DatabaseConfig struct {
 	QueryRetries int
 	// SQLite only
 	TransactionRetries int
+	// MySQL & Postgres Only
+	AzureManagedIdentityEnabled bool
 }
 
 func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
@@ -57,6 +66,8 @@ func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	if err := dbCfg.readConfig(cfg); err != nil {
 		return nil, err
 	}
+
+	dbCfg.buildGetConnector(cfg)
 
 	if err := dbCfg.buildConnectionString(cfg, features); err != nil {
 		return nil, err
@@ -119,6 +130,7 @@ func (dbCfg *DatabaseConfig) readConfigSection(cfg *setting.Cfg, section string)
 	dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
 	dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	dbCfg.LogQueries = sec.Key("log_queries").MustBool(false)
+	dbCfg.AzureManagedIdentityEnabled = sec.Key("azure_managed_identity_enabled").MustBool(false)
 	return nil
 }
 
@@ -229,4 +241,128 @@ func buildExtraConnectionString(sep rune, urlQueryParams map[string][]string) st
 		}
 	}
 	return sb.String()
+}
+
+func (dbCfg *DatabaseConfig) buildGetConnector(cfg *setting.Cfg) {
+	if dbCfg.Type != migrator.MySQL && dbCfg.Type != migrator.Postgres {
+		dbCfg.ConnectorCreator = nil
+		return
+	}
+
+	var getPassword func() (string, error)
+	if cfg.AzureAuthEnabled {
+		var credentials azcredentials.AzureCredentials
+		settings := cfg.Azure
+
+		if dbCfg.AzureManagedIdentityEnabled {
+			credentials = &azcredentials.AzureManagedIdentityCredentials{}
+		}
+
+		if credentials != nil {
+			var azTokenProvider aztokenprovider.AzureTokenProvider
+			var scopes []string
+			getPassword = func() (string, error) {
+				var err error
+				if azTokenProvider == nil {
+					var provider aztokenprovider.AzureTokenProvider
+					if provider, err = aztokenprovider.NewAzureAccessTokenProvider(settings, credentials, false); err != nil {
+						return "", fmt.Errorf("failed to create access token provider: %w", err)
+					}
+
+					var azureCloud string
+					if azureCloud, err = azcredentials.GetAzureCloud(settings, credentials); err != nil {
+						return "", fmt.Errorf("failed to get azure cloud: %w", err)
+					}
+
+					var cloudSettings *azsettings.AzureCloudSettings
+					if cloudSettings, err = settings.GetCloud(azureCloud); err != nil {
+						return "", fmt.Errorf("failed to get azure cloud settings of %v: %w", azureCloud, err)
+					}
+
+					resourceIdS, ok := cloudSettings.Properties["ossrdbmsResourceId"]
+					if !ok {
+						err := fmt.Errorf("the Azure cloud '%s' doesn't have configuration for ossrdbms", azureCloud)
+						return "", err
+					}
+
+					if scopes, err = audienceToScopes(resourceIdS); err != nil {
+						return "", err
+					}
+
+					azTokenProvider = provider
+				}
+
+				var token string
+				if token, err = azTokenProvider.GetAccessToken(context.TODO(), scopes); err != nil {
+					return "", fmt.Errorf("failed to get access token: %w", err)
+				}
+
+				return token, nil
+			}
+		}
+	}
+
+	switch dbCfg.Type {
+	case migrator.MySQL:
+		dbCfg.ConnectorCreator = mysql.MySQLDriver{}.OpenConnector
+	case migrator.Postgres:
+		dbCfg.ConnectorCreator = func(staticConnectionString string) (driver.Connector, error) {
+			var err error
+
+			if strings.HasPrefix(staticConnectionString, "postgres://") || strings.HasPrefix(staticConnectionString, "postgresql://") {
+				staticConnectionString, err = pq.ParseURL(staticConnectionString)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			return DynamicConnector{
+				callback: func() (driver.Connector, error) {
+					connectionString := staticConnectionString
+					if getPassword != nil {
+						if dynamicPassword, err := getPassword(); err != nil {
+							return nil, fmt.Errorf("failed to get dynamic password: %w", err)
+						} else {
+							connectionString += fmt.Sprintf(" password='%s'", strings.ReplaceAll(dynamicPassword, "'", "\\'"))
+						}
+					}
+					return pq.NewConnector(connectionString)
+				},
+				driver: pq.Driver{},
+			}, nil
+		}
+	}
+}
+
+func audienceToScopes(audience string) ([]string, error) {
+	resourceId, err := url.Parse(audience)
+	if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+		err = fmt.Errorf("endpoint resource ID (audience) '%s' invalid", audience)
+		return nil, err
+	}
+
+	resourceId.Path = path.Join(resourceId.Path, ".default")
+	scopes := []string{resourceId.String()}
+	return scopes, nil
+}
+
+// Dynamic Connector
+
+type DynamicConnector struct {
+	callback func() (driver.Connector, error)
+	driver   driver.Driver
+}
+
+func (d DynamicConnector) Driver() driver.Driver {
+	return d.driver
+}
+
+func (d DynamicConnector) Connect(ctx context.Context) (driver.Conn, error) {
+	connector, err := d.callback()
+
+	if err != nil {
+		return nil, fmt.Errorf("error instantiating dynamic connector: %w", err)
+	}
+
+	return connector.Connect(ctx)
 }
