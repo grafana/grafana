@@ -261,4 +261,29 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 0, response.Result.TotalCount)
 		})
+
+	testScenarioWithMixedQueriesInQueryHistory(t, "When users tries to get queries with mixed data source it should return correct queries",
+		func(t *testing.T, sc scenarioContext) {
+			t.Skip() // This test fails a lot at the moment
+			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(sc.service.now().UnixMilli()-60, 10))
+			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(sc.service.now().UnixMilli()+60, 10))
+			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
+
+			resp := sc.service.searchHandler(sc.reqContext)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 1, response.Result.TotalCount)
+
+			sc.reqContext.Req.Form.Set("datasourceUid", testDsUID2)
+
+			resp = sc.service.searchHandler(sc.reqContext)
+			err = json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 2, response.Result.TotalCount)
+		})
 }

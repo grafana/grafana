@@ -4,7 +4,10 @@ import { size } from 'lodash';
 import { QueryFix, QueryHint } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
-import { PromMetricsMetadata } from './types';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
+import { PromVisualQuery } from './querybuilder/types';
+import { PromMetricsMetadata, RecordingRuleIdentifier, RuleQueryMapping } from './types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
@@ -168,31 +171,8 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
 
   // Check for recording rules expansion
   if (datasource && datasource.ruleMappings) {
-    const mapping = datasource.ruleMappings;
-    const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
-      if (query.search(ruleName) > -1) {
-        return {
-          ...acc,
-          [ruleName]: mapping[ruleName],
-        };
-      }
-      return acc;
-    }, {});
-    if (size(mappingForQuery) > 0) {
-      const label = 'Query contains recording rules.';
-      hints.push({
-        type: 'EXPAND_RULES',
-        label,
-        fix: {
-          label: 'Expand rules',
-          action: {
-            type: 'EXPAND_RULES',
-            query,
-            options: mappingForQuery,
-          },
-        },
-      });
-    }
+    const expandQueryHints = getExpandRulesHints(query, datasource.ruleMappings);
+    hints.push(...expandQueryHints);
   }
 
   if (series && series.length >= SUM_HINT_THRESHOLD_COUNT) {
@@ -228,6 +208,126 @@ export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
   }
 
   return hints;
+}
+
+export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): QueryHint[] {
+  const hints: QueryHint[] = [];
+  const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
+    if (query.search(ruleName) === -1) {
+      return acc;
+    }
+
+    if (mapping[ruleName].length > 1) {
+      const { idx, expandedQuery, identifier, identifierValue } = getRecordingRuleIdentifierIdx(
+        query,
+        ruleName,
+        mapping[ruleName]
+      );
+
+      // No identifier detected add warning
+      if (idx === -1) {
+        hints.push({
+          type: 'EXPAND_RULES_WARNING',
+          label:
+            'We found multiple recording rules that match in this query. To expand the recording rule, add an identifier label/value.',
+        });
+        return acc;
+      } else {
+        // Identifier found.
+        return {
+          ...acc,
+          [ruleName]: {
+            expandedQuery,
+            identifier,
+            identifierValue,
+          },
+        };
+      }
+    } else {
+      return {
+        ...acc,
+        [ruleName]: {
+          expandedQuery: mapping[ruleName][0].query,
+        },
+      };
+    }
+  }, {});
+
+  if (size(mappingForQuery) > 0) {
+    const label = 'Query contains recording rules.';
+    hints.push({
+      type: 'EXPAND_RULES',
+      label,
+      fix: {
+        label: 'Expand rules',
+        action: {
+          type: 'EXPAND_RULES',
+          query,
+          options: mappingForQuery,
+        },
+      },
+    });
+  }
+
+  return hints;
+}
+
+export function getRecordingRuleIdentifierIdx(
+  queryStr: string,
+  ruleName: string,
+  mapping: RuleQueryMapping[string]
+): RecordingRuleIdentifier & { idx: number } {
+  const { query } = buildVisualQueryFromString(queryStr);
+  const queryMetricLabels: QueryBuilderLabelFilter[] = getQueryLabelsForRuleName(ruleName, query);
+  if (queryMetricLabels.length === 0) {
+    return { idx: -1, identifier: '', identifierValue: '', expandedQuery: '' };
+  }
+
+  let uuidLabel = '';
+  let uuidLabelValue = '';
+  let uuidLabelIdx = -1;
+
+  queryMetricLabels.forEach((qml) => {
+    if (uuidLabelIdx === -1 && qml.label.search('uuid') !== -1) {
+      uuidLabel = qml.label;
+      uuidLabelValue = qml.value;
+    }
+  });
+
+  mapping.forEach((mp, idx) => {
+    if (mp.labels) {
+      Object.entries(mp.labels).forEach(([key, value]) => {
+        if (uuidLabelIdx === -1 && key === uuidLabel && value === uuidLabelValue) {
+          uuidLabelIdx = idx;
+        }
+      });
+    }
+  });
+
+  return {
+    idx: uuidLabelIdx,
+    identifier: uuidLabel,
+    identifierValue: uuidLabelValue,
+    expandedQuery: mapping[uuidLabelIdx]?.query ?? '',
+  };
+}
+
+// returns the labels of matching metric
+// metricName is the ruleName in query
+export function getQueryLabelsForRuleName(metricName: string, query: PromVisualQuery): QueryBuilderLabelFilter[] {
+  if (query.metric === metricName) {
+    return query.labels;
+  } else {
+    if (query.binaryQueries) {
+      for (let i = 0; i < query.binaryQueries.length; i++) {
+        const labels = getQueryLabelsForRuleName(metricName, query.binaryQueries[i].query);
+        if (labels && labels.length > 0) {
+          return labels;
+        }
+      }
+    }
+    return [];
+  }
 }
 
 function getQueryTokens(query: string) {
