@@ -180,7 +180,6 @@ func TestExportFromPayload(t *testing.T) {
 		rc.Context.Req.Form.Set("download", "false")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
-		t.Log(response)
 		response.WriteTo(rc)
 
 		require.Equal(t, 200, response.Status())
