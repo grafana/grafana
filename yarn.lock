@@ -2460,36 +2460,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "@floating-ui/react-dom@npm:2.1.0"
+"@floating-ui/react-dom@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "@floating-ui/react-dom@npm:2.1.1"
   dependencies:
     "@floating-ui/dom": "npm:^1.0.0"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10/15be0714379c271ff01347e7c9bcdba96d6b39f3960697380e23de9b9d59fb91ba07bc75b8bdb12d72da7a9272191a9ce73f843a0d5f89939caa9f3137acd8ec
+  checksum: 10/cafabfb5dd0b25547863520b3bcf6faee7f087d0c3187a8779910a6838d496bf494f237bf1fe883bbfae1a7fcc399611ae52377b696065d8118bd7c1b9c0d253
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.16":
-  version: 0.26.16
-  resolution: "@floating-ui/react@npm:0.26.16"
+"@floating-ui/react@npm:0.26.19":
+  version: 0.26.19
+  resolution: "@floating-ui/react@npm:0.26.19"
   dependencies:
-    "@floating-ui/react-dom": "npm:^2.1.0"
-    "@floating-ui/utils": "npm:^0.2.0"
+    "@floating-ui/react-dom": "npm:^2.1.1"
+    "@floating-ui/utils": "npm:^0.2.4"
     tabbable: "npm:^6.0.0"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10/4d5216ba10c05f08a94730c0899578ead75a6cdfa9e531461e8d7ef7fea43d6b5818869c38a3c30c36f2e557c0af58b52b2325248d19029e2a89f34bfcc8c421
+  checksum: 10/709d0bb29fa51e29478ab385064b8601075be22d01b339bf624b603200fce068ca6526e7ee8ddfffb671c46be7d3a37ec742a3a9b35b1a38a42eeeb54cb075fc
   languageName: node
   linkType: hard
 
-"@floating-ui/utils@npm:^0.2.0":
-  version: 0.2.1
-  resolution: "@floating-ui/utils@npm:0.2.1"
-  checksum: 10/33c9ab346e7b05c5a1e6a95bc902aafcfc2c9d513a147e2491468843bd5607531b06d0b9aa56aa491cbf22a6c2495c18ccfc4c0344baec54a689a7bb8e4898d6
+"@floating-ui/utils@npm:^0.2.0, @floating-ui/utils@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "@floating-ui/utils@npm:0.2.4"
+  checksum: 10/7662d7a4ae39c0287e026f666297a3d28c80e588251c8c59ff66938a0aead47d380bbb9018629bd63a98f399c3919ec689d5448a5c48ffc176d545ddef705df1
   languageName: node
   linkType: hard
 
@@ -3371,7 +3371,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@emotion/eslint-plugin": "npm:11.11.0"
-    "@floating-ui/react": "npm:0.26.16"
+    "@floating-ui/react": "npm:0.26.19"
     "@grafana/data": "npm:11.2.0-pre"
     "@grafana/e2e-selectors": "npm:11.2.0-pre"
     "@grafana/experimental": "npm:1.7.12"
@@ -3653,7 +3653,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.4"
     "@faker-js/faker": "npm:^8.4.1"
-    "@floating-ui/react": "npm:0.26.16"
+    "@floating-ui/react": "npm:0.26.19"
     "@grafana/data": "npm:11.2.0-pre"
     "@grafana/e2e-selectors": "npm:11.2.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
@@ -17085,7 +17085,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@emotion/react": "npm:11.11.4"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.26.16"
+    "@floating-ui/react": "npm:0.26.19"
     "@formatjs/intl-durationformat": "npm:^0.2.4"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.3.3"

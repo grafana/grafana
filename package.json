@@ -242,7 +242,7 @@
     "@emotion/css": "11.11.2",
     "@emotion/react": "11.11.4",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/react": "0.26.16",
+    "@floating-ui/react": "0.26.19",
     "@formatjs/intl-durationformat": "^0.2.4",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/aws-sdk": "0.3.3",
