@@ -12,7 +12,7 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	testScenario(t, "When users tries to get query in empty query history, it should return empty result",
+	testScenario(t, "When users tries to get query in empty query history, it should return empty result", false,
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")
 			resp := sc.service.searchHandler(sc.reqContext)
@@ -260,6 +260,13 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 0, response.Result.TotalCount)
+		})
+
+	testScenario(t, "When user is viewer, return 401", true,
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.Req.Form.Add("datasourceUid", "test")
+			resp := sc.service.searchHandler(sc.reqContext)
+			require.Equal(t, 401, resp.Status())
 		})
 
 	testScenarioWithMixedQueriesInQueryHistory(t, "When users tries to get queries with mixed data source it should return correct queries",
