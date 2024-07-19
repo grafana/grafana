@@ -80,14 +80,14 @@ export const DataLinksInlineEditor = ({
       return;
     }
 
-    const copy = [...linksSafe];
-    const link = copy[result.source.index];
+    const update = cloneDeep(linksSafe);
+    const link = update[result.source.index];
 
-    copy.splice(result.source.index, 1);
-    copy.splice(result.destination.index, 0, link);
+    update.splice(result.source.index, 1);
+    update.splice(result.destination.index, 0, link);
 
-    setLinksSafe(copy);
-    onChange(linksSafe);
+    setLinksSafe(update);
+    onChange(update);
   };
 
   const renderFirstLink = (linkJSX: ReactNode, key: string) => {
