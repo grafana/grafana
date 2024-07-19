@@ -999,6 +999,12 @@
       "button": "Migrate this instance to Cloud",
       "header": "Let us manage your Grafana stack"
     },
+    "delete-migration-token-confirm": {
+      "body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
+      "confirm-button": "Delete token",
+      "error-title": "Error deleting token",
+      "title": "Delete migration token"
+    },
     "disconnect-modal": {
       "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
       "cancel": "Cancel",
@@ -1029,6 +1035,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migration-token": {
+      "delete-button": "Delete token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
       "delete-modal-cancel": "Cancel",
       "delete-modal-confirm": "Delete",
@@ -1044,7 +1051,7 @@
       "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
       "modal-field-label": "Token",
       "modal-title": "Migration token created",
-      "status": "Current status: <1></1>"
+      "status": "Current status: <2></2>"
     },
     "pdc": {
       "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
@@ -1092,7 +1099,9 @@
     },
     "token-status": {
       "active": "Token created and active",
-      "no-active": "No active token"
+      "no-active": "No active token",
+      "unknown": "Unknown",
+      "unknown-error": "Error retrieving token"
     },
     "what-is-cloud": {
       "body": "Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments. It's everything you love about Grafana without the overhead of maintaining, upgrading, and supporting an installation.",

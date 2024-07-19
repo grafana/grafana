@@ -8,12 +8,10 @@ import {
   DataFrame,
   DataQueryResponse,
   DataTopic,
-  dateTime,
   EventBus,
   GrafanaTheme2,
   LoadingState,
   SplitOpen,
-  TimeRange,
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
@@ -88,9 +86,10 @@ export const LogsVolumePanelList = ({
 
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
 
-  const from = dateTime(Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from));
-  const to = dateTime(Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to));
-  const visibleRange: TimeRange = { from, to, raw: { from, to } };
+  const visibleRange = {
+    from: Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from),
+    to: Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to),
+  };
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
@@ -127,7 +126,7 @@ export const LogsVolumePanelList = ({
           <LogsVolumePanel
             toggleLegendRef={toggleLegendRef}
             key={index}
-            timeRange={visibleRange}
+            absoluteRange={visibleRange}
             allLogsVolumeMaximum={allLogsVolumeMaximumValue}
             width={width}
             logsVolumeData={logsVolumeData}
