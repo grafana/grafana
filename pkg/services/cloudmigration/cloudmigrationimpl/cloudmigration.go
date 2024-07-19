@@ -511,7 +511,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		s.cancelFunc = cancelFunc
 
-		if err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, snapshot); err != nil {
+		if err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot); err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
