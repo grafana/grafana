@@ -57,18 +57,13 @@ jobs:
         echo dry run: ${{ needs.setup.outputs.dry_run }}
   create_github_release:
     # a github release requires a git tag
+    # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
+    # endpoint.
     needs: setup
     uses: ./.github/workflows/github-release.yml
     with:
       version: ${{ needs.setup.outputs.version }}
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
-  publish_docs:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-    - run: |
-        echo publish docs for ${{ needs.setup.outputs.version }}
-        echo dry run: ${{ needs.setup.outputs.dry_run }}
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest
