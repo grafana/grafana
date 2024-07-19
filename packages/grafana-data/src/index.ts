@@ -795,6 +795,7 @@ export {
   VariableSuggestionsScope,
   OneClickMode,
 } from './types/dataLink';
+export { type Action } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
   FieldType,
