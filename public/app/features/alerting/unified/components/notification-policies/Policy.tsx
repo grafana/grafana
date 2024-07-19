@@ -23,6 +23,7 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
+import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import {
   AlertmanagerGroup,
   MatcherOperator,
@@ -1020,9 +1021,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1.5),
   }),
 });
-
-// This is a convencience component to deal with I18n shenanigans
-// see https://github.com/grafana/grafana/blob/main/contribute/internationalization.md#jsx
-const PrimaryText = ({ content }: { content: string }) => <Text color="primary">{content}</Text>;
 
 export { Policy };
