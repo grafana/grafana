@@ -215,10 +215,11 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   prepareRow(row);
 
   const dashboardItem = row.original.item;
+  const { key, ...rowProps } = row.getRowProps({ style });
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'divider') {
     return (
-      <div {...row.getRowProps({ style })}>
+      <div key={key} {...rowProps}>
         <hr className={styles.divider} />
       </div>
     );
@@ -226,7 +227,8 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
   return (
     <div
-      {...row.getRowProps({ style })}
+      key={key}
+      {...rowProps}
       className={cx(styles.row, styles.bodyRow)}
       aria-labelledby={makeRowID(treeID, dashboardItem)}
       data-testid={selectors.pages.BrowseDashboards.table.row(

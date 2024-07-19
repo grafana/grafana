@@ -68,6 +68,12 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   mounted = false;
   editor: Editor | null = null;
 
+  // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+  // And slate will claim the focus, making it impossible to leave the field.
+  static defaultProps = {
+    onBlur: () => {},
+  };
+
   constructor(props: QueryFieldProps) {
     super(props);
 
@@ -235,12 +241,6 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
 }
 
 export const QueryField = withTheme2(UnThemedQueryField);
-
-// By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-// And slate will claim the focus, making it impossible to leave the field.
-QueryField.defaultProps = {
-  onBlur: () => {},
-};
 
 const getStyles = (theme: GrafanaTheme2) => {
   const focusStyles = getFocusStyles(theme);
