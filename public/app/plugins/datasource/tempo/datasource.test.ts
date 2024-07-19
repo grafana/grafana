@@ -43,8 +43,8 @@ import {
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
-import { createMetadataRequest, createTempoDatasource } from './mocks';
-import { initTemplateSrv } from './test_utils';
+import { createMetadataRequest, createTempoDatasource } from './test/mocks';
+import { initTemplateSrv } from './test/test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
 let mockObservable: () => Observable<unknown>;

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { initTemplateSrv } from '../test_utils';
+import { initTemplateSrv } from '../test/test_utils';
 import { TempoQuery } from '../types';
 
 import { GroupByField } from './GroupByField';

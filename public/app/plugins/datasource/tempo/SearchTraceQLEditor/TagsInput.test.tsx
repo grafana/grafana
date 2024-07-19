@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { initTemplateSrv } from '../test_utils';
+import { initTemplateSrv } from '../test/test_utils';
 import { Scope } from '../types';
 
 import TagsInput from './TagsInput';
