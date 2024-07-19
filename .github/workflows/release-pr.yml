@@ -30,7 +30,7 @@ on:
         type: bool
 
 permissions:
-  content: write
+  contents: write
   pull-requests: write
 
 jobs:
