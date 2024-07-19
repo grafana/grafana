@@ -267,7 +267,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
 
 	client := &http.Client{
-		Timeout: c.cfg.CloudMigration.GMSGetSnapshotStatusTimeout,
+		Timeout: c.cfg.CloudMigration.GMSReportEventTimeout,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
