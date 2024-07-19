@@ -357,7 +357,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			)
 
 			// token refresh
-			err := env.service.TryTokenRefresh(context.Background(), env.identity)
+			_, err := env.service.TryTokenRefresh(context.Background(), env.identity)
 
 			// test and validations
 			assert.ErrorIs(t, err, tt.expectedErr)

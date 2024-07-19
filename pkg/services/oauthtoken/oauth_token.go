@@ -45,7 +45,7 @@ type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error)
-	TryTokenRefresh(context.Context, identity.Requester) error
+	TryTokenRefresh(context.Context, identity.Requester) (*oauth2.Token, error)
 	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
 
@@ -66,7 +66,20 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		return nil
 	}
 
-	token, err := o.tryGetOrRefreshOAuthToken(ctx, authInfo)
+	if err := checkOAuthRefreshToken(authInfo); err != nil {
+		if errors.Is(err, ErrNoRefreshTokenFound) {
+			return buildOAuthTokenFromAuthInfo(authInfo)
+		}
+
+		return nil
+	}
+
+	persistedToken, refreshNeeded := needTokenRefresh(authInfo)
+	if !refreshNeeded {
+		return persistedToken
+	}
+
+	token, err := o.TryTokenRefresh(ctx, usr)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
 			return buildOAuthTokenFromAuthInfo(authInfo)
@@ -125,18 +138,18 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a server lock to prevent getting the Refresh Token multiple times for a given User
-func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) error {
+func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
 	if usr == nil || usr.IsNil() {
 		logger.Warn("Can only refresh OAuth tokens for existing users", "user", "nil")
 		// Not user, no token.
-		return nil
+		return nil, nil
 	}
 
 	namespace, id := usr.GetNamespacedID()
 	if namespace != identity.NamespaceUser {
 		// Not a user, therefore no token.
 		logger.Warn("Can only refresh OAuth tokens for users", "namespace", namespace, "userId", id)
-		return nil
+		return nil, nil
 	}
 
 	ctxLogger := logger.FromContext(ctx)
@@ -144,7 +157,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 	userID, err := identity.IntIdentifier(namespace, id)
 	if err != nil {
 		ctxLogger.Warn("Failed to convert user id to int", "namespace", namespace, "userId", id, "error", err)
-		return nil
+		return nil, nil
 	}
 
 	ctxLogger = ctxLogger.New("userID", userID)
@@ -164,6 +177,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		return ErrCouldntRefreshToken
 	}
 
+	var newToken *oauth2.Token
 	var cmdErr error
 
 	lockErr := o.serverLock.LockExecuteAndReleaseWithRetries(ctx, lockKey, lockTimeConfig, func(ctx context.Context) {
@@ -196,19 +210,19 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 			return
 		}
 
-		_, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, authInfo)
+		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, authInfo)
 	}, retryOpt)
 	if lockErr != nil {
 		ctxLogger.Error("Failed to obtain token refresh lock", "error", err)
-		return lockErr
+		return nil, lockErr
 	}
 
 	// Silence ErrNoRefreshTokenFound
 	if errors.Is(cmdErr, ErrNoRefreshTokenFound) {
-		return nil
+		return nil, nil
 	}
 
-	return cmdErr
+	return newToken, cmdErr
 }
 
 func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
@@ -243,11 +257,11 @@ func checkOAuthRefreshToken(authInfo *login.UserAuth) error {
 }
 
 // InvalidateOAuthTokens invalidates the OAuth tokens (access_token, refresh_token) and sets the Expiry to default/zero
-func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth) error {
+func (o *Service) InvalidateOAuthTokens(ctx context.Context, authInfo *login.UserAuth) error {
 	return o.AuthInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
-		UserId:     usr.UserId,
-		AuthModule: usr.AuthModule,
-		AuthId:     usr.AuthId,
+		UserId:     authInfo.UserId,
+		AuthModule: authInfo.AuthModule,
+		AuthId:     authInfo.AuthId,
 		OAuthToken: &oauth2.Token{
 			AccessToken:  "",
 			RefreshToken: "",
@@ -256,29 +270,29 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth
 	})
 }
 
-func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, usr *login.UserAuth) (*oauth2.Token, error) {
-	ctxLogger := logger.FromContext(ctx).New("userID", usr.UserId)
+func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, authInfo *login.UserAuth) (*oauth2.Token, error) {
+	ctxLogger := logger.FromContext(ctx).New("userID", authInfo.UserId)
 
-	if err := checkOAuthRefreshToken(usr); err != nil {
+	if err := checkOAuthRefreshToken(authInfo); err != nil {
 		return nil, err
 	}
 
-	persistedToken, refreshNeeded := needTokenRefresh(usr)
+	persistedToken, refreshNeeded := needTokenRefresh(authInfo)
 	if !refreshNeeded {
 		return persistedToken, nil
 	}
 
-	authProvider := usr.AuthModule
+	authProvider := authInfo.AuthModule
 	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth connector", "provider", authProvider, "error", err)
-		return nil, err
+		return persistedToken, err
 	}
 
 	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth http client", "provider", authProvider, "error", err)
-		return nil, err
+		return persistedToken, err
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
@@ -290,22 +304,28 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, usr *login.User
 
 	if err != nil {
 		ctxLogger.Error("Failed to retrieve oauth access token",
-			"provider", usr.AuthModule, "userId", usr.UserId, "error", err)
+			"provider", authInfo.AuthModule, "userId", authInfo.UserId, "error", err)
+
+		// token refresh failed, invalidate the old token
+		if err := o.InvalidateOAuthTokens(ctx, authInfo); err != nil {
+			ctxLogger.Warn("Failed to invalidate OAuth tokens", "id", authInfo.Id, "error", err)
+		}
+
 		return nil, err
 	}
 
 	// If the tokens are not the same, update the entry in the DB
 	if !tokensEq(persistedToken, token) {
 		updateAuthCommand := &login.UpdateAuthInfoCommand{
-			UserId:     usr.UserId,
-			AuthModule: usr.AuthModule,
-			AuthId:     usr.AuthId,
+			UserId:     authInfo.UserId,
+			AuthModule: authInfo.AuthModule,
+			AuthId:     authInfo.AuthId,
 			OAuthToken: token,
 		}
 
 		if o.Cfg.Env == setting.Dev {
 			ctxLogger.Debug("Oauth got token",
-				"auth_module", usr.AuthModule,
+				"auth_module", authInfo.AuthModule,
 				"expiry", fmt.Sprintf("%v", token.Expiry),
 				"access_token", fmt.Sprintf("%v", token.AccessToken),
 				"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
@@ -313,8 +333,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, usr *login.User
 		}
 
 		if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
-			ctxLogger.Error("Failed to update auth info during token refresh", "userId", usr.UserId, "error", err)
-			return nil, err
+			ctxLogger.Error("Failed to update auth info during token refresh", "userId", authInfo.UserId, "error", err)
+			return token, err
 		}
 		ctxLogger.Debug("Updated oauth info for user")
 	}
@@ -354,11 +374,12 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1IdToken == t2IdToken
 }
 
-func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool) {
+func needTokenRefresh(authInfo *login.UserAuth) (*oauth2.Token, bool) {
 	var hasAccessTokenExpired, hasIdTokenExpired bool
 
-	persistedToken := buildOAuthTokenFromAuthInfo(usr)
-	idTokenExp, err := getIDTokenExpiry(usr)
+	persistedToken := buildOAuthTokenFromAuthInfo(authInfo)
+
+	idTokenExp, err := getIDTokenExpiry(authInfo.OAuthIdToken)
 	if err != nil {
 		logger.Warn("Could not get ID Token expiry", "error", err)
 	}
@@ -369,7 +390,7 @@ func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool) {
 		_, hasIdTokenExpired = getExpiryWithSkew(idTokenExp)
 	}
 	if !hasAccessTokenExpired && !hasIdTokenExpired {
-		logger.Debug("Neither access nor id token have expired yet", "userID", usr.UserId)
+		logger.Debug("Neither access nor id token have expired yet", "userID", authInfo.UserId)
 		return persistedToken, false
 	}
 	if hasIdTokenExpired {
@@ -380,12 +401,12 @@ func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool) {
 }
 
 // getIDTokenExpiry extracts the expiry time from the ID token
-func getIDTokenExpiry(usr *login.UserAuth) (time.Time, error) {
-	if usr.OAuthIdToken == "" {
+func getIDTokenExpiry(idToken string) (time.Time, error) {
+	if idToken == "" {
 		return time.Time{}, nil
 	}
 
-	parsedToken, err := jwt.ParseSigned(usr.OAuthIdToken)
+	parsedToken, err := jwt.ParseSigned(idToken)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing id token: %w", err)
 	}
