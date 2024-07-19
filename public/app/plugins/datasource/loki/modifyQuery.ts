@@ -3,25 +3,25 @@ import { sortBy } from 'lodash';
 
 import { QueryBuilderLabelFilter } from '@grafana/experimental';
 import {
-  Expr,
   Identifier,
-  JsonExpressionParser,
   LabelFilter,
-  LabelFormatExpr,
   LabelParser,
   LineComment,
   LineFilters,
   LogExpr,
-  LogfmtExpressionParser,
-  LogfmtParser,
   LogRangeExpr,
   Matcher,
   parser,
   PipelineExpr,
-  PipelineStage,
   Selector,
-  String,
   UnwrapExpr,
+  String,
+  PipelineStage,
+  LogfmtParser,
+  JsonExpressionParser,
+  LogfmtExpressionParser,
+  Expr,
+  LabelFormatExpr,
 } from '@grafana/lezer-logql';
 
 import { unescapeLabelValue } from './languageUtils';
@@ -162,7 +162,6 @@ export function addLabelToQuery(
 
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
-
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
   // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
   const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
@@ -635,7 +634,7 @@ function getMatcherInStreamPositions(query: string): NodePosition[] {
   return positions;
 }
 
-function getIdentifierInStreamPositions(query: string): NodePosition[] {
+export function getIdentifierInStreamPositions(query: string): NodePosition[] {
   const tree = parser.parse(query);
   const positions: NodePosition[] = [];
   tree.iterate({

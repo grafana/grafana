@@ -6,6 +6,7 @@ import {
   addLineFilter,
   addNoPipelineErrorToQuery,
   addParserToQuery,
+  getIdentifierInStreamPositions,
   getStreamSelectorPositions,
   NodePosition,
   queryHasFilter,
@@ -365,20 +366,6 @@ describe.each(['|=', '!='])('addLineFilter type %s', (op: string) => {
 });
 
 describe('getStreamSelectorPositions', () => {
-  it('should parse position of stream selector', () => {
-    expect(getStreamSelectorPositions('{service_name=`grafana/hosted-grafana-gateway`} | logfmt')).toEqual([
-      {
-        from: 0,
-        to: 47,
-        type: {
-          name: 'Selector',
-          props: {},
-          id: 40,
-          flags: 0,
-        },
-      },
-    ]);
-  });
   it('should parse position of stream selectors', () => {
     expect(
       getStreamSelectorPositions('sum(rate({x="y", bar="baz"} | logfmt [5m])) + sum(rate({x="y", bar="baz"} [5m]))')
@@ -400,6 +387,62 @@ describe('getStreamSelectorPositions', () => {
           name: 'Selector',
           props: {},
           id: 40,
+          flags: 0,
+        },
+      },
+    ]);
+  });
+});
+describe('getIdentifierInStreamPositions', () => {
+  it('should parse position of stream selectors', () => {
+    const indexedKeys = ['x', 'bar'];
+    const expr = `sum(rate({${indexedKeys[0]}="y", ${indexedKeys[1]}="baz"} | logfmt | x |= "x=y" |= "bar=baz" [5m])) + sum(rate({${indexedKeys[0]}="y", ${indexedKeys[1]}="baz"} [5m]))`;
+    const identifiers = getIdentifierInStreamPositions(expr);
+    identifiers.forEach((identifier, index) => {
+      expect(identifier.getExpression(expr)).toEqual(indexedKeys[index % 2]);
+    });
+    expect(identifiers).toEqual([
+      //x1
+      {
+        from: 10,
+        to: 11,
+        type: {
+          name: 'Identifier',
+          props: {},
+          id: 43,
+          flags: 0,
+        },
+      },
+      //bar1
+      {
+        from: 17,
+        to: 20,
+        type: {
+          name: 'Identifier',
+          props: {},
+          id: 43,
+          flags: 0,
+        },
+      },
+      //x2
+      {
+        from: 82,
+        to: 83,
+        type: {
+          name: 'Identifier',
+          props: {},
+          id: 43,
+          flags: 0,
+        },
+      },
+      //bar2
+      {
+        from: 89,
+        to: 92,
+        type: {
+          name: 'Identifier',
+          props: {},
+          id: 43,
           flags: 0,
         },
       },
