@@ -121,14 +121,15 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       }
 
       builder.addRadio({
-        category: ['Data links'],
+        category: ['Data links and actions'],
         path: 'oneClickMode',
         name: 'One-click',
-        description: 'When enabled, a single click opens first link',
+        description: 'When enabled, a single click opens first link or action',
         settings: {
           options: [
             { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
             { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
+            { value: OneClickMode.Action, label: capitalize(OneClickMode.Action) },
           ],
         },
         defaultValue: OneClickMode.Off,
