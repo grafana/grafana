@@ -87,7 +87,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
             {grafanaRecordingRulesEnabled && (
               <LinkButton
                 href={createUrl('/alerting/new/grafana-recording', {
-                  returnTo: location.pathname + location.search,
+                  returnTo: '/alerting/list' + location.search,
                 })}
                 icon="plus"
                 variant="secondary"
