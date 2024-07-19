@@ -160,11 +160,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	responseOpts := ResponseOpts{
-		metricDataplane: s.features.IsEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
-		logsDataplane:   s.features.IsEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
+		metricDataplane: backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(featuremgmt.FlagLokiMetricDataplane),
+		logsDataplane:   backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(featuremgmt.FlagLokiRunQueriesInParallel), backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(featuremgmt.FlagLokiStructuredMetadata))
 }
 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
