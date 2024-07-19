@@ -235,6 +235,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
+    this.state.panel.setState({
+      pluginId,
+    });
+
     this.state.panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
     this.loadDataSource();
   }
