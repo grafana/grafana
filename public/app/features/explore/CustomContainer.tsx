@@ -1,4 +1,6 @@
-import { DataFrame, EventBus, LoadingState, SplitOpen, TimeRange } from '@grafana/data';
+import { useMemo } from 'react';
+
+import { AbsoluteTimeRange, DataFrame, dateTime, EventBus, LoadingState, SplitOpen } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { PanelChrome, PanelContext, PanelContextProvider } from '@grafana/ui';
 
@@ -12,7 +14,7 @@ export interface Props {
   timeZone: string;
   pluginId: string;
   frames: DataFrame[];
-  timeRange: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   state: LoadingState;
   splitOpenFn: SplitOpen;
   eventBus: EventBus;
@@ -25,10 +27,22 @@ export function CustomContainer({
   state,
   pluginId,
   frames,
-  timeRange,
+  absoluteRange,
   splitOpenFn,
   eventBus,
 }: Props) {
+  const timeRange = useMemo(
+    () => ({
+      from: dateTime(absoluteRange.from),
+      to: dateTime(absoluteRange.to),
+      raw: {
+        from: dateTime(absoluteRange.from),
+        to: dateTime(absoluteRange.to),
+      },
+    }),
+    [absoluteRange.from, absoluteRange.to]
+  );
+
   const plugin = getPanelPluginMeta(pluginId);
 
   const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);

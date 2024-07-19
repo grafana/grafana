@@ -67,13 +67,13 @@
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
   },
   "devDependencies": {
-    "@babel/core": "7.24.7",
-    "@babel/preset-env": "7.24.7",
-    "@babel/runtime": "7.24.7",
+    "@babel/core": "7.24.9",
+    "@babel/preset-env": "7.24.8",
+    "@babel/runtime": "7.24.8",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
     "@betterer/eslint": "5.4.0",
-    "@cypress/webpack-preprocessor": "6.0.1",
+    "@cypress/webpack-preprocessor": "6.0.2",
     "@emotion/eslint-plugin": "11.11.0",
     "@grafana/eslint-config": "7.0.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
