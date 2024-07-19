@@ -4,15 +4,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Field, Input, Stack, Text } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRulebyType } from '../../utils/rules';
+import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';
 
 const recordingRuleNameValidationPattern = (type: RuleFormType) => ({
-  message:
-    type === RuleFormType.grafanaRecording
-      ? 'Recording rule metric must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
-      : 'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+  message: isGrafanaRecordingRuleByType(type)
+    ? 'Recording rule metric must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
+    : 'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
 });
 
@@ -31,7 +30,7 @@ export const AlertRuleNameAndMetric = () => {
   if (!ruleFormType) {
     return null;
   }
-  const isRecording = isRecordingRulebyType(ruleFormType);
+  const isRecording = isRecordingRuleByType(ruleFormType);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(ruleFormType);
   const isCloudRecordingRule = isCloudRecordingRuleByType(ruleFormType);
   const recordingLabel = isGrafanaRecordingRule ? 'recording rule and metric' : 'recording rule';
