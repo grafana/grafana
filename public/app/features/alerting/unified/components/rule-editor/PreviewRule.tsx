@@ -13,7 +13,7 @@ import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
 import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { isDatatSourceManagedRuleByType } from '../../utils/rules';
+import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
@@ -26,7 +26,7 @@ export function PreviewRule(): React.ReactElement | null {
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
   const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
-  if (!type || isDatatSourceManagedRuleByType(type)) {
+  if (!type || isDataSourceManagedRuleByType(type)) {
     return null;
   }
 

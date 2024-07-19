@@ -8,7 +8,7 @@ import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { isRecordingRulebyType } from '../../utils/rules';
+import { isRecordingRuleByType } from '../../utils/rules';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -56,7 +56,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   return (
     <RuleEditorSection
       stepNo={4}
-      title={isRecordingRulebyType(type) ? 'Add labels' : 'Configure labels and notifications'}
+      title={isRecordingRuleByType(type) ? 'Add labels' : 'Configure labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
           {type === RuleFormType.cloudRecording ? (

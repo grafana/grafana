@@ -350,22 +350,30 @@ export function getRuleGroupLocationFromRuleWithLocation(rule: RuleWithLocation)
   };
 }
 
-export function isGrafanaManagedRuleByType(type: RuleFormType) {
-  return type === RuleFormType.grafana || type === RuleFormType.grafanaRecording;
-}
-
-export function isRecordingRulebyType(type: RuleFormType) {
-  return type === RuleFormType.grafanaRecording || type === RuleFormType.cloudRecording;
+export function isGrafanaAlertingRuleByType(type?: RuleFormType) {
+  return type === RuleFormType.grafana;
 }
 
 export function isGrafanaRecordingRuleByType(type: RuleFormType) {
   return type === RuleFormType.grafanaRecording;
 }
 
-export function isCloudRecordingRuleByType(type: RuleFormType) {
+export function isCloudAlertingRuleByType(type?: RuleFormType) {
+  return type === RuleFormType.cloudAlerting;
+}
+
+export function isCloudRecordingRuleByType(type?: RuleFormType) {
   return type === RuleFormType.cloudRecording;
 }
 
-export function isDatatSourceManagedRuleByType(type: RuleFormType) {
-  return type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording;
+export function isGrafanaManagedRuleByType(type: RuleFormType) {
+  return isGrafanaAlertingRuleByType(type) || isGrafanaRecordingRuleByType(type);
+}
+
+export function isRecordingRuleByType(type: RuleFormType) {
+  return isGrafanaRecordingRuleByType(type) || isCloudRecordingRuleByType(type);
+}
+
+export function isDataSourceManagedRuleByType(type: RuleFormType) {
+  return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
 }

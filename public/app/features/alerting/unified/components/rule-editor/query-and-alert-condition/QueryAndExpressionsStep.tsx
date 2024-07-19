@@ -18,7 +18,13 @@ import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
-import { isDatatSourceManagedRuleByType, isGrafanaManagedRuleByType } from '../../../utils/rules';
+import {
+  isCloudAlertingRuleByType,
+  isCloudRecordingRuleByType,
+  isDataSourceManagedRuleByType,
+  isGrafanaAlertingRuleByType,
+  isGrafanaManagedRuleByType,
+} from '../../../utils/rules';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -71,9 +77,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
-  const isGrafanaAlertingType = type === RuleFormType.grafana;
-  const isRecordingRuleType = type === RuleFormType.cloudRecording;
-  const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
+  const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
+  const isRecordingRuleType = isCloudRecordingRuleByType(type);
+  const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
 
   const dispatchReduxAction = useDispatch();
   useEffect(() => {
@@ -384,7 +390,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
     >
       {/* This is the cloud data source selector */}
-      {isDatatSourceManagedRuleByType(type) && (
+      {isDataSourceManagedRuleByType(type) && (
         <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
       )}
 

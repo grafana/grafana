@@ -66,7 +66,7 @@ import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
 import {
   getAlertInfo,
-  isDatatSourceManagedRuleByType,
+  isDataSourceManagedRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isRulerNotSupportedResponse,
@@ -372,7 +372,7 @@ export const saveRuleFormAction = createAsyncThunk(
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
 
-          if (isDatatSourceManagedRuleByType(type)) {
+          if (isDataSourceManagedRuleByType(type)) {
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
             }

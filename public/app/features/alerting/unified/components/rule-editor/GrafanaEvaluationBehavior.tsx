@@ -5,12 +5,13 @@ import { Controller, RegisterOptions, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { isGrafanaAlertingRuleByType } from 'app/features/alerting/unified/utils/rules';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -292,6 +293,8 @@ export function GrafanaEvaluationBehavior({
   const isPaused = watch('isPaused');
   const type = watch('type');
 
+  const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
+
   return (
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection stepNo={3} title="Set evaluation behavior" description={getDescription()}>
@@ -302,7 +305,7 @@ export function GrafanaEvaluationBehavior({
           enableProvisionedGroups={enableProvisionedGroups}
         />
         {/* Show the pending period input only for Grafana alerting rules */}
-        {type === RuleFormType.grafana && <ForInput evaluateEvery={evaluateEvery} />}
+        {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -329,7 +332,7 @@ export function GrafanaEvaluationBehavior({
           </Field>
         )}
       </Stack>
-      {type === RuleFormType.grafana && (
+      {isGrafanaAlertingRule && (
         <>
           <CollapseToggle
             isCollapsed={!showErrorHandling}

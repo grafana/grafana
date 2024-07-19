@@ -17,6 +17,7 @@ import {
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
+  isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
@@ -270,9 +271,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
                   {/* Annotations only for cloud and Grafana */}
-                  {type !== RuleFormType.cloudRecording && type !== RuleFormType.grafanaRecording && (
-                    <AnnotationsStep />
-                  )}
+                  {!isRecordingRuleByType(type) && <AnnotationsStep />}
                 </>
               )}
             </Stack>
