@@ -89,7 +89,7 @@
     "@rtk-query/codegen-openapi": "^1.2.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@swc/core": "1.4.2",
-    "@swc/helpers": "0.5.11",
+    "@swc/helpers": "0.5.12",
     "@testing-library/dom": "10.0.0",
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "15.0.2",
