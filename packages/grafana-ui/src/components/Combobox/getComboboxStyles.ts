@@ -15,6 +15,16 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       height: 400,
       overflowY: 'scroll',
     }),
+    menuContainer: css({
+      label: 'grafana-select-value-container',
+      // alignItems: 'center',
+      // display: 'grid',
+      // position: 'relative',
+      // boxSizing: 'border-box',
+      // flex: '1 1 0%',
+      // outline: 'none',
+      // overflow: 'hidden',
+    }),
     option: css({
       label: 'grafana-select-option',
       padding: '8px',
@@ -75,16 +85,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       backgroundColor: theme.colors.action.disabledBackground,
       color: theme.colors.action.disabledText,
       cursor: 'not-allowed',
-    }),
-    valueContainer: css({
-      label: 'grafana-select-value-container',
-      alignItems: 'center',
-      display: 'grid',
-      position: 'relative',
-      boxSizing: 'border-box',
-      flex: '1 1 0%',
-      outline: 'none',
-      overflow: 'hidden',
     }),
   };
 };
