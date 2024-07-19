@@ -50,7 +50,6 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef(null);
-
   const styles = useStyles2(getComboboxStyles);
 
   const rowVirtualizer = useVirtualizer({
@@ -95,7 +94,8 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   });
 
   const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_WIDTH;
-
+  console.log('size', rowVirtualizer.getTotalSize());
+  console.log('virtualizer', rowVirtualizer);
   return (
     <div>
       {/* @ts-expect-error */}
@@ -110,7 +110,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
         {...getMenuProps({ ref: floatingRef })}
       >
         {isOpen && (
-          <ul style={{ height: rowVirtualizer.getTotalSize() }}>
+          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
@@ -123,6 +123,9 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                     selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
                     highlightedIndex === virtualRow.index && styles.optionFocused
                   )}
+                  style={{
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
                 >
                   <div className={styles.optionBody}>
                     <span>{items[virtualRow.index].label}</span>

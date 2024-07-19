@@ -14,25 +14,37 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     menuHeight: css({
       height: 400,
       overflowY: 'scroll',
+      position: 'relative',
+    }),
+    menuUlContainer: css({
+      label: 'grafana-select-menu-ul-container',
+      listStyle: 'none',
     }),
     option: css({
       label: 'grafana-select-option',
-      padding: '8px',
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      flexDirection: 'row',
-      flexShrink: 0,
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       borderLeft: '2px solid transparent',
-
+      padding: theme.spacing.x1,
+      boxSizing: 'border-box',
+      height: 'auto',
       '&:hover': {
         background: theme.colors.action.hover,
         '@media (forced-colors: active), (prefers-contrast: more)': {
           border: `1px solid ${theme.colors.primary.border}`,
         },
       },
+    }),
+    optionBody: css({
+      label: 'grafana-select-option-body',
+      display: 'flex',
+      fontWeight: theme.typography.fontWeightMedium,
+      flexDirection: 'column',
+      flexGrow: 1,
     }),
     optionDescription: css({
       label: 'grafana-select-option-description',
@@ -42,15 +54,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'normal',
       lineHeight: theme.typography.body.lineHeight,
     }),
-    optionBody: css({
-      label: 'grafana-select-option-body',
-      display: 'flex',
-      fontWeight: theme.typography.fontWeightMedium,
-      flexDirection: 'column',
-      flexGrow: 1,
-    }),
     optionFocused: css({
       label: 'grafana-select-option-focused',
+      top: 0,
       background: theme.colors.action.focus,
       '@media (forced-colors: active), (prefers-contrast: more)': {
         border: `1px solid ${theme.colors.primary.border}`,
@@ -68,13 +74,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         transform: 'translateX(-50%)',
         width: theme.spacing(0.5),
         left: 0,
+        top: 0,
       },
-    }),
-    optionDisabled: css({
-      label: 'grafana-select-option-disabled',
-      backgroundColor: theme.colors.action.disabledBackground,
-      color: theme.colors.action.disabledText,
-      cursor: 'not-allowed',
     }),
   };
 };
