@@ -18,15 +18,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
-
-var eslog = log.New("tsdb.elasticsearch")
 
 const (
 	// headerFromExpression is used by data sources to identify expression queries
@@ -40,21 +38,21 @@ const (
 type Service struct {
 	im     instancemgmt.InstanceManager
 	tracer tracing.Tracer
-	logger *log.ConcreteLogger
+	logger log.Logger
 }
 
 func ProvideService(httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		tracer: tracer,
-		logger: eslog,
+		logger: backend.NewLoggerWith("logger", "tsdb.elasticsearch"),
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[headerFromAlert]
-	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
+	logger := s.logger.FromContext(ctx).With("fromAlert", fromAlert)
 
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
@@ -193,7 +191,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger := eslog.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
