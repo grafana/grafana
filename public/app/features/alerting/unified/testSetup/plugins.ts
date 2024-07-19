@@ -1,5 +1,6 @@
 import { PluginMeta, PluginType } from '@grafana/data';
 import { setPluginExtensionsHook } from '@grafana/runtime';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { mockPluginLinkExtension } from '../mocks';
 
@@ -18,7 +19,7 @@ export function setupPluginsExtensionsHook() {
 
 export const plugins: PluginMeta[] = [
   {
-    id: 'grafana-slo-app',
+    id: SupportedPlugin.Slo,
     name: 'SLO dashboard',
     type: PluginType.app,
     enabled: true,
@@ -41,7 +42,7 @@ export const plugins: PluginMeta[] = [
     baseUrl: 'public/plugins/grafana-slo-app',
   },
   {
-    id: 'grafana-incident-app',
+    id: SupportedPlugin.Incident,
     name: 'Incident management',
     type: PluginType.app,
     enabled: true,
@@ -87,7 +88,7 @@ export const plugins: PluginMeta[] = [
     baseUrl: 'public/plugins/grafana-asserts-app',
   },
   {
-    id: 'grafana-oncall-app',
+    id: SupportedPlugin.OnCall,
     name: 'OnCall',
     type: PluginType.app,
     enabled: true,
