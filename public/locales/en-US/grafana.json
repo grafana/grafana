@@ -1970,6 +1970,14 @@
       "copy-button": "Copy to Clipboard"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "share-link-title": "Link settings"
+    },
+    "menu": {
+      "share-link-title": "Link"
+    }
+  },
   "share-playlist": {
     "checkbox-description": "Panel heights will be adjusted to fit screen size",
     "checkbox-label": "Autofit",

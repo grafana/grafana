@@ -1970,6 +1970,14 @@
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "share-link-title": "Ŀįŉĸ şęŧŧįŉģş"
+    },
+    "menu": {
+      "share-link-title": "Ŀįŉĸ"
+    }
+  },
   "share-playlist": {
     "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
     "checkbox-label": "Åūŧőƒįŧ",

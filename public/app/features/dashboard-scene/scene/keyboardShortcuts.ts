@@ -2,6 +2,7 @@ import { SetPanelAttentionEvent } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
@@ -52,7 +53,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p u',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         const drawer = new ShareDrawer({
-          title: 'Link settings',
+          title: t('share-panel.drawer.share-link-title', 'Link settings'),
           body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
         });
 

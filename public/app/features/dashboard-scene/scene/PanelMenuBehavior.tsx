@@ -84,12 +84,12 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (config.featureToggles.newDashboardSharingComponent) {
       const subMenu: PanelMenuItem[] = [];
       subMenu.push({
-        text: 'Link',
+        text: t('share-panel.menu.share-link-title', 'Link'),
         iconClassName: 'link',
         shortcut: 'p u',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: 'Link settings',
+            title: t('share-panel.drawer.share-link-title', 'Link settings'),
             body: new SharePanelInternally({ panelRef: panel.getRef() }),
           });
 
