@@ -63,6 +63,7 @@ export class GrafanaJavascriptAgentBackend
       globalObjectKey: options.globalObjectKey || 'faro',
       preventGlobalExposure: options.preventGlobalExposure || false,
       app: {
+        name: 'grafana-frontend',
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
@@ -73,6 +74,7 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
       ],
+      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), /frontend-metrics/],
       sessionTracking: {
         persistent: true,
       },
