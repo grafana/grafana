@@ -50,7 +50,7 @@
     "@lezer/highlight": "1.2.0",
     "@lezer/lr": "1.4.0",
     "@prometheus-io/lezer-promql": "0.52.1",
-    "@reduxjs/toolkit": "2.2.5",
+    "@reduxjs/toolkit": "2.2.6",
     "d3": "7.9.0",
     "date-fns": "3.6.0",
     "debounce-promise": "3.1.2",
