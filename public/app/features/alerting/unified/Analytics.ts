@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/core';
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { getSearchFilterFromQuery, RulesFilter } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
@@ -24,6 +25,7 @@ export const LogMessages = {
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
+  loadedCentralAlertStateHistory: 'loaded central alert state history',
 };
 
 const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
@@ -253,6 +255,17 @@ export function trackUseCustomInputInTemplate() {
 }
 export function trackUseSingleTemplateInInput() {
   reportInteraction('grafana_alerting_contact_point_form_use_single_template_in_input');
+}
+export function trackUseCentralHistoryFilterByClicking(payload: { type: FilterType; key: string; value: string }) {
+  reportInteraction('grafana_alerting_central_alert_state_history_filter_by_clicking', payload);
+}
+
+export function trackUseCentralHistoryExpandRow() {
+  reportInteraction('grafana_alerting_central_alert_state_history_expand_row');
+}
+
+export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; to: number }) {
+  reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
 }
 
 export type AlertRuleTrackingProps = {
