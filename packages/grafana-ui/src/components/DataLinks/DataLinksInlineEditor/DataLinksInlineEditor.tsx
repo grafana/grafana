@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { ReactNode, useEffect, useState } from 'react';
 
-import { DataFrame, DataLink, OneClickMode, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Button } from '../../Button';
@@ -17,7 +17,7 @@ interface DataLinksInlineEditorProps {
   onChange: (links: DataLink[]) => void;
   getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
-  oneClickMode?: OneClickMode;
+  showOneClick?: boolean;
 }
 
 export const DataLinksInlineEditor = ({
@@ -25,7 +25,7 @@ export const DataLinksInlineEditor = ({
   onChange,
   getSuggestions,
   data,
-  oneClickMode = OneClickMode.Off,
+  showOneClick = false,
 }: DataLinksInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -91,7 +91,7 @@ export const DataLinksInlineEditor = ({
   };
 
   const renderFirstLink = (linkJSX: ReactNode, key: string) => {
-    if (oneClickMode === OneClickMode.Link) {
+    if (showOneClick) {
       return (
         <div className={styles.oneClickOverlay} key={key}>
           <span className={styles.oneClickSpan}>One-click</span>

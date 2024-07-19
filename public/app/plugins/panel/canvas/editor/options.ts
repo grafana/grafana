@@ -210,7 +210,7 @@ export const optionBuilder: OptionSuppliers = {
 
   addDataLinks: (builder, context) => {
     builder.addCustomEditor({
-      category: ['Data links and actions'],
+      category: ['Data links'],
       id: 'dataLinks',
       path: 'links',
       name: '',
