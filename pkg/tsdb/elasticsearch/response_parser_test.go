@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -3682,7 +3681,7 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string, keepL
 		return nil, err
 	}
 
-	return parseResponse(context.Background(), response.Responses, queries, configuredFields, keepLabelsInResponse, log.New(), tracing.InitializeTracerForTest())
+	return parseResponse(context.Background(), response.Responses, queries, configuredFields, keepLabelsInResponse, log.New())
 }
 
 func requireTimeValue(t *testing.T, expected int64, frame *data.Frame, index int) {

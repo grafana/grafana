@@ -216,7 +216,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Elasticsearch:
-		svc = elasticsearch.ProvideService(httpClientProvider, tracer)
+		svc = elasticsearch.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
