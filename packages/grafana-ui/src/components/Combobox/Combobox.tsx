@@ -110,7 +110,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
         {...getMenuProps({ ref: floatingRef })}
       >
         {isOpen && (
-          <ul className={styles.valueContainer}>
+          <ul style={{ height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
