@@ -67,6 +67,11 @@ var (
 			},
 		},
 	)
+	TemplateGroupResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+		"templategroups", "templategroup", "TemplateGroup",
+		func() runtime.Object { return &TemplateGroup{} },
+		func() runtime.Object { return &TemplateGroupList{} },
+	)
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 	// SchemaBuilder is used by standard codegen
