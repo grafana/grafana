@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
 type TemplateService struct {
@@ -14,6 +15,7 @@ type TemplateService struct {
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger
+	validator       validation.ProvenanceStatusTransitionValidator
 }
 
 func NewTemplateService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
@@ -21,6 +23,7 @@ func NewTemplateService(config AMConfigStore, prov ProvisioningStore, xact Trans
 		configStore:     &alertmanagerConfigStoreImpl{store: config},
 		provenanceStore: prov,
 		xact:            xact,
+		validator:       validation.ValidateProvenanceRelaxed,
 		log:             log,
 	}
 }
@@ -64,6 +67,19 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 	if revision.cfg.TemplateFiles == nil {
 		revision.cfg.TemplateFiles = map[string]string{}
 	}
+
+	_, ok := revision.cfg.TemplateFiles[tmpl.Name]
+	if ok {
+		// check that provenance is not changed in an invalid way
+		storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
+		if err != nil {
+			return definitions.NotificationTemplate{}, err
+		}
+		if err := t.validator(storedProvenance, models.Provenance(tmpl.Provenance)); err != nil {
+			return definitions.NotificationTemplate{}, err
+		}
+	}
+
 	revision.cfg.TemplateFiles[tmpl.Name] = tmpl.Template
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -79,9 +95,27 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 	return tmpl, nil
 }
 
-func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name string) error {
+func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance) error {
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
+		return err
+	}
+
+	if revision.cfg.TemplateFiles == nil {
+		return nil
+	}
+
+	_, ok := revision.cfg.TemplateFiles[name]
+	if !ok {
+		return nil
+	}
+
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &definitions.NotificationTemplate{Name: name}, orgID)
+	if err != nil {
+		return err
+	}
+	if err = t.validator(storedProvenance, models.Provenance(provenance)); err != nil {
 		return err
 	}
 
