@@ -20,9 +20,13 @@ export class ShareInternally extends ShareLinkTab {
       useShortUrl,
       selectedTheme: theme,
     });
+
+    this.onToggleLockedTime = this.onToggleLockedTime.bind(this);
+    this.onUrlShorten = this.onUrlShorten.bind(this);
+    this.onThemeChange = this.onThemeChange.bind(this);
   }
 
-  onToggleLockedTime = async () => {
+  async onToggleLockedTime() {
     const useLockedTime = !this.state.useLockedTime;
     updateShareLinkConfiguration({
       useAbsoluteTimeRange: useLockedTime,
@@ -30,9 +34,9 @@ export class ShareInternally extends ShareLinkTab {
       theme: this.state.selectedTheme,
     });
     await super.onToggleLockedTime();
-  };
+  }
 
-  onUrlShorten = async () => {
+  async onUrlShorten() {
     const useShortUrl = !this.state.useShortUrl;
     updateShareLinkConfiguration({
       useShortUrl,
@@ -40,16 +44,16 @@ export class ShareInternally extends ShareLinkTab {
       theme: this.state.selectedTheme,
     });
     await super.onUrlShorten();
-  };
+  }
 
-  onThemeChange = async (value: string) => {
+  async onThemeChange(value: string) {
     updateShareLinkConfiguration({
       theme: value,
       useShortUrl: this.state.useShortUrl,
       useAbsoluteTimeRange: this.state.useLockedTime,
     });
     await super.onThemeChange(value);
-  };
+  }
 }
 
 function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>) {
