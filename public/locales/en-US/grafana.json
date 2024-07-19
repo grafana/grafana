@@ -100,10 +100,17 @@
       }
     },
     "contact-points": {
+      "delivery-duration": "Last delivery took <1></1>",
+      "last-delivery-attempt": "Last delivery attempt",
+      "last-delivery-failed": "Last delivery attempt failed",
+      "no-delivery-attempts": "No delivery attempts",
+      "only-firing": "Delivering <1>only firing</1> notifications",
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
-      }
+      },
+      "used-by_one": "Used by {{ count }} notification policy",
+      "used-by_other": "Used by {{ count }} notification policies"
     },
     "policies": {
       "metadata": {

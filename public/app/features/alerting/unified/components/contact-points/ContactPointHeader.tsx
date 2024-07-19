@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 
@@ -82,6 +82,10 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
     );
   }
 
+  const referencedByPoliciesText = t('alerting.contact-points.used-by', 'Used by {{ count }} notification policy', {
+    count: numberOfPolicies,
+  });
+
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
@@ -91,17 +95,14 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
           </Text>
         </Stack>
         {isReferencedByAnyPolicy && (
-          <Text variant="bodySmall" color="secondary">
-            is used by{' '}
-            <TextLink
-              href={createUrl('/alerting/routes', { contactPoint: name })}
-              variant="bodySmall"
-              color="primary"
-              inline={false}
-            >
-              {`${numberOfPolicies} ${pluralize('notification policy', numberOfPolicies)}`}
-            </TextLink>
-          </Text>
+          <TextLink
+            href={createUrl('/alerting/routes', { contactPoint: name })}
+            variant="bodySmall"
+            color="primary"
+            inline={false}
+          >
+            {referencedByPoliciesText}
+          </TextLink>
         )}
         {provisioned && <ProvisioningBadge />}
         {!isReferencedByAnyPolicy && <UnusedContactPointBadge />}

@@ -4,6 +4,8 @@ import { Fragment, ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
+import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -174,7 +176,7 @@ export const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverS
                 {iconName && <Icon name={iconName} />}
                 <Text variant="body">
                   {receiverName}
-                  {receivers.length > 1 && <> ({receivers.length})</>}
+                  {receivers.length > 1 && receivers.length}
                 </Text>
               </Stack>
               {!isLastItem && '⋅'}
@@ -202,7 +204,9 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
           <>
             <MetaText color="error" icon="exclamation-circle">
               <Tooltip content={diagnostics.lastNotifyAttemptError!}>
-                <span>Last delivery attempt failed</span>
+                <span>
+                  <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
+                </span>
               </Tooltip>
             </MetaText>
           </>
@@ -212,7 +216,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
             {hasDeliveryAttempt && (
               <>
                 <MetaText icon="clock-nine">
-                  Last delivery attempt{' '}
+                  <Trans i18nKey="alerting.contact-points.last-delivery-attempt">Last delivery attempt</Trans>
                   <Tooltip content={lastDeliveryAttempt.toLocaleString()}>
                     <span>
                       <Text color="primary">{lastDeliveryAttempt.locale('en').fromNow()}</Text>
@@ -220,16 +224,24 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
                   </Tooltip>
                 </MetaText>
                 <MetaText icon="stopwatch">
-                  took <Text color="primary">{lastDeliveryAttemptDuration}</Text>
+                  <Trans i18nKey="alerting.contact-points.delivery-duration">
+                    Last delivery took <PrimaryText content={lastDeliveryAttemptDuration} />
+                  </Trans>
                 </MetaText>
               </>
             )}
             {/* when we have no last delivery attempt */}
-            {!hasDeliveryAttempt && <MetaText icon="clock-nine">No delivery attempts</MetaText>}
+            {!hasDeliveryAttempt && (
+              <MetaText icon="clock-nine">
+                <Trans i18nKey="alerting.contact-points.no-delivery-attempts">No delivery attempts</Trans>
+              </MetaText>
+            )}
             {/* this is only shown for contact points that only want "firing" updates */}
             {!sendingResolved && (
               <MetaText icon="info-circle">
-                Delivering <Text color="primary">only firing</Text> notifications
+                <Trans i18nKey="alerting.contact-points.only-firing">
+                  Delivering <Text color="primary">only firing</Text> notifications
+                </Trans>
               </MetaText>
             )}
           </>
