@@ -17,8 +17,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -55,7 +55,7 @@ type Client interface {
 
 // NewClient creates a new elasticsearch client
 var NewClient = func(ctx context.Context, ds *DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (Client, error) {
-	logger = logger.New("entity", "client")
+	logger = logger.FromContext(ctx).With("entity", "client")
 
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
