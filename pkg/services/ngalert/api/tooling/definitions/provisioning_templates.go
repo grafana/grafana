@@ -43,9 +43,10 @@ type RouteGetTemplateParam struct {
 
 // swagger:model
 type NotificationTemplate struct {
-	Name       string     `json:"name"`
-	Template   string     `json:"template"`
-	Provenance Provenance `json:"provenance,omitempty"`
+	Name            string     `json:"name"`
+	Template        string     `json:"template"`
+	Provenance      Provenance `json:"provenance,omitempty"`
+	ResourceVersion string     `json:"version,omitempty"`
 }
 
 // swagger:model
