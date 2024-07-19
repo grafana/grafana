@@ -82,6 +82,7 @@ export function getColumns(
   availableWidth: number,
   columnMinWidth: number,
   expander: boolean,
+  oneClickLinks: boolean,
   footerValues?: FooterItem[],
   isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {

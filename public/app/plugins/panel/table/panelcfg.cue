@@ -44,6 +44,8 @@ composableKinds: PanelCfg: {
 					}
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
+					// Controls one click data link functionality
+					oneClickLinks?: bool
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.TableFieldOptions
