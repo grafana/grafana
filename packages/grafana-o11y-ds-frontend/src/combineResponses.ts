@@ -91,9 +91,9 @@ function findSourceField(referenceField: Field, sourceFields: Field[], index: nu
   }
 
   if (referenceField.labels) {
-    return candidates.find(candidate => shallowCompare(referenceField.labels ?? {}, candidate.labels ?? {}));
+    return candidates.find((candidate) => shallowCompare(referenceField.labels ?? {}, candidate.labels ?? {}));
   }
-  
+
   return sourceFields[index];
 }
 
