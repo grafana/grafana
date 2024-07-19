@@ -1,11 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
 
-import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
-import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
+import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
   PromRulesResponse,
@@ -26,8 +26,6 @@ import {
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
 import { DashboardSearchItem } from '../../search/types';
-
-import { OnCallIntegrationDTO } from './api/onCallApi';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -173,46 +171,8 @@ export function mockApi(server: SetupServer) {
       );
     },
 
-    grafanaNotifiers: (response: NotifierDTO[]) => {
-      server.use(http.get(`api/alert-notifiers`, () => HttpResponse.json(response)));
-    },
-
-    plugins: {
-      getPluginSettings: (response: PluginMeta) => {
-        server.use(http.get(`api/plugins/${response.id}/settings`, () => HttpResponse.json(response)));
-      },
-    },
     getContactPointsList: (response: GrafanaManagedContactPoint[]) => {
       server.use(http.get(`/api/v1/notifications/receivers`, () => HttpResponse.json(response)));
-    },
-
-    oncall: {
-      getOnCallIntegrations: (response: OnCallIntegrationDTO[]) => {
-        server.use(
-          http.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, () =>
-            HttpResponse.json<OnCallIntegrationDTO[]>(response)
-          )
-        );
-      },
-      features: (response: string[]) => {
-        server.use(
-          http.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/features`, () => HttpResponse.json(response))
-        );
-      },
-      validateIntegrationName: (invalidNames: string[]) => {
-        server.use(
-          http.get(
-            `api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/validate_name`,
-            ({ request }) => {
-              const url = new URL(request.url);
-              const isValid = !invalidNames.includes(url.searchParams.get('verbal_name') ?? '');
-              return HttpResponse.json(isValid, {
-                status: isValid ? 200 : 409,
-              });
-            }
-          )
-        );
-      },
     },
   };
 }

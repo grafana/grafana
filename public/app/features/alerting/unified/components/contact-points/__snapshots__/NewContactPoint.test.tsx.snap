@@ -19,7 +19,7 @@ exports[`should be able to test and save a receiver 1`] = `
             "name": "test",
             "secureSettings": {},
             "settings": {
-              "addresses": "nteews treerc@egirvaefrana.com",
+              "addresses": "tester@grafana.com",
               "singleEmail": false,
             },
             "type": "email",
@@ -132,16 +132,16 @@ exports[`should be able to test and save a receiver 2`] = `
           "grafana_managed_receiver_configs": [
             {
               "disableResolveMessage": false,
-              "name": "my ",
+              "name": "my new receiver",
               "secureSettings": {},
               "settings": {
-                "addresses": "nteews treerc@egirvaefrana.com",
+                "addresses": "tester@grafana.com",
                 "singleEmail": false,
               },
               "type": "email",
             },
           ],
-          "name": "my ",
+          "name": "my new receiver",
         },
       ],
       "route": {
