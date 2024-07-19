@@ -1,4 +1,4 @@
-import { identity } from 'lodash';
+import { identity, isEqual, sortBy } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
@@ -142,6 +142,7 @@ export function ExploreGraph({
   const structureRev = useStructureRev(dataWithConfig);
 
   const onHiddenSeriesChangedRef = useRef(onHiddenSeriesChanged);
+  const previousHiddenFrames = useRef<string[] | undefined>(undefined);
 
   useEffect(() => {
     if (onHiddenSeriesChangedRef.current) {
@@ -152,7 +153,13 @@ export function ExploreGraph({
           hiddenFrames.push(getFrameDisplayName(frame));
         }
       });
-      onHiddenSeriesChangedRef.current(hiddenFrames);
+      if (
+        previousHiddenFrames.current === undefined ||
+        !isEqual(sortBy(hiddenFrames), sortBy(previousHiddenFrames.current))
+      ) {
+        previousHiddenFrames.current = hiddenFrames;
+        onHiddenSeriesChangedRef.current(hiddenFrames);
+      }
     }
   }, [dataWithConfig]);
 

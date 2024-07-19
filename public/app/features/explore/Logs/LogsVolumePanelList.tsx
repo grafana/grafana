@@ -13,6 +13,7 @@ import {
   GrafanaTheme2,
   LoadingState,
   SplitOpen,
+  TimeRange,
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
@@ -87,11 +88,9 @@ export const LogsVolumePanelList = ({
 
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
 
-  const visibleRange = useMemo(() => {
-    const from = dateTime(Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from));
-    const to = dateTime(Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to));
-    return { from, to, raw: { from, to } };
-  }, [absoluteRange.from, allLogsVolumeMaximumRange.from, absoluteRange.to, allLogsVolumeMaximumRange.to]);
+  const from = dateTime(Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from));
+  const to = dateTime(Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to));
+  const visibleRange: TimeRange = { from, to, raw: { from, to } };
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
