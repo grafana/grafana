@@ -43,7 +43,7 @@ The following sections provide detailed explanations on how to visualize and int
 
 ### Logs navigation
 
-Logs navigation, located at the right side of the log lines, can be used to easily request additional logs by clicking **Older logs** at the bottom of the navigation. This is especially useful when you reach the line limit and you want to see more logs. Each request run from the navigation displays in the navigation as separate page. Every page shows `from` and `to` timestamps of the incoming log lines. You can see previous results by clicking on each page. Explore caches the last five requests run from the logs navigation so you're not re-running the same queries when clicking on the pages, saving time and resources.  
+Logs navigation, located at the right side of the log lines, can be used to easily request additional logs by clicking **Older logs** at the bottom of the navigation. This is especially useful when you reach the line limit and you want to see more logs. Each request run from the navigation displays in the navigation as separate page. Every page shows `from` and `to` timestamps of the incoming log lines. You can see previous results by clicking on each page. Explore caches the last five requests run from the logs navigation so you're not re-running the same queries when clicking on the pages, saving time and resources.
 
 ![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
@@ -51,15 +51,14 @@ Logs navigation, located at the right side of the log lines, can be used to easi
 
 You have the option to customize the display of logs and choose which columns to show. Following is a list of available options.
 
-
-| Option                    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Time**                  | Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.                                                                                                                                                                                                                                                                                                                                                                           |
-| **Unique labels**         | Shows or hides the unique labels column that includes only non-common labels. All common labels are displayed above.                                                                                                                                                                                                                                                                                                                                                                           |
-| **Wrap lines**            | Set this to `true` if you want the display to use line wrapping. If set to `false`, it will result in horizontal scrolling.                                                                                                                                                                                                                                                                                                                                                                    |
-| **Prettify JSON**         | Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.                                                                                                                                                                                                                                                                                                                                                                             |
-| **Deduplication**         | Log data can be very repetitive. Explore hides duplicate log lines using a few different deduplication algorithms.  **Exact** matches are done on the whole line except for date fields. **Numbers** matches are done on the line after stripping out numbers such as durations, IP addresses, and so on. **Signature** is the most aggressive deduplication as it strips all letters and numbers and matches on the remaining whitespace and punctuation. |
-| **Display results order** | You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).                                                                                                                                                                                                                                                                                                                                                                  |
+| Option                    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Time**                  | Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.                                                                                                                                                                                                                                                                                                                                      |
+| **Unique labels**         | Shows or hides the unique labels column that includes only non-common labels. All common labels are displayed above.                                                                                                                                                                                                                                                                                                                                      |
+| **Wrap lines**            | Set this to `true` if you want the display to use line wrapping. If set to `false`, it will result in horizontal scrolling.                                                                                                                                                                                                                                                                                                                               |
+| **Prettify JSON**         | Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.                                                                                                                                                                                                                                                                                                                                        |
+| **Deduplication**         | Log data can be very repetitive. Explore hides duplicate log lines using a few different deduplication algorithms. **Exact** matches are done on the whole line except for date fields. **Numbers** matches are done on the line after stripping out numbers such as durations, IP addresses, and so on. **Signature** is the most aggressive deduplication as it strips all letters and numbers and matches on the remaining whitespace and punctuation. |
+| **Display results order** | You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).                                                                                                                                                                                                                                                                                                                             |
 
 ### Download log lines
 
@@ -67,7 +66,7 @@ Click **Download** to download log results in either `TXT` or `JSON` format. Thi
 
 ### Log result meta information
 
-The following meta information displays above the retrieved log lines:  
+The following meta information displays above the retrieved log lines:
 
 - **Number of received logs -** Indicates the total count of logs received for the current query or time range.
 - **Error -** Displays any errors in your log results.
@@ -91,7 +90,7 @@ Explore replaces these sequences, changing the option from **Escape newlines** t
 
 ### Log level
 
-For logs where a `level` label is specified, the value of this label is used to determine the log level and update the color of each log line accordingly. 
+For logs where a `level` label is specified, the value of this label is used to determine the log level and update the color of each log line accordingly.
 If the log doesn't have a specified level label, Grafana attempts to determine if its content matches any of the supported expressions. See the table below for more information. The log level is always determined by the first match. If Grafana isn't able to infer a log level field, it gets visualized as an unknown log level.
 
 {{< admonition type="tip" >}}
@@ -124,8 +123,8 @@ In Explore, each log line has an expandable section called **Log details** that 
 
 #### Fields
 
-Within the **Log details** view, you have the ability to filter the displayed fields in two ways: a positive filter, which focuses on an specific field and a negative filter, which excludes certain fields. 
-These filters modify the corresponding query that generated the log line, incorporating equality and inequality expressions accordingly. 
+Within the **Log details** view, you have the ability to filter the displayed fields in two ways: a positive filter, which focuses on an specific field and a negative filter, which excludes certain fields.
+These filters modify the corresponding query that generated the log line, incorporating equality and inequality expressions accordingly.
 
 If the data source supports it, as is the case with Loki and Elasticsearch, log details will verify whether the field is already included in the current query, indicating an active state for positive filters. This enables you to toggle it off from the query or convert the filter expression from positive to negative as necessary.
 
@@ -151,11 +150,11 @@ Use Command-click or Ctrl+click to open the log context query in a new browser t
 
 ### Copy log line
 
-Click **Copy log line** to copy the content of a selected log line to the clipboard. 
+Click **Copy log line** to copy the content of a selected log line to the clipboard.
 
 ### Copy link to log line
 
-Linking log lines in Grafana allows you to quickly navigate to specific log entries for detailed and  precise analysis. Click **Copy shortlink** to generate and copy a [short URL](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/short_url/) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it in blue, making it easy to identify and focus on relevant information.
+Linking log lines in Grafana allows you to quickly navigate to specific log entries for detailed and precise analysis. Click **Copy shortlink** to generate and copy a [short URL](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/short_url/) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it in blue, making it easy to identify and focus on relevant information.
 
 {{< admonition type="note" >}}
 The short URL feature is currently only supported in Loki and other data sources that provide an `id` field.
