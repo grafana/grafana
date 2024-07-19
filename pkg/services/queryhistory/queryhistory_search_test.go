@@ -266,9 +266,7 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")
 			resp := sc.service.searchHandler(sc.reqContext)
-			var response QueryHistorySearchResponse
-			err := json.Unmarshal(resp.Body(), &response)
-			require.Error(t, err)
+			require.Equal(t, 401, resp.Status())
 		})
 
 	testScenarioWithMixedQueriesInQueryHistory(t, "When users tries to get queries with mixed data source it should return correct queries",
