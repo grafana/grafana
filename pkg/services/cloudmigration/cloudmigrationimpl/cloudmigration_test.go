@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -453,6 +454,7 @@ type gmsClientMock struct {
 	startSnapshotCalled   int
 	getStatusCalled       int
 	createUploadUrlCalled int
+	reportEventCalled     int
 
 	getSnapshotResponse *cloudmigration.GetSnapshotStatusResponse
 }
@@ -479,4 +481,8 @@ func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.Cl
 func (m *gmsClientMock) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
 	m.createUploadUrlCalled++
 	return "http://localhost:3000", nil
+}
+
+func (c *gmsClientMock) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, gmsclient.EventRequestDTO) {
+	c.reportEventCalled++
 }
