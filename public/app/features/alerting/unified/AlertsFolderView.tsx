@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -14,8 +14,9 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
-import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
+import { combineMatcherStrings, labelsMatchMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 import { createViewLink } from './utils/misc';
 
 interface Props {
@@ -50,7 +51,8 @@ export const AlertsFolderView = ({ folder }: Props) => {
   const { nameFilter, labelFilter, sortOrder, setNameFilter, setLabelFilter, setSortOrder } =
     useAlertsFolderViewParams();
 
-  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.name === folder.title);
+  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.uid === folder.uid);
+
   const alertRules = matchingNamespace?.groups.flatMap((group) => group.rules) ?? [];
 
   const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
@@ -167,7 +169,7 @@ function filterAndSortRules(
   labelFilter: string,
   sortOrder: SortOrder
 ) {
-  const matchers = parseMatchers(labelFilter);
+  const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
   let rules = originalRules.filter(
     (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );
@@ -176,24 +178,24 @@ function filterAndSortRules(
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(1)};
-  `,
-  card: css`
-    grid-template-columns: auto 1fr 2fr;
-    margin: 0;
-  `,
-  pagination: css`
-    align-self: center;
-  `,
-  filterLabelsInput: css`
-    flex: 1;
-    width: auto;
-    min-width: 240px;
-  `,
-  noResults: css`
-    padding: ${theme.spacing(2)};
-    background-color: ${theme.colors.background.secondary};
-    font-style: italic;
-  `,
+  container: css({
+    padding: theme.spacing(1),
+  }),
+  card: css({
+    gridTemplateColumns: 'auto 1fr 2fr',
+    margin: 0,
+  }),
+  pagination: css({
+    alignSelf: 'center',
+  }),
+  filterLabelsInput: css({
+    flex: 1,
+    width: 'auto',
+    minWidth: '240px',
+  }),
+  noResults: css({
+    padding: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    fontStyle: 'italic',
+  }),
 });

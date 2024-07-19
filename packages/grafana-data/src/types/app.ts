@@ -102,22 +102,76 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._extensionConfigs;
   }
 
-  configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
-    this._extensionConfigs.push({
-      ...extension,
-      type: PluginExtensionTypes.link,
-    } as PluginExtensionLinkConfig);
+  addLink<Context extends object>(
+    extensionConfig: { targets: string | string[] } & Omit<
+      PluginExtensionLinkConfig<Context>,
+      'type' | 'extensionPointId'
+    >
+  ) {
+    const { targets, ...extension } = extensionConfig;
+    const targetsArray = Array.isArray(targets) ? targets : [targets];
+
+    targetsArray.forEach((target) => {
+      this._extensionConfigs.push({
+        ...extension,
+        extensionPointId: target,
+        type: PluginExtensionTypes.link,
+      } as PluginExtensionLinkConfig);
+    });
 
     return this;
   }
 
-  configureExtensionComponent<Context extends object>(
-    extension: Omit<PluginExtensionComponentConfig<Context>, 'type'>
+  addComponent<Props = {}>(
+    extensionConfig: { targets: string | string[] } & Omit<
+      PluginExtensionComponentConfig<Props>,
+      'type' | 'extensionPointId'
+    >
   ) {
+    const { targets, ...extension } = extensionConfig;
+    const targetsArray = Array.isArray(targets) ? targets : [targets];
+
+    targetsArray.forEach((target) => {
+      this._extensionConfigs.push({
+        ...extension,
+        extensionPointId: target,
+        type: PluginExtensionTypes.component,
+      } as PluginExtensionComponentConfig);
+    });
+
+    return this;
+  }
+
+  exposeComponent<Props = {}>(
+    componentConfig: { id: string } & Omit<PluginExtensionComponentConfig<Props>, 'type' | 'extensionPointId'>
+  ) {
+    const { id, ...extension } = componentConfig;
+
     this._extensionConfigs.push({
       ...extension,
+      extensionPointId: `capabilities/${id}`,
       type: PluginExtensionTypes.component,
     } as PluginExtensionComponentConfig);
+
+    return this;
+  }
+
+  /** @deprecated Use .addLink() instead */
+  configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
+    this.addLink({
+      targets: [extension.extensionPointId],
+      ...extension,
+    });
+
+    return this;
+  }
+
+  /** @deprecated Use .addComponent() instead */
+  configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
+    this.addComponent({
+      targets: [extension.extensionPointId],
+      ...extension,
+    });
 
     return this;
   }
@@ -128,6 +182,14 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
  * @internal
  */
 export enum FeatureState {
+  /** @deprecated in favor of experimental */
   alpha = 'alpha',
+  /** @deprecated in favor of preview */
   beta = 'beta',
+  /** used to mark experimental features with high/unknown risk */
+  experimental = 'experimental',
+  /** used to mark features that are in public preview with medium/hight risk */
+  privatePreview = 'private preview',
+  /** used to mark features that are in public preview with low/medium risk, or as a shared badge for public and private previews */
+  preview = 'preview',
 }

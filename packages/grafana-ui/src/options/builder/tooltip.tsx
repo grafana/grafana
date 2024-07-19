@@ -55,6 +55,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         integer: true,
       },
+      showIf: (options: T) => options.tooltip?.mode !== TooltipDisplayMode.None,
     });
   }
 
@@ -66,16 +67,16 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         integer: true,
       },
-      showIf: (options: T) => false, // options.tooltip?.mode !== TooltipDisplayMode.None,
+      showIf: (options: T) => options.tooltip?.mode !== TooltipDisplayMode.None,
     })
     .addNumberInput({
       path: 'tooltip.maxHeight',
       name: 'Max height',
       category,
-      defaultValue: 600,
+      defaultValue: undefined,
       settings: {
         integer: true,
       },
-      showIf: (options: T) => false, //options.tooltip?.mode !== TooltipDisplayMode.None,
+      showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
     });
 }

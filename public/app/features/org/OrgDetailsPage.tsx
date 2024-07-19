@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
-import { VerticalGroup } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';
@@ -51,7 +51,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
-            <VerticalGroup spacing="lg">
+            <Stack direction="column" gap={3}>
               {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
               {canReadPreferences && (
                 <SharedPreferences
@@ -61,7 +61,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
                   onConfirm={this.handleConfirm}
                 />
               )}
-            </VerticalGroup>
+            </Stack>
           )}
         </Page.Contents>
       </Page>

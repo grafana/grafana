@@ -25,6 +25,8 @@ If you just want to explore your data and do not want to create a dashboard, the
 - [Query management in Explore]({{< relref "query-management/" >}})
 - [Logs integration in Explore]({{< relref "logs-integration/" >}})
 - [Trace integration in Explore]({{< relref "trace-integration/" >}})
+- [Explore metrics]({{< relref "explore-metrics/" >}})
+- [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
 - [Inspector in Explore]({{< relref "explore-inspector/" >}})
 
 ## Start exploring
@@ -85,6 +87,24 @@ To open the content outline:
 
 You can then click on any panel icon in the content outline to navigate to that panel.
 
+### Filter logs in content outline
+
+When using Explore with logs, you can filter the logs in the content outline. You can filter by log level, which is currently supported for Elasticsearch and Loki data sources. To select multiple filters, press Command-click on a Mac or Ctrl+Click in Windows.
+
+{{% admonition type="note" %}}
+Log levels only show if the datasource supports the log volume histogram and contains multiple levels. Additionally, the query to the data source may have to format the log lines to see the levels. For example, in Loki, the `logfmt` parser commonly will display log levels.
+{{% /admonition %}}
+
+{{< figure src="/media/docs/grafana/explore/screenshot-explore-content-outline-logs-filtering-11.2.png" max-width= "950px" caption="Screenshot of Explore content outline logs filtering" >}}
+
+### Pin logs to content outline
+
+When using Explore with logs, you can pin logs to content outline by hovering over a log in the logs panel and clicking on the _Pin to content outline_ icon in the log row menu.
+
+{{< figure src="/media/docs/grafana/explore/screenshot-explore-content-outline-logs-pinning-11.2.png" max-width= "450px" caption="Screenshot of Explore content outline logs pinning" >}}
+
+Clicking on a pinned log opens the [log context modal](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-context), showing the log highlighted in context with other logs. From here, you can also open the log in split mode to preserve the time range in the left pane while having the time range specific to that log in the right pane.
+
 ## Share Explore URLs
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
@@ -137,7 +157,7 @@ Available in Grafana 7.3 and later versions.
 
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar.
 
-A shortened link will automatically get deleted after seven (7) days from its creation if it's never used. If a link is used at least once, it won't ever get deleted.
+A shortened link that is not accessed will automatically get deleted after a [configurable period](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#short_links) (defaulting to seven days). If a link is used at least once, it won't be deleted.
 
 ### Sharing shortened links with absolute time
 

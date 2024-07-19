@@ -1,5 +1,7 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.tsx
 import { css, cx } from '@emotion/css';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
+import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -7,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   BrowserLabel as PromLabel,
   Button,
-  HorizontalGroup,
+  Stack,
   Input,
   Label,
   LoadingPlaceholder,
@@ -115,75 +117,77 @@ export function facetLabels(
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  wrapper: css`
-    background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(1)};
-    width: 100%;
-  `,
-  list: css`
-    margin-top: ${theme.spacing(1)};
-    display: flex;
-    flex-wrap: wrap;
-    max-height: 200px;
-    overflow: auto;
-    align-content: flex-start;
-  `,
-  section: css`
-    & + & {
-      margin: ${theme.spacing(2)} 0;
-    }
-    position: relative;
-  `,
-  selector: css`
-    font-family: ${theme.typography.fontFamilyMonospace};
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  status: css`
-    padding: ${theme.spacing(0.5)};
-    color: ${theme.colors.text.secondary};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  wrapper: css({
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(1),
+    width: '100%',
+  }),
+  list: css({
+    marginTop: theme.spacing(1),
+    display: 'flex',
+    flexWrap: 'wrap',
+    maxHeight: '200px',
+    overflow: 'auto',
+    alignContent: 'flex-start',
+  }),
+  section: css({
+    '& + &': {
+      margin: `${theme.spacing(2)} 0`,
+    },
+    position: 'relative',
+  }),
+  selector: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+    marginBottom: theme.spacing(1),
+  }),
+  status: css({
+    padding: theme.spacing(0.5),
+    color: theme.colors.text.secondary,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
     /* using absolute positioning because flex interferes with ellipsis */
-    position: absolute;
-    width: 50%;
-    right: 0;
-    text-align: right;
-    transition: opacity 100ms linear;
-    opacity: 0;
-  `,
-  statusShowing: css`
-    opacity: 1;
-  `,
-  error: css`
-    color: ${theme.colors.error.main};
-  `,
-  valueList: css`
-    margin-right: ${theme.spacing(1)};
-    resize: horizontal;
-  `,
-  valueListWrapper: css`
-    border-left: 1px solid ${theme.colors.border.medium};
-    margin: ${theme.spacing(1)} 0;
-    padding: ${theme.spacing(1)} 0 ${theme.spacing(1)} ${theme.spacing(1)};
-  `,
-  valueListArea: css`
-    display: flex;
-    flex-wrap: wrap;
-    margin-top: ${theme.spacing(1)};
-  `,
-  valueTitle: css`
-    margin-left: -${theme.spacing(0.5)};
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  validationStatus: css`
-    padding: ${theme.spacing(0.5)};
-    margin-bottom: ${theme.spacing(1)};
-    color: ${theme.colors.text.maxContrast};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
+    position: 'absolute',
+    width: '50%',
+    right: 0,
+    textAlign: 'right',
+    opacity: 0,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 100ms linear',
+    },
+  }),
+  statusShowing: css({
+    opacity: 1,
+  }),
+  error: css({
+    color: theme.colors.error.main,
+  }),
+  valueList: css({
+    marginRight: theme.spacing(1),
+    resize: 'horizontal',
+  }),
+  valueListWrapper: css({
+    borderLeft: `1px solid ${theme.colors.border.medium}`,
+    margin: `${theme.spacing(1)} 0`,
+    padding: `${theme.spacing(1)} 0 ${theme.spacing(1)} ${theme.spacing(1)}`,
+  }),
+  valueListArea: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    marginTop: theme.spacing(1),
+  }),
+  valueTitle: css({
+    marginLeft: `-${theme.spacing(0.5)}`,
+    marginBottom: theme.spacing(1),
+  }),
+  validationStatus: css({
+    padding: theme.spacing(0.5),
+    marginBottom: theme.spacing(1),
+    color: theme.colors.text.maxContrast,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
 }));
 
 /**
@@ -485,7 +489,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
     return (
       <div className={styles.wrapper}>
-        <HorizontalGroup align="flex-start" spacing="lg">
+        <Stack gap={3}>
           <div>
             <div className={styles.section}>
               <Label description="Once a metric is selected only possible labels are shown.">1. Select a metric</Label>
@@ -628,7 +632,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
             </div>
           </div>
-        </HorizontalGroup>
+        </Stack>
 
         <div className={styles.section}>
           <Label>4. Resulting selector</Label>
@@ -636,7 +640,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
             {selector}
           </div>
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
-          <HorizontalGroup>
+          <Stack>
             <Button
               data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useQuery}
               aria-label="Use selector for query button"
@@ -674,7 +678,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
             <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
               <span className={error ? styles.error : ''}>{error || status}</span>
             </div>
-          </HorizontalGroup>
+          </Stack>
         </div>
       </div>
     );

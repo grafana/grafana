@@ -22,13 +22,14 @@ import (
 	"sync"
 	"time"
 
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
@@ -37,14 +38,20 @@ import (
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
+	"k8s.io/kube-aggregator/pkg/controllers"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
+
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/service"
 
 	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
@@ -127,16 +134,22 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		},
 	}
 
-	if err := commandOptions.AggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd, commandOptions.StorageOptions.DataPath); err != nil {
+	if err := commandOptions.AggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd); err != nil {
 		return nil, err
 	}
 
+	serviceAPIBuilder := service.NewServiceAPIBuilder()
+	if err := serviceAPIBuilder.InstallSchema(aggregatorscheme.Scheme); err != nil {
+		return nil, err
+	}
+	APIVersionPriorities[serviceAPIBuilder.GetGroupVersion()] = Priority{Group: 15000, Version: int32(1)}
+
 	// Exit early, if no remote services file is configured
 	if commandOptions.AggregatorOptions.RemoteServicesFile == "" {
-		return NewConfig(aggregatorConfig, sharedInformerFactory, nil), nil
+		return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
 	}
 
-	caBundlePEM, err := readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
+	_, err = readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
 	if err != nil {
 		return nil, err
 	}
@@ -146,18 +159,27 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 
 	remoteServicesConfig := &RemoteServicesConfig{
-		InsecureSkipTLSVerify:  commandOptions.ExtraOptions.DevMode,
+		// TODO: in practice, we should only use the insecure flag when commandOptions.ExtraOptions.DevMode == true
+		// But given the bug in K8s, we are forced to set it to true until the below PR is merged and available
+		// https://github.com/kubernetes/kubernetes/pull/123808
+		InsecureSkipTLSVerify:  true,
 		ExternalNamesNamespace: externalNamesNamespace,
-		CABundle:               caBundlePEM,
-		Services:               remoteServices,
-		serviceClientSet:       serviceClient,
+		// TODO: CABundle can't be set when insecure is true
+		// CABundle: caBundlePEM,
+		Services:         remoteServices,
+		serviceClientSet: serviceClient,
 	}
 
-	return NewConfig(aggregatorConfig, sharedInformerFactory, remoteServicesConfig), nil
+	return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, remoteServicesConfig), nil
 }
 
-func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, sharedInformerFactory informersv0alpha1.SharedInformerFactory, remoteServicesConfig *RemoteServicesConfig, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.DelegationTarget, reg prometheus.Registerer) (*aggregatorapiserver.APIAggregator, error) {
+	aggregatorConfig := config.KubeAggregatorConfig
+	sharedInformerFactory := config.Informers
+	remoteServicesConfig := config.RemoteServicesConfig
+	externalNamesInformer := sharedInformerFactory.Service().V0alpha1().ExternalNames()
 	completedConfig := aggregatorConfig.Complete()
+
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
 	if err != nil {
 		return nil, err
@@ -170,6 +192,7 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 	}
 
 	autoRegistrationController := autoregister.NewAutoRegisterController(aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(), apiRegistrationClient)
+
 	apiServices := apiServicesToRegister(delegateAPIServer, autoRegistrationController)
 
 	// Imbue all builtin group-priorities onto the aggregated discovery
@@ -190,7 +213,8 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 	if remoteServicesConfig != nil {
 		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
 		externalNames := getRemoteExternalNamesToRegister(remoteServicesConfig)
-		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(_ genericapiserver.PostStartHookContext) error {
+		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(ctx genericapiserver.PostStartHookContext) error {
+			controllers.WaitForCacheSync("grafana-apiserver-remote-autoregistration", ctx.StopCh, externalNamesInformer.Informer().HasSynced)
 			namespacedClient := remoteServicesConfig.serviceClientSet.ServiceV0alpha1().ExternalNames(remoteServicesConfig.ExternalNamesNamespace)
 			for _, externalName := range externalNames {
 				_, err := namespacedClient.Apply(context.Background(), externalName, metav1.ApplyOptions{
@@ -224,12 +248,25 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 		return nil, err
 	}
 
+	proxyCurrentCertKeyContentFunc := func() ([]byte, []byte) {
+		return nil, nil
+	}
+	if len(config.KubeAggregatorConfig.ExtraConfig.ProxyClientCertFile) > 0 && len(config.KubeAggregatorConfig.ExtraConfig.ProxyClientKeyFile) > 0 {
+		aggregatorProxyCerts, err := dynamiccertificates.NewDynamicServingContentFromFiles("aggregator-proxy-cert", config.KubeAggregatorConfig.ExtraConfig.ProxyClientCertFile, config.KubeAggregatorConfig.ExtraConfig.ProxyClientKeyFile)
+		if err != nil {
+			return nil, err
+		}
+		proxyCurrentCertKeyContentFunc = func() ([]byte, []byte) {
+			return aggregatorProxyCerts.CurrentCertKeyContent()
+		}
+	}
+
 	availableController, err := NewAvailableConditionController(
 		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
-		sharedInformerFactory.Service().V0alpha1().ExternalNames(),
+		externalNamesInformer,
 		apiregistrationClient.ApiregistrationV1(),
 		nil,
-		(func() ([]byte, []byte))(nil),
+		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
 	)
 	if err != nil {
@@ -247,6 +284,21 @@ func CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, shared
 		aggregatorServer.APIRegistrationInformers.Start(context.StopCh)
 		return nil
 	})
+
+	for _, b := range config.Builders {
+		serviceAPIGroupInfo, err := b.GetAPIGroupInfo(
+			aggregatorscheme.Scheme,
+			aggregatorscheme.Codecs,
+			aggregatorConfig.GenericConfig.RESTOptionsGetter,
+			nil, // no dual writer
+		)
+		if err != nil {
+			return nil, err
+		}
+		if err := aggregatorServer.GenericAPIServer.InstallAPIGroup(serviceAPIGroupInfo); err != nil {
+			return nil, err
+		}
+	}
 
 	return aggregatorServer, nil
 }

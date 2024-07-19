@@ -1,12 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { default as React, useState } from 'react';
-import { Provider } from 'react-redux';
+import { useState } from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
-
-import { configureStore } from 'app/store/configureStore';
-
-import 'whatwg-fetch';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PayloadEditor, RESET_TO_DEFAULT } from './PayloadEditor';
 
@@ -48,17 +44,11 @@ const PayloadEditorWithState = () => {
       defaultPayload={DEFAULT_PAYLOAD}
       setPayloadFormatError={jest.fn()}
       payloadFormatError={null}
-      onPayloadError={jest.fn()}
     />
   );
 };
 const renderWithProvider = () => {
-  const store = configureStore();
-  render(
-    <Provider store={store}>
-      <PayloadEditorWithState />
-    </Provider>
-  );
+  render(<PayloadEditorWithState />, { wrapper: TestProvider });
 };
 
 describe('Payload editor', () => {
@@ -82,7 +72,10 @@ describe('Payload editor', () => {
     expect(screen.getByTestId('mockeditor')).toHaveValue(
       '[  {    "annotations": {      "summary": "Instance instance1 has been down for more than 5 minutes"    },    "labels": {      "instance": "instance1"    },    "startsAt": "2023-04-25T15:28:56.440Z"  }]this is the something'
     );
-    await userEvent.click(screen.getByText(RESET_TO_DEFAULT));
+
+    // click edit payload > reset to defaults
+    await userEvent.click(screen.getByRole('button', { name: 'Edit payload' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: RESET_TO_DEFAULT }));
     await waitFor(() =>
       expect(screen.queryByTestId('mockeditor')).toHaveValue(
         '[  {    "annotations": {      "summary": "Instance instance1 has been down for more than 5 minutes"    },    "labels": {      "instance": "instance1"    },    "startsAt": "2023-04-25T15:28:56.440Z"  }]'

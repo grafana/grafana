@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getPluginComponentExtensions } from '@grafana/runtime';
-import { Tab, TabsBar, TabContent, VerticalGroup, Stack } from '@grafana/ui';
+import { usePluginComponentExtensions } from '@grafana/runtime';
+import { Tab, TabsBar, TabContent, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -76,31 +76,21 @@ export function UserProfileEditPage({
 
   useMount(() => initUserProfilePage());
 
-  const extensionComponents = useMemo(() => {
-    const { extensions } = getPluginComponentExtensions({
-      extensionPointId: PluginExtensionPoints.UserProfileTab,
-      context: {},
-    });
+  const { extensions } = usePluginComponentExtensions({ extensionPointId: PluginExtensionPoints.UserProfileTab });
 
-    return extensions;
-  }, []);
-
-  const groupedExtensionComponents = extensionComponents.reduce<Record<string, PluginExtensionComponent[]>>(
-    (acc, extension) => {
-      const { title } = extension;
-      if (acc[title]) {
-        acc[title].push(extension);
-      } else {
-        acc[title] = [extension];
-      }
-      return acc;
-    },
-    {}
-  );
+  const groupedExtensionComponents = extensions.reduce<Record<string, PluginExtensionComponent[]>>((acc, extension) => {
+    const { title } = extension;
+    if (acc[title]) {
+      acc[title].push(extension);
+    } else {
+      acc[title] = [extension];
+    }
+    return acc;
+  }, {});
 
   const convertExtensionComponentTitleToTabId = (title: string) => title.toLowerCase();
 
-  const showTabs = extensionComponents.length > 0;
+  const showTabs = extensions.length > 0;
   const tabs: TabInfo[] = [
     {
       id: GENERAL_SETTINGS_TAB,
@@ -113,7 +103,7 @@ export function UserProfileEditPage({
   ];
 
   const UserProfile = () => (
-    <VerticalGroup spacing="md">
+    <Stack direction="column" gap={2}>
       <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
       <SharedPreferences resourceUri="user" preferenceType="user" />
       <Stack direction="column" gap={6}>
@@ -121,7 +111,7 @@ export function UserProfileEditPage({
         <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
         <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
       </Stack>
-    </VerticalGroup>
+    </Stack>
   );
 
   const UserProfileWithTabs = () => (
@@ -150,11 +140,11 @@ export function UserProfileEditPage({
 
             if (activeTab === tabId) {
               return (
-                <React.Fragment key={tabId}>
+                <Fragment key={tabId}>
                   {pluginExtensionComponents.map(({ component: Component }, index) => (
                     <Component key={`${tabId}-${index}`} />
                   ))}
-                </React.Fragment>
+                </Fragment>
               );
             }
             return null;

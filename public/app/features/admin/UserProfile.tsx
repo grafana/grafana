@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent, useRef, useState } from 'react';
+import { PureComponent, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';

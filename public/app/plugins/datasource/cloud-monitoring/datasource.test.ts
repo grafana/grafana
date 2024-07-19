@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 
-import { CustomVariableModel } from '@grafana/data';
+import { CustomVariableModel, ScopedVars } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
@@ -71,6 +71,33 @@ describe('Cloud Monitoring Datasource', () => {
       const templatedQuery = ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].timeSeriesList?.projectName).toEqual('project-variable');
+    });
+    it('should correctly apply template variables for PromQLQuery (single-value)', () => {
+      const templateSrv = getTemplateSrv();
+      templateSrv.replace = jest.fn().mockReturnValue('filter-variable');
+      const mockInstanceSettings = createMockInstanceSetttings();
+      const ds = new Datasource(mockInstanceSettings, templateSrv);
+      const query = createMockQuery({ promQLQuery: { expr: '$testVar', projectName: 'test-project', step: '1' } });
+      const templatedQuery = ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].promQLQuery?.expr).toContain('filter-variable');
+    });
+    it('should correctly apply template variables for PromQLQuery (multi-value)', () => {
+      const templateSrv = getTemplateSrv();
+      templateSrv.replace = jest
+        .fn()
+        .mockImplementation((_target: string, _v2: ScopedVars, formatFunction: Function) => {
+          if (formatFunction) {
+            return formatFunction(['filter-variable', 'filter-variable2']);
+          }
+          return undefined;
+        });
+      const mockInstanceSettings = createMockInstanceSetttings();
+      const ds = new Datasource(mockInstanceSettings, templateSrv);
+      const query = createMockQuery({ promQLQuery: { expr: '$testVar', projectName: 'test-project', step: '1' } });
+      const templatedQuery = ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].promQLQuery?.expr).toContain('filter-variable|filter-variable2');
     });
   });
 
@@ -220,6 +247,68 @@ describe('Cloud Monitoring Datasource', () => {
           expected: {
             aliasBy: 'alias',
             sloQuery: {},
+          },
+        },
+        {
+          description: 'legacy metrics query with metricType defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              filters: ['metric.type', '=', 'test-metric-type'],
+            },
+          },
+        },
+        {
+          description: 'legacy metrics query with metricType and additional filters defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+            filters: ['test.filter', '=', 'test-filter-value'],
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              filters: ['test.filter', '=', 'test-filter-value', 'AND', 'metric.type', '=', 'test-metric-type'],
+            },
+          },
+        },
+        {
+          description: 'legacy metrics query without projectName defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              projectName: 'test-project',
+            },
+          },
+        },
+        {
+          description: 'legacy metrics query with projectName defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+            projectName: 'test-project-defined',
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              projectName: 'test-project-defined',
+            },
           },
         },
       ].forEach((t) =>

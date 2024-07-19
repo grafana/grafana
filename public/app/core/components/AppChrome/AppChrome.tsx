@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import React, { PropsWithChildren, useEffect } from 'react';
+import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
-import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
@@ -27,10 +26,11 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, searchBarHidden);
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
+  const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -55,8 +55,7 @@ export function AppChrome({ children }: Props) {
 
   const { pathname, search } = locationService.getLocation();
   const url = pathname + search;
-  const shouldShowReturnToPrevious =
-    config.featureToggles.returnToPrevious && state.returnToPrevious && url !== state.returnToPrevious.href;
+  const shouldShowReturnToPrevious = state.returnToPrevious && url !== state.returnToPrevious.href;
 
   // Clear returnToPrevious when the page is manually navigated to
   useEffect(() => {
@@ -66,6 +65,12 @@ export function AppChrome({ children }: Props) {
     // We only want to pay attention when the location changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chrome, url]);
+
+  // Sync updates from kiosk mode query string back into app chrome
+  useEffect(() => {
+    const queryParams = locationSearchToObject(search);
+    chrome.setKioskModeFromUrl(queryParams.kiosk);
+  }, [chrome, search]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
@@ -82,7 +87,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <div className={cx(styles.topNav)}>
+          <header className={cx(styles.topNav)}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
               searchBarHidden={searchBarHidden}
@@ -93,19 +98,24 @@ export function AppChrome({ children }: Props) {
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
-          </div>
+          </header>
         </>
       )}
-      <main className={contentClass}>
+      <div className={contentClass}>
         <div className={styles.panes}>
-          {!state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
+          {menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          <div className={styles.pageContainer} id="pageContent">
+          <main
+            className={cx(styles.pageContainer, {
+              [styles.pageContainerMenuDocked]: config.featureToggles.bodyScrolling && menuDockedAndOpen,
+            })}
+            id="pageContent"
+          >
             {children}
-          </div>
+          </main>
         </div>
-      </main>
+      </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
@@ -115,14 +125,14 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
       paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
-      height: '100%',
+      height: config.featureToggles.bodyScrolling ? 'auto' : '100%',
     }),
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,
@@ -130,16 +140,31 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentChromeless: css({
       paddingTop: 0,
     }),
-    dockedMegaMenu: css({
-      background: theme.colors.background.primary,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
-      display: 'none',
-      zIndex: theme.zIndex.navbarFixed,
+    dockedMegaMenu: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            background: theme.colors.background.primary,
+            borderRight: `1px solid ${theme.colors.border.weak}`,
+            display: 'none',
+            position: 'fixed',
+            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+            zIndex: theme.zIndex.navbarFixed,
 
-      [theme.breakpoints.up('xl')]: {
-        display: 'block',
-      },
-    }),
+            [theme.breakpoints.up('xl')]: {
+              display: 'block',
+            },
+          }
+        : {
+            background: theme.colors.background.primary,
+            borderRight: `1px solid ${theme.colors.border.weak}`,
+            display: 'none',
+            zIndex: theme.zIndex.navbarFixed,
+
+            [theme.breakpoints.up('xl')]: {
+              display: 'block',
+            },
+          }
+    ),
     topNav: css({
       display: 'flex',
       position: 'fixed',
@@ -149,35 +174,58 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
-    panes: css({
-      label: 'page-panes',
-      display: 'flex',
-      height: '100%',
-      width: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      flexDirection: 'column',
-      [theme.breakpoints.up('md')]: {
-        flexDirection: 'row',
-      },
+    panes: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+            label: 'page-panes',
+          }
+        : {
+            label: 'page-panes',
+            display: 'flex',
+            height: '100%',
+            width: '100%',
+            flexGrow: 1,
+            minHeight: 0,
+            flexDirection: 'column',
+            [theme.breakpoints.up('md')]: {
+              flexDirection: 'row',
+            },
+          }
+    ),
+    pageContainerMenuDocked: css({
+      paddingLeft: '300px',
     }),
-    pageContainer: css({
-      label: 'page-container',
-      flexGrow: 1,
-      minHeight: 0,
-      minWidth: 0,
-      overflow: 'auto',
-      '@media print': {
-        overflow: 'visible',
-      },
-      '@page': {
-        margin: 0,
-        size: 'auto',
-        padding: 0,
-      },
-    }),
+    pageContainer: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            label: 'page-container',
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+          }
+        : {
+            label: 'page-container',
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+            minHeight: 0,
+            minWidth: 0,
+            overflow: 'auto',
+            '@media print': {
+              overflow: 'visible',
+            },
+            '@page': {
+              margin: 0,
+              size: 'auto',
+              padding: 0,
+            },
+          }
+    ),
     skipLink: css({
-      position: 'absolute',
+      position: 'fixed',
       top: -1000,
 
       ':focus': {

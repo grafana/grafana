@@ -1,18 +1,29 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { setupServer } from 'msw/node';
 import { default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
+import { screen, render, waitFor } from 'test/test-utils';
+import { byRole } from 'testing-library-selector';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { Components } from '@grafana/e2e-selectors';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { configureStore } from 'app/store/configureStore';
 
-import 'whatwg-fetch';
 import { TemplatePreviewResponse } from '../../api/templateApi';
-import { mockPreviewTemplateResponse, mockPreviewTemplateResponseRejected } from '../../mocks/templatesApi';
+import {
+  mockPreviewTemplateResponse,
+  mockPreviewTemplateResponseRejected,
+  REJECTED_PREVIEW_RESPONSE,
+} from '../../mocks/templatesApi';
 
-import { defaults, PREVIEW_NOT_AVAILABLE, TemplateFormValues, TemplatePreview } from './TemplateForm';
+import { defaults, TemplateFormValues } from './TemplateForm';
+import { TemplatePreview } from './TemplatePreview';
+
+jest.mock(
+  'react-virtualized-auto-sizer',
+  () =>
+    ({ children }: { children: ({ height, width }: { height: number; width: number }) => JSX.Element }) =>
+      children({ height: 500, width: 400 })
+);
 
 const getProviderWraper = () => {
   return function Wrapper({ children }: React.PropsWithChildren<{}>) {
@@ -26,26 +37,17 @@ const getProviderWraper = () => {
   };
 };
 
-const server = setupServer();
+const server = setupMswServer();
 
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-beforeEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+const ui = {
+  errorAlert: byRole('alert', { name: /error/i }),
+  resultItems: byRole('listitem'),
+};
 
 describe('TemplatePreview component', () => {
   it('Should render error if payload has wrong format', async () => {
     render(
       <TemplatePreview
-        width={50}
         payload={'bla bla bla'}
         templateName="potato"
         payloadFormatError={'Unexpected token b in JSON at position 0'}
@@ -54,7 +56,7 @@ describe('TemplatePreview component', () => {
       { wrapper: getProviderWraper() }
     );
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent('Unexpected token b in JSON at position 0');
+      expect(ui.errorAlert.get()).toHaveTextContent('Unexpected token b in JSON at position 0');
     });
   });
 
@@ -62,7 +64,6 @@ describe('TemplatePreview component', () => {
     const setError = jest.fn();
     render(
       <TemplatePreview
-        width={50}
         payload={'{"a":"b"}'}
         templateName="potato"
         payloadFormatError={'Unexpected token b in JSON at position 0'}
@@ -78,7 +79,6 @@ describe('TemplatePreview component', () => {
   it('Should render error if payload has wrong format rendering the preview', async () => {
     render(
       <TemplatePreview
-        width={50}
         payload={'potatos and cherries'}
         templateName="potato"
         payloadFormatError={'Unexpected token b in JSON at position 0'}
@@ -90,7 +90,7 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent('Unexpected token b in JSON at position 0');
+      expect(ui.errorAlert.get()).toHaveTextContent('Unexpected token b in JSON at position 0');
     });
   });
 
@@ -98,7 +98,6 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponseRejected(server);
     render(
       <TemplatePreview
-        width={50}
         payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
@@ -108,7 +107,7 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent(PREVIEW_NOT_AVAILABLE);
+      expect(ui.errorAlert.get()).toHaveTextContent(REJECTED_PREVIEW_RESPONSE);
     });
   });
 
@@ -122,7 +121,6 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponse(server, response);
     render(
       <TemplatePreview
-        width={50}
         payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
@@ -132,11 +130,13 @@ describe('TemplatePreview component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        'Preview for template1: ======================>This is the template result bla bla bla<====================== Preview for template2: ======================>This is the template2 result bla bla bla<======================'
-      );
+      const previews = ui.resultItems.getAll();
+      expect(previews).toHaveLength(2);
+      expect(previews[0]).toHaveTextContent('This is the template result bla bla bla');
+      expect(previews[1]).toHaveTextContent('This is the template2 result bla bla bla');
     });
   });
+
   it('Should render preview response with some errors,  if payload has correct format ', async () => {
     const response: TemplatePreviewResponse = {
       results: [{ name: 'template1', text: 'This is the template result bla bla bla' }],
@@ -146,9 +146,9 @@ describe('TemplatePreview component', () => {
       ],
     };
     mockPreviewTemplateResponse(server, response);
+
     render(
       <TemplatePreview
-        width={50}
         payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
@@ -156,10 +156,16 @@ describe('TemplatePreview component', () => {
       />,
       { wrapper: getProviderWraper() }
     );
+
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        '======================>This is the template result bla bla bla<====================== ERROR in template2: kind_of_error Unexpected "{" in operand ERROR in template3: kind_of_error Unexpected "{" in operand'
-      );
+      const alerts = screen.getAllByTestId(Components.Alert.alertV2('error'));
+      const previewContent = screen.getByRole('listitem');
+
+      expect(alerts).toHaveLength(2);
+      expect(alerts[0]).toHaveTextContent(/Unexpected "{" in operand/i);
+      expect(alerts[1]).toHaveTextContent(/Unexpected "{" in operand/i);
+
+      expect(previewContent).toHaveTextContent('This is the template result bla bla bla');
     });
   });
 });

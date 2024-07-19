@@ -6,15 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -47,11 +50,12 @@ type AlertsRouter struct {
 
 	datasourceService datasources.DataSourceService
 	secretService     secrets.Service
+	featureManager    featuremgmt.FeatureToggles
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service) *AlertsRouter {
+	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -70,13 +74,14 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 
 		datasourceService: datasourceService,
 		secretService:     secretService,
+		featureManager:    featureManager,
 	}
 	return d
 }
 
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
-func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
+func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error {
 	cfgs, err := d.adminConfigStore.GetAdminConfigurations()
 	if err != nil {
 		return err
@@ -84,12 +89,19 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 	d.logger.Debug("Attempting to sync admin configs", "count", len(cfgs))
 
+	disableExternal := d.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingDisableSendAlertsExternal)
+
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	d.adminConfigMtx.Lock()
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := d.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
 			continue
+		}
+
+		if disableExternal && cfg.SendAlertsTo != models.InternalAlertmanager {
+			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", cfg.SendAlertsTo)
+			cfg.SendAlertsTo = models.InternalAlertmanager
 		}
 
 		// Update the Alertmanagers choice for the organization.
@@ -152,7 +164,11 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("Creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
-		s := NewExternalAlertmanagerSender()
+		senderLogger := log.New("ngalert.sender.external-alertmanager")
+		s, err := NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry())
+		if err != nil {
+			return err
+		}
 		d.externalAlertmanagers[cfg.OrgID] = s
 		s.Run()
 
@@ -189,15 +205,17 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 }
 
 func buildRedactedAMs(l log.Logger, alertmanagers []ExternalAMcfg, ordId int64) []string {
-	var redactedAMs []string
+	redactedAMs := make([]string, 0, len(alertmanagers))
 	for _, am := range alertmanagers {
 		parsedAM, err := url.Parse(am.URL)
 		if err != nil {
 			l.Error("Failed to parse alertmanager string", "org", ordId, "error", err)
 			continue
 		}
+
 		redactedAMs = append(redactedAMs, parsedAM.Redacted())
 	}
+
 	return redactedAMs
 }
 
@@ -209,9 +227,6 @@ func asSHA256(strings []string) string {
 }
 
 func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcfg, error) {
-	var (
-		alertmanagers []ExternalAMcfg
-	)
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
 	query := &datasources.GetDataSourcesByTypeQuery{
@@ -224,6 +239,9 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
+
+	alertmanagers := make([]ExternalAMcfg, 0, len(dataSources))
+
 	for _, ds := range dataSources {
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
 			continue
@@ -246,11 +264,13 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 				"error", err)
 			continue
 		}
+
 		alertmanagers = append(alertmanagers, ExternalAMcfg{
 			URL:     amURL,
 			Headers: headers,
 		})
 	}
+
 	return alertmanagers, nil
 }
 
@@ -270,22 +290,24 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 			if parsed.Path == "" {
 				parsed.Path = "/"
 			}
-			parsed = parsed.JoinPath("/alertmanager")
+			lastSegment := path.Base(parsed.Path)
+			if lastSegment != "alertmanager" {
+				parsed = parsed.JoinPath("/alertmanager")
+			}
 		default:
 		}
 	}
 
-	// if basic auth is enabled we need to build the url with basic auth baked in
-	if !ds.BasicAuth {
-		return parsed.String(), nil
+	// If basic auth is enabled we need to build the url with basic auth baked in.
+	if ds.BasicAuth {
+		password := d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "basicAuthPassword", "")
+		if password == "" {
+			return "", fmt.Errorf("basic auth enabled but no password set")
+		}
+		parsed.User = url.UserPassword(ds.BasicAuthUser, password)
 	}
 
-	password := d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "basicAuthPassword", "")
-	if password == "" {
-		return "", fmt.Errorf("basic auth enabled but no password set")
-	}
-	return fmt.Sprintf("%s://%s:%s@%s%s%s", parsed.Scheme, ds.BasicAuthUser,
-		password, parsed.Host, parsed.Path, parsed.RawQuery), nil
+	return parsed.String(), nil
 }
 
 func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
@@ -360,7 +382,7 @@ func (d *AlertsRouter) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-time.After(d.adminConfigPollInterval):
-			if err := d.SyncAndApplyConfigFromDatabase(); err != nil {
+			if err := d.SyncAndApplyConfigFromDatabase(ctx); err != nil {
 				d.logger.Error("Unable to sync admin configuration", "error", err)
 			}
 		case <-ctx.Done():

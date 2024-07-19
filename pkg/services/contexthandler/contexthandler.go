@@ -6,39 +6,37 @@ import (
 	"fmt"
 	"net/http"
 
+	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles, authnService authn.Service,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:          cfg,
-		tracer:       tracer,
-		features:     features,
-		authnService: authnService,
+		Cfg:           cfg,
+		tracer:        tracer,
+		authenticator: authenticator,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg          *setting.Cfg
-	tracer       tracing.Tracer
-	features     featuremgmt.FeatureToggles
-	authnService authn.Service
+	Cfg           *setting.Cfg
+	tracer        tracing.Tracer
+	authenticator authn.Authenticator
 }
 
 type reqContextKey = ctxkey.Key
@@ -84,11 +82,11 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := h.tracer.Start(r.Context(), "Auth - Middleware")
-		defer span.End() // this will span to next handlers as well
+		ctx := r.Context()
+		_, span := h.tracer.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
-			Context: web.FromContext(ctx), // Extract web context from context (no knowledge of the trace)
+			Context: web.FromContext(ctx),
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
@@ -106,22 +104,25 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		// This modifies both r and reqContext.Req since they point to the same value
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
-		traceID := tracing.TraceIDFromContext(reqContext.Req.Context(), false)
+		ctx = trace.ContextWithSpan(reqContext.Req.Context(), span)
+		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		identity, err := h.authnService.Authenticate(reqContext.Req.Context(), &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
 		if err != nil {
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
 		} else {
-			reqContext.SignedInUser = identity.SignedInUser()
-			reqContext.UserToken = identity.SessionToken
+			reqContext.SignedInUser = id.SignedInUser()
+			reqContext.UserToken = id.SessionToken
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
-			reqContext.IsRenderCall = identity.GetAuthenticatedBy() == login.RenderModule
+			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		}
+
+		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 		span.AddEvent("user", trace.WithAttributes(
@@ -134,8 +135,16 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 		}
 
-		next.ServeHTTP(w, r)
+		// End the span to make next handlers not wrapped within middleware span
+		span.End()
+
+		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
 	})
+}
+
+func (h *ContextHandler) excludeSensitiveHeadersFromRequest(req *http.Request) {
+	req.Header.Del(authnClients.ExtJWTAuthenticationHeaderName)
+	req.Header.Del(authnClients.ExtJWTAuthorizationHeaderName)
 }
 
 func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) web.BeforeFunc {
@@ -154,7 +163,7 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace.String()]; !ok {
 			return
 		}
 

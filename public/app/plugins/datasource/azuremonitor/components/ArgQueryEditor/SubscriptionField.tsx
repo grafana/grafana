@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
@@ -6,7 +6,7 @@ import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { findOptions } from '../../utils/common';
-import { Field } from '../Field';
+import { Field } from '../shared/Field';
 
 interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;

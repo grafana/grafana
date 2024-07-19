@@ -11,10 +11,13 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneGridItem, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { gridItemToPanel } from '../../serialization/transformSceneToSaveModel';
+import { DashboardGridItem } from '../../scene/DashboardGridItem';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
+import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { Randomize, randomizeData } from './randomizer';
@@ -36,6 +39,7 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
       frames.push(json);
     }
   }
+
   return frames;
 }
 
@@ -44,7 +48,7 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
     panelType: panel.state.pluginId,
     datasource: '??',
   };
-  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+  const grafanaVersion = config.buildInfo.versionString;
 
   let md = `| Key | Value |
 |--|--|
@@ -59,10 +63,35 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
 }
 
 export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRange: TimeRange) {
-  const saveModel = gridItemToPanel(panel.parent as SceneGridItem);
+  let saveModel: ReturnType<typeof gridItemToPanel> = { type: '' };
+  const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
+  const gridItem = (isLibraryPanel ? panel.parent.parent : panel.parent) as DashboardGridItem;
+  const scene = panel.getRoot() as DashboardScene;
+
+  if (isLibraryPanel) {
+    saveModel = {
+      ...gridItemToPanel(gridItem),
+      ...vizPanelToPanel(panel),
+    };
+  } else if (scene.state.editPanel) {
+    // If panel edit mode is open when the user chooses the "get help" panel menu option
+    // we want the debug dashboard to include the panel with any changes that were made while
+    // in panel edit mode.
+    const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
+    const dashGridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
+    if (dashGridItem instanceof DashboardGridItem) {
+      saveModel = {
+        ...gridItemToPanel(dashGridItem),
+        ...vizPanelToPanel(scene.state.editPanel.state.vizManager.state.panel.clone()),
+      };
+    }
+  } else {
+    saveModel = gridItemToPanel(gridItem);
+  }
+
   const dashboard = cloneDeep(embeddedDataTemplate);
   const info = {
-    panelType: saveModel.type,
+    panelType: panel.state.pluginId,
     datasource: '??',
   };
 
@@ -77,8 +106,9 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
 
   const dsref = queryRunner?.state.datasource;
   const frames = randomizeData(getPanelDataFrames(data), rand);
-  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+  const grafanaVersion = config.buildInfo.versionString;
   const queries = queryRunner.state.queries ?? [];
+  const annotationsCount = data.annotations ? data.annotations.reduce((acc, c) => c.length + acc, 0) : 0;
   const html = `<table width="100%">
     <tr>
       <th width="2%">Panel</th>
@@ -119,6 +149,9 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     ],
   };
 
+  // delete library panel not to load the panel from the db
+  delete dashboard.panels[0].libraryPanel;
+
   if (saveModel.transformations?.length) {
     const last = dashboard.panels[dashboard.panels.length - 1];
     last.title = last.title + ' (after transformations)';
@@ -131,7 +164,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     dashboard.panels.push(before);
   }
 
-  if (data.annotations?.length) {
+  if (annotationsCount > 0) {
     dashboard.panels.push({
       id: 7,
       gridPos: {
@@ -216,7 +249,7 @@ function getAnnotationsRow(data: PanelData): string {
 
   return `<tr>
   <th>Annotations</th>
-  <td>${data.annotations.map((a, idx) => `<span>${a.length}</span>`)}</td>
+  <td>${data.annotations.reduce((acc, c) => c.length + acc, 0)}</td>
 </tr>`;
 }
 

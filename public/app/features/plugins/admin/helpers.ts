@@ -76,6 +76,10 @@ export function mergeLocalsAndRemotes({
           catalogPlugin.hasUpdate &&
           catalogPlugin.installedVersion !== instancePlugin?.version;
 
+        if (instancePlugin?.version && instancePlugin?.version !== remotePlugin.version) {
+          catalogPlugin.hasUpdate = true;
+        }
+
         catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
       }
 
@@ -122,8 +126,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     id,
     info: {
       logos: {
-        small: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/small`,
-        large: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/large`,
+        small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${version}/logos/small`,
+        large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${version}/logos/large`,
       },
       keywords,
     },
@@ -210,8 +214,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
 
   if (remote) {
     logos = {
-      small: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/small`,
-      large: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/large`,
+      small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/small`,
+      large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/large`,
     };
   } else if (local && local.info.logos) {
     logos = local.info.logos;
@@ -249,7 +253,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     error: error?.errorCode,
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,
-    angularDetected: local?.angularDetected || remote?.angularDetected,
+    angularDetected: local?.angularDetected ?? remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
   };

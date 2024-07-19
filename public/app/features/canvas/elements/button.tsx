@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
@@ -13,7 +13,7 @@ import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/e
 import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { CanvasElementItem, CanvasElementProps, defaultLightTextColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultLightTextColor } from '../element';
 import { Align, TextConfig, TextData } from '../types';
 
 interface ButtonData extends Omit<TextData, 'valign'> {
@@ -42,7 +42,7 @@ export const defaultStyleConfig: ButtonStyleConfig = {
 const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) => {
   const styles = useStyles2(getStyles, data);
 
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const updateLoadingStateCallback = (loading: boolean) => {
     setIsLoading(loading);
@@ -126,34 +126,37 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       height: options?.placement?.height ?? 78,
       top: options?.placement?.top ?? 100,
       left: options?.placement?.left ?? 100,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: ButtonConfig) => {
-    const getCfgApi = () => {
-      if (cfg?.api) {
-        cfg.api = {
-          ...cfg.api,
-          method: cfg.api.method ?? defaultApiConfig.method,
-          contentType: cfg.api.contentType ?? defaultApiConfig.contentType,
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<ButtonConfig>) => {
+    const buttonConfig = elementOptions.config;
+
+    const getAPIConfig = () => {
+      if (buttonConfig?.api) {
+        buttonConfig.api = {
+          ...buttonConfig.api,
+          method: buttonConfig.api.method ?? defaultApiConfig.method,
+          contentType: buttonConfig.api.contentType ?? defaultApiConfig.contentType,
         };
-        return cfg.api;
+        return buttonConfig.api;
       }
 
       return undefined;
     };
 
     const data: ButtonData = {
-      text: cfg?.text ? ctx.getText(cfg.text).value() : '',
-      align: cfg.align ?? Align.Center,
-      size: cfg.size ?? 14,
-      api: getCfgApi(),
-      style: cfg?.style ?? defaultStyleConfig,
+      text: buttonConfig?.text ? dimensionContext.getText(buttonConfig.text).value() : '',
+      align: buttonConfig?.align ?? Align.Center,
+      size: buttonConfig?.size ?? 14,
+      api: getAPIConfig(),
+      style: buttonConfig?.style ?? defaultStyleConfig,
     };
 
-    if (cfg.color) {
-      data.color = ctx.getColor(cfg.color).value();
+    if (buttonConfig?.color) {
+      data.color = dimensionContext.getColor(buttonConfig.color).value();
     }
 
     return data;

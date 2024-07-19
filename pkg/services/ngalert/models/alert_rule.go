@@ -5,14 +5,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
+	"maps"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	prommodels "github.com/prometheus/common/model"
+
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -53,6 +62,8 @@ func NoDataStateFromString(state string) (NoDataState, error) {
 		return NoData, nil
 	case string(OK):
 		return OK, nil
+	case string(KeepLast):
+		return KeepLast, nil
 	default:
 		return "", fmt.Errorf("unknown NoData state option %s", state)
 	}
@@ -62,6 +73,7 @@ const (
 	Alerting NoDataState = "Alerting"
 	NoData   NoDataState = "NoData"
 	OK       NoDataState = "OK"
+	KeepLast NoDataState = "KeepLast"
 )
 
 // swagger:enum ExecutionErrorState
@@ -79,6 +91,8 @@ func ErrStateFromString(opt string) (ExecutionErrorState, error) {
 		return ErrorErrState, nil
 	case string(OkErrState):
 		return OkErrState, nil
+	case string(KeepLastErrState):
+		return KeepLastErrState, nil
 	default:
 		return "", fmt.Errorf("unknown Error state option %s", opt)
 	}
@@ -88,7 +102,19 @@ const (
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
 	OkErrState       ExecutionErrorState = "OK"
+	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
+
+type RuleType string
+
+const (
+	RuleTypeAlerting  = "alerting"
+	RuleTypeRecording = "recording"
+)
+
+func (r RuleType) String() string {
+	return string(r)
+}
 
 const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
@@ -137,7 +163,12 @@ const (
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
 	StateReasonRuleDeleted   = "RuleDeleted"
+	StateReasonKeepLast      = "KeepLast"
 )
+
+func ConcatReasons(reasons ...string) string {
+	return strings.Join(reasons, ", ")
+}
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
@@ -168,42 +199,42 @@ type AlertRuleGroup struct {
 	Rules      []AlertRule
 }
 
-// AlertRuleGroupWithFolderTitle extends AlertRuleGroup with orgID and folder title
-type AlertRuleGroupWithFolderTitle struct {
+// AlertRuleGroupWithFolderFullpath extends AlertRuleGroup with orgID and folder title
+type AlertRuleGroupWithFolderFullpath struct {
 	*AlertRuleGroup
-	OrgID       int64
-	FolderTitle string
+	OrgID          int64
+	FolderFullpath string
 }
 
-func NewAlertRuleGroupWithFolderTitle(groupKey AlertRuleGroupKey, rules []AlertRule, folderTitle string) AlertRuleGroupWithFolderTitle {
+func NewAlertRuleGroupWithFolderFullpath(groupKey AlertRuleGroupKey, rules []AlertRule, folderFullpath string) AlertRuleGroupWithFolderFullpath {
 	SortAlertRulesByGroupIndex(rules)
 	var interval int64
 	if len(rules) > 0 {
 		interval = rules[0].IntervalSeconds
 	}
-	var result = AlertRuleGroupWithFolderTitle{
+	var result = AlertRuleGroupWithFolderFullpath{
 		AlertRuleGroup: &AlertRuleGroup{
 			Title:     groupKey.RuleGroup,
 			FolderUID: groupKey.NamespaceUID,
 			Interval:  interval,
 			Rules:     rules,
 		},
-		FolderTitle: folderTitle,
-		OrgID:       groupKey.OrgID,
+		FolderFullpath: folderFullpath,
+		OrgID:          groupKey.OrgID,
 	}
 	return result
 }
 
-func NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey AlertRuleGroupKey, rules RulesGroup, folderTitle string) AlertRuleGroupWithFolderTitle {
+func NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey AlertRuleGroupKey, rules RulesGroup, folderFullpath string) AlertRuleGroupWithFolderFullpath {
 	derefRules := make([]AlertRule, 0, len(rules))
 	for _, rule := range rules {
 		derefRules = append(derefRules, *rule)
 	}
-	return NewAlertRuleGroupWithFolderTitle(groupKey, derefRules, folderTitle)
+	return NewAlertRuleGroupWithFolderFullpath(groupKey, derefRules, folderFullpath)
 }
 
 // SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
-func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderTitle) {
+func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	sort.SliceStable(g, func(i, j int) bool {
 		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
 			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
@@ -227,7 +258,8 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
-	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	RuleGroupIndex  int     `xorm:"rule_group_idx"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -237,6 +269,17 @@ type AlertRule struct {
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
+}
+
+// Namespaced describes a class of resources that are stored in a specific namespace.
+type Namespaced interface {
+	GetNamespaceUID() string
+}
+
+type Namespace folder.Folder
+
+func (n Namespace) GetNamespaceUID() string {
+	return n.UID
 }
 
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
@@ -281,6 +324,10 @@ func (s AlertRulesSorter) Len() int           { return len(s.rules) }
 func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
 func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
 
+func (alertRule *AlertRule) GetNamespaceUID() string {
+	return alertRule.NamespaceUID
+}
+
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
 	if alertRule.DashboardUID != nil {
@@ -321,7 +368,21 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	meta := map[string]string{
+		"Name":    alertRule.Title,
+		"Uid":     alertRule.UID,
+		"Type":    string(alertRule.Type()),
+		"Version": strconv.FormatInt(alertRule.Version, 10),
+	}
+	if alertRule.Type() == RuleTypeRecording {
+		return Condition{
+			Metadata:  meta,
+			Condition: alertRule.Record.From,
+			Data:      alertRule.Data,
+		}
+	}
 	return Condition{
+		Metadata:  meta,
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
 	}
@@ -334,7 +395,11 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
-		return string(in)
+		b, err := json.Marshal(in)
+		if err != nil {
+			return string(in)
+		}
+		return string(b)
 	})
 	ops = append(
 		ops,
@@ -478,11 +543,13 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
 	}
 
-	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
+	var err error
+	if alertRule.Type() == RuleTypeRecording {
+		err = validateRecordingRuleFields(alertRule)
+	} else {
+		err = validateAlertRuleFields(alertRule)
 	}
-
-	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+	if err != nil {
 		return err
 	}
 
@@ -509,6 +576,29 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 	return nil
 }
 
+func validateAlertRuleFields(rule *AlertRule) error {
+	if _, err := ErrStateFromString(string(rule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := NoDataStateFromString(string(rule.NoDataState)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateRecordingRuleFields(rule *AlertRule) error {
+	metricName := prommodels.LabelValue(rule.Record.Metric)
+	if !metricName.IsValid() {
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+	}
+	if !prommodels.IsValidMetricName(metricName) {
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
+	}
+	return nil
+}
+
 func (alertRule *AlertRule) ResourceType() string {
 	return "alertRule"
 }
@@ -528,6 +618,13 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
+func (alertRule *AlertRule) Type() RuleType {
+	if alertRule.Record != nil {
+		return RuleTypeRecording
+	}
+	return RuleTypeAlerting
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -545,6 +642,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -571,16 +669,18 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
+	RuleUIDs      []string
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
-	RuleGroup     string
+	RuleGroups    []string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
 
-	ReceiverName string
+	ReceiverName     string
+	TimeIntervalName string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
@@ -614,18 +714,6 @@ type ListNamespaceAlertRulesQuery struct {
 	NamespaceUID string
 }
 
-// ListOrgRuleGroupsQuery is the query for listing unique rule groups
-// for an organization
-type ListOrgRuleGroupsQuery struct {
-	OrgID         int64
-	NamespaceUIDs []string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
-}
-
 type UpdateRule struct {
 	Existing *AlertRule
 	New      AlertRule
@@ -634,12 +722,33 @@ type UpdateRule struct {
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
+	// Additional information provided to the evaluation to include to the request as headers in format `X-Rule-{Key}`
+	Metadata map[string]string
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
+}
+
+func (c Condition) withMetadata(key, value string) Condition {
+	meta := make(map[string]string, len(c.Metadata)+1)
+	maps.Copy(meta, c.Metadata)
+	meta[key] = value
+	return Condition{
+		Metadata:  meta,
+		Condition: c.Condition,
+		Data:      c.Data,
+	}
+}
+
+func (c Condition) WithFolder(folderTitle string) Condition {
+	return c.withMetadata("Folder", folderTitle)
+}
+
+func (c Condition) WithSource(source string) Condition {
+	return c.withMetadata("Source", source)
 }
 
 // IsValid checks the condition's validity.
@@ -740,4 +849,27 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// Record contains mapping information for Recording Rules.
+type Record struct {
+	// Metric indicates a metric name to send results to.
+	Metric string
+	// From contains a query RefID, indicating which expression node is the output of the recording rule.
+	From string
+}
+
+func (r *Record) Fingerprint() data.Fingerprint {
+	h := fnv.New64()
+
+	writeString := func(s string) {
+		// save on extra slice allocation when string is converted to bytes.
+		_, _ = h.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		// ignore errors returned by Write method because fnv never returns them.
+		_, _ = h.Write([]byte{255}) // use an invalid utf-8 sequence as separator
+	}
+
+	writeString(r.Metric)
+	writeString(r.From)
+	return data.Fingerprint(h.Sum64())
 }

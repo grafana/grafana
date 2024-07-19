@@ -1,6 +1,5 @@
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -351,7 +350,6 @@ describe('Mute timings', () => {
             name: 'default-mute',
             time_intervals: [
               {
-                times: [],
                 weekdays: ['monday'],
                 days_of_month: ['-7:-1'],
                 months: ['3', '6', '9', '12'],

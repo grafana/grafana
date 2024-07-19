@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -51,10 +51,7 @@ export function GroupByVariableForm({
         />
       ) : null}
 
-      <Field
-        label="Use static Group By dimensions"
-        description="Provide dimensions as CSV: dimensionId, dimensionName "
-      >
+      <Field label="Use static Group By dimensions" description="Provide dimensions as CSV: dimensionName, dimensionId">
         <Switch
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}
           value={defaultOptions !== undefined}

@@ -1,9 +1,9 @@
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { PulseWaveQuery } from '../dataquery.gen';
+import { PulseWaveQuery } from '../dataquery';
 
 const fields: Array<{
   label: string;

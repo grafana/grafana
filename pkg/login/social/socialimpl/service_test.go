@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -66,10 +68,21 @@ func TestSocialService_ProvideService(t *testing.T) {
 	cfg.Raw = iniFile
 
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(cfg)
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(
+		cfg,
+		sqlStore,
+		accessControl,
+		routing.NewRouteRegister(),
+		featuremgmt.WithFeatures(),
+		secrets,
+		&usagestats.UsageStatsMock{},
+		nil,
+		&setting.OSSImpl{Cfg: cfg},
+		&licensing.OSSLicensingService{},
+	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -80,7 +93,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 				tc.setup(t, env)
 			}
 
-			socialService := ProvideService(cfg, env.features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), ssoSettingsSvc)
+			socialService := ProvideService(cfg, env.features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
 			require.Equal(t, tc.expectedSocialMapLength, len(socialService.socialMap))
 
 			genericOAuthInfo := socialService.GetOAuthInfoProvider("generic_oauth")
@@ -103,7 +116,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,
@@ -121,7 +134,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -139,7 +152,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -157,7 +170,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,
@@ -167,10 +180,21 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(cfg)
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(
+		cfg,
+		sqlStore,
+		accessControl,
+		routing.NewRouteRegister(),
+		featuremgmt.WithFeatures(),
+		secrets,
+		&usagestats.UsageStatsMock{},
+		nil,
+		nil,
+		&licensing.OSSLicensingService{},
+	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -180,7 +204,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.Raw = iniFile
 
-			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), ssoSettingsSvc)
+			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
 			require.EqualValues(t, tc.expectedGrafanaComOAuthInfo, socialService.GetOAuthInfoProvider("grafana_com"))
 		})
 	}

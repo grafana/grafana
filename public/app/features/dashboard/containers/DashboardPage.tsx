@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
@@ -13,10 +13,12 @@ import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaCont
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
+import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
@@ -36,6 +38,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
+import { explicitlyControlledMigrationPanels, autoMigrateAngular } from '../state/PanelModel';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 
@@ -65,6 +68,7 @@ export type Props = Themeable2 &
 export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
+  editView: string | null;
   updateScrollTop?: number;
   rememberScrollTop?: number;
   showLoadingState: boolean;
@@ -84,6 +88,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   getCleanState(): State {
     return {
+      editView: null,
       editPanel: null,
       viewPanel: null,
       showLoadingState: false,
@@ -191,6 +196,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       this.props.notifyApp(createErrorNotification(`Panel not found`));
       locationService.partial({ editPanel: null, viewPanel: null });
     }
+
+    if (config.featureToggles.bodyScrolling) {
+      // Update window scroll position
+      if (this.state.updateScrollTop !== undefined && this.state.updateScrollTop !== prevState.updateScrollTop) {
+        window.scrollTo(0, this.state.updateScrollTop);
+      }
+    }
   }
 
   updateLiveTimer = () => {
@@ -206,6 +218,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const urlEditPanelId = queryParams.editPanel;
     const urlViewPanelId = queryParams.viewPanel;
+    const urlEditView = queryParams.editview;
 
     if (!dashboard) {
       return state;
@@ -213,13 +226,33 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const updatedState = { ...state };
 
+    if (config.featureToggles.bodyScrolling) {
+      // Entering settings view
+      if (!state.editView && urlEditView) {
+        updatedState.editView = urlEditView;
+        updatedState.rememberScrollTop = window.scrollY;
+        updatedState.updateScrollTop = 0;
+      }
+
+      // Leaving settings view
+      else if (state.editView && !urlEditView) {
+        updatedState.updateScrollTop = state.rememberScrollTop;
+        updatedState.editView = null;
+      }
+    }
+
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
       if (panel) {
         if (dashboard.canEditPanel(panel)) {
           updatedState.editPanel = panel;
-          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+          updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
+            ? window.scrollY
+            : state.scrollElement?.scrollTop;
+          if (config.featureToggles.bodyScrolling) {
+            updatedState.updateScrollTop = 0;
+          }
         } else {
           updatedState.editPanelAccessDenied = true;
         }
@@ -241,7 +274,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         // Should move this state out of dashboard in the future
         dashboard.initViewPanel(panel);
         updatedState.viewPanel = panel;
-        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
+          ? window.scrollY
+          : state.scrollElement?.scrollTop;
         updatedState.updateScrollTop = 0;
       } else {
         updatedState.panelNotFound = true;
@@ -302,7 +337,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview && dashboard.isSubMenuVisible();
 
     const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
@@ -318,6 +353,50 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         </Page>
       );
     }
+
+    const migrationFeatureFlags = new Set([
+      'autoMigrateOldPanels',
+      'autoMigrateGraphPanel',
+      'autoMigrateTablePanel',
+      'autoMigratePiechartPanel',
+      'autoMigrateWorldmapPanel',
+      'autoMigrateStatPanel',
+      'disableAngular',
+    ]);
+
+    const isAutoMigrationFlagSet = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      let isFeatureFlagSet = false;
+
+      urlParams.forEach((value, key) => {
+        if (key.startsWith('__feature.')) {
+          const featureName = key.substring(10);
+          const toggleState = value === 'true' || value === '';
+          const featureToggles = config.featureToggles as Record<string, boolean>;
+
+          if (featureToggles[featureName]) {
+            return;
+          }
+
+          if (migrationFeatureFlags.has(featureName) && toggleState) {
+            isFeatureFlagSet = true;
+            return;
+          }
+        }
+      });
+
+      return isFeatureFlagSet;
+    };
+
+    const dashboardWasAngular = dashboard.panels.some(
+      (panel) => panel.autoMigrateFrom && autoMigrateAngular[panel.autoMigrateFrom] != null
+    );
+
+    const showDashboardMigrationNotice =
+      config.featureToggles.angularDeprecationUI &&
+      dashboardWasAngular &&
+      isAutoMigrationFlagSet() &&
+      dashboard.uid !== null;
 
     return (
       <>
@@ -349,8 +428,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
           {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
-            <AngularDeprecationNotice dashboardUid={dashboard.uid} />
+            <AngularDeprecationNotice
+              dashboardUid={dashboard.uid}
+              showAutoMigrateLink={dashboard.panels.some((panel) =>
+                explicitlyControlledMigrationPanels.includes(panel.type)
+              )}
+            />
           )}
+          {showDashboardMigrationNotice && <AngularMigrationNotice dashboardUid={dashboard.uid} />}
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
@@ -405,8 +490,22 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
+  if (props.route.routeName === DashboardRoutes.Path) {
+    sectionNav = getRootContentNavModel();
+    const pageNav = getPageNavFromSlug(props.match.params.slug!);
+    if (pageNav?.parentItem) {
+      pageNav.parentItem = pageNav.parentItem;
+    }
+  } else {
+    sectionNav = getNavModel(
+      props.navIndex,
+      ID_PREFIX + dashboard.uid,
+      getNavModel(props.navIndex, 'dashboards/browse')
+    );
+  }
+
   const { folderUid } = dashboard.meta;
-  if (folderUid && pageNav) {
+  if (folderUid && pageNav && sectionNav.main.id !== 'starred') {
     const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
     // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
     // don't show the "page not found" breadcrumb
@@ -416,16 +515,6 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
         parentItem: folderNavModel,
       };
     }
-  }
-
-  if (props.route.routeName === DashboardRoutes.Path) {
-    sectionNav = getRootContentNavModel();
-    const pageNav = getPageNavFromSlug(props.match.params.slug!);
-    if (pageNav?.parentItem) {
-      pageNav.parentItem = pageNav.parentItem;
-    }
-  } else {
-    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
   }
 
   if (state.editPanel || state.viewPanel) {

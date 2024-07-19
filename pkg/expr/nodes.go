@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -133,7 +134,10 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		if err != nil {
 			return nil, err
 		}
-		q, err := reader.ReadQuery(rn, iter)
+		q, err := reader.ReadQuery(data.NewDataQuery(map[string]any{
+			"refId": rn.RefID,
+			"type":  rn.QueryType,
+		}), iter)
 		if err != nil {
 			return nil, err
 		}
@@ -181,6 +185,13 @@ type DSNode struct {
 	intervalMS int64
 	maxDP      int64
 	request    Request
+}
+
+func (dn *DSNode) String() string {
+	if dn.datasource == nil {
+		return "unknown"
+	}
+	return dn.datasource.Type
 }
 
 // NodeType returns the data pipeline node type.
@@ -314,7 +325,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			}
 
 			for _, dn := range nodeGroup {
-				dataFrames, err := getResponseFrame(resp, dn.refID)
+				dataFrames, err := getResponseFrame(logger, resp, dn.refID)
 				if err != nil {
 					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
 					instrument(err, "")
@@ -384,7 +395,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
-	dataFrames, err := getResponseFrame(resp, dn.refID)
+	dataFrames, err := getResponseFrame(logger, resp, dn.refID)
 	if err != nil {
 		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}

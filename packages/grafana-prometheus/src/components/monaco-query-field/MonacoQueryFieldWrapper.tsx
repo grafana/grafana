@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryFieldWrapper.tsx
+import { useRef } from 'react';
 
 import { MonacoQueryFieldLazy } from './MonacoQueryFieldLazy';
 import { Props as MonacoProps } from './MonacoQueryFieldProps';

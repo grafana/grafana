@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { contextSrv } from 'app/core/core';
@@ -53,7 +53,7 @@ export const TeamRolePicker = ({
         return pendingRoles;
       }
 
-      if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && teamId > 0) {
         return await fetchTeamRoles(teamId);
       }
     } catch (e) {

@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -59,6 +58,7 @@ async function setupTestContext({
   const dashSrv = { getCurrent: () => dash } as DashboardSrv;
   setDashboardSrv(dashSrv);
   const pushSpy = jest.spyOn(locationService, 'push');
+  const partialSpy = jest.spyOn(locationService, 'partial');
 
   const props: Props = {
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
@@ -89,7 +89,7 @@ async function setupTestContext({
   const { rerender } = render(<AnnoListPanel {...props} />);
   await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
-  return { props, rerender, getMock, pushSpy };
+  return { props, rerender, getMock, pushSpy, partialSpy };
 }
 
 describe('AnnoListPanel', () => {
@@ -133,7 +133,7 @@ describe('AnnoListPanel', () => {
 
     it("renders annotation item's html content", async () => {
       const { getMock } = await setupTestContext({
-        results: [{ ...defaultResult, text: '<a href="">test link </a> ' }],
+        results: [{ ...defaultResult, text: '<a href="/path">test link </a> ' }],
       });
 
       getMock.mockClear();
@@ -219,6 +219,34 @@ describe('AnnoListPanel', () => {
         expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardUIDs: '7MeksYbmk' });
         expect(pushSpy).toHaveBeenCalledTimes(1);
         expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
+      });
+
+      it('should default to the current dashboard, if no dashboard is associated with the annotation', async () => {
+        const { getMock, partialSpy } = await setupTestContext({
+          results: [{ ...defaultResult, dashboardUID: null, panelId: 0 }],
+        });
+        getMock.mockClear();
+        expect(screen.getByRole('button', { name: /result text/i })).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: /result text/i }));
+
+        expect(getMock).not.toHaveBeenCalled();
+        expect(partialSpy).toHaveBeenCalledTimes(1);
+        expect(partialSpy).toHaveBeenCalledWith({ from: 1609458600000, to: 1609459800000, viewPanel: undefined });
+      });
+
+      it('should default to the current dashboard, if no dashboard is associated with the annotation and navigate to viewPanel', async () => {
+        const { getMock, partialSpy } = await setupTestContext({
+          results: [{ ...defaultResult, dashboardUID: null }],
+        });
+        getMock.mockClear();
+        expect(screen.getByRole('button', { name: /result text/i })).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: /result text/i }));
+
+        expect(getMock).not.toHaveBeenCalled();
+        expect(partialSpy).toHaveBeenCalledTimes(1);
+        expect(partialSpy).toHaveBeenCalledWith({ from: 1609458600000, to: 1609459800000, viewPanel: 13 });
       });
     });
 

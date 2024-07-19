@@ -14,6 +14,12 @@ labels:
     - enterprise
     - oss
 title: User HTTP API
+refs:
+  role-based-access-control-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
 ---
 
 # User API
@@ -24,7 +30,7 @@ user must have the Grafana Admin role.
 
 API Tokens can be used with Organization HTTP API to get users of specific organization.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions][] for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
 ## Search Users
 
@@ -66,7 +72,7 @@ Content-Type: application/json
     "isAdmin": true,
     "isDisabled": false,
     "lastSeenAt": "2020-04-10T20:29:27+03:00",
-    "lastSeenAtAge': "2m",
+    "lastSeenAtAge": "2m",
     "authLabels": ["OAuth"]
   },
   {
@@ -683,8 +689,3 @@ Content-Type: application/json
   "message": "User auth token revoked"
 }
 ```
-
-{{% docs/reference %}}
-[Role-based access control permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
-[Role-based access control permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
-{{% /docs/reference %}}

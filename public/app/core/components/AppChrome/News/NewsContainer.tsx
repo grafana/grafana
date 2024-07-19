@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -25,7 +24,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
         <Drawer
           title={
             <div className={styles.title}>
-              <Text element="h3">{t('news.title', 'Latest from the blog')}</Text>
+              <Text element="h2">{t('news.title', 'Latest from the blog')}</Text>
               <a
                 href="https://grafana.com/blog/"
                 target="_blank"

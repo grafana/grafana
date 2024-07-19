@@ -4,14 +4,13 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "11.0.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 export enum HorizontalConstraint {
   Center = 'center',
@@ -39,6 +38,7 @@ export interface Placement {
   height?: number;
   left?: number;
   right?: number;
+  rotation?: number;
   top?: number;
   width?: number;
 }
@@ -59,6 +59,7 @@ export interface BackgroundConfig {
 
 export interface LineConfig {
   color?: ui.ColorDimensionConfig;
+  radius?: number;
   width?: number;
 }
 
@@ -82,9 +83,16 @@ export interface CanvasConnection {
   path: ConnectionPath;
   size?: ui.ScaleDimensionConfig;
   source: ConnectionCoordinates;
+  sourceOriginal?: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;
+  targetOriginal?: ConnectionCoordinates;
+  vertices?: Array<ConnectionCoordinates>;
 }
+
+export const defaultCanvasConnection: Partial<CanvasConnection> = {
+  vertices: [],
+};
 
 export interface CanvasElementOptions {
   background?: BackgroundConfig;
@@ -96,6 +104,7 @@ export interface CanvasElementOptions {
   connections?: Array<CanvasConnection>;
   constraint?: Constraint;
   name: string;
+  oneClickLinks?: boolean;
   placement?: Placement;
   type: string;
 }
@@ -105,6 +114,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 };
 
 export interface Options {
+  /**
+   * Enable infinite pan
+   */
+  infinitePan: boolean;
   /**
    * Enable inline editing
    */
@@ -138,6 +151,7 @@ export interface Options {
 }
 
 export const defaultOptions: Partial<Options> = {
+  infinitePan: true,
   inlineEditing: true,
   panZoom: true,
   showAdvancedTypes: true,

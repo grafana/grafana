@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { CoreApp, LoadingState } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
-import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
 import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -20,17 +21,15 @@ import { GetDataOptions } from '../query/state/PanelQueryRunner';
 import { runQueries } from './state/query';
 
 interface DispatchProps {
-  width: number;
   exploreId: string;
   timeZone: TimeZone;
   onClose: () => void;
-  isMixed: boolean;
 }
 
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { width, onClose, queryResponse, timeZone, isMixed, exploreId } = props;
+  const { onClose, queryResponse, timeZone, isMixed, exploreId } = props;
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
@@ -40,6 +39,7 @@ export function ExploreQueryInspector(props: Props) {
   if (!errors?.length && queryResponse?.error) {
     errors = [queryResponse.error];
   }
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     reportInteraction('grafana_explore_query_inspector_opened');
@@ -82,11 +82,13 @@ export function ExploreQueryInspector(props: Props) {
     value: 'query',
     icon: 'info-circle',
     content: (
-      <QueryInspector
-        instanceId={isMixed ? mixedRequestId(0, requestIdGenerator(exploreId)) : requestIdGenerator(exploreId)}
-        data={queryResponse}
-        onRefreshQuery={() => props.runQueries({ exploreId })}
-      />
+      <div className={styles.queryInspectorWrapper}>
+        <QueryInspector
+          instanceId={isMixed ? mixedRequestId(0, requestIdGenerator(exploreId)) : requestIdGenerator(exploreId)}
+          data={queryResponse}
+          onRefreshQuery={() => props.runQueries({ exploreId })}
+        />
+      </div>
     ),
   };
 
@@ -101,7 +103,7 @@ export function ExploreQueryInspector(props: Props) {
     tabs.push(errorTab);
   }
   return (
-    <ExploreDrawer width={width}>
+    <ExploreDrawer>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
     </ExploreDrawer>
   );
@@ -114,12 +116,19 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 
   return {
     queryResponse,
+    isMixed: item.datasourceInstance?.meta.mixed || false,
   };
 }
 
 const mapDispatchToProps = {
   runQueries,
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  queryInspectorWrapper: css({
+    paddingBottom: theme.spacing(3),
+  }),
+});
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 

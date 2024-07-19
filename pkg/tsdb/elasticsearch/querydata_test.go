@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -57,7 +56,6 @@ func newFlowTestDsInfo(body []byte, statusCode int, requestCallback func(req *ht
 		HTTPClient:                 &client,
 		MaxConcurrentShardRequests: 42,
 		IncludeFrozen:              false,
-		XPack:                      true,
 	}
 }
 
@@ -85,15 +83,16 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 		return nil, fmt.Errorf("error unmarshaling query-json: %w", err)
 	}
 
-	var queries []backend.DataQuery
-
-	for _, jsonBytes := range jsonBytesArray {
+	queries := make([]backend.DataQuery, len(jsonBytesArray))
+	for i, jsonBytes := range jsonBytesArray {
 		// we need to extract some fields from the json-array
 		var jsonInfo queryDataTestQueryJSON
+
 		err = json.Unmarshal(jsonBytes, &jsonInfo)
 		if err != nil {
 			return nil, err
 		}
+
 		// we setup the DataQuery, with values loaded from the json
 		query := backend.DataQuery{
 			RefID:         jsonInfo.RefID,
@@ -102,7 +101,8 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 			TimeRange:     timeRange,
 			JSON:          jsonBytes,
 		}
-		queries = append(queries, query)
+
+		queries[i] = query
 	}
 	return queries, nil
 }
@@ -114,6 +114,9 @@ type queryDataTestResult struct {
 
 func queryDataTestWithResponseCode(queriesBytes []byte, responseStatusCode int, responseBytes []byte) (queryDataTestResult, error) {
 	queries, err := newFlowTestQueries(queriesBytes)
+	req := backend.QueryDataRequest{
+		Queries: queries,
+	}
 	if err != nil {
 		return queryDataTestResult{}, err
 	}
@@ -138,7 +141,7 @@ func queryDataTestWithResponseCode(queriesBytes []byte, responseStatusCode int, 
 		return nil
 	})
 
-	result, err := queryData(context.Background(), queries, dsInfo, log.New("test.logger"), tracing.InitializeTracerForTest())
+	result, err := queryData(context.Background(), &req, dsInfo, log.New())
 	if err != nil {
 		return queryDataTestResult{}, err
 	}

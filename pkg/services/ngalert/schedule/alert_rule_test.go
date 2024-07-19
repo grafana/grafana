@@ -2,7 +2,7 @@ package schedule
 
 import (
 	"bytes"
-	context "context"
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
@@ -11,33 +11,38 @@ import (
 	"testing"
 	"time"
 
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	models "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	prometheusModel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	alertingModels "github.com/grafana/alerting/models"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestAlertRuleInfo(t *testing.T) {
+func TestAlertRule(t *testing.T) {
+	gen := models.RuleGen
 	type evalResponse struct {
 		success     bool
-		droppedEval *evaluation
+		droppedEval *Evaluation
 	}
 
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
 		t.Run("update should send to updateCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+				resultCh <- r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 			}()
 			select {
 			case <-r.updateCh:
@@ -47,22 +52,22 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			version1 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
-			version2 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
+			version1 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
+			version2 := RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(version1)
+				r.Update(version1)
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(version2)
+				r.Update(version2)
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
@@ -73,16 +78,17 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("eval should send to evalCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
 			expected := time.Now()
 			resultCh := make(chan evalResponse)
-			data := &evaluation{
+			data := &Evaluation{
 				scheduledAt: expected,
-				rule:        models.AlertRuleGen()(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
 			go func() {
-				result, dropped := r.eval(data)
+				result, dropped := r.Eval(data)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			select {
@@ -96,17 +102,18 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("eval should drop any concurrent sending to evalCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
 			time1 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			time2 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			resultCh1 := make(chan evalResponse)
 			resultCh2 := make(chan evalResponse)
-			data := &evaluation{
+			data := &Evaluation{
 				scheduledAt: time1,
-				rule:        models.AlertRuleGen()(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
-			data2 := &evaluation{
+			data2 := &Evaluation{
 				scheduledAt: time2,
 				rule:        data.rule,
 				folderTitle: data.folderTitle,
@@ -115,7 +122,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(data)
+				result, dropped := r.Eval(data)
 				wg.Done()
 				resultCh1 <- evalResponse{result, dropped}
 			}()
@@ -123,7 +130,7 @@ func TestAlertRuleInfo(t *testing.T) {
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(data2)
+				result, dropped := r.Eval(data2)
 				resultCh2 <- evalResponse{result, dropped}
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
@@ -142,19 +149,20 @@ func TestAlertRuleInfo(t *testing.T) {
 			}
 		})
 		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
 			resultCh := make(chan evalResponse)
-			data := &evaluation{
+			data := &Evaluation{
 				scheduledAt: time.Now(),
-				rule:        models.AlertRuleGen()(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
 			go func() {
-				result, dropped := r.eval(data)
+				result, dropped := r.Eval(data)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			runtime.Gosched()
-			r.stop(nil)
+			r.Stop(nil)
 			select {
 			case result := <-resultCh:
 				require.False(t, result.success)
@@ -166,37 +174,38 @@ func TestAlertRuleInfo(t *testing.T) {
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop(errRuleDeleted)
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
+			r.Stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
+			require.False(t, r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop(nil)
-			data := &evaluation{
+			ruleSpec := gen.GenerateRef()
+			r := blankRuleForTests(context.Background(), ruleSpec.GetKey())
+			r.Stop(nil)
+			data := &Evaluation{
 				scheduledAt: time.Now(),
-				rule:        models.AlertRuleGen()(),
+				rule:        ruleSpec,
 				folderTitle: util.GenerateShortUID(),
 			}
-			success, dropped := r.eval(data)
+			success, dropped := r.Eval(data)
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
-		t.Run("stop should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop(nil)
-			r.stop(nil)
+		t.Run("calling stop multiple times should not panic", func(t *testing.T) {
+			r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
+			r.Stop(nil)
+			r.Stop(nil)
 		})
-		t.Run("stop should do nothing if parent context stopped", func(t *testing.T) {
+		t.Run("stop should not panic if parent context stopped", func(t *testing.T) {
 			ctx, cancelFn := context.WithCancel(context.Background())
-			r := newAlertRuleInfo(ctx)
+			r := blankRuleForTests(ctx, models.GenerateRuleKey(1))
 			cancelFn()
-			r.stop(nil)
+			r.Stop(nil)
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
-		r := newAlertRuleInfo(context.Background())
+		r := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
 		wg := sync.WaitGroup{}
 		go func() {
 			for {
@@ -221,15 +230,15 @@ func TestAlertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+						r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 					case 2:
-						r.eval(&evaluation{
+						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
-							rule:        models.AlertRuleGen()(),
+							rule:        gen.GenerateRef(),
 							folderTitle: util.GenerateShortUID(),
 						})
 					case 3:
-						r.stop(nil)
+						r.Stop(nil)
 					}
 				}
 				wg.Done()
@@ -238,9 +247,31 @@ func TestAlertRuleInfo(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("Run should exit if idle when Stop is called", func(t *testing.T) {
+		rule := blankRuleForTests(context.Background(), models.GenerateRuleKey(1))
+		runResult := make(chan error)
+		go func() {
+			runResult <- rule.Run()
+		}()
+
+		rule.Stop(nil)
+
+		select {
+		case err := <-runResult:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("Run() never exited")
+		}
+	})
+}
+
+func blankRuleForTests(ctx context.Context, key models.AlertRuleKey) *alertRule {
+	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
+	gen := models.RuleGen
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *SyncAlertsSenderMock,
@@ -266,23 +297,24 @@ func TestRuleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 			sch, ruleStore, instanceStore, reg := createSchedule(evalAppliedChan, nil)
 
-			rule := models.AlertRuleGen(withQueryForState(t, evalState))()
+			rule := gen.With(withQueryForState(t, evalState)).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 			folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := newAlertRuleInfo(ctx)
+			ruleInfo := factory.new(ctx, rule)
 			go func() {
-				_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+				_ = ruleInfo.Run()
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
 
-			ruleInfo.evalCh <- &evaluation{
+			ruleInfo.Eval(&Evaluation{
 				scheduledAt: expectedTime,
 				rule:        rule,
 				folderTitle: folderTitle,
-			}
+			})
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
 			require.Equal(t, expectedTime, actualTime)
@@ -303,13 +335,13 @@ func TestRuleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 				require.Equal(t, rule.UID, s.AlertRuleUID)
-				require.Len(t, s.Results, 1)
+				require.NotNil(t, s.LatestResult)
 				var expectedStatus = evalState
 				if evalState == eval.Pending {
 					expectedStatus = eval.Alerting
 				}
-				require.Equal(t, expectedStatus.String(), s.Results[0].EvaluationState.String())
-				require.Equal(t, expectedTime, s.Results[0].EvaluationTime)
+				require.Equal(t, expectedStatus.String(), s.LatestResult.EvaluationState.String())
+				require.Equal(t, expectedTime, s.LatestResult.EvaluationTime)
 			})
 			t.Run("it should save alert instances to storage", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
@@ -364,6 +396,13 @@ func TestRuleRoutine(t *testing.T) {
         	            	# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
         	            	# TYPE grafana_alerting_rule_evaluations_total counter
         	            	grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+        	            	# HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
+        	            	# TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
+        	            	grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} 0
+        	            	# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+        	            	# TYPE grafana_alerting_rule_evaluation_attempts_total counter
+        	            	grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 1
+
 							# HELP grafana_alerting_rule_process_evaluation_duration_seconds The time to process the evaluation results for a rule.
 							# TYPE grafana_alerting_rule_process_evaluation_duration_seconds histogram
 							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
@@ -402,7 +441,14 @@ func TestRuleRoutine(t *testing.T) {
 							grafana_alerting_rule_send_alerts_duration_seconds_count{org="%[1]d"} 1
 				`, rule.OrgID)
 
-				err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total", "grafana_alerting_rule_process_evaluation_duration_seconds", "grafana_alerting_rule_send_alerts_duration_seconds")
+				err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+					"grafana_alerting_rule_evaluation_duration_seconds",
+					"grafana_alerting_rule_evaluations_total",
+					"grafana_alerting_rule_evaluation_failures_total",
+					"grafana_alerting_rule_evaluation_attempts_total",
+					"grafana_alerting_rule_evaluation_attempt_failures_total",
+					"grafana_alerting_rule_process_evaluation_duration_seconds",
+					"grafana_alerting_rule_send_alerts_duration_seconds")
 				require.NoError(t, err)
 			})
 		})
@@ -413,15 +459,16 @@ func TestRuleRoutine(t *testing.T) {
 			stoppedChan := make(chan error)
 			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
-			rule := models.AlertRuleGen()()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
+			rule := gen.GenerateRef()
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
 			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
+			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
-			ruleInfo := newAlertRuleInfo(ctx)
+			ruleInfo := factory.new(ctx, rule)
 			go func() {
-				err := ruleInfo.ruleRoutine(models.AlertRuleKey{}, sch)
+				err := ruleInfo.Run()
 				stoppedChan <- err
 			}()
 
@@ -434,17 +481,18 @@ func TestRuleRoutine(t *testing.T) {
 			stoppedChan := make(chan error)
 			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
-			rule := models.AlertRuleGen()()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
+			rule := gen.GenerateRef()
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
-			ruleInfo := newAlertRuleInfo(context.Background())
+			factory := ruleFactoryFromScheduler(sch)
+			ruleInfo := factory.new(context.Background(), rule)
 			go func() {
-				err := ruleInfo.ruleRoutine(rule.GetKey(), sch)
+				err := ruleInfo.Run()
 				stoppedChan <- err
 			}()
 
-			ruleInfo.stop(errRuleDeleted)
+			ruleInfo.Stop(errRuleDeleted)
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 
@@ -453,7 +501,7 @@ func TestRuleRoutine(t *testing.T) {
 	})
 
 	t.Run("when a message is sent to update channel", func(t *testing.T) {
-		rule := models.AlertRuleGen(withQueryForState(t, eval.Normal))()
+		rule := gen.With(withQueryForState(t, eval.Normal)).GenerateRef()
 		folderTitle := "folderName"
 		ruleFp := ruleWithFolder{rule, folderTitle}.Fingerprint()
 
@@ -465,20 +513,21 @@ func TestRuleRoutine(t *testing.T) {
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 		ruleStore.PutRule(context.Background(), rule)
 		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := newAlertRuleInfo(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+			_ = ruleInfo.Run()
 		}()
 
 		// init evaluation loop so it got the rule version
-		ruleInfo.evalCh <- &evaluation{
+		ruleInfo.Eval(&Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
 			folderTitle: folderTitle,
-		}
+		})
 
 		waitForTimeChannel(t, evalAppliedChan)
 
@@ -488,7 +537,7 @@ func TestRuleRoutine(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				states = append(states, &state.State{
 					AlertRuleUID: rule.UID,
-					CacheID:      util.GenerateShortUID(),
+					CacheID:      data.Labels(rule.Labels).Fingerprint(),
 					OrgID:        rule.OrgID,
 					State:        s,
 					StartsAt:     sch.clock.Now(),
@@ -510,8 +559,8 @@ func TestRuleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			ruleInfo.updateCh <- ruleVersionAndPauseStatus{ruleFp, false}
-			ruleInfo.updateCh <- ruleVersionAndPauseStatus{ruleFp, false} // second time just to make sure that previous messages were handled
+			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp, false})
+			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp, false}) // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -520,7 +569,7 @@ func TestRuleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			ruleInfo.updateCh <- ruleVersionAndPauseStatus{ruleFp + 1, false}
+			ruleInfo.Update(RuleVersionAndPauseStatus{ruleFp + 1, false})
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls()) > 0
@@ -535,7 +584,7 @@ func TestRuleRoutine(t *testing.T) {
 	})
 
 	t.Run("when evaluation fails", func(t *testing.T) {
-		rule := models.AlertRuleGen(withQueryForState(t, eval.Error))()
+		rule := gen.With(withQueryForState(t, eval.Error)).GenerateRef()
 		rule.ExecErrState = models.ErrorErrState
 
 		evalAppliedChan := make(chan time.Time)
@@ -546,48 +595,55 @@ func TestRuleRoutine(t *testing.T) {
 		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
 		sch.maxAttempts = 3
 		ruleStore.PutRule(context.Background(), rule)
+		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := newAlertRuleInfo(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+			_ = ruleInfo.Run()
 		}()
 
-		ruleInfo.evalCh <- &evaluation{
+		ruleInfo.Eval(&Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
-		}
+		})
 
 		waitForTimeChannel(t, evalAppliedChan)
 
-		t.Run("it should increase failure counter", func(t *testing.T) {
+		t.Run("it should increase failure counter by 1 and attempt failure counter by 3", func(t *testing.T) {
 			// duration metric has 0 values because of mocked clock that do not advance
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
         	            # TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 3
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 3
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 3
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 3
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 3
-						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 3
-        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
         	            grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
-        	            grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 3
+        	            grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
 						# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
         	            # TYPE grafana_alerting_rule_evaluation_failures_total counter
-        	            grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 3
+        	            grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 1
         	            # HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
         	            # TYPE grafana_alerting_rule_evaluations_total counter
-        	            grafana_alerting_rule_evaluations_total{org="%[1]d"} 3
+        	            grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+        	            # HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
+        	            # TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
+        	            grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} 3
+        	            # HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+        	            # TYPE grafana_alerting_rule_evaluation_attempts_total counter
+        	            grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 3
 						# HELP grafana_alerting_rule_process_evaluation_duration_seconds The time to process the evaluation results for a rule.
 						# TYPE grafana_alerting_rule_process_evaluation_duration_seconds histogram
 						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
@@ -626,7 +682,14 @@ func TestRuleRoutine(t *testing.T) {
 						grafana_alerting_rule_send_alerts_duration_seconds_count{org="%[1]d"} 1
 				`, rule.OrgID)
 
-			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total", "grafana_alerting_rule_process_evaluation_duration_seconds", "grafana_alerting_rule_send_alerts_duration_seconds")
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluation_duration_seconds",
+				"grafana_alerting_rule_evaluations_total",
+				"grafana_alerting_rule_evaluation_failures_total",
+				"grafana_alerting_rule_evaluation_attempts_total",
+				"grafana_alerting_rule_evaluation_attempt_failures_total",
+				"grafana_alerting_rule_process_evaluation_duration_seconds",
+				"grafana_alerting_rule_send_alerts_duration_seconds")
 			require.NoError(t, err)
 		})
 
@@ -642,7 +705,7 @@ func TestRuleRoutine(t *testing.T) {
 	t.Run("when there are alerts that should be firing", func(t *testing.T) {
 		t.Run("it should call sender", func(t *testing.T) {
 			// eval.Alerting makes state manager to create notifications for alertmanagers
-			rule := models.AlertRuleGen(withQueryForState(t, eval.Alerting))()
+			rule := gen.With(withQueryForState(t, eval.Alerting)).GenerateRef()
 
 			evalAppliedChan := make(chan time.Time)
 
@@ -651,18 +714,19 @@ func TestRuleRoutine(t *testing.T) {
 
 			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 			ruleStore.PutRule(context.Background(), rule)
+			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := newAlertRuleInfo(ctx)
+			ruleInfo := factory.new(ctx, rule)
 
 			go func() {
-				_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+				_ = ruleInfo.Run()
 			}()
 
-			ruleInfo.evalCh <- &evaluation{
+			ruleInfo.Eval(&Evaluation{
 				scheduledAt: sch.clock.Now(),
 				rule:        rule,
-			}
+			})
 
 			waitForTimeChannel(t, evalAppliedChan)
 
@@ -675,7 +739,7 @@ func TestRuleRoutine(t *testing.T) {
 	})
 
 	t.Run("when there are no alerts to send it should not call notifiers", func(t *testing.T) {
-		rule := models.AlertRuleGen(withQueryForState(t, eval.Normal))()
+		rule := gen.With(withQueryForState(t, eval.Normal)).GenerateRef()
 
 		evalAppliedChan := make(chan time.Time)
 
@@ -684,18 +748,19 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 		ruleStore.PutRule(context.Background(), rule)
+		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := newAlertRuleInfo(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
-			_ = ruleInfo.ruleRoutine(rule.GetKey(), sch)
+			_ = ruleInfo.Run()
 		}()
 
-		ruleInfo.evalCh <- &evaluation{
+		ruleInfo.Eval(&Evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
-		}
+		})
 
 		waitForTimeChannel(t, evalAppliedChan)
 
@@ -703,4 +768,94 @@ func TestRuleRoutine(t *testing.T) {
 
 		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 	})
+
+	t.Run("when there are resolved alerts they should keep sending until retention period is over", func(t *testing.T) {
+		rule := gen.With(withQueryForState(t, eval.Normal), models.RuleMuts.WithInterval(time.Second)).GenerateRef()
+
+		evalAppliedChan := make(chan time.Time)
+
+		sender := NewSyncAlertsSenderMock()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
+		sch.stateManager.ResolvedRetention = 4 * time.Second
+		sch.stateManager.ResendDelay = 2 * time.Second
+		sch.stateManager.Put([]*state.State{
+			stateForRule(rule, sch.clock.Now(), eval.Alerting), // Add existing Alerting state so evals will resolve.
+		})
+
+		ruleStore.PutRule(context.Background(), rule)
+		factory := ruleFactoryFromScheduler(sch)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		ruleInfo := factory.new(ctx, rule)
+
+		go func() {
+			_ = ruleInfo.Run()
+		}()
+
+		// Evaluate 10 times:
+		// 1. Send resolve #1.
+		// 2. 2s resend delay.
+		// 3. Send resolve #2.
+		// 4. 2s resend delay.
+		// 5. Send resolve #3.
+		// 6. No more sends, 4s retention period is over.
+		expectedResolves := map[time.Time]struct{}{
+			sch.clock.Now().Add(1 * time.Second): {},
+			sch.clock.Now().Add(3 * time.Second): {},
+			sch.clock.Now().Add(5 * time.Second): {},
+		}
+		calls := 0
+		for i := 1; i < 10; i++ {
+			ts := sch.clock.Now().Add(time.Duration(int64(i)*rule.IntervalSeconds) * time.Second)
+			ruleInfo.Eval(&Evaluation{
+				scheduledAt: ts,
+				rule:        rule,
+			})
+			waitForTimeChannel(t, evalAppliedChan)
+
+			if _, ok := expectedResolves[ts]; ok {
+				calls++
+				prevCallAlerts, ok := sender.Calls()[calls-1].Arguments[2].(definitions.PostableAlerts)
+				assert.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[calls-1].Arguments[2]))
+				assert.Len(t, prevCallAlerts.PostableAlerts, 1)
+			}
+			sender.AssertNumberOfCalls(t, "Send", calls)
+		}
+	})
+}
+
+func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
+	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.featureToggles, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
+}
+
+func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {
+	s := &state.State{
+		OrgID:              rule.OrgID,
+		AlertRuleUID:       rule.UID,
+		CacheID:            0,
+		State:              evalState,
+		Annotations:        make(map[string]string),
+		Labels:             make(map[string]string),
+		StartsAt:           ts,
+		EndsAt:             ts,
+		ResolvedAt:         &ts,
+		LastSentAt:         &ts,
+		LastEvaluationTime: ts,
+	}
+	for k, v := range rule.Labels {
+		s.Labels[k] = v
+	}
+	for k, v := range state.GetRuleExtraLabels(&logtest.Fake{}, rule, "", true) {
+		if _, ok := s.Labels[k]; !ok {
+			s.Labels[k] = v
+		}
+	}
+	il := models.InstanceLabels(s.Labels)
+	s.Labels = data.Labels(il)
+	id := il.Fingerprint()
+	s.CacheID = id
+
+	return s
 }

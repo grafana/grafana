@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ScaleDimensionConfig } from '@grafana/schema';
@@ -23,7 +23,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption);
+  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption, settings?.filteredFieldType);
   const minMaxStep = useMemo(() => {
     return validateScaleOptions(settings);
   }, [settings]);

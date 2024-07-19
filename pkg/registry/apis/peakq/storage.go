@@ -12,7 +12,7 @@ import (
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -28,10 +28,12 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             grafanaregistry.Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},

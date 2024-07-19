@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
@@ -42,13 +41,14 @@ const mockFolder = (folderOverride: Partial<FolderState> = {}): FolderState => {
 };
 
 describe('AlertsFolderView tests', () => {
-  it('Should display grafana alert rules when the namespace name matches the folder name', () => {
+  it('Should display grafana alert rules when the folder uid matches the name space uid', () => {
     // Arrange
     const folder = mockFolder();
 
     const grafanaNamespace: CombinedRuleNamespace = {
       name: folder.title,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-1',
       groups: [
         {
           name: 'group1',
@@ -91,13 +91,14 @@ describe('AlertsFolderView tests', () => {
     expect(alertRows[5]).toHaveTextContent('Test Alert 6');
   });
 
-  it('Should not display alert rules when the namespace name does not match the folder name', () => {
+  it('Should not display alert rules when the namespace uid does not match the folder uid', () => {
     // Arrange
     const folder = mockFolder();
 
     const grafanaNamespace: CombinedRuleNamespace = {
       name: 'Folder without alerts',
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-2',
       groups: [
         {
           name: 'default',
@@ -130,6 +131,7 @@ describe('AlertsFolderView tests', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
       name: folder.title,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-1',
       groups: [
         {
           name: 'default',
@@ -162,6 +164,7 @@ describe('AlertsFolderView tests', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
       name: folder.title,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      uid: 'folder-1',
       groups: [
         {
           name: 'default',

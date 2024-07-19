@@ -13,7 +13,7 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	ss := InitTestDB(t)
+	ss, _ := InitTestDB(t)
 
 	t.Run("top level transaction", func(t *testing.T) {
 		var outerSession *DBSession
@@ -73,7 +73,7 @@ func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := InitTestDB(t)
+	ss, _ := InitTestDB(t)
 	ctx := context.Background()
 
 	// On X success

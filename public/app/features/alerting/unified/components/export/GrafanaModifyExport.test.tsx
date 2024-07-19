@@ -1,20 +1,14 @@
-import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { Route } from 'react-router-dom';
 import { Props } from 'react-virtualized-auto-sizer';
+import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService } from '@grafana/runtime';
-
-import { TestProvider } from '../../../../../../test/helpers/TestProvider';
-import { AlertmanagerChoice } from '../../../../../plugins/datasource/alertmanager/types';
 import { DashboardSearchItemType } from '../../../../search/types';
-import { mockAlertRuleApi, mockApi, mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
-import { getGrafanaRule, mockDashboardSearchItem, mockDataSource } from '../../mocks';
-import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
+import { mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
+import { mockDashboardSearchItem, mockDataSource } from '../../mocks';
+import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import GrafanaModifyExport from './GrafanaModifyExport';
 
@@ -37,7 +31,7 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 const ui = {
-  loading: byText('Loading the rule'),
+  loading: byText('Loading the rule...'),
   form: {
     nameInput: byRole('textbox', { name: 'name' }),
     folder: byTestId('folder-picker'),
@@ -62,70 +56,37 @@ const dataSources = {
 };
 
 function renderModifyExport(ruleId: string) {
-  locationService.push(`/alerting/${ruleId}/modify-export`);
-  render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, { wrapper: TestProvider });
+  render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, {
+    historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
+  });
 }
 
 const server = setupMswServer();
 
-mockAlertmanagerChoiceResponse(server, {
-  alertmanagersChoice: AlertmanagerChoice.Internal,
-  numExternalAlertmanagers: 0,
-});
-
 describe('GrafanaModifyExport', () => {
   setupDataSources(dataSources.default);
 
-  const grafanaRule = getGrafanaRule(undefined, {
-    uid: 'test-rule-uid',
-    title: 'cpu-usage',
-    namespace_uid: 'folderUID1',
-    data: [
-      {
-        refId: 'A',
-        datasourceUid: dataSources.default.uid,
-        queryType: 'alerting',
-        relativeTimeRange: { from: 1000, to: 2000 },
-        model: {
-          refId: 'A',
-          expression: 'vector(1)',
-          queryType: 'alerting',
-          datasource: { uid: dataSources.default.uid, type: 'prometheus' },
-        },
-      },
-    ],
-  });
-
   it('Should render edit form for the specified rule', async () => {
-    mockApi(server).eval({ results: { A: { frames: [] } } });
     mockSearchApi(server).search([
       mockDashboardSearchItem({
-        title: grafanaRule.namespace.name,
-        uid: 'folderUID1',
+        title: grafanaRulerRule.grafana_alert.title,
+        uid: grafanaRulerRule.grafana_alert.namespace_uid,
         url: '',
         tags: [],
         type: DashboardSearchItemType.DashFolder,
       }),
     ]);
-    mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {
-      [grafanaRule.namespace.name]: [{ name: grafanaRule.group.name, interval: '1m', rules: [grafanaRule.rulerRule!] }],
-    });
-    mockAlertRuleApi(server).rulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, 'folderUID1', grafanaRule.group.name, {
-      name: grafanaRule.group.name,
-      interval: '1m',
-      rules: [grafanaRule.rulerRule!],
-    });
-    mockExportApi(server).modifiedExport('folderUID1', {
+    mockExportApi(server).modifiedExport(grafanaRulerRule.grafana_alert.namespace_uid, {
       yaml: 'Yaml Export Content',
       json: 'Json Export Content',
     });
 
     const user = userEvent.setup();
 
-    renderModifyExport('test-rule-uid');
+    renderModifyExport(grafanaRulerRule.grafana_alert.uid);
 
     await waitForElementToBeRemoved(() => ui.loading.get());
-    expect(await ui.form.nameInput.find()).toHaveValue('cpu-usage');
+    expect(await ui.form.nameInput.find()).toHaveValue('Grafana-rule');
 
     await user.click(ui.exportButton.get());
 

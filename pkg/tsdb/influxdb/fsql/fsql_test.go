@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"net"
 	"testing"
 
 	"github.com/apache/arrow/go/v15/arrow/flight"
@@ -21,9 +22,14 @@ type FSQLTestSuite struct {
 	suite.Suite
 	db     *sql.DB
 	server flight.Server
+	addr   string
 }
 
 func (suite *FSQLTestSuite) SetupTest() {
+	addr, _ := freeport(suite.T())
+
+	suite.addr = addr
+
 	db, err := example.CreateDB()
 	require.NoError(suite.T(), err)
 
@@ -32,7 +38,7 @@ func (suite *FSQLTestSuite) SetupTest() {
 	sqliteServer.Alloc = memory.NewCheckedAllocator(memory.DefaultAllocator)
 	server := flight.NewServerWithMiddleware(nil)
 	server.RegisterFlightService(flightsql.NewFlightServer(sqliteServer))
-	err = server.Init("localhost:12345")
+	err = server.Init(suite.addr)
 	require.NoError(suite.T(), err)
 	go func() {
 		err := server.Serve()
@@ -57,13 +63,13 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 		resp, err := Query(
 			context.Background(),
 			&models.DatasourceInfo{
-				HTTPClient: nil,
-				Token:      "secret",
-				URL:        "http://localhost:12345",
-				DbName:     "influxdb",
-				Version:    "test",
-				HTTPMode:   "proxy",
-				SecureGrpc: false,
+				HTTPClient:   nil,
+				Token:        "secret",
+				URL:          "http://" + suite.addr,
+				DbName:       "influxdb",
+				Version:      "test",
+				HTTPMode:     "proxy",
+				InsecureGrpc: true,
 			},
 			backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
@@ -108,4 +114,16 @@ func mustQueryJSON(t *testing.T, refID, sql string) []byte {
 		panic(err)
 	}
 	return b
+}
+
+func freeport(t *testing.T) (addr string, err error) {
+	l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("127.0.0.1")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err = l.Close()
+	}()
+	a := l.Addr().(*net.TCPAddr)
+	return a.String(), nil
 }

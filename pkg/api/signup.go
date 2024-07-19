@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -88,9 +87,6 @@ func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response 
 	if !hs.Cfg.AllowUserSignUp {
 		return response.Error(http.StatusUnauthorized, "User signup is disabled", nil)
 	}
-
-	form.Email = strings.TrimSpace(form.Email)
-	form.Username = strings.TrimSpace(form.Username)
 
 	createUserCmd := user.CreateUserCommand{
 		Email:    form.Email,

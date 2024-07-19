@@ -1,6 +1,6 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryEditorByApp.test.tsx
 import { render, screen } from '@testing-library/react';
 import { noop } from 'lodash';
-import React from 'react';
 
 import { CoreApp } from '@grafana/data';
 
@@ -24,7 +24,6 @@ jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
 
 function setup(app: CoreApp): { onRunQuery: jest.Mock } {
   const dataSource = {
-    createQuery: jest.fn((q) => q),
     getInitHints: () => [],
     getPrometheusTime: jest.fn((date, roundup) => 123),
     getQueryHints: jest.fn(() => []),

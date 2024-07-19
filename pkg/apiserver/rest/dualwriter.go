@@ -1,34 +1,46 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
 
 var (
-	_ rest.Storage              = (*DualWriter)(nil)
-	_ rest.Scoper               = (*DualWriter)(nil)
-	_ rest.TableConvertor       = (*DualWriter)(nil)
-	_ rest.CreaterUpdater       = (*DualWriter)(nil)
-	_ rest.CollectionDeleter    = (*DualWriter)(nil)
-	_ rest.GracefulDeleter      = (*DualWriter)(nil)
-	_ rest.SingularNameProvider = (*DualWriter)(nil)
+	_ rest.Storage              = (DualWriter)(nil)
+	_ rest.Scoper               = (DualWriter)(nil)
+	_ rest.TableConvertor       = (DualWriter)(nil)
+	_ rest.CreaterUpdater       = (DualWriter)(nil)
+	_ rest.CollectionDeleter    = (DualWriter)(nil)
+	_ rest.GracefulDeleter      = (DualWriter)(nil)
+	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
+
+// Function that will create a dual writer
+type DualWriteBuilder func(gr schema.GroupResource, legacy LegacyStorage, storage Storage) (Storage, error)
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
 	rest.Storage
-	rest.StandardStorage
 	rest.Scoper
 	rest.TableConvertor
 	rest.SingularNameProvider
 	rest.Getter
+	// TODO: when watch is implemented, we can replace all the below with rest.StandardStorage
+	rest.Lister
+	rest.CreaterUpdater
+	rest.GracefulDeleter
+	rest.CollectionDeleter
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -36,6 +48,10 @@ type LegacyStorage interface {
 	rest.Storage
 	rest.Scoper
 	rest.SingularNameProvider
+	rest.CreaterUpdater
+	rest.Lister
+	rest.GracefulDeleter
+	rest.CollectionDeleter
 	rest.TableConvertor
 	rest.Getter
 }
@@ -60,117 +76,53 @@ type LegacyStorage interface {
 // - rest.Updater
 // - rest.GracefulDeleter
 // - rest.CollectionDeleter
-type DualWriter struct {
+
+type DualWriter interface {
 	Storage
-	legacy LegacyStorage
+	LegacyStorage
+	Mode() DualWriterMode
 }
 
+type DualWriterMode int
+
+const (
+	// Mode0 represents writing to and reading from solely LegacyStorage. This mode is enabled when the
+	// `unifiedStorage` feature flag is not set. All reads and writes are made to LegacyStorage. None are made to Storage.
+	Mode0 DualWriterMode = iota
+	// Mode1 represents writing to and reading from LegacyStorage for all primary functionality while additionally
+	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
+	Mode1
+	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
+	Mode2
+	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
+	Mode3
+	// Mode4 represents writing and reading from Storage.
+	Mode4
+)
+
+// TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
-	return &DualWriter{
-		Storage: storage,
-		legacy:  legacy,
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer) DualWriter {
+	metrics := &dualWriterMetrics{}
+	metrics.init(reg)
+	switch mode {
+	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+	// writing to legacy storage without `unifiedStorage` enabled.
+	case Mode1:
+		// read and write only from legacy storage
+		return newDualWriterMode1(legacy, storage, metrics)
+	case Mode2:
+		// write to both, read from storage but use legacy as backup
+		return newDualWriterMode2(legacy, storage, metrics)
+	case Mode3:
+		// write to both, read from storage only
+		return newDualWriterMode3(legacy, storage, metrics)
+	case Mode4:
+		// read and write only from storage
+		return newDualWriterMode4(legacy, storage, metrics)
+	default:
+		return newDualWriterMode1(legacy, storage, metrics)
 	}
-}
-
-// Create overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
-func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	if legacy, ok := d.legacy.(rest.Creater); ok {
-		created, err := legacy.Create(ctx, obj, createValidation, options)
-		if err != nil {
-			return nil, err
-		}
-
-		accessor, err := meta.Accessor(created)
-		if err != nil {
-			return created, err
-		}
-		accessor.SetResourceVersion("")
-		accessor.SetUID("")
-
-		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
-		if err != nil {
-			klog.Error("unable to create object in duplicate storage", "error", err)
-		}
-		return rsp, err
-	}
-
-	return d.Storage.Create(ctx, obj, createValidation, options)
-}
-
-// Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
-func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	if legacy, ok := d.legacy.(rest.Updater); ok {
-		// Get the previous version from k8s storage (the one)
-		old, err := d.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			return nil, false, err
-		}
-		accessor, err := meta.Accessor(old)
-		if err != nil {
-			return nil, false, err
-		}
-		// Hold on to the RV+UID for the dual write
-		theRV := accessor.GetResourceVersion()
-		theUID := accessor.GetUID()
-
-		// Changes applied within new storage
-		// will fail if RV is out of sync
-		updated, err := objInfo.UpdatedObject(ctx, old)
-		if err != nil {
-			return nil, false, err
-		}
-
-		accessor, err = meta.Accessor(updated)
-		if err != nil {
-			return nil, false, err
-		}
-		accessor.SetUID("")             // clear it
-		accessor.SetResourceVersion("") // remove it so it is not a constraint
-		obj, created, err := legacy.Update(ctx, name, &updateWrapper{
-			upstream: objInfo,
-			updated:  updated, // returned as the object that will be updated
-		}, createValidation, updateValidation, forceAllowCreate, options)
-		if err != nil {
-			return obj, created, err
-		}
-
-		accessor, err = meta.Accessor(obj)
-		if err != nil {
-			return nil, false, err
-		}
-		accessor.SetResourceVersion(theRV) // the original RV
-		accessor.SetUID(theUID)
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  obj, // returned as the object that will be updated
-		}
-	}
-
-	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-}
-
-// Delete overrides the default behavior of the Storage and delete from both the LegacyStorage and Storage.
-func (d *DualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// Delete from storage *first* so the item is still exists if a failure happens
-	obj, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-	if err == nil {
-		if legacy, ok := d.legacy.(rest.GracefulDeleter); ok {
-			obj, async, err = legacy.Delete(ctx, name, deleteValidation, options)
-		}
-	}
-	return obj, async, err
-}
-
-// DeleteCollection overrides the default behavior of the Storage and delete from both the LegacyStorage and Storage.
-func (d *DualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	out, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	if err == nil {
-		if legacy, ok := d.legacy.(rest.CollectionDeleter); ok {
-			out, err = legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
-		}
-	}
-	return out, err
 }
 
 type updateWrapper struct {
@@ -189,4 +141,121 @@ func (u *updateWrapper) Preconditions() *metav1.Preconditions {
 // The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
 func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
 	return u.updated, nil
+}
+
+type NamespacedKVStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key, value string) error
+}
+
+func SetDualWritingMode(
+	ctx context.Context,
+	kvs NamespacedKVStore,
+	legacy LegacyStorage,
+	storage Storage,
+	entity string,
+	desiredMode DualWriterMode,
+	reg prometheus.Registerer,
+) (DualWriterMode, error) {
+	// Mode0 means no DualWriter
+	if desiredMode == Mode0 {
+		return Mode0, nil
+	}
+
+	toMode := map[string]DualWriterMode{
+		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+		// writing to legacy storage without `unifiedStorage` enabled.
+		"1": Mode1,
+		"2": Mode2,
+		"3": Mode3,
+		"4": Mode4,
+	}
+	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
+
+	// Use entity name as key
+	m, ok, err := kvs.Get(ctx, entity)
+	if err != nil {
+		return Mode0, errors.New("failed to fetch current dual writing mode")
+	}
+
+	currentMode, valid := toMode[m]
+
+	if !valid && ok {
+		// Only log if "ok" because initially all instances will have mode unset for playlists.
+		klog.Info("invalid dual writing mode for playlists mode:", m)
+	}
+
+	if !valid || !ok {
+		// Default to mode 1
+		currentMode = Mode1
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return Mode0, errDualWriterSetCurrentMode
+		}
+	}
+
+	// Desired mode is 2 and current mode is 1
+	if (desiredMode == Mode2) && (currentMode == Mode1) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
+		// There are none between mode 1 and mode 2
+		currentMode = Mode2
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return Mode0, errDualWriterSetCurrentMode
+		}
+	}
+	if (desiredMode == Mode1) && (currentMode == Mode2) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
+		// There are none between mode 1 and mode 2
+		currentMode = Mode1
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return Mode0, errDualWriterSetCurrentMode
+		}
+	}
+
+	// 	#TODO add support for other combinations of desired and current modes
+
+	return currentMode, nil
+}
+
+var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func Compare(storageObj, legacyObj runtime.Object) bool {
+	if storageObj == nil || legacyObj == nil {
+		return storageObj == nil && legacyObj == nil
+	}
+	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+}
+
+func removeMeta(obj runtime.Object) []byte {
+	cpy := obj.DeepCopyObject()
+	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if err != nil {
+		return nil
+	}
+	// we don't want to compare meta fields
+	delete(unstObj, "metadata")
+
+	jsonObj, err := json.Marshal(unstObj)
+	if err != nil {
+		return nil
+	}
+	return jsonObj
+}
+
+func getName(o runtime.Object) string {
+	if o == nil {
+		return ""
+	}
+	accessor, err := meta.Accessor(o)
+	if err != nil {
+		klog.Error("failed to get object name: ", err)
+		return ""
+	}
+	return accessor.GetName()
 }

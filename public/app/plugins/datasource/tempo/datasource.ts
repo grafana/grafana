@@ -1,5 +1,5 @@
-import { groupBy, identity, pick, pickBy, startCase } from 'lodash';
-import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { groupBy } from 'lodash';
+import { EMPTY, forkJoin, from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
 
@@ -10,12 +10,10 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
-  DataSourceApi,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  isValidGoDuration,
   LoadingState,
   rangeUtil,
   ScopedVars,
@@ -36,11 +34,14 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import {
+  generateQueryFromAdHocFilters,
+  generateQueryFromFilters,
+  interpolateFilters,
+} from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
-import { LokiOptions } from './_importedDependencies/datasources/loki/types';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
-import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
   durationMetric,
@@ -55,22 +56,20 @@ import {
 import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import {
-  createTableFrameFromSearch,
   formatTraceQLMetrics,
   formatTraceQLResponse,
   transformFromOTLP as transformFromOTEL,
   transformTrace,
-  transformTraceList,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
-import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
-import { getErrorMessage } from './utils';
+import { TempoJsonData, TempoQuery } from './types';
+import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
 export const DEFAULT_SPSS = 3; // spans per span set
 
-enum FeatureName {
+export enum FeatureName {
   streaming = 'streaming',
 }
 
@@ -78,7 +77,7 @@ enum FeatureName {
  ** feature available. If the running Tempo instance on the user's backend is older than the
  ** target version, the feature is disabled in Grafana (frontend).
  */
-const featuresToTempoVersion = {
+export const featuresToTempoVersion = {
   [FeatureName.streaming]: '2.2.0',
 };
 
@@ -107,9 +106,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     filters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
-  lokiSearch?: {
-    datasourceUid?: string;
-  };
   traceQuery?: {
     timeShiftEnabled?: boolean;
     spanStartTimeShift?: string;
@@ -118,6 +114,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   uploadedJson?: string | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
+
+  streamingEnabled?: {
+    search?: boolean;
+  };
 
   // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
   tempoVersion?: string | null;
@@ -132,8 +132,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
-    this.lokiSearch = instanceSettings.jsonData.lokiSearch;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
+    this.streamingEnabled = instanceSettings.jsonData.streamingEnabled;
+
     this.languageProvider = new TempoLanguageProvider(this);
 
     if (!this.search?.filters) {
@@ -179,7 +180,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(labelName?: string, query?: string): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
@@ -201,7 +202,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+      options = await this.languageProvider.getOptionsV2(scopeAndTag, query);
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -225,8 +226,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   // Allows to retrieve the list of tag values for ad-hoc filters
-  getTagValues(options: DataSourceGetTagValuesOptions): Promise<Array<{ text: string }>> {
-    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
+  getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
+    const query = generateQueryFromAdHocFilters(options.filters);
+    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''), query);
   }
 
   init = async () => {
@@ -251,7 +253,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @param featureName - the name of the feature to consider
    * @return true if the feature is available, false otherwise
    */
-  private isFeatureAvailable(featureName: FeatureName) {
+  isFeatureAvailable(featureName: FeatureName) {
     // We know for old Tempo instances we don't know their version, so resort to default
     const actualVersion = this.tempoVersion ?? defaultTempoVersion;
 
@@ -263,6 +265,25 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
+  /**
+   * Check if streaming for search queries is enabled (and available).
+   *
+   * We need to check:
+   * - the `traceQLStreaming` feature toggle, to disable streaming if customer support turned off the toggle in the past, which usually means that streaming does not work properly for the customer
+   * - the recently created Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
+   * - whether streaming is actually available based on the Tempo version, just as a sanity check
+   *
+   * @return true if streaming for search queries is enabled, false otherwise
+   */
+  isStreamingSearchEnabled() {
+    return (
+      config.featureToggles.traceQLStreaming &&
+      this.isFeatureAvailable(FeatureName.streaming) &&
+      config.liveEnabled &&
+      this.streamingEnabled?.search
+    );
+  }
+
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
@@ -272,83 +293,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return of({ data: [], state: LoadingState.Done });
     }
 
-    const logsDatasourceUid = this.getLokiSearchDS();
-
-    // Run search queries on linked datasource
-    if (logsDatasourceUid && targets.search?.length > 0) {
-      reportInteraction('grafana_traces_loki_search_queried', {
-        datasourceType: 'tempo',
-        app: options.app ?? '',
-        grafana_version: config.buildInfo.version,
-        hasLinkedQueryExpr:
-          targets.search[0].linkedQuery?.expr && targets.search[0].linkedQuery?.expr !== '' ? true : false,
-      });
-
-      const dsSrv = getDataSourceSrv();
-      subQueries.push(
-        from(dsSrv.get(logsDatasourceUid)).pipe(
-          mergeMap((linkedDatasource: DataSourceApi) => {
-            // Wrap linked query into a data request based on original request
-            const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
-            // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
-            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as TempoDatasource)
-              .instanceSettings;
-            const traceLinkMatcher: string[] =
-              settings.jsonData.derivedFields
-                ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
-                .map((field) => field.matcherRegex) || [];
-
-            if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
-              return throwError(
-                () =>
-                  new Error(
-                    'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
-                  )
-              );
-            } else {
-              const response = linkedDatasource.query(linkedRequest);
-              return from(response).pipe(
-                map((response) =>
-                  response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
-                )
-              );
-            }
-          })
-        )
-      );
-    }
-
+    // Migrate user to new query type if they are using the old search query type
     if (targets.nativeSearch?.length) {
-      try {
-        reportInteraction('grafana_traces_search_queried', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          hasServiceName: targets.nativeSearch[0].serviceName ? true : false,
-          hasSpanName: targets.nativeSearch[0].spanName ? true : false,
-          resultLimit: targets.nativeSearch[0].limit ?? '',
-          hasSearch: targets.nativeSearch[0].search ? true : false,
-          minDuration: targets.nativeSearch[0].minDuration ?? '',
-          maxDuration: targets.nativeSearch[0].maxDuration ?? '',
-        });
-
-        const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
-        const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
-        const searchQuery = this.buildSearchQuery(query, timeRange);
-        subQueries.push(
-          this._request('/api/search', searchQuery).pipe(
-            map((response) => {
-              return {
-                data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
-              };
-            }),
-            catchError((err) => {
-              return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-            })
-          )
-        );
-      } catch (error) {
-        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      if (
+        targets.nativeSearch[0].spanName ||
+        targets.nativeSearch[0].serviceName ||
+        targets.nativeSearch[0].search ||
+        targets.nativeSearch[0].maxDuration ||
+        targets.nativeSearch[0].minDuration ||
+        targets.nativeSearch[0].queryType === 'nativeSearch'
+      ) {
+        const migratedQuery = migrateFromSearchToTraceQLSearch(targets.nativeSearch[0]);
+        if (targets.traceqlSearch?.length) {
+          targets.traceqlSearch.push(migratedQuery);
+        } else {
+          targets.traceqlSearch = [migratedQuery];
+        }
       }
     }
 
@@ -382,7 +342,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: config.featureToggles.traceQLStreaming,
+              streaming: this.streamingEnabled,
             });
             subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
@@ -416,10 +376,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValueFromFilters ?? '',
-            streaming: config.featureToggles.traceQLStreaming,
+            streaming: this.streamingEnabled,
           });
 
-          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
+          if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
@@ -503,7 +463,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   isTraceQlMetricsQuery(query: string): boolean {
     // Check whether this is a metrics query by checking if it contains a metrics function
     const metricsFnRegex =
-      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time)\s*\(/;
+      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time|compare)\s*\(/;
     return !!query.trim().match(metricsFnRegex);
   }
 
@@ -534,26 +494,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   applyVariables(query: TempoQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 
-    if (query.linkedQuery) {
-      expandedQuery.linkedQuery = {
-        ...query.linkedQuery,
-        expr: this.templateSrv.replace(query.linkedQuery?.expr ?? '', scopedVars),
-      };
+    if (query.filters) {
+      expandedQuery.filters = interpolateFilters(query.filters, scopedVars);
     }
 
-    if (query.filters) {
-      expandedQuery.filters = query.filters.map((filter) => {
+    if (query.groupBy) {
+      expandedQuery.groupBy = query.groupBy.map((filter) => {
         const updatedFilter = {
           ...filter,
           tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
         };
-
-        if (filter.value) {
-          updatedFilter.value =
-            typeof filter.value === 'string'
-              ? this.templateSrv.replace(filter.value ?? '', scopedVars, VariableFormatID.Pipe)
-              : filter.value.map((v) => this.templateSrv.replace(v ?? '', scopedVars, VariableFormatID.Pipe));
-        }
 
         return updatedFilter;
       });
@@ -562,11 +512,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars, VariableFormatID.Pipe),
-      serviceName: this.templateSrv.replace(query.serviceName ?? '', scopedVars),
-      spanName: this.templateSrv.replace(query.spanName ?? '', scopedVars),
-      search: this.templateSrv.replace(query.search ?? '', scopedVars),
-      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
-      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
       serviceMapQuery: Array.isArray(query.serviceMapQuery)
         ? query.serviceMapQuery.map((query) => this.templateSrv.replace(query, scopedVars))
         : this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
@@ -602,9 +547,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (!response.data.summaries) {
           return {
             error: {
-              message: getErrorMessage(
-                `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. You can check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
-              ),
+              message: getErrorMessage(`No summary data for '${groupBy}'.`),
             },
             data: emptyResponse,
           };
@@ -681,7 +624,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
+    if (this.isStreamingSearchEnabled()) {
       return this.handleStreamingSearch(options, targets.traceql, queryValue);
     } else {
       return this._request('/api/search', {
@@ -707,11 +650,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     options: DataQueryRequest<TempoQuery>,
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    return this._request('/api/metrics/query_range', {
+    const requestData = {
       query: queryValue,
       start: options.range.from.unix(),
       end: options.range.to.unix(),
-    }).pipe(
+      step: options.targets[0].step,
+    };
+
+    if (!requestData.step) {
+      delete requestData.step;
+    }
+
+    return this._request('/api/metrics/query_range', requestData).pipe(
       map((response) => {
         return {
           data: formatTraceQLMetrics(queryValue, response.data),
@@ -732,11 +682,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (this.traceQuery?.timeShiftEnabled) {
       request.range = options.range && {
         ...options.range,
-        from: options.range.from.subtract(
+        from: dateTime(options.range.from).subtract(
           rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
           'milliseconds'
         ),
-        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
+        to: dateTime(options.range.to).add(
+          rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'),
+          'milliseconds'
+        ),
       };
     } else {
       request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
@@ -772,11 +725,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
   }
 
-  private _request(
-    apiUrl: string,
-    data?: unknown,
-    options?: Partial<BackendSrvRequest>
-  ): Observable<Record<string, any>> {
+  _request(apiUrl: string, data?: unknown, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
     const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
@@ -785,97 +734,96 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async testDatasource(): Promise<TestDataSourceResponse> {
+    const observables = [];
+
     const options: BackendSrvRequest = {
       headers: {},
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-
-    return await lastValueFrom(
+    observables.push(
       getBackendSrv()
         .fetch(options)
         .pipe(
           mergeMap(() => {
-            return of({ status: 'success', message: 'Data source successfully connected.' });
+            return of({ status: 'success', message: 'Health check succeeded' });
           }),
           catchError((err) => {
-            return of({ status: 'error', message: getErrorMessage(err.data.message, 'Unable to connect with Tempo') });
+            return of({
+              status: 'error',
+              message: getErrorMessage(err.data.message, 'Unable to connect with Tempo'),
+            });
           })
         )
+    );
+
+    if (this.streamingEnabled?.search) {
+      const now = new Date();
+      const from = new Date(now);
+      from.setMinutes(from.getMinutes() - 15);
+      observables.push(
+        this.handleStreamingSearch(
+          {
+            range: {
+              from: dateTime(from),
+              to: dateTime(now),
+              raw: { from: 'now-15m', to: 'now' },
+            },
+            requestId: '',
+            interval: '',
+            intervalMs: 0,
+            scopedVars: {},
+            targets: [],
+            timezone: '',
+            app: '',
+            startTime: 0,
+          },
+          [
+            {
+              datasource: this.instanceSettings,
+              limit: 1,
+              query: '{}',
+              queryType: 'traceql',
+              refId: 'A',
+              tableType: SearchTableType.Traces,
+              filters: [],
+            },
+          ],
+          '{}'
+        ).pipe(
+          mergeMap(() => {
+            return of({ status: 'success', message: 'Streaming test succeeded.' });
+          }),
+          catchError((err) => {
+            return of({
+              status: 'error',
+              message: getErrorMessage(err.data.message, 'Test for streaming failed, consider disabling streaming'),
+            });
+          })
+        )
+      );
+    }
+
+    return await lastValueFrom(
+      forkJoin(observables).pipe(
+        mergeMap((observableResults) => {
+          const erroredResult = observableResults.find((result) => result.status !== 'success');
+          return erroredResult
+            ? of(erroredResult)
+            : of({ status: 'success', message: 'Successfully connected to Tempo data source.' });
+        })
+      )
     );
   }
 
   getQueryDisplayText(query: TempoQuery) {
-    if (query.queryType !== 'nativeSearch') {
+    if (query.queryType === 'traceql' || query.queryType === 'traceId') {
       return query.query ?? '';
     }
 
-    const keys: Array<
-      keyof Pick<TempoQuery, 'serviceName' | 'spanName' | 'search' | 'minDuration' | 'maxDuration' | 'limit'>
-    > = ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'];
-    return keys
-      .filter((key) => query[key])
-      .map((key) => `${startCase(key)}: ${query[key]}`)
-      .join(', ');
+    const appliedQuery = this.applyVariables(query, {});
+    return generateQueryFromFilters(appliedQuery.filters);
   }
-
-  buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
-    let tags = query.search ?? '';
-
-    let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
-    // Remove empty properties
-    tempoQuery = pickBy(tempoQuery, identity);
-
-    if (query.serviceName) {
-      tags += ` service.name="${query.serviceName}"`;
-    }
-    if (query.spanName) {
-      tags += ` name="${query.spanName}"`;
-    }
-
-    // Set default limit
-    if (!tempoQuery.limit) {
-      tempoQuery.limit = DEFAULT_LIMIT;
-    }
-
-    // Validate query inputs and remove spaces if valid
-    if (tempoQuery.minDuration) {
-      tempoQuery.minDuration = this.templateSrv.replace(tempoQuery.minDuration ?? '');
-      if (!isValidGoDuration(tempoQuery.minDuration)) {
-        throw new Error('Please enter a valid min duration.');
-      }
-      tempoQuery.minDuration = tempoQuery.minDuration.replace(/\s/g, '');
-    }
-    if (tempoQuery.maxDuration) {
-      tempoQuery.maxDuration = this.templateSrv.replace(tempoQuery.maxDuration ?? '');
-      if (!isValidGoDuration(tempoQuery.maxDuration)) {
-        throw new Error('Please enter a valid max duration.');
-      }
-      tempoQuery.maxDuration = tempoQuery.maxDuration.replace(/\s/g, '');
-    }
-
-    if (!Number.isInteger(tempoQuery.limit) || tempoQuery.limit <= 0) {
-      throw new Error('Please enter a valid limit.');
-    }
-
-    let searchQuery: SearchQueryParams = { tags, ...tempoQuery };
-
-    if (timeRange) {
-      searchQuery.start = timeRange.startTime;
-      searchQuery.end = timeRange.endTime;
-    }
-
-    return searchQuery;
-  }
-
-  // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
-  getLokiSearchDS = (): string | undefined => {
-    const legacyLogsDatasourceUid =
-      this.tracesToLogs?.lokiSearch !== false && this.lokiSearch === undefined
-        ? this.tracesToLogs?.datasourceUid
-        : undefined;
-    return this.lokiSearch?.datasourceUid ?? legacyLogsDatasourceUid;
-  };
 }
 
 function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
@@ -1080,8 +1028,10 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
   };
 }
 
+// TODO: this is basically the same as prometheus/datasource.ts#prometheusSpecialRegexEscape which is used to escape
+//  template variable values. It would be best to move it to some common place.
 export function getEscapedSpanNames(values: string[]) {
-  return values.map((value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
+  return values.map((value: string) => value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
 }
 
 export function getFieldConfig(
@@ -1128,13 +1078,35 @@ export function getFieldConfig(
         datasourceUid,
         false
       ),
-      makeTempoLink('View traces', `\${${tempoField}}`, '', tempoDatasourceUid),
+      makeTempoLink(
+        'View traces',
+        namespaceFields !== undefined ? `\${${namespaceFields.targetNamespace}}` : '',
+        `\${${targetField}}`,
+        '',
+        tempoDatasourceUid
+      ),
     ],
   };
 }
 
-export function makeTempoLink(title: string, serviceName: string, spanName: string, datasourceUid: string) {
+export function makeTempoLink(
+  title: string,
+  serviceNamespace: string | undefined,
+  serviceName: string,
+  spanName: string,
+  datasourceUid: string
+) {
   let query: TempoQuery = { refId: 'A', queryType: 'traceqlSearch', filters: [] };
+  if (serviceNamespace !== undefined && serviceNamespace !== '') {
+    query.filters.push({
+      id: 'service-namespace',
+      scope: TraceqlSearchScope.Resource,
+      tag: 'service.namespace',
+      value: serviceNamespace,
+      operator: '=',
+      valueType: 'string',
+    });
+  }
   if (serviceName !== '') {
     query.filters.push({
       id: 'service-name',
@@ -1257,7 +1229,12 @@ function getServiceGraphView(
   if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
     const errorRateNames = errorRate[0].fields[1]?.values ?? [];
     const errorRateValues = errorRate[0].fields[2]?.values ?? [];
-    let errorRateObj: any = {};
+    let errorRateObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     errorRateNames.map((name: string, index: number) => {
       errorRateObj[name] = { value: errorRateValues[index] };
     });
@@ -1302,7 +1279,12 @@ function getServiceGraphView(
   }
 
   if (duration.length > 0) {
-    let durationObj: any = {};
+    let durationObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     duration.forEach((d) => {
       if (d.fields.length > 1) {
         const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
@@ -1338,7 +1320,7 @@ function getServiceGraphView(
         return 'Tempo';
       }),
       config: {
-        links: [makeTempoLink('Tempo', '', `\${__data.fields[0]}`, tempoDatasourceUid)],
+        links: [makeTempoLink('Tempo', undefined, '', `\${__data.fields[0]}`, tempoDatasourceUid)],
       },
     });
   }

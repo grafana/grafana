@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 //go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go
@@ -27,6 +28,7 @@ type Service interface {
 	DeleteExpiredSnapshots(context.Context, *DeleteExpiredSnapshotsCommand) error
 	GetDashboardSnapshot(context.Context, *GetDashboardSnapshotQuery) (*DashboardSnapshot, error)
 	SearchDashboardSnapshots(context.Context, *GetDashboardSnapshotsQuery) (DashboardSnapshotsList, error)
+	ValidateDashboardExists(context.Context, int64, string) error
 }
 
 var client = &http.Client{
@@ -34,19 +36,26 @@ var client = &http.Client{
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
 
-func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.SnapshotSharingOptions, svc Service) {
+func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.SnapshotSharingOptions, cmd CreateDashboardSnapshotCommand, svc Service) {
 	if !cfg.SnapshotsEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return
 	}
 
-	cmd := CreateDashboardSnapshotCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+	uid := cmd.DashboardCreateCommand.Dashboard.GetNestedString("uid")
+
+	err := svc.ValidateDashboardExists(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	if err != nil {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			c.JsonApiErr(http.StatusBadRequest, "Dashboard not found", err)
+			return
+		}
+		c.JsonApiErr(http.StatusInternalServerError, "Failed to get dashboard", err)
 		return
 	}
-	if cmd.Name == "" {
-		cmd.Name = "Unnamed snapshot"
+
+	if cmd.DashboardCreateCommand.Name == "" {
+		cmd.DashboardCreateCommand.Name = "Unnamed snapshot"
 	}
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
@@ -66,7 +75,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		return
 	}
 
-	if cmd.External {
+	if cmd.DashboardCreateCommand.External {
 		if !cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 			return
@@ -83,11 +92,11 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		cmd.DeleteKey = resp.DeleteKey
 		cmd.ExternalURL = resp.Url
 		cmd.ExternalDeleteURL = resp.DeleteUrl
-		cmd.Dashboard = &common.Unstructured{}
+		cmd.DashboardCreateCommand.Dashboard = &common.Unstructured{}
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
-		cmd.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
+		cmd.DashboardCreateCommand.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
 
 		if cmd.Key == "" {
 			var err error

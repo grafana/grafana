@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 
@@ -7,13 +7,10 @@ export interface AzureAuthSettings {
   readonly azureAuthSupported: boolean;
 
   /** Gets whether the Azure authentication currently enabled for the datasource */
-  readonly getAzureAuthEnabled: (config: DataSourceSettings<any, any>) => boolean;
+  readonly getAzureAuthEnabled: (config: DataSourceSettings) => boolean;
 
   /** Enables/disables the Azure authentication from the datasource */
-  readonly setAzureAuthEnabled: (
-    config: DataSourceSettings<any, any>,
-    enabled: boolean
-  ) => Partial<DataSourceSettings<any, any>>;
+  readonly setAzureAuthEnabled: (config: DataSourceSettings, enabled: boolean) => Partial<DataSourceSettings>;
 
   /** Optional React component of additional Azure settings UI if authentication is enabled  */
   readonly azureSettingsUI?: React.ComponentType<HttpSettingsBaseProps>;

@@ -1,6 +1,6 @@
-import React, { useMemo, useReducer, useState } from 'react';
+import { useMemo } from 'react';
 
-import { Cascader, CascaderOption, HorizontalGroup, Button } from '@grafana/ui';
+import { Cascader, CascaderOption } from '@grafana/ui';
 
 import { useMetricCategories } from './useMetricCategories';
 
@@ -15,36 +15,19 @@ export function MetricCategoryCascader({ metricNames, onSelect, disabled, initia
   const categoryTree = useMetricCategories(metricNames);
   const options = useMemo(() => createCasaderOptions(categoryTree), [categoryTree]);
 
-  const [disableClear, setDisableClear] = useState(initialValue == null);
-
-  // Increments whenever clear is pressed, to reset the Cascader component
-  const [cascaderKey, resetCascader] = useReducer((x) => x + 1, 0);
-
-  const clear = () => {
-    resetCascader();
-    setDisableClear(true);
-    onSelect(undefined);
-  };
-
   return (
-    <HorizontalGroup>
-      <Cascader
-        key={cascaderKey} // To reset the component to `undefined`
-        displayAllSelectedLevels={true}
-        width={40}
-        separator="_"
-        hideActiveLevelLabel={false}
-        placeholder={'No filter'}
-        onSelect={(prefix) => {
-          setDisableClear(!prefix);
-          onSelect(prefix);
-        }}
-        {...{ options, disabled, initialValue }}
-      />
-      <Button disabled={disableClear || disabled} onClick={clear} variant="secondary">
-        Clear
-      </Button>
-    </HorizontalGroup>
+    <Cascader
+      displayAllSelectedLevels={true}
+      width={40}
+      separator="_"
+      hideActiveLevelLabel={false}
+      placeholder={'No filter'}
+      isClearable
+      onSelect={(prefix) => {
+        onSelect(prefix);
+      }}
+      {...{ options, disabled, initialValue }}
+    />
   );
 }
 

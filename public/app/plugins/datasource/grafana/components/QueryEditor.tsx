@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { DropEvent, FileRejection } from 'react-dropzone';
 
 import {
@@ -8,12 +9,12 @@ import {
   SelectableValue,
   rangeUtil,
   DataQueryRequest,
-  DataFrame,
   DataFrameJSON,
   dataFrameToJSON,
   GrafanaTheme2,
   getValueFormat,
   formattedValueToString,
+  Field,
 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
@@ -108,7 +109,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         gds.query(query).subscribe({
           next: (rsp) => {
             if (rsp.data.length) {
-              const names = (rsp.data[0] as DataFrame).fields[0];
+              const names: Field = rsp.data[0].fields[0];
               const folders = names.values.map((v) => ({
                 value: v,
                 label: v,

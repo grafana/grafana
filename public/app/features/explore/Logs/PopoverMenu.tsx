@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -11,8 +11,8 @@ interface PopoverMenuProps {
   selection: string;
   x: number;
   y: number;
-  onClickFilterValue?: (value: string, refId?: string) => void;
-  onClickFilterOutValue?: (value: string, refId?: string) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
   row: LogRowModel;
   close: () => void;
 }
@@ -20,8 +20,8 @@ interface PopoverMenuProps {
 export const PopoverMenu = ({
   x,
   y,
-  onClickFilterValue,
-  onClickFilterOutValue,
+  onClickFilterString,
+  onClickFilterOutString,
   selection,
   row,
   close,
@@ -42,7 +42,7 @@ export const PopoverMenu = ({
     };
   }, [close]);
 
-  const supported = onClickFilterValue || onClickFilterOutValue;
+  const supported = onClickFilterString || onClickFilterOutString;
 
   if (!supported) {
     return null;
@@ -59,21 +59,21 @@ export const PopoverMenu = ({
             track('copy', selection.length, row.datasourceType);
           }}
         />
-        {onClickFilterValue && (
+        {onClickFilterString && (
           <Menu.Item
             label="Add as line contains filter"
             onClick={() => {
-              onClickFilterValue(selection, row.dataFrame.refId);
+              onClickFilterString(selection, row.dataFrame.refId);
               close();
               track('line_contains', selection.length, row.datasourceType);
             }}
           />
         )}
-        {onClickFilterOutValue && (
+        {onClickFilterOutString && (
           <Menu.Item
             label="Add as line does not contain filter"
             onClick={() => {
-              onClickFilterOutValue(selection, row.dataFrame.refId);
+              onClickFilterOutString(selection, row.dataFrame.refId);
               close();
               track('line_does_not_contain', selection.length, row.datasourceType);
             }}
@@ -94,7 +94,7 @@ function track(action: string, selectionLength: number, dataSourceType: string |
 
 const getStyles = (theme: GrafanaTheme2) => ({
   menu: css({
-    position: 'absolute',
+    position: 'fixed',
     zIndex: theme.zIndex.modal,
   }),
 });

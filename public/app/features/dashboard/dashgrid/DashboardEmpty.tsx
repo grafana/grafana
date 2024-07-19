@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,7 +6,12 @@ import { config, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
+import {
+  onAddLibraryPanel as onAddLibraryPanelImpl,
+  onCreateNewPanel,
+  onImportDashboard,
+} from 'app/features/dashboard/utils/dashboard';
+import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useDispatch, useSelector } from 'app/types';
@@ -27,14 +31,25 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddVisualization = () => {
     let id;
     if (dashboard instanceof DashboardScene) {
-      id = dashboard.onCreateNewPanel();
+      const panel = dashboard.onCreateNewPanel();
+      dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+      locationService.partial({ firstPanel: true });
     } else {
       id = onCreateNewPanel(dashboard, initialDatasource);
       dispatch(setInitialDatasource(undefined));
+      locationService.partial({ editPanel: id, firstPanel: true });
     }
 
-    locationService.partial({ editPanel: id, firstPanel: true });
     DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
+  };
+
+  const onAddLibraryPanel = () => {
+    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
+    if (dashboard instanceof DashboardScene) {
+      dashboard.onShowAddLibraryPanelDrawer();
+    } else {
+      onAddLibraryPanelImpl(dashboard);
+    }
   };
 
   return (
@@ -110,14 +125,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   icon="plus"
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
-                  onClick={() => {
-                    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
-                    if (dashboard instanceof DashboardScene) {
-                      dashboard.onCreateLibPanelWidget();
-                    } else {
-                      onAddLibraryPanel(dashboard);
-                    }
-                  }}
+                  onClick={onAddLibraryPanel}
                   disabled={!canCreate}
                 >
                   <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
@@ -132,8 +140,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
                     <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                      Import dashboards from files or
-                      <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                      Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
                     </Trans>
                   </Text>
                 </Box>

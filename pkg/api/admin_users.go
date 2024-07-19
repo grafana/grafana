@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"golang.org/x/sync/errgroup"
 
@@ -14,12 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -46,19 +44,12 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	form.Email = strings.TrimSpace(form.Email)
-	form.Login = strings.TrimSpace(form.Login)
-
 	cmd := user.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
 		Password: form.Password,
 		Name:     form.Name,
 		OrgID:    form.OrgId,
-	}
-
-	if len(cmd.Password) < 4 {
-		return response.Error(http.StatusBadRequest, "Password is missing or too short", nil)
 	}
 
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
@@ -115,37 +106,17 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if err := form.Password.Validate(hs.Cfg); err != nil {
-		return response.Err(err)
+	if response := hs.errOnExternalUser(c.Req.Context(), userID); response != nil {
+		return response
 	}
 
-	userQuery := user.GetUserByIDQuery{ID: userID}
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &form.Password}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update user password", err)
+	}
 
-	usr, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Could not read user from database", err)
-	}
-
-	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
-	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
-			return response.Error(http.StatusBadRequest, "Cannot update external user password", err)
-		}
-	}
-
-	passwordHashed, err := util.EncodePassword(string(form.Password), usr.Salt)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Could not encode password", err)
-	}
-
-	cmd := user.ChangeUserPasswordCommand{
-		UserID:      userID,
-		NewPassword: user.Password(passwordHashed),
-	}
-
-	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update user password", err)
 	}
 
 	if err := hs.loginAttemptService.Reset(c.Req.Context(),
@@ -185,15 +156,17 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
-	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil && authInfo != nil {
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil && authInfo != nil {
 		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
 		if login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule) {
 			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
 		}
 	}
 
-	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
+	err = hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{
+		UserID:         userID,
+		IsGrafanaAdmin: &form.IsGrafanaAdmin,
+	})
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
 			return response.Error(http.StatusBadRequest, user.ErrLastGrafanaAdmin.Error(), nil)
@@ -318,8 +291,8 @@ func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusInternalServerError, "Could not disable external user", nil)
 	}
 
-	disableCmd := user.DisableUserCommand{UserID: userID, IsDisabled: true}
-	if err := hs.userService.Disable(c.Req.Context(), &disableCmd); err != nil {
+	isDisabled := true
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled}); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
@@ -361,8 +334,8 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Could not enable external user", nil)
 	}
 
-	disableCmd := user.DisableUserCommand{UserID: userID, IsDisabled: false}
-	if err := hs.userService.Disable(c.Req.Context(), &disableCmd); err != nil {
+	isDisabled := false
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled}); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
@@ -393,15 +366,8 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace == identity.NamespaceUser {
-		activeUserID, err := identity.IntIdentifier(namespace, identifier)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to parse active user id", err)
-		}
-		if activeUserID == userID {
-			return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
-		}
+	if c.SignedInUser.GetID() == authn.NewNamespaceID(authn.NamespaceUser, userID) {
+		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)

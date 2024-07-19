@@ -1,14 +1,17 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { getDashboardSceneFor } from '../utils/utils';
+import { UnlinkModal } from '../scene/UnlinkModal';
+import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
+import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
@@ -30,7 +33,13 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
-      <div {...containerProps}>
+      <div
+        {...containerProps}
+        className={cx(containerProps.className, {
+          [styles.content]: config.featureToggles.bodyScrolling,
+        })}
+        data-testid={selectors.components.PanelEditor.General.content}
+      >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
           <VizAndDataPane model={model} />
         </div>
@@ -57,8 +66,10 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { vizManager, dataPane } = model.useState();
-  const { controls } = dashboard.useState();
+  const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
+  const { sourcePanel } = vizManager.useState();
+  const libraryPanel = getLibraryPanel(sourcePanel.resolve());
+  const { controls, scopes } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
@@ -71,17 +82,45 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       },
     });
 
+  containerProps.className = cx(containerProps.className, styles.container);
+
   if (!dataPane) {
     primaryProps.style.flexGrow = 1;
   }
 
   return (
-    <>
-      {controls && <controls.Component model={controls} />}
+    <div
+      className={cx(
+        styles.pageContainer,
+        controls && !scopes && styles.pageContainerWithControls,
+        scopes && styles.pageContainerWithScopes
+      )}
+    >
+      {scopes && <scopes.Component model={scopes} />}
+      {controls && (
+        <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperWithScopes)}>
+          <controls.Component model={controls} />
+        </div>
+      )}
       <div {...containerProps}>
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
         </div>
+        {showLibraryPanelSaveModal && libraryPanel && (
+          <SaveLibraryVizPanelModal
+            libraryPanel={libraryPanel}
+            onDismiss={model.onDismissLibraryPanelSaveModal}
+            onConfirm={model.onConfirmSaveLibraryPanel}
+            onDiscard={model.onDiscard}
+          ></SaveLibraryVizPanelModal>
+        )}
+        {showLibraryPanelUnlinkModal && libraryPanel && (
+          <UnlinkModal
+            onDismiss={model.onDismissUnlinkLibraryPanelModal}
+            onConfirm={model.onConfirmUnlinkLibraryPanel}
+            isOpen
+          />
+        )}
         {dataPane && (
           <>
             <div {...splitterProps} />
@@ -104,12 +143,37 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    pageContainer: css({
+      display: 'grid',
+      gridTemplateAreas: `
+        "panels"`,
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
+      height: '100%',
+    }),
+    pageContainerWithControls: css({
+      gridTemplateAreas: `
+        "controls"
+        "panels"`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    pageContainerWithScopes: css({
+      gridTemplateAreas: `
+        "scopes controls"
+        "panels panels"`,
+      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    container: css({
+      gridArea: 'panels',
+      height: '100%',
+    }),
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',
@@ -119,13 +183,17 @@ function getStyles(theme: GrafanaTheme2) {
       minHeight: 0,
       width: '100%',
     }),
+    content: css({
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+    }),
     body: css({
       label: 'body',
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      gap: '8px',
     }),
     optionsPane: css({
       flexDirection: 'column',
@@ -149,6 +217,16 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotate180: css({
       rotate: '180deg',
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      gridArea: 'controls',
+      padding: theme.spacing(2, 0, 2, 2),
+    }),
+    controlsWrapperWithScopes: css({
+      padding: theme.spacing(2, 0),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

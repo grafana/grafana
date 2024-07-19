@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
+import * as React from 'react';
 
 export interface ModalsContextState {
   component: React.ComponentType<any> | null;
@@ -22,6 +23,10 @@ interface ModalsProviderProps {
   props?: any;
 }
 
+/**
+ * @deprecated.
+ * Not the real implementation used by core.
+ */
 export class ModalsProvider extends Component<ModalsProviderProps, ModalsContextState> {
   constructor(props: ModalsProviderProps) {
     super(props);

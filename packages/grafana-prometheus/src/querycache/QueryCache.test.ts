@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querycache/QueryCache.test.ts
 import moment from 'moment';
 
 import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data';
@@ -5,7 +6,7 @@ import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@gra
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { DatasourceProfileData, QueryCache } from './QueryCache';
+import { QueryCache } from './QueryCache';
 import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
 
 // Will not interpolate vars!
@@ -56,14 +57,6 @@ const mockPromRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQu
   return {
     ...defaultRequest,
     ...request,
-  };
-};
-
-const getPromProfileData = (request: DataQueryRequest, targ: PromQuery): DatasourceProfileData => {
-  return {
-    expr: targ.expr,
-    interval: targ.interval ?? request.interval,
-    datasource: 'prom',
   };
 };
 
@@ -191,7 +184,6 @@ describe('QueryCache: Prometheus', function () {
       const storage = new QueryCache<PromQuery>({
         getTargetSignature: getPrometheusTargetSignature,
         overlapString: '10m',
-        profileFunction: getPromProfileData,
       });
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
@@ -327,7 +319,6 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
 
     // Initial request with all data for time range
@@ -488,7 +479,6 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
@@ -500,7 +490,6 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
@@ -512,7 +501,6 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);

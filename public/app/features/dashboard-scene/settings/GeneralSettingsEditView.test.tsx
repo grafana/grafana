@@ -1,18 +1,12 @@
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setPluginImportUtils } from '@grafana/runtime';
-import { behaviors, SceneGridLayout, SceneGridItem, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { behaviors, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
+import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
-
-setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
-});
 
 describe('GeneralSettingsEditView', () => {
   describe('Dashboard state', () => {
@@ -96,11 +90,14 @@ describe('GeneralSettingsEditView', () => {
       expect(settings.getRefreshPicker()?.state?.intervals).toEqual(['5s']);
     });
 
-    it('A change to folder updates the dashboard state', () => {
-      settings.onFolderChange('folder-2', 'folder 2');
+    it('A change to folder updates the dashboard state', async () => {
+      const updateNavModel = jest.spyOn(utils, 'updateNavModel').mockImplementation(jest.fn());
+
+      await settings.onFolderChange('folder-2', 'folder 2');
 
       expect(dashboard.state.meta.folderUid).toBe('folder-2');
       expect(dashboard.state.meta.folderTitle).toBe('folder 2');
+      expect(updateNavModel).toHaveBeenCalledWith('folder-2');
     });
 
     it('A change to tooltip settings updates the dashboard state', () => {
@@ -129,20 +126,7 @@ async function buildTestScene() {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
-        }),
-      ],
+      children: [],
     }),
     editview: settings,
   });

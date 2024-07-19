@@ -1,6 +1,6 @@
-import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 
@@ -12,14 +12,9 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
+import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource } from './mocks';
-import {
-  defaultAlertmanagerChoiceResponse,
-  emptyExternalAlertmanagersResponse,
-  mockAlertmanagerChoiceResponse,
-  mockAlertmanagersResponse,
-} from './mocks/alertmanagerApi';
+import { emptyExternalAlertmanagersResponse, mockAlertmanagersResponse } from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
@@ -55,9 +50,7 @@ setupDataSources(dataSources.default);
 const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
-mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
 mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
-mockApi(server).eval({ results: {} });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
 // and wait for the UI to be in particular states, drone seems to time out quite often so
@@ -75,8 +68,6 @@ const mocks = {
     fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
-
-const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 
 describe('RuleEditor cloud', () => {
   beforeEach(() => {
@@ -158,9 +149,6 @@ describe('RuleEditor cloud', () => {
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await user.click(ui.buttons.addLabel.get());
 
-    await user.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
-    await user.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
-
     // save and check what was sent to backend
     await user.click(ui.buttons.saveAndExit.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
@@ -173,9 +161,10 @@ describe('RuleEditor cloud', () => {
           {
             alert: 'my great new rule',
             annotations: { description: 'some description', summary: 'some summary' },
-            labels: { severity: 'warn' },
             expr: 'up == 1',
             for: '1m',
+            labels: {},
+            keep_firing_for: undefined,
           },
         ],
       }

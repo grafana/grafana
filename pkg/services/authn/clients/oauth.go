@@ -13,16 +13,16 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -65,12 +65,12 @@ var _ authn.RedirectClient = new(OAuth)
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
-	socialService social.Service, settingsProviderService setting.Provider,
+	socialService social.Service, settingsProviderService setting.Provider, features featuremgmt.FeatureToggles,
 ) *OAuth {
 	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
 		name, fmt.Sprintf("oauth_%s", providerName), providerName,
-		log.New(name), cfg, settingsProviderService, oauthService, socialService,
+		log.New(name), cfg, settingsProviderService, oauthService, socialService, features,
 	}
 }
 
@@ -84,6 +84,7 @@ type OAuth struct {
 	settingsProviderSvc setting.Provider
 	oauthService        oauthtoken.OAuthTokenService
 	socialService       social.Service
+	features            featuremgmt.FeatureToggles
 }
 
 func (c *OAuth) Name() string {
@@ -148,10 +149,13 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthUserInfo.Errorf("failed to get user info: %w", err)
 	}
 
-	// Implement in Grafana 11
-	// if userInfo.Id == "" {
-	// 	return nil, errors.New("idP did not return a user id")
-	// }
+	if userInfo.Id == "" {
+		if c.features.IsEnabledGlobally(featuremgmt.FlagOauthRequireSubClaim) {
+			return nil, errOAuthUserInfo.Errorf("missing required sub claims")
+		} else {
+			c.log.FromContext(ctx).Warn("Missing sub claim, oauth authentication without a sub claim is deprecated and will be rejected in future versions.")
+		}
+	}
 
 	if userInfo.Email == "" {
 		return nil, errOAuthMissingRequiredEmail.Errorf("required attribute email was not provided")
@@ -160,13 +164,6 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if !connector.IsEmailAllowed(userInfo.Email) {
 		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
 	}
-
-	orgRoles, isGrafanaAdmin, _ := getRoles(c.cfg, func() (org.RoleType, *bool, error) {
-		if c.cfg.OAuthSkipOrgRoleUpdateSync {
-			return "", nil, nil
-		}
-		return userInfo.Role, userInfo.IsGrafanaAdmin, nil
-	})
 
 	lookupParams := login.UserLookupParams{}
 	allowInsecureEmailLookup := c.settingsProviderSvc.KeyValue("auth", "oauth_allow_insecure_email_lookup").MustBool(false)
@@ -178,12 +175,12 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		Login:           userInfo.Login,
 		Name:            userInfo.Name,
 		Email:           userInfo.Email,
-		IsGrafanaAdmin:  isGrafanaAdmin,
+		IsGrafanaAdmin:  userInfo.IsGrafanaAdmin,
 		AuthenticatedBy: c.moduleName,
 		AuthID:          userInfo.Id,
 		Groups:          userInfo.Groups,
 		OAuthToken:      token,
-		OrgRoles:        orgRoles,
+		OrgRoles:        userInfo.OrgRoles,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,
@@ -191,10 +188,19 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			SyncPermissions: true,
 			AllowSignUp:     connector.IsSignupAllowed(),
 			// skip org role flag is checked and handled in the connector. For now we can skip the hook if no roles are passed
-			SyncOrgRoles: len(orgRoles) > 0,
+			SyncOrgRoles: len(userInfo.OrgRoles) > 0,
 			LookUpParams: lookupParams,
 		},
 	}, nil
+}
+
+func (c *OAuth) IsEnabled() bool {
+	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if provider == nil {
+		return false
+	}
+
+	return provider.Enabled
 }
 
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
@@ -239,10 +245,21 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*authn.Redirect, bool) {
+func (c *OAuth) Logout(ctx context.Context, user authn.Requester) (*authn.Redirect, bool) {
 	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, info); err != nil {
+	namespace, id := user.GetNamespacedID()
+	userID, err := identity.UserIdentifier(namespace, id)
+	if err != nil {
+		c.log.FromContext(ctx).Error("Failed to parse user id", "namespace", namespace, "id", id, "error", err)
+		return nil, false
+	}
+
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, &login.UserAuth{
+		UserId:     userID,
+		AuthId:     user.GetAuthID(),
+		AuthModule: user.GetAuthenticatedBy(),
+	}); err != nil {
 		namespace, id := user.GetNamespacedID()
 		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "namespace", namespace, "id", id, "error", err)
 	}

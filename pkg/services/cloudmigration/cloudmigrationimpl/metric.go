@@ -1,26 +1,42 @@
 package cloudmigrationimpl
 
 import (
-	"errors"
-
-	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// type Metrics struct {
-// 	log log.Logger
-// }
+const (
+	namespace = "grafana"
+	subsystem = "cloudmigrations"
+)
 
-func (s *Service) registerMetrics(prom prometheus.Registerer) error {
-	for _, m := range cloudmigration.PromMetrics {
-		if err := prom.Register(m); err != nil {
-			var alreadyRegisterErr prometheus.AlreadyRegisteredError
-			if errors.As(err, &alreadyRegisterErr) {
-				s.log.Warn("metric already registered", "metric", m)
-				continue
-			}
-			return err
-		}
+type Metrics struct {
+	accessTokenCreated *prometheus.CounterVec
+	accessTokenDeleted *prometheus.CounterVec
+}
+
+func newMetrics() *Metrics {
+	return &Metrics{
+		accessTokenCreated: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "access_token_created",
+			Help:      "Total of access tokens created",
+		}, []string{"slug"}),
+		accessTokenDeleted: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "access_token_deleted",
+			Help:      "Total of access tokens deleted",
+		}, []string{"slug"}),
 	}
-	return nil
+}
+
+func (metrics *Metrics) Collect(ch chan<- prometheus.Metric) {
+	metrics.accessTokenCreated.Collect(ch)
+	metrics.accessTokenDeleted.Collect(ch)
+}
+
+func (metrics *Metrics) Describe(ch chan<- *prometheus.Desc) {
+	metrics.accessTokenCreated.Describe(ch)
+	metrics.accessTokenDeleted.Describe(ch)
 }

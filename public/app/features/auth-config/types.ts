@@ -36,6 +36,7 @@ export type SSOProviderSettingsBase = {
   roleAttributeStrict?: boolean;
   signoutRedirectUrl?: string;
   skipOrgRoleSync?: boolean;
+  orgAttributePath?: string;
   teamIdsAttributePath?: string;
   teamsUrl?: string;
   tlsClientCa?: string;
@@ -55,6 +56,8 @@ export type SSOProviderSettingsBase = {
   tlsSkipVerifyInsecure?: boolean;
   // For Azure AD
   forceUseGraphApi?: boolean;
+  // For Google
+  validateHd?: boolean;
 };
 
 // SSO data received from the API and sent to it
@@ -68,6 +71,7 @@ export type SSOProvider = {
     allowedDomains?: string;
     allowedGroups?: string;
     scopes?: string;
+    orgMapping?: string;
   };
 };
 
@@ -78,6 +82,7 @@ export type SSOProviderDTO = Partial<SSOProviderSettingsBase> & {
   allowedDomains?: Array<SelectableValue<string>>;
   allowedGroups?: Array<SelectableValue<string>>;
   scopes?: Array<SelectableValue<string>>;
+  orgMapping?: Array<SelectableValue<string>>;
 };
 
 export interface AuthConfigState {

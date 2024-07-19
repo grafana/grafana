@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
-import { DataFrame, FieldType, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -11,14 +11,20 @@ import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
 import { getDataLinks } from '../status-history/utils';
+import { fmt } from '../xychart/utils';
+
+import { isTooltipScrollable } from './utils';
 
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
 
 export interface TimeSeriesTooltipProps {
-  frames?: DataFrame[];
   // aligned series frame
-  seriesFrame: DataFrame;
+  series: DataFrame;
+
+  // aligned fields that are not series
+  _rest?: Field[];
+
   // hovered points
   dataIdxs: Array<number | null>;
   // closest/hovered series
@@ -27,57 +33,72 @@ export interface TimeSeriesTooltipProps {
   sortOrder?: SortOrder;
 
   isPinned: boolean;
-  scrollable?: boolean;
 
   annotate?: () => void;
+  maxHeight?: number;
 }
 
 export const TimeSeriesTooltip = ({
-  frames,
-  seriesFrame,
+  series,
+  _rest,
   dataIdxs,
   seriesIdx,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
-  scrollable = false,
   isPinned,
   annotate,
+  maxHeight,
 }: TimeSeriesTooltipProps) => {
   const styles = useStyles2(getStyles);
 
-  const xField = seriesFrame.fields[0];
-
-  const xVal = xField.display!(xField.values[dataIdxs[0]!]).text;
+  const xField = series.fields[0];
+  const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
 
   const contentItems = getContentItems(
-    seriesFrame.fields,
+    series.fields,
     xField,
     dataIdxs,
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number
+    (field) => field.type === FieldType.number || field.type === FieldType.enum
   );
+
+  _rest?.forEach((field) => {
+    if (!field.config.custom?.hideFrom?.tooltip) {
+      contentItems.push({
+        label: field.state?.displayName ?? field.name,
+        value: fmt(field, field.values[dataIdxs[0]!]),
+      });
+    }
+  });
 
   let footer: ReactNode;
 
   if (isPinned && seriesIdx != null) {
-    const field = seriesFrame.fields[seriesIdx];
+    const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
 
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
   }
 
-  const headerItem: VizTooltipItem = {
-    label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
-    value: xVal,
-  };
+  const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
+    ? null
+    : {
+        label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
+        value: xVal,
+      };
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} />
+      {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      />
       {footer}
     </div>
   );

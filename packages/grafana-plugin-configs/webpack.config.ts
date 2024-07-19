@@ -2,8 +2,9 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
+// @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
-import { Configuration, DefinePlugin } from 'webpack';
+import { Configuration } from 'webpack';
 
 import { DIST_DIR } from './constants';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
@@ -99,6 +100,11 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
                   decorators: false,
                   dynamicImport: true,
                 },
+                transform: {
+                  react: {
+                    runtime: 'automatic',
+                  },
+                },
               },
             },
           },
@@ -185,33 +191,35 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
           ],
         },
       ]),
-      env.development
-        ? new ForkTsCheckerWebpackPlugin({
-            async: true,
-            issue: {
-              include: [{ file: '**/*.{ts,tsx}' }],
-            },
-            typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
-          })
-        : new DefinePlugin({}),
-      env.development
-        ? new ESLintPlugin({
-            extensions: ['.ts', '.tsx'],
-            lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
-            cacheLocation: path.resolve(
-              __dirname,
-              '../../node_modules/.cache/eslint-webpack-plugin',
-              path.basename(process.cwd()),
-              '.eslintcache'
-            ),
-          })
-        : new DefinePlugin({}),
+      ...(env.development
+        ? [
+            new ForkTsCheckerWebpackPlugin({
+              async: true,
+              issue: {
+                include: [{ file: '**/*.{ts,tsx}' }],
+              },
+              typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
+            }),
+            new ESLintPlugin({
+              extensions: ['.ts', '.tsx'],
+              lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
+              cacheLocation: path.resolve(
+                __dirname,
+                '../../node_modules/.cache/eslint-webpack-plugin',
+                path.basename(process.cwd()),
+                '.eslintcache'
+              ),
+            }),
+          ]
+        : []),
     ],
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       unsafeCache: true,
     },
+
+    stats: 'minimal',
 
     watchOptions: {
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],

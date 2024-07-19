@@ -1,5 +1,5 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationListExplained.tsx
 import { Grammar } from 'prismjs';
-import React from 'react';
 
 import { OperationExplainedBox } from './OperationExplainedBox';
 import { RawQuery } from './RawQuery';

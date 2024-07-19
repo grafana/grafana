@@ -1,8 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
 import { TextLink } from './TextLink';
@@ -33,10 +32,6 @@ const meta: Meta = {
     inline: { control: 'boolean' },
   },
   args: {
-    variant: 'body',
-    weight: 'light',
-    color: undefined,
-    inline: false,
     href: 'https://www.google.com',
     external: true,
     icon: 'external-link-alt',
@@ -45,7 +40,7 @@ const meta: Meta = {
 
 export const Example: StoryFn = (args) => {
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <StoryExample name="This is a 'inline + external' link with the default behaviour">
         <Text element="p">
           To get started with a forever free Grafana Cloud account, sign up at &#160;
@@ -56,7 +51,7 @@ export const Example: StoryFn = (args) => {
         </Text>
       </StoryExample>
       <StoryExample name="This is a 'standalone + external' link with the default behaviour">
-        <TextLink href="https://grafana.com/docs/grafana/latest/" {...args}>
+        <TextLink href="https://grafana.com/docs/grafana/latest/" external inline={false} {...args}>
           Learn how in the docs
         </TextLink>
       </StoryExample>
@@ -64,7 +59,7 @@ export const Example: StoryFn = (args) => {
       <Text element="p">
         *The examples cannot contemplate an internal link due to conflicts between Storybook and React Router
       </Text>
-    </VerticalGroup>
+    </Stack>
   );
 };
 

@@ -51,16 +51,17 @@ composableKinds: DataQuery: {
 					groupBy?: [...#TraceqlFilter]
 					// The type of the table that is used to display the search results
 					tableType?: #SearchTableType
+					// For metric queries, the step size to use
+					step?: string
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
+				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
 
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")
 
 				// The type of the table that is used to display the search results
-				#SearchTableType: "traces" | "spans" @cuetsy(kind="enum")
+				#SearchTableType: "traces" | "spans" | "raw" @cuetsy(kind="enum")
 
 				// static fields are pre-set in the UI, dynamic fields are added by the user
 				#TraceqlSearchScope: "intrinsic" | "unscoped" | "resource" | "span" @cuetsy(kind="enum")

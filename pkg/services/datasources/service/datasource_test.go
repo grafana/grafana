@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -19,11 +21,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -32,6 +38,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	// testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 func TestMain(m *testing.M) {
@@ -55,32 +62,180 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 }
 
 func TestService_AddDataSource(t *testing.T) {
-	cfg := &setting.Cfg{}
+	t.Run("should not fail if the plugin is not installed", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.pluginStore = &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{}, // empty list
+		}
 
-	t.Run("should return validation error if command validation failed", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
+		cmd := &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Type:  datasources.DS_TESTDATA,
+			Name:  "test",
+		}
+
+		ds, err := dsService.AddDataSource(context.Background(), cmd)
 		require.NoError(t, err)
+		require.Equal(t, "test", ds.Name)
+	})
+
+	t.Run("should fail if the datasource name is too long", func(t *testing.T) {
+		dsService := initDSService(t)
 
 		cmd := &datasources.AddDataSourceCommand{
 			OrgID: 1,
 			Name:  string(make([]byte, 256)),
 		}
 
-		_, err = dsService.AddDataSource(context.Background(), cmd)
+		_, err := dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
+	})
 
-		cmd = &datasources.AddDataSourceCommand{
+	t.Run("should fail if the datasource url is invalid", func(t *testing.T) {
+		dsService := initDSService(t)
+
+		cmd := &datasources.AddDataSourceCommand{
 			OrgID: 1,
 			URL:   string(make([]byte, 256)),
 		}
 
-		_, err = dsService.AddDataSource(context.Background(), cmd)
+		_, err := dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
+	})
+
+	t.Run("if a plugin has an API version defined (EXPERIMENTAL)", func(t *testing.T) {
+		t.Run("should success to run admission hooks", func(t *testing.T) {
+			dsService := initDSService(t)
+			validateExecuted := false
+			dsService.pluginStore = &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
+					},
+				}},
+			}
+			dsService.pluginClient = &pluginfakes.FakePluginClient{
+				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+					validateExecuted = true
+					return &backend.ValidationResponse{
+						Allowed: true,
+					}, nil
+				},
+				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+					return &backend.MutationResponse{
+						Allowed:     true,
+						ObjectBytes: req.ObjectBytes,
+					}, nil
+				},
+				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+					return nil, fmt.Errorf("not implemented")
+				},
+			}
+			cmd := &datasources.AddDataSourceCommand{
+				OrgID:      1,
+				Type:       "test", // required to validate apiserver
+				Name:       "test",
+				APIVersion: "v0alpha1",
+			}
+			_, err := dsService.AddDataSource(context.Background(), cmd)
+			require.NoError(t, err)
+			require.True(t, validateExecuted)
+		})
+
+		t.Run("should fail at validation", func(t *testing.T) {
+			dsService := initDSService(t)
+			dsService.pluginStore = &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
+					},
+				}},
+			}
+			dsService.pluginClient = &pluginfakes.FakePluginClient{
+				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+					settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "")
+					if err != nil {
+						return nil, err
+					}
+					if settings.APIVersion != "v0alpha1" {
+						return &backend.ValidationResponse{
+							Allowed: false,
+							Result: &backend.StatusResult{
+								Status:  "Failure",
+								Message: fmt.Sprintf("expected apiVersion: v0alpha1, found: %s", settings.APIVersion),
+								Reason:  "badRequest",
+								Code:    http.StatusBadRequest,
+							},
+						}, nil
+					}
+					return &backend.ValidationResponse{
+						Allowed: true,
+					}, nil
+				},
+				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+					return nil, fmt.Errorf("not implemented")
+				},
+				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+					return nil, fmt.Errorf("not implemented")
+				},
+			}
+			cmd := &datasources.AddDataSourceCommand{
+				OrgID:      1,
+				Type:       "test", // required to validate apiserver
+				Name:       "test",
+				APIVersion: "v123", // invalid apiVersion
+			}
+			_, err := dsService.AddDataSource(context.Background(), cmd)
+			assert.ErrorContains(t, err, "expected apiVersion: v0alpha1, found: v123")
+		})
+
+		t.Run("should mutate a request", func(t *testing.T) {
+			dsService := initDSService(t)
+			dsService.pluginStore = &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
+					},
+				}},
+			}
+			dsService.pluginClient = &pluginfakes.FakePluginClient{
+				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+					return &backend.ValidationResponse{
+						Allowed: true,
+					}, nil
+				},
+				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+					settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "")
+					if err != nil {
+						return nil, err
+					}
+					settings.URL = "url-mutated"
+					pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
+					return &backend.MutationResponse{
+						Allowed:     true,
+						ObjectBytes: pb,
+					}, err
+				},
+				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+					return nil, fmt.Errorf("not implemented")
+				},
+			}
+			cmd := &datasources.AddDataSourceCommand{
+				OrgID:      1,
+				Type:       "test", // required to validate apiserver
+				Name:       "test",
+				APIVersion: "v0alpha1",
+			}
+			ds, err := dsService.AddDataSource(context.Background(), cmd)
+			require.NoError(t, err)
+			require.Equal(t, "url-mutated", ds.URL)
+		})
 	})
 }
 
@@ -164,16 +319,8 @@ func TestService_getAvailableName(t *testing.T) {
 }
 
 func TestService_UpdateDataSource(t *testing.T) {
-	cfg := &setting.Cfg{}
-
 	t.Run("should return not found error if datasource not found", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
+		dsService := initDSService(t)
 
 		cmd := &datasources.UpdateDataSourceCommand{
 			UID:   uuid.New().String(),
@@ -181,21 +328,25 @@ func TestService_UpdateDataSource(t *testing.T) {
 			OrgID: 1,
 		}
 
-		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		_, err := dsService.UpdateDataSource(context.Background(), cmd)
 		require.ErrorIs(t, err, datasources.ErrDataSourceNotFound)
 	})
 
 	t.Run("should return validation error if command validation failed", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
+		dsService := initDSService(t)
+
+		// First add the datasource
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  1,
+			Name:   "test",
+			Type:   "test",
+			UserID: 0,
+		})
 		require.NoError(t, err)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    1,
+			ID:    ds.ID,
+			UID:   ds.UID,
 			OrgID: 1,
 			Name:  string(make([]byte, 256)),
 		}
@@ -204,7 +355,8 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
 
 		cmd = &datasources.UpdateDataSourceCommand{
-			ID:    1,
+			ID:    ds.ID,
+			UID:   ds.UID,
 			OrgID: 1,
 			URL:   string(make([]byte, 256)),
 		}
@@ -214,15 +366,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 	})
 
 	t.Run("should return no error if updated datasource", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-
-		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+		dsService := initDSService(t)
 
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgID: 1,
@@ -241,15 +385,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 	})
 
 	t.Run("should return error if datasource with same name exist", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-
-		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+		dsService := initDSService(t)
 
 		dsToUpdate, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgID: 1,
@@ -274,15 +410,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 	})
 
 	t.Run("should merge cmd.SecureJsonData with db data", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-
-		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+		dsService := initDSService(t)
 
 		expectedDbKey := "db-secure-key"
 		expectedDbValue := "db-secure-value"
@@ -318,15 +446,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 	})
 
 	t.Run("should preserve cmd.SecureJsonData when cmd.IgnoreOldSecureJsonData=true", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-
-		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+		dsService := initDSService(t)
 
 		notExpectedDbKey := "db-secure-key"
 		dbValue := "db-secure-value"
@@ -361,6 +481,125 @@ func TestService_UpdateDataSource(t *testing.T) {
 		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
 		_, ok := secret[notExpectedDbKey]
 		assert.False(t, ok)
+	})
+
+	t.Run("should run validation and mutation hooks", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.pluginStore = &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{{
+				JSONData: plugins.JSONData{
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
+				},
+			}},
+		}
+		validateExecuted := false
+		mutateExecuted := false
+		dsService.pluginClient = &pluginfakes.FakePluginClient{
+			ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+				validateExecuted = true
+				return &backend.ValidationResponse{
+					Allowed: true,
+				}, nil
+			},
+			MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+				mutateExecuted = true
+				return &backend.MutationResponse{
+					Allowed:     true,
+					ObjectBytes: req.ObjectBytes,
+				}, nil
+			},
+			ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+				return nil, fmt.Errorf("not implemented")
+			},
+		}
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:      1,
+			Name:       "test-datasource",
+			APIVersion: "v0alpha1",
+			Type:       "test",
+		})
+		require.NoError(t, err)
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:         ds.ID,
+			OrgID:      ds.OrgID,
+			Name:       "test-datasource-updated",
+			APIVersion: "v0alpha1",
+			Type:       "test",
+		}
+
+		dsUpdated, err := dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+		require.True(t, validateExecuted)
+		require.True(t, mutateExecuted)
+		require.Equal(t, "test-datasource-updated", dsUpdated.Name)
+	})
+}
+
+func TestService_DeleteDataSource(t *testing.T) {
+	t.Run("should not return an error if data source doesn't exist", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		permissionSvc := acmock.NewMockedPermissionsService()
+		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		require.NoError(t, err)
+
+		cmd := &datasources.DeleteDataSourceCommand{
+			UID:   uuid.New().String(),
+			ID:    1,
+			OrgID: 1,
+		}
+
+		err = dsService.DeleteDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+	})
+
+	t.Run("should successfully delete a data source that exists", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+
+		permissionSvc := acmock.NewMockedPermissionsService()
+		permissionSvc.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
+		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		require.NoError(t, err)
+
+		// First add the datasource
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  1,
+			Name:   "test",
+			Type:   "test",
+			UserID: 0,
+		})
+		require.NoError(t, err)
+
+		cmd := &datasources.DeleteDataSourceCommand{
+			ID:    ds.ID,
+			UID:   ds.UID,
+			OrgID: 1,
+		}
+
+		err = dsService.DeleteDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+
+		// Data source doesn't exist anymore
+		ds, err = dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+			OrgID: 1,
+			UID:   ds.UID,
+		})
+		require.Nil(t, ds)
+		require.ErrorIs(t, err, datasources.ErrDataSourceNotFound)
+
+		permissionSvc.AssertExpectations(t)
 	})
 }
 
@@ -585,7 +824,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -622,7 +861,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -673,7 +912,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -721,7 +960,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -777,7 +1016,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -812,7 +1051,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -833,7 +1072,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
-		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
+		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers.Get("Authorization"))
 
 		// 1. Start HTTP test server which checks the request headers
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -881,7 +1120,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -902,7 +1141,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "example.com"})
-		require.Equal(t, "example.com", headers["Host"])
+		require.Equal(t, "example.com", headers.Get("Host"))
 
 		// 1. Start HTTP test server which checks the request headers
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -939,32 +1178,6 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.Equal(t, "Ok", bodyStr)
 	})
 
-	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
-		provider := httpclient.NewProvider()
-
-		sjson := simplejson.NewFromAny(map[string]any{
-			"timeout": 19,
-		})
-
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-		ds := datasources.DataSource{
-			ID:       1,
-			URL:      "http://k8s:8001",
-			Type:     "Kubernetes",
-			JsonData: sjson,
-		}
-
-		client, err := dsService.GetHTTPClient(context.Background(), &ds, provider)
-		require.NoError(t, err)
-		require.NotNil(t, client)
-		require.Equal(t, 19*time.Second, client.Timeout)
-	})
-
 	t.Run("Should populate SigV4 options if configured in JsonData", func(t *testing.T) {
 		var configuredOpts sdkhttpclient.Options
 		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
@@ -986,7 +1199,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1007,7 +1220,7 @@ func TestService_getProxySettings(t *testing.T) {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 	require.NoError(t, err)
 
 	t.Run("Should default to disabled", func(t *testing.T) {
@@ -1103,7 +1316,7 @@ func TestService_getTimeout(t *testing.T) {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
@@ -1126,7 +1339,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -1154,7 +1367,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -1178,7 +1391,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 	require.NoError(t, err)
 
 	dsService.cfg = setting.NewCfg()
@@ -1192,7 +1405,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 		name             string
 		jsonData         *simplejson.Json
 		secureJsonData   map[string][]byte
-		expectedHeaders  map[string]string
+		expectedHeaders  http.Header
 		expectedErrorMsg string
 	}{
 		{
@@ -1203,8 +1416,8 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 			secureJsonData: map[string][]byte{
 				"httpHeaderValue1": encryptedValue,
 			},
-			expectedHeaders: map[string]string{
-				"X-Test-Header1": testValue,
+			expectedHeaders: http.Header{
+				"X-Test-Header1": []string{testValue},
 			},
 		},
 		{
@@ -1213,7 +1426,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"httpHeaderName1": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
 		},
 		{
 			name: "non customer header value",
@@ -1221,7 +1434,21 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"someotherheader": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
+		},
+		{
+			name: "add multiple header value",
+			jsonData: simplejson.NewFromAny(map[string]any{
+				"httpHeaderName1": "X-Test-Header1",
+				"httpHeaderName2": "X-Test-Header1",
+			}),
+			secureJsonData: map[string][]byte{
+				"httpHeaderValue1": encryptedValue,
+				"httpHeaderValue2": encryptedValue,
+			},
+			expectedHeaders: http.Header{
+				"X-Test-Header1": []string{testValue, testValue},
+			},
 		},
 	}
 
@@ -1243,6 +1470,43 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 			}
 		})
 	}
+}
+
+func initDSService(t *testing.T) *Service {
+	cfg := &setting.Cfg{}
+	sqlStore := db.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	quotaService := quotatest.New(false, nil)
+	mockPermission := acmock.NewMockedPermissionsService()
+	mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{{
+			JSONData: plugins.JSONData{
+				ID:   "test",
+				Type: plugins.TypeDataSource,
+				Name: "test",
+			},
+		}},
+	}, &pluginfakes.FakePluginClient{
+		ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+			return &backend.ValidationResponse{
+				Allowed: true,
+			}, nil
+		},
+		MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+			return &backend.MutationResponse{
+				Allowed:     true,
+				ObjectBytes: req.ObjectBytes,
+			}, nil
+		},
+		ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+			return nil, fmt.Errorf("not implemented")
+		},
+	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+	require.NoError(t, err)
+
+	return dsService
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----
@@ -1284,6 +1548,7 @@ AU6WWoaAIEhhbWQfth/Diz3mivl1ARB+YqiWca2mjRPLTPcKJEURDVddQ423el0Q
 llG/Sw5+FquFuChaA6l5KWy7F3bQyA==
 -----END CERTIFICATE-----`
 
+// #nosec G101
 const clientKey string = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEA4yWJpbI0RQkozfu9YKXlsa5veUyJzJECoZDJj+rEP3IoozYV
 u5xVyZaaDm+9OpBWXmuVD5zsYjw4Pqm2YWXxrbpygSSLtsWvxuSlLIFIRzmnbttn

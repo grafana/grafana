@@ -35,7 +35,6 @@ const defaultAlertmanagerConfigJSON = `
 			"receiver": "grafana-default-email",
 			"group_by": ["grafana_folder", "alertname"]
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
@@ -239,6 +238,17 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 
 type apiClient struct {
 	url string
+}
+
+type LegacyApiClient struct {
+	apiClient
+}
+
+func NewAlertingLegacyAPIClient(host, user, pass string) LegacyApiClient {
+	cli := newAlertingApiClient(host, user, pass)
+	return LegacyApiClient{
+		apiClient: cli,
+	}
 }
 
 func newAlertingApiClient(host, user, pass string) apiClient {
@@ -454,39 +464,50 @@ func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (
 	return resp.StatusCode, string(b)
 }
 
-func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (string, error) {
+func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (apimodels.PostSilencesOKBody, int, string) {
 	t.Helper()
 
 	b, err := json.Marshal(s)
 	require.NoError(t, err)
 
-	u := fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silences", a.url)
-	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silences", a.url), bytes.NewReader(b))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
+	return sendRequest[apimodels.PostSilencesOKBody](t, req, http.StatusAccepted)
+}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+func (a apiClient) GetSilence(t *testing.T, id string) (apimodels.GettableSilence, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silence/%s", a.url, id), nil)
 	require.NoError(t, err)
-	require.NotNil(t, resp)
+	return sendRequest[apimodels.GettableSilence](t, req, http.StatusOK)
+}
 
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	b, err = io.ReadAll(resp.Body)
+func (a apiClient) GetSilences(t *testing.T, filters ...string) (apimodels.GettableSilences, int, string) {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silences", a.url))
 	require.NoError(t, err)
-
-	data := struct {
-		SilenceID string `json:"silenceID"`
-		Message   string `json:"message"`
-	}{}
-	require.NoError(t, json.Unmarshal(b, &data))
-
-	if resp.StatusCode == http.StatusAccepted {
-		return data.SilenceID, nil
+	if len(filters) > 0 {
+		u.RawQuery = url.Values{"filter": filters}.Encode()
 	}
 
-	return "", errors.New(data.Message)
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.GettableSilences](t, req, http.StatusOK)
+}
+
+func (a apiClient) DeleteSilence(t *testing.T, id string) (any, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silence/%s", a.url, id), nil)
+	require.NoError(t, err)
+
+	type dynamic struct {
+		Message string `json:"message"`
+	}
+
+	return sendRequest[dynamic](t, req, http.StatusOK)
 }
 
 func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {

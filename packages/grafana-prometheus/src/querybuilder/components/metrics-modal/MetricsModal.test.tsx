@@ -1,6 +1,6 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
@@ -186,6 +186,38 @@ describe('MetricsModal', () => {
       expect(metricABucket).toBeInTheDocument();
     });
   });
+
+  // native histograms are given a custom type.
+  // They are histograms but are given the type 'native histogram'
+  // to distinguish then from old histograms.
+  it('displays a type for a native histogram', async () => {
+    setup(defaultQuery, listOfMetrics);
+    await waitFor(() => {
+      expect(screen.getByText('new_histogram')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('native histogram')).toBeInTheDocument();
+  });
+
+  it('has a filter for selected type', async () => {
+    setup(defaultQuery, listOfMetrics);
+
+    const selectType = screen.getByText('Filter by type');
+
+    await userEvent.click(selectType);
+
+    const nativeHistogramOption = await screen.getByText('Native histograms are different', { exact: false });
+
+    await userEvent.click(nativeHistogramOption);
+
+    const classicHistogram = await screen.queryByText('a_bucket');
+
+    expect(classicHistogram).toBeNull();
+
+    const nativeHistogram = await screen.getByText('new_histogram');
+
+    expect(nativeHistogram).toBeInTheDocument();
+  });
 });
 
 const defaultQuery: PromVisualQuery = {
@@ -194,7 +226,21 @@ const defaultQuery: PromVisualQuery = {
   operations: [],
 };
 
-const listOfMetrics: string[] = ['all-metrics', 'a_bucket', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+const listOfMetrics: string[] = [
+  'all-metrics',
+  'a_bucket',
+  'new_histogram',
+  'a',
+  'b',
+  'c',
+  'd',
+  'e',
+  'f',
+  'g',
+  'h',
+  'i',
+  'j',
+];
 
 function createDatasource(withLabels?: boolean) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
@@ -219,8 +265,12 @@ function createDatasource(withLabels?: boolean) {
         help: 'a-metric-help',
       },
       a_bucket: {
-        type: 'counter',
+        type: 'histogram',
         help: 'for functions',
+      },
+      new_histogram: {
+        type: 'histogram',
+        help: 'a native histogram',
       },
       // missing metadata for other metrics is tested for, see below
     };

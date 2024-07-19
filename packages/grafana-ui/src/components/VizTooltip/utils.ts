@@ -1,4 +1,4 @@
-import { FALLBACK_COLOR, Field, FieldType, formattedValueToString } from '@grafana/data';
+import { FALLBACK_COLOR, Field, FieldType, formattedValueToString, getFieldColorModeForField } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
@@ -49,8 +49,6 @@ export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndi
   switch (colorIndicator) {
     case ColorIndicator.value:
       return styles.value;
-    case ColorIndicator.series:
-      return styles.series;
     case ColorIndicator.hexagon:
       return styles.hexagon;
     case ColorIndicator.pie_1_4:
@@ -85,7 +83,7 @@ export const getContentItems = (
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
-  let allNumeric = false;
+  let allNumeric = true;
 
   for (let i = 0; i < fields.length; i++) {
     const field = fields[i];
@@ -131,14 +129,25 @@ export const getContentItems = (
         ? Number.MIN_SAFE_INTEGER
         : Number.MAX_SAFE_INTEGER;
 
+    const colorMode = getFieldColorModeForField(field);
+
+    let colorIndicator = ColorIndicator.series;
+    let colorPlacement = ColorPlacement.first;
+
+    if (colorMode.isByValue) {
+      colorIndicator = ColorIndicator.value;
+      colorPlacement = ColorPlacement.trailing;
+    }
+
     rows.push({
       label: field.state?.displayName ?? field.name,
       value: formattedValueToString(display),
       color: display.color ?? FALLBACK_COLOR,
-      colorIndicator: ColorIndicator.series,
-      colorPlacement: ColorPlacement.first,
+      colorIndicator,
+      colorPlacement,
       isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
       numeric,
+      lineStyle: field.config.custom?.lineStyle,
     });
   }
 

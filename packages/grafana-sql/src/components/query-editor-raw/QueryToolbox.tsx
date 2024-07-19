@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
@@ -20,31 +20,31 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
 
   const styles = useMemo(() => {
     return {
-      container: css`
-        border: 1px solid ${theme.colors.border.medium};
-        border-top: none;
-        padding: ${theme.spacing(0.5, 0.5, 0.5, 0.5)};
-        display: flex;
-        flex-grow: 1;
-        justify-content: space-between;
-        font-size: ${theme.typography.bodySmall.fontSize};
-      `,
-      error: css`
-        color: ${theme.colors.error.text};
-        font-size: ${theme.typography.bodySmall.fontSize};
-        font-family: ${theme.typography.fontFamilyMonospace};
-      `,
-      valid: css`
-        color: ${theme.colors.success.text};
-      `,
-      info: css`
-        color: ${theme.colors.text.secondary};
-      `,
-      hint: css`
-        color: ${theme.colors.text.disabled};
-        white-space: nowrap;
-        cursor: help;
-      `,
+      container: css({
+        border: `1px solid ${theme.colors.border.medium}`,
+        borderTop: 'none',
+        padding: theme.spacing(0.5, 0.5, 0.5, 0.5),
+        display: 'flex',
+        flexGrow: 1,
+        justifyContent: 'space-between',
+        fontSize: theme.typography.bodySmall.fontSize,
+      }),
+      error: css({
+        color: theme.colors.error.text,
+        fontSize: theme.typography.bodySmall.fontSize,
+        fontFamily: theme.typography.fontFamilyMonospace,
+      }),
+      valid: css({
+        color: theme.colors.success.text,
+      }),
+      info: css({
+        color: theme.colors.text.secondary,
+      }),
+      hint: css({
+        color: theme.colors.text.disabled,
+        whiteSpace: 'nowrap',
+        cursor: 'help',
+      }),
     };
   }, [theme]);
 

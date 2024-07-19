@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2, VariableHide } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
@@ -18,19 +17,25 @@ import {
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
+  sceneUtils,
+  SceneVariable,
   SceneVariableSet,
+  VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrailSettings } from './DataTrailSettings';
-import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
+import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetricSelectScene } from './MetricSelectScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
+import { reportChangeInLabelFilters } from './interactions';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
-import { getUrlForTrail } from './utils';
+import { getMetricName } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -46,10 +51,11 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+  metricSearch?: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -78,63 +84,89 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
 
-    // Pay attention to changes in history (i.e., changing the step)
-    this.state.history.subscribeToState((newState, oldState) => {
-      const oldNumberOfSteps = oldState.steps.length;
-      const newNumberOfSteps = newState.steps.length;
+    const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    if (filtersVariable instanceof AdHocFiltersVariable) {
+      this._subs.add(
+        filtersVariable?.subscribeToState((newState, prevState) => {
+          if (!this._addingFilterWithoutReportingInteraction) {
+            reportChangeInLabelFilters(newState.filters, prevState.filters);
+          }
+        })
+      );
+    }
 
-      const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
-
-      if (newStepWasAppended) {
-        // In order for the `useBookmarkState` to re-evaluate after a new step was made:
-        this.forceRender();
-        // Do nothing because the state is already up to date -- it created a new step!
-        return;
-      }
-
-      if (oldState.currentStep === newState.currentStep) {
-        // The same step was clicked on -- no need to change anything.
-        return;
-      }
-
-      // History changed because a different node was selected
-      const step = newState.steps[newState.currentStep];
-
-      this.goBackToStep(step);
-    });
+    // Save the current trail as a recent if the browser closes or reloads
+    const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
+    window.addEventListener('unload', saveRecentTrail);
 
     return () => {
       if (!this.state.embedded) {
-        getUrlSyncManager().cleanUp(this);
-        getTrailStore().setRecentTrail(this);
+        saveRecentTrail();
       }
+      window.removeEventListener('unload', saveRecentTrail);
     };
   }
 
-  private goBackToStep(step: DataTrailHistoryStep) {
-    if (!this.state.embedded) {
-      getUrlSyncManager().cleanUp(this);
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [VAR_DATASOURCE],
+    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
+      const { name } = variable.state;
+      if (name === VAR_DATASOURCE) {
+        this.datasourceHelper.reset();
+      }
+    },
+  });
+
+  /**
+   * Assuming that the change in filter was already reported with a cause other than `'adhoc_filter'`,
+   * this will modify the adhoc filter variable and prevent the automatic reporting which would
+   * normally occur through the call to `reportChangeInLabelFilters`.
+   */
+  public addFilterWithoutReportingInteraction(filter: AdHocVariableFilter) {
+    const variable = sceneGraph.lookupVariable('filters', this);
+    if (!(variable instanceof AdHocFiltersVariable)) {
+      return;
     }
 
-    if (!step.trailState.metric) {
-      step.trailState.metric = undefined;
+    this._addingFilterWithoutReportingInteraction = true;
+
+    variable.setState({ filters: [...variable.state.filters, filter] });
+
+    this._addingFilterWithoutReportingInteraction = false;
+  }
+
+  private _addingFilterWithoutReportingInteraction = false;
+  private datasourceHelper = new MetricDatasourceHelper(this);
+
+  public getMetricMetadata(metric?: string) {
+    return this.datasourceHelper.getMetricMetadata(metric);
+  }
+
+  public getCurrentMetricMetadata() {
+    return this.getMetricMetadata(this.state.metric);
+  }
+
+  public restoreFromHistoryStep(state: DataTrailState) {
+    if (!state.topScene && !state.metric) {
+      // If the top scene for an  is missing, correct it.
+      state.topScene = new MetricSelectScene({});
     }
 
-    this.setState(step.trailState);
+    this.setState(
+      sceneUtils.cloneSceneObjectState(state, {
+        history: this.state.history,
+        metric: !state.metric ? undefined : state.metric,
+        metricSearch: !state.metricSearch ? undefined : state.metricSearch,
+      })
+    );
 
-    if (!this.state.embedded) {
-      locationService.replace(getUrlForTrail(this));
-
-      getUrlSyncManager().initSync(this);
-    }
+    const urlState = getUrlSyncManager().getUrlState(this);
+    const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
+    locationService.replace(fullUrl);
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
-    if (this.state.embedded) {
-      this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
-    } else {
-      locationService.partial({ metric: evt.payload, actionView: null });
-    }
+    this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
 
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
@@ -153,7 +185,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   getUrlState() {
-    return { metric: this.state.metric };
+    const { metric, metricSearch } = this.state;
+    return { metric, metricSearch };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -163,32 +196,42 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (this.state.metric !== values.metric) {
         Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
       }
-    } else if (values.metric === null) {
+    } else if (values.metric == null) {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({});
+    }
+
+    if (typeof values.metricSearch === 'string') {
+      stateUpdate.metricSearch = values.metricSearch;
+    } else if (values.metric == null) {
+      stateUpdate.metricSearch = undefined;
     }
 
     this.setState(stateUpdate);
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history } = model.useState();
-    const styles = useStyles2(getStyles);
+    const { controls, topScene, history, settings, metric } = model.useState();
+    const chromeHeaderHeight = useChromeHeaderHeight();
+    const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
-      <div className={styles.container}>
-        {showHeaderForFirstTimeUsers && <MetricsHeader />}
-        <history.Component model={history} />
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-          </div>
-        )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-      </div>
+      <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
+        <div className={styles.container}>
+          {showHeaderForFirstTimeUsers && <MetricsHeader />}
+          <history.Component model={history} />
+          {controls && (
+            <div className={styles.controls}>
+              {controls.map((control) => (
+                <control.Component key={control.state.key} model={control} />
+              ))}
+              <settings.Component model={settings} />
+            </div>
+          )}
+          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        </div>
+      </Page>
     );
   };
 }
@@ -206,7 +249,8 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
     variables: [
       new DataSourceVariable({
         name: VAR_DATASOURCE,
-        label: 'Prometheus data source',
+        label: 'Data source',
+        description: 'Only prometheus data sources are supported',
         value: initialDS,
         pluginId: 'prometheus',
       }),
@@ -223,14 +267,15 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
   });
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
   return {
     container: css({
       flexGrow: 1,
       display: 'flex',
       gap: theme.spacing(1),
-      minHeight: '100%',
       flexDirection: 'column',
+      background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
+      padding: theme.spacing(2, 3, 2, 3),
     }),
     body: css({
       flexGrow: 1,
@@ -245,8 +290,8 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       position: 'sticky',
       background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
-      zIndex: theme.zIndex.activePanel + 1,
-      top: 0,
+      zIndex: theme.zIndex.navbarFixed,
+      top: chromeHeaderHeight,
     }),
   };
 }

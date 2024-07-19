@@ -2,13 +2,14 @@ import { cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { PropsWithChildren, useRef } from 'react';
+import { PropsWithChildren, useRef } from 'react';
+import * as React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
@@ -105,23 +106,23 @@ function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; 
   if (leftItems) {
     return (
       <div className={styles.modalButtonRow}>
-        <HorizontalGroup justify="space-between">
-          <HorizontalGroup justify="flex-start" spacing="md">
+        <Stack justifyContent="space-between">
+          <Stack justifyContent="flex-start" gap={2}>
             {leftItems}
-          </HorizontalGroup>
-          <HorizontalGroup justify="flex-end" spacing="md">
+          </Stack>
+          <Stack justifyContent="flex-end" gap={2}>
             {children}
-          </HorizontalGroup>
-        </HorizontalGroup>
+          </Stack>
+        </Stack>
       </div>
     );
   }
 
   return (
     <div className={styles.modalButtonRow}>
-      <HorizontalGroup justify="flex-end" spacing="md" wrap={true}>
+      <Stack justifyContent="flex-end" gap={2} wrap="wrap">
         {children}
-      </HorizontalGroup>
+      </Stack>
     </div>
   );
 }

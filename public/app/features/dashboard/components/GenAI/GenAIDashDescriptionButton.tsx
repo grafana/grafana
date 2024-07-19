@@ -1,14 +1,18 @@
-import React from 'react';
-
+import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { getDashboardPanelPrompt, Message, Role } from './utils';
+import {
+  DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE,
+  getDashboardPanelPrompt,
+  getPanelStrings,
+  Message,
+  Role,
+} from './utils';
 
 interface GenAIDashDescriptionButtonProps {
   onGenerate: (description: string) => void;
-  dashboard: DashboardModel;
 }
 
 const DASHBOARD_DESCRIPTION_CHAR_LIMIT = 300;
@@ -24,30 +28,31 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   `The description should be, at most, ${DASHBOARD_DESCRIPTION_CHAR_LIMIT} characters.\n` +
   'Respond with only the description of the dashboard.';
 
-export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashDescriptionButtonProps) => {
-  const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
+export const GenAIDashDescriptionButton = ({ onGenerate }: GenAIDashDescriptionButtonProps) => {
+  const dashboard = getDashboardSrv().getCurrent()!;
+  const panelStrings = getPanelStrings(dashboard);
 
   return (
     <GenAIButton
-      messages={messages}
+      messages={getMessages(dashboard)}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.dashboardDescription}
       toggleTipTitle={'Improve your dashboard description'}
+      disabled={panelStrings.length === 0}
+      tooltip={panelStrings.length === 0 ? DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE : undefined}
     />
   );
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {
-  const panelPrompt = getDashboardPanelPrompt(dashboard);
-
   return [
     {
       content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
       role: Role.system,
     },
     {
-      content: `The title of the dashboard is "${dashboard.title}"\n` + `${panelPrompt}`,
-      role: Role.system,
+      content: `The title of the dashboard is "${dashboard.title}"\n` + `${getDashboardPanelPrompt(dashboard)}`,
+      role: Role.user,
     },
   ];
 }

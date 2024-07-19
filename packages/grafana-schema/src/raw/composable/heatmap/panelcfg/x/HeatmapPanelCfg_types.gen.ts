@@ -4,14 +4,13 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "11.0.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 /**
  * Controls the color mode of the heatmap
@@ -27,6 +26,15 @@ export enum HeatmapColorMode {
 export enum HeatmapColorScale {
   Exponential = 'exponential',
   Linear = 'linear',
+}
+
+/**
+ * Controls which axis to allow selection on
+ */
+export enum HeatmapSelectionMode {
+  X = 'x',
+  Xy = 'xy',
+  Y = 'y',
 }
 
 /**
@@ -224,6 +232,10 @@ export interface Options {
    */
   rowsFrame?: RowsHeatmapOptions;
   /**
+   * Controls which axis to allow selection on
+   */
+  selectionMode?: HeatmapSelectionMode;
+  /**
    * | *{
    * 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
    * }
@@ -266,6 +278,7 @@ export const defaultOptions: Partial<Options> = {
   legend: {
     show: true,
   },
+  selectionMode: HeatmapSelectionMode.X,
   showValue: ui.VisibilityMode.Auto,
   tooltip: {
     mode: ui.TooltipDisplayMode.Single,

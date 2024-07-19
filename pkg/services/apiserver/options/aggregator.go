@@ -5,7 +5,6 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -14,11 +13,9 @@ import (
 	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
-	"k8s.io/kube-openapi/pkg/common"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -34,11 +31,6 @@ func NewAggregatorServerOptions() *AggregatorServerOptions {
 	return &AggregatorServerOptions{}
 }
 
-func (o *AggregatorServerOptions) getMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
-	return aggregatorAPIs
-}
-
 func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
 	if o == nil {
 		return
@@ -48,7 +40,7 @@ func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
 		"path to proxy client cert file")
 
 	fs.StringVar(&o.ProxyClientKeyFile, "proxy-client-key-file", o.ProxyClientKeyFile,
-		"path to proxy client cert file")
+		"path to proxy client key file")
 }
 
 func (o *AggregatorServerOptions) Validate() []error {
@@ -60,7 +52,7 @@ func (o *AggregatorServerOptions) Validate() []error {
 	return nil
 }
 
-func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions, dataPath string) error {
+func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions) error {
 	genericConfig := aggregatorConfig.GenericConfig
 
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
@@ -88,11 +80,8 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
-	// override the RESTOptionsGetter to use the file storage options getter
-	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig,
-		"apiregistration.k8s.io/apiservices",
-		"service.grafana.app/externalnames",
-	)
+	// override the RESTOptionsGetter to use the in memory storage options
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig)
 	if err != nil {
 		return err
 	}
@@ -109,11 +98,6 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	aggregatorConfig.ExtraConfig.ProxyClientCertFile = o.ProxyClientCertFile
 	aggregatorConfig.ExtraConfig.ProxyClientKeyFile = o.ProxyClientKeyFile
 
-	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
-	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(o.getMergedOpenAPIDefinitions, namer)
-	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
-	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(o.getMergedOpenAPIDefinitions, namer)
-	genericConfig.OpenAPIConfig.Info.Title = "Kubernetes"
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 
 	// These hooks use v1 informers, which are not available in the grafana aggregator.

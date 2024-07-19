@@ -31,6 +31,10 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
+}));
+
 describe('Explore: handle datasource states', () => {
   afterEach(() => {
     tearDown();

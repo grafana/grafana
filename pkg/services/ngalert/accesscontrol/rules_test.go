@@ -10,11 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -91,6 +92,8 @@ func createUserWithPermissions(permissions map[string][]string) identity.Request
 func TestAuthorizeRuleChanges(t *testing.T) {
 	groupKey := models.GenerateGroupKey(rand.Int63())
 	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
+	gen := models.RuleGen
+	genWithGroupKey := gen.With(gen.WithGroupKey(groupKey))
 
 	testCases := []struct {
 		name        string
@@ -102,7 +105,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			changes: func() *store.GroupDelta {
 				return &store.GroupDelta{
 					GroupKey: groupKey,
-					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey))),
+					New:      genWithGroupKey.GenerateManyRef(1, 5),
 					Update:   nil,
 					Delete:   nil,
 				}
@@ -118,6 +121,12 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleCreate: {
 						namespaceIdScope,
 					},
+					ruleRead: {
+						namespaceIdScope,
+					},
+					dashboards.ActionFoldersRead: {
+						namespaceIdScope,
+					},
 					datasources.ActionQuery: scopes,
 				}
 			},
@@ -125,8 +134,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules to delete it should check delete action and query for datasource",
 			changes: func() *store.GroupDelta {
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				rules2 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules := genWithGroupKey.GenerateManyRef(1, 5)
+				rules2 := genWithGroupKey.GenerateManyRef(1, 5)
 				return &store.GroupDelta{
 					GroupKey: groupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
@@ -139,18 +148,24 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
 				return map[string][]string{
+					ruleRead: {
+						namespaceIdScope,
+					},
+					dashboards.ActionFoldersRead: {
+						namespaceIdScope,
+					},
 					ruleDelete: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery: getDatasourceScopesForRules(c.AffectedGroups[c.GroupKey]),
+					datasources.ActionQuery: getDatasourceScopesForRules(c.Delete),
 				}
 			},
 		},
 		{
 			name: "if there are rules to update within the same namespace it should check update action and access to datasource",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
+				rules := genWithGroupKey.GenerateManyRef(1, 5)
 				updates := make([]store.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
@@ -174,10 +189,16 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				scopes := getDatasourceScopesForRules(append(c.AffectedGroups[c.GroupKey], mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+				scopes := getDatasourceScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
 					return update.New
-				})...))
+				}))
 				return map[string][]string{
+					ruleRead: {
+						namespaceIdScope,
+					},
+					dashboards.ActionFoldersRead: {
+						namespaceIdScope,
+					},
 					ruleUpdate: {
 						namespaceIdScope,
 					},
@@ -188,18 +209,14 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules that are moved between namespaces it should check delete+add action and access to group where rules come from",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
+				rules := genWithGroupKey.GenerateManyRef(1, 5)
 
 				targetGroupKey := models.GenerateGroupKey(groupKey.OrgID)
 
 				updates := make([]store.RuleDelta, 0, len(rules))
 				for _, rule := range rules {
-					cp := models.CopyRule(rule)
-					models.WithGroupKey(targetGroupKey)(cp)
-					cp.Data = []models.AlertQuery{
-						models.GenerateAlertQuery(),
-					}
+					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(gen.GenerateQuery()))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
@@ -219,13 +236,9 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
 				dsScopes := getDatasourceScopesForRules(
-					append(append(append(c.AffectedGroups[c.GroupKey],
-						mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
-							return update.New
-						})...,
-					), mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
-						return update.Existing
-					})...), c.AffectedGroups[groupKey]...),
+					mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+						return update.New
+					}),
 				)
 
 				var deleteScopes []string
@@ -250,8 +263,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					NamespaceUID: groupKey.NamespaceUID,
 					RuleGroup:    util.GenerateShortUID(),
 				}
-				sourceGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				targetGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(targetGroupKey)))
+				sourceGroup := genWithGroupKey.GenerateManyRef(1, 5)
+				targetGroup := gen.With(gen.WithGroupKey(targetGroupKey)).GenerateManyRef(1, 5)
 
 				updates := make([]store.RuleDelta, 0, len(sourceGroup))
 				toCopy := len(sourceGroup)
@@ -260,11 +273,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 				for i := 0; i < toCopy; i++ {
 					rule := sourceGroup[0]
-					cp := models.CopyRule(rule)
-					models.WithGroupKey(targetGroupKey)(cp)
-					cp.Data = []models.AlertQuery{
-						models.GenerateAlertQuery(),
-					}
+					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(models.GenerateAlertQuery()))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
@@ -284,29 +293,19 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				scopes := make(map[string]struct{})
-				for _, update := range c.Update {
-					for _, query := range update.New.Data {
-						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-					}
-					for _, query := range update.Existing.Data {
-						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-					}
-				}
-				for _, rules := range c.AffectedGroups {
-					for _, rule := range rules {
-						for _, query := range rule.Data {
-							scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-						}
-					}
-				}
-
-				dsScopes := make([]string, 0, len(scopes))
-				for key := range scopes {
-					dsScopes = append(dsScopes, key)
-				}
+				dsScopes := getDatasourceScopesForRules(
+					mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+						return update.New
+					}),
+				)
 
 				return map[string][]string{
+					ruleRead: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+					},
+					dashboards.ActionFoldersRead: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+					},
 					ruleUpdate: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
@@ -327,7 +326,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				for _, missing := range permissionCombinations {
 					ac := &recordingAccessControlFake{}
 					srv := RuleService{
-						ac: ac,
+						genericService{ac: ac},
 					}
 					err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(missing), groupChanges)
 
@@ -344,7 +343,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				},
 			}
 			srv := RuleService{
-				ac: ac,
+				genericService{ac: ac},
 			}
 			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
@@ -354,7 +353,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 }
 
 func TestCheckDatasourcePermissionsForRule(t *testing.T) {
-	rule := models.AlertRuleGen()()
+	rule := models.RuleGen.GenerateRef()
 
 	expressionByType := models.GenerateAlertQuery()
 	expressionByType.QueryType = expr.DatasourceType
@@ -378,12 +377,18 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 	t.Run("should check only expressions", func(t *testing.T) {
 		permissions := map[string][]string{
+			ruleRead: {
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID),
+			},
+			dashboards.ActionFoldersRead: {
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID),
+			},
 			datasources.ActionQuery: scopes,
 		}
 
 		ac := &recordingAccessControlFake{}
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
 		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(permissions), rule)
@@ -399,7 +404,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 			},
 		}
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
 		result := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
@@ -410,20 +415,19 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 }
 
 func Test_authorizeAccessToRuleGroup(t *testing.T) {
-	t.Run("should return true if user has access to all datasources of all rules in group", func(t *testing.T) {
-		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
-		var scopes []string
+	t.Run("should succeed if user has access to all namespaces", func(t *testing.T) {
+		rules := models.RuleGen.GenerateManyRef(1, 5)
+		namespaceScopes := make([]string, 0)
 		for _, rule := range rules {
-			for _, query := range rule.Data {
-				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-			}
+			namespaceScopes = append(namespaceScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID))
 		}
 		permissions := map[string][]string{
-			datasources.ActionQuery: scopes,
+			ruleRead:                     namespaceScopes,
+			dashboards.ActionFoldersRead: namespaceScopes,
 		}
 		ac := &recordingAccessControlFake{}
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
@@ -431,29 +435,72 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		require.NoError(t, result)
 		require.NotEmpty(t, ac.EvaluateRecordings)
 	})
-	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
-		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
-		var scopes []string
-		for _, rule := range rules {
-			for _, query := range rule.Data {
-				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-			}
-		}
-		permissions := map[string][]string{
-			datasources.ActionQuery: scopes,
-		}
 
-		rule := models.AlertRuleGen()()
-		rules = append(rules, rule)
+	t.Run("should fail if user does not have access to namespace", func(t *testing.T) {
+		f := &folder.Folder{UID: "test-folder"}
+		gen := models.RuleGen
+		genWithFolder := gen.With(gen.WithNamespace(f))
+		rules := genWithFolder.GenerateManyRef(1, 5)
 
 		ac := &recordingAccessControlFake{}
-
 		svc := RuleService{
-			ac: ac,
+			genericService{ac: ac},
 		}
 
-		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
+		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(map[string][]string{}), rules)
 
 		require.Error(t, result)
+		require.ErrorIs(t, result, ErrAuthorizationBase)
 	})
+}
+
+func TestCanReadAllRules(t *testing.T) {
+	ac := &recordingAccessControlFake{}
+	svc := RuleService{
+		genericService{ac: ac},
+	}
+
+	testCases := []struct {
+		permissions map[string][]string
+		expected    bool
+	}{
+		{
+			permissions: map[string][]string{
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+			expected: true,
+		},
+		{
+			permissions: make(map[string][]string),
+		},
+		{
+			permissions: map[string][]string{
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceScopeUID("test")},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+		},
+		{
+			permissions: map[string][]string{
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("test")},
+			},
+		},
+		{
+			permissions: map[string][]string{
+				ruleRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+		},
+		{
+			permissions: map[string][]string{
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		result, err := svc.CanReadAllRules(context.Background(), createUserWithPermissions(tc.permissions))
+		assert.NoError(t, err)
+		assert.Equalf(t, tc.expected, result, "permissions: %v", tc.permissions)
+	}
 }

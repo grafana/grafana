@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
@@ -7,13 +7,17 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
-import { RulerRuleDTO, RulerRuleGroupDTO } from '../../../../../../types/unified-alerting-dto';
-import { alertRuleApi, ModifyExportPayload } from '../../../api/alertRuleApi';
+import {
+  PostableRulerRuleGroupDTO,
+  RulerRuleDTO,
+  RulerRuleGroupDTO,
+} from '../../../../../../types/unified-alerting-dto';
+import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { formValuesToRulerGrafanaRuleDTO, MINUTE } from '../../../utils/rule-form';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL, formValuesToRulerGrafanaRuleDTO } from '../../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
@@ -44,7 +48,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const [exportData, setExportData] = useState<RuleFormValues | undefined>(undefined);
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
-  const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? MINUTE);
+  const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const onInvalid = (): void => {
     notifyApp.error('There are errors in the form. Please correct them and try again!');
@@ -133,7 +137,7 @@ export const getPayloadToExport = (
   uid: string,
   formValues: RuleFormValues,
   existingGroup: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined
-): ModifyExportPayload => {
+): PostableRulerRuleGroupDTO => {
   const grafanaRuleDto = formValuesToRulerGrafanaRuleDTO(formValues);
 
   const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: uid } };
@@ -167,7 +171,7 @@ export const getPayloadToExport = (
 
 const useGetPayloadToExport = (values: RuleFormValues, uid: string) => {
   const rulerGroupDto = useGetGroup(values.folder?.uid ?? '', values.group);
-  const payload: ModifyExportPayload = useMemo(() => {
+  const payload: PostableRulerRuleGroupDTO = useMemo(() => {
     return getPayloadToExport(uid, values, rulerGroupDto?.value);
   }, [uid, rulerGroupDto, values]);
   return { payload, loadingGroup: rulerGroupDto.loading };
@@ -210,27 +214,25 @@ interface GrafanaRuleDesignExporterProps {
   uid: string;
 }
 
-export const GrafanaRuleDesignExporter = React.memo(
-  ({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
-    const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
-    return (
-      <GrafanaExportDrawer
-        title={'Export Group'}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+  return (
+    <GrafanaExportDrawer
+      title={'Export Group'}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={Object.values(allGrafanaExportProviders)}
+    >
+      <GrafanaRuleDesignExportPreview
+        exportFormat={activeTab}
         onClose={onClose}
-        formatProviders={Object.values(allGrafanaExportProviders)}
-      >
-        <GrafanaRuleDesignExportPreview
-          exportFormat={activeTab}
-          onClose={onClose}
-          exportValues={exportValues}
-          uid={uid}
-        />
-      </GrafanaExportDrawer>
-    );
-  }
-);
+        exportValues={exportValues}
+        uid={uid}
+      />
+    </GrafanaExportDrawer>
+  );
+});
 
 GrafanaRuleDesignExporter.displayName = 'GrafanaRuleDesignExporter';

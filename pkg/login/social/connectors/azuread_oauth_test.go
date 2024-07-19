@@ -16,10 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -75,12 +77,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				},
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Viewer",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -139,12 +141,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				usGovURL: true,
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Viewer",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -166,12 +168,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				},
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Viewer",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -193,12 +195,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Admin",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -220,12 +222,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Admin",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -247,15 +249,14 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Viewer",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{},
 			},
 		},
-		// TODO: @mgyongyosi check this test
 		{
 			name: "role from env variable",
 			claims: &azureClaims{
@@ -275,12 +276,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				},
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Editor",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -302,12 +303,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				},
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Editor",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -329,12 +330,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Admin",
-				Groups: []string{},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+				Groups:   []string{},
 			},
 		},
 		{
@@ -362,7 +363,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:           "My Name",
 				Email:          "me@example.com",
 				Login:          "me@example.com",
-				Role:           "Admin",
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 				Groups:         []string{},
 				IsGrafanaAdmin: nil,
 			},
@@ -391,7 +392,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:           "My Name",
 				Email:          "me@example.com",
 				Login:          "me@example.com",
-				Role:           "Editor",
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleEditor},
 				Groups:         []string{},
 				IsGrafanaAdmin: falseBoolPtr(),
 			},
@@ -420,7 +421,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:           "My Name",
 				Email:          "me@example.com",
 				Login:          "me@example.com",
-				Role:           "Admin",
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 				Groups:         []string{},
 				IsGrafanaAdmin: trueBoolPtr(),
 			},
@@ -500,12 +501,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Viewer",
-				Groups: []string{"foo", "bar"},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{"foo", "bar"},
 			},
 			wantErr: false,
 		},
@@ -531,12 +532,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1234",
-				Name:   "My Name",
-				Email:  "me@example.com",
-				Login:  "me@example.com",
-				Role:   "Viewer",
-				Groups: []string{"foo"},
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{"foo"},
 			},
 		},
 		{
@@ -585,12 +586,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 			settingAutoAssignOrgRole: "",
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "test",
-				Email:  "test@test.com",
-				Login:  "test@test.com",
-				Role:   "Viewer",
-				Groups: []string{"from_server"},
+				Id:       "1",
+				Name:     "test",
+				Email:    "test@test.com",
+				Login:    "test@test.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{"from_server"},
 			},
 			wantErr: false,
 		},
@@ -620,12 +621,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 			settingAutoAssignOrgRole: "",
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "test",
-				Email:  "test@test.com",
-				Login:  "test@test.com",
-				Role:   "Viewer",
-				Groups: []string{"from_server"},
+				Id:       "1",
+				Name:     "test",
+				Email:    "test@test.com",
+				Login:    "test@test.com",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{"from_server"},
 			},
 			wantErr: false,
 		},
@@ -675,6 +676,131 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "should map role when org mapping is set, IdP returns with invalid role and role attribute strict is enabled",
+			fields: fields{
+				providerCfg: &social.OAuthInfo{
+					Name:                "azuread",
+					ClientId:            "client-id-example",
+					RoleAttributeStrict: true,
+					OrgMapping:          []string{"group1:Org4:Editor", "*:5:Viewer"},
+				},
+				cfg: &setting.Cfg{},
+			},
+			claims: &azureClaims{
+				PreferredUsername: "",
+				Roles:             []string{"Invalid"},
+				Groups:            []string{"group1", "group3"},
+				Name:              "My Name",
+				ID:                "1234",
+				Email:             "me@example.com",
+			},
+			want: &social.BasicUserInfo{
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
+				Groups:   []string{"group1", "group3"},
+			},
+		},
+		{
+			name: "should map role when org mapping is set and IdP returns with empty role list",
+			fields: fields{
+				providerCfg: &social.OAuthInfo{
+					Name:       "azuread",
+					ClientId:   "client-id-example",
+					OrgMapping: []string{"group1:Org4:Editor", "group2:5:Viewer"},
+				},
+				cfg: &setting.Cfg{
+					AutoAssignOrgRole: "Viewer",
+				},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"group1"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &social.BasicUserInfo{
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{4: org.RoleEditor},
+				Groups:   []string{"group1"},
+			},
+		},
+		{
+			name: "should map role when only org mapping is set and role attribute strict is enabled",
+			fields: fields{
+				providerCfg: &social.OAuthInfo{
+					Name:                "azuread",
+					ClientId:            "client-id-example",
+					RoleAttributeStrict: true,
+					OrgMapping:          []string{"group1:Org4:Editor", "*:5:Viewer"},
+				},
+				cfg: &setting.Cfg{},
+			},
+			claims: &azureClaims{
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"group1", "group3"},
+				Name:              "My Name",
+				ID:                "1234",
+				Email:             "me@example.com",
+			},
+			want: &social.BasicUserInfo{
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
+				Groups:   []string{"group1", "group3"},
+			},
+		},
+		{
+			name: "should return error when roles claim is empty and org mapping doesn't evaluate to any role and role attribute strict is enabled",
+			fields: fields{
+				providerCfg: &social.OAuthInfo{
+					Name:                "azuread",
+					ClientId:            "client-id-example",
+					RoleAttributeStrict: true,
+					OrgMapping:          []string{"group1:Org4:Editor"},
+				},
+				cfg: &setting.Cfg{},
+			},
+			claims: &azureClaims{
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"group2"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when roles claim is empty and org mapping is empty and role attribute strict is enabled",
+			fields: fields{
+				providerCfg: &social.OAuthInfo{
+					Name:                "azuread",
+					ClientId:            "client-id-example",
+					RoleAttributeStrict: true,
+					OrgMapping:          []string{},
+				},
+				cfg: &setting.Cfg{},
+			},
+			claims: &azureClaims{
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"group2"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			wantErr: true,
+		},
 	}
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -711,7 +837,13 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewAzureADProvider(tt.fields.providerCfg, tt.fields.cfg, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), cache)
+			s := NewAzureADProvider(tt.fields.providerCfg,
+				tt.fields.cfg,
+				ProvideOrgRoleMapper(tt.fields.cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				&ssosettingstests.MockService{},
+				featuremgmt.WithFeatures(),
+				cache)
 
 			if tt.fields.usGovURL {
 				s.SocialBase.Endpoint.AuthURL = usGovAuthURL
@@ -765,11 +897,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			tt.args.client = s.Client(context.Background(), token)
 
 			got, err := s.UserInfo(context.Background(), tt.args.client, token)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
 
+			require.NoError(t, err)
 			require.EqualValues(t, tt.want, got)
 		})
 	}
@@ -791,7 +924,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		wantErr                  bool
 	}{
 		{
-			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should get roles, skipOrgRoleSyncBase disabled",
+			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should get roles",
 			fields: fields{
 				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
@@ -800,8 +933,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				},
 			},
 			claims: &azureClaims{
@@ -816,23 +948,22 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				Name:           "My Name",
 				Email:          "me@example.com",
 				Login:          "me@example.com",
-				Role:           "Admin",
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 				IsGrafanaAdmin: trueBoolPtr(),
 				Groups:         []string{},
 			},
 		},
 		{
-			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should not get roles",
+			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync enabled should not get roles",
 			fields: fields{
 				providerCfg: &social.OAuthInfo{
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
-					SkipOrgRoleSync:         false,
+					SkipOrgRoleSync:         true,
 				},
 				cfg: &setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				},
 			},
 			claims: &azureClaims{
@@ -843,13 +974,11 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &social.BasicUserInfo{
-				Id:             "1234",
-				Name:           "My Name",
-				Email:          "me@example.com",
-				Login:          "me@example.com",
-				Role:           "Admin",
-				IsGrafanaAdmin: trueBoolPtr(),
-				Groups:         []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Groups: []string{},
 			},
 		},
 	}
@@ -886,7 +1015,13 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewAzureADProvider(tt.fields.providerCfg, tt.fields.cfg, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), cache)
+			s := NewAzureADProvider(tt.fields.providerCfg,
+				tt.fields.cfg,
+				ProvideOrgRoleMapper(tt.fields.cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				&ssosettingstests.MockService{},
+				featuremgmt.WithFeatures(),
+				cache)
 
 			s.SocialBase.Endpoint.AuthURL = authURL
 
@@ -984,7 +1119,7 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.settings, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
 
 			require.Equal(t, tc.want.forceUseGraphAPI, s.forceUseGraphAPI)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
@@ -1127,12 +1262,12 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
-			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
@@ -1207,7 +1342,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1264,7 +1399,7 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+			s := NewAzureADProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

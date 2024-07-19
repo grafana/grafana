@@ -3,8 +3,8 @@ package clients
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -37,4 +37,8 @@ func (c *Form) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ident
 		return nil, errBadForm.Errorf("failed to parse request: %w", err)
 	}
 	return c.client.AuthenticatePassword(ctx, r, form.Username, form.Password)
+}
+
+func (c *Form) IsEnabled() bool {
+	return true
 }

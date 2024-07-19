@@ -8,9 +8,9 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { normalizeMatchers, parseMatcher, quoteWithEscape, unquoteWithUnescape } from './matchers';
+import { encodeMatcher, normalizeMatchers, parseMatcherToArray, unquoteWithUnescape } from './matchers';
 import { findExistingRoute } from './routeTree';
-import { isValidPrometheusDuration, safeParseDurationstr } from './time';
+import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -94,9 +94,13 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
 
   const objectMatchers =
     route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
+
   const matchers =
     route.matchers
-      ?.map((matcher) => matcherToMatcherField(parseMatcher(matcher)))
+      ?.flatMap((matcher) => {
+        // parse the matcher to an array of matchers, PromQL-style matchers can contain more than one matcher (in a matcher, yes it's confusing)
+        return parseMatcherToArray(matcher).flatMap(matcherToMatcherField);
+      })
       .map(({ name, operator, value }) => ({
         name: unquoteWithUnescape(name),
         operator,
@@ -185,9 +189,8 @@ export const formAmRouteToAmRoute = (
   // Grafana maintains a fork of AM to support all utf-8 characters in the "object_matchers" property values but this
   // does not exist in upstream AlertManager
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    amRoute.matchers = formAmRoute.object_matchers?.map(
-      ({ name, operator, value }) => `${quoteWithEscape(name)}${operator}${quoteWithEscape(value)}`
-    );
+    // to support UTF-8 characters we must wrap label keys and values with double quotes if they contain reserved characters.
+    amRoute.matchers = formAmRoute.object_matchers?.map(encodeMatcher);
     amRoute.object_matchers = undefined;
   } else {
     amRoute.object_matchers = normalizeMatchers(amRoute);
@@ -264,8 +267,8 @@ export const repeatIntervalValidator = (repeatInterval: string, groupInterval = 
     return validGroupInterval;
   }
 
-  const repeatDuration = safeParseDurationstr(repeatInterval);
-  const groupDuration = safeParseDurationstr(groupInterval);
+  const repeatDuration = safeParsePrometheusDuration(repeatInterval);
+  const groupDuration = safeParsePrometheusDuration(groupInterval);
 
   const isRepeatLowerThanGroupDuration = groupDuration !== 0 && repeatDuration < groupDuration;
 

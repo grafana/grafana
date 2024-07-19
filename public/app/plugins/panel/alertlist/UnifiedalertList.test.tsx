@@ -1,14 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
-import { act } from 'react-test-renderer';
 import { byRole, byText } from 'testing-library-selector';
 
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
-import { getPluginLinkExtensions, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { TimeRangeUpdatedEvent, usePluginLinkExtensions } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/alertRuleApi';
+import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -25,7 +23,7 @@ import {
 } from '../../../features/alerting/unified/mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 
-import { UnifiedAlertList } from './UnifiedAlertList';
+import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
@@ -58,12 +56,12 @@ const grafanaRuleMock = {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
 }));
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
 const mocks = {
-  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
 };
 
 const fakeResponse: PromRulesResponse = {
@@ -86,7 +84,7 @@ beforeEach(() => {
   mockRulerRulesApiResponse(server, 'grafana', {
     'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
   });
-  mocks.getPluginLinkExtensionsMock.mockReturnValue({
+  mocks.usePluginLinkExtensionsMock.mockReturnValue({
     extensions: [
       {
         pluginId: 'grafana-ml-app',
@@ -98,6 +96,7 @@ beforeEach(() => {
         onClick: jest.fn(),
       },
     ],
+    isLoading: false,
   });
 });
 
@@ -159,20 +158,20 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
 
   return render(
     <Provider store={store}>
-      <UnifiedAlertList {...props} />
+      <UnifiedAlertListPanel {...props} />
     </Provider>
   );
 };
 
 describe('UnifiedAlertList', () => {
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
   it('subscribes to the dashboard refresh interval', async () => {
     jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
 
-    await act(async () => {
-      renderPanel();
-    });
+    renderPanel();
 
-    expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1));
     expect(dashboard.events.subscribe.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
   });
 
@@ -180,21 +179,18 @@ describe('UnifiedAlertList', () => {
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     const filterAlertsSpy = jest.spyOn(utils, 'filterAlerts');
 
     const replaceVarsSpy = jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
 
     const user = userEvent.setup();
 
-    await act(async () => {
-      renderPanel({
-        alertInstanceLabelFilter: '$label',
-        dashboardAlerts: false,
-        alertName: '',
-        datasource: GRAFANA_RULES_SOURCE_NAME,
-        folder: undefined,
-      });
+    renderPanel({
+      alertInstanceLabelFilter: '$label',
+      dashboardAlerts: false,
+      alertName: '',
+      datasource: GRAFANA_RULES_SOURCE_NAME,
+      folder: undefined,
     });
 
     await waitFor(() => {
@@ -221,5 +217,13 @@ describe('UnifiedAlertList', () => {
       }),
       expect.anything()
     );
+  });
+
+  it('should render authorization error when user has no permission', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+    renderPanel();
+
+    expect(screen.getByRole('alert', { name: 'Permission required' })).toBeInTheDocument();
   });
 });

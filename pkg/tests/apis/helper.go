@@ -24,11 +24,16 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -38,6 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
+
+const Org1 = "Org1"
 
 type K8sTestHelper struct {
 	t          *testing.T
@@ -62,7 +69,7 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 		namespacer: request.GetNamespaceMapper(nil),
 	}
 
-	c.Org1 = c.createTestUsers("Org1")
+	c.Org1 = c.createTestUsers(Org1)
 	c.OrgB = c.createTestUsers("OrgB")
 
 	c.loadAPIGroups()
@@ -85,6 +92,10 @@ func (c *K8sTestHelper) loadAPIGroups() {
 
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func (c *K8sTestHelper) GetEnv() server.TestEnv {
+	return c.env
 }
 
 func (c *K8sTestHelper) Shutdown() {
@@ -142,16 +153,17 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 
 	deep := v.DeepCopy()
 	anno := deep.GetAnnotations()
-	if anno["grafana.app/originKey"] != "" {
-		anno["grafana.app/originKey"] = "${originKey}"
+	if anno["grafana.app/originPath"] != "" {
+		anno["grafana.app/originPath"] = "${originPath}"
 	}
-	if anno["grafana.app/updatedTimestamp"] != "" {
-		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
+	if anno["grafana.app/originHash"] != "" {
+		anno["grafana.app/originHash"] = "${originHash}"
 	}
 	// Remove annotations that are not added by legacy storage
-	delete(anno, "grafana.app/originTimestamp")
-	delete(anno, "grafana.app/createdBy")
-	delete(anno, "grafana.app/updatedBy")
+	delete(anno, utils.AnnoKeyOriginTimestamp)
+	delete(anno, utils.AnnoKeyCreatedBy)
+	delete(anno, utils.AnnoKeyUpdatedBy)
+	delete(anno, utils.AnnoKeyUpdatedTimestamp)
 
 	deep.SetAnnotations(anno)
 	copy := deep.Object
@@ -167,7 +179,7 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	}
 
 	out, err := json.MarshalIndent(copy, "", "  ")
-	//fmt.Printf("%s", out)
+	// fmt.Printf("%s", out)
 	require.NoError(c.t, err)
 	return string(out)
 }
@@ -369,69 +381,102 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: unstructuredMap}
 }
 
-func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
+func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
+	c.t.Helper()
+	return OrgUsers{
+		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
+		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
+		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
+	}
+}
+
+func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.RoleType, permissions []resourcepermissions.SetResourcePermissionCommand) User {
 	c.t.Helper()
 
 	store := c.env.SQLStore
 	defer func() {
-		store.Cfg.AutoAssignOrg = false
-		store.Cfg.AutoAssignOrgId = 1 // the default
+		c.env.Cfg.AutoAssignOrg = false
+		c.env.Cfg.AutoAssignOrgId = 1 // the default
 	}()
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
 
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 
 	orgId := int64(1)
-	if orgName != "Org1" {
-		orgId, err = orgService.GetOrCreate(context.Background(), orgName)
-		require.NoError(c.t, err)
+	if orgName != Org1 {
+		o, err := orgService.GetByName(context.Background(), &org.GetOrgByNameQuery{Name: orgName})
+		if err != nil {
+			if !org.ErrOrgNotFound.Is(err) {
+				require.NoError(c.t, err)
+			}
+			orgId, err = orgService.GetOrCreate(context.Background(), orgName)
+			require.NoError(c.t, err)
+		} else {
+			orgId = o.ID
+		}
 	}
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = int(orgId)
+	c.env.Cfg.AutoAssignOrg = true
+	c.env.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc, err := teamimpl.ProvideService(store, store.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg, tracing.InitializeTracerForTest())
 	require.NoError(c.t, err)
 
 	cache := localcache.ProvideService()
-	userSvc, err := userimpl.ProvideService(store,
-		orgService, store.Cfg, teamSvc, cache, quotaService,
+	userSvc, err := userimpl.ProvideService(
+		store, orgService, c.env.Cfg, teamSvc,
+		cache, tracing.InitializeTracerForTest(), quotaService,
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
-	createUser := func(key string, role org.RoleType) User {
-		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
-			DefaultOrgRole: string(role),
-			Password:       user.Password(key),
-			Login:          fmt.Sprintf("%s-%d", key, orgId),
-			OrgID:          orgId,
-		})
-		require.NoError(c.t, err)
-		require.Equal(c.t, orgId, u.OrgID)
-		require.True(c.t, u.ID > 0)
 
-		s, err := userSvc.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
-			UserID: u.ID,
-			Login:  u.Login,
-			Email:  u.Email,
-			OrgID:  orgId,
-		})
-		require.NoError(c.t, err)
-		require.Equal(c.t, orgId, s.OrgID)
-		require.Equal(c.t, role, s.OrgRole) // make sure the role was set properly
+	u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
+		DefaultOrgRole: string(basicRole),
+		Password:       user.Password(name),
+		Login:          fmt.Sprintf("%s-%d", name, orgId),
+		OrgID:          orgId,
+	})
+	require.NoError(c.t, err)
+	require.Equal(c.t, orgId, u.OrgID)
+	require.True(c.t, u.ID > 0)
 
-		return User{
-			Identity: s,
-			password: key,
-			baseURL:  baseUrl,
-		}
+	s, err := userSvc.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
+		UserID: u.ID,
+		Login:  u.Login,
+		Email:  u.Email,
+		OrgID:  orgId,
+	})
+	require.NoError(c.t, err)
+	require.Equal(c.t, orgId, s.OrgID)
+	require.Equal(c.t, basicRole, s.OrgRole) // make sure the role was set properly
+
+	usr := User{
+		Identity: s,
+		password: name,
+		baseURL:  baseUrl,
 	}
-	return OrgUsers{
-		Admin:  createUser("admin", org.RoleAdmin),
-		Editor: createUser("editor", org.RoleEditor),
-		Viewer: createUser("viewer", org.RoleViewer),
+
+	if len(permissions) > 0 {
+		c.SetPermissions(usr, permissions)
+	}
+
+	return usr
+}
+
+func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissions.SetResourcePermissionCommand) {
+	id, err := user.Identity.GetID().UserID()
+	require.NoError(c.t, err)
+
+	permissionsStore := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, featuremgmt.WithFeatures())
+
+	for _, permission := range permissions {
+		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
+			user.Identity.GetOrgID(),
+			accesscontrol.User{ID: id},
+			permission, nil)
+		require.NoError(c.t, err)
 	}
 }
 

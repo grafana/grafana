@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -36,7 +36,13 @@ import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
-import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
+import {
+  InsertPosition,
+  addRouteToReferenceRoute,
+  cleanRouteIDs,
+  mergePartialAmRouteWithRouteTree,
+  omitRouteFromRouteTree,
+} from './utils/routeTree';
 
 enum ActiveTab {
   NotificationPolicies = 'notification_policies',
@@ -132,19 +138,28 @@ const AmRoutes = () => {
     updateRouteTree(newRouteTree);
   }
 
-  function handleAdd(partialRoute: Partial<FormAmRoute>, parentRoute: RouteWithID) {
+  function handleAdd(partialRoute: Partial<FormAmRoute>, referenceRoute: RouteWithID, insertPosition: InsertPosition) {
     if (!rootRoute) {
       return;
     }
 
-    const newRouteTree = addRouteToParentRoute(selectedAlertmanager ?? '', partialRoute, parentRoute, rootRoute);
+    const newRouteTree = addRouteToReferenceRoute(
+      selectedAlertmanager ?? '',
+      partialRoute,
+      referenceRoute,
+      rootRoute,
+      insertPosition
+    );
     updateRouteTree(newRouteTree);
   }
 
-  function updateRouteTree(routeTree: Route) {
+  function updateRouteTree(routeTree: Route | RouteWithID) {
     if (!result) {
       return;
     }
+
+    // make sure we omit all IDs from our routes
+    const newRouteTree = cleanRouteIDs(routeTree);
 
     setUpdatingTree(true);
 
@@ -154,7 +169,7 @@ const AmRoutes = () => {
           ...result,
           alertmanager_config: {
             ...result.alertmanager_config,
-            route: routeTree,
+            route: newRouteTree,
           },
         },
         oldConfig: result,
@@ -185,7 +200,7 @@ const AmRoutes = () => {
     updatingTree
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
-  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
+  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -204,6 +219,7 @@ const AmRoutes = () => {
 
   return (
     <>
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
         <Tab
           label={'Notification Policies'}
@@ -234,7 +250,6 @@ const AmRoutes = () => {
           <>
             {policyTreeTabActive && (
               <>
-                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
@@ -365,9 +380,9 @@ function findMapIntersection(...matchingRoutes: FilterResult[]): FilterResult {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tabContent: css`
-    margin-top: ${theme.spacing(2)};
-  `,
+  tabContent: css({
+    marginTop: theme.spacing(2),
+  }),
 });
 
 interface QueryParamValues {

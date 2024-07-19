@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import {
   DisplayValueAlignmentFactors,
@@ -48,6 +48,7 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
         onClick={openMenu}
         className={targetClassName}
         disableWideLayout={!options.wideLayout}
+        percentChangeColorMode={options.percentChangeColorMode}
       />
     );
   };

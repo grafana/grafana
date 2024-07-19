@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -24,7 +25,7 @@ import (
 // - each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
-	sqlStore := db.InitTestDB(b)
+	sqlStore := db.InitTestReplDB(b)
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
 		cfg:           setting.NewCfg(),
@@ -32,6 +33,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		registrations: accesscontrol.RegistrationList{},
 		store:         store,
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
+		cache:         localcache.New(1*time.Second, 1*time.Second),
 	}
 
 	// Prepare default permissions
@@ -54,6 +56,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		for u := start + 1; u < end+1; u++ {
 			users = append(users, user.User{
 				ID:      int64(u),
+				UID:     fmt.Sprintf("user%v", u),
 				Name:    fmt.Sprintf("user%v", u),
 				Login:   fmt.Sprintf("user%v", u),
 				Email:   fmt.Sprintf("user%v@example.org", u),
@@ -136,7 +139,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	return acService, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: userPermissions}}
 }
 
-func benchSearchUsersPermissions(b *testing.B, usersCount, resourceCount int) {
+func benchSearchUsersWithActionPrefix(b *testing.B, usersCount, resourceCount int) {
 	acService, siu := setupBenchEnv(b, usersCount, resourceCount)
 	b.ResetTimer()
 
@@ -152,49 +155,62 @@ func benchSearchUsersPermissions(b *testing.B, usersCount, resourceCount int) {
 }
 
 // Lots of resources
-func BenchmarkSearchUsersPermissions_10_1K(b *testing.B)  { benchSearchUsersPermissions(b, 10, 1000) }  // ~0.047s/op
-func BenchmarkSearchUsersPermissions_10_10K(b *testing.B) { benchSearchUsersPermissions(b, 10, 10000) } // ~0.5s/op
-func BenchmarkSearchUsersPermissions_10_100K(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_10_1K(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 10, 1000)
+} // ~0.047s/op
+func BenchmarkSearchUsersWithActionPrefix_10_10K(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 10, 10000)
+} // ~0.5s/op
+func BenchmarkSearchUsersWithActionPrefix_10_100K(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10, 100000)
+	benchSearchUsersWithActionPrefix(b, 10, 100000)
 } // ~4.6s/op
-func BenchmarkSearchUsersPermissions_10_1M(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_10_1M(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10, 1000000)
+	benchSearchUsersWithActionPrefix(b, 10, 1000000)
 } // ~55.36s/op
 
 // Lots of users (most probable case)
-func BenchmarkSearchUsersPermissions_1K_10(b *testing.B)  { benchSearchUsersPermissions(b, 1000, 10) }  // ~0.056s/op
-func BenchmarkSearchUsersPermissions_10K_10(b *testing.B) { benchSearchUsersPermissions(b, 10000, 10) } // ~0.58s/op
-func BenchmarkSearchUsersPermissions_100K_10(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_1K_10(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 1000, 10)
+} // ~0.056s/op
+func BenchmarkSearchUsersWithActionPrefix_10K_10(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 10000, 10)
+} // ~0.58s/op
+func BenchmarkSearchUsersWithActionPrefix_100K_10(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 100000, 10)
+	benchSearchUsersWithActionPrefix(b, 100000, 10)
 } // ~6.21s/op
-func BenchmarkSearchUsersPermissions_1M_10(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_1M_10(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 1000000, 10)
+	benchSearchUsersWithActionPrefix(b, 1000000, 10)
 } // ~57s/op
 
 // Lots of both
-func BenchmarkSearchUsersPermissions_10K_100(b *testing.B) {
+
+func BenchmarkSearchUsersWithActionPrefix_1K_1K(b *testing.B) {
+	benchSearchUsersWithActionPrefix(b, 1000, 1000)
+}
+
+func BenchmarkSearchUsersWithActionPrefix_10K_100(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10000, 100)
+	benchSearchUsersWithActionPrefix(b, 10000, 100)
 } // ~1.45s/op
-func BenchmarkSearchUsersPermissions_10K_1K(b *testing.B) {
+func BenchmarkSearchUsersWithActionPrefix_10K_1K(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchSearchUsersPermissions(b, 10000, 1000)
+	benchSearchUsersWithActionPrefix(b, 10000, 1000)
 } // ~50s/op
 
 // Benchmarking search when we specify Action and Scope
@@ -234,3 +250,24 @@ func BenchmarkSearchUsersWithPerm_20K_10K(b *testing.B) { benchSearchUsersWithPe
 
 func BenchmarkSearchUsersWithPerm_100K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 100000, 10) }  // ~0.88s/op
 func BenchmarkSearchUsersWithPerm_100K_100(b *testing.B) { benchSearchUsersWithPerm(b, 100000, 100) } // ~0.72s/op
+
+// Benchmarking search when we specify Action and Scope
+func benchSearchUserWithAction(b *testing.B, usersCount, resourceCount int) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	acService, siu := setupBenchEnv(b, usersCount, resourceCount)
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu,
+			accesscontrol.SearchOptions{Action: "resources:action2", NamespacedID: "user:14"})
+		require.NoError(b, err)
+		require.Len(b, usersPermissions, 1)
+		for _, permissions := range usersPermissions {
+			require.Len(b, permissions, resourceCount)
+		}
+	}
+}
+
+func BenchmarkSearchUserWithAction_1K_1k(b *testing.B) { benchSearchUserWithAction(b, 1000, 1000) } // ~0.6s/op (mysql)

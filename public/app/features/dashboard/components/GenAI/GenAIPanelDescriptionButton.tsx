@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+
+import { Panel } from '@grafana/schema';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
@@ -9,7 +10,7 @@ import { Message, Role, getFilteredPanelString } from './utils';
 
 interface GenAIPanelDescriptionButtonProps {
   onGenerate: (description: string) => void;
-  panel: PanelModel;
+  panel: Panel;
 }
 
 const PANEL_DESCRIPTION_CHAR_LIMIT = 200;
@@ -36,29 +37,22 @@ export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDes
   );
 };
 
-function getMessages(panel: PanelModel): Message[] {
+function getMessages(panel: Panel): Message[] {
   const dashboard = getDashboardSrv().getCurrent()!;
   const panelString = getFilteredPanelString(panel);
 
   return [
     {
-      content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
+      content:
+        `${DESCRIPTION_GENERATION_STANDARD_PROMPT}\n` +
+        `Disregard the current panel description and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
       role: Role.system,
     },
     {
-      content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
-      role: Role.system,
-    },
-    {
-      content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
-      role: Role.system,
-    },
-    {
-      content: `Disregard the current panel description and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
-      role: Role.system,
-    },
-    {
-      content: `This is the JSON which defines the panel: ${panelString}`,
+      content:
+        `The panel is part of a dashboard with the title: ${dashboard.title}\n` +
+        `The panel is part of a dashboard with the description: ${dashboard.description}\n` +
+        `This is the JSON which defines the panel: ${panelString}`,
       role: Role.user,
     },
   ];

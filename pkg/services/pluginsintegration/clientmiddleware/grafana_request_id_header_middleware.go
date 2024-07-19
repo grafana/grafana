@@ -5,11 +5,13 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"net/http"
 	"net/url"
 
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -29,17 +31,19 @@ const GrafanaInternalRequest = "X-Grafana-Internal-Request"
 func NewHostedGrafanaACHeaderMiddleware(cfg *setting.Cfg) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &HostedGrafanaACHeaderMiddleware{
-			next: next,
-			log:  log.New("ip_header_middleware"),
-			cfg:  cfg,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
+			log: log.New("ip_header_middleware"),
+			cfg: cfg,
 		}
 	})
 }
 
 type HostedGrafanaACHeaderMiddleware struct {
-	next plugins.Client
-	log  log.Logger
-	cfg  *setting.Cfg
+	baseMiddleware
+	log log.Logger
+	cfg *setting.Cfg
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx context.Context, pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) {
@@ -55,45 +59,63 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx contex
 		m.log.Debug("Failed to parse data source URL", "error", err)
 		return
 	}
-	foundMatch := false
-	for _, allowedURL := range m.cfg.IPRangeACAllowedURLs {
-		// Only look at the scheme and host, ignore the path
-		if allowedURL.Host == dsBaseURL.Host && allowedURL.Scheme == dsBaseURL.Scheme {
-			foundMatch = true
-			break
-		}
-	}
-	if !foundMatch {
+	if !IsRequestURLInAllowList(dsBaseURL, m.cfg) {
 		m.log.Debug("Data source URL not among the allow-listed URLs", "url", dsBaseURL.String())
 		return
 	}
 
+	var req *http.Request
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx != nil {
+		req = reqCtx.Req
+	}
+	for k, v := range GetGrafanaRequestIDHeaders(req, m.cfg, m.log) {
+		h.SetHTTPHeader(k, v)
+	}
+}
+
+func IsRequestURLInAllowList(url *url.URL, cfg *setting.Cfg) bool {
+	for _, allowedURL := range cfg.IPRangeACAllowedURLs {
+		// Only look at the scheme and host, ignore the path
+		if allowedURL.Host == url.Host && allowedURL.Scheme == url.Scheme {
+			return true
+		}
+	}
+	return false
+}
+
+func GetGrafanaRequestIDHeaders(req *http.Request, cfg *setting.Cfg, logger log.Logger) map[string]string {
 	// Generate a new Grafana request ID and sign it with the secret key
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		m.log.Debug("Failed to generate Grafana request ID", "error", err)
-		return
+		logger.Debug("Failed to generate Grafana request ID", "error", err)
+		return nil
 	}
 	grafanaRequestID := uid.String()
 
-	hmac := hmac.New(sha256.New, []byte(m.cfg.IPRangeACSecretKey))
+	hmac := hmac.New(sha256.New, []byte(cfg.IPRangeACSecretKey))
 	if _, err := hmac.Write([]byte(grafanaRequestID)); err != nil {
-		m.log.Debug("Failed to sign IP range access control header", "error", err)
-		return
+		logger.Debug("Failed to sign IP range access control header", "error", err)
+		return nil
 	}
 	signedGrafanaRequestID := hex.EncodeToString(hmac.Sum(nil))
-	h.SetHTTPHeader(GrafanaSignedRequestID, signedGrafanaRequestID)
-	h.SetHTTPHeader(GrafanaRequestID, grafanaRequestID)
 
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx != nil && reqCtx.Req != nil {
-		remoteAddress := web.RemoteAddr(reqCtx.Req)
-		if remoteAddress != "" {
-			h.SetHTTPHeader(XRealIPHeader, remoteAddress)
-			return
-		}
+	headers := make(map[string]string)
+	headers[GrafanaRequestID] = grafanaRequestID
+	headers[GrafanaSignedRequestID] = signedGrafanaRequestID
+
+	// If the remote address is not specified, treat the request as internal
+	remoteAddress := ""
+	if req != nil {
+		remoteAddress = web.RemoteAddr(req)
 	}
-	h.SetHTTPHeader(GrafanaInternalRequest, "true")
+	if remoteAddress != "" {
+		headers[XRealIPHeader] = remoteAddress
+	} else {
+		headers[GrafanaInternalRequest] = "true"
+	}
+
+	return headers
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -124,20 +146,4 @@ func (m *HostedGrafanaACHeaderMiddleware) CheckHealth(ctx context.Context, req *
 	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

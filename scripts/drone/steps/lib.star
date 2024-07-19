@@ -35,8 +35,6 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
-            # Python is needed to build `esfx`, which is needed by `msagl`
-            "apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python",
             "yarn install --immutable || yarn install --immutable",
         ],
         "depends_on": [],
@@ -101,7 +99,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         check = []
     else:
         check = [
-            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
+            'is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
             'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
         ]
 
@@ -201,24 +199,6 @@ def enterprise_downstream_step(ver_mode):
 
     return step
 
-def lint_backend_step():
-    return {
-        "name": "lint-backend",
-        "image": images["go"],
-        "environment": {
-            # We need CGO because of go-sqlite3
-            "CGO_ENABLED": "1",
-        },
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update make build-base",
-            # Don't use Make since it will re-download the linters
-            "make lint-go",
-        ],
-    }
-
 def validate_modfile_step():
     return {
         "name": "validate-modfile",
@@ -238,14 +218,19 @@ def validate_openapi_spec_step():
         ],
     }
 
-def dockerize_step(name, hostname, port):
-    return {
+def dockerize_step(name, hostname, port, canFail = False):
+    step = {
         "name": name,
         "image": images["dockerize"],
         "commands": [
             "dockerize -wait tcp://{}:{} -timeout 120s".format(hostname, port),
         ],
     }
+
+    if canFail:
+        step["failure"] = "ignore"
+
+    return step
 
 def build_storybook_step(ver_mode):
     return {
@@ -641,17 +626,15 @@ def lint_frontend_step():
 
 def verify_i18n_step():
     extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
-    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
+    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
-        "image": images["node"],
+        "image": images["node_deb"],
         "depends_on": [
             "yarn-install",
         ],
-        "failure": "ignore",
         "commands": [
-            "apk add --update git",
-            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
+            "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
@@ -796,6 +779,36 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
     }
 
+def start_storybook_step():
+    return {
+        "name": "start-storybook",
+        "image": images["node"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn storybook --quiet",
+        ],
+        "detach": True,
+    }
+
+def e2e_storybook_step():
+    return {
+        "name": "end-to-end-tests-storybook-suite",
+        "image": images["cypress"],
+        "depends_on": [
+            "start-storybook",
+        ],
+        "environment": {
+            "HOST": "start-storybook",
+            "PORT": "9001",
+        },
+        "commands": [
+            "npx wait-on@7.2.0 -t 1m http://$HOST:$PORT",
+            "yarn e2e:storybook",
+        ],
+    }
+
 def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 
@@ -835,7 +848,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
         "depends_on": [
             "grafana-server",
         ],
@@ -853,13 +866,13 @@ def playwright_e2e_tests_step():
             "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "playwright-plugin-e2e",
-        "image": images["playwright"],
-        "failure": "ignore",
+        "image": images["node_deb"],
         "depends_on": [
             "grafana-server",
         ],
         "commands": [
-            "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
+            "yarn playwright install --with-deps chromium",
             "yarn e2e:playwright",
         ],
     }
@@ -951,7 +964,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
 
     return step
 
-def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None):
+def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None, canFail = False):
     """Integration test steps
 
     Args:
@@ -960,6 +973,7 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
       hostname: the hostname where the remote server is available.
       port: the port where the remote server is available.
       environment: Any extra environment variables needed to run the integration tests.
+      canFail: controls whether the step can fail.
 
     Returns:
       A list of drone steps. If a hostname / port were provided, then a step to wait for the remove server to be
@@ -979,6 +993,9 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
             "apk add --update build-base",
         ] + cmds,
     }
+
+    if canFail:
+        step["failure"] = "ignore"
 
     if environment:
         step["environment"] = environment
@@ -1056,7 +1073,7 @@ def remote_alertmanager_integration_tests_steps():
         "AM_URL": "http://mimir_backend:8080",
     }
 
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment, canFail = True)
 
 def memcached_integration_tests_steps():
     cmds = [
@@ -1174,6 +1191,34 @@ def publish_grafanacom_step(ver_mode):
         ],
     }
 
+def verify_grafanacom_step(depends_on = ["publish-grafanacom"]):
+    return {
+        "name": "verify-grafanacom",
+        "image": images["node"],
+        "commands": [
+            # Download and install `curl` and `bash` - both of which aren't available inside of the `node:{version}-alpine` docker image.
+            "apk add curl bash",
+
+            # There may be a slight lag between when artifacts are uploaded to Google Storage,
+            # and when they become available on the website. This `for` loop sould account for that discrepancy.
+            # We attempt the verification up to 5 times. If successful, exit the loop with a success (0) status.
+            # If any attempt fails, but it's not the final attempt, wait 60 seconds before the next attempt.
+            # If the 5th (final) attempt fails, exit with error (1) status.
+            """
+            for i in {1..5}; do
+                if ./scripts/drone/verify-grafanacom.sh; then
+                    exit 0
+                elif [ $i -eq 5 ]; then
+                    exit 1
+                else
+                    sleep 60
+                fi
+            done
+            """,
+        ],
+        "depends_on": depends_on,
+    }
+
 def publish_linux_packages_step(package_manager = "deb"):
     return {
         "name": "publish-linux-packages-{}".format(package_manager),
@@ -1194,6 +1239,110 @@ def publish_linux_packages_step(package_manager = "deb"):
                 package_manager,
             ),
         },
+    }
+
+def retry_command(command, attempts = 5, delay = 60):
+    return [
+        "for i in $(seq 1 %d); do" % attempts,
+        "    if %s; then" % command,
+        '        echo "Command succeeded on attempt $i"',
+        "        break",
+        "    else",
+        '        echo "Attempt $i failed"',
+        "        if [ $i -eq %d ]; then" % attempts,
+        "            echo 'All attempts failed'",
+        "            exit 1",
+        "        fi",
+        '        echo "Waiting %d seconds before next attempt..."' % delay,
+        "        sleep %d" % delay,
+        "    fi",
+        "done",
+    ]
+
+def verify_linux_DEB_packages_step(depends_on = []):
+    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
+
+    return {
+        "name": "verify-linux-DEB-packages",
+        "image": images["ubuntu"],
+        "environment": {},
+        "commands": [
+            'echo "Step 1: Updating package lists..."',
+            "apt-get update >/dev/null 2>&1",
+            'echo "Step 2: Installing prerequisites..."',
+            "DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1",
+            'echo "Step 3: Adding Grafana GPG key..."',
+            "mkdir -p /etc/apt/keyrings/",
+            "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null",
+            'echo "Step 4: Adding Grafana repository..."',
+            'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
+            'echo "Step 5: Installing Grafana..."',
+            # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
+        ] + retry_command(install_command, attempts = 10) + [
+            'echo "Step 6: Verifying Grafana installation..."',
+            'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
+            '    echo "Successfully verified Grafana version ${TAG}"',
+            "else",
+            '    echo "Failed to verify Grafana version ${TAG}"',
+            "    exit 1",
+            "fi",
+            'echo "Verification complete."',
+        ],
+        "depends_on": depends_on,
+    }
+
+def verify_linux_RPM_packages_step(depends_on = []):
+    repo_config = (
+        "[grafana]\n" +
+        "name=grafana\n" +
+        "baseurl=https://rpm.grafana.com\n" +
+        "repo_gpgcheck=0\n" +  # Change this to 0
+        "enabled=1\n" +
+        "gpgcheck=0\n" +  # Change this to 0
+        "gpgkey=https://rpm.grafana.com/gpg.key\n" +
+        "sslverify=1\n" +
+        "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
+    )
+
+    repo_install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
+
+    return {
+        "name": "verify-linux-RPM-packages",
+        "image": images["rocky"],
+        "environment": {},
+        "commands": [
+            'echo "Step 1: Updating package lists..."',
+            "dnf check-update -y >/dev/null 2>&1 || true",
+            'echo "Step 2: Installing prerequisites..."',
+            "dnf install -y dnf-utils >/dev/null 2>&1",
+            'echo "Step 3: Adding Grafana GPG key..."',
+            "rpm --import https://rpm.grafana.com/gpg.key",
+            'echo "Step 4: Configuring Grafana repository..."',
+            "echo '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
+            'echo "Step 5: Checking RPM repository..."',
+            "dnf list available grafana-${TAG}",
+            "if [ $? -eq 0 ]; then",
+            '    echo "Grafana package found in repository. Installing from repo..."',
+        ] + retry_command(repo_install_command, attempts = 5) + [
+            '    echo "Verifying GPG key..."',
+            "    rpm --import https://rpm.grafana.com/gpg.key",
+            "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",
+            "else",
+            '    echo "Grafana package version ${TAG} not found in repository."',
+            "    dnf repolist",
+            "    dnf list available grafana*",
+            "    exit 1",
+            "fi",
+            'echo "Step 6: Verifying Grafana installation..."',
+            'if rpm -q grafana | grep -q "${TAG}"; then',
+            '    echo "Successfully verified Grafana version ${TAG}"',
+            "else",
+            '    echo "Failed to verify Grafana version ${TAG}"',
+            "    exit 1",
+            "fi",
+            'echo "Verification complete."',
+        ],
+        "depends_on": depends_on,
     }
 
 def verify_gen_cue_step():

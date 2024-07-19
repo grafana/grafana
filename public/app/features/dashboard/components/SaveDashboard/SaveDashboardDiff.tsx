@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
 import { Box, Spinner, Stack } from '@grafana/ui';
@@ -13,9 +13,19 @@ interface SaveDashboardDiffProps {
 
   // calculated by parent so we can see summary in tabs
   diff?: Diffs;
+  hasFolderChanges?: boolean;
+  oldFolder?: string;
+  newFolder?: string;
 }
 
-export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDiffProps) => {
+export const SaveDashboardDiff = ({
+  diff,
+  oldValue,
+  newValue,
+  hasFolderChanges,
+  oldFolder,
+  newFolder,
+}: SaveDashboardDiffProps) => {
   const loader = useAsync(async () => {
     const oldJSON = JSON.stringify(oldValue ?? {}, null, 2);
     const newJSON = JSON.stringify(newValue ?? {}, null, 2);
@@ -48,23 +58,38 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
   }, [diff, oldValue, newValue]);
 
   const { value } = loader;
-  if (!value || !oldValue) {
-    return <Spinner />;
-  }
-
-  if (value.count < 1) {
-    return <div>No changes in this dashboard</div>;
-  }
 
   return (
     <Stack direction="column" gap={1}>
-      {value.schemaChange && value.schemaChange}
-      {value.showDiffs && value.diffs}
-
-      <Box paddingTop={2}>
-        <h4>Full JSON diff</h4>
-        {value.jsonView}
-      </Box>
+      {hasFolderChanges && (
+        <DiffGroup
+          diffs={[
+            {
+              op: 'replace',
+              value: newFolder,
+              originalValue: oldFolder,
+              path: [],
+              startLineNumber: 0,
+              endLineNumber: 0,
+            },
+          ]}
+          key={'folder'}
+          title={'folder'}
+        />
+      )}
+      {(!value || !oldValue) && <Spinner />}
+      {value && value.count >= 1 ? (
+        <>
+          {value && value.schemaChange && value.schemaChange}
+          {value && value.showDiffs && value.diffs}
+          <Box paddingTop={1}>
+            <h4>Full JSON diff</h4>
+            {value.jsonView}
+          </Box>
+        </>
+      ) : (
+        <Box paddingTop={1}>No changes in the dashboard JSON</Box>
+      )}
     </Stack>
   );
 };

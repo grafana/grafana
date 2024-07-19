@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const DefaultAdminUserId = 1
@@ -48,7 +47,7 @@ func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 	return err
 }
 
-func resetPassword(adminId int64, newPassword user.Password, userSvc user.Service) error {
+func resetPassword(adminId int64, password user.Password, userSvc user.Service) error {
 	userQuery := user.GetUserByIDQuery{ID: adminId}
 	usr, err := userSvc.GetByID(context.Background(), &userQuery)
 	if err != nil {
@@ -58,17 +57,7 @@ func resetPassword(adminId int64, newPassword user.Password, userSvc user.Servic
 		return ErrMustBeAdmin
 	}
 
-	passwordHashed, err := util.EncodePassword(string(newPassword), usr.Salt)
-	if err != nil {
-		return err
-	}
-
-	cmd := user.ChangeUserPasswordCommand{
-		UserID:      adminId,
-		NewPassword: user.Password(passwordHashed),
-	}
-
-	if err := userSvc.ChangePassword(context.Background(), &cmd); err != nil {
+	if err := userSvc.Update(context.Background(), &user.UpdateUserCommand{UserID: adminId, Password: &password}); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 

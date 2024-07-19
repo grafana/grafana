@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode, useState } from 'react';
+import { ReactNode, useState } from 'react';
+import * as React from 'react';
 
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,7 +10,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 export interface Props<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
   queries: TQuery[];
-  disabled?: boolean;
+  hidden?: boolean;
   dataSource: DataSourceInstanceSettings;
   renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
@@ -20,7 +21,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
-  const { query, queries, onChange, collapsedText, renderExtras, disabled } = props;
+  const { query, queries, onChange, collapsedText, renderExtras, hidden } = props;
 
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -117,7 +118,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         )}
         {renderDataSource(props, styles)}
         {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
-        {disabled && <em className={styles.contextInfo}>Disabled</em>}
+        {hidden && <em className={styles.contextInfo}>Hidden</em>}
       </div>
 
       {collapsedText && <div className={styles.collapsedText}>{collapsedText}</div>}

@@ -1,36 +1,34 @@
-import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
-import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
-import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
 import { discoverFeatures } from './api/buildInfo';
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import * as ruler from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
-import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
+import { grantUserPermissions, mockDataSource } from './mocks';
+import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
+import { setupDataSources } from './testSetup/datasources';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
 }));
 
-jest.mock('./api/buildInfo');
-jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -40,7 +38,6 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
 }));
 
@@ -53,15 +50,12 @@ const mocks = {
   searchFolders: jest.mocked(searchFolders),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
-    fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
-    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
-    fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
-    fetchRulerRules: jest.mocked(fetchRulerRules),
-    fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
+    setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
   },
 };
 
-const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
+setupMswServer();
+
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -94,64 +88,13 @@ describe('RuleEditor grafana managed rules', () => {
       ),
     };
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    setupDataSources(dataSources.default);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    mocks.api.fetchRulerRulesGroup.mockResolvedValue({
-      name: 'group2',
-      rules: [],
-    });
-    mocks.api.fetchRulerRules.mockResolvedValue({
-      'Folder A': [
-        {
-          interval: '1m',
-          name: 'group1',
-          rules: [
-            {
-              annotations: { description: 'some description', summary: 'some summary' },
-              labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
-              grafana_alert: {
-                uid: '23',
-                namespace_uid: 'abcd',
-                condition: 'B',
-                data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Error,
-                no_data_state: GrafanaAlertStateDecision.NoData,
-                title: 'my great new rule',
-              },
-            },
-          ],
-        },
-      ],
-      namespace2: [
-        {
-          interval: '1m',
-          name: 'group1',
-          rules: [
-            {
-              annotations: { description: 'some description', summary: 'some summary' },
-              labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
-              grafana_alert: {
-                uid: '23',
-                namespace_uid: 'b',
-                condition: 'B',
-                data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Error,
-                no_data_state: GrafanaAlertStateDecision.NoData,
-                title: 'my great new rule',
-              },
-            },
-          ],
-        },
-      ],
-    });
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
-        uid: 'abcd',
+        uid: grafanaRulerRule.grafana_alert.namespace_uid,
         id: 1,
         type: DashboardSearchItemType.DashDB,
       },
@@ -169,12 +112,6 @@ describe('RuleEditor grafana managed rules', () => {
       },
     ] as DashboardSearchHit[]);
 
-    mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Prometheus,
-      features: {
-        rulerApiEnabled: false,
-      },
-    });
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
@@ -184,15 +121,8 @@ describe('RuleEditor grafana managed rules', () => {
     await clickSelectOption(folderInput, 'Folder A');
     const groupInput = await ui.inputs.group.find();
     await userEvent.click(byRole('combobox').get(groupInput));
-    await clickSelectOption(groupInput, 'group1');
+    await clickSelectOption(groupInput, grafanaRulerGroup.name);
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
-
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
-    //8 segons
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.saveAndExit.get());
@@ -201,15 +131,16 @@ describe('RuleEditor grafana managed rules', () => {
     // 9seg
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'abcd',
+      grafanaRulerRule.grafana_alert.namespace_uid,
       {
         interval: '1m',
-        name: 'group1',
+        name: grafanaRulerGroup.name,
         rules: [
+          grafanaRulerRule,
           {
             annotations: { description: 'some description' },
-            labels: { severity: 'warn' },
-            for: '5m',
+            labels: {},
+            for: '1m',
             grafana_alert: {
               condition: 'B',
               data: getDefaultQueries(),
@@ -217,6 +148,7 @@ describe('RuleEditor grafana managed rules', () => {
               is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
+              notification_settings: undefined,
             },
           },
         ],

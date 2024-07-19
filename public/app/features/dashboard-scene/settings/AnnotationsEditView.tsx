@@ -1,6 +1,4 @@
-import React from 'react';
-
-import { AnnotationQuery, DataTopic, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
+import { AnnotationQuery, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
@@ -40,19 +38,13 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
   public getDataLayer(editIndex: number): dataLayers.AnnotationsDataLayer {
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
-    const layer = data.state.layers[editIndex];
+    const layer = data.state.annotationLayers[editIndex];
 
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       throw new Error('AnnotationsDataLayer not found at index ' + editIndex);
     }
 
     return layer;
-  }
-
-  public getAnnotationsLength(): number {
-    return dashboardSceneGraph
-      .getDataLayers(this._dashboard)
-      .state.layers.filter((layer) => layer.topic === DataTopic.Annotations).length;
   }
 
   public getDashboard(): DashboardScene {
@@ -68,7 +60,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     };
 
     const newAnnotation = new DashboardAnnotationsDataLayer({
-      key: `annotations-${newAnnotationQuery.name}`,
       query: newAnnotationQuery,
       name: newAnnotationQuery.name,
       isEnabled: Boolean(newAnnotationQuery.enable),
@@ -77,18 +68,9 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
-    const layers = [...data.state.layers];
+    data.addAnnotationLayer(newAnnotation);
 
-    //keep annotation layers together
-    layers.splice(this.getAnnotationsLength(), 0, newAnnotation);
-
-    data.setState({
-      layers,
-    });
-
-    newAnnotation.activate();
-
-    this.setState({ editIndex: this.getAnnotationsLength() - 1 });
+    this.setState({ editIndex: data.state.annotationLayers.length - 1 });
   };
 
   public onEdit = (idx: number) => {
@@ -101,32 +83,27 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
   public onMove = (idx: number, direction: MoveDirection) => {
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
+    const layers = [...data.state.annotationLayers];
 
-    const layers = [...data.state.layers];
     const [layer] = layers.splice(idx, 1);
     layers.splice(idx + direction, 0, layer);
 
-    data.setState({
-      layers,
-    });
+    data.setState({ annotationLayers: layers });
   };
 
   public onDelete = (idx: number) => {
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
+    const layers = [...data.state.annotationLayers];
 
-    const layers = [...data.state.layers];
     layers.splice(idx, 1);
 
-    data.setState({
-      layers,
-    });
+    data.setState({ annotationLayers: layers });
   };
 
   public onUpdate = (annotation: AnnotationQuery, editIndex: number) => {
     const layer = this.getDataLayer(editIndex);
 
     layer.setState({
-      key: `annotations-${annotation.name}`,
       name: annotation.name,
       isEnabled: Boolean(annotation.enable),
       isHidden: Boolean(annotation.hide),
@@ -141,14 +118,14 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
 function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditView>) {
   const dashboard = model.getDashboard();
-  const { layers } = dashboardSceneGraph.getDataLayers(dashboard).useState();
+  const { annotationLayers } = dashboardSceneGraph.getDataLayers(dashboard).useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
   const panels = dashboardSceneGraph.getVizPanels(dashboard);
 
-  const annotations: AnnotationQuery[] = dataLayersToAnnotations(layers);
+  const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
-  if (editIndex != null && editIndex < model.getAnnotationsLength()) {
+  if (editIndex != null && editIndex < annotationLayers.length) {
     return (
       <AnnotationsSettingsEditView
         annotationLayer={model.getDataLayer(editIndex)}

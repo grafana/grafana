@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/satokengen"
@@ -28,7 +29,7 @@ func TestMain(m *testing.M) {
 func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, *user.SignedInUser) {
 	t.Helper()
 
-	account := saTests.SetupUserServiceAccount(t, env.SQLStore, saTests.TestUser{
+	account := saTests.SetupUserServiceAccount(t, env.SQLStore, env.Cfg, saTests.TestUser{
 		Name:             "grpc-server-sa",
 		Role:             string(org.RoleAdmin),
 		Login:            "grpc-server-sa",
@@ -38,7 +39,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 	keyGen, err := satokengen.New(saAPI.ServiceID)
 	require.NoError(t, err)
 
-	_ = saTests.SetupApiKey(t, env.SQLStore, saTests.TestApiKey{
+	_ = saTests.SetupApiKey(t, env.SQLStore, env.Cfg, saTests.TestApiKey{
 		Name:             "grpc-server-test",
 		Role:             org.RoleAdmin,
 		OrgId:            account.OrgID,
@@ -58,7 +59,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 
 type testContext struct {
 	authToken string
-	client    entity.EntityStoreServer
+	client    entity.EntityStoreClient
 	user      *user.SignedInUser
 	ctx       context.Context
 }
@@ -79,18 +80,24 @@ func createTestContext(t *testing.T) testContext {
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
 
-	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.SQLStore.Cfg, env.FeatureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.Cfg, env.FeatureToggles, nil)
 	require.NoError(t, err)
 
 	err = eDB.Init()
 	require.NoError(t, err)
 
-	store, err := sqlstash.ProvideSQLEntityServer(eDB)
+	traceConfig, err := tracing.ParseTracingConfig(env.Cfg)
 	require.NoError(t, err)
+	tracer, err := tracing.ProvideService(traceConfig)
+	require.NoError(t, err)
+	store, err := sqlstash.ProvideSQLEntityServer(eDB, tracer)
+	require.NoError(t, err)
+
+	client := entity.NewEntityStoreClientLocal(store)
 
 	return testContext{
 		authToken: authToken,
-		client:    store,
+		client:    client,
 		user:      serviceAccountUser,
 		ctx:       appcontext.WithUser(context.Background(), serviceAccountUser),
 	}

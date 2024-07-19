@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
@@ -13,17 +12,27 @@ import (
 )
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, pluginCtx backend.PluginContext, region string,
-	client models.CloudWatchMetricsAPIProvider, origQueries []*models.CloudWatchQuery, tagValueCache *cache.Cache, listMetricsPageLimit int) ([]*models.CloudWatchQuery, error) {
+func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
+	ctx context.Context,
+	region string,
+	client models.CloudWatchMetricsAPIProvider,
+	origQueries []*models.CloudWatchQuery,
+	tagValueCache *cache.Cache,
+	listMetricsPageLimit int,
+	shouldSkip func(*models.CloudWatchQuery) bool) ([]*models.CloudWatchQuery, error) {
 	metricsClient := clients.NewMetricsClient(client, listMetricsPageLimit)
 	service := services.NewListMetricsService(metricsClient)
 	// create copies of the original query. All the fields besides Dimensions are primitives
 	queries := copyQueries(origQueries)
+	queries = addWildcardDimensionsForMetricQueryTypeQueries(queries)
 
 	for _, query := range queries {
+		if shouldSkip(query) {
+			continue
+		}
 		for dimensionKey, values := range query.Dimensions {
 			// if the dimension is not a wildcard, skip it
-			if len(values) != 1 || query.MatchExact || (len(values) == 1 && values[0] != "*") {
+			if len(values) != 1 || (len(values) == 1 && values[0] != "*") {
 				continue
 			}
 
@@ -85,4 +94,23 @@ func copyQueries(origQueries []*models.CloudWatchQuery) []*models.CloudWatchQuer
 		newQueries = append(newQueries, &newQuery)
 	}
 	return newQueries
+}
+
+// addWildcardDimensionsForMetricQueryTypeQueries adds wildcard dimensions if there is
+// a `GROUP BY` clause in the query. This is used for MetricQuery type queries so we can
+// build labels when we build the data frame.
+func addWildcardDimensionsForMetricQueryTypeQueries(queries []*models.CloudWatchQuery) []*models.CloudWatchQuery {
+	for i, q := range queries {
+		if q.MetricQueryType != models.MetricQueryTypeQuery || q.MetricEditorMode == models.MetricEditorModeRaw || q.Sql.GroupBy == nil || len(q.Sql.GroupBy.Expressions) == 0 {
+			continue
+		}
+
+		for _, expr := range q.Sql.GroupBy.Expressions {
+			if expr.Property.Name != nil && *expr.Property.Name != "" {
+				queries[i].Dimensions[*expr.Property.Name] = []string{"*"}
+			}
+		}
+	}
+
+	return queries
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -16,7 +16,7 @@ import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareModalTabModel } from './types';
-import { shareDashboardType } from './utils';
+import { getTrackingSource, shareDashboardType } from './utils';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -29,11 +29,11 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
   customPanelTabs.push(tab);
 }
 
-function getTabs(panel?: PanelModel, activeTab?: string) {
+function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: string) {
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: shareDashboardType.link, component: ShareLink }];
 
-  if (contextSrv.isSignedIn && config.snapshotEnabled) {
+  if (contextSrv.isSignedIn && config.snapshotEnabled && canEditDashboard) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
     tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
   }
@@ -55,14 +55,14 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
       component: ShareExport,
     });
     tabs.push(...customDashboardTabs);
-  }
 
-  if (isPublicDashboardsEnabled()) {
-    tabs.push({
-      label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
-      value: shareDashboardType.publicDashboard,
-      component: SharePublicDashboard,
-    });
+    if (isPublicDashboardsEnabled()) {
+      tabs.push({
+        label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
+        value: shareDashboardType.publicDashboard,
+        component: SharePublicDashboard,
+      });
+    }
   }
 
   const at = tabs.find((t) => t.value === activeTab);
@@ -86,7 +86,7 @@ interface State {
 }
 
 function getInitialState(props: Props): State {
-  const { tabs, activeTab } = getTabs(props.panel, props.activeTab);
+  const { tabs, activeTab } = getTabs(props.dashboard.canEditDashboard(), props.panel, props.activeTab);
 
   return {
     tabs,
@@ -102,8 +102,9 @@ class UnthemedShareModal extends React.Component<Props, State> {
 
   onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {
     this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
-    DashboardInteractions.sharingTabChanged({
+    DashboardInteractions.sharingCategoryClicked({
       item: t.value,
+      shareResource: getTrackingSource(this.props.panel),
     });
   };
 
@@ -116,7 +117,8 @@ class UnthemedShareModal extends React.Component<Props, State> {
     const { panel } = this.props;
     const { activeTab } = this.state;
     const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
-    const tabs = getTabs(this.props.panel, this.state.activeTab).tabs;
+    const canEditDashboard = this.props.dashboard.canEditDashboard();
+    const tabs = getTabs(canEditDashboard, this.props.panel, this.state.activeTab).tabs;
 
     return (
       <ModalTabsHeader

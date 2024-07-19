@@ -1,6 +1,5 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
@@ -12,6 +11,11 @@ import { AccessControlAction } from 'app/types';
 import { AddNewConnection } from './ConnectData';
 
 jest.mock('app/features/datasources/api');
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+}));
 
 const renderPage = (plugins: CatalogPlugin[] = []): RenderResult => {
   return render(
@@ -63,13 +67,13 @@ describe('Add new connection', () => {
   test('renders no results if the plugins list is empty', async () => {
     renderPage();
 
-    expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
 
   test('renders no results if there is no data source plugin in the list', async () => {
     renderPage([getCatalogPluginMock()]);
 
-    expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
 
   test('renders only data source plugins when list is populated', async () => {
@@ -87,7 +91,7 @@ describe('Add new connection', () => {
 
     await userEvent.clear(searchField);
     await userEvent.type(searchField, 'cramp');
-    expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
 
     await userEvent.clear(searchField);
     expect(await screen.findByText('Sample data source')).toBeVisible();

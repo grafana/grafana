@@ -1,6 +1,6 @@
 import { getByRole, render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { lastValueFrom, of } from 'rxjs';
 
 import {
@@ -152,6 +152,8 @@ describe('QueryVariableEditor', () => {
     });
 
     expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
+    expect(variable.state.query).toBe('');
+    expect(variable.state.definition).toBe('');
   });
 
   it('should update the variable state when changing the query', async () => {

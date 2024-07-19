@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { PanelModel } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
@@ -26,6 +25,7 @@ jest.mock('react-router-dom', () => ({
 jest.spyOn(analytics, 'logInfo');
 
 jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
   useAsync: () => ({ loading: false, value: {} }),
 }));
 

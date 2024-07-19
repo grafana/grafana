@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
@@ -30,23 +30,16 @@ export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource,
             onChange={(value) => {
               if (value.value! === 'profileType') {
                 props.onChange({
-                  ...props.query,
                   type: value.value!,
+                  refId: props.query.refId,
                 });
               }
-              if (value.value! === 'label') {
+              if (value.value! === 'label' || value.value! === 'labelValue') {
                 props.onChange({
-                  ...props.query,
                   type: value.value!,
-                  profileTypeId: '',
-                });
-              }
-              if (value.value! === 'labelValue') {
-                props.onChange({
-                  ...props.query,
-                  type: value.value!,
-                  profileTypeId: '',
-                  labelName: '',
+                  refId: props.query.refId,
+                  // Make sure we keep already selected values if they make sense for the variable type
+                  profileTypeId: props.query.type !== 'profileType' ? props.query.profileTypeId : '',
                 });
               }
             }}
@@ -98,7 +91,13 @@ function LabelRow(props: {
   const [labels, setLabels] = useState<string[]>();
   useEffect(() => {
     (async () => {
-      setLabels(await props.datasource.getLabelNames((props.profileTypeId || '') + '{}', props.from, props.to));
+      setLabels(
+        await props.datasource.getLabelNames(
+          props.profileTypeId ? getProfileTypeLabel(props.profileTypeId) : '{}',
+          props.from,
+          props.to
+        )
+      );
     })();
   }, [props.datasource, props.profileTypeId, props.to, props.from]);
 
@@ -155,4 +154,8 @@ function ProfileTypeRow(props: {
       </InlineField>
     </InlineFieldRow>
   );
+}
+
+export function getProfileTypeLabel(type: string) {
+  return `{__profile_type__="${type}"}`;
 }

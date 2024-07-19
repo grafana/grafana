@@ -3,10 +3,12 @@ package connectors
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"regexp"
 	"strings"
 	"sync"
@@ -15,9 +17,9 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -27,32 +29,39 @@ import (
 
 type SocialBase struct {
 	*oauth2.Config
-	info        *social.OAuthInfo
-	cfg         *setting.Cfg
-	reloadMutex sync.RWMutex
-	log         log.Logger
-	features    featuremgmt.FeatureToggles
+	info          *social.OAuthInfo
+	cfg           *setting.Cfg
+	reloadMutex   sync.RWMutex
+	log           log.Logger
+	features      featuremgmt.FeatureToggles
+	orgRoleMapper *OrgRoleMapper
+	orgMappingCfg *MappingConfiguration
 }
 
 func newSocialBase(name string,
+	orgRoleMapper *OrgRoleMapper,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:   createOAuthConfig(info, cfg, name),
-		info:     info,
-		log:      logger,
-		features: features,
-		cfg:      cfg,
+		Config:        createOAuthConfig(info, cfg, name),
+		info:          info,
+		log:           logger,
+		features:      features,
+		cfg:           cfg,
+		orgRoleMapper: orgRoleMapper,
+		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
 	}
 }
 
-func (s *SocialBase) updateInfo(name string, info *social.OAuthInfo) {
+func (s *SocialBase) updateInfo(ctx context.Context, name string, info *social.OAuthInfo) {
 	s.Config = createOAuthConfig(info, s.cfg, name)
 	s.info = info
+	s.orgMappingCfg = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict)
 }
 
 type groupStruct struct {
@@ -60,6 +69,48 @@ type groupStruct struct {
 }
 
 func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.getBaseSupportBundleContent(bf)
+}
+
+func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.info
+}
+
+func (s *SocialBase) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.AuthCodeURL(state, opts...)
+}
+
+func (s *SocialBase) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.Exchange(ctx, code, opts...)
+}
+
+func (s *SocialBase) Client(ctx context.Context, t *oauth2.Token) *http.Client {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.Client(ctx, t)
+}
+
+func (s *SocialBase) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	return s.Config.TokenSource(ctx, t)
+}
+
+func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
@@ -77,14 +128,8 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
 	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
 	bf.WriteString("```\n\n")
+
 	return nil
-}
-
-func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
-	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
-
-	return s.info
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
@@ -108,15 +153,6 @@ func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string
 	return "", false, nil
 }
 
-func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
-	role, gAdmin, err := s.extractRoleAndAdminOptional(rawJSON, groups)
-	if role == "" {
-		role = s.defaultRole()
-	}
-
-	return role, gAdmin, err
-}
-
 func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
 	role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
 	if err == nil && role != "" {
@@ -133,16 +169,12 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 	return "", false
 }
 
-// defaultRole returns the default role for the user based on the autoAssignOrgRole setting
-// if legacy is enabled "" is returned indicating the previous role assignment is used.
-func (s *SocialBase) defaultRole() org.RoleType {
-	if s.cfg.AutoAssignOrgRole != "" {
-		s.log.Debug("No role found, returning default.")
-		return org.RoleType(s.cfg.AutoAssignOrgRole)
+func (s *SocialBase) extractOrgs(rawJSON []byte) ([]string, error) {
+	if s.info.OrgAttributePath == "" {
+		return []string{}, nil
 	}
 
-	// should never happen
-	return org.RoleViewer
+	return util.SearchJSONForStringSliceAttr(s.info.OrgAttributePath, rawJSON)
 }
 
 func (s *SocialBase) isGroupMember(groups []string) bool {
@@ -227,9 +259,11 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 	return org.RoleType(cases.Title(language.Und).String(role)), false
 }
 
-func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
+func validateInfo(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester identity.Requester) error {
 	return validation.Validate(info, requester,
 		validation.RequiredValidator(info.ClientId, "Client Id"),
-		validation.AllowAssignGrafanaAdminValidator,
-		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
+		validation.AllowAssignGrafanaAdminValidator(info, oldInfo, requester),
+		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
+		validation.OrgAttributePathValidator(info, oldInfo, requester),
+		validation.OrgMappingValidator(info, oldInfo, requester))
 }

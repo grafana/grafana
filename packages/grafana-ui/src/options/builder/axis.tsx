@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   FieldConfigEditorBuilder,
   FieldType,
@@ -100,8 +98,8 @@ export function addAxisConfig(
       path: 'scaleDistribution',
       name: 'Scale',
       category,
-      editor: ScaleDistributionEditor as any,
-      override: ScaleDistributionEditor as any,
+      editor: ScaleDistributionEditor,
+      override: ScaleDistributionEditor,
       defaultValue: { type: ScaleDistribution.Linear },
       shouldApply: (f) => f.type === FieldType.number,
       process: identityOverrideProcessor,

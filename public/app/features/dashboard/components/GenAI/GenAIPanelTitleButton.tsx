@@ -1,7 +1,6 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
-import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state';
+import { Dashboard, Panel } from '@grafana/schema';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
@@ -9,7 +8,8 @@ import { Message, Role, getFilteredPanelString } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
-  panel: PanelModel;
+  panel: Panel;
+  dashboard: Dashboard;
 }
 
 const PANEL_TITLE_CHAR_LIMIT = 50;
@@ -19,8 +19,8 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'Your goal is to write short, descriptive, and concise panel title.' +
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
-export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
-  const messages = useCallback(() => getMessages(panel), [panel]);
+export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard }: GenAIPanelTitleButtonProps) => {
+  const messages = useCallback(() => getMessages(panel, dashboard), [panel, dashboard]);
 
   return (
     <GenAIButton
@@ -32,30 +32,22 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButt
   );
 };
 
-function getMessages(panel: PanelModel): Message[] {
-  const dashboard = getDashboardSrv().getCurrent()!;
+function getMessages(panel: Panel, dashboard: Dashboard): Message[] {
   const panelString = getFilteredPanelString(panel);
 
   return [
     {
-      content: TITLE_GENERATION_STANDARD_PROMPT,
+      content:
+        `${TITLE_GENERATION_STANDARD_PROMPT}\n` +
+        `Disregard the current panel title and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
       role: Role.system,
     },
     {
-      content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
-      role: Role.system,
-    },
-    {
-      content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
-      role: Role.system,
-    },
-    {
-      content: `Disregard the current panel title and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
-      role: Role.system,
-    },
-    {
-      content: `Use this JSON object which defines the panel: ${panelString}`,
-      role: Role.system,
+      content:
+        `The panel is part of a dashboard with the title: ${dashboard.title}\n` +
+        `The panel is part of a dashboard with the description: ${dashboard.description}\n` +
+        `Use this JSON object which defines the panel: ${panelString}`,
+      role: Role.user,
     },
   ];
 }

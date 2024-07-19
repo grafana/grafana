@@ -38,6 +38,10 @@ import {
   DataSourceGetTagValuesOptions,
   DataSourceGetTagKeysOptions,
   DataSourceWithQueryModificationSupport,
+  LogsVolumeOption,
+  LogsSampleOptions,
+  QueryVariableModel,
+  CustomVariableModel,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -167,13 +171,18 @@ export class LokiDatasource
    */
   getSupplementaryRequest(
     type: SupplementaryQueryType,
-    request: DataQueryRequest<LokiQuery>
+    request: DataQueryRequest<LokiQuery>,
+    options?: SupplementaryQueryOptions
   ): DataQueryRequest<LokiQuery> | undefined {
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
-        return this.getLogsVolumeDataProvider(request);
+        const logsVolumeOption: LogsVolumeOption =
+          options?.type === SupplementaryQueryType.LogsVolume ? options : { type };
+        return this.getLogsVolumeDataProvider(request, logsVolumeOption);
       case SupplementaryQueryType.LogsSample:
-        return this.getLogsSampleDataProvider(request);
+        const logsSampleOption: LogsSampleOptions =
+          options?.type === SupplementaryQueryType.LogsSample ? options : { type };
+        return this.getLogsSampleDataProvider(request, logsSampleOption);
       default:
         return undefined;
     }
@@ -207,6 +216,7 @@ export class LokiDatasource
         }
 
         const dropErrorExpression = `${expr} | drop __error__`;
+        const field = options.field || 'level';
         if (isQueryWithError(this.interpolateString(dropErrorExpression, placeHolderScopedVars)) === false) {
           expr = dropErrorExpression;
         }
@@ -216,7 +226,8 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
+          expr: `sum by (${field}) (count_over_time(${expr}[$__auto]))`,
+          legendFormat: `{{ ${field} }}`,
         };
 
       case SupplementaryQueryType.LogsSample:
@@ -242,10 +253,13 @@ export class LokiDatasource
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
-  private getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> | undefined {
+  private getLogsVolumeDataProvider(
+    request: DataQueryRequest<LokiQuery>,
+    options: LogsVolumeOption
+  ): DataQueryRequest<LokiQuery> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, query))
+      .map((query) => this.getSupplementaryQuery(options, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {
@@ -259,7 +273,10 @@ export class LokiDatasource
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
-  private getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> | undefined {
+  private getLogsSampleDataProvider(
+    request: DataQueryRequest<LokiQuery>,
+    options?: LogsSampleOptions
+  ): DataQueryRequest<LokiQuery> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets
       .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query))
@@ -397,7 +414,7 @@ export class LokiDatasource
         key: `loki-${liveTarget.refId}`,
         state: LoadingState.Streaming,
       })),
-      catchError((err: any) => {
+      catchError((err) => {
         return throwError(() => `Live tailing was stopped due to following error: ${err.reason}`);
       })
     );
@@ -665,16 +682,10 @@ export class LokiDatasource
       return [];
     }
 
-    // If we have stream selector, use /series endpoint
-    if (query.stream) {
-      const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
-      if (!result[query.label]) {
-        return [];
-      }
-      return result[query.label].map((value: string) => ({ text: value }));
-    }
-
-    const result = await this.languageProvider.fetchLabelValues(query.label, { timeRange });
+    const result = await this.languageProvider.fetchLabelValues(query.label, {
+      streamSelector: query.stream,
+      timeRange,
+    });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -732,7 +743,11 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
    */
   async getTagKeys(options?: DataSourceGetTagKeysOptions<LokiQuery>): Promise<MetricFindValue[]> {
-    const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange });
+    let streamSelector = '{}';
+    for (const filter of options?.filters ?? []) {
+      streamSelector = addLabelToQuery(streamSelector, filter.key, filter.operator, filter.value);
+    }
+    const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange, streamSelector });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -740,8 +755,15 @@ export class LokiDatasource
    * Implemented as part of the DataSourceAPI. Retrieves tag values that can be used for ad-hoc filtering.
    * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
-  async getTagValues(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]> {
-    const result = await this.languageProvider.fetchLabelValues(options.key, { timeRange: options.timeRange });
+  async getTagValues(options: DataSourceGetTagValuesOptions<LokiQuery>): Promise<MetricFindValue[]> {
+    let streamSelector = '{}';
+    for (const filter of options?.filters ?? []) {
+      streamSelector = addLabelToQuery(streamSelector, filter.key, filter.operator, filter.value);
+    }
+    const result = await this.languageProvider.fetchLabelValues(options.key, {
+      timeRange: options.timeRange,
+      streamSelector,
+    });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -750,7 +772,7 @@ export class LokiDatasource
    * Handles escaping of special characters based on variable type and value.
    * @returns The interpolated value with appropriate character escaping.
    */
-  interpolateQueryExpr(value: any, variable: any) {
+  interpolateQueryExpr(value: any, variable: QueryVariableModel | CustomVariableModel) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return lokiRegularEscape(value);
@@ -1067,8 +1089,6 @@ export class LokiDatasource
     // alerting/ML queries and we want to have consistent interpolation for all queries
     const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
-    const exprWithAdHoc = this.addAdHocFilters(target.expr, adhocFilters);
-
     const variables = {
       ...rest,
 
@@ -1080,10 +1100,16 @@ export class LokiDatasource
         value: '$__interval_ms',
       },
     };
+
+    const exprWithAdHoc = this.addAdHocFilters(
+      this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
+      adhocFilters
+    );
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(exprWithAdHoc, variables, this.interpolateQueryExpr),
+      expr: exprWithAdHoc,
     };
   }
 
@@ -1136,14 +1162,14 @@ export class LokiDatasource
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function lokiRegularEscape(value: any) {
+export function lokiRegularEscape<T>(value: T) {
   if (typeof value === 'string') {
     return value.replace(/'/g, "\\\\'");
   }
   return value;
 }
 
-export function lokiSpecialRegexEscape(value: any) {
+export function lokiSpecialRegexEscape<T>(value: T) {
   if (typeof value === 'string') {
     return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
   }

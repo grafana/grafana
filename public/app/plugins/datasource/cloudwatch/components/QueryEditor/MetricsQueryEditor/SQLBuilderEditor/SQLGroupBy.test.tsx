@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { setupMockedDataSource } from '../../../../__mocks__/CloudWatchDataSource';
@@ -18,7 +17,7 @@ const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   region: 'us-east-1',
   namespace: 'ec2',
   dimensions: { somekey: 'somevalue' },
-  metricQueryType: MetricQueryType.Query,
+  metricQueryType: MetricQueryType.Insights,
   metricEditorMode: MetricEditorMode.Builder,
   sql: sql,
 });

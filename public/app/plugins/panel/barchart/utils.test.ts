@@ -2,13 +2,11 @@ import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
   createTheme,
-  DefaultTimeZone,
-  EventBusSrv,
   FieldConfig,
   FieldType,
-  getDefaultTimeRange,
   MutableDataFrame,
   VizOrientation,
+  FieldConfigSource,
 } from '@grafana/data';
 import {
   LegendDisplayMode,
@@ -17,10 +15,16 @@ import {
   GraphGradientMode,
   StackingMode,
   SortOrder,
+  defaultTimeZone,
 } from '@grafana/schema';
 
-import { FieldConfig as PanelFieldConfig, Options } from './panelcfg.gen';
-import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
+import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
+import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
+
+const fieldConfig: FieldConfigSource = {
+  defaults: {},
+  overrides: [],
+};
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -69,13 +73,16 @@ function mockDataFrame() {
     state: {},
   });
 
-  const info = prepareBarChartDisplayValues([df1], createTheme(), {} as Options);
+  df1.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+  df2.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-  if (!('aligned' in info)) {
+  const info = prepSeries([df1], fieldConfig, StackingMode.None, createTheme());
+
+  if (info.series.length === 0) {
     throw new Error('Bar chart not prepared correctly');
   }
 
-  return info.aligned;
+  return info.series[0];
 }
 
 jest.mock('@grafana/data', () => ({
@@ -85,98 +92,100 @@ jest.mock('@grafana/data', () => ({
 
 describe('BarChart utils', () => {
   describe('preparePlotConfigBuilder', () => {
-    const frame = mockDataFrame();
-
-    const config: BarChartOptionsEX = {
+    const config: PrepConfigOpts = {
+      series: [mockDataFrame()],
+      totalSeries: 2,
+      // color?: Field | null;
+      timeZone: defaultTimeZone,
+      theme: createTheme(),
       orientation: VizOrientation.Auto,
-      groupWidth: 20,
-      barWidth: 2,
-      showValue: VisibilityMode.Always,
-      legend: {
-        displayMode: LegendDisplayMode.List,
-        showLegend: true,
-        placement: 'bottom',
-        calcs: [],
+
+      options: {
+        orientation: VizOrientation.Auto,
+        groupWidth: 20,
+        barWidth: 2,
+        showValue: VisibilityMode.Always,
+        legend: {
+          displayMode: LegendDisplayMode.List,
+          showLegend: true,
+          placement: 'bottom',
+          calcs: [],
+        },
+        xTickLabelRotation: 0,
+        xTickLabelMaxLength: 20,
+        stacking: StackingMode.None,
+        tooltip: {
+          mode: TooltipDisplayMode.None,
+          sort: SortOrder.None,
+        },
+        text: {
+          valueSize: 10,
+        },
+        fullHighlight: false,
       },
-      xTickLabelRotation: 0,
-      xTickLabelMaxLength: 20,
-      stacking: StackingMode.None,
-      tooltip: {
-        mode: TooltipDisplayMode.None,
-        sort: SortOrder.None,
-      },
-      text: {
-        valueSize: 10,
-      },
-      fullHighlight: false,
-      rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values[valueIdx],
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
-      const result = preparePlotConfigBuilder({
+      const result = prepConfig({
         ...config,
+        options: {
+          ...config.options,
+          orientation: v,
+        },
+        series: [mockDataFrame()],
         orientation: v,
-        frame: frame!,
-        theme: createTheme(),
-        timeZones: [DefaultTimeZone],
-        getTimeRange: getDefaultTimeRange,
-        eventBus: new EventBusSrv(),
-        allFrames: [frame],
-      }).getConfig();
+      }).builder.getConfig();
       expect(result).toMatchSnapshot();
     });
 
     it.each([VisibilityMode.Always, VisibilityMode.Auto])('value visibility', (v) => {
       expect(
-        preparePlotConfigBuilder({
+        prepConfig({
           ...config,
-          showValue: v,
-          frame: frame!,
-          theme: createTheme(),
-          timeZones: [DefaultTimeZone],
-          getTimeRange: getDefaultTimeRange,
-          eventBus: new EventBusSrv(),
-          allFrames: [frame],
-        }).getConfig()
+          options: {
+            ...config.options,
+            showValue: v,
+          },
+          series: [mockDataFrame()],
+        }).builder.getConfig()
       ).toMatchSnapshot();
     });
 
     it.each([StackingMode.None, StackingMode.Percent, StackingMode.Normal])('stacking', (v) => {
       expect(
-        preparePlotConfigBuilder({
+        prepConfig({
           ...config,
-          stacking: v,
-          frame: frame!,
-          theme: createTheme(),
-          timeZones: [DefaultTimeZone],
-          getTimeRange: getDefaultTimeRange,
-          eventBus: new EventBusSrv(),
-          allFrames: [frame],
-        }).getConfig()
+          options: {
+            ...config.options,
+            stacking: v,
+          },
+          series: [mockDataFrame()],
+        }).builder.getConfig()
       ).toMatchSnapshot();
     });
   });
 
   describe('prepareGraphableFrames', () => {
     it('will warn when there is no frames in the response', () => {
-      const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as Options);
-      const warning = assertIsDefined('warn' in result ? result : null);
+      const info = prepSeries([], fieldConfig, StackingMode.None, createTheme());
+      const warning = assertIsDefined('warn' in info ? info : null);
 
       expect(warning.warn).toEqual('No data in response');
     });
 
     it('will warn when there is no data in the response', () => {
-      const result = prepareBarChartDisplayValues(
+      const info = prepSeries(
         [
           {
             length: 0,
             fields: [],
           },
         ],
-        createTheme(),
-        { stacking: StackingMode.None } as Options
+        fieldConfig,
+        StackingMode.None,
+        createTheme()
       );
-      const warning = assertIsDefined('warn' in result ? result : null);
+      const warning = assertIsDefined('warn' in info ? info : null);
 
       expect(warning.warn).toEqual('No data in response');
     });
@@ -188,10 +197,11 @@ describe('BarChart utils', () => {
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
-      const warning = assertIsDefined('warn' in result ? result : null);
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+
+      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('Bar charts requires a string or time field');
-      expect(warning).not.toHaveProperty('viz');
     });
 
     it('will warn when there are no numeric fields in the response', () => {
@@ -201,10 +211,11 @@ describe('BarChart utils', () => {
           { name: 'value', type: FieldType.boolean, values: [true, true, true, true, true] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
-      const warning = assertIsDefined('warn' in result ? result : null);
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+
+      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('No numeric fields found');
-      expect(warning).not.toHaveProperty('viz');
     });
 
     it('will convert NaN and Infinty to nulls', () => {
@@ -214,10 +225,11 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
-      const displayValues = assertIsDefined('viz' in result ? result : null);
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const field = displayValues.viz[0].fields[1];
+      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+
+      const field = info.series[0].fields[1];
       expect(field.values).toMatchInlineSnapshot(`
         [
           -10,
@@ -227,23 +239,10 @@ describe('BarChart utils', () => {
           null,
         ]
       `);
-
-      const displayLegendValuesAsc = assertIsDefined('legend' in result ? result : null).legend;
-      const legendField = displayLegendValuesAsc.fields[1];
-
-      expect(legendField.values).toMatchInlineSnapshot(`
-      [
-        -10,
-        null,
-        10,
-        null,
-        null,
-      ]
-    `);
     });
 
-    it('should remove unit from legend values when stacking is percent', () => {
-      const frame = new MutableDataFrame({
+    it('should not apply % unit to series when stacking is percent', () => {
+      const df = new MutableDataFrame({
         fields: [
           { name: 'string', type: FieldType.string, values: ['a', 'b', 'c'] },
           { name: 'a', values: [-10, 20, 10], state: { calcs: { min: -10 } } },
@@ -251,15 +250,13 @@ describe('BarChart utils', () => {
           { name: 'c', values: [10, 10, 10], state: { calcs: { min: 10 } } },
         ],
       });
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
-        stacking: StackingMode.Percent,
-      } as Options);
-      const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
 
-      expect(displayLegendValuesAsc.fields[0].config.unit).toBeUndefined();
-      expect(displayLegendValuesAsc.fields[1].config.unit).toBeUndefined();
-      expect(displayLegendValuesAsc.fields[2].config.unit).toBeUndefined();
+      expect(info.series[0].fields[0].config.unit).toBeUndefined();
+      expect(info.series[0].fields[1].config.unit).toBeUndefined();
+      expect(info.series[0].fields[2].config.unit).toBeUndefined();
     });
   });
 });

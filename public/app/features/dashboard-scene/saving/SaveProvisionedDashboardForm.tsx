@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Button, ClipboardButton, Stack, CodeEditor, Box } from '@grafana/ui';
@@ -49,9 +49,9 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
           <br /> <br />
           <strong>File path: </strong> {dashboard.state.meta.provisionedExternalId}
         </div>
-        <Stack direction="column" gap={0}>
-          <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
-        </Stack>
+
+        <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
+
         <div className={styles.json}>
           <AutoSizer disableWidth>
             {({ height }) => (

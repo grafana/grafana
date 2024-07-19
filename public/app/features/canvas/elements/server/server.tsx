@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
 import config from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps } from '../../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../../element';
 
 import { ServerDatabase } from './types/database';
 import { ServerSingle } from './types/single';
@@ -26,6 +25,7 @@ export interface ServerData {
   statusColor?: string;
   bulbColor?: string;
   type: ServerType;
+  links?: LinkModel[];
 }
 
 enum ServerType {
@@ -78,19 +78,25 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       height: options?.placement?.height ?? 100,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
     config: {
       type: ServerType.Single,
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: ServerConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<ServerConfig>) => {
+    const serverConfig = elementOptions.config;
+
     const data: ServerData = {
-      blinkRate: cfg?.blinkRate ? ctx.getScalar(cfg.blinkRate).value() : 0,
-      statusColor: cfg?.statusColor ? ctx.getColor(cfg.statusColor).value() : 'transparent',
-      bulbColor: cfg?.bulbColor ? ctx.getColor(cfg.bulbColor).value() : 'green',
-      type: cfg.type,
+      blinkRate: serverConfig?.blinkRate ? dimensionContext.getScalar(serverConfig.blinkRate).value() : 0,
+      statusColor: serverConfig?.statusColor
+        ? dimensionContext.getColor(serverConfig.statusColor).value()
+        : 'transparent',
+      bulbColor: serverConfig?.bulbColor ? dimensionContext.getColor(serverConfig.bulbColor).value() : 'green',
+      type: serverConfig?.type ?? ServerType.Single,
     };
 
     return data;
@@ -164,7 +170,9 @@ export const getServerStyles = (data: ServerData | undefined) => (theme: Grafana
     fill: data?.statusColor ?? 'transparent',
   }),
   circle: css({
-    animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    },
     fill: data?.bulbColor,
     stroke: 'none',
   }),

@@ -1,5 +1,4 @@
-import React from 'react';
-
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, ModalsController } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -20,9 +19,9 @@ export const DeleteDashboardButton = () => {
               hideModal,
             });
           }}
-          aria-label="Dashboard settings page delete dashboard button"
+          data-testid={selectors.pages.Dashboard.Settings.General.deleteDashBoard}
         >
-          <Trans i18nKey="dashboard-settings.dashboard-delete-button">Delete Dashboard</Trans>
+          <Trans i18nKey="dashboard-settings.dashboard-delete-button">Delete dashboard</Trans>
         </Button>
       )}
     </ModalsController>

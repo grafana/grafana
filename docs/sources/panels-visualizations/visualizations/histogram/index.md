@@ -17,21 +17,88 @@ labels:
     - oss
 title: Histogram
 weight: 100
+refs:
+  standard-calculations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  color-scheme:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
 ---
 
 # Histogram
 
-Histograms calculate the distribution of values and present them as a bar chart. The Y-axis and the height of each bar represent the count of values that fall into each bracket while the X-axis represents the value range.
+Histograms calculate the distribution of values and present them as a bar chart. Each bar represents a bucket; the y-axis and the height of each bar represent the count of values that fall into each bucket, and the x-axis represents the value range.
 
-{{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" caption="Bar chart example" >}}
+For example, if you want to understand the distribution of people's heights, you can use a histogram visualization to identify patterns or insights in the data distribution:
+
+{{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="1025px" alt="A histogram visualization showing the distribution of people's heights" >}}
+
+You can use a histogram visualization if you need to:
+
+- Visualize and analyze data distributions over a specific time range to see how frequently certain values occur.
+- Identify any outliers in your data distribution.
+- Provide statistical analysis to help with decision-making
+
+## Configure a histogram visualization
+
+Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a histogram visualization:
+
+{{< youtube id="QfJ480j9-KM" >}}
+
+{{< docs/play title="Histogram Examples" url="https://play.grafana.org/d/histogram_tests/" >}}
 
 ## Supported data formats
 
 Histograms support time series and any table results with one or more numerical fields.
 
-## Display options
+### Examples
 
-Use the following options to refine your visualization.
+The following tables are examples of the type of data you need for a histogram visualization and how it should be formatted.
+
+#### Time-series table
+
+| Time                | Walking (km) |
+| ------------------- | ------------ |
+| 2024-03-25 21:13:09 | 37.2         |
+| 2024-03-25 21:13:10 | 37.1         |
+| 2024-03-25 21:13:10 | 37.0         |
+| 2024-03-25 21:13:11 | 37.2         |
+| 2024-03-25 21:13:11 | 36.9         |
+| 2024-03-25 21:13:12 | 36.7         |
+| 2024-03-25 21:13:13 | 36.3         |
+
+The data is converted as follows:
+
+{{< figure src="/static/img/docs/histogram-panel/histogram-example-time-series.png" max-width="1025px" alt="A histogram visualization showing the random walk distribution." >}}
+
+#### Basic numerical table
+
+| Gender | Height (kg) | Weight (lbs) |
+| ------ | ----------- | ------------ |
+| Male   | 73.8        | 242          |
+| Male   | 68.8        | 162          |
+| Male   | 74.1        | 213          |
+| Male   | 71.7        | 220          |
+| Male   | 69.9        | 206          |
+| Male   | 67.3        | 152          |
+| Male   | 68.8        | 184          |
+
+The data is converted as follows:
+
+{{< figure src="/static/img/docs/histogram-panel/histogram-example-height-weight.png" max-width="1025px" alt="A histogram visualization showing the male height and weight distribution" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Histogram options
+
+Use the following options to refine your histogram visualization.
 
 ### Bucket size
 
@@ -55,7 +122,7 @@ Controls the fill opacity bars.
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme][] field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
 Gradient display is influenced by the **Fill opacity** setting.
 
@@ -71,16 +138,30 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 
 Gradient color is generated based on the hue of the line color.
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+## Tooltip options
 
-### Legend calculations
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Choose a [standard calculations][] to show in the legend. You can select more than one.
+## Legend options
 
-{{% docs/reference %}}
-[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[standard calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

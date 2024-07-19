@@ -5,7 +5,9 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
@@ -14,9 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
-	"github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 var (
@@ -51,13 +53,22 @@ type service struct {
 	tracing *tracing.TracingService
 
 	authenticator interceptors.Authenticator
+
+	log log.Logger
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	log log.Logger,
 ) (*service, error) {
-	tracing, err := tracing.ProvideService(cfg)
+	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tracingCfg.ServiceName = "unified-storage"
+
+	tracing, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +82,7 @@ func ProvideService(
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
 		tracing:       tracing,
+		log:           log,
 	}
 
 	// This will be used when running as a dskit service
@@ -95,7 +107,7 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
 
 	// TODO: support using grafana db connection?
-	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
+	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
 	}
@@ -105,7 +117,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := sqlstash.ProvideSQLEntityServer(eDB)
+	store, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
 	if err != nil {
 		return err
 	}
@@ -115,7 +127,18 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	healthService, err := entity.ProvideHealthService(store)
+	if err != nil {
+		return err
+	}
+
 	entity.RegisterEntityStoreServer(s.handler.GetServer(), store)
+	grpc_health_v1.RegisterHealthServer(s.handler.GetServer(), healthService)
+	// register reflection service
+	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
+	if err != nil {
+		return err
+	}
 
 	err = s.handler.Run(ctx)
 	if err != nil {

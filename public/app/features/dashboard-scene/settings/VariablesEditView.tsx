@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
@@ -78,6 +76,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     // Update the state or the variables array
     this.getVariableSet().setState({ variables: updatedVariables });
+    // Remove editIndex otherwise switches to next variable in list
+    this.setState({ editIndex: undefined });
   };
 
   public getVariables() {
@@ -278,6 +278,8 @@ function VariableEditorSettingsView({
         onGoBack={onGoBack}
         onDelete={onDelete}
         onValidateVariableName={onValidateVariableName}
+        // force refresh when navigating using back/forward between variables
+        key={variable.state.key}
       />
     </Page>
   );

@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
 interface WindTurbineData {
   rpm?: number;
+  links?: LinkModel[];
 }
 
 interface WindTurbineConfig {
@@ -88,13 +88,17 @@ export const windTurbineItem: CanvasElementItem = {
       height: options?.placement?.height ?? 155,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: WindTurbineConfig) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<WindTurbineConfig>) => {
+    const windTurbineConfig = elementOptions.config;
+
     const data: WindTurbineData = {
-      rpm: cfg?.rpm ? ctx.getScalar(cfg.rpm).value() : 0,
+      rpm: windTurbineConfig?.rpm ? dimensionContext.getScalar(windTurbineConfig.rpm).value() : 0,
     };
 
     return data;

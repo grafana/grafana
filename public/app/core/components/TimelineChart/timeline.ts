@@ -53,8 +53,6 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
-  onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
-  onLeave: () => void;
   hoverMulti: boolean;
 }
 
@@ -78,8 +76,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     getTimeRange,
     getValueColor,
     getFieldConfig,
-    onHover,
-    onLeave,
     hoverMulti,
   } = opts;
 
@@ -315,7 +311,7 @@ export function getConfig(opts: TimelineCoreOptions) {
               let discrete = isDiscrete(sidx);
               let mappedNull = discrete && hasMappedNull(sidx);
 
-              let y = round(yOff + yMids[sidx - 1]);
+              let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null || mappedNull) {
@@ -426,17 +422,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         let cx = u.cursor.left! * uPlot.pxRatio;
         let cy = u.cursor.top! * uPlot.pxRatio;
 
-        let prevHovered = hoveredAtCursor;
-
         setHovered(cx, cy, u.cursor.event == null);
-
-        if (hoveredAtCursor != null) {
-          if (hoveredAtCursor !== prevHovered) {
-            onHover(hoveredAtCursor.sidx, hoveredAtCursor.didx, hoveredAtCursor);
-          }
-        } else if (prevHovered != null) {
-          onLeave();
-        }
       }
 
       return hovered[seriesIdx]?.didx;
@@ -461,7 +447,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
   };
 
-  const yMids: number[] = Array(numSeries).fill(0);
   const ySplits: number[] = Array(numSeries).fill(0);
   const yRange: uPlot.Range.MinMax = [0, 1];
 
@@ -516,8 +501,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     ySplits: (u: uPlot) => {
       walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
-        yMids[iy] = round(y0 + hgt / 2);
-        ySplits[iy] = u.posToVal(yMids[iy] / uPlot.pxRatio, FIXED_UNIT);
+        let yMid = round(y0 + hgt / 2);
+        ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
       });
 
       return ySplits;

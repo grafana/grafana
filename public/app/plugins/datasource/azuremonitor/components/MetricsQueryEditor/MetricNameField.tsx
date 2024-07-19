@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
@@ -6,7 +6,7 @@ import { Select } from '@grafana/ui';
 import { selectors } from '../../e2e/selectors';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { addValueToOptions } from '../../utils/common';
-import { Field } from '../Field';
+import { Field } from '../shared/Field';
 
 import { setMetricName } from './setQueryValue';
 

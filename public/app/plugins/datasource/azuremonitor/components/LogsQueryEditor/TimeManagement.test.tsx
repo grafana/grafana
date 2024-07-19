@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
@@ -33,7 +32,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
     const dashboardTimeOption = await screen.findByLabelText('Dashboard');
     await userEvent.click(dashboardTimeOption);
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           dashboardTime: true,
@@ -52,7 +51,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
       />
     );
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           timeColumn: 'TimeGenerated',
@@ -90,7 +89,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
       />
     );
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           timeColumn: 'TimeGenerated',
@@ -128,7 +127,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
       />
     );
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           timeColumn: 'Timespan',
@@ -168,5 +167,25 @@ describe('LogsQueryEditor.TimeManagement', () => {
 
     expect(onChange).not.toBeCalled();
     expect(screen.getByText('Alert > TestTimeColumn')).toBeInTheDocument();
+  });
+
+  it('should set time to dashboard and query disabled if basic logs is selected', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { basicLogsQuery: true, dashboardTime: true } });
+    const onChange = jest.fn();
+
+    render(
+      <TimeManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+        schema={FakeSchemaData.getLogAnalyticsFakeEngineSchema()}
+      />
+    );
+
+    expect(screen.getByLabelText('Query')).toBeDisabled();
+    expect(screen.getByLabelText('Dashboard')).toBeChecked();
   });
 });

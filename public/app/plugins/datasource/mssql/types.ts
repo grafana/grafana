@@ -6,6 +6,10 @@ export enum MSSQLAuthenticationType {
   sqlAuth = 'SQL Server Authentication',
   windowsAuth = 'Windows Authentication',
   azureAuth = 'Azure AD Authentication',
+  kerberosRaw = 'Windows AD: Username + password',
+  kerberosKeytab = 'Windows AD: Keytab',
+  kerberosCredentialCache = 'Windows AD: Credential cache',
+  kerberosCredentialCacheLookupFile = 'Windows AD: Credential cache file',
 }
 
 export enum MSSQLEncryptOptions {
@@ -24,6 +28,7 @@ export type ConcealedSecretType = symbol;
 export enum AzureAuthType {
   MSI = 'msi',
   CLIENT_SECRET = 'clientsecret',
+  AD_PASSWORD = 'ad-password',
 }
 
 export interface AzureCredentialsType {
@@ -32,6 +37,8 @@ export interface AzureCredentialsType {
   tenantId?: string;
   clientId?: string;
   clientSecret?: string | ConcealedSecretType;
+  userId?: string;
+  password?: string | ConcealedSecretType;
 }
 
 export interface MssqlOptions extends SQLOptions {
@@ -41,6 +48,12 @@ export interface MssqlOptions extends SQLOptions {
   serverName?: string;
   connectionTimeout?: number;
   azureCredentials?: AzureCredentialsType;
+  keytabFilePath?: string;
+  credentialCache?: string;
+  credentialCacheLookupFile?: string;
+  configFilePath?: string;
+  UDPConnectionLimit?: number;
+  enableDNSLookupKDC?: string;
 }
 
 export interface MssqlSecureOptions {
@@ -53,6 +66,7 @@ export type AzureAuthJSONDataType = DataSourceJsonData & {
 
 export type AzureAuthSecureJSONDataType = {
   azureClientSecret: undefined | string | ConcealedSecretType;
+  password: undefined | string | ConcealedSecretType;
 };
 
 export type AzureAuthConfigType = {

@@ -6,8 +6,9 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   TestDataSourceResponse,
+  ScopedVar,
 } from '@grafana/data';
-import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { SafeSerializableSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 
 import { DashboardQuery } from './types';
@@ -25,7 +26,18 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
-    const scene: SceneObject | undefined = options.scopedVars?.__sceneObject?.value;
+    const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
+    let scene: SceneObject | undefined;
+
+    if (!(sceneScopedVar instanceof SafeSerializableSceneObject)) {
+      throw new Error('Scene object from scopedVars is not safe serializable.');
+    }
+
+    scene = sceneScopedVar.valueOf();
+
+    if (options.requestId.indexOf('mixed') > -1) {
+      throw new Error('Dashboard data source cannot be used with Mixed data source.');
+    }
 
     if (!scene) {
       throw new Error('Can only be called from a scene');
@@ -72,6 +84,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
+            key: 'source-ds-provider',
           };
         }),
         finalize(cleanUp)

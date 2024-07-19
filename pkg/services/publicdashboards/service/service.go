@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -23,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,6 +33,7 @@ import (
 type PublicDashboardServiceImpl struct {
 	log                log.Logger
 	cfg                *setting.Cfg
+	features           featuremgmt.FeatureToggles
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   query.Service
@@ -52,6 +54,7 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 // builds the service, and api, and configures routes
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	store publicdashboards.Store,
 	qds query.Service,
 	anno annotations.Repository,
@@ -63,6 +66,7 @@ func ProvideService(
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
 		cfg:                cfg,
+		features:           features,
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,
@@ -416,7 +420,7 @@ func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO Pub
 	interval := time.Duration(reqDTO.IntervalMs) * time.Millisecond
 
 	// calculate a safe interval with time range from dashboard and safeResolution
-	dataTimeRange := legacydata.NewDataTimeRange(ts.From, ts.To)
+	dataTimeRange := gtime.NewTimeRange(ts.From, ts.To)
 	tr := backend.TimeRange{
 		From: dataTimeRange.GetFromAsTimeUTC(),
 		To:   dataTimeRange.GetToAsTimeUTC(),

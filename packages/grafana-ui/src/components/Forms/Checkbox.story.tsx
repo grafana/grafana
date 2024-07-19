@@ -1,7 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import * as React from 'react';
 
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { Checkbox } from './Checkbox';
 import mdx from './Checkbox.mdx';
@@ -26,11 +27,7 @@ export const Basic: StoryFn<typeof Checkbox> = (args) => {
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
     [setChecked]
   );
-  return (
-    <div>
-      <Checkbox value={checked} onChange={onChange} {...args} />
-    </div>
-  );
+  return <Checkbox value={checked} onChange={onChange} {...args} />;
 };
 
 Basic.args = {
@@ -44,7 +41,7 @@ Basic.args = {
 export const StackedList = () => {
   return (
     <div>
-      <VerticalGroup>
+      <Stack direction="column" alignItems="flex-start">
         <Checkbox
           defaultChecked={true}
           label="Skip TLS cert validation"
@@ -60,18 +57,16 @@ export const StackedList = () => {
           label="Another checkbox times 2"
           description="Another long description that does not make any sense or does it?"
         />
-      </VerticalGroup>
+      </Stack>
     </div>
   );
 };
 
 export const InAField: StoryFn<typeof Checkbox> = (args) => {
   return (
-    <div>
-      <Field {...args}>
-        <Checkbox name="hide" id="hide" defaultChecked={true} />
-      </Field>
-    </div>
+    <Field {...args}>
+      <Checkbox name="hide" id="hide" defaultChecked={true} />
+    </Field>
   );
 };
 
@@ -93,14 +88,14 @@ export const AllStates: StoryFn<typeof Checkbox> = (args) => {
 
   return (
     <div>
-      <VerticalGroup>
+      <Stack direction="column" alignItems="flex-start">
         <Checkbox value={checked} onChange={onChange} {...args} />
         <Checkbox value={true} label="Checked" />
         <Checkbox value={false} label="Unchecked" />
         <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
         <Checkbox value={false} invalid={true} label="Invalid and unchecked" />
         <Checkbox value={true} invalid={true} label="Invalid and checked" />
-      </VerticalGroup>
+      </Stack>
     </div>
   );
 };

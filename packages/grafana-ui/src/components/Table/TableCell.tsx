@@ -1,4 +1,3 @@
-import React from 'react';
 import { Cell } from 'react-table';
 
 import { TimeRange, DataFrame } from '@grafana/data';
@@ -15,9 +14,24 @@ export interface Props {
   timeRange?: TimeRange;
   userProps?: object;
   frame: DataFrame;
+  rowStyled?: boolean;
+  rowExpanded?: boolean;
+  textWrapped?: boolean;
+  height?: number;
 }
 
-export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps, frame }: Props) => {
+export const TableCell = ({
+  cell,
+  tableStyles,
+  onCellFilterAdded,
+  timeRange,
+  userProps,
+  frame,
+  rowStyled,
+  rowExpanded,
+  textWrapped,
+  height,
+}: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
 
@@ -27,7 +41,14 @@ export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, use
 
   if (cellProps.style) {
     cellProps.style.minWidth = cellProps.style.width;
-    cellProps.style.justifyContent = (cell.column as any).justifyContent;
+    const justifyContent = (cell.column as any).justifyContent;
+    if (justifyContent === 'flex-end') {
+      // justify-content flex-end is not compatible with cellLink overflow; use direction instead
+      cellProps.style.textAlign = 'right';
+      cellProps.style.direction = 'rtl';
+    } else {
+      cellProps.style.justifyContent = justifyContent;
+    }
   }
 
   let innerWidth = (typeof cell.column.width === 'number' ? cell.column.width : 24) - tableStyles.cellPadding * 2;
@@ -43,6 +64,10 @@ export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, use
         timeRange,
         userProps,
         frame,
+        rowStyled,
+        rowExpanded,
+        textWrapped,
+        height,
       })}
     </>
   );

@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,7 +42,7 @@ func setupBenchEnv(b *testing.B, folderCount, dashboardsPerFolder int) (*Standar
 		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 	}
 	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, nil).(*StandardSearchService)
+		tracing.InitializeTracerForTest(), features, orgSvc, nil, foldertest.NewFakeService()).(*StandardSearchService)
 	require.True(b, ok)
 
 	err = runSearchService(searchService)
@@ -98,7 +98,7 @@ func runSearchService(searchService *StandardSearchService) error {
 }
 
 // Populates database with dashboards and folders
-func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStore) error {
+func populateDB(folderCount, dashboardsPerFolder int, sqlStore db.DB) error {
 	// Insert folders
 	offset := 1
 	if errInsert := actest.ConcurrentBatch(actest.Concurrency, folderCount, actest.BatchSize, func(start, end int) error {

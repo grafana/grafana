@@ -1,4 +1,4 @@
-resource "grafana_rule_group" "rule_group_0000" {
+resource "grafana_rule_group" "rule_group_d3e8424bfbf66bc3" {
   org_id           = 1
   name             = "group101"
   folder_uid       = "e4584834-1a87-4dff-8913-8a4748dfca79"
@@ -17,7 +17,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       }
 
       datasource_uid = "000000002"
-      model          = "{\n              \"expr\": \"http_request_duration_microseconds_count\",\n              \"hide\": false,\n              \"interval\": \"\",\n              \"intervalMs\": 1000,\n              \"legendFormat\": \"\",\n              \"maxDataPoints\": 100,\n              \"refId\": \"query\"\n            }"
+      model          = "{\"expr\":\"http_request_duration_microseconds_count\",\"hide\":false,\"interval\":\"\",\"intervalMs\":1000,\"legendFormat\":\"\",\"maxDataPoints\":100,\"refId\":\"query\"}"
     }
     data {
       ref_id = "reduced"
@@ -28,7 +28,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       }
 
       datasource_uid = "__expr__"
-      model          = "{\n              \"expression\": \"query\",\n              \"hide\": false,\n              \"intervalMs\": 1000,\n              \"maxDataPoints\": 100,\n              \"reducer\": \"mean\",\n              \"refId\": \"reduced\",\n              \"type\": \"reduce\"\n            }"
+      model          = "{\"expression\":\"query\",\"hide\":false,\"intervalMs\":1000,\"maxDataPoints\":100,\"reducer\":\"mean\",\"refId\":\"reduced\",\"type\":\"reduce\"}"
     }
     data {
       ref_id = "condition"
@@ -39,7 +39,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       }
 
       datasource_uid = "__expr__"
-      model          = "{\n              \"expression\": \"$reduced > 10\",\n              \"hide\": false,\n              \"intervalMs\": 1000,\n              \"maxDataPoints\": 100,\n              \"refId\": \"condition\",\n              \"type\": \"math\"\n            }"
+      model          = "{\"expression\":\"$reduced > 10\",\"hide\":false,\"intervalMs\":1000,\"maxDataPoints\":100,\"refId\":\"condition\",\"type\":\"math\"}"
     }
 
     no_data_state  = "NoData"
@@ -60,7 +60,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       }
 
       datasource_uid = "000000004"
-      model          = "{\n              \"alias\": \"just-testing\",\n              \"intervalMs\": 1000,\n              \"maxDataPoints\": 100,\n              \"orgId\": 0,\n              \"refId\": \"A\",\n              \"scenarioId\": \"csv_metric_values\",\n              \"stringInput\": \"1,20,90,30,5,0\"\n            }"
+      model          = "{\"alias\":\"just-testing\",\"intervalMs\":1000,\"maxDataPoints\":100,\"orgId\":0,\"refId\":\"A\",\"scenarioId\":\"csv_metric_values\",\"stringInput\":\"1,20,90,30,5,0\"}"
     }
     data {
       ref_id = "B"
@@ -71,7 +71,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       }
 
       datasource_uid = "__expr__"
-      model          = "{\n              \"expression\": \"$A\",\n              \"intervalMs\": 2000,\n              \"maxDataPoints\": 200,\n              \"orgId\": 0,\n              \"reducer\": \"mean\",\n              \"refId\": \"B\",\n              \"type\": \"reduce\"\n            }"
+      model          = "{\"expression\":\"$A\",\"intervalMs\":2000,\"maxDataPoints\":200,\"orgId\":0,\"reducer\":\"mean\",\"refId\":\"B\",\"type\":\"reduce\"}"
     }
 
     no_data_state  = "NoData"
@@ -79,12 +79,12 @@ resource "grafana_rule_group" "rule_group_0000" {
     is_paused      = false
 
     notification_settings {
-      receiver            = "Test-Receiver"
-      group_by            = ["alertname", "grafana_folder", "test"]
-      group_wait          = "1s"
-      group_interval      = "5s"
-      repeat_interval     = "5m"
-      mute_time_intervals = ["test-mute"]
+      contact_point   = "Test-Receiver"
+      group_by        = ["alertname", "grafana_folder", "test"]
+      group_wait      = "1s"
+      group_interval  = "5s"
+      repeat_interval = "5m"
+      mute_timings    = ["test-mute"]
     }
   }
 }

@@ -1,20 +1,14 @@
 import { action } from '@storybook/addon-actions';
-import { useArgs } from '@storybook/client-api';
+import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
-import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2, ColorPickerInput } from '@grafana/ui';
 
 import mdx from './ColorPicker.mdx';
-import { ColorPickerInput } from './ColorPickerInput';
 
 const meta: Meta<typeof ColorPicker> = {
   title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
-  // SB7 has broken subcomponent types due to dropping support for the feature
-  // https://github.com/storybookjs/storybook/issues/20782
-  // @ts-ignore
-  subcomponents: { SeriesColorPicker, ColorPickerInput },
   parameters: {
     docs: {
       page: mdx,
@@ -48,14 +42,30 @@ export const Basic: StoryFn<typeof ColorPicker> = ({ color, enableNamedColors })
 
 export const SeriesPicker: StoryFn<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+      <SeriesColorPicker
+        enableNamedColors={enableNamedColors}
+        yaxis={1}
+        onToggleAxis={() => {}}
+        color={color}
+        onChange={(color) => {
+          action('Color changed')(color);
+          updateArgs({ color });
+        }}
+      />
+    </div>
+  );
+};
+
+export const CustomTrigger: StoryFn<typeof ColorPicker> = ({ color, enableNamedColors }) => {
+  const [, updateArgs] = useArgs();
   const clearButton = useStyles2(clearButtonStyles);
   return (
-    <SeriesColorPicker
+    <ColorPicker
       enableNamedColors={enableNamedColors}
-      yaxis={1}
-      onToggleAxis={() => {}}
       color={color}
-      onChange={(color) => {
+      onChange={(color: string) => {
         action('Color changed')(color);
         updateArgs({ color });
       }}
@@ -72,7 +82,7 @@ export const SeriesPicker: StoryFn<typeof SeriesColorPicker> = ({ color, enableN
           Open color picker
         </button>
       )}
-    </SeriesColorPicker>
+    </ColorPicker>
   );
 };
 

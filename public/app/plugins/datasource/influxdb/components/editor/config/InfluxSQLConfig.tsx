@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -8,7 +7,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Field, InlineLabel, Input, SecretInput, useStyles2 } from '@grafana/ui';
+import { Field, InlineLabel, InlineSwitch, Input, SecretInput, useStyles2 } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
@@ -55,6 +54,25 @@ export const InfluxSqlConfig = (props: Props) => {
           onReset={() => updateDatasourcePluginResetOption(props, 'token')}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
           isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
+        />
+      </Field>
+      <Field
+        horizontal
+        label={<InlineLabel width={WIDTH_SHORT}>Insecure Connection</InlineLabel>}
+        className={styles.horizontalField}
+      >
+        <InlineSwitch
+          id={`${htmlPrefix}-insecure-grpc`}
+          value={jsonData.insecureGrpc ?? false}
+          onChange={(event) => {
+            onOptionsChange({
+              ...options,
+              jsonData: {
+                ...jsonData,
+                insecureGrpc: event.currentTarget.checked,
+              },
+            });
+          }}
         />
       </Field>
     </div>

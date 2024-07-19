@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
@@ -22,7 +22,7 @@ export function DataSourcesList() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
-  const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const hasExploreRights = contextSrv.hasAccessToExplore();
 
   return (
     <DataSourcesListView
@@ -66,17 +66,25 @@ export function DataSourcesListView({
 
   if (!isLoading && dataSourcesCount === 0) {
     return (
-      <EmptyListCTA
-        buttonDisabled={!hasCreateRights}
-        title="No data sources defined"
-        buttonIcon="database"
-        buttonLink={dataSourcesRoutes.New}
-        buttonTitle="Add data source"
-        proTip="You can also define data sources through configuration files."
-        proTipLink="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
-        proTipLinkTitle="Learn more"
-        proTipTarget="_blank"
-      />
+      <EmptyState
+        variant="call-to-action"
+        button={
+          <LinkButton disabled={!hasCreateRights} href={dataSourcesRoutes.New} icon="database" size="lg">
+            <Trans i18nKey="data-source-list.empty-state.button-title">Add data source</Trans>
+          </LinkButton>
+        }
+        message={t('data-source-list.empty-state.title', 'No data sources defined')}
+      >
+        <Trans i18nKey="data-source-list.empty-state.pro-tip">
+          You can also define data sources through configuration files.{' '}
+          <TextLink
+            external
+            href="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
+          >
+            Learn more
+          </TextLink>
+        </Trans>
+      </EmptyState>
     );
   }
 
@@ -104,7 +112,11 @@ export function DataSourcesListView({
       <DataSourcesListHeader />
 
       {/* List */}
-      <ul className={styles.list}>{getDataSourcesList()}</ul>
+      {dataSources.length === 0 && !isLoading ? (
+        <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
+      ) : (
+        <ul className={styles.list}>{getDataSourcesList()}</ul>
+      )}
     </>
   );
 }

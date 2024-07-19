@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
@@ -8,6 +8,10 @@ import { PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import {
+  PublicDashboardPageRouteParams,
+  PublicDashboardPageRouteSearchParams,
+} from 'app/features/dashboard/containers/types';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { useSelector, useDispatch } from 'app/types';
 
@@ -21,16 +25,6 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
-
-interface PublicDashboardPageRouteParams {
-  accessToken?: string;
-}
-
-interface PublicDashboardPageRouteSearchParams {
-  from?: string;
-  to?: string;
-  refresh?: string;
-}
 
 export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
 
@@ -75,8 +69,7 @@ const PublicDashboardPage = (props: Props) => {
         keybindingSrv: context.keybindings,
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [route.routeName, match.params.accessToken, context.keybindings, dispatch]);
 
   useEffect(() => {
     if (prevProps?.location.search !== location.search) {
@@ -95,7 +88,7 @@ const PublicDashboardPage = (props: Props) => {
         getTimeSrv().setAutoRefresh(urlParams.refresh);
       }
     }
-  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden]);
+  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden, match.params.accessToken]);
 
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;
@@ -116,7 +109,9 @@ const PublicDashboardPage = (props: Props) => {
       <div className={styles.gridContainer}>
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
-      <PublicDashboardFooter />
+      <div className={styles.footer}>
+        <PublicDashboardFooter />
+      </div>
     </Page>
   );
 };
@@ -126,6 +121,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     padding: theme.spacing(2, 2, 2, 2),
     overflow: 'auto',
+  }),
+  footer: css({
+    padding: theme.spacing(0, 2),
   }),
 });
 

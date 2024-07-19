@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -19,6 +19,7 @@ const (
 	azureResourceGraph = "Azure Resource Graph"
 	azureTraces        = "Azure Traces"
 	azurePortal        = "Azure Portal"
+	traceExemplar      = "traceql"
 )
 
 func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
@@ -82,6 +83,7 @@ func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcre
 		azureLogAnalytics:  logAnalyticsRoute,
 		azureResourceGraph: resourceManagerRoute,
 		azureTraces:        logAnalyticsRoute,
+		traceExemplar:      logAnalyticsRoute,
 		azurePortal:        portalRoute,
 	}
 

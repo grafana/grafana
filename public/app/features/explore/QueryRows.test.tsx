@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 
 import { DataSourceApi } from '@grafana/data';
@@ -51,10 +50,10 @@ function setup(queries: DataQuery[]) {
 
   const leftState = makeExplorePaneState();
   const initialState: ExploreState = {
+    richHistory: [],
     panes: {
       left: {
         ...leftState,
-        richHistory: [],
         datasourceInstance: datasources['someDs-uid'],
         queries,
         correlations: [],

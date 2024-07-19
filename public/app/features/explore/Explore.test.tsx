@@ -1,11 +1,18 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { CoreApp, createTheme, DataSourceApi, EventBusSrv, LoadingState, PluginExtensionTypes } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  DataSourceApi,
+  EventBusSrv,
+  LoadingState,
+  PluginExtensionTypes,
+  store,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinkExtensions } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
@@ -51,6 +58,8 @@ const makeEmptyQueryResponse = (loadingState: LoadingState) => {
 };
 
 const dummyProps: Props = {
+  setShowQueryInspector: (value: boolean) => {},
+  showQueryInspector: false,
   logsResult: undefined,
   changeSize: jest.fn(),
   datasourceInstance: {
@@ -119,7 +128,7 @@ jest.mock('app/core/core', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getPluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
+  usePluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
 }));
 
 // for the AutoSizer component to have a width
@@ -133,7 +142,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
 
 const setup = (overrideProps?: Partial<Props>) => {
   const store = configureStore({
@@ -175,7 +184,7 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    getPluginLinkExtensionsMock.mockReturnValueOnce({
+    usePluginLinkExtensionsMock.mockReturnValueOnce({
       extensions: [
         {
           id: '1',
@@ -194,6 +203,7 @@ describe('Explore', () => {
           onClick: () => {},
         },
       ],
+      isLoading: false,
     });
 
     setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
@@ -221,6 +231,16 @@ describe('Explore', () => {
       const dataSourcePicker = await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
       expect(dataSourcePicker).toBeInTheDocument();
+    });
+  });
+
+  describe('Content Outline', () => {
+    it('should retrieve the last visible state from local storage', async () => {
+      const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
+      setup();
+      const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
+      expect(showContentOutlineButton).not.toBeInTheDocument();
+      getBoolMock.mockRestore();
     });
   });
 });

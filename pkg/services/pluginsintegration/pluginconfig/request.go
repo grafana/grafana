@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -18,7 +19,7 @@ import (
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
 
 type PluginRequestConfigProvider interface {
-	PluginRequestConfig(ctx context.Context, pluginID string) map[string]string
+	PluginRequestConfig(ctx context.Context, pluginID string, externalService *auth.ExternalService) map[string]string
 }
 
 type RequestConfigProvider struct {
@@ -33,7 +34,7 @@ func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
 
 // PluginRequestConfig returns a map of configuration that should be passed in a plugin request.
 // nolint:gocyclo
-func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string) map[string]string {
+func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string, externalService *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
@@ -73,9 +74,12 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 	if s.cfg.ProxySettings.Enabled {
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
-		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCert
-		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKey
-		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
+		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCertFilePath
+		m[proxy.PluginSecureSocksProxyClientCertContents] = s.cfg.ProxySettings.ClientCert
+		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKeyFilePath
+		m[proxy.PluginSecureSocksProxyClientKeyContents] = s.cfg.ProxySettings.ClientKey
+		m[proxy.PluginSecureSocksProxyRootCAs] = strings.Join(s.cfg.ProxySettings.RootCAFilePaths, " ")
+		m[proxy.PluginSecureSocksProxyRootCAsContents] = strings.Join(s.cfg.ProxySettings.RootCAs, ",")
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
 		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
@@ -91,6 +95,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
 
+		if len(azureSettings.CustomCloudListJSON) > 0 {
+			m[azsettings.AzureCustomCloudsConfig] = azureSettings.CustomCloudListJSON
+		}
+
 		if azureSettings.ManagedIdentityEnabled {
 			m[azsettings.ManagedIdentityEnabled] = "true"
 
@@ -101,6 +109,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 		if azureSettings.UserIdentityEnabled {
 			m[azsettings.UserIdentityEnabled] = "true"
+			m[azsettings.UserIdentityFallbackCredentialsEnabled] = strconv.FormatBool(azureSettings.UserIdentityFallbackCredentialsEnabled)
 
 			if azureSettings.UserIdentityTokenEndpoint != nil {
 				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
@@ -133,6 +142,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 				}
 			}
 		}
+
+		m[azsettings.AzureEntraPasswordCredentialsEnabled] = strconv.FormatBool(azureSettings.AzureEntraPasswordCredentialsEnabled)
 	}
 
 	if s.cfg.UserFacingDefaultError != "" {
@@ -146,6 +157,19 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxOpenConnsDefault)
 	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxIdleConnsDefault)
 	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxConnLifetimeDefault)
+
+	if s.cfg.ResponseLimit > 0 {
+		m[backend.ResponseLimit] = strconv.FormatInt(s.cfg.ResponseLimit, 10)
+	}
+
+	if s.cfg.SigV4AuthEnabled {
+		m[awsds.SigV4AuthEnabledEnvVarKeyName] = "true"
+		m[awsds.SigV4VerboseLoggingEnvVarKeyName] = strconv.FormatBool(s.cfg.SigV4VerboseLogging)
+	}
+
+	if externalService != nil {
+		m[backend.AppClientSecret] = externalService.ClientSecret
+	}
 
 	return m
 }

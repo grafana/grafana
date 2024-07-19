@@ -15,7 +15,7 @@ import {
   TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
 } from '@grafana/runtime';
-import { sceneGraph, VariableCustomFormatterFn } from '@grafana/scenes';
+import { sceneGraph, VariableCustomFormatterFn, SafeSerializableSceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
@@ -124,7 +124,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    * interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument
    **/
   getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): AdHocVariableFilter[] {
-    let filters: any = [];
+    let filters: AdHocVariableFilter[] = [];
     let ds = getDataSourceSrv().getInstanceSettings(datasourceName);
 
     if (!ds) {
@@ -249,11 +249,13 @@ export class TemplateSrv implements BaseTemplateSrv {
   ): string {
     // Scenes compatability (primary method) is via SceneObject inside scopedVars. This way we get a much more accurate "local" scope for the evaluation
     if (scopedVars && scopedVars.__sceneObject) {
+      const sceneObject = (scopedVars.__sceneObject.value as SafeSerializableSceneObject).valueOf();
       return sceneGraph.interpolate(
-        scopedVars.__sceneObject.value,
+        sceneObject,
         target,
         scopedVars,
-        format as string | VariableCustomFormatterFn | undefined
+        format as string | VariableCustomFormatterFn | undefined,
+        interpolations
       );
     }
 
@@ -263,7 +265,8 @@ export class TemplateSrv implements BaseTemplateSrv {
         window.__grafanaSceneContext,
         target,
         scopedVars,
-        format as string | VariableCustomFormatterFn | undefined
+        format as string | VariableCustomFormatterFn | undefined,
+        interpolations
       );
     }
 

@@ -13,14 +13,19 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+type predicate interface {
+	Eval(f float64) bool
+}
 
 type ThresholdCommand struct {
 	ReferenceVar  string
 	RefID         string
 	ThresholdFunc ThresholdType
-	Conditions    []float64
 	Invert        bool
+	predicate     predicate
 }
 
 // +enum
@@ -43,15 +48,28 @@ var (
 )
 
 func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType, conditions []float64) (*ThresholdCommand, error) {
+	var predicate predicate
 	switch thresholdFunc {
-	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
+	case ThresholdIsOutsideRange:
 		if len(conditions) < 2 {
-			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 2", len(conditions))
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
 		}
-	case ThresholdIsAbove, ThresholdIsBelow:
+		predicate = outsideRangePredicate{left: conditions[0], right: conditions[1]}
+	case ThresholdIsWithinRange:
+		if len(conditions) < 2 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
+		}
+		predicate = withinRangePredicate{left: conditions[0], right: conditions[1]}
+	case ThresholdIsAbove:
 		if len(conditions) < 1 {
-			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 1", len(conditions))
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
 		}
+		predicate = greaterThanPredicate{value: conditions[0]}
+	case ThresholdIsBelow:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = lessThanPredicate{value: conditions[0]}
 	default:
 		return nil, fmt.Errorf("expected threshold function to be one of [%s], got %s", strings.Join(supportedThresholdFuncs, ", "), thresholdFunc)
 	}
@@ -60,7 +78,7 @@ func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType
 		RefID:         refID,
 		ReferenceVar:  referenceVar,
 		ThresholdFunc: thresholdFunc,
-		Conditions:    conditions,
+		predicate:     predicate,
 	}, nil
 }
 
@@ -92,10 +110,10 @@ func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles)
 	}
 	if firstCondition.UnloadEvaluator != nil && features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
 		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
-		unloading.Invert = true
 		if err != nil {
 			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
 		}
+		unloading.Invert = true
 		var d Fingerprints
 		if firstCondition.LoadedDimensions != nil {
 			d, err = FingerprintsFromFrame(firstCondition.LoadedDimensions)
@@ -114,42 +132,51 @@ func (tc *ThresholdCommand) NeedsVars() []string {
 	return []string{tc.ReferenceVar}
 }
 
-func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
-	mathExpression, err := createMathExpression(tc.ReferenceVar, tc.ThresholdFunc, tc.Conditions, tc.Invert)
-	if err != nil {
-		return mathexp.Results{}, err
+func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Vars, _ tracing.Tracer) (mathexp.Results, error) {
+	eval := func(maybeValue *float64) *float64 {
+		if maybeValue == nil {
+			return nil
+		}
+		result := tc.predicate.Eval(*maybeValue)
+		if tc.Invert {
+			result = !result
+		}
+		if result {
+			return util.Pointer(float64(1))
+		}
+		return util.Pointer(float64(0))
 	}
 
-	mathCommand, err := NewMathCommand(tc.ReferenceVar, mathExpression)
-	if err != nil {
-		return mathexp.Results{}, err
+	refVarResult := vars[tc.ReferenceVar]
+	newRes := mathexp.Results{Values: make(mathexp.Values, 0, len(refVarResult.Values))}
+	for _, val := range refVarResult.Values {
+		switch v := val.(type) {
+		case mathexp.Series:
+			s := mathexp.NewSeries(tc.RefID, v.GetLabels(), v.Len())
+			for i := 0; i < v.Len(); i++ {
+				t, value := v.GetPoint(i)
+				s.SetPoint(i, t, eval(value))
+			}
+			newRes.Values = append(newRes.Values, s)
+		case mathexp.Number:
+			copyV := mathexp.NewNumber(tc.RefID, v.GetLabels())
+			copyV.SetValue(eval(v.GetFloat64Value()))
+			newRes.Values = append(newRes.Values, copyV)
+		case mathexp.Scalar:
+			copyV := mathexp.NewScalar(tc.RefID, eval(v.GetFloat64Value()))
+			newRes.Values = append(newRes.Values, copyV)
+		case mathexp.NoData:
+			newRes.Values = append(newRes.Values, mathexp.NewNoData())
+		default:
+			return newRes, fmt.Errorf("unsupported format of the input data, got type %v", val.Type())
+		}
 	}
-
-	return mathCommand.Execute(ctx, now, vars, tracer)
+	return newRes, nil
 }
 
-// createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
-func createMathExpression(referenceVar string, thresholdFunc ThresholdType, args []float64, invert bool) (string, error) {
-	var exp string
-	switch thresholdFunc {
-	case ThresholdIsAbove:
-		exp = fmt.Sprintf("${%s} > %f", referenceVar, args[0])
-	case ThresholdIsBelow:
-		exp = fmt.Sprintf("${%s} < %f", referenceVar, args[0])
-	case ThresholdIsWithinRange:
-		exp = fmt.Sprintf("${%s} > %f && ${%s} < %f", referenceVar, args[0], referenceVar, args[1])
-	case ThresholdIsOutsideRange:
-		exp = fmt.Sprintf("${%s} < %f || ${%s} > %f", referenceVar, args[0], referenceVar, args[1])
-	default:
-		return "", fmt.Errorf("failed to evaluate threshold expression: no such threshold function %s", thresholdFunc)
-	}
-
-	if invert {
-		return fmt.Sprintf("!(%s)", exp), nil
-	}
-	return exp, nil
+func (tc *ThresholdCommand) Type() string {
+	return TypeThreshold.String()
 }
-
 func IsSupportedThresholdFunc(name string) bool {
 	isSupported := false
 
@@ -169,8 +196,8 @@ type ThresholdCommandConfig struct {
 
 type ThresholdConditionJSON struct {
 	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
+	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
+	LoadedDimensions *data.Frame        `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:
@@ -232,4 +259,38 @@ func getConditionForHysteresisCommand(query map[string]any) (map[string]any, err
 		return nil, nil
 	}
 	return condition, nil
+}
+
+type withinRangePredicate struct {
+	left  float64
+	right float64
+}
+
+func (r withinRangePredicate) Eval(f float64) bool {
+	return f > r.left && f < r.right
+}
+
+type outsideRangePredicate struct {
+	left  float64
+	right float64
+}
+
+func (r outsideRangePredicate) Eval(f float64) bool {
+	return f < r.left || f > r.right
+}
+
+type lessThanPredicate struct {
+	value float64
+}
+
+func (r lessThanPredicate) Eval(f float64) bool {
+	return f < r.value
+}
+
+type greaterThanPredicate struct {
+	value float64
+}
+
+func (r greaterThanPredicate) Eval(f float64) bool {
+	return f > r.value
 }

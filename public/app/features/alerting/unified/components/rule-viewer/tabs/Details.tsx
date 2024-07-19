@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, Stack, useStyles2, ClipboardButton, TextLink } from '@grafana/ui';
@@ -79,12 +79,12 @@ const Details = ({ rule }: DetailsProps) => {
           {hasEvaluationDuration && (
             <>
               Last evaluation
-              {evaluationTimestamp && evaluationDuration && (
+              {evaluationTimestamp && evaluationDuration ? (
                 <span>
                   <Text color="primary">{formatDistanceToNowStrict(new Date(evaluationTimestamp))} ago</Text>, took{' '}
                   <Text color="primary">{evaluationDuration}ms</Text>
                 </span>
-              )}
+              ) : null}
             </>
           )}
         </MetaText>
@@ -140,7 +140,7 @@ interface AnnotationValueProps {
   value: string;
 }
 
-function AnnotationValue({ value }: AnnotationValueProps) {
+export function AnnotationValue({ value }: AnnotationValueProps) {
   const needsExternalLink = value && value.startsWith('http');
   const tokenizeValue = <Tokenize input={value} delimiter={['{{', '}}']} />;
 

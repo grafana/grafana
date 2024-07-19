@@ -18,25 +18,39 @@ labels:
 menuTitle: InfluxDB
 title: InfluxDB data source
 weight: 700
+refs:
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  build-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
 ---
 
 # InfluxDB data source
 
-{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 Grafana includes built-in support for InfluxDB.
 This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include
 its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}).
 
 For instructions on how to add a data source to Grafana, refer to
-the [administration documentation][data-source-management].
+the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning
 system.
 
 Once you've added the InfluxDB data source, you can [configure it](#configure-the-data-source) so that your Grafana
 instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when
-they [build dashboards][build-dashboards] and use [Explore][explore].
+they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 ## Configure the data source
 
@@ -126,10 +140,11 @@ Configure these options if you select the InfluxQL (classic InfluxDB) query lang
 
 Configure these options if you select the SQL query language:
 
-| Name         | Description                                                                                                                                                                                                                   |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database** | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
-| **Token**    | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
+| Name                    | Description                                                                                                                                                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**            | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
+| **Token**               | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
+| **Insecure Connection** | Disable gRPC TLS security.                                                                                                                                                                                                    |
 
 ### Configure Flux
 
@@ -203,9 +218,8 @@ datasources:
     access: proxy
     url: http://localhost:8086
     jsonData:
-      version: SQL
-      metadata:
-        - database: <bucket-name>
+      dbName: site
+      httpHeaderName1: 'Authorization'
     secureJsonData:
       httpHeaderValue1: 'Token <token>'
 ```
@@ -216,13 +230,15 @@ datasources:
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v2_InfluxQL
+  - name: InfluxDB_v3_InfluxQL
     type: influxdb
     access: proxy
     url: http://localhost:8086
     jsonData:
+      version: SQL
       dbName: site
       httpMode: POST
+      insecureGrpc: false
     secureJsonData:
       token: '<api-token>'
 ```
@@ -242,20 +258,3 @@ in your dashboard.
 Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
-
-{{% docs/reference %}}
-[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-
-[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>
-/administration/data-source-management"
-
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>
-/administration/provisioning#data-sources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>
-/administration/provisioning#data-sources"
-{{% /docs/reference %}}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/secretscan"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -26,6 +26,7 @@ const (
 )
 
 type ServiceAccountsService struct {
+	acService         accesscontrol.Service
 	store             store
 	log               log.Logger
 	backgroundLog     log.Logger
@@ -38,7 +39,7 @@ type ServiceAccountsService struct {
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
-	store *sqlstore.SQLStore,
+	store db.DB,
 	apiKeyService apikey.Service,
 	kvStore kvstore.KVStore,
 	userService user.Service,
@@ -54,6 +55,7 @@ func ProvideServiceAccountsService(
 		orgService,
 	)
 	s := &ServiceAccountsService{
+		acService:     accesscontrolService,
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
@@ -174,7 +176,10 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	if err := validServiceAccountID(serviceAccountID); err != nil {
 		return err
 	}
-	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
+	if err := sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID); err != nil {
+		return err
+	}
+	return sa.acService.DeleteUserPermissions(ctx, orgID, serviceAccountID)
 }
 
 func (sa *ServiceAccountsService) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {

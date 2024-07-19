@@ -31,11 +31,13 @@ TableFooterOptions: {
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
+	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
+	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Json view cell options
@@ -46,6 +48,8 @@ TableJsonViewCellOptions: {
 // Json view cell options
 TableImageCellOptions: {
 	type: TableCellDisplayMode & "image"
+	alt?: string
+	title?: string
 } @cuetsy(kind="interface")
 
 // Show data links in the cell
@@ -71,10 +75,12 @@ TableSparklineCellOptions: {
 TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode?: TableCellBackgroundDisplayMode
+	applyToRow?: bool
+	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Height of a table cell
-TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")
+TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.

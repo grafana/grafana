@@ -3,7 +3,8 @@ import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -181,7 +182,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     if (e.shiftKey) {
       e.preventDefault();
       markerElement?.focus();
-      // When navigating forward, the dropdown closes and and the element next to the input element is focused.
+      // When navigating forward, the dropdown closes and the element next to the input element is focused.
     } else {
       onClose();
     }

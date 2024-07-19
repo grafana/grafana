@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -70,6 +70,9 @@ type FakePluginClient struct {
 	backend.CheckHealthHandlerFunc
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
+	backend.MutateAdmissionFunc
+	backend.ValidateAdmissionFunc
+	backend.ConvertObjectFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -164,6 +167,30 @@ func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if pc.ValidateAdmissionFunc != nil {
+		return pc.ValidateAdmissionFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if pc.MutateAdmissionFunc != nil {
+		return pc.MutateAdmissionFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if pc.ConvertObjectFunc != nil {
+		return pc.ConvertObjectFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 type FakePluginRegistry struct {
@@ -364,6 +391,18 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 	return f.ExpectedErr
 }
 
+type FakeActionSetRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeActionSetRegistry() *FakeActionSetRegistry {
+	return &FakeActionSetRegistry{}
+}
+
+func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, _ []plugins.ActionSet) error {
+	return f.ExpectedErr
+}
+
 type FakePluginFiles struct {
 	OpenFunc   func(name string) (fs.File, error)
 	RemoveFunc func() error
@@ -456,7 +495,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.IAM) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 
@@ -476,36 +515,36 @@ func (f *FakeDiscoverer) Discover(ctx context.Context, src plugins.PluginSource)
 }
 
 type FakeBootstrapper struct {
-	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error)
 }
 
-func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	if f.BootstrapFunc != nil {
-		return f.BootstrapFunc(ctx, src, bundles)
+		return f.BootstrapFunc(ctx, src, bundle)
 	}
 	return []*plugins.Plugin{}, nil
 }
 
 type FakeValidator struct {
-	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+	ValidateFunc func(ctx context.Context, ps *plugins.Plugin) error
 }
 
-func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+func (f *FakeValidator) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	if f.ValidateFunc != nil {
 		return f.ValidateFunc(ctx, ps)
 	}
-	return []*plugins.Plugin{}, nil
+	return nil
 }
 
 type FakeInitializer struct {
-	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+	IntializeFunc func(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error)
 }
 
-func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+func (f *FakeInitializer) Initialize(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
 	if f.IntializeFunc != nil {
 		return f.IntializeFunc(ctx, ps)
 	}
-	return []*plugins.Plugin{}, nil
+	return ps, nil
 }
 
 type FakeTerminator struct {

@@ -1,7 +1,8 @@
 import { difference } from 'lodash';
 
 import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
-import { Field, FieldType, NullValueMode } from '../types/index';
+import { NullValueMode } from '../types/data';
+import { Field, FieldType } from '../types/dataFrame';
 
 import { fieldReducers, ReducerID, reduceField, defaultCalcs } from './fieldReducer';
 
@@ -250,5 +251,21 @@ describe('Stats Calculators', () => {
     someNulls.config.nullValueMode = NullValueMode.Null;
 
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
+  });
+
+  it('can reduce to percentiles', () => {
+    // This `Array.from` will build an array of elements from 1 to 99
+    const percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)];
+    percentiles.forEach((percentile) => {
+      const preciseStats = reduceField({
+        field: createField(
+          'x',
+          Array.from({ length: 101 }, (_, index) => index)
+        ),
+        reducers: [(ReducerID as Record<string, ReducerID>)[`p${percentile}`]],
+      });
+
+      expect(preciseStats[`p${percentile}`]).toEqual(percentile);
+    });
   });
 });

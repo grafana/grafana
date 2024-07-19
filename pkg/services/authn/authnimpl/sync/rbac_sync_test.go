@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -24,14 +24,14 @@ func TestRBACSync_SyncPermission(t *testing.T) {
 	testCases := []testCase{
 		{
 			name:     "enriches the identity successfully when SyncPermissions is true",
-			identity: &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
+			identity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2"), OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
 			expectedPermissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionUsersRead},
 			},
 		},
 		{
 			name:     "does not load the permissions when SyncPermissions is false",
-			identity: &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
+			identity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2"), OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
 			expectedPermissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionUsersRead},
 			},
@@ -46,7 +46,7 @@ func TestRBACSync_SyncPermission(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, 1, len(tt.identity.Permissions))
-			assert.Equal(t, accesscontrol.GroupScopesByAction(tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
+			assert.Equal(t, accesscontrol.GroupScopesByActionContext(context.Background(), tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
 		})
 	}
 }
@@ -65,7 +65,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should call sync when authenticated with grafana com and has viewer role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
 			},
@@ -76,7 +76,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should call sync when authenticated with grafana com and has editor role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
 			},
@@ -87,7 +87,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should call sync when authenticated with grafana com and has admin role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 			},
@@ -98,7 +98,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should not call sync when authenticated with grafana com and has invalid role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleType("something else")},
 			},
@@ -109,7 +109,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should not call sync when not authenticated with grafana com",
 			module: login.LDAPAuthModule,
 			identity: &authn.Identity{
-				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 			},
@@ -128,7 +128,8 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 						return nil
 					},
 				},
-				log: log.NewNopLogger(),
+				log:    log.NewNopLogger(),
+				tracer: tracing.InitializeTracerForTest(),
 			}
 
 			req := &authn.Request{}
@@ -143,15 +144,16 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 
 func setupTestEnv() *RBACSync {
 	acMock := &acmock.Mock{
-		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
+		GetUserPermissionsFunc: func(ctx context.Context, siu authn.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
 			return []accesscontrol.Permission{
 				{Action: accesscontrol.ActionUsersRead},
 			}, nil
 		},
 	}
 	s := &RBACSync{
-		ac:  acMock,
-		log: log.NewNopLogger(),
+		ac:     acMock,
+		log:    log.NewNopLogger(),
+		tracer: tracing.InitializeTracerForTest(),
 	}
 	return s
 }

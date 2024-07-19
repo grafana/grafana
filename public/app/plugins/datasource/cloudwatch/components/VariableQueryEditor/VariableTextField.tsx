@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { EditorField } from '@grafana/experimental';
 import { InlineField, Input, PopoverContent } from '@grafana/ui';

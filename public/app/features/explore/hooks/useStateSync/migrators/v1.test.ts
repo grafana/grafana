@@ -2,6 +2,11 @@ import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { v1Migrator } from './v1';
 
+// Avoids errors caused by circular dependencies
+jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
+  ignoreNextSave: jest.fn(),
+}));
+
 jest.mock('app/core/utils/explore', () => ({
   ...jest.requireActual('app/core/utils/explore'),
   generateExploreId: () => 'ID',

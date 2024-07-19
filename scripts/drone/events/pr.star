@@ -52,6 +52,10 @@ load(
     "scripts/drone/pipelines/verify_starlark.star",
     "verify_starlark",
 )
+load(
+    "scripts/drone/pipelines/verify_storybook.star",
+    "verify_storybook",
+)
 
 ver_mode = "pr"
 trigger = {
@@ -78,6 +82,12 @@ def pr_pipelines():
         verify_starlark(
             get_pr_trigger(
                 include_paths = ["scripts/drone/**", ".drone.star"],
+            ),
+            ver_mode,
+        ),
+        verify_storybook(
+            get_pr_trigger(
+                include_paths = ["packages/grafana-ui/**"],
             ),
             ver_mode,
         ),
@@ -113,6 +123,7 @@ def pr_pipelines():
         lint_backend_pipeline(
             get_pr_trigger(
                 include_paths = [
+                    ".golangci.toml",
                     "Makefile",
                     "pkg/**",
                     "packaging/**",
@@ -145,7 +156,6 @@ def pr_pipelines():
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
         swagger_gen(
-            get_pr_trigger(include_paths = ["pkg/**"]),
             ver_mode,
         ),
         integration_benchmarks(

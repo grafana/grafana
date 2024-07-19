@@ -1,4 +1,5 @@
-import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta, Field } from '../types';
+import { Labels, QueryResultMeta } from '../types/data';
+import { FieldType, DataFrame, Field, FieldConfig } from '../types/dataFrame';
 
 import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 
@@ -128,9 +129,10 @@ const ENTITY_MAP: Record<keyof FieldValueEntityLookup, number | undefined> = {
  * @internal use locally
  */
 export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values: FieldValues) {
-  for (const key in lookup) {
-    const repl = ENTITY_MAP[key as keyof FieldValueEntityLookup];
-    for (const idx of lookup[key as keyof FieldValueEntityLookup]!) {
+  let key: keyof typeof lookup;
+  for (key in lookup) {
+    const repl = ENTITY_MAP[key];
+    for (const idx of lookup[key]!) {
       if (idx < values.length) {
         values[idx] = repl;
       }

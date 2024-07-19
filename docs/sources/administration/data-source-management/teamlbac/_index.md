@@ -35,6 +35,8 @@ To set up Team LBAC for a Loki data source, refer to [Configure Team LBAC](https
 
 ## Limitations
 
+- There is a set number of rules to be configured within a datasource, depending on the size of the rules.
+  - Around ~500-600 rules is the upper limit.
 - If there are no Team LBAC rules for a user's team, that user can query all logs.
 - If an administrator is part of a team with Team LBAC rules, those rules are applied to the administrator requests.
 - Cloud Access Policies (CAP) LBAC rules override Team LBAC rules.

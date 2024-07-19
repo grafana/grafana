@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { of } from 'rxjs';
@@ -22,7 +21,7 @@ import {
   locationService,
   HistoryWrapper,
   LocationService,
-  setPluginExtensionGetter,
+  setPluginExtensionsHook,
   setBackendSrv,
   getBackendSrv,
   getDataSourceSrv,
@@ -34,6 +33,7 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
+import { QueryLibraryMocks } from 'app/features/query-library';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 
@@ -52,6 +52,7 @@ type SetupOptions = {
   queryHistory?: { queryHistory: Array<Partial<RichHistoryRemoteStorageDTO>>; totalCount: number };
   urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
+  failAddToLibrary?: boolean;
 };
 
 type TearDownOptions = {
@@ -70,12 +71,14 @@ export function setupExplore(options?: SetupOptions): {
     datasourceRequest: jest.fn().mockRejectedValue(undefined),
     delete: jest.fn().mockRejectedValue(undefined),
     fetch: jest.fn().mockImplementation((req) => {
-      const data: Record<string, object | number> = {};
+      let data: Record<string, string | object | number> = {};
       if (req.url.startsWith('/api/datasources/correlations') && req.method === 'GET') {
         data.correlations = [];
         data.totalCount = 0;
       } else if (req.url.startsWith('/api/query-history') && req.method === 'GET') {
         data.result = options?.queryHistory || {};
+      } else if (req.url.startsWith(QueryLibraryMocks.data.all.url)) {
+        data = QueryLibraryMocks.data.all.response;
       }
       return of({ data });
     }),
@@ -86,7 +89,7 @@ export function setupExplore(options?: SetupOptions): {
     request: jest.fn().mockRejectedValue(undefined),
   });
 
-  setPluginExtensionGetter(() => ({ extensions: [] }));
+  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false }));
 
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
@@ -282,6 +285,11 @@ export const withinExplore = (exploreId: string) => {
   return within(container[exploreId === 'left' ? 0 : 1]);
 };
 
+export const withinQueryHistory = () => {
+  const container = screen.getByTestId('data-testid QueryHistory');
+  return within(container);
+};
+
 const exploreTestsHelper: { setupExplore: typeof setupExplore; tearDownExplore?: (options?: TearDownOptions) => void } =
   {
     setupExplore,
@@ -291,8 +299,8 @@ const exploreTestsHelper: { setupExplore: typeof setupExplore; tearDownExplore?:
 /**
  * Optimized version of getAllByRole to avoid timeouts in tests. Please check #70158, #59116 and #47635, #78236.
  */
-export const getAllByRoleInQueryHistoryTab = (exploreId: string, role: ByRoleMatcher, name: string | RegExp) => {
-  const selector = withinExplore(exploreId);
+export const getAllByRoleInQueryHistoryTab = (role: ByRoleMatcher, name: string | RegExp) => {
+  const selector = withinQueryHistory();
   // Test ID is used to avoid test timeouts reported in
   const queriesContainer = selector.getByTestId('query-history-queries-tab');
   return within(queriesContainer).getAllByRole(role, { name });

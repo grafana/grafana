@@ -82,10 +82,16 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 		}
 
 		deletedCount, err := session.Delete(&Correlation{UID: cmd.UID, SourceUID: cmd.SourceUID})
+
+		if err != nil {
+			return err
+		}
+
 		if deletedCount == 0 {
 			return ErrCorrelationNotFound
 		}
-		return err
+
+		return nil
 	})
 }
 
@@ -142,10 +148,16 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		}
 
 		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
+
+		if err != nil {
+			return err
+		}
+
 		if updateCount == 0 {
 			return ErrCorrelationNotFound
 		}
-		return err
+
+		return nil
 	})
 
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -40,6 +40,11 @@ var testRoutes = map[string]types.AzRoute{
 		Headers: map[string]string{"x-ms-app": "Grafana"},
 	},
 	azureTraces: {
+		URL:     "https://api.loganalytics.io",
+		Scopes:  []string{"https://api.loganalytics.io/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
+	},
+	traceExemplar: {
 		URL:     "https://api.loganalytics.io",
 		Scopes:  []string{"https://api.loganalytics.io/.default"},
 		Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
@@ -149,7 +154,7 @@ func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request
 	return nil, nil
 }
 
-func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {

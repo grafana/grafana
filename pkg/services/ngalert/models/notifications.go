@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"hash/fnv"
 	"slices"
 	"unsafe"
@@ -12,12 +11,16 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// groupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
-const groupByAll = "..."
+// GroupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
+const GroupByAll = "..."
+
+// DefaultNotificationSettingsGroupBy are the default required GroupBy fields for notification settings.
+var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 
 type ListNotificationSettingsQuery struct {
-	OrgID        int64
-	ReceiverName string
+	OrgID            int64
+	ReceiverName     string
+	TimeIntervalName string
 }
 
 // NotificationSettings represents the settings for sending notifications for a single AlertRule. It is used to
@@ -32,41 +35,58 @@ type NotificationSettings struct {
 	MuteTimeIntervals []string        `json:"mute_time_intervals,omitempty"`
 }
 
+// NormalizedGroupBy returns a consistent and ordered GroupBy.
+//   - If the GroupBy is empty, it returns nil so that the parent group can be inherited.
+//   - If the GroupBy contains the special label '...', it returns only '...'.
+//   - Otherwise, it returns the default GroupBy labels followed by any custom labels in sorted order.
+//
+// To ensure consistent and valid generated routes, this should be used instead of GroupBy when generating fingerprints
+// or fingerprint-level routes.
+func (s *NotificationSettings) NormalizedGroupBy() []string {
+	if len(s.GroupBy) == 0 {
+		// Inherit group from parent.
+		return nil
+	}
+
+	defaultGroupBySet := make(map[string]struct{}, len(DefaultNotificationSettingsGroupBy))
+	for _, lbl := range DefaultNotificationSettingsGroupBy {
+		defaultGroupBySet[lbl] = struct{}{}
+	}
+
+	var customLabels []string
+	for _, lbl := range s.GroupBy {
+		if lbl == GroupByAll {
+			return []string{GroupByAll}
+		}
+		if _, ok := defaultGroupBySet[lbl]; !ok {
+			customLabels = append(customLabels, lbl)
+		}
+	}
+
+	// Sort the custom labels to ensure consistent ordering while keeping the required labels in the front.
+	slices.Sort(customLabels)
+
+	normalized := make([]string, 0, len(DefaultNotificationSettingsGroupBy)+len(customLabels))
+	normalized = append(normalized, DefaultNotificationSettingsGroupBy...)
+	return append(normalized, customLabels...)
+}
+
 // Validate checks if the NotificationSettings object is valid.
 // It returns an error if any of the validation checks fail.
 // The receiver must be specified.
-// If GroupBy is not empty, it must contain both model.AlertNameLabel and FolderTitleLabel or the special label '...'.
 // GroupWait, GroupInterval, RepeatInterval must be positive durations.
 func (s *NotificationSettings) Validate() error {
 	if s.Receiver == "" {
 		return errors.New("receiver must be specified")
 	}
-	if len(s.GroupBy) > 0 {
-		alertName, folderTitle := false, false
-		for _, lbl := range s.GroupBy {
-			if lbl == groupByAll {
-				alertName, folderTitle = true, true
-				break
-			}
-			if lbl == model.AlertNameLabel {
-				alertName = true
-			}
-			if lbl == FolderTitleLabel {
-				folderTitle = true
-			}
-		}
-		if !alertName || !folderTitle {
-			return fmt.Errorf("group by override must contain two required labels: '%s' and '%s' or '...' (group by all)", model.AlertNameLabel, FolderTitleLabel)
-		}
-	}
 	if s.GroupWait != nil && *s.GroupWait < 0 {
 		return errors.New("group wait must be a positive duration")
 	}
-	if s.GroupInterval != nil && *s.GroupInterval < 0 {
-		return errors.New("group interval must be a positive duration")
+	if s.GroupInterval != nil && *s.GroupInterval <= 0 {
+		return errors.New("group interval must be greater than zero")
 	}
-	if s.RepeatInterval != nil && *s.RepeatInterval < 0 {
-		return errors.New("repeat interval must be a positive duration")
+	if s.RepeatInterval != nil && *s.RepeatInterval <= 0 {
+		return errors.New("repeat interval must be greater than zero")
 	}
 	return nil
 }
@@ -153,8 +173,7 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	}
 
 	writeString(s.Receiver)
-	// TODO: Should we sort the group by labels?
-	for _, gb := range s.GroupBy {
+	for _, gb := range s.NormalizedGroupBy() {
 		writeString(gb)
 	}
 	writeDuration(s.GroupWait)

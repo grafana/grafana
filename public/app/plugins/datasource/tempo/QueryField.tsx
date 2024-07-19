@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { PureComponent } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -15,17 +15,18 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
-import { LokiSearch } from './LokiSearch';
-import NativeSearch from './NativeSearch/NativeSearch';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
-import { LokiQuery } from './_importedDependencies/datasources/loki/types';
 import { TempoQueryType } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { QueryEditor } from './traceql/QueryEditor';
 import { TempoQuery } from './types';
+import { migrateFromSearchToTraceQLSearch } from './utils';
 
-interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
+interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {
+  // should template variables be added to tag options. default true
+  addVariablesToOptions?: boolean;
+}
 interface State {
   uploadModalOpen: boolean;
 }
@@ -34,7 +35,7 @@ interface State {
 // data link should open the traceql tab and run a search based on the configured query.
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
 
-class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
+class TempoQueryFieldComponent extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -55,18 +56,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     }
   }
 
-  onChangeLinkedQuery = (value: LokiQuery) => {
-    const { query, onChange } = this.props;
-    onChange({
-      ...query,
-      linkedQuery: { ...value, refId: 'linked' },
-    });
-  };
-
-  onRunLinkedQuery = () => {
-    this.props.onRunQuery();
-  };
-
   onClearResults = () => {
     // Run clear query to clear results
     const { onChange, query, onRunQuery } = this.props;
@@ -80,8 +69,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   render() {
     const { query, onChange, datasource, app } = this.props;
 
-    const logsDatasourceUid = datasource.getLokiSearchDS();
-
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     let queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
@@ -90,17 +77,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       { value: 'serviceMap', label: 'Service Graph' },
     ];
 
-    if (logsDatasourceUid) {
-      if (datasource?.search?.hide) {
-        // Place at beginning as Search if no native search
-        queryTypeOptions.unshift({ value: 'search', label: 'Search' });
-      } else {
-        // Place at end as Loki Search if native search is enabled
-        queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
-      }
-    }
-
-    // Show the deprecated search option if any of the deprecated search fields are set
+    // Migrate user to new query type if they are using the old search query type
     if (
       query.spanName ||
       query.serviceName ||
@@ -109,7 +86,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       query.minDuration ||
       query.queryType === 'nativeSearch'
     ) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: '[Deprecated] Search' });
+      onChange(migrateFromSearchToTraceQLSearch(query));
     }
 
     return (
@@ -172,23 +149,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'search' && (
-          <LokiSearch
-            logsDatasourceUid={logsDatasourceUid}
-            query={query}
-            onRunQuery={this.onRunLinkedQuery}
-            onChange={this.onChangeLinkedQuery}
-          />
-        )}
-        {query.queryType === 'nativeSearch' && (
-          <NativeSearch
-            datasource={this.props.datasource}
-            query={query}
-            onChange={onChange}
-            onBlur={this.props.onBlur}
-            onRunQuery={this.props.onRunQuery}
-          />
-        )}
         {query.queryType === 'traceqlSearch' && (
           <TraceQLSearch
             datasource={this.props.datasource}
@@ -197,6 +157,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             onBlur={this.props.onBlur}
             app={app}
             onClearResults={this.onClearResults}
+            addVariablesToOptions={this.props.addVariablesToOptions}
           />
         )}
         {query.queryType === 'serviceMap' && (

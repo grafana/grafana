@@ -1,13 +1,15 @@
-import 'whatwg-fetch';
-import { uniqueId } from 'lodash';
 import { http, HttpResponse } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
 
-import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
+import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
+import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
   PromRulesResponse,
+  RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -18,15 +20,12 @@ import {
   AlertManagerCortexConfig,
   AlertmanagerReceiver,
   EmailConfig,
+  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { DashboardDTO, FolderDTO, NotifierDTO } from '../../../types';
 import { DashboardSearchItem } from '../../search/types';
-
-import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
-import { AlertingQueryResponse } from './state/AlertingQueryRunner';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -156,35 +155,6 @@ class AlertmanagerReceiverBuilder {
   }
 }
 
-export class OnCallIntegrationBuilder {
-  private onCallIntegration: NewOnCallIntegrationDTO = {
-    id: uniqueId('oncall-integration-mock-'),
-    integration: '',
-    integration_url: '',
-    verbal_name: '',
-    connected_escalations_chains_count: 0,
-  };
-
-  withIntegration(integration: string): OnCallIntegrationBuilder {
-    this.onCallIntegration.integration = integration;
-    return this;
-  }
-
-  withIntegrationUrl(integrationUrl: string): OnCallIntegrationBuilder {
-    this.onCallIntegration.integration_url = integrationUrl;
-    return this;
-  }
-
-  withVerbalName(verbalName: string): OnCallIntegrationBuilder {
-    this.onCallIntegration.verbal_name = verbalName;
-    return this;
-  }
-
-  build() {
-    return this.onCallIntegration;
-  }
-}
-
 export function mockApi(server: SetupServer) {
   return {
     getAlertmanagerConfig: (amName: string, configure: (builder: AlertmanagerConfigBuilder) => void) => {
@@ -201,69 +171,8 @@ export function mockApi(server: SetupServer) {
       );
     },
 
-    eval: (response: AlertingQueryResponse) => {
-      server.use(
-        http.post('/api/v1/eval', () => {
-          return HttpResponse.json(response);
-        })
-      );
-    },
-    grafanaNotifiers: (response: NotifierDTO[]) => {
-      server.use(http.get(`api/alert-notifiers`, () => HttpResponse.json(response)));
-    },
-
-    plugins: {
-      getPluginSettings: (response: PluginMeta) => {
-        server.use(http.get(`api/plugins/${response.id}/settings`, () => HttpResponse.json(response)));
-      },
-    },
-
-    oncall: {
-      getOnCallIntegrations: (response: OnCallIntegrationDTO[]) => {
-        server.use(
-          http.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, () =>
-            HttpResponse.json<OnCallIntegrationDTO[]>(response)
-          )
-        );
-      },
-      features: (response: string[]) => {
-        server.use(
-          http.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/features`, () => HttpResponse.json(response))
-        );
-      },
-      validateIntegrationName: (invalidNames: string[]) => {
-        server.use(
-          http.get(
-            `api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/validate_name`,
-            ({ request }) => {
-              const url = new URL(request.url);
-              const isValid = !invalidNames.includes(url.searchParams.get('verbal_name') ?? '');
-              return HttpResponse.json(isValid, {
-                status: isValid ? 200 : 409,
-              });
-            }
-          )
-        );
-      },
-      createIntegraion: () => {
-        server.use(
-          http.post<{}, CreateIntegrationDTO>(
-            `api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`,
-            async ({ request }) => {
-              const body = await request.json();
-              const integrationId = uniqueId('oncall-integration-');
-
-              return HttpResponse.json<NewOnCallIntegrationDTO>({
-                id: integrationId,
-                integration: body.integration,
-                integration_url: `https://oncall-endpoint.example.com/${integrationId}`,
-                verbal_name: body.verbal_name,
-                connected_escalations_chains_count: 0,
-              });
-            }
-          )
-        );
-      },
+    getContactPointsList: (response: GrafanaManagedContactPoint[]) => {
+      server.use(http.get(`/api/v1/notifications/receivers`, () => HttpResponse.json(response)));
     },
   };
 }
@@ -278,10 +187,16 @@ export function mockAlertRuleApi(server: SetupServer) {
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
     },
+    updateRule: (dsName: string, response: AlertGroupUpdated) => {
+      server.use(http.post(`/api/ruler/${dsName}/api/v1/rules/:namespaceUid`, () => HttpResponse.json(response)));
+    },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
       server.use(
         http.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, () => HttpResponse.json(response))
       );
+    },
+    getAlertRule: (uid: string, response: RulerGrafanaRuleDTO) => {
+      server.use(http.get(`/api/ruler/grafana/api/v1/rule/${uid}`, () => HttpResponse.json(response)));
     },
   };
 }
@@ -302,66 +217,15 @@ export function mockFeatureDiscoveryApi(server: SetupServer) {
   };
 }
 
-export function mockProvisioningApi(server: SetupServer) {
-  return {
-    exportRuleGroup: (folderUid: string, groupName: string, response: Record<string, string>) => {
-      server.use(
-        http.get(`/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`, ({ request }) => {
-          const url = new URL(request.url);
-          const format = url.searchParams.get('format') ?? 'yaml';
-          return HttpResponse.text(response[format]);
-        })
-      );
-    },
-    exportReceiver: (response: Record<string, string>) => {
-      server.use(
-        http.get(`/api/v1/provisioning/contact-points/export/`, ({ request }) => {
-          const url = new URL(request.url);
-          const format = url.searchParams.get('format') ?? 'yaml';
-          return HttpResponse.text(response[format]);
-        })
-      );
-    },
-  };
-}
-
 export function mockExportApi(server: SetupServer) {
   // exportRule, exportRulesGroup, exportRulesFolder use the same API endpoint but with different parameters
   return {
-    // exportRule requires ruleUid parameter and doesn't allow folderUid and group parameters
-    exportRule: (ruleUid: string, response: Record<string, string>) => {
-      server.use(
-        http.get('/api/ruler/grafana/api/v1/export/rules', ({ request }) => {
-          const url = new URL(request.url);
-          if (url.searchParams.get('ruleUid') === ruleUid) {
-            const format = url.searchParams.get('format') ?? 'yaml';
-            return HttpResponse.text(response[format]);
-          }
-
-          return HttpResponse.text('', { status: 500 });
-        })
-      );
-    },
     // exportRulesGroup requires folderUid and group parameters and doesn't allow ruleUid parameter
     exportRulesGroup: (folderUid: string, group: string, response: Record<string, string>) => {
       server.use(
         http.get('/api/ruler/grafana/api/v1/export/rules', ({ request }) => {
           const url = new URL(request.url);
           if (url.searchParams.get('folderUid') === folderUid && url.searchParams.get('group') === group) {
-            const format = url.searchParams.get('format') ?? 'yaml';
-            return HttpResponse.text(response[format]);
-          }
-
-          return HttpResponse.text('', { status: 500 });
-        })
-      );
-    },
-    // exportRulesFolder requires folderUid parameter
-    exportRulesFolder: (folderUid: string, response: Record<string, string>) => {
-      server.use(
-        http.get('/api/ruler/grafana/api/v1/export/rules', ({ request }) => {
-          const url = new URL(request.url);
-          if (url.searchParams.get('folderUid') === folderUid) {
             const format = url.searchParams.get('format') ?? 'yaml';
             return HttpResponse.text(response[format]);
           }
@@ -398,6 +262,14 @@ export function mockSearchApi(server: SetupServer) {
   };
 }
 
+export function mockUserApi(server: SetupServer) {
+  return {
+    user: (user: OrgUser) => {
+      server.use(http.get(`/api/user`, () => HttpResponse.json(user)));
+    },
+  };
+}
+
 export function mockDashboardApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
@@ -409,10 +281,12 @@ export function mockDashboardApi(server: SetupServer) {
   };
 }
 
-// Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
-export function setupMswServer() {
-  const server = setupServer();
+const server = setupServer(...allHandlers);
 
+/**
+ * Sets up beforeAll, afterAll and beforeEach handlers for mock server
+ */
+export function setupMswServer() {
   beforeAll(() => {
     setBackendSrv(backendSrv);
     server.listen({ onUnhandledRequest: 'error' });
@@ -428,3 +302,5 @@ export function setupMswServer() {
 
   return server;
 }
+
+export default server;

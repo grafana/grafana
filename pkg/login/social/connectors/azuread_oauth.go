@@ -15,10 +15,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -78,9 +77,9 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
@@ -98,6 +97,9 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ss
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, ErrIDTokenNotFound
@@ -118,28 +120,42 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrEmailNotFound
 	}
 
-	info := s.GetOAuthInfo()
-
-	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
-	var role roletype.RoleType
-	var grafanaAdmin bool
-	if !info.SkipOrgRoleSync {
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
-		if err != nil {
-			return nil, err
-		}
-
-		if !role.IsValid() {
-			return nil, errInvalidRole.Errorf("AzureAD OAuth: invalid role %q", role)
-		}
-	}
-	s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
-
 	groups, err := s.extractGroups(ctx, client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
+
 	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
+
+	userInfo := &social.BasicUserInfo{
+		Id:     claims.ID,
+		Name:   claims.Name,
+		Email:  email,
+		Login:  email,
+		Groups: groups,
+	}
+
+	if !s.info.SkipOrgRoleSync {
+		directlyMappedRole, grafanaAdmin := s.extractRoleAndAdminOptional(claims)
+
+		s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", directlyMappedRole)
+
+		if s.info.AllowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
+
+		s.log.Debug("AzureAD OAuth: mapped org roles", "email", email, "roles", fmt.Sprintf("%v", userInfo.OrgRoles))
+	}
+
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
 	if !s.isGroupMember(groups) {
 		if len(groups) == 0 {
 			// either they do not have a group or misconfiguration
@@ -149,24 +165,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, errMissingGroupMembership
 	}
 
-	var isGrafanaAdmin *bool = nil
-	if info.AllowAssignGrafanaAdmin {
-		isGrafanaAdmin = &grafanaAdmin
-	}
-
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
-		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
-	}
-
-	return &social.BasicUserInfo{
-		Id:             claims.ID,
-		Name:           claims.Name,
-		Email:          email,
-		Login:          email,
-		Role:           role,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		Groups:         groups,
-	}, nil
+	return userInfo, nil
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -178,7 +177,7 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.AzureADProviderName, newInfo)
+	s.updateInfo(ctx, social.AzureADProviderName, newInfo)
 
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
@@ -190,21 +189,25 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	return nil
 }
 
-func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info, requester)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
 	}
 
 	return validation.Validate(info, requester,
 		validateAllowedGroups,
-		// FIXME: uncomment this after the Terraform provider is updated
-		//validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
 }
@@ -289,14 +292,9 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
-	info := s.GetOAuthInfo()
-
+func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if info.RoleAttributeStrict {
-			return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: unset role")
-		}
-		return s.defaultRole(), false, nil
+		return "", false
 	}
 
 	roleOrder := []org.RoleType{social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
@@ -304,18 +302,14 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == social.RoleGrafanaAdmin {
-				return org.RoleAdmin, true, nil
+				return org.RoleAdmin, true
 			}
 
-			return role, false, nil
+			return role, false
 		}
 	}
 
-	if info.RoleAttributeStrict {
-		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
-	}
-
-	return s.defaultRole(), false, nil
+	return "", false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {
@@ -411,7 +405,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 
 	// If no endpoint was specified or if the endpoints provided in _claim_source is pointing to the deprecated
 	// "graph.windows.net" api, use an handcrafted url to graph.microsoft.com
-	// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
+	// See https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim
 	if endpoint == "" || strings.Contains(endpoint, "graph.windows.net") {
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token
@@ -435,15 +429,16 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 }
 
 func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", info.AllowedGroups))
+	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.info.AllowedGroups))
 	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
 	bf.WriteString("```\n\n")
 
-	return s.SocialBase.SupportBundleContent(bf)
+	return s.SocialBase.getBaseSupportBundleContent(bf)
 }
 
 func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {

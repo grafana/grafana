@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Icon, IconButton, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
@@ -120,31 +121,37 @@ export const GenAIHistory = ({
         </Alert>
       )}
 
+      <GenerationHistoryCarousel
+        history={history}
+        index={currentIndex}
+        onNavigate={onNavigate}
+        reply={sanitizeReply(reply)}
+        streamStatus={streamStatus}
+      />
+
+      <div className={styles.actionButtons}>
+        <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
+      </div>
+
       <Input
         placeholder="Tell AI what to do next..."
         suffix={
-          <IconButton
-            name="corner-down-right-alt"
+          <Button
+            icon="enter"
             variant="secondary"
+            fill="text"
             aria-label="Send custom feedback"
             onClick={onClickSubmitCustomFeedback}
             disabled={customFeedback === ''}
-          />
+          >
+            Send
+          </Button>
         }
         value={customFeedback}
         onChange={onChangeCustomFeedback}
         onKeyDown={onKeyDownCustomFeedbackInput}
       />
-      <div className={styles.actions}>
-        <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
-        <GenerationHistoryCarousel
-          history={history}
-          index={currentIndex}
-          onNavigate={onNavigate}
-          reply={sanitizeReply(reply)}
-          streamStatus={streamStatus}
-        />
-      </div>
+
       <div className={styles.applySuggestion}>
         <Stack justifyContent={'flex-end'} direction={'row'}>
           <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} onClick={onApply}>
@@ -152,12 +159,14 @@ export const GenAIHistory = ({
           </Button>
         </Stack>
       </div>
+
       <div className={styles.footer}>
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" color="secondary">
           This content is AI-generated using the{' '}
           <TextLink
             variant="bodySmall"
+            inline={true}
             href="https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
             external
             onClick={onClickDocs}
@@ -177,10 +186,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 520,
     maxHeight: 350,
     // This is the space the footer height
-    paddingBottom: 35,
+    paddingBottom: 25,
   }),
   applySuggestion: css({
-    marginTop: theme.spacing(1),
+    paddingTop: theme.spacing(2),
   }),
   actions: css({
     display: 'flex',
@@ -205,5 +214,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   infoColor: css({
     color: theme.colors.info.main,
+  }),
+  actionButtons: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: '24px 0 8px 0',
   }),
 });

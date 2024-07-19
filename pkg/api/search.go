@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/org"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -28,7 +30,12 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
+	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
+
+	if deleted == "true" && c.SignedInUser.GetOrgRole() != org.RoleAdmin {
+		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
+	}
 
 	if limit > 5000 {
 		return response.Error(http.StatusUnprocessableEntity, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
@@ -77,6 +84,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
+		IsDeleted:     deleted == "true",
 		OrgId:         c.SignedInUser.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
@@ -190,6 +198,10 @@ type SearchParams struct {
 	// default: alpha-asc
 	// Enum: alpha-asc,alpha-desc
 	Sort string `json:"sort"`
+	// Flag indicating if only soft deleted Dashboards should be returned
+	// in:query
+	// required: false
+	Deleted bool `json:"deleted"`
 }
 
 // swagger:response searchResponse

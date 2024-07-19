@@ -23,7 +23,7 @@ After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the
 
 The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change this file.
 
-Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
+Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/custom.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
 ### Linux
 
@@ -147,20 +147,6 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
-
-## force_migration
-
-{{% admonition type="note" %}}
-This option is deprecated - [See `clean_upgrade` option]({{< relref "#clean_upgrade" >}}) instead.
-{{% /admonition %}}
-
-When you restart Grafana to rollback from Grafana Alerting to legacy alerting, delete any existing Grafana Alerting data, such as alert rules, contact points, and notification policies. Default is `false`.
-
-If `false` or unset, existing Grafana Alerting data is not changed or deleted when rolling back to legacy alerting.
-
-{{% admonition type="note" %}}
-It should be kept false or unset when not needed, as it may cause unintended data loss if left enabled.
-{{% /admonition %}}
 
 <hr />
 
@@ -286,6 +272,17 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+### certs_watch_interval
+
+Controls whether `cert_key` and `cert_file` are periodically watched for changes.
+Disabled, by default. When enabled, `cert_key` and `cert_file`
+are watched for changes. If there is change, the new certificates are loaded automatically.
+
+{{% admonition type="warning" %}}
+After the new certificates are loaded, connections with old certificates
+will not work. You must reload the connections to the old certs for them to work.
+{{% /admonition %}}
+
 ### socket_gid
 
 GID where the socket should be set when `protocol=socket`.
@@ -375,9 +372,13 @@ The maximum number of open connections to the database. For MYSQL, configure thi
 
 Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
 
+### migration_locking
+
+Set to `false` to disable database locking during the migrations. Default is true.
+
 ### locking_attempt_timeout_sec
 
-For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql" and "postgres" only. Specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -387,6 +388,10 @@ Set to `true` to log the sql calls and execution times.
 
 For Postgres, use use any [valid libpq `sslmode`](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.`disable`, `require`, `verify-full`, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
+
+### ssl_sni
+
+For Postgres, set to `0` to disable [Server Name Indication](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLSNI). This is enabled by default on SSL-enabled connections.
 
 ### isolation_level
 
@@ -700,14 +705,13 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 
 ### angular_support_enabled
 
-This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
+This is set to false by default, meaning that the angular framework and support components will not be loaded. This means that
 all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support will stop working.
 
 The core features that depend on angular are:
 
 - Old graph panel
 - Old table panel
-- Legacy alerting edit rule UI
 
 These features each have supported alternatives, and we recommend using them.
 
@@ -833,7 +837,11 @@ The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For
 
 ### verify_email_enabled
 
-Require email validation before sign up completes. Default is `false`.
+Require email validation before sign up completes or when updating a user email address. Default is `false`.
+
+### login_default_org_id
+
+Set the default organization for users when they sign in. The default is `-1`.
 
 ### login_hint
 
@@ -877,6 +885,18 @@ Default is `false`.
 The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
+
+### verification_email_max_lifetime_duration
+
+The duration in time a verification email, used to update the email address of a user, remains valid before expiring.
+This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
+Default is 1h (1 hour).
+
+### last_seen_update_interval
+
+The frequency of updating a user's last seen time.
+This setting should be expressed as a duration. Examples: 1h (hour), 15m (minutes)
+Default is `15m` (15 minutes). The minimum supported duration is `5m` (5 minutes). The maximum supported duration is `1h` (1 hour).
 
 ### hidden_users
 
@@ -939,10 +959,10 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### oauth_skip_org_role_update_sync
 
 {{% admonition type="note" %}}
-This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+This option is removed from G11 in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
 {{% /admonition %}}
 
-If you want to change the `oauth_skip_org_role_update_sync` setting to `false`, then for each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
+If you want to change the `oauth_skip_org_role_update_sync` setting from `true` to `false`, then each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
 
 {{% admonition type="warning" %}}
 Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
@@ -1161,6 +1181,28 @@ Azure cloud environment where Grafana is hosted:
 | US Government cloud                              | AzureUSGovernment      |
 | Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
 
+### clouds_config
+
+The JSON config defines a list of Azure clouds and their associated properties when hosted in custom Azure environments.
+
+For example:
+
+```ini
+clouds_config = `[
+		{
+			"name":"CustomCloud1",
+			"displayName":"Custom Cloud 1",
+			"aadAuthority":"https://login.cloud1.contoso.com/",
+			"properties":{
+				"azureDataExplorerSuffix": ".kusto.windows.cloud1.contoso.com",
+				"logAnalytics":            "https://api.loganalytics.cloud1.contoso.com",
+				"portal":                  "https://portal.azure.cloud1.contoso.com",
+				"prometheusResourceId":    "https://prometheus.monitor.azure.cloud1.contoso.com",
+				"resourceManager":         "https://management.azure.cloud1.contoso.com"
+			}
+		}]`
+```
+
 ### managed_identity_enabled
 
 Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
@@ -1203,6 +1245,12 @@ Specifies whether user identity authentication (on behalf of currently signed-in
 
 Disabled by default, needs to be explicitly enabled.
 
+### user_identity_fallback_credentials_enabled
+
+Specifies whether user identity authentication fallback credentials should be enabled in data sources. Enabling this allows data source creators to provide fallback credentials for backend-initiated requests, such as alerting, recorded queries, and so on.
+
+It is by default and needs to be explicitly disabled. It will not have any effect if user identity authentication is disabled.
+
 ### user_identity_token_url
 
 Override token URL for Azure Active Directory.
@@ -1226,6 +1274,12 @@ By default is the same as used in AAD authentication or can be set to another ap
 Set plugins that will receive Azure settings via plugin context.
 
 By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
+
+### azure_entra_password_credentials_enabled
+
+Specifies whether Entra password auth can be used for the MSSQL data source. This authentication is not recommended and consideration should be taken before enabling this.
+
+Disabled by default, needs to be explicitly enabled.
 
 ## [auth.jwt]
 
@@ -1506,6 +1560,10 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
 
+### alerting_rule_evaluation_results
+
+Limit the number of query evaluation results per alert rule. If the condition query of an alert rule produces more results than this limit, the evaluation results in an error. Default is -1 (unlimited).
+
 <hr>
 
 ## [unified_alerting]
@@ -1514,9 +1572,9 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again. The default value is `true`.
+Enable or disable Grafana Alerting. The default value is `true`.
 
-Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
+Alerting rules migrated from dashboards and panels will include a link back via the `annotations`.
 
 ### disabled_orgs
 
@@ -1593,6 +1651,12 @@ across cluster more quickly at the expense of increased bandwidth usage. The def
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_reconnect_timeout
+
+Length of time to attempt to reconnect to a lost peer. When running Grafana in a Kubernetes cluster, set this duration to less than `15m`.
+
+The string is a possibly signed sequence of decimal numbers followed by a unit suffix (ms, s, m, h, d), such as `30s` or `1m`.
+
 ### ha_push_pull_interval
 
 The interval between gossip full state syncs. Setting this interval lower (more frequent) will increase convergence speeds
@@ -1602,11 +1666,11 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### execute_alerts
 
-Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1" >}}) that takes precedence.
+Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible.
 
 ### evaluation_timeout
 
-Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
+Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`.
 
 The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
@@ -1616,7 +1680,7 @@ Sets a maximum number of times we'll attempt to evaluate an alert rule before gi
 
 ### min_interval
 
-Sets the minimum interval to enforce between rule evaluations. The default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds" >}}) that takes precedence.
+Sets the minimum interval to enforce between rule evaluations. The default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
@@ -1631,6 +1695,11 @@ For more information about screenshots, refer to [Images in notifications]({{< r
 ### capture
 
 Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
+
+### capture_timeout
+
+The timeout for capturing screenshots. If a screenshot cannot be captured within the timeout then the notification is sent without a screenshot.
+The maximum duration is 30 seconds. This timeout should be less than the minimum Interval of all Evaluation Groups to avoid back pressure on alert rule evaluation.
 
 ### max_concurrent_screenshots
 
@@ -1663,84 +1732,6 @@ This section controls retention of annotations automatically created while evalu
 Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### max_annotations_to_keep
-
-Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
-
-<hr>
-
-## [unified_alerting.upgrade]
-
-For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/).
-
-### clean_upgrade
-
-When you restart Grafana to upgrade from legacy alerting to Grafana Alerting, delete any existing Grafana Alerting data from a previous upgrade, such as alert rules, contact points, and notification policies. Default is `false`.
-
-If `false` or unset, existing Grafana Alerting data is not changed or deleted when you switch between legacy and Unified Alerting.
-
-{{% admonition type="note" %}}
-It should be kept false when not needed, as it may cause unintended data loss if left enabled.
-{{% /admonition %}}
-
-<hr>
-
-## [alerting]
-
-For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](/docs/grafana/v8.5/alerting/old-alerting/).
-
-### enabled
-
-Set to `true` to [enable legacy dashboard alerting]({{< relref "#unified_alerting" >}}). The default value is `false`.
-
-### execute_alerts
-
-Turns off alert rule execution, but alerting is still visible in the Grafana UI.
-
-### error_or_timeout
-
-Default setting for new alert rules. Defaults to categorize error and timeouts as alerting. (alerting, keep_state)
-
-### nodata_or_nullvalues
-
-Defines how Grafana handles nodata or null values in alerting. Options are `alerting`, `no_data`, `keep_state`, and `ok`. Default is `no_data`.
-
-### concurrent_render_limit
-
-Alert notifications can include images, but rendering many images at the same time can overload the server.
-This limit protects the server from render overloading and ensures notifications are sent out quickly. Default value is `5`.
-
-### evaluation_timeout_seconds
-
-Sets the alert calculation timeout. Default value is `30`.
-
-### notification_timeout_seconds
-
-Sets the alert notification timeout. Default value is `30`.
-
-### max_attempts
-
-Sets a maximum limit on attempts to sending alert notifications. Default value is `3`.
-
-### min_interval_seconds
-
-Sets the minimum interval between rule evaluations. Default value is `1`.
-
-> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
-
-### max_annotation_age
-
-{{% admonition type="note" %}}
-This option is deprecated - See `max_age` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
-{{% /admonition %}}
-
-Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
-This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
-
-### max_annotations_to_keep
-
-{{% admonition type="note" %}}
-This option is deprecated - See `max_annotations_to_keep` option in [unified_alerting.state_history.annotations]({{< relref "#unified_alertingstate_historyannotations" >}}) instead.
-{{% /admonition %}}
 
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
@@ -1792,6 +1783,11 @@ For more information about this feature, refer to [Explore]({{< relref "../../ex
 
 Enable or disable the Explore section. Default is `enabled`.
 
+### defaultTimeOffset
+
+Set a default time offset from now on the time picker. Default is 1 hour.
+This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1w (week), 1M (month).
+
 ## [help]
 
 Configures the help section.
@@ -1829,6 +1825,16 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
+
+## [short_links]
+
+Configures settings around the short link feature.
+
+### expire_time
+
+Short links which are never accessed are considered expired or stale, and will be deleted as cleanup. Set the expiration time in days. Default is `7` days. Maximum is `365` days, and setting above the maximum will have `365` set instead. Setting `0` means the short links will be cleaned up approximately every 10 minutes.
 
 <hr>
 
@@ -1978,7 +1984,7 @@ Configure general parameters shared between OpenTelemetry providers.
 
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
-Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+Can be set or overridden with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable). The service name can be set or overridden using attributes or with the environment variable `OTEL_SERVICE_NAME`.
 
 ### sampler_type
 
@@ -2003,7 +2009,7 @@ Depending on the value of `sampler_type`, the sampler configuration parameter ca
 
 When `sampler_type` is `remote`, this specifies the URL of the sampling server. This can be used by all tracing providers.
 
-Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Agent](/oss/agent/).
+Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/).
 
 <hr>
 
@@ -2210,7 +2216,11 @@ Set to `true` if you want to test alpha panels that are not yet ready for genera
 
 ### disable_sanitize_html
 
-If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false. This setting was introduced in Grafana v6.0.
+{{% admonition type="note" %}}
+This configuration is not available in Grafana Cloud instances.
+{{% /admonition %}}
+
+If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false.
 
 ## [plugins]
 

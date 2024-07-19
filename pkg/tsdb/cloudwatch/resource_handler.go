@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
@@ -25,7 +24,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/accounts", routes.ResourceRequestMiddleware(routes.AccountsHandler, e.logger, e.getRequestContext))
 	mux.HandleFunc("/namespaces", routes.ResourceRequestMiddleware(routes.NamespacesHandler, e.logger, e.getRequestContext))
 	mux.HandleFunc("/log-group-fields", routes.ResourceRequestMiddleware(routes.LogGroupFieldsHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/external-id", routes.ResourceRequestMiddleware(routes.ExternalIdHandler, e.logger, e.getRequestContext))
+	mux.HandleFunc("/external-id", routes.ResourceRequestMiddleware(routes.ExternalIdHandler, e.logger, e.getRequestContextOnlySettings))
 	mux.HandleFunc("/regions", routes.ResourceRequestMiddleware(routes.RegionsHandler, e.logger, e.getRequestContext))
 	// remove this once AWS's Cross Account Observability is supported in GovCloud
 	mux.HandleFunc("/legacy-log-groups", handleResourceReq(e.handleGetLogGroups, e.logger))
@@ -38,7 +37,7 @@ type handleFn func(ctx context.Context, pluginCtx backend.PluginContext, paramet
 func handleResourceReq(handleFunc handleFn, logger log.Logger) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		pluginContext := httpadapter.PluginConfigFromContext(ctx)
+		pluginContext := backend.PluginConfigFromContext(ctx)
 		err := req.ParseForm()
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger.FromContext(ctx))

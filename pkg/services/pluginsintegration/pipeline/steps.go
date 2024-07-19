@@ -3,9 +3,14 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -14,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -24,31 +27,43 @@ type ExternalServiceRegistration struct {
 	cfg                     *config.PluginManagementCfg
 	externalServiceRegistry auth.ExternalServiceRegistry
 	log                     log.Logger
+	tracer                  tracing.Tracer
 }
 
 // ExternalServiceRegistrationStep returns an InitializeFunc for registering external services.
-func ExternalServiceRegistrationStep(cfg *config.PluginManagementCfg, externalServiceRegistry auth.ExternalServiceRegistry) initialization.InitializeFunc {
-	return newExternalServiceRegistration(cfg, externalServiceRegistry).Register
+func ExternalServiceRegistrationStep(cfg *config.PluginManagementCfg, externalServiceRegistry auth.ExternalServiceRegistry, tracer tracing.Tracer) initialization.InitializeFunc {
+	return newExternalServiceRegistration(cfg, externalServiceRegistry, tracer).Register
 }
 
-func newExternalServiceRegistration(cfg *config.PluginManagementCfg, serviceRegistry auth.ExternalServiceRegistry) *ExternalServiceRegistration {
+func newExternalServiceRegistration(cfg *config.PluginManagementCfg, serviceRegistry auth.ExternalServiceRegistry, tracer tracing.Tracer) *ExternalServiceRegistration {
 	return &ExternalServiceRegistration{
 		cfg:                     cfg,
 		externalServiceRegistry: serviceRegistry,
 		log:                     log.New("plugins.external.registration"),
+		tracer:                  tracer,
 	}
 }
 
 // Register registers the external service with the external service registry, if the feature is enabled.
 func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if p.IAM != nil {
-		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, plugindef.Type(p.Type), p.IAM)
-		if err != nil {
-			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
-			return nil, err
-		}
-		p.ExternalService = s
+	if p.IAM == nil {
+		return p, nil
 	}
+
+	ctx, span := r.tracer.Start(ctx, "ExternalServiceRegistration.Register")
+	span.SetAttributes(attribute.String("register.pluginId", p.ID))
+	defer span.End()
+
+	ctxLogger := r.log.FromContext(ctx)
+
+	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, pfs.Type(p.Type), p.IAM)
+	if err != nil {
+		ctxLogger.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
+		span.SetStatus(codes.Error, fmt.Sprintf("could not register external service: %v", err))
+		return nil, err
+	}
+	p.ExternalService = s
+
 	return p, nil
 }
 
@@ -74,6 +89,34 @@ func newRegisterPluginRoles(registry plugins.RoleRegistry) *RegisterPluginRoles 
 func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := r.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
 		r.log.Warn("Declare plugin roles failed.", "pluginId", p.ID, "error", err)
+		return nil, err
+	}
+	return p, nil
+}
+
+// RegisterActionSets implements an InitializeFunc for registering plugin action sets.
+type RegisterActionSets struct {
+	log               log.Logger
+	actionSetRegistry plugins.ActionSetRegistry
+}
+
+// RegisterActionSetsStep returns a new InitializeFunc for registering plugin action sets.
+func RegisterActionSetsStep(actionRegistry plugins.ActionSetRegistry) initialization.InitializeFunc {
+	return newRegisterActionSets(actionRegistry).Register
+}
+
+func newRegisterActionSets(registry plugins.ActionSetRegistry) *RegisterActionSets {
+	return &RegisterActionSets{
+		log:               log.New("plugins.actionsets.registration"),
+		actionSetRegistry: registry,
+	}
+}
+
+// Register registers the plugin action sets.
+func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if err := r.actionSetRegistry.RegisterActionSets(ctx, p.ID, p.ActionSets); err != nil {
+		r.log.Warn("Plugin action set registration failed", "pluginId", p.ID, "error", err)
+		return nil, err
 	}
 	return p, nil
 }
@@ -89,15 +132,12 @@ func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, 
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.
 type SignatureValidation struct {
 	signatureValidator signature.Validator
-	errs               pluginerrs.SignatureErrorTracker
 	log                log.Logger
 }
 
 // SignatureValidationStep returns a new ValidateFunc for validating plugin signatures.
-func SignatureValidationStep(signatureValidator signature.Validator,
-	sigErr pluginerrs.SignatureErrorTracker) validation.ValidateFunc {
+func SignatureValidationStep(signatureValidator signature.Validator) validation.ValidateFunc {
 	sv := &SignatureValidation{
-		errs:               sigErr,
 		signatureValidator: signatureValidator,
 		log:                log.New("plugins.signature.validation"),
 	}
@@ -105,22 +145,18 @@ func SignatureValidationStep(signatureValidator signature.Validator,
 }
 
 // Validate validates the plugin signature. If a signature error is encountered, the error is recorded with the
-// pluginerrs.SignatureErrorTracker.
+// pluginerrs.ErrorTracker.
 func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) error {
 	err := v.signatureValidator.ValidateSignature(p)
 	if err != nil {
-		var sigErr *plugins.SignatureError
+		var sigErr *plugins.Error
 		if errors.As(err, &sigErr) {
 			v.log.Warn("Skipping loading plugin due to problem with signature",
 				"pluginId", p.ID, "status", sigErr.SignatureStatus)
-			p.SignatureError = sigErr
-			v.errs.Record(ctx, sigErr)
+			p.Error = sigErr
 		}
 		return err
 	}
-
-	// clear plugin error if a pre-existing error has since been resolved
-	v.errs.Clear(ctx, p.ID)
 
 	return nil
 }
@@ -167,7 +203,7 @@ type AsExternal struct {
 	cfg *config.PluginManagementCfg
 }
 
-// NewDisablePluginsStep returns a new DisablePlugins.
+// NewAsExternalStep returns a new DisablePlugins.
 func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 	return &AsExternal{
 		cfg: cfg,
@@ -177,7 +213,7 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if c.cfg.Features == nil || !c.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) {
+	if !c.cfg.Features.ExternalCorePluginsEnabled {
 		return bundles, nil
 	}
 

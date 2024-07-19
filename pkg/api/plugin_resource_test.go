@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -70,7 +70,7 @@ func TestCallResource(t *testing.T) {
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
 		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test", strings.NewReader(`{"test": "true"}`))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 			}),
 		}})
@@ -92,7 +92,7 @@ func TestCallResource(t *testing.T) {
 	t.Run("Test successful response is received for valid request with the colon character", func(t *testing.T) {
 		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test-*,*:test-*/_mapping", strings.NewReader(`{"test": "true"}`))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 			}),
 		}})
@@ -146,7 +146,7 @@ func TestCallResource(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				req := srv.NewPostRequest(tc.url, strings.NewReader(`{"test": "true"}`))
 				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 						{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 					}),
 				}})
@@ -171,7 +171,7 @@ func TestCallResource(t *testing.T) {
 			Backend: true,
 		},
 	}))
-	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{}, &featuremgmt.FeatureManager{}, prometheus.DefaultRegisterer, pluginRegistry)
+	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{}, featuremgmt.WithFeatures(), prometheus.DefaultRegisterer, pluginRegistry)
 	pc, err := pluginClient.NewDecorator(&fakes.FakePluginClient{
 		CallResourceHandlerFunc: backend.CallResourceHandlerFunc(func(ctx context.Context,
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -192,7 +192,7 @@ func TestCallResource(t *testing.T) {
 	t.Run("Test error is properly propagated to API response", func(t *testing.T) {
 		req := srv.NewGetRequest("/api/plugins/grafana-testdata-datasource/resources/scenarios")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 			}),
 		}})

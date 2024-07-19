@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
+import * as React from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
 
@@ -19,7 +20,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   declare context: React.ContextType<typeof PanelContextRoot>;
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const { eventBus, eventsScope, sync } = this.context;
+    const { sync } = this.context;
     const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
@@ -27,13 +28,11 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       theme,
       timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
       getTimeRange,
-      eventBus,
       sync,
       allFrames,
       renderers,
       tweakScale,
       tweakAxis,
-      eventsScope,
     });
   };
 

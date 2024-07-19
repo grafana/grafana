@@ -1,6 +1,8 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationEditor.tsx
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useId, useState } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from '@hello-pangea/dnd';
+import { useEffect, useId, useState } from 'react';
+import * as React from 'react';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -237,7 +239,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       marginBottom: theme.spacing(1),
       position: 'relative',
-      transition: 'all 0.5s ease-in 0s',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'all 0.5s ease-in 0s',
+      },
       height: '100%',
     }),
     cardError: css({

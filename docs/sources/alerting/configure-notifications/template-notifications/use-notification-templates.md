@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../manage-notifications/template-notifications/use-notification-templates/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/use-notification-templates/
+  - ../../manage-notifications/template-notifications/use-notification-templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/use-notification-templates/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/use-notification-templates/
 description: Use notification templates in contact points to customize your notifications
 keywords:
@@ -16,30 +16,38 @@ labels:
     - oss
 title: Use notification templates
 weight: 300
+refs:
+  create-notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
+  using-go-templating-language:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language/
 ---
 
 # Use notification templates
 
 Use templates in contact points to customize your notifications.
 
-In the Contact points tab, you can see a list of your contact points.
+Complete the following steps to add templates to your contact point.
 
-1. To create a new contact point, click New.
+1. Click an existing contact point or create a new one
+1. In **Optional settings**, click any field that contains templates.
 
-   **Note:** You can edit an existing contact by clicking the Edit icon.
+   For example, if you are creating an email contact point integration, click **Message** or **Subject**.
 
-1. Execute a template from one or more fields such as Message and Subject:
+1. Click **Edit**.
+   A dialog box opens where you can select templates.
+1. Click **Select existing template** to select a template and preview it using the default payload.
 
-   {{< figure max-width="940px" src="/static/img/docs/alerting/unified/use-notification-template-9-4.png" caption="Use notification template" >}}
+   You can also copy the selected template and use it in the custom tab.
 
-   For more information on how to write and execute templates, refer to [Using Go's templating language][using-go-templating-language] and [Create notification templates][create-notification-templates].
+1. Click **Enter custom message** to customize and edit the field directly. Note that the title changes depending on the field you are editing.
+
+1. You can switch between the two tabs to access the list of available templates and copy them across to the customized version.
 
 1. Click **Save contact point**.
-
-{{% docs/reference %}}
-[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates"
-[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates"
-
-[using-go-templating-language]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language"
-[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language"
-{{% /docs/reference %}}

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { Tooltip, Icon, InteractiveTable, type CellProps, Column } from '@grafana/ui';
 import { LdapRole } from 'app/types';
@@ -46,7 +46,7 @@ export const LdapUserGroups = ({ groups }: Props) => {
       }}
       columns={columns}
       data={items}
-      getRowId={(row) => row.orgId + row.orgRole}
+      getRowId={(row) => row.orgId + row.orgRole + row.groupDN}
     />
   );
 };

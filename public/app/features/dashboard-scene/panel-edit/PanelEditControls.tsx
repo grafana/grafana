@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { InlineSwitch } from '@grafana/ui';
@@ -13,7 +11,7 @@ export interface Props {
 export function PanelEditControls({ panelEditor }: Props) {
   const vizManager = panelEditor.state.vizManager;
   const { panel, tableView } = vizManager.useState();
-  const skipDataQuery = config.panels[panel.state.pluginId].skipDataQuery;
+  const skipDataQuery = config.panels[panel.state.pluginId]?.skipDataQuery;
 
   return (
     <>

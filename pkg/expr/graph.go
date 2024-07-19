@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/exp/maps"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
@@ -88,7 +90,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			if res, ok := vars[neededVar]; ok {
 				if res.Error != nil {
 					errResult := mathexp.Results{
-						Error: makeDependencyError(node.RefID(), neededVar),
+						Error: MakeDependencyError(node.RefID(), neededVar),
 					}
 					vars[node.RefID()] = errResult
 					hasDepError = true
@@ -121,6 +123,56 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		vars[node.RefID()] = res
 	}
 	return vars, nil
+}
+
+// GetDatasourceTypes returns an unique list of data source types used in the query. Machine learning node is encoded as `ml_<type>`, e.g. ml_outlier
+func (dp *DataPipeline) GetDatasourceTypes() []string {
+	if dp == nil {
+		return nil
+	}
+	m := make(map[string]struct{}, 2)
+	for _, node := range *dp {
+		name := ""
+		switch t := node.(type) {
+		case *DSNode:
+			if t.datasource != nil {
+				name = t.datasource.Type
+			}
+		case *MLNode:
+			name = fmt.Sprintf("ml_%s", t.command.Type())
+		}
+		if name == "" {
+			continue
+		}
+		m[name] = struct{}{}
+	}
+	result := maps.Keys(m)
+	slices.Sort(result)
+	return result
+}
+
+// GetCommandTypes returns a sorted unique list of all server-side expression commands used in the pipeline.
+func (dp *DataPipeline) GetCommandTypes() []string {
+	if dp == nil {
+		return nil
+	}
+	m := make(map[string]struct{}, 5) // 5 is big enough to cover most of the cases
+	for _, node := range *dp {
+		name := ""
+		switch t := node.(type) {
+		case *CMDNode:
+			if t.Command != nil {
+				name = t.Command.Type()
+			}
+		}
+		if name == "" {
+			continue
+		}
+		m[name] = struct{}{}
+	}
+	result := maps.Keys(m)
+	slices.Sort(result)
+	return result
 }
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an

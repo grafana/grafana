@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
@@ -57,7 +56,7 @@ export const ExamplesSizes = (args: BasePropsWithTooltip) => {
   });
 
   return (
-    <HorizontalGroup justify="center">
+    <Stack justifyContent="center">
       {variants.map((variant) => {
         return (
           <div
@@ -93,7 +92,7 @@ export const ExamplesSizes = (args: BasePropsWithTooltip) => {
           </div>
         ))}
       </div>
-    </HorizontalGroup>
+    </Stack>
   );
 };
 
@@ -115,7 +114,7 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
           background: theme.colors.background[background],
         })}
       >
-        <VerticalGroup spacing="md">
+        <Stack direction="column" gap={2}>
           <div>{background}</div>
           <div
             className={css({
@@ -128,7 +127,7 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
             })}
             <IconButton name="times" size="xl" tooltip={args.tooltip} disabled />
           </div>
-        </VerticalGroup>
+        </Stack>
       </div>
     );
   };

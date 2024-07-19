@@ -116,6 +116,11 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
+	ErrFolderRestoreNotFound = DashboardErr{
+		Reason:     "Restoring folder not found",
+		StatusCode: 400,
+		Status:     "bad-request",
+	}
 
 	ErrFolderNotFound          = errors.New("folder not found")
 	ErrFolderVersionMismatch   = errors.New("the folder has been changed by someone else")

@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func TestClient_ExecuteMultisearch(t *testing.T) {
@@ -58,7 +57,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			Interval:                   "Daily",
 			MaxConcurrentShardRequests: 6,
 			IncludeFrozen:              true,
-			XPack:                      true,
 		}
 
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
@@ -68,7 +66,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			To:   to,
 		}
 
-		c, err := NewClient(context.Background(), &ds, timeRange, log.New("test", "test"), tracing.InitializeTracerForTest())
+		c, err := NewClient(context.Background(), &ds, log.New())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -76,7 +74,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			ts.Close()
 		})
 
-		ms, err := createMultisearchForTest(t, c)
+		ms, err := createMultisearchForTest(t, c, timeRange)
 		require.NoError(t, err)
 		res, err := c.ExecuteMultisearch(ms)
 		require.NoError(t, err)
@@ -110,6 +108,78 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 
 		assert.Equal(t, 200, res.Status)
 		require.Len(t, res.Responses, 1)
+	})
+
+	t.Run("Given a fake http client, 2 queries and a client with response", func(t *testing.T) {
+		var requestBody *bytes.Buffer
+		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			buf, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+
+			requestBody = bytes.NewBuffer(buf)
+
+			rw.Header().Set("Content-Type", "application/x-ndjson")
+			_, err = rw.Write([]byte(
+				`{
+				"responses": [
+					{
+						"hits": {	"hits": [], "max_score": 0,	"total": { "value": 4656, "relation": "eq"}	},
+						"status": 200
+					}
+				]
+			}`))
+			require.NoError(t, err)
+			rw.WriteHeader(200)
+		}))
+
+		configuredFields := ConfiguredFields{
+			TimeField:       "testtime",
+			LogMessageField: "line",
+			LogLevelField:   "lvl",
+		}
+
+		ds := DatasourceInfo{
+			URL:                        ts.URL,
+			HTTPClient:                 ts.Client(),
+			Database:                   "[metrics-]YYYY.MM.DD",
+			ConfiguredFields:           configuredFields,
+			Interval:                   "Daily",
+			MaxConcurrentShardRequests: 6,
+			IncludeFrozen:              true,
+		}
+
+		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
+
+		from2 := time.Date(2018, 5, 17, 17, 50, 0, 0, time.UTC)
+		to2 := time.Date(2018, 5, 17, 17, 55, 0, 0, time.UTC)
+		timeRange2 := backend.TimeRange{
+			From: from2,
+			To:   to2,
+		}
+
+		c, err := NewClient(context.Background(), &ds, log.New())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		t.Cleanup(func() {
+			ts.Close()
+		})
+
+		ms, err := createMultisearchWithMultipleQueriesForTest(t, c, timeRange, timeRange2)
+		require.NoError(t, err)
+		_, err = c.ExecuteMultisearch(ms)
+		require.NoError(t, err)
+
+		require.NotNil(t, requestBody)
+
+		bodyString := requestBody.String()
+		require.Contains(t, bodyString, "metrics-2018.05.15")
+		require.Contains(t, bodyString, "metrics-2018.05.17")
 	})
 }
 
@@ -180,7 +250,6 @@ func TestClient_Index(t *testing.T) {
 				Interval:                   test.patternInDatasource,
 				MaxConcurrentShardRequests: 6,
 				IncludeFrozen:              true,
-				XPack:                      true,
 			}
 
 			from := time.Date(2018, 5, 10, 17, 50, 0, 0, time.UTC)
@@ -190,7 +259,7 @@ func TestClient_Index(t *testing.T) {
 				To:   to,
 			}
 
-			c, err := NewClient(context.Background(), &ds, timeRange, log.New("test", "test"), tracing.InitializeTracerForTest())
+			c, err := NewClient(context.Background(), &ds, log.New())
 			require.NoError(t, err)
 			require.NotNil(t, c)
 
@@ -198,7 +267,7 @@ func TestClient_Index(t *testing.T) {
 				ts.Close()
 			})
 
-			ms, err := createMultisearchForTest(t, c)
+			ms, err := createMultisearchForTest(t, c, timeRange)
 			require.NoError(t, err)
 			_, err = c.ExecuteMultisearch(ms)
 			require.NoError(t, err)
@@ -217,11 +286,11 @@ func TestClient_Index(t *testing.T) {
 	}
 }
 
-func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, error) {
+func createMultisearchForTest(t *testing.T, c Client, timeRange backend.TimeRange) (*MultiSearchRequest, error) {
 	t.Helper()
 
 	msb := c.MultiSearch()
-	s := msb.Search(15 * time.Second)
+	s := msb.Search(15*time.Second, timeRange)
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.FixedInterval = "$__interval"
 
@@ -229,5 +298,30 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 			a.Settings["script"] = "$__interval_ms*@hostname"
 		})
 	})
+	return msb.Build()
+}
+
+func createMultisearchWithMultipleQueriesForTest(t *testing.T, c Client, firstTimeRange backend.TimeRange, secondTimeRange backend.TimeRange) (*MultiSearchRequest, error) {
+	t.Helper()
+
+	msb := c.MultiSearch()
+	s1 := msb.Search(15*time.Second, firstTimeRange)
+	s1.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
+		a.FixedInterval = "$__interval"
+
+		ab.Metric("1", "avg", "@hostname", func(a *MetricAggregation) {
+			a.Settings["script"] = "$__interval_ms*@hostname"
+		})
+	})
+
+	s2 := msb.Search(15*time.Second, secondTimeRange)
+	s2.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
+		a.FixedInterval = "$__interval"
+
+		ab.Metric("1", "avg", "@hostname", func(a *MetricAggregation) {
+			a.Settings["script"] = "$__interval_ms*@hostname"
+		})
+	})
+
 	return msb.Build()
 }

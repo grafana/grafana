@@ -5,6 +5,7 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/usermig"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -153,6 +154,15 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(userV2, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
+
+	// Service accounts login were not unique per org. this migration is part of making it unique per org
+	// to be able to create service accounts that are unique per org
+	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
+
+	// Users login and email should be in lower case
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
+	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;

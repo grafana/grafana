@@ -1,7 +1,8 @@
 // Libraries
 import { isNumber } from 'lodash';
 
-import { NullValueMode, Field, FieldCalcs, FieldType } from '../types/index';
+import { NullValueMode } from '../types/data';
+import { Field, FieldCalcs, FieldType } from '../types/dataFrame';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -28,6 +29,105 @@ export enum ReducerID {
   allIsNull = 'allIsNull',
   allValues = 'allValues',
   uniqueValues = 'uniqueValues',
+  p1 = 'p1',
+  p2 = 'p2',
+  p3 = 'p3',
+  p4 = 'p4',
+  p5 = 'p5',
+  p6 = 'p6',
+  p7 = 'p7',
+  p8 = 'p8',
+  p9 = 'p9',
+  p10 = 'p10',
+  p11 = 'p11',
+  p12 = 'p12',
+  p13 = 'p13',
+  p14 = 'p14',
+  p15 = 'p15',
+  p16 = 'p16',
+  p17 = 'p17',
+  p18 = 'p18',
+  p19 = 'p19',
+  p20 = 'p20',
+  p21 = 'p21',
+  p22 = 'p22',
+  p23 = 'p23',
+  p24 = 'p24',
+  p25 = 'p25',
+  p26 = 'p26',
+  p27 = 'p27',
+  p28 = 'p28',
+  p29 = 'p29',
+  p30 = 'p30',
+  p31 = 'p31',
+  p32 = 'p32',
+  p33 = 'p33',
+  p34 = 'p34',
+  p35 = 'p35',
+  p36 = 'p36',
+  p37 = 'p37',
+  p38 = 'p38',
+  p39 = 'p39',
+  p40 = 'p40',
+  p41 = 'p41',
+  p42 = 'p42',
+  p43 = 'p43',
+  p44 = 'p44',
+  p45 = 'p45',
+  p46 = 'p46',
+  p47 = 'p47',
+  p48 = 'p48',
+  p49 = 'p49',
+  p50 = 'p50',
+  p51 = 'p51',
+  p52 = 'p52',
+  p53 = 'p53',
+  p54 = 'p54',
+  p55 = 'p55',
+  p56 = 'p56',
+  p57 = 'p57',
+  p58 = 'p58',
+  p59 = 'p59',
+  p60 = 'p60',
+  p61 = 'p61',
+  p62 = 'p62',
+  p63 = 'p63',
+  p64 = 'p64',
+  p65 = 'p65',
+  p66 = 'p66',
+  p67 = 'p67',
+  p68 = 'p68',
+  p69 = 'p69',
+  p70 = 'p70',
+  p71 = 'p71',
+  p72 = 'p72',
+  p73 = 'p73',
+  p74 = 'p74',
+  p75 = 'p75',
+  p76 = 'p76',
+  p77 = 'p77',
+  p78 = 'p78',
+  p79 = 'p79',
+  p80 = 'p80',
+  p81 = 'p81',
+  p82 = 'p82',
+  p83 = 'p83',
+  p84 = 'p84',
+  p85 = 'p85',
+  p86 = 'p86',
+  p87 = 'p87',
+  p88 = 'p88',
+  p89 = 'p89',
+  p90 = 'p90',
+  p91 = 'p91',
+  p92 = 'p92',
+  p93 = 'p93',
+  p94 = 'p94',
+  p95 = 'p95',
+  p96 = 'p96',
+  p97 = 'p97',
+  p98 = 'p98',
+  p99 = 'p99',
 }
 
 export function isReducerID(id: string): id is ReducerID {
@@ -303,7 +403,34 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     }),
     preservesUnits: false,
   },
+  ...buildPercentileReducers(),
 ]);
+
+// This `Array.from` will build an array of elements from 1 to 99
+const buildPercentileReducers = (percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)]) => {
+  const percentileReducers: FieldReducerInfo[] = [];
+  const nth = (n: number) =>
+    n > 3 && n < 21 ? 'th' : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th';
+
+  percentiles.forEach((p) => {
+    const percentile = p / 100;
+    const id = `p${p}` as ReducerID;
+    const name = `${p}${nth(p)} %`;
+    const description = `${p}${nth(p)} percentile value`;
+
+    percentileReducers.push({
+      id: id,
+      name: name,
+      description: description,
+      standard: false,
+      reduce: (field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs => {
+        return { [id]: calculatePercentile(field, percentile, ignoreNulls, nullAsZero) };
+      },
+      preservesUnits: true,
+    });
+  });
+  return percentileReducers;
+};
 
 // Used for test cases
 export const defaultCalcs: FieldCalcs = {
@@ -325,7 +452,6 @@ export const defaultCalcs: FieldCalcs = {
   delta: 0,
   step: Number.MAX_VALUE,
   diffperc: 0,
-
   // Just used for calculations -- not exposed as a stat
   previousDeltaUp: true,
 };
@@ -552,4 +678,19 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
     distinct.add(currentValue);
   }
   return { distinctCount: distinct.size };
+}
+
+function calculatePercentile(field: Field, percentile: number, ignoreNulls: boolean, nullAsZero: boolean): number {
+  let data = field.values;
+
+  if (ignoreNulls) {
+    data = data.filter((value) => value !== null);
+  }
+  if (nullAsZero) {
+    data = data.map((value) => (value === null ? 0 : value));
+  }
+
+  const sorted = data.slice().sort((a, b) => a - b);
+  const index = Math.round((sorted.length - 1) * percentile);
+  return sorted[index];
 }

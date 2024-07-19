@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 
@@ -23,8 +23,17 @@ function PluginListItemComponent({ plugin, pathName, displayMode = PluginListDis
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
+  const reportUserClickInteraction = () => {
+    if (locationService.getSearchObject()?.q) {
+      reportInteraction('plugins_search_user_click', {});
+    }
+  };
   return (
-    <a href={`${pathName}/${plugin.id}`} className={cx(styles.container, { [styles.list]: isList })}>
+    <a
+      href={`${pathName}/${plugin.id}`}
+      className={cx(styles.container, { [styles.list]: isList })}
+      onClick={reportUserClickInteraction}
+    >
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
@@ -90,9 +99,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(3),
-      transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-        duration: theme.transitions.duration.short,
-      }),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
@@ -139,6 +150,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.h4.fontSize,
       color: theme.colors.text.primary,
       margin: 0,
+      wordBreak: 'normal',
+      overflowWrap: 'anywhere',
     }),
   };
 };

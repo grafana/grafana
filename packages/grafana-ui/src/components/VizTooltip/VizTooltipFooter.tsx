@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
-import { Button, ButtonProps, DataLinkButton, HorizontalGroup } from '..';
+import { Button, ButtonProps, DataLinkButton, Stack } from '..';
 import { useStyles2 } from '../../themes';
 
 interface VizTooltipFooterProps {
@@ -22,11 +21,11 @@ export const VizTooltipFooter = ({ dataLinks, annotate }: VizTooltipFooterProps)
     };
 
     return (
-      <HorizontalGroup>
+      <Stack direction="column" justifyContent="flex-start">
         {dataLinks.map((link, i) => (
           <DataLinkButton key={i} link={link} buttonProps={buttonProps} />
         ))}
-      </HorizontalGroup>
+      </Stack>
     );
   };
 
@@ -52,10 +51,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0),
   }),
   dataLinks: css({
-    overflowX: 'auto',
-    overflowY: 'hidden',
-    whiteSpace: 'nowrap',
-    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),

@@ -1,151 +1,25 @@
-import { Meta, StoryFn } from '@storybook/react';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { InteractiveTable, Column, CellProps, LinkButton } from '@grafana/ui';
+import { InteractiveTable, CellProps, LinkButton } from '@grafana/ui';
+
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 
 import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
 
-const meta: Meta<typeof InteractiveTable> = {
-  title: 'Experimental/InteractiveTable',
-  component: InteractiveTable,
-  parameters: {
-    docs: {
-      page: mdx,
-    },
-    controls: {
-      exclude: EXCLUDED_PROPS,
-    },
-  },
-  args: {},
-  argTypes: {},
-};
-
-interface TableData {
-  header1: string;
-  header2?: number;
-  noheader?: string;
-}
-
-export const Basic: StoryFn<typeof InteractiveTable> = (args) => {
-  const columns = useMemo<Array<Column<TableData>>>(
-    () => [
-      { id: 'header2', header: 'With missing values', sortType: 'number', disableGrow: true },
-      {
-        id: 'noheader',
-        sortType: 'number',
-      },
-    ],
-    []
-  );
-  const data: TableData[] = useMemo(
-    () => [
-      { header1: 'a', header2: 1 },
-      { header1: 'b', noheader: "This column doesn't have an header" },
-      { header1: 'c', noheader: "But it's still sortable" },
-    ],
-    []
-  );
-
-  return <InteractiveTable columns={columns} data={data} getRowId={(r) => r.header1} />;
-};
-
-interface WithRowExpansionData {
-  datasource: string;
-  repo: string;
-  description: string;
-}
-
-const ExpandedCell = ({ description }: WithRowExpansionData) => {
-  return <p>{description}</p>;
-};
-
-export const WithRowExpansion: StoryFn<typeof InteractiveTable> = (args) => {
-  const tableData: WithRowExpansionData[] = [
-    {
-      datasource: 'Prometheus',
-      repo: 'https://github.com/prometheus/prometheus',
-      description: 'Open source time series database & alerting.',
-    },
-    {
-      datasource: 'Loki',
-      repo: 'https://github.com/grafana/loki',
-      description: 'Like Prometheus but for logs. OSS logging solution from Grafana Labs.',
-    },
-    {
-      datasource: 'Tempo',
-      repo: 'https://github.com/grafana/tempo',
-      description: 'High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs.',
-    },
-  ];
-
-  const columns: Array<Column<WithRowExpansionData>> = [
-    { id: 'datasource', header: 'Data Source' },
-    { id: 'repo', header: 'Repo' },
-  ];
-
-  return (
-    <InteractiveTable
-      columns={columns}
-      data={tableData}
-      getRowId={(r) => r.datasource}
-      renderExpandedRow={ExpandedCell}
-    />
-  );
-};
-
-interface WithCustomCellData {
-  datasource: string;
-  repo: string;
-}
-
-const RepoCell = ({
-  row: {
-    original: { repo },
-  },
-}: CellProps<WithCustomCellData, void>) => {
-  return (
-    <LinkButton href={repo} size="sm" icon="external-link-alt">
-      Open on GithHub
-    </LinkButton>
-  );
-};
-
-export const WithCustomCell: StoryFn<typeof InteractiveTable> = (args) => {
-  const tableData: WithCustomCellData[] = [
-    {
-      datasource: 'Prometheus',
-      repo: 'https://github.com/prometheus/prometheus',
-    },
-    {
-      datasource: 'Loki',
-      repo: 'https://github.com/grafana/loki',
-    },
-    {
-      datasource: 'Tempo',
-      repo: 'https://github.com/grafana/tempo',
-    },
-  ];
-
-  const columns: Array<Column<WithCustomCellData>> = [
-    { id: 'datasource', header: 'Data Source' },
-    { id: 'repo', header: 'Repo', cell: RepoCell },
-  ];
-
-  return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
-};
-
-interface WithPaginationData {
+interface CarData {
   id: string;
   firstName: string;
   lastName: string;
-  car: string;
+  car?: string;
   age: number;
 }
 
-const pageableData: WithPaginationData[] = [
+const pageableData: CarData[] = [
   { id: '48a3926a-e82c-4c26-b959-3a5f473e186e', firstName: 'Brynne', lastName: 'Denisevich', car: 'Cougar', age: 47 },
   {
     id: 'cf281390-adbf-4407-8cf3-a52e012f63e6',
@@ -228,60 +102,177 @@ const pageableData: WithPaginationData[] = [
   { id: 'b9b0b559-acc1-4bd8-b052-160ecf3e4f68', firstName: 'Ermanno', lastName: 'Sinott', car: 'Thunderbird', age: 26 },
 ];
 
-export const WithPagination: StoryFn<typeof InteractiveTable> = (args) => {
-  const columns: Array<Column<WithPaginationData>> = [
-    { id: 'firstName', header: 'First name' },
-    { id: 'lastName', header: 'Last name' },
-    { id: 'car', header: 'Car', sortType: 'string' },
-    { id: 'age', header: 'Age', sortType: 'number' },
-  ];
-  return <InteractiveTable columns={columns} data={pageableData} getRowId={(r) => r.id} pageSize={15} />;
+const meta: Meta<typeof InteractiveTable<CarData>> = {
+  title: 'Experimental/InteractiveTable',
+  component: InteractiveTable,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+    controls: {
+      exclude: EXCLUDED_PROPS,
+    },
+  },
+  args: {
+    columns: [
+      { id: 'firstName', header: 'First name', sortType: 'string' },
+      { id: 'lastName', header: 'Last name', sortType: 'string' },
+      { id: 'car', header: 'Car', sortType: 'string' },
+      { id: 'age', header: 'Age' },
+    ],
+    data: pageableData.slice(0, 10),
+    getRowId: (r) => r.id,
+    pageSize: 0,
+    showExpandAll: false,
+  },
+  argTypes: {},
 };
 
-export const WithHeaderTooltips: StoryFn<typeof InteractiveTable> = (args) => {
-  const columns: Array<Column<WithPaginationData>> = [
-    { id: 'firstName', header: 'First name' },
-    { id: 'lastName', header: 'Last name' },
-    { id: 'car', header: 'Car', sortType: 'string' },
-    { id: 'age', header: 'Age', sortType: 'number' },
-  ];
+type TableStoryObj = StoryObj<typeof InteractiveTable<CarData>>;
 
-  const headerTooltips: Record<string, InteractiveTableHeaderTooltip> = {
-    age: { content: 'The number of years since the person was born' },
-    lastName: {
-      content: () => {
-        return (
-          <>
-            <h4>Here is an h4</h4>
-            <div>Some content</div>
-            <div>Some more content</div>
-          </>
-        );
+export const Basic: TableStoryObj = {
+  args: {
+    columns: [
+      {
+        id: 'firstName',
+        header: 'First name',
+        sortType: 'alphanumeric',
       },
-      iconName: 'plus-square',
-    },
-  };
+      {
+        id: 'lastName',
+        sortType: 'alphanumeric',
+      },
+      { id: 'car', header: 'With missing values', sortType: 'alphanumeric', disableGrow: true },
+    ],
+    data: [
+      {
+        id: 'be5736f5-7015-4668-a03d-44b56f2b012c',
+        firstName: 'Sonni',
+        lastName: 'Still sortable!',
+        car: 'Legend',
+        age: 75,
+      },
+      { id: 'fdbe3559-c68a-4f2f-b579-48ef02642628', firstName: 'Hanson', lastName: 'Giraudeau', car: 'X5', age: 67 },
+      { id: '7d0ee01a-7ac5-4e0a-9c73-e864d10c0152', firstName: 'Whitman', lastName: 'Seabridge', age: 99 },
+      { id: '177c2287-b7cb-4b5f-8976-56ee993bed61', firstName: 'Aleda', lastName: 'Friman', car: 'X5', age: 44 },
+      { id: '87c21e60-c2f4-4a01-b2af-a6d22c196e25', firstName: 'Cullen', lastName: 'Kobpac', car: 'Montero', age: 28 },
+      { id: 'dd89f32d-2ef4-4c35-8e23-a8b2219e3a69', firstName: 'Fitz', lastName: 'Butterwick', car: 'Fox', age: 70 },
+      {
+        id: 'cc1b4de7-8ec5-49bd-93bc-bee9fa1ccf37',
+        firstName: 'Jordon',
+        lastName: 'Harrington',
+        car: 'Elantra',
+        age: 39,
+      },
+    ],
+  },
+};
 
+const ExpandedCell = ({ car }: CarData) => {
+  return <p>{car}</p>;
+};
+
+export const WithRowExpansion: TableStoryObj = {
+  args: {
+    renderExpandedRow: ExpandedCell,
+  },
+};
+
+interface WithCustomCellData {
+  datasource: string;
+  repo: string;
+}
+
+const RepoCell = ({
+  row: {
+    original: { repo },
+  },
+}: CellProps<WithCustomCellData, void>) => {
   return (
-    <InteractiveTable
-      columns={columns}
-      data={pageableData.slice(0, 10)}
-      getRowId={(r) => r.id}
-      headerTooltips={headerTooltips}
-    />
+    <LinkButton href={repo} size="sm" icon="external-link-alt">
+      Open on GithHub
+    </LinkButton>
   );
 };
 
+export const WithCustomCell: StoryObj<typeof InteractiveTable<WithCustomCellData>> = {
+  args: {
+    columns: [
+      { id: 'datasource', header: 'Data Source' },
+      { id: 'repo', header: 'Repo', cell: RepoCell },
+    ],
+    data: [
+      {
+        datasource: 'Prometheus',
+        repo: 'https://github.com/prometheus/prometheus',
+      },
+      {
+        datasource: 'Loki',
+        repo: 'https://github.com/grafana/loki',
+      },
+      {
+        datasource: 'Tempo',
+        repo: 'https://github.com/grafana/tempo',
+      },
+    ],
+    getRowId: (r) => r.datasource,
+  },
+};
+
+export const WithPagination: StoryFn<typeof InteractiveTable> = (args) => {
+  const [filter, setFilter] = useState('');
+
+  const data = useMemo(() => {
+    if (filter) {
+      return pageableData.filter((d) => d.firstName.toLowerCase().includes(filter.toLowerCase()));
+    }
+    return pageableData;
+  }, [filter]);
+
+  return (
+    <>
+      <Field label={'Filter data'}>
+        <Input
+          placeholder={'Filter by first name'}
+          onChange={(event) => {
+            setFilter(event.currentTarget.value);
+          }}
+        />
+      </Field>
+      <InteractiveTable {...args} data={data} />
+    </>
+  );
+};
+
+WithPagination.args = {
+  pageSize: 15,
+};
+
+const headerTooltips: Record<string, InteractiveTableHeaderTooltip> = {
+  age: { content: 'The number of years since the person was born' },
+  lastName: {
+    content: () => {
+      return (
+        <>
+          <h4>Here is an h4</h4>
+          <div>Some content</div>
+          <div>Some more content</div>
+        </>
+      );
+    },
+    iconName: 'plus-square',
+  },
+};
+export const WithHeaderTooltips: TableStoryObj = {
+  args: {
+    headerTooltips,
+  },
+};
+
 export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
-  const columns: Array<Column<WithPaginationData>> = [
-    { id: 'firstName', header: 'First name', sortType: 'string' },
-    { id: 'lastName', header: 'Last name', sortType: 'string' },
-    { id: 'car', header: 'Car', sortType: 'string' },
-    { id: 'age', header: 'Age' },
-  ];
   const [data, setData] = useState(pageableData);
 
-  const fetchData = useCallback(({ sortBy }: FetchDataArgs<WithPaginationData>) => {
+  const fetchData = useCallback(({ sortBy }: FetchDataArgs<CarData>) => {
     if (!sortBy?.length) {
       return setData(pageableData);
     }
@@ -291,9 +282,9 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
       newData.sort((a, b) => {
         const sort = sortBy[0];
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const aData = a[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        const aData = a[sort.id as keyof Omit<CarData, 'age' | 'car'>];
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const bData = b[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        const bData = b[sort.id as keyof Omit<CarData, 'age' | 'car'>];
         if (sort.desc) {
           return bData.localeCompare(aData);
         }
@@ -303,6 +294,7 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
     }, 300);
   }, []);
 
-  return <InteractiveTable columns={columns} data={data} getRowId={(r) => r.id} pageSize={15} fetchData={fetchData} />;
+  return <InteractiveTable {...args} data={data} pageSize={15} fetchData={fetchData} />;
 };
+
 export default meta;

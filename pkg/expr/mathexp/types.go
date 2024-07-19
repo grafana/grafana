@@ -88,7 +88,10 @@ func (s Scalar) AsDataFrame() *data.Frame { return s.Frame }
 func NewScalar(name string, f *float64) Scalar {
 	frame := data.NewFrame("",
 		data.NewField(name, nil, []*float64{f}),
-	)
+	).SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeNumericMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
 	return Scalar{frame}
 }
 
@@ -196,7 +199,7 @@ func (ff *Float64Field) GetValue(idx int) *float64 {
 	return &f
 }
 
-// Len returns the the length of the field.
+// Len returns the length of the field.
 func (ff *Float64Field) Len() int {
 	df := data.Field(*ff)
 	return df.Len()

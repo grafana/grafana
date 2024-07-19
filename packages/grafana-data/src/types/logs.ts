@@ -33,6 +33,21 @@ export enum LogLevel {
   unknown = 'unknown',
 }
 
+/**
+ * Mapping of log level abbreviation to canonical log level.
+ * Supported levels are reduce to limit color variation.
+ */
+export const NumericLogLevel: Record<string, LogLevel> = {
+  '0': LogLevel.critical,
+  '1': LogLevel.critical,
+  '2': LogLevel.critical,
+  '3': LogLevel.error,
+  '4': LogLevel.warning,
+  '5': LogLevel.info,
+  '6': LogLevel.info,
+  '7': LogLevel.debug,
+};
+
 // Used for meta information such as common labels or returned log rows in logs view in Explore
 export enum LogsMetaKind {
   Number,
@@ -55,7 +70,7 @@ export interface LogRowModel {
   // the same as rows final index when rendered.
   rowIndex: number;
 
-  // The value of the the dataframe's id field, if it exists
+  // The value of the dataframe's id field, if it exists
   rowId?: string;
 
   // Full DataFrame from which we parsed this log.
@@ -185,6 +200,7 @@ export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
  */
 export type LogsVolumeOption = {
   type: SupplementaryQueryType.LogsVolume;
+  field?: string;
 };
 
 /**
@@ -237,7 +253,8 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    */
   getSupplementaryRequest?(
     type: SupplementaryQueryType,
-    request: DataQueryRequest<TQuery>
+    request: DataQueryRequest<TQuery>,
+    options?: SupplementaryQueryOptions
   ): DataQueryRequest<TQuery> | undefined;
   /**
    * Returns supplementary query types that data source supports.

@@ -1,26 +1,32 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack } from '@grafana/ui';
+import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack, Alert } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useCleanup } from 'app/core/hooks/useCleanup';
-import { useDispatch } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { dispatch } from 'app/store/store';
+import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
+import {
+  useUpdateRuleGroupConfiguration,
+  useRenameRuleGroup,
+  useMoveRuleGroup,
+} from '../../hooks/ruleGroup/useUpdateRuleGroup';
+import { anyOfRequestState } from '../../hooks/useAsync';
+import { fetchRulerRulesAction, rulesInSameGroupHaveInvalidFor } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { initialAsyncRequestState } from '../../utils/redux';
+import { stringifyErrorLike } from '../../utils/misc';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
-import { parsePrometheusDuration, safeParseDurationstr } from '../../utils/time';
+import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
+import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const ITEMS_PER_PAGE = 10;
@@ -68,7 +74,8 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
       data: getAlertInfo(rule, currentInterval),
     }))
     .sort(
-      (alert1, alert2) => safeParseDurationstr(alert1.data.forDuration) - safeParseDurationstr(alert2.data.forDuration)
+      (alert1, alert2) =>
+        safeParsePrometheusDuration(alert1.data.forDuration) - safeParsePrometheusDuration(alert2.data.forDuration)
     );
 
   const columns: AlertsWithForTableColumnProps[] = useMemo(() => {
@@ -145,7 +152,12 @@ export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterO
       if (rulesInSameGroupHaveInvalidFor(rules, evaluateEvery).length === 0) {
         return true;
       } else {
-        return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+        const rulePendingPeriods = rules.map((rule) => {
+          const { forDuration } = getAlertInfo(rule, evaluateEvery);
+          return safeParsePrometheusDuration(forDuration);
+        });
+        const largestPendingPeriod = Math.min(...rulePendingPeriods);
+        return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(largestPendingPeriod)}".`;
       }
     } catch (error) {
       return error instanceof Error ? error.message : 'Failed to parse duration';
@@ -167,18 +179,28 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose, intervalEditOnly, folderUid } = props;
 
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
-  const { loading, error, dispatched } =
-    useUnifiedAlertingSelector((state) => state.updateLotexNamespaceAndGroup) ?? initialAsyncRequestState;
   const notifyApp = useAppNotification();
+
+  /**
+   * This modal can take 3 different actions, depending on what fields were updated.
+   *
+   *  1. update the rule group details without renaming either the namespace or group
+   *  2. rename the rule group, but keeping it in the same namespace
+   *  3. move the rule group to a new namespace, optionally with a different group name
+   */
+  const [updateRuleGroupState, updateRuleGroup] = useUpdateRuleGroupConfiguration();
+  const [renameRuleGroupState, renameRuleGroup] = useRenameRuleGroup();
+  const [moveRuleGroupState, moveRuleGroup] = useMoveRuleGroup();
+
+  const { loading, error } = anyOfRequestState(updateRuleGroupState, moveRuleGroupState, renameRuleGroupState);
 
   const defaultValues = useMemo(
     (): FormValues => ({
       namespaceName: decodeGrafanaNamespace(namespace).name,
       groupName: group.name,
-      groupInterval: group.interval ?? '',
+      groupInterval: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
     }),
-    [namespace, group]
+    [namespace, group.name, group.interval]
   );
 
   const rulesSourceName = getRulesSourceName(namespace.rulesSource);
@@ -189,31 +211,35 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
 
   const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
 
-  // close modal if successfully saved
-  useEffect(() => {
-    if (dispatched && !loading && !error) {
-      onClose(true);
-    }
-  }, [dispatched, loading, onClose, error]);
+  const onSubmit = async (values: FormValues) => {
+    const ruleGroupIdentifier: RuleGroupIdentifier = {
+      dataSourceName: rulesSourceName,
+      groupName: group.name,
+      namespaceName: isGrafanaManagedGroup ? folderUid! : namespace.name,
+    };
 
-  useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
-  const onSubmit = (values: FormValues) => {
     // make sure that when dealing with a nested folder for Grafana managed rules we encode the folder properly
-    const newNamespaceName = isGrafanaManagedGroup
+    const updatedNamespaceName = isGrafanaManagedGroup
       ? encodeGrafanaNamespace(values.namespaceName, nestedFolderParents)
       : values.namespaceName;
+    const updatedGroupName = values.groupName;
+    const updatedInterval = values.groupInterval;
 
-    dispatch(
-      updateLotexNamespaceAndGroupAction({
-        rulesSourceName: rulesSourceName,
-        groupName: group.name,
-        newGroupName: values.groupName,
-        namespaceName: namespace.name,
-        newNamespaceName: newNamespaceName,
-        groupInterval: values.groupInterval || undefined,
-        folderUid,
-      })
-    );
+    // GMA alert rules cannot be moved to another folder, we currently do not support it but it should be doable (with caveats).
+    const shouldMove = isGrafanaManagedGroup ? false : updatedNamespaceName !== ruleGroupIdentifier.namespaceName;
+    const shouldRename = updatedGroupName !== ruleGroupIdentifier.groupName;
+
+    try {
+      if (shouldMove) {
+        await moveRuleGroup.execute(ruleGroupIdentifier, updatedNamespaceName, updatedGroupName, updatedInterval);
+      } else if (shouldRename) {
+        await renameRuleGroup.execute(ruleGroupIdentifier, updatedGroupName, updatedInterval);
+      } else {
+        await updateRuleGroup.execute(ruleGroupIdentifier, updatedInterval);
+      }
+      onClose(true);
+      await dispatch(fetchRulerRulesAction({ rulesSourceName }));
+    } catch (_error) {} // React hook form will handle errors
   };
 
   const formAPI = useForm<FormValues>({
@@ -226,7 +252,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     handleSubmit,
     register,
     watch,
-    formState: { isDirty, errors },
+    formState: { isDirty, errors, isValid },
+    setValue,
+    getValues,
   } = formAPI;
 
   const onInvalid = () => {
@@ -243,7 +271,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   return (
     <Modal className={styles.modal} isOpen={true} title={modalTitle} onDismiss={onClose} onClickBackdrop={onClose}>
       <FormProvider {...formAPI}>
-        <form onSubmit={(e) => e.preventDefault()} key={JSON.stringify(defaultValues)}>
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} key={JSON.stringify(defaultValues)}>
           <>
             {!props.hideFolder && (
               <Stack gap={1} alignItems={'center'}>
@@ -260,7 +288,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                       {nameSpaceLabel}
                     </Label>
                   }
-                  invalid={!!errors.namespaceName}
+                  invalid={Boolean(errors.namespaceName) ? true : undefined}
                   error={errors.namespaceName?.message}
                 >
                   <Input
@@ -283,7 +311,14 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               </Stack>
             )}
             <Field
-              label={<Label htmlFor="groupName">Evaluation group name</Label>}
+              label={
+                <Label
+                  htmlFor="groupName"
+                  description="A group evaluates all its rules over the same evaluation interval."
+                >
+                  Evaluation group
+                </Label>
+              }
               invalid={!!errors.groupName}
               error={errors.groupName?.message}
             >
@@ -305,17 +340,24 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   <Stack gap={0.5}>Evaluation interval</Stack>
                 </Label>
               }
-              invalid={!!errors.groupInterval}
+              invalid={Boolean(errors.groupInterval) ? true : undefined}
               error={errors.groupInterval?.message}
             >
-              <Input
-                id="groupInterval"
-                placeholder="1m"
-                {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
-              />
+              <Stack direction="column">
+                <Input
+                  id="groupInterval"
+                  placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
+                  {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
+                />
+                <EvaluationGroupQuickPick
+                  currentInterval={getValues('groupInterval')}
+                  onSelect={(value) => setValue('groupInterval', value, { shouldValidate: true, shouldDirty: true })}
+                />
+              </Stack>
             </Field>
 
-            {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
+            {/* if we're dealing with a Grafana-managed group, check if the evaluation interval is valid / permitted */}
+            {isGrafanaManagedGroup && checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
               <EvaluationIntervalLimitExceeded />
             )}
 
@@ -329,7 +371,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
               </>
             )}
-
+            {error && <Alert title={'Failed to update rule group'}>{stringifyErrorLike(error)}</Alert>}
             <div className={styles.modalButtons}>
               <Modal.ButtonRow>
                 <Button
@@ -341,11 +383,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  disabled={!isDirty || loading}
-                  onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
-                >
+                <Button type="submit" disabled={!isDirty || !isValid || loading}>
                   {loading ? 'Saving...' : 'Save'}
                 </Button>
               </Modal.ButtonRow>
@@ -358,22 +396,22 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    max-width: 560px;
-  `,
-  modalButtons: css`
-    top: -24px;
-    position: relative;
-  `,
-  formInput: css`
-    flex: 1;
-  `,
-  tableWrapper: css`
-    margin-top: ${theme.spacing(2)};
-    margin-bottom: ${theme.spacing(2)};
-    height: 100%;
-  `,
-  evalRequiredLabel: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
+  modal: css({
+    maxWidth: '560px',
+  }),
+  modalButtons: css({
+    top: '-24px',
+    position: 'relative',
+  }),
+  formInput: css({
+    flex: 1,
+  }),
+  tableWrapper: css({
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    height: '100%',
+  }),
+  evalRequiredLabel: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

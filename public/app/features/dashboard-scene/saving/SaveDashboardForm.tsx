@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
@@ -35,6 +35,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     const result = await onSaveDashboard(dashboard, changedSaveModel, { ...options, overwrite });
     if (result.status === 'success') {
       dashboard.closeModal();
+      drawer.state.onSaveSuccess?.();
     }
   };
 
@@ -100,10 +101,9 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   }
 
   return (
-    <Stack gap={0} direction="column">
+    <Stack gap={2} direction="column">
       <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
       <Field label="Message">
-        {/* config.featureToggles.dashgpt * TOOD GenAIDashboardChangesButton */}
         <TextArea
           aria-label="message"
           value={options.message ?? ''}
@@ -118,7 +118,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           rows={5}
         />
       </Field>
-      <Box paddingTop={2}>{renderFooter(state.error)}</Box>
+      {renderFooter(state.error)}
     </Stack>
   );
 }
@@ -129,31 +129,41 @@ export interface SaveDashboardFormCommonOptionsProps {
 }
 
 export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashboardFormCommonOptionsProps) {
-  const { saveVariables = false, saveTimeRange = false } = drawer.useState();
-  const { hasTimeChanges, hasVariableValueChanges } = changeInfo;
+  const { saveVariables = false, saveTimeRange = false, saveRefresh = false } = drawer.useState();
+  const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
 
   return (
-    <>
+    <Stack direction={'column'} alignItems={'flex-start'}>
       {hasTimeChanges && (
-        <Field label="Update default time range" description="Will make current time range the new default">
-          <Checkbox
-            id="save-timerange"
-            checked={saveTimeRange}
-            onChange={drawer.onToggleSaveTimeRange}
-            aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-          />
-        </Field>
+        <Checkbox
+          id="save-timerange"
+          checked={saveTimeRange}
+          onChange={drawer.onToggleSaveTimeRange}
+          label="Update default time range"
+          description={'Will make current time range the new default'}
+          data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
+        />
+      )}
+      {hasRefreshChange && (
+        <Checkbox
+          id="save-refresh"
+          label="Update default refresh value"
+          description="Will make the current refresh the new default"
+          checked={saveRefresh}
+          onChange={drawer.onToggleSaveRefresh}
+          data-testid={selectors.pages.SaveDashboardModal.saveRefresh}
+        />
       )}
       {hasVariableValueChanges && (
-        <Field label="Update default variable values" description="Will make the current values the new default">
-          <Checkbox
-            id="save-variables"
-            checked={saveVariables}
-            onChange={drawer.onToggleSaveVariables}
-            aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-          />
-        </Field>
+        <Checkbox
+          id="save-variables"
+          label="Update default variable values"
+          description="Will make the current values the new default"
+          checked={saveVariables}
+          onChange={drawer.onToggleSaveVariables}
+          data-testid={selectors.pages.SaveDashboardModal.saveVariables}
+        />
       )}
-    </>
+    </Stack>
   );
 }

@@ -42,10 +42,22 @@ func ProvideServiceAccountsStore(cfg *setting.Cfg, store db.DB, apiKeyService ap
 	}
 }
 
+// generateLogin makes a generated string to have a ID for the service account across orgs and it's name
+// this causes you to create a service account with the same name in different orgs
+// not the same name in the same org
+// -- WARNING:
+// -- if you change this function you need to change the ExtSvcLoginPrefix as well
+// -- to make sure they are not considered as regular service accounts
+func generateLogin(prefix string, orgId int64, name string) string {
+	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
+	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
+	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
+	return strings.Replace(generatedLogin, " ", "-", -1)
+}
+
 // CreateServiceAccount creates service account
 func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	generatedLogin := serviceaccounts.ServiceAccountPrefix + strings.ToLower(saForm.Name)
-	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
+	login := generateLogin(serviceaccounts.ServiceAccountPrefix, orgId, saForm.Name)
 	isDisabled := false
 	role := org.RoleViewer
 	if saForm.IsDisabled != nil {
@@ -56,7 +68,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	}
 
 	newSA, err := s.userService.CreateServiceAccount(ctx, &user.CreateUserCommand{
-		Login:            generatedLogin,
+		Login:            login,
 		OrgID:            orgId,
 		Name:             saForm.Name,
 		IsDisabled:       isDisabled,
@@ -173,7 +185,7 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId,
 
 // EnableServiceAccount enable/disable service account
 func (s *ServiceAccountsStoreImpl) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := "UPDATE " + s.sqlStore.GetDialect().Quote("user") + " SET is_disabled = ? WHERE id = ? AND is_service_account = ?"
 		_, err := sess.Exec(query, !enable, serviceAccountID, true)
 		return err
@@ -322,7 +334,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			whereConditions = append(
 				whereConditions,
 				"login "+s.sqlStore.GetDialect().LikeStr()+" ?")
-			whereParams = append(whereParams, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix+"%")
+			whereParams = append(whereParams, serviceaccounts.ExtSvcLoginPrefix+"%")
 		default:
 			s.log.Warn("Invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}
@@ -435,7 +447,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
-		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgID, key.Name),
+		Login:            generateLogin(prefix, key.OrgID, key.Name),
 		Name:             fmt.Sprintf("%v-%v", prefix, key.Name),
 		OrgID:            key.OrgID,
 		DefaultOrgRole:   string(key.Role),

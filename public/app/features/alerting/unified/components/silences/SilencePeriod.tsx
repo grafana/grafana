@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
 import { dateTime } from '@grafana/data';
@@ -75,7 +74,7 @@ export const SilencePeriod = () => {
 };
 
 const styles = {
-  timeRange: css`
-    width: 400px;
-  `,
+  timeRange: css({
+    width: '400px',
+  }),
 };

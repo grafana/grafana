@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Segment, useStyles2 } from '@grafana/ui';
@@ -35,12 +35,16 @@ export function AddGraphiteFunction({ funcDefs }: Props) {
   }, [value, dispatch]);
 
   return (
-    <Segment
-      Component={<Button icon="plus" variant="secondary" className={cx(styles.button)} aria-label="Add new function" />}
-      options={options}
-      onChange={setValue}
-      inputMinWidth={150}
-    />
+    <div>
+      <Segment
+        Component={
+          <Button icon="plus" variant="secondary" className={cx(styles.button)} aria-label="Add new function" />
+        }
+        options={options}
+        onChange={setValue}
+        inputMinWidth={150}
+      />
+    </div>
   );
 }
 

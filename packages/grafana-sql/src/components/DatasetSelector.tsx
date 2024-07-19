@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
@@ -14,10 +14,18 @@ export interface DatasetSelectorProps extends ResourceSelectorProps {
   preconfiguredDataset: string;
   dialect: SQLDialect;
   onChange: (v: SelectableValue) => void;
+  inputId?: string | undefined;
 }
 
-export const DatasetSelector = ({ dataset, db, dialect, onChange, preconfiguredDataset }: DatasetSelectorProps) => {
-  /* 
+export const DatasetSelector = ({
+  dataset,
+  db,
+  dialect,
+  onChange,
+  inputId,
+  preconfiguredDataset,
+}: DatasetSelectorProps) => {
+  /*
     The behavior of this component - for MSSQL and MySQL datasources - is based on whether the user chose to create a datasource
     with or without a default database (preconfiguredDataset). If the user configured a default database, this selector
     should only allow that single preconfigured database option to be selected. If the user chose to NOT assign/configure a default database,
@@ -68,6 +76,7 @@ export const DatasetSelector = ({ dataset, db, dialect, onChange, preconfiguredD
   return (
     <Select
       aria-label="Dataset selector"
+      inputId={inputId}
       value={dataset}
       options={state.value}
       onChange={onChange}

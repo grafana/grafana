@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, useStyles2 } from '@grafana/ui';
@@ -35,18 +34,18 @@ export const GenerationHistoryCarousel = ({
 
   return (
     <>
-      <MinimalisticPagination
-        currentPage={index}
-        numberOfPages={historySize}
-        onNavigate={onNavigate}
-        hideWhenSinglePage={true}
-        className={styles.paginationWrapper}
-      />
       <div className={styles.contentWrapper}>
         <Text element="p" color="secondary">
           {getHistoryText()}
         </Text>
       </div>
+      <MinimalisticPagination
+        currentPage={index}
+        numberOfPages={historySize}
+        onNavigate={onNavigate}
+        hideWhenSinglePage={false}
+        className={styles.paginationWrapper}
+      />
     </>
   );
 };
@@ -63,8 +62,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexBasis: '100%',
     flexGrow: 3,
     whiteSpace: 'pre-wrap',
-    marginTop: 20,
-    height: 110,
+    maxHeight: 110,
     overflowY: 'scroll',
+    backgroundColor: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(1),
+    minHeight: 60,
   }),
 });

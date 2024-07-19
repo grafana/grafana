@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/core';
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { getSearchFilterFromQuery, RulesFilter } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
@@ -24,31 +25,32 @@ export const LogMessages = {
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
+  loadedCentralAlertStateHistory: 'loaded central alert state history',
 };
 
-const alertingLogger = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
 
-export function logInfo(message: string, context?: Record<string, string>) {
-  alertingLogger.logInfo(message, context);
-}
-
-export function logError(error: Error, context?: Record<string, string>) {
-  alertingLogger.logError(error, context);
-}
+export { logError, logInfo, logMeasurement };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
   return async function (...args) {
     const startLoadingTs = performance.now();
+
     const response = await func(...args);
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      ...context,
-    });
+    const loadTimesMs = performance.now() - startLoadingTs;
+
+    logMeasurement(
+      type,
+      {
+        loadTimesMs,
+      },
+      context
+    );
 
     return response;
   };
@@ -56,8 +58,8 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RuleNamespace[]>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ) {
   return async (...args: Parameters<TFunc>) => {
@@ -66,15 +68,30 @@ export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => P
 
     const { namespacesCount, groupsCount, rulesCount } = getPromRulesMetadata(response);
 
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      namespacesCount,
-      groupsCount,
-      rulesCount,
-      ...context,
-    });
+    logMeasurement(
+      type,
+      {
+        loadTimeMs: performance.now() - startLoadingTs,
+        namespacesCount,
+        groupsCount,
+        rulesCount,
+      },
+      context
+    );
     return response;
   };
+}
+
+type FormErrors = Record<string, Partial<{ message: string; type: string | number }>>;
+export function reportFormErrors(errors: FormErrors) {
+  Object.entries(errors).forEach(([field, error]) => {
+    const message = error.message ?? 'unknown error';
+    const type = String(error.type) ?? 'unknown';
+
+    const errorObject = new Error(message);
+
+    logError(errorObject, { field, type });
+  });
 }
 
 function getPromRulesMetadata(promRules: RuleNamespace[]) {
@@ -83,9 +100,9 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
   const rulesCount = promRules.flatMap((ns) => ns.groups).flatMap((g) => g.rules).length;
 
   const metadata = {
-    namespacesCount: namespacesCount.toFixed(0),
-    groupsCount: groupsCount.toFixed(0),
-    rulesCount: rulesCount.toFixed(0),
+    namespacesCount: namespacesCount,
+    groupsCount: groupsCount,
+    rulesCount: rulesCount,
   };
 
   return metadata;
@@ -93,8 +110,8 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RulerRulesConfigDTO>>(
+  type: string,
   func: TFunc,
-  message: string,
   context: Record<string, string>
 ) {
   return async (...args: Parameters<TFunc>) => {
@@ -103,26 +120,29 @@ export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => 
 
     const { namespacesCount, groupsCount, rulesCount } = getRulerRulesMetadata(response);
 
-    logInfo(message, {
-      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
-      namespacesCount,
-      groupsCount,
-      rulesCount,
-      ...context,
-    });
+    logMeasurement(
+      type,
+      {
+        namespacesCount,
+        groupsCount,
+        rulesCount,
+        loadTimeMs: performance.now() - startLoadingTs,
+      },
+      context
+    );
     return response;
   };
 }
 
 function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
-  const namespacesCount = Object.keys(rulerRules).length;
+  const namespaces = Object.keys(rulerRules);
   const groups = Object.values(rulerRules).flatMap((groups) => groups);
   const rules = groups.flatMap((group) => group.rules);
 
   return {
-    namespacesCount: namespacesCount.toFixed(0),
-    groupsCount: groups.length.toFixed(0),
-    rulesCount: rules.length.toFixed(0),
+    namespacesCount: namespaces.length,
+    groupsCount: groups.length,
+    rulesCount: rules.length,
   };
 }
 
@@ -218,6 +238,34 @@ export function trackRulesSearchComponentInteraction(filter: keyof RulesFilter) 
 
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
+}
+export function trackSwitchToSimplifiedRouting() {
+  reportInteraction('grafana_alerting_switch_to_simplified_routing');
+}
+
+export function trackSwitchToPoliciesRouting() {
+  reportInteraction('grafana_alerting_switch_to_policies_routing');
+}
+
+export function trackEditInputWithTemplate() {
+  reportInteraction('grafana_alerting_contact_point_form_edit_input_with_template');
+}
+export function trackUseCustomInputInTemplate() {
+  reportInteraction('grafana_alerting_contact_point_form_use_custom_input_in_template');
+}
+export function trackUseSingleTemplateInInput() {
+  reportInteraction('grafana_alerting_contact_point_form_use_single_template_in_input');
+}
+export function trackUseCentralHistoryFilterByClicking(payload: { type: FilterType; key: string; value: string }) {
+  reportInteraction('grafana_alerting_central_alert_state_history_filter_by_clicking', payload);
+}
+
+export function trackUseCentralHistoryExpandRow() {
+  reportInteraction('grafana_alerting_central_alert_state_history_expand_row');
+}
+
+export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; to: number }) {
+  reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
 }
 
 export type AlertRuleTrackingProps = {

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Placement } from '@popperjs/core';
 import classnames from 'classnames';
-import React, { ReactElement, ReactNode, useRef } from 'react';
+import { cloneElement, ReactElement, ReactNode, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Popover as GrafanaPopover, PopoverController, useStyles2, Stack } from '@grafana/ui';
@@ -37,7 +37,7 @@ export const HoverCard = ({
   }
 
   const body = (
-    <Stack direction="column" gap={0}>
+    <Stack direction="column" gap={0} role="tooltip">
       {header && <div className={styles.card.header}>{header}</div>}
       <div className={styles.card.body}>{content}</div>
       {footer && <div className={styles.card.footer}>{footer}</div>}
@@ -63,12 +63,13 @@ export const HoverCard = ({
               />
             )}
 
-            {React.cloneElement(children, {
+            {cloneElement(children, {
               ref: popoverRef,
               onMouseEnter: showPopper,
               onMouseLeave: hidePopper,
               onFocus: showPopper,
               onBlur: hidePopper,
+              tabIndex: 0,
             })}
           </>
         );

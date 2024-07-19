@@ -1,4 +1,6 @@
-import React, { SyntheticEvent } from 'react';
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderOptions.tsx
+import { SyntheticEvent } from 'react';
+import * as React from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -37,7 +39,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
     };
 
     const onChangeStep = (evt: React.FormEvent<HTMLInputElement>) => {
-      onChange({ ...query, interval: evt.currentTarget.value });
+      onChange({ ...query, interval: evt.currentTarget.value.trim() });
       onRunQuery();
     };
 

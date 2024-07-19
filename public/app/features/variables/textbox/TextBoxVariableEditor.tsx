@@ -1,11 +1,11 @@
-import React, { FormEvent, ReactElement, useCallback } from 'react';
+import { FormEvent, ReactElement, useCallback } from 'react';
 
+import { TextBoxVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
-import { TextBoxVariableModel } from '../types';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 

@@ -1,6 +1,6 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/metric_find_query.test.ts
 import { Observable, of } from 'rxjs';
 
-import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
 import { BackendDataSourceResponse, BackendSrvRequest, FetchResponse, TemplateSrv } from '@grafana/runtime';
 

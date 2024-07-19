@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_utils.ts
 import { invert } from 'lodash';
 import { Token } from 'prismjs';
 
@@ -15,7 +16,7 @@ import {
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './querybuilder/components/MetricSelect';
-import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -74,7 +75,7 @@ export const selectorRegexp = /\{[^}]*?(\}|$)/;
 // comma and space is useful for addLabelsToExpression function
 export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")(,)?(\s*)?/g;
 
-export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
+export function parseSelector(query: string, cursorOffset = 1): { labelKeys: string[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
     if (query.match(/^[A-Za-z:][\w:]*$/)) {
@@ -138,7 +139,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
   return { labelKeys, selector: selectorString };
 }
 
-export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
+export function expandRecordingRules(query: string, mapping: { [name: string]: RecordingRuleIdentifier }): string {
   const getRuleRegex = (ruleName: string) => new RegExp(`(\\s|\\(|^)(${ruleName})(\\s|$|\\(|\\[|\\{)`, 'ig');
 
   // For each mapping key we iterate over the query and split them in parts.
@@ -201,12 +202,13 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
 
     // check if the mapping is there
     if (mapping[tsp]) {
-      const recordingRule = mapping[tsp];
+      const { expandedQuery: recordingRule, identifierValue, identifier } = mapping[tsp];
       // it is a recording rule. if the following is a label then apply it
       if (i + 1 !== tmpSplitParts.length && tmpSplitParts[i + 1].match(labelRegexp)) {
         // the next value in the loop is label. Let's apply labels to the metric
         labelFound = true;
-        const labels = tmpSplitParts[i + 1];
+        const regexp = new RegExp(`(,)?(\\s)?(${identifier}=\\"${identifierValue}\\")(,)?(\\s)?`, 'g');
+        const labels = tmpSplitParts[i + 1].replace(regexp, '');
         const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
         return addLabelsToExpression(recordingRule + labels, invalidLabelsRegex);
       } else {
@@ -345,7 +347,7 @@ export function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
 }
 
-export function addLimitInfo(items: any[] | undefined): string {
+export function addLimitInfo(items: unknown[] | undefined): string {
   return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }
 

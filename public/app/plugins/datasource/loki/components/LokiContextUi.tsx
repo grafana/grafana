@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
@@ -126,9 +126,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
     window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true'
   );
 
-  const timerHandle = React.useRef<number>();
-  const previousInitialized = React.useRef<boolean>(false);
-  const previousContextFilters = React.useRef<ContextFilter[]>([]);
+  const timerHandle = useRef<number>();
+  const previousInitialized = useRef<boolean>(false);
+  const previousContextFilters = useRef<ContextFilter[]>([]);
 
   const isInitialState = useMemo(() => {
     // Initial query has all regular labels enabled and all parsed labels disabled
@@ -205,7 +205,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    const initContextFilters = await logContextProvider.getInitContextFilters(row.labels, origQuery, {
+    const initContextFilters = await logContextProvider.getInitContextFilters(row, origQuery, {
       from: dateTime(row.timeEpochMs),
       to: dateTime(row.timeEpochMs),
       raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },

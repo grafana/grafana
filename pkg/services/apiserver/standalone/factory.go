@@ -5,22 +5,23 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -31,8 +32,13 @@ type APIServerFactory interface {
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
+	// Any optional middlewares this factory wants configured via apiserver's BuildHandlerChain facility
+	GetOptionalMiddlewares(tracer tracing.Tracer) []web.Middleware
+
 	// Make an API server for a given group+version
-	MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+
+	Shutdown()
 }
 
 // Zero dependency provider for testing
@@ -44,6 +50,10 @@ type DummyAPIFactory struct{}
 
 func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
 	return nil
+}
+
+func (p *DummyAPIFactory) GetOptionalMiddlewares(_ tracing.Tracer) []web.Middleware {
+	return []web.Middleware{}
 }
 
 func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error) {
@@ -60,29 +70,28 @@ func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVer
 	return gv, nil
 }
 
-func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
+func (p *DummyAPIFactory) ApplyTo(config *genericapiserver.RecommendedConfig) error {
+	return nil
+}
+
+func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
 	if gv.Version != "v0alpha1" {
 		return nil, fmt.Errorf("only alpha supported now")
 	}
 
 	switch gv.Group {
-	case "example.grafana.app":
-		return example.NewTestingAPIBuilder(), nil
-
 	// Only works with testdata
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(
 			featuremgmt.WithFeatures(),
-			runner.NewDummyTestRunner(),
-			runner.NewDummyRegistry(),
-		), nil
-
-	case "featuretoggle.grafana.app":
-		return featuretoggle.NewFeatureFlagAPIBuilder(
-			featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
-			&actest.FakeAccessControl{ExpectedEvaluate: false},
-			&setting.Cfg{},
-		), nil
+			&query.CommonDataSourceClientSupplier{
+				Client: client.NewTestDataClient(),
+			},
+			client.NewTestDataRegistry(),
+			nil,                      // legacy lookup
+			prometheus.NewRegistry(), // ???
+			tracer,
+		)
 
 	case "testdata.datasource.grafana.app":
 		return datasource.NewDataSourceAPIBuilder(
@@ -95,11 +104,14 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 			},
 			&pluginDatasourceImpl{}, // stub
 			&actest.FakeAccessControl{ExpectedEvaluate: true},
+			true, // show query types
 		)
 	}
 
 	return nil, fmt.Errorf("unsupported group")
 }
+
+func (p *DummyAPIFactory) Shutdown() {}
 
 // Simple stub for standalone datasource testing
 type pluginDatasourceImpl struct {
@@ -111,8 +123,8 @@ var (
 )
 
 // Get implements PluginDatasourceProvider.
-func (p *pluginDatasourceImpl) Get(ctx context.Context, pluginID string, uid string) (*v0alpha1.DataSourceConnection, error) {
-	all, err := p.List(ctx, pluginID)
+func (p *pluginDatasourceImpl) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
+	all, err := p.List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +137,7 @@ func (p *pluginDatasourceImpl) Get(ctx context.Context, pluginID string, uid str
 }
 
 // List implements PluginConfigProvider.
-func (p *pluginDatasourceImpl) List(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error) {
+func (p *pluginDatasourceImpl) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -147,7 +159,7 @@ func (p *pluginDatasourceImpl) List(ctx context.Context, pluginID string) (*v0al
 }
 
 // PluginContextForDataSource implements PluginConfigProvider.
-func (*pluginDatasourceImpl) GetInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+func (*pluginDatasourceImpl) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
 	return &backend.DataSourceInstanceSettings{}, nil
 }
 

@@ -1,12 +1,20 @@
-go 1.21.0
+go 1.22.4
 
 use (
 	.
 	./pkg/apimachinery
 	./pkg/apiserver
+	./pkg/build
+	./pkg/build/wire
+	./pkg/promlib
+	./pkg/storage/unified/resource
 	./pkg/util/xorm
 )
 
 // when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
 // but we don't want to change all the imports. so we use replace to handle this situation
 replace xorm.io/xorm => ./pkg/util/xorm
+
+// this is required until a new version of k8s.io/component-base is released
+// with an update to prometheus/common v0.48.0
+replace k8s.io/component-base => k8s.io/component-base v0.0.0-20240417101527-62c04b35eff6

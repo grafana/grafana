@@ -1,9 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
@@ -89,9 +87,7 @@ describe('AnnotationsSettings', () => {
     expect(screen.queryByRole('grid')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /annotations & alerts \(built-in\) -- grafana --/i })).toBeInTheDocument();
 
-    expect(
-      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add annotation query' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /annotations documentation/i })).toBeInTheDocument();
   });
 
@@ -99,9 +95,7 @@ describe('AnnotationsSettings', () => {
     dashboard.annotations.list = [];
     setup(dashboard);
 
-    expect(
-      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add annotation query' })).toBeInTheDocument();
   });
 
   test('it renders the annotation names or uid if annotation does not exist', async () => {
@@ -185,7 +179,7 @@ describe('AnnotationsSettings', () => {
   test('Adding a new annotation', async () => {
     setup(dashboard);
 
-    await userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
+    await userEvent.click(screen.getByRole('button', { name: 'Add annotation query' }));
 
     expect(locationService.getSearchObject().editIndex).toBe('1');
     expect(dashboard.annotations.list.length).toBe(2);

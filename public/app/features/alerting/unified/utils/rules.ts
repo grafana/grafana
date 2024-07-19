@@ -1,6 +1,7 @@
 import { capitalize } from 'lodash';
 
 import { AlertState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   AlertingRule,
@@ -14,15 +15,19 @@ import {
   RecordingRule,
   Rule,
   RuleIdentifier,
+  RuleGroupIdentifier,
   RuleNamespace,
+  RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   mapStateWithReasonToBaseState,
+  PostableRuleDTO,
   PromAlertingRuleState,
   PromRuleType,
   RulerAlertingRuleDTO,
+  RulerCloudRuleDTO,
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
@@ -33,9 +38,10 @@ import { State } from '../components/StateTag';
 import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
-import { getRulesSourceName } from './datasource';
+import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
+import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { AsyncRequestState } from './redux';
-import { safeParseDurationstr } from './time';
+import { safeParsePrometheusDuration } from './time';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
@@ -53,12 +59,16 @@ export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordin
   return typeof rule === 'object' && 'record' in rule;
 }
 
-export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 
-export function isGrafanaRulerRulePaused(rule: CombinedRule) {
-  return rule.rulerRule && isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.is_paused);
+export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerCloudRuleDTO {
+  return typeof rule === 'object' && !isGrafanaRulerRule(rule);
+}
+
+export function isGrafanaRulerRulePaused(rule: RulerGrafanaRuleDTO) {
+  return rule && isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.is_paused);
 }
 
 export function alertInstanceKey(alert: Alert): string {
@@ -99,6 +109,41 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
     default:
       return undefined;
   }
+}
+
+export interface RulePluginOrigin {
+  pluginId: string;
+}
+
+export function getRulePluginOrigin(rule: CombinedRule): RulePluginOrigin | undefined {
+  // com.grafana.origin=plugin/<plugin-identifier>
+  // Prom and Mimir do not support dots in label names 😔
+  const origin = rule.labels[GRAFANA_ORIGIN_LABEL];
+  if (!origin) {
+    return undefined;
+  }
+
+  const match = origin.match(/^plugin\/(?<pluginId>.+)$/);
+  if (!match?.groups) {
+    return undefined;
+  }
+
+  const pluginId = match.groups['pluginId'];
+  const pluginInstalled = isPluginInstalled(pluginId);
+
+  if (!pluginInstalled) {
+    return undefined;
+  }
+
+  return { pluginId };
+}
+
+function isPluginInstalled(pluginId: string) {
+  return Boolean(config.apps[pluginId]);
+}
+
+export function isPluginProvidedRule(rule: CombinedRule): boolean {
+  return Boolean(getRulePluginOrigin(rule));
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
@@ -237,8 +282,8 @@ export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): Al
 };
 
 export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
-  const evalNumberMs = safeParseDurationstr(currentEvaluation);
-  const forNumber = safeParseDurationstr(forDuration);
+  const evalNumberMs = safeParsePrometheusDuration(currentEvaluation);
+  const forNumber = safeParsePrometheusDuration(forDuration);
   if (forNumber === 0 && evalNumberMs !== 0) {
     return 1;
   }
@@ -249,3 +294,38 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
     return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumberMs) + 1;
   }
 };
+
+/*
+ * Extracts a rule group identifier from a CombinedRule
+ */
+export function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGroupIdentifier {
+  const ruleSourceName = isGrafanaRulesSource(rule.namespace.rulesSource)
+    ? rule.namespace.rulesSource
+    : rule.namespace.rulesSource.name;
+
+  const namespace = isGrafanaRulerRule(rule.rulerRule)
+    ? rule.rulerRule.grafana_alert.namespace_uid
+    : rule.namespace.name;
+
+  return {
+    dataSourceName: ruleSourceName,
+    namespaceName: namespace,
+    groupName: rule.group.name,
+  };
+}
+
+/**
+ * Extracts a rule group identifier from a RuleWithLocation
+ */
+export function getRuleGroupLocationFromRuleWithLocation(rule: RuleWithLocation): RuleGroupIdentifier {
+  const dataSourceName = rule.ruleSourceName;
+
+  const namespaceName = isGrafanaRulerRule(rule.rule) ? rule.rule.grafana_alert.namespace_uid : rule.namespace;
+  const groupName = rule.group.name;
+
+  return {
+    dataSourceName,
+    namespaceName,
+    groupName,
+  };
+}

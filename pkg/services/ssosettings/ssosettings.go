@@ -3,16 +3,12 @@ package ssosettings
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
 var (
-	// ConfigurableOAuthProviders is a list of OAuth providers that can be configured from the API
-	// TODO: make it configurable
-	ConfigurableOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "azuread", "okta"}
-
 	AllOAuthProviders = []string{social.GitHubProviderName, social.GitlabProviderName, social.GoogleProviderName, social.GenericOAuthProviderName, social.GrafanaComProviderName, social.AzureADProviderName, social.OktaProviderName}
 )
 
@@ -45,7 +41,7 @@ type Service interface {
 //go:generate mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
-	Validate(ctx context.Context, settings models.SSOSettings, requester identity.Requester) error
+	Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error
 }
 
 // FallbackStrategy is an interface that can be implemented to allow a provider to load settings from a different source

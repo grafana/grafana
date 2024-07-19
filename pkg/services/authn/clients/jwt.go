@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const authQueryParamName = "auth_token"
@@ -78,9 +78,22 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	if key := s.cfg.JWTAuth.UsernameClaim; key != "" {
 		id.Login, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Login = &id.Login
+	} else if key := s.cfg.JWTAuth.UsernameAttributePath; key != "" {
+		id.Login, err = util.SearchJSONForStringAttr(s.cfg.JWTAuth.UsernameAttributePath, claims)
+		if err != nil {
+			return nil, err
+		}
+		id.ClientParams.LookUpParams.Login = &id.Login
 	}
+
 	if key := s.cfg.JWTAuth.EmailClaim; key != "" {
 		id.Email, _ = claims[key].(string)
+		id.ClientParams.LookUpParams.Email = &id.Email
+	} else if key := s.cfg.JWTAuth.EmailAttributePath; key != "" {
+		id.Email, err = util.SearchJSONForStringAttr(s.cfg.JWTAuth.EmailAttributePath, claims)
+		if err != nil {
+			return nil, err
+		}
 		id.ClientParams.LookUpParams.Email = &id.Email
 	}
 
@@ -124,6 +137,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	}
 
 	return id, nil
+}
+
+func (s *JWT) IsEnabled() bool {
+	return s.cfg.JWTAuth.Enabled
 }
 
 // remove sensitive query param

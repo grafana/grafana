@@ -17,42 +17,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-)
 
-const (
-	randomWalkQuery                   queryType = "random_walk"
-	randomWalkSlowQuery               queryType = "slow_query"
-	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
-	randomWalkTableQuery              queryType = "random_walk_table"
-	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
-	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
-	noDataPointsQuery                 queryType = "no_data_points"
-	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
-	csvMetricValuesQuery              queryType = "csv_metric_values"
-	predictablePulseQuery             queryType = "predictable_pulse"
-	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
-	streamingClientQuery              queryType = "streaming_client"
-	simulation                        queryType = "simulation"
-	usaQueryKey                       queryType = "usa"
-	liveQuery                         queryType = "live"
-	grafanaAPIQuery                   queryType = "grafana_api"
-	arrowQuery                        queryType = "arrow"
-	annotationsQuery                  queryType = "annotations"
-	tableStaticQuery                  queryType = "table_static"
-	serverError500Query               queryType = "server_error_500"
-	logsQuery                         queryType = "logs"
-	nodeGraphQuery                    queryType = "node_graph"
-	flameGraphQuery                   queryType = "flame_graph"
-	rawFrameQuery                     queryType = "raw_frame"
-	csvFileQueryType                  queryType = "csv_file"
-	csvContentQueryType               queryType = "csv_content"
-	traceType                         queryType = "trace"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
-
-type queryType string
 
 type Scenario struct {
-	ID          string `json:"id"`
+	ID kinds.TestDataQueryType `json:"id"`
+
 	Name        string `json:"name"`
 	StringInput string `json:"stringInput"`
 	Description string `json:"description"`
@@ -61,25 +32,25 @@ type Scenario struct {
 
 func (s *Service) registerScenarios() {
 	s.registerScenario(&Scenario{
-		ID:      string(exponentialHeatmapBucketDataQuery),
+		ID:      kinds.TestDataQueryTypeExponentialHeatmapBucketData,
 		Name:    "Exponential heatmap bucket data",
 		handler: s.handleExponentialHeatmapBucketDataScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(linearHeatmapBucketDataQuery),
+		ID:      kinds.TestDataQueryTypeLinearHeatmapBucketData,
 		Name:    "Linear heatmap bucket data",
 		handler: s.handleLinearHeatmapBucketDataScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(randomWalkQuery),
+		ID:      kinds.TestDataQueryTypeRandomWalk,
 		Name:    "Random Walk",
 		handler: s.handleRandomWalkScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(predictablePulseQuery),
+		ID:      kinds.TestDataQueryTypePredictablePulse,
 		Name:    "Predictable Pulse",
 		handler: s.handlePredictablePulseScenario,
 		Description: `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
@@ -89,100 +60,100 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(predictableCSVWaveQuery),
+		ID:      kinds.TestDataQueryTypePredictableCsvWave,
 		Name:    "Predictable CSV Wave",
 		handler: s.handlePredictableCSVWaveScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(randomWalkTableQuery),
+		ID:      kinds.TestDataQueryTypeRandomWalkTable,
 		Name:    "Random Walk Table",
 		handler: s.handleRandomWalkTableScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:          string(randomWalkSlowQuery),
+		ID:          kinds.TestDataQueryTypeSlowQuery,
 		Name:        "Slow Query",
 		StringInput: "5s",
 		handler:     s.handleRandomWalkSlowScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(noDataPointsQuery),
+		ID:      kinds.TestDataQueryTypeNoDataPoints,
 		Name:    "No Data Points",
 		handler: s.handleClientSideScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(datapointsOutsideRangeQuery),
+		ID:      kinds.TestDataQueryTypeDatapointsOutsideRange,
 		Name:    "Datapoints Outside Range",
 		handler: s.handleDatapointsOutsideRangeScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:          string(csvMetricValuesQuery),
+		ID:          kinds.TestDataQueryTypeCsvMetricValues,
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
 		handler:     s.handleCSVMetricValuesScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(streamingClientQuery),
+		ID:      kinds.TestDataQueryTypeStreamingClient,
 		Name:    "Streaming Client",
 		handler: s.handleClientSideScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(liveQuery),
+		ID:      kinds.TestDataQueryTypeLive,
 		Name:    "Grafana Live",
 		handler: s.handleClientSideScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(simulation),
+		ID:      kinds.TestDataQueryTypeSimulation,
 		Name:    "Simulation",
 		handler: s.sims.QueryData,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(usaQueryKey),
+		ID:      kinds.TestDataQueryTypeUsa,
 		Name:    "USA generated data",
 		handler: s.handleUSAScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(grafanaAPIQuery),
+		ID:      kinds.TestDataQueryTypeGrafanaApi,
 		Name:    "Grafana API",
 		handler: s.handleClientSideScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(arrowQuery),
+		ID:      kinds.TestDataQueryTypeArrow,
 		Name:    "Load Apache Arrow Data",
 		handler: s.handleArrowScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(annotationsQuery),
+		ID:      kinds.TestDataQueryTypeAnnotations,
 		Name:    "Annotations",
 		handler: s.handleClientSideScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(tableStaticQuery),
+		ID:      kinds.TestDataQueryTypeTableStatic,
 		Name:    "Table Static",
 		handler: s.handleTableStaticScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(randomWalkWithErrorQuery),
+		ID:      kinds.TestDataQueryTypeRandomWalkWithError,
 		Name:    "Random Walk (with error)",
 		handler: s.handleRandomWalkWithErrorScenario,
 	})
 
 	s.registerScenario(&Scenario{
 		// Is no longer strictly a _server_ error scenario, but ID is kept for legacy :)
-		ID:          string(serverError500Query),
+		ID:          kinds.TestDataQueryTypeServerError500,
 		Name:        "Conditional Error",
 		handler:     s.handleServerError500Scenario,
 		StringInput: "1,20,90,30,5,0",
@@ -190,40 +161,40 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(logsQuery),
+		ID:      kinds.TestDataQueryTypeLogs,
 		Name:    "Logs",
 		handler: s.handleLogsScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:   string(nodeGraphQuery),
+		ID:   kinds.TestDataQueryTypeNodeGraph,
 		Name: "Node Graph",
 	})
 
 	s.registerScenario(&Scenario{
-		ID:   string(flameGraphQuery),
+		ID:   kinds.TestDataQueryTypeFlameGraph,
 		Name: "Flame Graph",
 	})
 
 	s.registerScenario(&Scenario{
-		ID:   string(rawFrameQuery),
+		ID:   kinds.TestDataQueryTypeRawFrame,
 		Name: "Raw Frames",
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(csvFileQueryType),
+		ID:      kinds.TestDataQueryTypeCsvFile,
 		Name:    "CSV File",
 		handler: s.handleCsvFileScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(csvContentQueryType),
+		ID:      kinds.TestDataQueryTypeCsvContent,
 		Name:    "CSV Content",
 		handler: s.handleCsvContentScenario,
 	})
 
 	s.registerScenario(&Scenario{
-		ID:   string(traceType),
+		ID:   kinds.TestDataQueryTypeTrace,
 		Name: "Trace",
 	})
 
@@ -232,70 +203,36 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 
 func (s *Service) registerScenario(scenario *Scenario) {
 	s.scenarios[scenario.ID] = scenario
-	s.queryMux.HandleFunc(scenario.ID, instrumentScenarioHandler(s.logger, scenario.ID, scenario.handler))
+	s.queryMux.HandleFunc(string(scenario.ID), instrumentScenarioHandler(s.logger, scenario.ID, scenario.handler))
 }
 
-func instrumentScenarioHandler(logger log.Logger, scenario string, fn backend.QueryDataHandlerFunc) backend.QueryDataHandlerFunc {
+func instrumentScenarioHandler(logger log.Logger, scenario kinds.TestDataQueryType, fn backend.QueryDataHandlerFunc) backend.QueryDataHandlerFunc {
 	return backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 		ctx, span := tracing.DefaultTracer().Start(ctx, "testdatasource.queryData",
 			trace.WithAttributes(
-				attribute.String("scenario", scenario),
+				attribute.String("scenario", string(scenario)),
 			))
 		defer span.End()
 
 		ctxLogger := logger.FromContext(ctx)
-		ctxLogger.Debug("queryData", "scenario", scenario)
+		ctxLogger.Debug(string(backend.EndpointQueryData), "scenario", scenario)
 
 		return fn(ctx, req)
 	})
 }
 
-type JSONModel struct {
-	ScenarioID         string    `json:"scenarioId"`
-	SeriesCount        int       `json:"seriesCount"`
-	StringInput        string    `json:"stringInput"`
-	Lines              int64     `json:"lines"`
-	IncludeLevelColumn bool      `json:"includeLevelColumn"`
-	StartValue         float64   `json:"startValue"`
-	Spread             float64   `json:"spread"`
-	Noise              float64   `json:"noise"`
-	Drop               float64   `json:"drop"`
-	Min                *float64  `json:"min,omitempty"`
-	Max                *float64  `json:"max,omitempty"`
-	Labels             string    `json:"labels"`
-	WithNil            bool      `json:"withNil"`
-	PulseWave          pulseWave `json:"pulseWave"`
-	Alias              string    `json:"alias"`
-	// Cannot specify a type for csvWave since legacy queries
-	// does not follow the same format as the new ones (and there is no migration).
-	CSVWave     any     `json:"csvWave"`
-	CSVContent  string  `json:"csvContent"`
-	CSVFileName string  `json:"csvFileName"`
-	DropPercent float64 `json:"dropPercent"`
-}
-
-type pulseWave struct {
-	TimeStep int64 `json:"timeStep"`
-	OnCount  int64 `json:"onCount"`
-	OffCount int64 `json:"offCount"`
-	OnValue  any   `json:"onValue"`
-	OffValue any   `json:"offValue"`
-}
-
-func GetJSONModel(j json.RawMessage) (JSONModel, error) {
-	model := JSONModel{
+func GetJSONModel(j json.RawMessage) (kinds.TestDataQuery, error) {
+	model := kinds.TestDataQuery{
 		// Default values
-		ScenarioID:  string(randomWalkQuery),
+		ScenarioId:  kinds.TestDataQueryTypeRandomWalk,
 		SeriesCount: 1,
 		Lines:       10,
 		StartValue:  rand.Float64() * 100,
 		Spread:      1,
 	}
 	if len(j) > 0 {
-		err := json.Unmarshal(j, &model)
-		if err != nil {
-			return JSONModel{}, err
-		}
+		// csvWave has saved values that are single values, not arrays
+		_ = json.Unmarshal(j, &model)
 	}
 	return model, nil
 }
@@ -303,7 +240,7 @@ func GetJSONModel(j json.RawMessage) (JSONModel, error) {
 // handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.
 func (s *Service) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	ctxLogger := s.logger.FromContext(ctx)
-	scenarioQueries := map[string][]backend.DataQuery{}
+	scenarioQueries := map[kinds.TestDataQueryType][]backend.DataQuery{}
 
 	for _, q := range req.Queries {
 		model, err := GetJSONModel(q.JSON)
@@ -312,7 +249,7 @@ func (s *Service) handleFallbackScenario(ctx context.Context, req *backend.Query
 			continue
 		}
 
-		scenarioID := model.ScenarioID
+		scenarioID := model.ScenarioId
 		if _, exist := s.scenarios[scenarioID]; exist {
 			if _, ok := scenarioQueries[scenarioID]; !ok {
 				scenarioQueries[scenarioID] = []backend.DataQuery{}
@@ -654,7 +591,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 		}
 
 		lines := model.Lines
-		includeLevelColumn := model.IncludeLevelColumn
+		includeLevelColumn := model.LevelColumn
 
 		logLevelGenerator := newRandomStringProvider([]string{
 			"emerg",
@@ -726,14 +663,14 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 	return resp, nil
 }
 
-func RandomWalk(query backend.DataQuery, model JSONModel, index int) *data.Frame {
+func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.StartValue
 	spread := model.Spread
 	noise := model.Noise
-	drop := model.Drop / 100.0 // value is 0-100
+	drop := model.DropPercent / 100.0 // value is 0-100
 
 	min := float64(0)
 	hasMin := false
@@ -795,7 +732,7 @@ func RandomWalk(query backend.DataQuery, model JSONModel, index int) *data.Frame
 	return frame
 }
 
-func randomWalkTable(query backend.DataQuery, model JSONModel) *data.Frame {
+func randomWalkTable(query backend.DataQuery, model kinds.TestDataQuery) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
@@ -868,23 +805,8 @@ func randomWalkTable(query backend.DataQuery, model JSONModel) *data.Frame {
 	return frame
 }
 
-type pCSVOptions struct {
-	TimeStep  int64  `json:"timeStep"`
-	ValuesCSV string `json:"valuesCSV"`
-	Labels    string `json:"labels"`
-	Name      string `json:"name"`
-}
-
-func predictableCSVWave(query backend.DataQuery, model JSONModel) ([]*data.Frame, error) {
-	queries := []pCSVOptions{}
-	input, err := json.Marshal(model.CSVWave)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(input, &queries)
-	if err != nil {
-		return nil, err
-	}
+func predictableCSVWave(query backend.DataQuery, model kinds.TestDataQuery) ([]*data.Frame, error) {
+	queries := model.CsvWave
 
 	frames := make([]*data.Frame, 0, len(queries))
 
@@ -972,7 +894,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	}, nil
 }
 
-func predictablePulse(query backend.DataQuery, model JSONModel) (*data.Frame, error) {
+func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data.Frame, error) {
 	// Process Input
 	var timeStep int64
 	var onCount int64
@@ -1042,7 +964,7 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 	return frame
 }
 
-func doArrowQuery(query backend.DataQuery, model JSONModel) (*data.Frame, error) {
+func doArrowQuery(query backend.DataQuery, model kinds.TestDataQuery) (*data.Frame, error) {
 	encoded := model.StringInput
 	if encoded == "" {
 		return nil, nil
@@ -1054,7 +976,7 @@ func doArrowQuery(query backend.DataQuery, model JSONModel) (*data.Frame, error)
 	return data.UnmarshalArrowFrame(arrow)
 }
 
-func newSeriesForQuery(query backend.DataQuery, model JSONModel, index int) *data.Frame {
+func newSeriesForQuery(query backend.DataQuery, model kinds.TestDataQuery, index int) *data.Frame {
 	alias := model.Alias
 	suffix := ""
 
@@ -1082,7 +1004,7 @@ func newSeriesForQuery(query backend.DataQuery, model JSONModel, index int) *dat
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func parseLabels(model JSONModel, seriesIndex int) data.Labels {
+func parseLabels(model kinds.TestDataQuery, seriesIndex int) data.Labels {
 	return parseLabelsString(model.Labels, seriesIndex)
 }
 
@@ -1110,7 +1032,7 @@ func parseLabelsString(labelText string, seriesIndex int) data.Labels {
 	return tags
 }
 
-func frameNameForQuery(query backend.DataQuery, model JSONModel, index int) string {
+func frameNameForQuery(query backend.DataQuery, model kinds.TestDataQuery, index int) string {
 	name := model.Alias
 	suffix := ""
 

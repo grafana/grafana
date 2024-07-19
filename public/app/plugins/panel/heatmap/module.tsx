@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -53,15 +51,12 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         // NOTE: this feels like overkill/expensive just to assert if we have an ordinal y
         // can probably simplify without doing full dataprep
         const palette = quantizeScheme(opts.color, config.theme2);
-        const v = prepareHeatmapData(
-          context.data,
-          undefined,
-          opts,
+        const v = prepareHeatmapData({
+          frames: context.data,
+          options: opts,
           palette,
-          config.theme2,
-          undefined,
-          context.replaceVariables
-        );
+          theme: config.theme2,
+        });
         isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
       } catch {}
     }
@@ -419,7 +414,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show color scale',
       defaultValue: defaultOptions.tooltip.showColorScale,
       category,
-      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single && config.featureToggles.newVizTooltips,
+      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
     });
 
     builder.addNumberInput({
@@ -429,18 +424,18 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
-      showIf: (options) => false, // config.featureToggles.newVizTooltips && options.tooltip?.mode !== TooltipDisplayMode.None,
+      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None,
     });
 
     builder.addNumberInput({
       path: 'tooltip.maxHeight',
       name: 'Max height',
       category,
-      defaultValue: 600,
+      defaultValue: undefined,
       settings: {
         integer: true,
       },
-      showIf: (options) => false, // config.featureToggles.newVizTooltips && options.tooltip?.mode !== TooltipDisplayMode.None,
+      showIf: (options) => options.tooltip?.mode === TooltipDisplayMode.Multi,
     });
 
     category = ['Legend'];

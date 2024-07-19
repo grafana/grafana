@@ -209,6 +209,30 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'PagerDuty',
       imgUrl: 'public/img/plugins/pagerduty.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-catchpoint-datasource',
+      description: 'Catchpoint datasource',
+      name: 'Catchpoint',
+      imgUrl: 'public/img/plugins/catchpoint.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-azurecosmosdb-datasource',
+      description: 'Azure CosmosDB datasource',
+      name: 'Azure CosmosDB',
+      imgUrl: 'public/img/plugins/azure-cosmosdb.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-adobeanalytics-datasource',
+      description: 'Adobe Analytics datasource',
+      name: 'Adobe Analytics',
+      imgUrl: 'public/img/plugins/adobe-analytics.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-cloudflare-datasource',
+      description: 'Cloudflare datasource',
+      name: 'Cloudflare',
+      imgUrl: 'public/img/plugins/cloudflare.jpg',
+    }),
   ];
 }
 

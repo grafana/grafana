@@ -30,6 +30,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
+export { EmptyState } from './EmptyState/EmptyState';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -38,7 +39,7 @@ export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
-export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
+export { WeekStartPicker, getWeekStart, type WeekStart } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
@@ -174,7 +175,8 @@ export {
 } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
-export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { FeatureBadge } from './FeatureBadge/FeatureBadge';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -229,12 +231,14 @@ export { FieldArray } from './Forms/FieldArray';
 // Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
+export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonDot } from './Forms/RadioButtonList/RadioButtonDot';
 export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';
@@ -310,3 +314,6 @@ export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
 export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
 export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
 export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
+
+export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
+export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';

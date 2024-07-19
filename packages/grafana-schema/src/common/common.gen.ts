@@ -43,9 +43,7 @@ export interface DataQuery {
    */
   datasource?: unknown;
   /**
-   * true if query is disabled (ie should not be returned to the dashboard)
-   * Note this does not always imply that the query should not be executed since
-   * the results from a hidden query may be used as the input to other queries (SSE etc)
+   * If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
    */
   hide?: boolean;
   /**
@@ -555,6 +553,15 @@ export enum BigValueTextMode {
 }
 
 /**
+ * TODO docs
+ */
+export enum PercentChangeColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}
+
+/**
  * TODO -- should not be table specific!
  * TODO docs
  */
@@ -603,6 +610,7 @@ export enum SortOrder {
 export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig, BarConfig, StackableFieldConfig, HideableFieldConfig {
   drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
+  insertNulls?: (boolean | number);
   thresholdsStyle?: GraphThresholdsStyleConfig;
   transform?: GraphTransform;
 }
@@ -741,6 +749,7 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
  */
 export interface TableAutoCellOptions {
   type: TableCellDisplayMode.Auto;
+  wrapText?: boolean;
 }
 
 /**
@@ -748,6 +757,7 @@ export interface TableAutoCellOptions {
  */
 export interface TableColorTextCellOptions {
   type: TableCellDisplayMode.ColorText;
+  wrapText?: boolean;
 }
 
 /**
@@ -761,6 +771,8 @@ export interface TableJsonViewCellOptions {
  * Json view cell options
  */
 export interface TableImageCellOptions {
+  alt?: string;
+  title?: string;
   type: TableCellDisplayMode.Image;
 }
 
@@ -792,14 +804,17 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
  * Colored background cell options
  */
 export interface TableColoredBackgroundCellOptions {
+  applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
+  wrapText?: boolean;
 }
 
 /**
  * Height of a table cell
  */
 export enum TableCellHeight {
+  Auto = 'auto',
   Lg = 'lg',
   Md = 'md',
   Sm = 'sm',
@@ -846,6 +861,10 @@ export enum VariableFormatID {
 }
 
 export interface DataSourceRef {
+  /**
+   *  Datasource API version
+   */
+  apiVersion?: string;
   /**
    * The plugin type-id
    */

@@ -15,6 +15,37 @@ labels:
 description: Configure options for Grafana's traces visualization
 title: Traces
 weight: 100
+refs:
+  variables-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  generative-ai-features:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+  tracing-in-explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
+  panel-editor-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-editor-overview/
+  tempo-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/
+  configure-panel-options-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/
 ---
 
 # Traces
@@ -24,49 +55,61 @@ The traces visualization displays traces data in a diagram that allows you to ea
 
 For more information about traces and how to use them, refer to the following documentation:
 
-- [Tracing in Explore][]
-- [Tempo data source][]
+- [Tracing in Explore](ref:tracing-in-explore)
+- [Tempo data source](ref:tempo-data-source)
 - [Getting started with Tempo](/docs/tempo/latest/getting-started)
 
 {{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
+
+{{< docs/play title="Traces Panel" url="https://play.grafana.org/d/edodkfmj0tce8f/" >}}
 
 ## Add a panel with tracing visualizations
 
 Once you have tracing data available in your Grafana stack, you can add tracing panels to your Grafana dashboards.
 
 Using a dashboard variable, `traceID`, lets you create a query to show specific traces for a given trace ID.
-For more information about dashboard variables, refer to the [Variables documentation][].
+For more information about dashboard variables, refer to the [Variables documentation](ref:variables-documentation).
 
 ### Before you begin
 
 To use this procedure, you need:
 
 - A Grafana instance
-- A [Tempo data source][] connected to your Grafana instance
+- A [Tempo data source](ref:tempo-data-source) connected to your Grafana instance
 
 ### Add the traces visualization query {#add-the-traces-panel-query}
 
 To view and analyze traces data in a dashboard, you need to add the traces visualization to your dashboard and define a query using the panel editor.
 The query determines the data that is displayed in the visualization.
-For more information on the panel editor, refer to the [Panel editor documentation][].
+For more information on the panel editor, refer to the [Panel editor documentation](ref:panel-editor-documentation).
 
 This procedure uses dashboard variables and templates to allow you to enter trace IDs which can then be visualized. You'll use a variable called `traceId` and add it as a template query.
 
 1. From your Grafana stack, create a new dashboard or go to an existing dashboard where you'd like to add traces visualizations.
-1. Select **Add visualization** from a new dashboard or select **Add Panel** on an existing dashboard.
+1. Do one of the following:
+
+   - New dashboard - Click **+ Add visualization**.
+   - Existing dashboard - Click **Edit** in the top-right corner and then select **Visualization** in the **Add** drop-down.
+
 1. Search for and select the appropriate tracing data source.
-1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
-1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation][].
-1. In the query editor, select the **TraceQL** query type tab.
+1. In the top-right corner of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
+1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features](ref:generative-ai-features).
+
+   For more information on the panel editor, refer to the [Configure panel options documentation](ref:configure-panel-options-documentation).
+
+1. In the query editor, click the **TraceQL** query type tab.
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" caption="Add a template query" >}}
 
-1. Select **Apply** in the panel editor to add the panel to the dashboard.
-1. Go to the dashboard **Settings** and add a new variable called `traceId`, of variable type **Custom**, giving it a label if required. Select **Apply** to add the variable to the dashboard.
+1. Click **Back to dashboard**.
+1. Click **Settings** and go to the **Variables** tab.
+1. Add a new variable called `traceId`, of variable type **Custom**, giving it a label if required.
 
-   {{< figure  src="/static/img/docs/panels/traces/screenshot-traces-custom-variable.png" max-width="50%" caption="Add a Custom variable" >}}
+   {{< figure  src="/media/docs/grafana/dashboards/screenshot-traces-custom-variable-11.2.png" max-width="50%" caption="Add a Custom variable" >}}
 
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in trace panel" >}}
@@ -76,14 +119,18 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 While you can add a trace visualization to a dashboard, having to manually add trace IDs as a dashboard variable is cumbersome.
 It’s more useful to instead be able to use TraceQL queries to search for specific types of traces and then select appropriate traces from matching results.
 
-1. In the same dashboard where you added the trace visualization, select **Add panel** to add a new visualization panel.
+1. In the same dashboard where you added the trace visualization, click **Edit** in the top-right corner.
+1. In the **Add** drop-down, select **Visualization**.
 1. Select the same trace data source you used in the previous section.
-1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Table**.
+1. In the top-right corner of the panel editor, select the **Visualizations** tab, search for, and select **Table**.
 1. In the query editor, select the **TraceQL** tab.
-1. Under the **Panel options**, enter a **Title** for your trace panel.
+1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features](ref:generative-ai-features).
 1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. This example uses a simple, static query. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" caption="Create a dynamic query" >}}
+
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 When results are returned from a query, the results are rendered in the panel’s table.
 
@@ -95,7 +142,7 @@ The results in the traces visualization include links to the **Explore** page th
 
 To create a set of data links in the panel, use the following steps:
 
-1. In the right-side menu, under **Data links**, select **Add link**.
+1. In the panel editor menu, under **Data links**, click **Add link**.
 1. Add a **Title** for the data link.
 1. Find the UUID of the dashboard by looking in your browser’s address bar when the full dashboard is being rendered. Because this is a link to a dashboard in the same Grafana stack, only the path of the dashboard is required.
 
@@ -107,8 +154,8 @@ To create a set of data links in the panel, use the following steps:
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-edit-link.png" caption="Edit link and add the Trace link" >}}
 
 1. Select **Save** to save the data link.
-1. Select **Apply** from the panel editor to apply the panel to the dashboard.
-1. Save the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
 
@@ -116,22 +163,6 @@ You should now see a list of matching traces in the table visualization. While s
 
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link-follow.png" caption="Follow the trace link populates the trace ID and displays the traces view" >}}
 
-{{% docs/reference %}}
-[Tracing in Explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
-[Tracing in Explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
+## Panel options
 
-[Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
-[Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
-
-[Panel editor documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview"
-[Panel editor documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview"
-
-[Variables documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[Variables documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-
-[Configure panel options documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
-[Configure panel options documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
-
-[Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
-[Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo"
-{{% /docs/reference %}}
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
+import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
 
 import {
   DataFrame,
@@ -232,16 +232,16 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
 
 function getTransformationGridStyles(theme: GrafanaTheme2) {
   return {
-    // eslint-disable-next-line @emotion/syntax-preference
-    heading: css`
-            font-weight: 400,
-            > button: {
-                width: '100%',
-                display: 'flex',
-                justify-content: 'space-between',
-                align-items: 'center',
-                flex-wrap: 'no-wrap',
-        },`,
+    heading: css({
+      fontWeight: 400,
+      '> button': {
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'nowrap',
+      },
+    }),
     description: css({
       fontSize: '12px',
       display: 'flex',
@@ -263,6 +263,10 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     cardDisabled: css({
       backgroundColor: 'rgb(204, 204, 220, 0.045)',
       color: `${theme.colors.text.disabled} !important`,
+      img: {
+        filter: 'grayscale(100%)',
+        opacity: 0.33,
+      },
     }),
     cardApplicableInfo: css({
       position: 'absolute',
@@ -279,13 +283,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
 }
 
 const getImagePath = (id: string, disabled: boolean) => {
-  let folder = null;
-  if (!disabled) {
-    folder = config.theme2.isDark ? 'dark' : 'light';
-  } else {
-    folder = 'disabled';
-  }
-
+  const folder = config.theme2.isDark ? 'dark' : 'light';
   return `public/img/transformations/${folder}/${id}.svg`;
 };
 

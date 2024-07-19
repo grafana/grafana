@@ -1,9 +1,11 @@
-import { DataFrameView } from '../../dataframe';
+import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataTransformContext, ScopedVars } from '../../types';
+import { ScopedVars } from '../../types/ScopedVars';
 import { FieldType } from '../../types/dataFrame';
-import { BinaryOperationID, UnaryOperationID } from '../../utils';
+import { DataTransformContext } from '../../types/transformations';
+import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { UnaryOperationID } from '../../utils/unaryOperators';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
 
@@ -377,7 +379,7 @@ describe('calculateField transformer w/ timeseries', () => {
             text: '10000',
           },
         };
-        for (const key of Object.keys(variables)) {
+        for (const key in variables) {
           if (target === `$${key}`) {
             return variables[key]!.value + '';
           }

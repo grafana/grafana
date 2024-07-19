@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useId } from 'react';
+import { useId } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import {
@@ -83,10 +83,10 @@ export const DynamicConfigValueEditor = ({
       <OptionsPaneCategory
         id={item.name}
         renderTitle={renderLabel(false, true)}
-        className={css`
-          padding-left: 0;
-          padding-right: 0;
-        `}
+        className={css({
+          paddingLeft: 0,
+          paddingRight: 0,
+        })}
         isNested
         isOpenDefault={property.value !== undefined}
       >
@@ -130,13 +130,11 @@ export const DynamicConfigValueEditor = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    collapsibleOverrideEditor: css`
-      label: collapsibleOverrideEditor;
-      & + .dynamicConfigValueEditor--nonCollapsible {
-        margin-top: ${theme.spacing(1)};
-      }
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  collapsibleOverrideEditor: css({
+    label: 'collapsibleOverrideEditor',
+    '& + .dynamicConfigValueEditor--nonCollapsible': {
+      marginTop: theme.spacing(1),
+    },
+  }),
+});

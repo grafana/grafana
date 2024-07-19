@@ -26,7 +26,7 @@ import (
 )
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
-	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), &authntest.FakeService{
+	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
 	})
@@ -94,7 +94,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: "user:1"},
+			identity:       &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -102,7 +102,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
-			identity:       &authn.Identity{ID: "user:1"},
+			identity:       &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},

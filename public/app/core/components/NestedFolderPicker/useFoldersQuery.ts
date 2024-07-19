@@ -9,7 +9,7 @@ import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { RootState } from 'app/store/configureStore';
-import { FolderListItemDTO } from 'app/types';
+import { FolderListItemDTO, PermissionLevelString } from 'app/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;
@@ -22,17 +22,6 @@ type ListFoldersRequest = QueryActionCreatorResult<
     'browseDashboardsAPI'
   >
 >;
-
-const listFoldersSelector = createSelector(
-  (state: RootState) => state,
-  (
-    state: RootState,
-    parentUid: ListFolderQueryArgs['parentUid'],
-    page: ListFolderQueryArgs['page'],
-    limit: ListFolderQueryArgs['limit']
-  ) => browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit }),
-  (state, selectFolderList) => selectFolderList(state)
-);
 
 const listAllFoldersSelector = createSelector(
   [(state: RootState) => state, (state: RootState, requests: ListFoldersRequest[]) => requests],
@@ -48,7 +37,13 @@ const listAllFoldersSelector = createSelector(
         continue;
       }
 
-      const page = listFoldersSelector(state, req.arg.parentUid, req.arg.page, req.arg.limit);
+      const page = browseDashboardsAPI.endpoints.listFolders.select({
+        parentUid: req.arg.parentUid,
+        page: req.arg.page,
+        limit: req.arg.limit,
+        permission: req.arg.permission,
+      })(state);
+
       if (page.status === 'pending') {
         isLoading = true;
       }
@@ -91,7 +86,11 @@ function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undef
 /**
  * Returns a loaded folder hierarchy as a flat list and a function to load more pages.
  */
-export function useFoldersQuery(isBrowsing: boolean, openFolders: Record<string, boolean>) {
+export function useFoldersQuery(
+  isBrowsing: boolean,
+  openFolders: Record<string, boolean>,
+  permission?: PermissionLevelString
+) {
   const dispatch = useDispatch();
 
   // Keep a list of all requests so we can
@@ -113,13 +112,13 @@ export function useFoldersQuery(isBrowsing: boolean, openFolders: Record<string,
         return;
       }
 
-      const args = { parentUid, page: (pageNumber ?? 0) + 1, limit: PAGE_SIZE };
+      const args = { parentUid, page: (pageNumber ?? 0) + 1, limit: PAGE_SIZE, permission };
       const promise = dispatch(browseDashboardsAPI.endpoints.listFolders.initiate(args));
 
       // It's important that we create a new array so we can correctly memoize with it
       requestsRef.current = requestsRef.current.concat([promise]);
     },
-    [state, dispatch]
+    [state, dispatch, permission]
   );
 
   // Unsubscribe from all requests when the component is unmounted

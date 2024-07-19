@@ -1,4 +1,5 @@
-import React, { memo } from 'react';
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryEditorByApp.tsx
+import { memo } from 'react';
 
 import { CoreApp } from '@grafana/data';
 

@@ -7,10 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -38,7 +38,7 @@ func NewServiceAccountsAPI(
 	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		cfg:                  cfg,

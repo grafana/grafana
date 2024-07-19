@@ -8,13 +8,15 @@ import (
 )
 
 const (
-	GROUP      = "playlist.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP         = "playlist.grafana.app"
+	VERSION       = "v0alpha1"
+	APIVERSION    = GROUP + "/" + VERSION
+	RESOURCE      = "playlists"
+	GROUPRESOURCE = GROUP + "/" + RESOURCE
 )
 
 var PlaylistResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"playlists", "playlist", "Playlist",
+	RESOURCE, "playlist", "Playlist",
 	func() runtime.Object { return &Playlist{} },
 	func() runtime.Object { return &PlaylistList{} },
 )

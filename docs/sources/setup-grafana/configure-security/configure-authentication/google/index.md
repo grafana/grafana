@@ -16,6 +16,10 @@ weight: 1100
 
 To enable Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
 
+{{% admonition type="note" %}}
+If Users use the same email address in Google that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+{{% /admonition %}}
+
 ## Create Google OAuth keys
 
 First, you need to create a Google OAuth Client:
@@ -197,8 +201,7 @@ The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.htm
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 
 If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-This setting denies user access if no role or an invalid role is returned.
+You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
@@ -207,6 +210,20 @@ To ease configuration of a proper JMESPath expression, go to [JMESPath](http://j
 ##### Role mapping examples
 
 This section includes examples of JMESPath expressions used for role mapping.
+
+##### Org roles mapping example
+
+The Google integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on their Google group membership.
+
+In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
+
+The external user is part of the following Google groups: `group-1` and `group-2`.
+
+Config:
+
+```ini
+org_mapping = group-1:org_foo:Viewer group-2:org_bar:Editor *:org_baz:Editor
+```
 
 ###### Map roles using user information from OAuth token
 

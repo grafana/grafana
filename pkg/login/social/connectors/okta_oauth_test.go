@@ -12,10 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -29,63 +30,142 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 	tests := []struct {
 		name                    string
 		userRawJSON             string
-		OAuth2Extra             any
-		autoAssignOrgRole       string
-		settingSkipOrgRoleSync  bool
+		oAuth2Extra             any
+		skipOrgRoleSync         bool
 		allowAssignGrafanaAdmin bool
-		RoleAttributePath       string
-		ExpectedEmail           string
-		ExpectedRole            roletype.RoleType
-		ExpectedGrafanaAdmin    *bool
-		ExpectedErr             error
-		wantErr                 bool
+		roleAttributePath       string
+		roleAttributeStrict     bool
+		orgMapping              []string
+		orgAttributePath        string
+		expectedEmail           string
+		expectedOrgRoles        map[int64]org.RoleType
+		expectedGrafanaAdmin    *bool
+		expectedErr             error
 	}{
 		{
-			name:              "Should give role from JSON and email from id token",
+			name:              "should give role from JSON and email from id token",
 			userRawJSON:       `{ "email": "okta-octopus@grafana.com", "role": "Admin" }`,
-			RoleAttributePath: "role",
-			OAuth2Extra: map[string]any{
+			roleAttributePath: "role",
+			oAuth2Extra: map[string]any{
 				// {
 				// "email": "okto.octopus@test.com"
 				// },
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
 			},
-			ExpectedEmail:        "okto.octopus@test.com",
-			ExpectedRole:         "Admin",
-			ExpectedGrafanaAdmin: boolPointer,
-			wantErr:              false,
+			expectedEmail:        "okto.octopus@test.com",
+			expectedOrgRoles:     map[int64]org.RoleType{1: org.RoleAdmin},
+			expectedGrafanaAdmin: boolPointer,
 		},
 		{
-			name:                   "Should give empty role and nil pointer for GrafanaAdmin when skip org role sync enable",
-			userRawJSON:            `{ "email": "okta-octopus@grafana.com", "role": "Admin" }`,
-			RoleAttributePath:      "role",
-			settingSkipOrgRoleSync: true,
-			OAuth2Extra: map[string]any{
+			name:              "should give empty role and nil pointer for GrafanaAdmin when skip org role sync enable",
+			userRawJSON:       `{ "email": "okta-octopus@grafana.com", "role": "Admin" }`,
+			roleAttributePath: "role",
+			skipOrgRoleSync:   true,
+			oAuth2Extra: map[string]any{
 				// {
 				// "email": "okto.octopus@test.com"
 				// },
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
 			},
-			ExpectedEmail:        "okto.octopus@test.com",
-			ExpectedRole:         "",
-			ExpectedGrafanaAdmin: boolPointer,
-			wantErr:              false,
+			expectedEmail:        "okto.octopus@test.com",
+			expectedOrgRoles:     nil,
+			expectedGrafanaAdmin: boolPointer,
 		},
 		{
-			name:                    "Should give grafanaAdmin role for specific GrafanaAdmin in the role assignement",
+			name:                    "should give grafanaAdmin role for specific GrafanaAdmin in the role assignement",
 			userRawJSON:             fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "role": "%s" }`, social.RoleGrafanaAdmin),
-			RoleAttributePath:       "role",
+			roleAttributePath:       "role",
 			allowAssignGrafanaAdmin: true,
-			OAuth2Extra: map[string]any{
+			oAuth2Extra: map[string]any{
 				// {
 				// "email": "okto.octopus@test.com"
 				// },
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
 			},
-			ExpectedEmail:        "okto.octopus@test.com",
-			ExpectedRole:         "Admin",
-			ExpectedGrafanaAdmin: trueBoolPtr(),
-			wantErr:              false,
+			expectedEmail:        "okto.octopus@test.com",
+			expectedOrgRoles:     map[int64]org.RoleType{1: org.RoleAdmin},
+			expectedGrafanaAdmin: trueBoolPtr(),
+		},
+		{
+			name:        "should fallback to default org role when role attribute path is empty",
+			userRawJSON: fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "groups": ["Group 1"], "role": "%s" }`, org.RoleEditor),
+			oAuth2Extra: map[string]any{
+				// {
+				// "email": "okto.octopus@test.com"
+				// },
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
+			},
+			expectedEmail:    "okto.octopus@test.com",
+			expectedOrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+		},
+		{
+			name:                "should map role when only org mapping is set",
+			userRawJSON:         fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "groups": ["Group 1"], "role": "%s" }`, org.RoleEditor),
+			orgAttributePath:    "groups",
+			orgMapping:          []string{"Group 1:Org4:Editor", "*:Org5:Viewer"},
+			roleAttributeStrict: false,
+			oAuth2Extra: map[string]any{
+				// {
+				// "email": "okto.octopus@test.com"
+				// },
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
+			},
+			expectedEmail:    "okto.octopus@test.com",
+			expectedOrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
+		},
+		{
+			name:                "should map role when only org mapping is set and role attribute strict is enabled",
+			userRawJSON:         fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "groups": ["Group 1"], "role": "%s" }`, org.RoleEditor),
+			orgAttributePath:    "groups",
+			orgMapping:          []string{"Group 1:Org4:Editor", "*:Org5:Viewer"},
+			roleAttributeStrict: true,
+			oAuth2Extra: map[string]any{
+				// {
+				// "email": "okto.octopus@test.com"
+				// },
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
+			},
+			expectedEmail:    "okto.octopus@test.com",
+			expectedOrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
+		},
+		{
+			name:              "should return nil OrgRoles when SkipOrgRoleSync is enabled",
+			userRawJSON:       fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "role": "%s" }`, org.RoleEditor),
+			roleAttributePath: "role",
+			skipOrgRoleSync:   true,
+			oAuth2Extra: map[string]any{
+				// {
+				// "email": "okto.octopus@test.com"
+				// },
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
+			},
+			expectedOrgRoles: nil,
+			expectedEmail:    "okto.octopus@test.com",
+		},
+		{
+			name:                "should return error when neither role attribute path nor org mapping evaluates to a role and role attribute strict is enabled",
+			userRawJSON:         fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "role": "%s" }`, org.RoleEditor),
+			roleAttributePath:   "invalid_role_path",
+			roleAttributeStrict: true,
+			oAuth2Extra: map[string]any{
+				// {
+				// "email": "okto.octopus@test.com"
+				// },
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
+			},
+			expectedErr: errRoleAttributeStrictViolation,
+		},
+		{
+			name:                "should return error when neither role attribute path nor org mapping is set and role attribute strict is enabled",
+			userRawJSON:         fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "role": "%s" }`, org.RoleEditor),
+			roleAttributeStrict: true,
+			oAuth2Extra: map[string]any{
+				// {
+				// "email": "okto.octopus@test.com"
+				// },
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
+			},
+			expectedErr: errRoleAttributeStrictViolation,
 		},
 	}
 	for _, tt := range tests {
@@ -103,17 +183,23 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 
+			cfg := &setting.Cfg{
+				AutoAssignOrgRole: "Viewer", // default role
+			}
+
 			provider := NewOktaProvider(
 				&social.OAuthInfo{
 					ApiUrl:                  server.URL + "/user",
-					RoleAttributePath:       tt.RoleAttributePath,
+					RoleAttributePath:       tt.roleAttributePath,
+					RoleAttributeStrict:     tt.roleAttributeStrict,
+					OrgMapping:              tt.orgMapping,
+					OrgAttributePath:        tt.orgAttributePath,
 					AllowAssignGrafanaAdmin: tt.allowAssignGrafanaAdmin,
-					SkipOrgRoleSync:         tt.settingSkipOrgRoleSync,
+					SkipOrgRoleSync:         tt.skipOrgRoleSync,
 				},
-				&setting.Cfg{
-					AutoAssignOrgRole:          tt.autoAssignOrgRole,
-					OAuthSkipOrgRoleUpdateSync: false,
-				},
+				cfg,
+				ProvideOrgRoleMapper(cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
@@ -124,15 +210,19 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				RefreshToken: "",
 				Expiry:       time.Now(),
 			}
-			token := staticToken.WithExtra(tt.OAuth2Extra)
-			got, err := provider.UserInfo(context.Background(), server.Client(), token)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
+
+			token := staticToken.WithExtra(tt.oAuth2Extra)
+			actual, err := provider.UserInfo(context.Background(), server.Client(), token)
+
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tt.expectedErr)
 				return
 			}
-			require.Equal(t, tt.ExpectedEmail, got.Email)
-			require.Equal(t, tt.ExpectedRole, got.Role)
-			require.Equal(t, tt.ExpectedGrafanaAdmin, got.IsGrafanaAdmin)
+
+			require.Equal(t, tt.expectedEmail, actual.Email)
+			require.Equal(t, tt.expectedOrgRoles, actual.OrgRoles)
+			require.Equal(t, tt.expectedGrafanaAdmin, actual.IsGrafanaAdmin)
 		})
 	}
 }
@@ -282,12 +372,12 @@ func TestSocialOkta_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
-			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
@@ -362,7 +452,7 @@ func TestSocialOkta_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewOktaProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {

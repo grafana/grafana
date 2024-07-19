@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent } from 'react';
+import { ChangeEvent, FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { IntervalVariable } from '@grafana/scenes';
@@ -15,14 +15,21 @@ interface IntervalVariableEditorProps {
 }
 
 export function IntervalVariableEditor({ variable, onRunQuery }: IntervalVariableEditorProps) {
-  const { intervals, autoStepCount, autoEnabled, autoMinInterval } = variable.useState();
+  const { intervals, autoStepCount, autoEnabled, autoMinInterval, value } = variable.useState();
 
   //transform intervals array into string
   const intervalsCombined = getIntervalsQueryFromNewIntervalModel(intervals);
 
   const onIntervalsChange = (event: FormEvent<HTMLInputElement>) => {
-    const intervalsArray = getIntervalsFromQueryString(event.currentTarget.value);
-    variable.setState({ intervals: intervalsArray });
+    const newIntervals = getIntervalsFromQueryString(event.currentTarget.value);
+    // if the current value is not in the new intervals, set the value to the first interval
+    const newValue = newIntervals.includes(value) ? value : newIntervals[0];
+
+    variable.setState({
+      intervals: newIntervals,
+      value: newValue,
+    });
+
     onRunQuery();
   };
 

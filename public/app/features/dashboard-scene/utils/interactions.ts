@@ -20,6 +20,7 @@ export const DashboardInteractions = {
       | 'share'
       | 'createLibraryPanel'
       | 'unlinkLibraryPanel'
+      | 'replaceLibraryPanel'
       | 'duplicate'
       | 'copy'
       | 'remove'
@@ -41,12 +42,9 @@ export const DashboardInteractions = {
   panelCancelQueryClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_cancelquery_clicked', properties);
   },
-  panelDescriptionShown: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('panelheader_description_displayed', properties);
-  },
 
   // Sharing interactions:
-  sharingTabChanged: (properties?: Record<string, unknown>) => {
+  sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_category_clicked', properties);
   },
   shareLinkCopied: (properties?: Record<string, unknown>) => {

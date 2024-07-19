@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/tracking.ts
 import { CoreApp, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
@@ -9,10 +10,10 @@ export function trackQuery(
   startTime: Date
 ): void {
   const { app, targets: queries } = request;
-  // We do want to track panel-editor and explore
-  // We do not want to track queries from the dashboard or viewing a panel
-  // also included in the tracking is cloud-alerting, unified-alerting, and unknown
-  if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
+  // We only track queries run in Explore.
+  // We do not want to track queries from the dashboard, viewing a panel,
+  // cloud-alerting, unified-alerting, scenes and unknown
+  if (app !== CoreApp.Explore) {
     return;
   }
 

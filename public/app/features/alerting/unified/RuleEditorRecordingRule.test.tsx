@@ -1,12 +1,13 @@
-import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -15,7 +16,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
-import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
+import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 
@@ -91,7 +92,7 @@ const mocks = {
   },
 };
 
-const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
+setupMswServer();
 
 describe('RuleEditor recording rules', () => {
   beforeEach(() => {
@@ -158,12 +159,6 @@ describe('RuleEditor recording rules', () => {
 
     await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
 
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(1).get()), 'team{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
-
     // try to save, find out that recording rule name is invalid
     await userEvent.click(ui.buttons.saveAndExit.get());
     await waitFor(() =>
@@ -190,7 +185,7 @@ describe('RuleEditor recording rules', () => {
         rules: [
           {
             record: 'my:great:new:recording:rule',
-            labels: { team: 'the a-team' },
+            labels: {},
             expr: 'up == 1',
           },
         ],

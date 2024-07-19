@@ -8,12 +8,13 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
+import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
-import { instancesPermissions, notificationsPermissions } from './access-control';
+import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
@@ -45,6 +46,10 @@ export function getRulesDataSources() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
+  return isGrafanaRulesSource(rulesSource) ? 'grafana' : rulesSource.uid ?? rulesSource.id;
+}
+
 export function getRulesDataSource(rulesSourceName: string) {
   return getRulesDataSources().find((x) => x.name === rulesSourceName);
 }
@@ -69,6 +74,12 @@ export function isAlertmanagerDataSource(
 
 export function getExternalDsAlertManagers() {
   return getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
+}
+
+export function isAlertmanagerDataSourceInterestedInAlerts(
+  dataSourceSettings: DataSourceSettings<AlertManagerDataSourceJsonData>
+) {
+  return dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true;
 }
 
 const grafanaAlertManagerDataSource: AlertManagerDataSource = {
@@ -105,7 +116,7 @@ export function useGetAlertManagerDataSourcesByPermissionAndConfig(
   const internalDSAlertManagers = allAlertManagersByPermission.availableInternalDataSources;
 
   //get current alerting configuration
-  const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
+  const { currentData: amConfigStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery();
 
   const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
 
@@ -133,9 +144,15 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   const permissions = {
     instance: instancesPermissions.read,
     notification: notificationsPermissions.read,
+    silence: silencesPermissions.read,
   };
 
-  if (contextSrv.hasPermission(permissions[permission].grafana)) {
+  const builtinAlertmanagerPermissions = Object.values(permissions).flatMap((permissions) => permissions.grafana);
+  const hasPermissionsForInternalAlertmanager = builtinAlertmanagerPermissions.some((permission) =>
+    contextSrv.hasPermission(permission)
+  );
+
+  if (hasPermissionsForInternalAlertmanager) {
     availableInternalDataSources.push(grafanaAlertManagerDataSource);
   }
 
@@ -204,6 +221,10 @@ export function isVanillaPrometheusAlertManagerDataSource(name: string): boolean
   );
 }
 
+export function isProvisionedDataSource(dataSource: DataSourceSettings): boolean {
+  return dataSource.readOnly === true;
+}
+
 export function isGrafanaRulesSource(
   rulesSource: RulesSource | string
 ): rulesSource is typeof GRAFANA_RULES_SOURCE_NAME {
@@ -262,4 +283,21 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+}
+
+export function getApplicationFromRulesSource(rulesSource: RulesSource): RulesSourceApplication {
+  if (isGrafanaRulesSource(rulesSource)) {
+    return 'grafana';
+  }
+
+  // @TODO use buildinfo
+  if ('prometheusType' in rulesSource.jsonData) {
+    return rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
+  }
+
+  if (rulesSource.type === 'loki') {
+    return 'loki';
+  }
+
+  return PromApplication.Prometheus; // assume Prometheus if nothing matches
 }

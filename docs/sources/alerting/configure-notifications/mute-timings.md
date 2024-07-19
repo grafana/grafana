@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../notifications/mute-timings/ # /docs/grafana/latest/alerting/notifications/mute-timings/
-  - ../unified-alerting/notifications/mute-timings/ # /docs/grafana/latest/alerting/unified-alerting/notifications/mute-timings/
-  - ../manage-notifications/mute-timings/ # /docs/grafana/latest/alerting/manage-notifications/mute-timings/
+  - ../notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/notifications/mute-timings/
+  - ../unified-alerting/notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/notifications/mute-timings/
+  - ../manage-notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/mute-timings/
 canonical: /docs/grafana/latest/alerting/configure-notifications/mute-timings/
 description: Create mute timings to prevent alerts from firing during a specific and reoccurring period of time
 keywords:
@@ -19,6 +19,12 @@ labels:
     - oss
 title: Configure mute timings
 weight: 450
+refs:
+  external-alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
 ---
 
 # Configure mute timings
@@ -27,7 +33,7 @@ A mute timing is a recurring interval of time when no new notifications for a po
 
 Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source][datasources/alertmanager]. For more information, refer to [Alertmanager documentation][fundamentals/alertmanager].
+You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager](ref:external-alertmanager).
 
 ## Mute timings vs silences
 
@@ -70,7 +76,7 @@ Supported time interval options are:
 
 All fields are lists; to match the field, at least one list element must be satisfied. Fields also support ranges using `:` (e.g., `monday:thursday`).
 
-If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
+If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
 
 If you want to specify an exact duration, specify all the options. For example, if you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
 
@@ -80,11 +86,3 @@ If you want to specify an exact duration, specify all the options. For example, 
 - Days of the week: `monday`
 - Months: `3, 6, 9, 12`
 - Days of the month: `1:7`
-
-{{% docs/reference %}}
-[datasources/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager"
-[datasources/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/alertmanager"
-
-[fundamentals/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alertmanager"
-[fundamentals/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alertmanager"
-{{% /docs/reference %}}

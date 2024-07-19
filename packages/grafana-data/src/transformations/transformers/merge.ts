@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 import { map } from 'rxjs/operators';
 
-import { MutableDataFrame } from '../../dataframe';
+import { MutableDataFrame } from '../../dataframe/MutableDataFrame';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 

@@ -7,13 +7,13 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,7 +34,7 @@ type ExtSvcAccountsService struct {
 	tracer   tracing.Tracer
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, features *featuremgmt.FeatureManager, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	esa := &ExtSvcAccountsService{
 		acSvc:    acSvc,
@@ -101,7 +101,7 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 		Name:       svcAcc.Name,
 		OrgID:      svcAcc.OrgId,
 		IsDisabled: svcAcc.IsDisabled,
-		Role:       roletype.RoleType(svcAcc.Role),
+		Role:       identity.RoleType(svcAcc.Role),
 	}, nil
 }
 
@@ -110,14 +110,16 @@ func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) (
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.GetExternalServiceNames")
 	defer span.End()
 
-	esa.logger.Debug("Get external service names from store")
+	ctxLogger := esa.logger.FromContext(ctx)
+
+	ctxLogger.Debug("Get external service names from store")
 	sas, err := esa.saSvc.SearchOrgServiceAccounts(ctx, &sa.SearchOrgServiceAccountsQuery{
 		OrgID:        extsvcauth.TmpOrgID,
 		Filter:       sa.FilterOnlyExternal,
 		SignedInUser: extsvcuser,
 	})
 	if err != nil {
-		esa.logger.Error("Could not fetch external service accounts from store", "error", err.Error())
+		ctxLogger.Error("Could not fetch external service accounts from store", "error", err.Error())
 		return nil, err
 	}
 	if sas == nil {
@@ -134,15 +136,17 @@ func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) (
 func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
 	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
-		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
+		esa.logger.FromContext(ctx).Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return nil, nil
 	}
 
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.SaveExternalService")
 	defer span.End()
 
+	ctxLogger := esa.logger.FromContext(ctx)
+
 	if cmd == nil {
-		esa.logger.Warn("Received no input")
+		ctxLogger.Warn("Received no input")
 		return nil, nil
 	}
 
@@ -160,13 +164,13 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 
 	// No need for a token if we don't have a service account
 	if saID <= 0 {
-		esa.logger.Debug("Skipping service account token creation", "service", slug)
+		ctxLogger.Debug("Skipping service account token creation", "service", slug)
 		return nil, nil
 	}
 
 	token, err := esa.getExtSvcAccountToken(ctx, extsvcauth.TmpOrgID, saID, slug)
 	if err != nil {
-		esa.logger.Error("Could not get the external svc token",
+		ctxLogger.Error("Could not get the external svc token",
 			"service", slug,
 			"saID", saID,
 			"error", err.Error())
@@ -192,18 +196,20 @@ func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.RemoveExtSvcAccount")
 	defer span.End()
 
+	ctxLogger := esa.logger.FromContext(ctx)
+
 	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, orgID, sa.ExtSvcPrefix+extSvcSlug)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return errRetrieve
 	}
 
 	if saID <= 0 {
-		esa.logger.Debug("No external service account associated with this service", "service", extSvcSlug, "orgID", orgID)
+		ctxLogger.Debug("No external service account associated with this service", "service", extSvcSlug, "orgID", orgID)
 		return nil
 	}
 
 	if err := esa.deleteExtSvcAccount(ctx, orgID, extSvcSlug, saID); err != nil {
-		esa.logger.Error("Error occurred while deleting service account",
+		ctxLogger.Error("Error occurred while deleting service account",
 			"service", extSvcSlug,
 			"saID", saID,
 			"error", err.Error())
@@ -217,15 +223,17 @@ func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID
 func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *sa.ManageExtSvcAccountCmd) (int64, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
 	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
-		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
+		esa.logger.FromContext(ctx).Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return 0, nil
 	}
 
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.ManageExtSvcAccount")
 	defer span.End()
 
+	ctxLogger := esa.logger.FromContext(ctx)
+
 	if cmd == nil {
-		esa.logger.Warn("Received no input")
+		ctxLogger.Warn("Received no input")
 		return 0, nil
 	}
 
@@ -237,14 +245,14 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 	if len(cmd.Permissions) == 0 {
 		if saID > 0 {
 			if err := esa.deleteExtSvcAccount(ctx, cmd.OrgID, cmd.ExtSvcSlug, saID); err != nil {
-				esa.logger.Error("Error occurred while deleting service account",
+				ctxLogger.Error("Error occurred while deleting service account",
 					"service", cmd.ExtSvcSlug,
 					"saID", saID,
 					"error", err.Error())
 				return 0, err
 			}
 		}
-		esa.logger.Info("Skipping service account creation, no permission",
+		ctxLogger.Info("Skipping service account creation, no permission",
 			"service", cmd.ExtSvcSlug,
 			"permission count", len(cmd.Permissions),
 			"saID", saID)
@@ -259,7 +267,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		SaID:        saID,
 	})
 	if errSave != nil {
-		esa.logger.Error("Could not save service account", "service", cmd.ExtSvcSlug, "error", errSave.Error())
+		ctxLogger.Error("Could not save service account", "service", cmd.ExtSvcSlug, "error", errSave.Error())
 		return 0, errSave
 	}
 	return saID, nil
@@ -270,12 +278,14 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.saveExtSvcAccount")
 	defer span.End()
 
+	ctxLogger := esa.logger.FromContext(ctx)
+
 	if cmd.SaID <= 0 {
 		// Create a service account
-		esa.logger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
+		ctxLogger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
 			Name:       sa.ExtSvcPrefix + cmd.ExtSvcSlug,
-			Role:       newRole(roletype.RoleNone),
+			Role:       newRole(identity.RoleNone),
 			IsDisabled: newBool(false),
 		})
 		if err != nil {
@@ -285,13 +295,13 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 	}
 
 	// Enable or disable the service account
-	esa.logger.Debug("Set service account state", "service", cmd.ExtSvcSlug, "saID", cmd.SaID, "enabled", cmd.Enabled)
+	ctxLogger.Debug("Set service account state", "service", cmd.ExtSvcSlug, "saID", cmd.SaID, "enabled", cmd.Enabled)
 	if err := esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, cmd.SaID, cmd.Enabled); err != nil {
 		return 0, err
 	}
 
 	// update the service account's permissions
-	esa.logger.Debug("Update role permissions", "service", cmd.ExtSvcSlug, "saID", cmd.SaID)
+	ctxLogger.Debug("Update role permissions", "service", cmd.ExtSvcSlug, "saID", cmd.SaID)
 	if err := esa.acSvc.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
 		AssignmentOrgID:   cmd.OrgID,
 		ExternalServiceID: cmd.ExtSvcSlug,
@@ -311,7 +321,9 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.deleteExtSvcAccount")
 	defer span.End()
 
-	esa.logger.Info("Delete service account", "service", slug, "orgID", orgID, "saID", saID)
+	ctxLogger := esa.logger.FromContext(ctx)
+
+	ctxLogger.Info("Delete service account", "service", slug, "orgID", orgID, "saID", saID)
 	if err := esa.saSvc.DeleteServiceAccount(ctx, orgID, saID); err != nil {
 		return err
 	}
@@ -330,25 +342,33 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.getExtSvcAccountToken")
 	defer span.End()
 
+	ctxLogger := esa.logger.FromContext(ctx)
+
 	// Get credentials from store
 	credentials, err := esa.GetExtSvcCredentials(ctx, orgID, extSvcSlug)
 	if err != nil && !errors.Is(err, ErrCredentialsNotFound) {
-		return "", err
+		if !errors.Is(err, &satokengen.ErrInvalidApiKey{}) {
+			return "", err
+		}
+		ctxLogger.Warn("Invalid token found in store, recovering...", "service", extSvcSlug, "orgID", orgID)
+		if err := esa.removeExtSvcAccountToken(ctx, orgID, saID, extSvcSlug); err != nil {
+			return "", err
+		}
 	}
 	if credentials != nil {
 		return credentials.Secret, nil
 	}
 
 	// Generate token
-	esa.logger.Info("Generate new service account token", "service", extSvcSlug, "orgID", orgID)
-	newKeyInfo, err := satokengen.New(extSvcSlug)
+	ctxLogger.Info("Generate new service account token", "service", extSvcSlug, "orgID", orgID)
+	newKeyInfo, err := genTokenWithRetries(ctxLogger, extSvcSlug)
 	if err != nil {
 		return "", err
 	}
 
-	esa.logger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
+	ctxLogger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
 	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &sa.AddServiceAccountTokenCommand{
-		Name:  tokenNamePrefix + "-" + extSvcSlug,
+		Name:  tokenName(extSvcSlug),
 		OrgId: orgID,
 		Key:   newKeyInfo.HashedKey,
 	}); err != nil {
@@ -366,9 +386,85 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	return newKeyInfo.ClientSecret, nil
 }
 
+func (esa *ExtSvcAccountsService) removeExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) error {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.removeExtSvcAccountToken")
+	defer span.End()
+
+	ctxLogger := esa.logger.FromContext(ctx)
+	ctxLogger.Debug("List service account tokens", "service", extSvcSlug, "orgID", orgID)
+	tokens, err := esa.saSvc.ListTokens(ctx, &sa.GetSATokensQuery{OrgID: &orgID, ServiceAccountID: &saID})
+	if err != nil {
+		return err
+	}
+	notFound := int64(-1)
+	tknID := notFound
+	for _, token := range tokens {
+		if token.Name == tokenName(extSvcSlug) {
+			ctxLogger.Debug("Found token", "service", extSvcSlug, "orgID", orgID)
+			tknID = token.ID
+			break
+		}
+	}
+	if tknID != notFound {
+		ctxLogger.Debug("Remove token", "service", extSvcSlug, "orgID", orgID)
+		if err := esa.saSvc.DeleteServiceAccountToken(ctx, orgID, saID, tknID); err != nil {
+			return err
+		}
+	}
+	return esa.DeleteExtSvcCredentials(ctx, orgID, extSvcSlug)
+}
+
+// FIXME: If the warning log never appears, we can remove this function
+func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.KeyGenResult, error) {
+	var newKeyInfo satokengen.KeyGenResult
+	var err error
+	retry := 0
+	for retry < maxTokenGenRetries {
+		newKeyInfo, err = satokengen.New(extSvcSlug)
+		if err != nil {
+			return satokengen.KeyGenResult{}, err
+		}
+
+		if !strings.Contains(newKeyInfo.ClientSecret, "\x00") {
+			return newKeyInfo, nil
+		}
+
+		retry++
+
+		ctxLogger.Warn("Generated a token containing NUL, retrying",
+			"service", extSvcSlug,
+			"retry", retry,
+		)
+		// On first retry, log the token parts that contain a nil byte
+		if retry == 1 {
+			logTokenNULParts(ctxLogger, extSvcSlug, newKeyInfo.ClientSecret)
+		}
+	}
+
+	return satokengen.KeyGenResult{}, ErrCredentialsGenFailed.Errorf("Failed to generate a token for %s", extSvcSlug)
+}
+
+// logTokenNULParts logs a warning if the external service token contains a nil byte
+// Tokens normally have 3 parts "gl+serviceID_secret_checksum"
+// Log the part of the generated token that contains a nil byte
+func logTokenNULParts(ctxLogger log.Logger, extSvcSlug string, token string) {
+	parts := strings.Split(token, "_")
+	for i := range parts {
+		if strings.Contains(parts[i], "\x00") {
+			ctxLogger.Warn("Token contains NUL",
+				"service", extSvcSlug,
+				"part", i,
+				"part_len", len(parts[i]),
+				"parts_count", len(parts),
+			)
+		}
+	}
+}
+
 // GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) (*Credentials, error) {
-	esa.logger.Debug("Get service account token from skv", "service", extSvcSlug, "orgID", orgID)
+	ctxLogger := esa.logger.FromContext(ctx)
+	ctxLogger.Debug("Get service account token from skv", "service", extSvcSlug, "orgID", orgID)
 	token, ok, err := esa.skvStore.Get(ctx, orgID, extSvcSlug, kvStoreType)
 	if err != nil {
 		return nil, err
@@ -376,23 +472,30 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 	if !ok {
 		return nil, ErrCredentialsNotFound.Errorf("No credential found for in store %v", extSvcSlug)
 	}
+	if _, err := satokengen.Decode(token); err != nil {
+		ctxLogger.Error("Failed to decode token", "error", err.Error())
+		return nil, err
+	}
 	return &Credentials{Secret: token}, nil
 }
 
 // SaveExtSvcCredentials stores the credentials of an External Service in an encrypted storage
 func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd *SaveCredentialsCmd) error {
-	esa.logger.Debug("Save service account token in skv", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
+	ctxLogger := esa.logger.FromContext(ctx)
+	ctxLogger.Debug("Save service account token in skv", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 	return esa.skvStore.Set(ctx, cmd.OrgID, cmd.ExtSvcSlug, kvStoreType, cmd.Secret)
 }
 
 // DeleteExtSvcCredentials removes the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error {
-	esa.logger.Debug("Delete service account token from skv", "service", extSvcSlug, "orgID", orgID)
+	ctxLogger := esa.logger.FromContext(ctx)
+	ctxLogger.Debug("Delete service account token from skv", "service", extSvcSlug, "orgID", orgID)
 	return esa.skvStore.Del(ctx, orgID, extSvcSlug, kvStoreType)
 }
 
 func (esa *ExtSvcAccountsService) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
-	esa.logger.Debug("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+	ctxLogger := esa.logger.FromContext(ctx)
+	ctxLogger.Debug("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	errEnable := esa.EnableExtSvcAccount(ctx, &sa.EnableExtSvcAccountCmd{
 		ExtSvcSlug: event.PluginId,
@@ -402,8 +505,12 @@ func (esa *ExtSvcAccountsService) handlePluginStateChanged(ctx context.Context, 
 
 	// Ignore service account not found error
 	if errors.Is(errEnable, sa.ErrServiceAccountNotFound) {
-		esa.logger.Debug("No ext svc account with this plugin", "pluginId", event.PluginId, "orgId", event.OrgId)
+		ctxLogger.Debug("No ext svc account with this plugin", "pluginId", event.PluginId, "orgId", event.OrgId)
 		return nil
 	}
 	return errEnable
+}
+
+func tokenName(extSvcSlug string) string {
+	return tokenNamePrefix + "-" + extSvcSlug
 }

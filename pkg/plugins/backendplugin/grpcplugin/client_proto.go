@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -23,10 +25,13 @@ type ProtoClient interface {
 	pluginv2.ResourceClient
 	pluginv2.DiagnosticsClient
 	pluginv2.StreamClient
+	pluginv2.AdmissionControlClient
 
 	PID(context.Context) (string, error)
 	PluginID() string
 	PluginVersion() string
+	PluginJSON() plugins.JSONData
+	Backend() backendplugin.Plugin
 	Logger() log.Logger
 	Start(context.Context) error
 	Stop(context.Context) error
@@ -36,13 +41,13 @@ type ProtoClient interface {
 type protoClient struct {
 	plugin        *grpcPlugin
 	pluginVersion string
+	pluginJSON    plugins.JSONData
 
 	mu sync.RWMutex
 }
 
 type ProtoClientOpts struct {
-	PluginID       string
-	PluginVersion  string
+	PluginJSON     plugins.JSONData
 	ExecutablePath string
 	ExecutableArgs []string
 	Env            []string
@@ -52,7 +57,7 @@ type ProtoClientOpts struct {
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 	p := newGrpcPlugin(
 		PluginDescriptor{
-			pluginID:         opts.PluginID,
+			pluginID:         opts.PluginJSON.ID,
 			managed:          true,
 			executablePath:   opts.ExecutablePath,
 			executableArgs:   opts.ExecutableArgs,
@@ -62,7 +67,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p, pluginVersion: opts.PluginVersion}, nil
+	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON}, nil
 }
 
 func (r *protoClient) PID(ctx context.Context) (string, error) {
@@ -78,6 +83,14 @@ func (r *protoClient) PluginID() string {
 
 func (r *protoClient) PluginVersion() string {
 	return r.pluginVersion
+}
+
+func (r *protoClient) PluginJSON() plugins.JSONData {
+	return r.pluginJSON
+}
+
+func (r *protoClient) Backend() backendplugin.Plugin {
+	return r.plugin
 }
 
 func (r *protoClient) Logger() log.Logger {
@@ -171,4 +184,28 @@ func (r *protoClient) PublishStream(ctx context.Context, in *pluginv2.PublishStr
 		return nil, errClientNotStarted
 	}
 	return c.StreamClient.PublishStream(ctx, in, opts...)
+}
+
+func (r *protoClient) ValidateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.ValidationResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotStarted
+	}
+	return c.AdmissionClient.ValidateAdmission(ctx, in, opts...)
+}
+
+func (r *protoClient) MutateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.MutationResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotStarted
+	}
+	return c.AdmissionClient.MutateAdmission(ctx, in, opts...)
+}
+
+func (r *protoClient) ConvertObject(ctx context.Context, in *pluginv2.ConversionRequest, opts ...grpc.CallOption) (*pluginv2.ConversionResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotStarted
+	}
+	return c.AdmissionClient.ConvertObject(ctx, in, opts...)
 }

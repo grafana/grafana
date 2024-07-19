@@ -6,13 +6,7 @@
 export * from './services';
 export * from './config';
 export * from './analytics/types';
-export {
-  loadPluginCss,
-  SystemJS,
-  type PluginCssOptions,
-  setPluginImportUtils,
-  getPluginImportUtils,
-} from './utils/plugin';
+export { loadPluginCss, type PluginCssOptions, setPluginImportUtils, getPluginImportUtils } from './utils/plugin';
 export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
 export { logInfo, logDebug, logWarning, logError, createMonitoringLogger } from './utils/logging';
@@ -23,6 +17,7 @@ export {
   type HealthCheckResultDetails,
   HealthStatus,
   type StreamOptionsProvider,
+  isExpressionReference,
 } from './utils/DataSourceWithBackend';
 export {
   toDataQueryResponse,
@@ -56,4 +51,6 @@ export {
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
 export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPrevious';
+export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chromeHeaderHeight';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
+export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';

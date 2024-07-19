@@ -8,14 +8,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -105,7 +103,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 			permissionScenario(t, "When creating a new dashboard in the General folder", canSave,
 				func(t *testing.T, sc *permissionScenarioContext) {
-					sqlStore := db.InitTestDB(t)
+					sqlStore := db.InitTestReplDB(t)
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]any{
@@ -840,7 +838,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
-	sqlStore                 db.DB
+	sqlStore                 db.ReplDB
 	dashboardStore           dashboards.Store
 	savedFolder              *dashboards.Dashboard
 	savedDashInFolder        *dashboards.Dashboard
@@ -860,7 +858,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	t.Run(desc, func(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		cfg := setting.NewCfg()
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestReplDB(t)
 		quotaService := quotatest.New(false, nil)
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
@@ -870,7 +868,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardService, err := ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
+			cfg, dashboardStore, folderStore,
 			featuremgmt.WithFeatures(),
 			folderPermissions,
 			dashboardPermissions,
@@ -919,23 +917,23 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	})
 }
 
-func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) *dashboards.Dashboard {
+func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.ReplDB) *dashboards.Dashboard {
 	t.Helper()
 
 	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		dashboardPermissions,
@@ -950,16 +948,16 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 	return res
 }
 
-func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) error {
+func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.ReplDB) error {
 	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	service, err := ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
@@ -972,7 +970,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string, sqlStore db.DB) *dashboards.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string, sqlStore db.ReplDB) *dashboards.Dashboard {
 	t.Helper()
 
 	cmd := dashboards.SaveDashboardCommand{
@@ -996,13 +994,13 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, folderStore,
 		features,
 		accesscontrolmock.NewMockedPermissionsService(),
 		dashboardPermissions,
@@ -1018,7 +1016,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 	return res
 }
 
-func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *dashboards.Dashboard {
+func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.ReplDB) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
@@ -1046,13 +1044,13 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		accesscontrolmock.NewMockedPermissionsService(),
@@ -1077,15 +1075,4 @@ func toSaveDashboardDto(cmd dashboards.SaveDashboardCommand) dashboards.SaveDash
 		User:      &user.SignedInUser{UserID: cmd.UserID},
 		Overwrite: cmd.Overwrite,
 	}
-}
-
-type dummyDashAlertExtractor struct {
-}
-
-func (d *dummyDashAlertExtractor) GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*models.Alert, error) {
-	return nil, nil
-}
-
-func (d *dummyDashAlertExtractor) ValidateAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) error {
-	return nil
 }

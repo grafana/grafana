@@ -1,11 +1,10 @@
-import React from 'react';
-
 import { CoreApp } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
 import { AzureMonitorQuery } from '../../dataquery.gen';
-import AzureCheatSheet from '../AzureCheatSheet';
+
+import AzureCheatSheet from './AzureCheatSheet';
 
 type Props = {
   isOpen: boolean;

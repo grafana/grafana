@@ -14,10 +14,10 @@
      "type": "string"
     },
     "annotations": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "state": {
      "type": "string"
@@ -94,20 +94,6 @@
     }
    },
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
-   "type": "object"
-  },
-  "AlertPair": {
-   "properties": {
-    "alertRule": {
-     "$ref": "#/definitions/AlertRuleUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyAlert": {
-     "$ref": "#/definitions/LegacyAlert"
-    }
-   },
    "type": "object"
   },
   "AlertQuery": {
@@ -188,7 +174,7 @@
     "condition": {
      "type": "string"
     },
-    "dasboardUid": {
+    "dashboardUid": {
      "type": "string"
     },
     "data": {
@@ -231,6 +217,9 @@
     "panelId": {
      "format": "int64",
      "type": "integer"
+    },
+    "record": {
+     "$ref": "#/definitions/AlertRuleRecordExport"
     },
     "title": {
      "type": "string"
@@ -381,25 +370,17 @@
    "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
    "type": "object"
   },
-  "AlertRuleUpgrade": {
+  "AlertRuleRecordExport": {
    "properties": {
-    "sendsTo": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "title": {
+    "from": {
      "type": "string"
     },
-    "uid": {
+    "metric": {
      "type": "string"
     }
    },
+   "title": "Record is the provisioned export of models.Record.",
    "type": "object"
-  },
-  "AlertStateType": {
-   "type": "string"
   },
   "AlertingFileExport": {
    "properties": {
@@ -449,7 +430,7 @@
      "type": "array"
     },
     "annotations": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "duration": {
      "format": "double",
@@ -463,7 +444,7 @@
      "type": "string"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "lastError": {
      "type": "string"
@@ -497,7 +478,7 @@
      "type": "object"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -522,80 +503,6 @@
      "type": "string"
     },
     "numExternalAlertmanagers": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "Annotation": {
-   "properties": {
-    "alertId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "alertName": {
-     "type": "string"
-    },
-    "avatarUrl": {
-     "type": "string"
-    },
-    "created": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "dashboardUID": {
-     "type": "string"
-    },
-    "data": {
-     "$ref": "#/definitions/Json"
-    },
-    "email": {
-     "type": "string"
-    },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "login": {
-     "type": "string"
-    },
-    "newState": {
-     "type": "string"
-    },
-    "panelId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "prevState": {
-     "type": "string"
-    },
-    "tags": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "text": {
-     "type": "string"
-    },
-    "time": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "timeEnd": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "updated": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "userId": {
      "format": "int64",
      "type": "integer"
     }
@@ -763,20 +670,6 @@
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object"
   },
-  "ContactPair": {
-   "properties": {
-    "contactPoint": {
-     "$ref": "#/definitions/ContactPointUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyChannel": {
-     "$ref": "#/definitions/LegacyChannel"
-    }
-   },
-   "type": "object"
-  },
   "ContactPointExport": {
    "properties": {
     "name": {
@@ -796,136 +689,17 @@
    "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
-  "ContactPointUpgrade": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "routeMatchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
    "type": "array"
   },
-  "CookieType": {
-   "type": "string"
-  },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
-  },
-  "CreateLibraryElementCommand": {
-   "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
-   "properties": {
-    "folderId": {
-     "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
-     "format": "int64",
-     "type": "integer"
-    },
-    "folderUid": {
-     "description": "UID of the folder where the library element is stored.",
-     "type": "string"
-    },
-    "kind": {
-     "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
-     "enum": [
-      1,
-      2
-     ],
-     "format": "int64",
-     "type": "integer"
-    },
-    "model": {
-     "description": "The JSON model for the library element.",
-     "type": "object"
-    },
-    "name": {
-     "description": "Name of the library element.",
-     "type": "string"
-    },
-    "uid": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "DashboardACLUpdateItem": {
-   "properties": {
-    "permission": {
-     "$ref": "#/definitions/PermissionType"
-    },
-    "role": {
-     "enum": [
-      "None",
-      "Viewer",
-      "Editor",
-      "Admin"
-     ],
-     "type": "string"
-    },
-    "teamId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "userId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "DashboardUpgrade": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "dashboardName": {
-     "type": "string"
-    },
-    "dashboardUid": {
-     "type": "string"
-    },
-    "error": {
-     "type": "string"
-    },
-    "folderName": {
-     "type": "string"
-    },
-    "folderUid": {
-     "type": "string"
-    },
-    "migratedAlerts": {
-     "items": {
-      "$ref": "#/definitions/AlertPair"
-     },
-     "type": "array"
-    },
-    "newFolderName": {
-     "type": "string"
-    },
-    "newFolderUid": {
-     "type": "string"
-    },
-    "provisioned": {
-     "type": "boolean"
-    },
-    "warning": {
-     "type": "string"
-    }
-   },
-   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -1208,7 +982,9 @@
    },
    "type": "object"
   },
-  "EvalQueriesResponse": {},
+  "EvalQueriesResponse": {
+   "type": "object"
+  },
   "ExplorePanelsState": {
    "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
   },
@@ -1508,7 +1284,7 @@
    "type": "object"
   },
   "FrameType": {
-   "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+   "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
    "type": "string"
   },
   "FrameTypeVersion": {
@@ -1814,6 +1590,9 @@
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "rule_group": {
      "type": "string"
     },
@@ -1936,6 +1715,9 @@
       "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2215,41 +1997,6 @@
    },
    "type": "array"
   },
-  "LegacyAlert": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "panelId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "LegacyChannel": {
-   "properties": {
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -2327,48 +2074,6 @@
    },
    "type": "array"
   },
-  "MetricRequest": {
-   "properties": {
-    "debug": {
-     "type": "boolean"
-    },
-    "from": {
-     "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
-     "example": "now-1h",
-     "type": "string"
-    },
-    "queries": {
-     "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
-     "example": [
-      {
-       "datasource": {
-        "uid": "PD8C576611E62080A"
-       },
-       "format": "table",
-       "intervalMs": 86400000,
-       "maxDataPoints": 1092,
-       "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
-       "refId": "A"
-      }
-     ],
-     "items": {
-      "$ref": "#/definitions/Json"
-     },
-     "type": "array"
-    },
-    "to": {
-     "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
-     "example": "now",
-     "type": "string"
-    }
-   },
-   "required": [
-    "from",
-    "to",
-    "queries"
-   ],
-   "type": "object"
-  },
   "MultiStatus": {
    "type": "object"
   },
@@ -2417,24 +2122,6 @@
      "$ref": "#/definitions/GettableRuleGroupConfig"
     },
     "type": "array"
-   },
-   "type": "object"
-  },
-  "NewApiKeyResult": {
-   "properties": {
-    "id": {
-     "example": 1,
-     "format": "int64",
-     "type": "integer"
-    },
-    "key": {
-     "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
-     "type": "string"
-    },
-    "name": {
-     "example": "grafana",
-     "type": "string"
-    }
    },
    "type": "object"
   },
@@ -2701,50 +2388,6 @@
    },
    "type": "object"
   },
-  "OrgMigrationState": {
-   "properties": {
-    "migratedChannels": {
-     "items": {
-      "$ref": "#/definitions/ContactPair"
-     },
-     "type": "array"
-    },
-    "migratedDashboards": {
-     "items": {
-      "$ref": "#/definitions/DashboardUpgrade"
-     },
-     "type": "array"
-    },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "OrgMigrationSummary": {
-   "properties": {
-    "hasErrors": {
-     "type": "boolean"
-    },
-    "newAlerts": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newChannels": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newDashboards": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "removed": {
-     "type": "boolean"
-    }
-   },
-   "type": "object"
-  },
   "PagerdutyConfig": {
    "properties": {
     "class": {
@@ -2815,7 +2458,6 @@
    "type": "object"
   },
   "PagerdutyImage": {
-   "description": "PagerdutyImage is an image",
    "properties": {
     "alt": {
      "type": "string"
@@ -2827,10 +2469,10 @@
      "type": "string"
     }
    },
+   "title": "PagerdutyImage is an image.",
    "type": "object"
   },
   "PagerdutyLink": {
-   "description": "PagerdutyLink is a link",
    "properties": {
     "href": {
      "type": "string"
@@ -2839,79 +2481,14 @@
      "type": "string"
     }
    },
-   "type": "object"
-  },
-  "PatchPrefsCmd": {
-   "properties": {
-    "cookies": {
-     "items": {
-      "$ref": "#/definitions/CookieType"
-     },
-     "type": "array"
-    },
-    "homeDashboardId": {
-     "default": 0,
-     "description": "The numerical :id of a favorited dashboard",
-     "format": "int64",
-     "type": "integer"
-    },
-    "homeDashboardUID": {
-     "type": "string"
-    },
-    "language": {
-     "type": "string"
-    },
-    "queryHistory": {
-     "$ref": "#/definitions/QueryHistoryPreference"
-    },
-    "theme": {
-     "enum": [
-      "light",
-      "dark"
-     ],
-     "type": "string"
-    },
-    "timezone": {
-     "enum": [
-      "utc",
-      "browser"
-     ],
-     "type": "string"
-    },
-    "weekStart": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "Permission": {
-   "properties": {
-    "action": {
-     "type": "string"
-    },
-    "created": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "scope": {
-     "type": "string"
-    },
-    "updated": {
-     "format": "date-time",
-     "type": "string"
-    }
-   },
-   "title": "Permission is the model for access control permissions.",
+   "title": "PagerdutyLink is a link.",
    "type": "object"
   },
   "PermissionDenied": {
    "type": "object"
   },
-  "PermissionType": {
-   "format": "int64",
-   "type": "integer"
-  },
   "PostableApiAlertingConfig": {
+   "description": "nolint:revive",
    "properties": {
     "global": {
      "$ref": "#/definitions/GlobalConfig"
@@ -2955,6 +2532,7 @@
    "type": "object"
   },
   "PostableApiReceiver": {
+   "description": "nolint:revive",
    "properties": {
     "discord_configs": {
      "items": {
@@ -3175,6 +2753,9 @@
     "notification_settings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "title": {
      "type": "string"
     },
@@ -3224,6 +2805,9 @@
       "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -3361,6 +2945,9 @@
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "ruleGroup": {
      "example": "eval_group_1",
      "maxLength": 190,
@@ -3494,14 +3081,6 @@
      "$ref": "#/definitions/Secret"
     },
     "user_key_file": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "QueryHistoryPreference": {
-   "properties": {
-    "homeTab": {
      "type": "string"
     }
    },
@@ -3700,6 +3279,25 @@
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
    "type": "object"
   },
+  "Record": {
+   "properties": {
+    "from": {
+     "description": "Which expression node should be used as the input for the recorded metric.",
+     "example": "A",
+     "type": "string"
+    },
+    "metric": {
+     "description": "Name of the recorded metric.",
+     "example": "grafana_alerts_ratio",
+     "type": "string"
+    }
+   },
+   "required": [
+    "metric",
+    "from"
+   ],
+   "type": "object"
+  },
   "RelativeTimeRange": {
    "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
    "properties": {
@@ -3739,53 +3337,6 @@
    },
    "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
    "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
-   "type": "object"
-  },
-  "RoleDTO": {
-   "properties": {
-    "created": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "delegatable": {
-     "type": "boolean"
-    },
-    "description": {
-     "type": "string"
-    },
-    "displayName": {
-     "type": "string"
-    },
-    "global": {
-     "type": "boolean"
-    },
-    "group": {
-     "type": "string"
-    },
-    "hidden": {
-     "type": "boolean"
-    },
-    "name": {
-     "type": "string"
-    },
-    "permissions": {
-     "items": {
-      "$ref": "#/definitions/Permission"
-     },
-     "type": "array"
-    },
-    "uid": {
-     "type": "string"
-    },
-    "updated": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "version": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
    "type": "object"
   },
   "Route": {
@@ -3912,7 +3463,7 @@
      "type": "string"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "lastError": {
      "type": "string"
@@ -3928,7 +3479,7 @@
      "type": "string"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -4046,10 +3597,6 @@
    ],
    "type": "object"
   },
-  "RuleType": {
-   "title": "RuleType models the type of a rule.",
-   "type": "string"
-  },
   "SNSConfig": {
    "properties": {
     "api_url": {
@@ -4133,6 +3680,20 @@
     },
     "SecretKey": {
      "$ref": "#/definitions/Secret"
+    }
+   },
+   "type": "object"
+  },
+  "SilenceMetadata": {
+   "properties": {
+    "folder_uid": {
+     "type": "string"
+    },
+    "rule_title": {
+     "type": "string"
+    },
+    "rule_uid": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -4714,61 +4275,6 @@
    "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
-  "UpdateDashboardACLCommand": {
-   "properties": {
-    "items": {
-     "items": {
-      "$ref": "#/definitions/DashboardACLUpdateItem"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "UpdatePrefsCmd": {
-   "properties": {
-    "cookies": {
-     "items": {
-      "$ref": "#/definitions/CookieType"
-     },
-     "type": "array"
-    },
-    "homeDashboardId": {
-     "default": 0,
-     "description": "The numerical :id of a favorited dashboard",
-     "format": "int64",
-     "type": "integer"
-    },
-    "homeDashboardUID": {
-     "type": "string"
-    },
-    "language": {
-     "type": "string"
-    },
-    "queryHistory": {
-     "$ref": "#/definitions/QueryHistoryPreference"
-    },
-    "theme": {
-     "enum": [
-      "light",
-      "dark",
-      "system"
-     ],
-     "type": "string"
-    },
-    "timezone": {
-     "enum": [
-      "utc",
-      "browser"
-     ],
-     "type": "string"
-    },
-    "weekStart": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "UpdateRuleGroupResponse": {
    "properties": {
     "created": {
@@ -4796,7 +4302,7 @@
    "type": "object"
   },
   "Userinfo": {
-   "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+   "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
    "type": "object"
   },
   "ValidationError": {
@@ -4972,6 +4478,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4996,7 +4503,8 @@
   },
   "alertGroups": {
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/alertGroup",
+    "type": "object"
    },
    "type": "array"
   },
@@ -5099,6 +4607,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -5154,13 +4663,82 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/gettableAlert"
+    "$ref": "#/definitions/gettableAlert",
+    "type": "object"
+   },
+   "type": "array"
+  },
+  "gettableGrafanaSilence": {
+   "properties": {
+    "accessControl": {
+     "additionalProperties": {
+      "type": "boolean"
+     },
+     "example": {
+      "create": false,
+      "read": true,
+      "write": false
+     },
+     "type": "object"
+    },
+    "comment": {
+     "description": "comment",
+     "type": "string"
+    },
+    "createdBy": {
+     "description": "created by",
+     "type": "string"
+    },
+    "endsAt": {
+     "description": "ends at",
+     "format": "date-time",
+     "type": "string"
+    },
+    "id": {
+     "description": "id",
+     "type": "string"
+    },
+    "matchers": {
+     "$ref": "#/definitions/matchers"
+    },
+    "metadata": {
+     "$ref": "#/definitions/SilenceMetadata"
+    },
+    "startsAt": {
+     "description": "starts at",
+     "format": "date-time",
+     "type": "string"
+    },
+    "status": {
+     "$ref": "#/definitions/silenceStatus"
+    },
+    "updatedAt": {
+     "description": "updated at",
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "required": [
+    "comment",
+    "createdBy",
+    "endsAt",
+    "matchers",
+    "startsAt",
+    "id",
+    "status",
+    "updatedAt"
+   ],
+   "type": "object"
+  },
+  "gettableGrafanaSilences": {
+   "items": {
+    "$ref": "#/definitions/gettableGrafanaSilence"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5210,11 +4788,13 @@
   },
   "gettableSilences": {
    "items": {
-    "$ref": "#/definitions/gettableSilence"
+    "$ref": "#/definitions/gettableSilence",
+    "type": "object"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -5285,14 +4865,6 @@
    },
    "type": "array"
   },
-  "overrideLabels": {
-   "additionalProperties": {
-    "type": "string"
-   },
-   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-   "title": "override the labels type with a map for generation.",
-   "type": "object"
-  },
   "peerStatus": {
    "description": "PeerStatus peer status",
    "properties": {
@@ -5358,6 +4930,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5583,7 +5156,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -5609,6 +5187,13 @@
       "name": "ruleUid",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -5740,7 +5325,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -5756,7 +5346,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -5851,7 +5443,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -5869,6 +5466,13 @@
       "name": "name",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -6077,7 +5681,7 @@
       }
      }
     },
-    "summary": "Update the interval of a rule group.",
+    "summary": "Create or update alert rule group.",
     "tags": [
      "provisioning"
     ]
@@ -6096,7 +5700,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -6117,7 +5726,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -6204,11 +5815,23 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -6239,6 +5862,17 @@
       "in": "path",
       "name": "name",
       "required": true,
+      "type": "string"
+     },
+     {
+      "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+      "in": "query",
+      "name": "version",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
       "type": "string"
      }
     ],
@@ -6323,6 +5957,12 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Replace an existing mute timing.",
@@ -6344,7 +5984,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -6356,6 +6001,13 @@
       "required": true,
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -6454,6 +6106,13 @@
   "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
+    ],
     "responses": {
      "200": {
       "description": "AlertingFileExport",
@@ -6652,7 +6311,7 @@
    "description": "",
    "schema": {
     "items": {
-     "$ref": "#/definitions/receiver"
+     "$ref": "#/definitions/Receiver"
     },
     "type": "array"
    }

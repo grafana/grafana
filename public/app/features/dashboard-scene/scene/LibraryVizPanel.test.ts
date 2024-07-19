@@ -1,16 +1,15 @@
-import 'whatwg-fetch';
 import { waitFor } from '@testing-library/dom';
 import { merge } from 'lodash';
 import { http, HttpResponse } from 'msw';
 import { setupServer, SetupServerApi } from 'msw/node';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryVizPanel } from './LibraryVizPanel';
-import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 
 describe('LibraryVizPanel', () => {
   const server = setupServer();
@@ -42,7 +41,7 @@ describe('LibraryVizPanel', () => {
     });
   });
 
-  it('should change parent from SceneGridItem to PanelRepeaterGridItem if repeat is set', async () => {
+  it('should configure repeat options of DashboardGridIem if repeat is set', async () => {
     setUpApiMock(server, { model: { repeat: 'query0', repeatDirection: 'h' } });
     const libVizPanel = new LibraryVizPanel({
       name: 'My Library Panel',
@@ -52,12 +51,17 @@ describe('LibraryVizPanel', () => {
     });
 
     const layout = new SceneGridLayout({
-      children: [new SceneGridItem({ body: libVizPanel })],
+      children: [new DashboardGridItem({ body: libVizPanel })],
     });
+
     layout.activate();
     libVizPanel.activate();
+
     await waitFor(() => {
-      expect(layout.state.children[0]).toBeInstanceOf(PanelRepeaterGridItem);
+      expect(layout.state.children[0]).toBeInstanceOf(DashboardGridItem);
+      expect((layout.state.children[0] as DashboardGridItem).state.variableName).toBe('query0');
+      expect((layout.state.children[0] as DashboardGridItem).state.repeatDirection).toBe('h');
+      expect((layout.state.children[0] as DashboardGridItem).state.maxPerRow).toBe(4);
     });
   });
 });
@@ -108,7 +112,7 @@ function setUpApiMock(
       },
       version: 6,
       meta: {
-        folderName: 'General',
+        folderName: 'Dashboards',
         folderUid: '',
         connectedDashboards: 1,
         created: '2024-02-15T15:26:46Z',

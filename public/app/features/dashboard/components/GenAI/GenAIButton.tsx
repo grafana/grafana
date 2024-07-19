@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/ui';
@@ -27,6 +28,13 @@ export interface GenAIButtonProps {
   eventTrackingSrc: EventTrackingSrc;
   // Whether the button should be disabled
   disabled?: boolean;
+  /*
+    Tooltip to show when hovering over the button
+    Tooltip will be shown only before the improvement stage.
+    i.e once the button title changes to "Improve", the tooltip will not be shown because
+    toggletip will be enabled.
+  */
+  tooltip?: string;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -40,18 +48,11 @@ export const GenAIButton = ({
   temperature = 1,
   eventTrackingSrc,
   disabled,
+  tooltip,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const {
-    messages: streamMessages,
-    setMessages,
-    setStopGeneration,
-    reply,
-    value,
-    error,
-    streamStatus,
-  } = useOpenAIStream(model, temperature);
+  const { setMessages, setStopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -62,13 +63,18 @@ export const GenAIButton = ({
   const isButtonDisabled = disabled || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
+  const showTooltip = error || tooltip ? undefined : false;
+  const tooltipContent = error
+    ? 'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
+    : tooltip || '';
+
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (streamStatus === StreamStatus.GENERATING) {
       setStopGeneration(true);
     } else {
       if (!hasHistory) {
         onClickProp?.(e);
-        setMessages(typeof messages === 'function' ? messages() : messages);
+        setMessages(getMessages());
       } else {
         setShowHistory(true);
       }
@@ -158,6 +164,13 @@ export const GenAIButton = ({
     </Button>
   );
 
+  const getMessages = () => {
+    if (typeof messages === 'function') {
+      return messages();
+    }
+    return messages;
+  };
+
   const renderButtonWithToggletip = () => {
     if (hasHistory) {
       const title = <Text element="p">{toggleTipTitle}</Text>;
@@ -168,7 +181,7 @@ export const GenAIButton = ({
           content={
             <GenAIHistory
               history={history}
-              messages={streamMessages}
+              messages={getMessages()}
               onApplySuggestion={onApplySuggestion}
               updateHistory={pushHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
@@ -192,13 +205,7 @@ export const GenAIButton = ({
     <div className={styles.wrapper}>
       {isGenerating && <Spinner size="sm" className={styles.spinner} />}
       {isFirstHistoryEntry ? (
-        <Tooltip
-          show={error ? undefined : false}
-          interactive
-          content={
-            'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
-          }
-        >
+        <Tooltip show={showTooltip} interactive content={tooltipContent}>
           {button}
         </Tooltip>
       ) : (

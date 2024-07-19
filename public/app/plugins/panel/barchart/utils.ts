@@ -1,97 +1,201 @@
-import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
   DataFrame,
   Field,
+  FieldConfigSource,
   FieldType,
+  GrafanaTheme2,
+  cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
-  cacheFieldDisplayNames,
   getFieldSeriesColor,
-  GrafanaTheme2,
   outerJoinDataFrames,
-  TimeZone,
-  VizOrientation,
-  getFieldDisplayName,
 } from '@grafana/data';
-import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { config as runtimeConfig } from '@grafana/runtime';
+import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
 import {
   AxisColorMode,
   AxisPlacement,
-  GraphTransform,
+  FieldColorModeId,
+  GraphGradientMode,
   GraphThresholdsStyleMode,
-  ScaleDirection,
+  GraphTransform,
   ScaleDistribution,
+  TimeZone,
+  TooltipDisplayMode,
+  VizOrientation,
+} from '@grafana/schema';
+import {
+  FIXED_UNIT,
+  ScaleDirection,
   ScaleOrientation,
   StackingMode,
-  VizLegendOptions,
-} from '@grafana/schema';
-import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+  UPlotConfigBuilder,
+  measureText,
+} from '@grafana/ui';
+import { AxisProps, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
-import { findField } from 'app/features/dimensions';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
 import { BarsOptions, getConfig } from './bars';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
-import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
+// import { isLegendOrdered } from './utils';
 
-function getBarCharScaleOrientation(orientation: VizOrientation) {
-  if (orientation === VizOrientation.Vertical) {
+interface BarSeries {
+  series: DataFrame[];
+  _rest: Field[];
+  color?: Field | null;
+  warn?: string | null;
+}
+
+export function prepSeries(
+  frames: DataFrame[],
+  fieldConfig: FieldConfigSource<any>,
+  stacking: StackingMode,
+  theme: GrafanaTheme2,
+  xFieldName?: string,
+  colorFieldName?: string
+): BarSeries {
+  if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
+    return { series: [], _rest: [], warn: 'No data in response' };
+  }
+
+  cacheFieldDisplayNames(frames);
+  decoupleHideFromState(frames, fieldConfig);
+
+  let frame: DataFrame | undefined = { ...frames[0] };
+
+  // auto-sort and/or join on first time field (if any)
+  // TODO: should this always join on the xField (if supplied?)
+  const timeFieldIdx = frame.fields.findIndex((f) => f.type === FieldType.time);
+
+  if (timeFieldIdx >= 0 && frames.length > 1) {
+    frame = outerJoinDataFrames({ frames, keepDisplayNames: true }) ?? frame;
+  }
+
+  const xField =
+    // TODO: use matcher
+    frame.fields.find((field) => field.state?.displayName === xFieldName || field.name === xFieldName) ??
+    frame.fields.find((field) => field.type === FieldType.string) ??
+    frame.fields[timeFieldIdx];
+
+  if (xField != null) {
+    const fields: Field[] = [xField];
+    const _rest: Field[] = [];
+
+    const colorField =
+      colorFieldName == null
+        ? undefined
+        : frame.fields.find(
+            // TODO: use matcher
+            (field) => field.state?.displayName === colorFieldName || field.name === colorFieldName
+          );
+
+    frame.fields.forEach((field) => {
+      if (field !== xField) {
+        if (field.type === FieldType.number && !field.config.custom?.hideFrom?.viz) {
+          const field2 = {
+            ...field,
+            values: field.values.map((v) => (Number.isFinite(v) ? v : null)),
+            // TODO: stacking should be moved from panel opts to fieldConfig (like TimeSeries) so we dont have to do this
+            config: {
+              ...field.config,
+              custom: {
+                ...field.config.custom,
+                stacking: {
+                  group: '_',
+                  mode: stacking,
+                },
+              },
+            },
+          };
+
+          fields.push(field2);
+        } else {
+          _rest.push(field);
+        }
+      }
+    });
+
+    let warn: string | null = null;
+
+    if (fields.length === 1) {
+      warn = 'No numeric fields found';
+    }
+
+    frame.fields = fields;
+
+    const series = [frame];
+
+    setClassicPaletteIdxs(series, theme, 0);
+
     return {
-      xOri: ScaleOrientation.Horizontal,
-      xDir: ScaleDirection.Right,
-      yOri: ScaleOrientation.Vertical,
-      yDir: ScaleDirection.Up,
+      series,
+      _rest,
+      color: colorField,
+      warn,
     };
   }
 
   return {
-    xOri: ScaleOrientation.Vertical,
-    xDir: ScaleDirection.Down,
-    yOri: ScaleOrientation.Horizontal,
-    yDir: ScaleDirection.Right,
+    series: [],
+    _rest: [],
+    color: null,
+    warn: 'Bar charts requires a string or time field',
   };
 }
 
-export interface BarChartOptionsEX extends Options {
-  rawValue: (seriesIdx: number, valueIdx: number) => number | null;
-  getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
-  timeZone?: TimeZone;
-  fillOpacity?: number;
-  hoverMulti?: boolean;
+export interface PrepConfigOpts {
+  series: DataFrame[]; // series with hideFrom.viz: false
+  totalSeries: number; // total series count (including hidden)
+  color?: Field | null;
+  orientation: VizOrientation;
+  options: Options;
+  timeZone: TimeZone;
+  theme: GrafanaTheme2;
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
-  frame,
-  theme,
-  orientation,
-  showValue,
-  groupWidth,
-  barWidth,
-  barRadius = 0,
-  stacking,
-  text,
-  rawValue,
-  getColor,
-  fillOpacity,
-  allFrames,
-  xTickLabelRotation,
-  xTickLabelMaxLength,
-  xTickLabelSpacing = 0,
-  legend,
-  timeZone,
-  fullHighlight,
-  hoverMulti,
-}) => {
+export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+  let {
+    showValue,
+    groupWidth,
+    barWidth,
+    barRadius = 0,
+    stacking,
+    text,
+    tooltip,
+    xTickLabelRotation,
+    xTickLabelMaxLength,
+    xTickLabelSpacing = 0,
+    legend,
+    fullHighlight,
+  } = options;
+  // this and color is kept up to date by returned prepData()
+  let frame = series[0];
+
   const builder = new UPlotConfigBuilder();
 
+  const formatters = frame.fields.map((f, i) => {
+    if (stacking === StackingMode.Percent) {
+      return getDisplayProcessor({
+        field: {
+          ...f,
+          config: {
+            ...f.config,
+            unit: 'percentunit',
+          },
+        },
+        theme,
+      });
+    }
+
+    return f.display!;
+  });
+
   const formatValue = (seriesIdx: number, value: unknown) => {
-    return formattedValueToString(frame.fields[seriesIdx].display!(value));
+    return formattedValueToString(formatters[seriesIdx](value));
   };
 
   const formatShortValue = (seriesIdx: number, value: unknown) => {
@@ -99,12 +203,61 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   };
 
   // bar orientation -> x scale orientation & direction
-  const vizOrientation = getBarCharScaleOrientation(orientation);
+  const vizOrientation = getScaleOrientation(orientation);
 
   // Use bar width when only one field
-  if (frame.fields.length === 2) {
-    groupWidth = barWidth;
+  if (frame.fields.length === 2 && stacking === StackingMode.None) {
+    if (totalSeries === 1) {
+      groupWidth = barWidth;
+    }
+
     barWidth = 1;
+  }
+
+  const rawValue = (seriesIdx: number, valueIdx: number) => {
+    return frame.fields[seriesIdx].values[valueIdx];
+  };
+
+  // Color by value
+  let getColor: ((seriesIdx: number, valueIdx: number) => string) | undefined = undefined;
+
+  let fillOpacity = 1;
+
+  if (color != null) {
+    const disp = color.display!;
+    fillOpacity = (color.config.custom.fillOpacity ?? 100) / 100;
+    // gradientMode? ignore?
+    getColor = (seriesIdx: number, valueIdx: number) => disp(color!.values[valueIdx]).color!;
+  } else {
+    const hasPerBarColor = frame.fields.some((f) => {
+      const fromThresholds =
+        f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+        f.config.color?.mode === FieldColorModeId.Thresholds;
+
+      return (
+        fromThresholds ||
+        f.config.mappings?.some((m) => {
+          // ValueToText mappings have a different format, where all of them are grouped into an object keyed by value
+          if (m.type === 'value') {
+            // === MappingType.ValueToText
+            return Object.values(m.options).some((result) => result.color != null);
+          }
+          return m.options.result.color != null;
+        })
+      );
+    });
+
+    if (hasPerBarColor) {
+      // use opacity from first numeric field
+      let opacityField = frame.fields.find((f) => f.type === FieldType.number)!;
+
+      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
+
+      getColor = (seriesIdx: number, valueIdx: number) => {
+        let field = frame.fields[seriesIdx];
+        return field.display!(field.values[valueIdx]).color!;
+      };
+    }
   }
 
   const opts: BarsOptions = {
@@ -127,7 +280,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
-    hoverMulti,
+    hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
   };
 
   const config = getConfig(opts, theme);
@@ -137,9 +290,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
-
-  const showNewVizTooltips = Boolean(runtimeConfig.featureToggles.newVizTooltips);
-  !showNewVizTooltips && builder.setTooltipInterpolator(config.interpolateTooltip);
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label
@@ -162,18 +312,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   });
 
   const xFieldAxisPlacement =
-    frame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden
+    frame.fields[0]?.config.custom?.axisPlacement !== AxisPlacement.Hidden
       ? vizOrientation.xOri === ScaleOrientation.Horizontal
         ? AxisPlacement.Bottom
         : AxisPlacement.Left
       : AxisPlacement.Hidden;
-  const xFieldAxisShow = frame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden;
+  const xFieldAxisShow = frame.fields[0]?.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   builder.addAxis({
     scaleKey: 'x',
     isTime: false,
     placement: xFieldAxisPlacement,
-    label: frame.fields[0].config.custom?.axisLabel,
+    label: frame.fields[0]?.config.custom?.axisLabel,
     splits: config.xSplits,
     filter: vizOrientation.xOri === 0 ? config.hFilter : undefined,
     values: config.xValues,
@@ -186,14 +336,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     show: xFieldAxisShow,
   });
 
-  let seriesIndex = 0;
-  const legendOrdered = isLegendOrdered(legend);
+  // let seriesIndex = 0;
+  // const legendOrdered = isLegendOrdered(legend);
 
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    seriesIndex++;
+    // seriesIndex++;
 
     const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
@@ -250,14 +400,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
-      dataFrameFieldIndex: {
-        fieldIndex: legendOrdered
-          ? i
-          : allFrames[0].fields.findIndex(
-              (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
-            ),
-        frameIndex: 0,
-      },
+      // dataFrameFieldIndex: {
+      //   fieldIndex: legendOrdered
+      //     ? i
+      //     : allFrames[0].fields.findIndex(
+      //         (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
+      //       ),
+      //   frameIndex: 0,
+      // },
     });
 
     // The builder will manage unique scaleKeys and combine where appropriate
@@ -318,7 +468,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   builder.setStackingGroups(stackingGroups);
 
-  return builder;
+  return {
+    builder,
+    prepData: (_series: DataFrame[], _color?: Field | null) => {
+      series = _series;
+      frame = series[0];
+      color = _color;
+
+      return builder.prepData!(series);
+    },
+  };
 };
 
 function shortenValue(value: string, length: number) {
@@ -377,167 +536,20 @@ function getRotationPadding(
   ];
 }
 
-/** @internal */
-export function prepareBarChartDisplayValues(
-  series: DataFrame[],
-  theme: GrafanaTheme2,
-  options: Options
-): BarChartDisplayValues | BarChartDisplayWarning {
-  if (!series.length || series.every((fr) => fr.length === 0)) {
-    return { warn: 'No data in response' };
-  }
-
-  cacheFieldDisplayNames(series);
-
-  // Bar chart requires a single frame
-  const frame =
-    series.length === 1
-      ? maybeSortFrame(
-          series[0],
-          series[0].fields.findIndex((f) => f.type === FieldType.time)
-        )
-      : outerJoinDataFrames({ frames: series, keepDisplayNames: true });
-
-  if (!frame) {
-    return { warn: 'Unable to join data' };
-  }
-
-  // Color by a field different than the input
-  let colorByField: Field | undefined = undefined;
-  if (options.colorByField) {
-    colorByField = findField(frame, options.colorByField);
-    if (!colorByField) {
-      return { warn: 'Color field not found' };
-    }
-  }
-
-  let xField: Field | undefined = undefined;
-  if (options.xField) {
-    xField = findField(frame, options.xField);
-    if (!xField) {
-      return { warn: 'Configured x field not found' };
-    }
-  }
-
-  let stringField: Field | undefined = undefined;
-  let timeField: Field | undefined = undefined;
-  let fields: Field[] = [];
-  for (const field of frame.fields) {
-    if (field === xField) {
-      continue;
-    }
-
-    switch (field.type) {
-      case FieldType.string:
-        if (!stringField) {
-          stringField = field;
-        }
-        break;
-
-      case FieldType.time:
-        if (!timeField) {
-          timeField = field;
-        }
-        break;
-
-      case FieldType.number: {
-        const copy = {
-          ...field,
-          state: {
-            ...field.state,
-            seriesIndex: fields.length, // off by one?
-          },
-          config: {
-            ...field.config,
-            custom: {
-              ...field.config.custom,
-              stacking: {
-                group: '_',
-                mode: options.stacking,
-              },
-            },
-          },
-          values: field.values.map((v) => {
-            if (!(Number.isFinite(v) || v == null)) {
-              return null;
-            }
-            return v;
-          }),
-        };
-
-        if (options.stacking === StackingMode.Percent) {
-          copy.config.unit = 'percentunit';
-          copy.display = getDisplayProcessor({ field: copy, theme });
-        }
-
-        fields.push(copy);
-      }
-    }
-  }
-
-  let firstField = xField;
-  if (!firstField) {
-    firstField = stringField || timeField;
-  }
-
-  if (!firstField) {
+function getScaleOrientation(orientation: VizOrientation) {
+  if (orientation === VizOrientation.Vertical) {
     return {
-      warn: 'Bar charts requires a string or time field',
+      xOri: ScaleOrientation.Horizontal,
+      xDir: ScaleDirection.Right,
+      yOri: ScaleOrientation.Vertical,
+      yDir: ScaleDirection.Up,
     };
   }
-
-  // if both string and time fields exist, remove unused leftover time field
-  if (frame.fields[0].type === FieldType.time && frame.fields[0] !== firstField) {
-    frame.fields.shift();
-  }
-
-  setClassicPaletteIdxs([frame], theme, 0);
-
-  if (!fields.length) {
-    return {
-      warn: 'No numeric fields found',
-    };
-  }
-
-  // Show the first number value
-  if (colorByField && fields.length > 1) {
-    const firstNumber = fields.find((f) => f !== colorByField);
-    if (firstNumber) {
-      fields = [firstNumber];
-    }
-  }
-
-  // If stacking is percent, we need to correct the legend fields unit and display
-  let legendFields: Field[] = cloneDeep(fields);
-  if (options.stacking === StackingMode.Percent) {
-    legendFields.map((field) => {
-      const alignedFrameField = frame.fields.find(
-        (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(f, frame)
-      );
-
-      field.config.unit = alignedFrameField?.config?.unit ?? undefined;
-      field.display = getDisplayProcessor({ field: field, theme });
-    });
-  }
-
-  // String field is first, make sure fields / legend fields indexes match
-  fields.unshift(firstField);
-  legendFields.unshift(firstField);
 
   return {
-    aligned: frame,
-    colorByField,
-    viz: [
-      {
-        fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
-        length: firstField.values.length,
-      },
-    ],
-    legend: {
-      fields: legendFields,
-      length: firstField.values.length,
-    },
+    xOri: ScaleOrientation.Vertical,
+    xDir: ScaleDirection.Down,
+    yOri: ScaleOrientation.Horizontal,
+    yDir: ScaleDirection.Right,
   };
 }
-
-export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);

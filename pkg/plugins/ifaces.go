@@ -90,6 +90,7 @@ type Client interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.StreamHandler
+	backend.AdmissionHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
 }
@@ -110,6 +111,7 @@ type StaticRouteResolver interface {
 
 type ErrorResolver interface {
 	PluginErrors(ctx context.Context) []*Error
+	PluginError(ctx context.Context, pluginID string) *Error
 }
 
 type PluginLoaderAuthorizer interface {
@@ -130,6 +132,11 @@ type Licensing interface {
 // RoleRegistry handles the plugin RBAC roles and their assignments
 type RoleRegistry interface {
 	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
+}
+
+// ActionSetRegistry handles the plugin RBAC actionsets
+type ActionSetRegistry interface {
+	RegisterActionSets(ctx context.Context, ID string, registrations []ActionSet) error
 }
 
 // ClientMiddleware is an interface representing the ability to create a middleware

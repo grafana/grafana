@@ -1,4 +1,3 @@
-import React from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 
 import { DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
@@ -31,6 +30,10 @@ jest.mock('react-virtualized-auto-sizer', () => {
     },
   };
 });
+
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
+}));
 
 describe('Explore: interpolation', () => {
   afterEach(() => {

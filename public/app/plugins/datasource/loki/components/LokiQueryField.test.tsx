@@ -1,11 +1,21 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
 
 import { createLokiDatasource } from '../__mocks__/datasource';
 
 import { LokiQueryField } from './LokiQueryField';
+import { Props as MonacoProps } from './monaco-query-field/MonacoQueryFieldProps';
+
+jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
+  const fakeQueryField = (props: MonacoProps) => {
+    return <input onBlur={(e) => props.onBlur(e.currentTarget.value)} data-testid={'dummy-code-input'} type={'text'} />;
+  };
+  return {
+    MonacoQueryFieldLazy: fakeQueryField,
+  };
+});
 
 type Props = ComponentProps<typeof LokiQueryField>;
 describe('LokiQueryField', () => {
@@ -34,7 +44,7 @@ describe('LokiQueryField', () => {
     const { rerender } = render(<LokiQueryField {...props} />);
 
     await waitFor(async () => {
-      expect(await screen.findByText('Loading...')).toBeInTheDocument();
+      expect(await screen.findByTestId('dummy-code-input')).toBeInTheDocument();
     });
 
     expect(props.datasource.languageProvider.fetchLabels).not.toHaveBeenCalled();
@@ -58,7 +68,7 @@ describe('LokiQueryField', () => {
     const { rerender } = render(<LokiQueryField {...props} />);
 
     await waitFor(async () => {
-      expect(await screen.findByText('Loading...')).toBeInTheDocument();
+      expect(await screen.findByTestId('dummy-code-input')).toBeInTheDocument();
     });
 
     expect(props.datasource.languageProvider.fetchLabels).not.toHaveBeenCalled();

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { get as lodashGet } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
@@ -16,6 +16,7 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 
 import { activePanelSubject, InstanceState } from '../../CanvasPanel';
 import { addStandardCanvasEditorOptions } from '../../module';
+import { Options } from '../../panelcfg.gen';
 import { InlineEditTabs } from '../../types';
 import { getElementTypes, onAddItem } from '../../utils';
 import { getConnectionEditor } from '../connectionEditor';
@@ -34,11 +35,11 @@ export function InlineEditBody() {
   const pane = useMemo(() => {
     const p = activePanel?.panel;
     const state: InstanceState = instanceState;
-    if (!state || !p) {
+    if (!(state && state.scene) || !p) {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
-    const supplier = (builder: PanelOptionsEditorBuilder<any>) => {
+    const supplier = (builder: PanelOptionsEditorBuilder<Options>) => {
       if (activeTab === InlineEditTabs.ElementManagement) {
         builder.addNestedOptions(getLayerEditor(instanceState));
       }
@@ -130,7 +131,7 @@ interface EditorProps<T> {
   data?: DataFrame[];
 }
 
-function getOptionsPaneCategoryDescriptor<T = any>(
+function getOptionsPaneCategoryDescriptor<T extends object>(
   props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
@@ -156,7 +157,7 @@ function getOptionsPaneCategoryDescriptor<T = any>(
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(props.options, path),
     onChange: (path, value) => {
-      props.onChange(setOptionImmutably(props.options as any, path, value));
+      props.onChange(setOptionImmutably<T>(props.options, path, value));
     },
   };
 

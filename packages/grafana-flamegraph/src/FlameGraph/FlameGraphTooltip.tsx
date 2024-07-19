@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DisplayValue, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
@@ -182,33 +181,33 @@ function getValueWithUnit(data: FlameGraphDataContainer, displayValue: DisplayVa
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tooltipContainer: css`
-    title: tooltipContainer;
-    overflow: hidden;
-  `,
-  tooltipContent: css`
-    title: tooltipContent;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    width: 100%;
-  `,
-  tooltipName: css`
-    title: tooltipName;
-    margin-top: 0;
-    word-break: break-all;
-  `,
-  lastParagraph: css`
-    title: lastParagraph;
-    margin-bottom: 0;
-  `,
-  name: css`
-    title: name;
-    margin-bottom: 10px;
-  `,
+  tooltipContainer: css({
+    title: 'tooltipContainer',
+    overflow: 'hidden',
+  }),
+  tooltipContent: css({
+    title: 'tooltipContent',
+    fontSize: theme.typography.bodySmall.fontSize,
+    width: '100%',
+  }),
+  tooltipName: css({
+    title: 'tooltipName',
+    marginTop: 0,
+    wordBreak: 'break-all',
+  }),
+  lastParagraph: css({
+    title: 'lastParagraph',
+    marginBottom: 0,
+  }),
+  name: css({
+    title: 'name',
+    marginBottom: '10px',
+  }),
 
-  tooltipTable: css`
-    title: tooltipTable;
-    max-width: 400px;
-  `,
+  tooltipTable: css({
+    title: 'tooltipTable',
+    maxWidth: '400px',
+  }),
 });
 
 export default FlameGraphTooltip;

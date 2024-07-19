@@ -131,9 +131,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 /devenv/bulk-dashboards/*.json
 /devenv/bulk-folders/*/*.json
-/devenv/bulk_alerting_dashboards/*.json
 /devenv/datasources_bulk.yaml
-/devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml
 
 /scripts/build/release_publisher/release_publisher
 *.patch
@@ -204,6 +202,7 @@ public/api-spec.json
 deployment_tools_config.json
 
 .betterer.cache
+.nx
 
 # Temporary file for backporting PRs
 .pr-body.txt
@@ -215,3 +214,8 @@ public/app/plugins/**/dist/
 /public/app/features/transformers/docs/*.js
 /scripts/docs/generate-transformations.js
 
+# Go coverage files created with go test -cover -coverprogile=something.out ...
+*.out
+
+# Locally enabling the Go race detector until we can globally do so
+.go-race-enabled-locally

@@ -14,13 +14,13 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
-	ss := InitTestDB(t)
+	ss, _ := InitTestDB(t)
 
-	err := ss.WithNewDbSession(context.Background(), func(sess *DBSession) error {
+	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Create the org only:
-		ss.Cfg.AutoAssignOrg = true
-		ss.Cfg.DisableInitAdminCreation = true
-		ss.Cfg.AutoAssignOrgId = 1
+		ss.cfg.AutoAssignOrg = true
+		ss.cfg.DisableInitAdminCreation = true
+		ss.cfg.AutoAssignOrgId = 1
 		createdOrgID, err := ss.getOrCreateOrg(sess, mainOrgName)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), createdOrgID)
@@ -28,7 +28,7 @@ func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = ss.WithNewDbSession(context.Background(), func(sess *DBSession) error {
+	err = ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Run it a second time and verify that it finds the org that was
 		// created above.
 		gotOrgId, err := ss.getOrCreateOrg(sess, mainOrgName)

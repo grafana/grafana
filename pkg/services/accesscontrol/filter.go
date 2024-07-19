@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 var sqlIDAcceptList = map[string]struct{}{
@@ -176,4 +176,19 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 	}
 
 	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
+}
+
+func RolePrefixesFilter(rolePrefixes []string) (string, []any) {
+	query := ""
+	params := make([]any, 0)
+
+	if len(rolePrefixes) > 0 {
+		query += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(rolePrefixes)-1)
+		query += "role.name LIKE ? )"
+		for i := range rolePrefixes {
+			params = append(params, rolePrefixes[i]+"%")
+		}
+	}
+
+	return query, params
 }

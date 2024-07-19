@@ -6,13 +6,14 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
+  getLinksSupplier,
   GrafanaTheme2,
   InterpolateFunction,
-  LinkModel,
   outerJoinDataFrames,
+  TimeRange,
   ValueFormatter,
-  ValueLinkConfig,
 } from '@grafana/data';
+import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import { HeatmapCellLayout } from '@grafana/schema';
 import {
@@ -21,7 +22,6 @@ import {
   readHeatmapRowsCustomMeta,
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
 import { CellValues, Options } from './types';
 import { boundedMinMax, valuesToFills } from './utils';
@@ -38,6 +38,8 @@ export interface HeatmapData {
     minValue: number;
     maxValue: number;
   };
+
+  series?: DataFrame; // the joined single frame for nonNumericOrdinalY data links
 
   exemplars?: DataFrame; // optionally linked exemplars
   exemplarColor?: string;
@@ -64,15 +66,25 @@ export interface HeatmapData {
   warning?: string;
 }
 
-export function prepareHeatmapData(
-  frames: DataFrame[],
-  annotations: DataFrame[] | undefined,
-  options: Options,
-  palette: string[],
-  theme: GrafanaTheme2,
-  getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>,
-  replaceVariables?: InterpolateFunction
-): HeatmapData {
+interface PrepareHeatmapDataOptions {
+  frames: DataFrame[];
+  annotations?: DataFrame[];
+  options: Options;
+  palette: string[];
+  theme: GrafanaTheme2;
+  replaceVariables?: InterpolateFunction;
+  timeRange?: TimeRange;
+}
+
+export function prepareHeatmapData({
+  frames,
+  annotations,
+  options,
+  palette,
+  theme,
+  replaceVariables = (v) => v,
+  timeRange,
+}: PrepareHeatmapDataOptions): HeatmapData {
   if (!frames?.length) {
     return {};
   }
@@ -81,11 +93,9 @@ export function prepareHeatmapData(
 
   const exemplars = annotations?.find((f) => f.name === 'exemplar');
 
-  if (getFieldLinks) {
-    exemplars?.fields.forEach((field, index) => {
-      exemplars.fields[index].getLinks = getFieldLinks(exemplars, field);
-    });
-  }
+  exemplars?.fields.forEach((field) => {
+    field.getLinks = getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+  });
 
   if (options.calculate) {
     if (config.featureToggles.transformationsVariableSupport) {
@@ -106,7 +116,7 @@ export function prepareHeatmapData(
       }
 
       return getDenseHeatmapData(
-        calculateHeatmapFromData(frames, optionsCopy.calculation ?? {}),
+        calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
         exemplars,
         optionsCopy,
         palette,
@@ -115,7 +125,7 @@ export function prepareHeatmapData(
     }
 
     return getDenseHeatmapData(
-      calculateHeatmapFromData(frames, options.calculation ?? {}),
+      calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
       exemplars,
       options,
       palette,
@@ -138,7 +148,7 @@ export function prepareHeatmapData(
   }
 
   // Everything past here assumes a field for each row in the heatmap (buckets)
-  if (!rowsHeatmap) {
+  if (rowsHeatmap == null) {
     if (frames.length > 1) {
       let allNamesNumeric = frames.every(
         (frame) => !Number.isNaN(parseSampleValue(frame.fields[1].state?.displayName!))
@@ -148,11 +158,10 @@ export function prepareHeatmapData(
         frames.sort(sortSeriesByLabel);
       }
 
-      rowsHeatmap = [
-        outerJoinDataFrames({
-          frames,
-        })!,
-      ][0];
+      rowsHeatmap = outerJoinDataFrames({
+        frames,
+        keepDisplayNames: true,
+      })!;
     } else {
       let frame = frames[0];
       let numberFields = frame.fields.filter((field) => field.type === FieldType.number);
@@ -171,18 +180,31 @@ export function prepareHeatmapData(
     }
   }
 
-  return getDenseHeatmapData(
-    rowsToCellsHeatmap({
-      unit: options.yAxis?.unit, // used to format the ordinal lookup values
-      decimals: options.yAxis?.decimals,
-      ...options.rowsFrame,
-      frame: rowsHeatmap,
-    }),
-    exemplars,
-    options,
-    palette,
-    theme
-  );
+  // config data links
+  rowsHeatmap.fields.forEach((field) => {
+    if ((field.config.links?.length ?? 0) === 0) {
+      return;
+    }
+
+    // this expects that the tooltip is able to identify the field and rowIndex from a dense hovered index
+    field.getLinks = getLinksSupplier(rowsHeatmap!, field, field.state?.scopedVars ?? {}, replaceVariables);
+  });
+
+  return {
+    ...getDenseHeatmapData(
+      rowsToCellsHeatmap({
+        unit: options.yAxis?.unit, // used to format the ordinal lookup values
+        decimals: options.yAxis?.decimals,
+        ...options.rowsFrame,
+        frame: rowsHeatmap,
+      }),
+      exemplars,
+      options,
+      palette,
+      theme
+    ),
+    series: rowsHeatmap,
+  };
 }
 
 const getSparseHeatmapData = (

@@ -92,6 +92,7 @@ message Entity {
     UPDATED = 2;
     DELETED = 3;
     ERROR = 4;
+    BOOKMARK = 5;
   }
 }
 
@@ -136,18 +137,6 @@ message ReadEntityRequest {
 
   // Include the status
   bool with_status = 5;
-}
-
-//------------------------------------------------------
-// Make many read requests at once (by key+version)
-//------------------------------------------------------
-
-message BatchReadEntityRequest {
-  repeated ReadEntityRequest batch = 1;
-}
-
-message BatchReadEntityResponse {
-  repeated Entity results = 1;
 }
 
 //-----------------------------------------------
@@ -244,11 +233,26 @@ message EntityHistoryRequest {
   // Entity identifier
   string key = 1;
 
+  // return the history from before this version
+  int64 before = 2;
+
   // Maximum number of items to return
   int64 limit = 3;
 
+  // guid of the entity
+  string guid = 4;
+
   // Starting from the requested page
   string next_page_token = 5;
+
+  // Sorting instructions `field ASC/DESC`
+  repeated string sort = 7;
+
+  // Return the full body in each payload
+  bool with_body = 8;
+
+  // Return the status in each payload
+  bool with_status = 10;
 }
 
 message EntityHistoryResponse {
@@ -260,6 +264,9 @@ message EntityHistoryResponse {
 
   // More results exist... pass this in the next request
   string next_page_token = 3;
+
+  // Resource version of the response
+  int64 resource_version = 4;
 }
 
 
@@ -300,6 +307,12 @@ message EntityListRequest {
 
   // Return the full body in each payload
   bool with_status = 10;
+
+  // list deleted entities instead of active ones
+  bool deleted = 12;
+
+  // Deprecated: Limit to a set of origin keys (empty is all)
+  repeated string origin_keys = 13;
 }
 
 message ReferenceRequest {
@@ -335,6 +348,14 @@ message EntityListResponse {
 //-----------------------------------------------
 
 message EntityWatchRequest {
+  enum WatchAction {
+    START = 0;
+    STOP = 1;
+  }
+
+  // Start or stop the watch
+  WatchAction action = 8;
+
   // ResourceVersion of last changes. Empty will default to full history
   int64 since = 1;
 
@@ -355,6 +376,11 @@ message EntityWatchRequest {
 
   // Return the full status in each payload
   bool with_status = 7;
+
+  // Return initial events
+  bool send_initial_events = 9;
+
+  bool allow_watch_bookmarks = 10;
 }
 
 message EntityWatchResponse {
@@ -363,6 +389,9 @@ message EntityWatchResponse {
 
   // Entity that was created, updated, or deleted
   Entity entity = 2;
+
+  // previous version of the entity
+  Entity previous = 3;
 }
 
 message EntitySummary {
@@ -410,19 +439,36 @@ message EntityExternalReference {
   string identifier = 3;
 }
 
+//-----------------------------------------------
+// Health
+//-----------------------------------------------
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
+}
 
 //-----------------------------------------------
 // Storage interface
 //-----------------------------------------------
 
-// The entity store provides a basic CRUD (+watch eventually) interface for generic entitys
+// The entity store provides a basic CRUD (+watch eventually) interface for generic entities
 service EntityStore {
   rpc Read(ReadEntityRequest) returns (Entity);
-  rpc BatchRead(BatchReadEntityRequest) returns (BatchReadEntityResponse);
   rpc Create(CreateEntityRequest) returns (CreateEntityResponse);
   rpc Update(UpdateEntityRequest) returns (UpdateEntityResponse);
   rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc List(EntityListRequest) returns (EntityListResponse);
-  rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
+  rpc Watch(stream EntityWatchRequest) returns (stream EntityWatchResponse);
+  rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
 }

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { createRef, MutableRefObject, PureComponent } from 'react';
+import { createRef, MutableRefObject, PureComponent } from 'react';
+import * as React from 'react';
 import SplitPane, { Split } from 'react-split-pane';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -91,7 +92,6 @@ export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Prop
 
     return (
       <SplitPane
-        className={styles.splitPane}
         split={splitOrientation}
         minSize={minSize}
         maxSize={maxSize}
@@ -115,9 +115,6 @@ export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Prop
 
 const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
   return {
-    splitPane: css({
-      overflow: 'visible !important',
-    }),
     resizer: css({
       display: hasSplit ? 'block' : 'none',
     }),

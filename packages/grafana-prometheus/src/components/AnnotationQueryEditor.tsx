@@ -1,5 +1,4 @@
-import React from 'react';
-
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/AnnotationQueryEditor.tsx
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';

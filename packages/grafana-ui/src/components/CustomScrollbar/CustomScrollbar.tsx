@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { RefCallback, useCallback, useEffect, useRef } from 'react';
+import { RefCallback, useCallback, useEffect, useRef } from 'react';
+import * as React from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,6 +27,7 @@ interface Props {
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
   onScroll?: React.UIEventHandler;
+  divId?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export const CustomScrollbar = ({
   scrollTop,
   onScroll,
   children,
+  divId,
 }: React.PropsWithChildren<Props>) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
   const styles = useStyles2(getStyles);
@@ -58,11 +61,7 @@ export const CustomScrollbar = ({
     }
   }, [ref, scrollRefCallback]);
 
-  useEffect(() => {
-    if (ref.current && scrollTop != null) {
-      ref.current.scrollTop(scrollTop);
-    }
-  }, [scrollTop]);
+  useScrollTop(ref.current, scrollTop);
 
   /**
    * Special logic for doing a update a few milliseconds after mount to check for
@@ -110,14 +109,17 @@ export const CustomScrollbar = ({
     return <div {...passedProps} className="thumb-vertical" />;
   }, []);
 
-  const renderView = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
-    // fixes issues of visibility on safari and ios devices
-    if (passedProps.style && passedProps.style['WebkitOverflowScrolling'] === 'touch') {
-      passedProps.style['WebkitOverflowScrolling'] = 'auto';
-    }
+  const renderView = useCallback(
+    (passedProps: JSX.IntrinsicElements['div']) => {
+      // fixes issues of visibility on safari and ios devices
+      if (passedProps.style && passedProps.style['WebkitOverflowScrolling'] === 'touch') {
+        passedProps.style['WebkitOverflowScrolling'] = 'auto';
+      }
 
-    return <div {...passedProps} className="scrollbar-view" />;
-  }, []);
+      return <div {...passedProps} className="scrollbar-view" id={divId} />;
+    },
+    [divId]
+  );
 
   const onScrollStop = useCallback(() => {
     ref.current && setScrollTop && setScrollTop(ref.current.getValues());
@@ -211,3 +213,21 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+/**
+ * Calling scrollTop on a scrollbar ref in a useEffect can race with internal state in react-custom-scrollbars-2, causing scrollTop to get called on a stale reference, which prevents the element from scrolling as desired.
+ * Adding the reference to the useEffect dependency array not notify react that the reference has changed (and is an eslint violation), so we create a custom hook so updates to the reference trigger another render, fixing the race condition bug.
+ *
+ * @param scrollBar
+ * @param scrollTop
+ */
+function useScrollTop(
+  scrollBar: (Scrollbars & { view: HTMLDivElement; update: () => void }) | null,
+  scrollTop?: number
+) {
+  useEffect(() => {
+    if (scrollBar && scrollTop != null) {
+      scrollBar.scrollTop(scrollTop);
+    }
+  }, [scrollTop, scrollBar]);
+}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 
@@ -590,7 +591,7 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), store)
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()), store)
 			evalCtx := NewContext(context.Background(), u)
 
 			err := evaluator.Validate(evalCtx, condition)
@@ -894,6 +895,85 @@ func TestEvaluate(t *testing.T) {
 			},
 			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
 		}},
+	}, {
+		name: "results contains error if condition frame has error",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar", "bar": "baz"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+					Error: errors.New("some frame error"),
+				},
+			},
+		},
+		expected: Results{{
+			State:            Error,
+			Error:            errors.New("some frame error"),
+			EvaluationString: "",
+		}},
+	}, {
+		name: "results contain underlying error if condition frame has error that depends on another node",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+					Error: errors.New("another error depends on me"),
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar", "bar": "baz"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+					Error: expr.MakeDependencyError("B", "A"),
+				},
+			},
+		},
+		expected: Results{{
+			State:            Error,
+			Error:            errors.New("another error depends on me"),
+			EvaluationString: "",
+		}},
 	}}
 
 	for _, tc := range cases {
@@ -950,6 +1030,146 @@ func TestEvaluateRaw(t *testing.T) {
 	})
 }
 
+func TestEvaluateRawLimit(t *testing.T) {
+	t.Run("should apply the limit to the successful query evaluation", func(t *testing.T) {
+		resp := backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						},
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "baz"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		cases := []struct {
+			desc            string
+			cond            models.Condition
+			evalResultLimit int
+			error           string
+		}{
+			{
+				desc:            "too many results from the condition query results in an error",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: 1,
+				error:           "query evaluation returned too many results: 2 (limit: 1)",
+			},
+			{
+				desc:            "if the limit equals to the number of condition query frames, no error is returned",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: len(resp.Responses["B"].Frames),
+			},
+			{
+				desc:            "if the limit is 0, no error is returned",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: 0,
+			},
+			{
+				desc:            "if the limit is -1, no error is returned",
+				cond:            models.Condition{Condition: "B"},
+				evalResultLimit: -1,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.desc, func(t *testing.T) {
+				e := conditionEvaluator{
+					pipeline: nil,
+					expressionService: &fakeExpressionService{
+						hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+							return &resp, nil
+						},
+					},
+					condition:       tc.cond,
+					evalResultLimit: tc.evalResultLimit,
+				}
+
+				result, err := e.EvaluateRaw(context.Background(), time.Now())
+
+				if tc.error != "" {
+					require.Error(t, err)
+					require.EqualError(t, err, tc.error)
+				} else {
+					require.NoError(t, err)
+					require.NotNil(t, result)
+				}
+			})
+		}
+	})
+
+	t.Run("should return the original error if the evaluation did not succeed", func(t *testing.T) {
+		cases := []struct {
+			desc            string
+			queryEvalResult *backend.QueryDataResponse
+			queryEvalError  error
+			evalResultLimit int
+		}{
+			{
+				desc:            "the original query evaluation result is preserved",
+				queryEvalResult: &backend.QueryDataResponse{},
+				queryEvalError:  errors.New("some query error"),
+				evalResultLimit: 1,
+			},
+			{
+				desc:            "the original query evaluation result is preserved (no evaluation result)",
+				queryEvalResult: nil,
+				queryEvalError:  errors.New("some query error"),
+				evalResultLimit: 1,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.desc, func(t *testing.T) {
+				e := conditionEvaluator{
+					pipeline: nil,
+					expressionService: &fakeExpressionService{
+						hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+							return tc.queryEvalResult, tc.queryEvalError
+						},
+					},
+					evalResultLimit: tc.evalResultLimit,
+				}
+
+				result, err := e.EvaluateRaw(context.Background(), time.Now())
+				require.Error(t, err)
+				require.Equal(t, err, tc.queryEvalError)
+				require.Equal(t, result, tc.queryEvalResult)
+			})
+		}
+	})
+}
+
 func TestResults_HasNonRetryableErrors(t *testing.T) {
 	tc := []struct {
 		name     string
@@ -957,11 +1177,21 @@ func TestResults_HasNonRetryableErrors(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "with non-retryable errors",
+			name: "with invalid format error",
 			eval: Results{
 				{
 					State: Error,
 					Error: &invalidEvalResultFormatError{refID: "A", reason: "unable to get frame row length", err: errors.New("weird error")},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "with expected wide series but got type long error",
+			eval: Results{
+				{
+					State: Error,
+					Error: fmt.Errorf("%w but got type long", expr.ErrSeriesMustBeWide),
 				},
 			},
 			expected: true,
@@ -1014,10 +1244,90 @@ func TestResults_Error(t *testing.T) {
 	}
 }
 
+func TestCreate(t *testing.T) {
+	t.Run("should generate headers from metadata", func(t *testing.T) {
+		orgID := rand.Int63()
+		ctx := models.WithRuleKey(context.Background(), models.GenerateRuleKey(orgID))
+		q := models.CreateClassicConditionExpression("A", "B", "avg", "gt", 1)
+		condition := models.Condition{
+			Condition: q.RefID,
+			Data: []models.AlertQuery{
+				q,
+			},
+			Metadata: map[string]string{
+				"Test1": "data1",
+				"Test2": "музыка 🎶",
+				"Test3": "",
+			},
+		}
+
+		expectedHeaders := map[string]string{
+			"X-Rule-Test1":             "data1",
+			"X-Rule-Test2":             "%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D0%B0+%F0%9F%8E%B6",
+			"X-Rule-Test3":             "",
+			models.FromAlertHeaderName: "true",
+			models.CacheSkipHeaderName: "true",
+			"X-Grafana-Org-Id":         strconv.FormatInt(orgID, 10),
+		}
+
+		var request *expr.Request
+
+		factory := evaluatorImpl{
+			expressionService: fakeExpressionService{
+				buildHook: func(req *expr.Request) (expr.DataPipeline, error) {
+					if request != nil {
+						assert.Fail(t, "BuildPipeline was called twice but should be only once")
+					}
+					request = req
+					return expr.DataPipeline{
+						fakeNode{refID: q.RefID},
+					}, nil
+				},
+			},
+		}
+
+		_, err := factory.Create(NewContext(ctx, &user.SignedInUser{}), condition)
+		require.NoError(t, err)
+
+		require.NotNil(t, request)
+
+		require.Equal(t, expectedHeaders, request.Headers)
+	})
+}
+
 type fakeExpressionService struct {
-	hook func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+	hook      func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+	buildHook func(req *expr.Request) (expr.DataPipeline, error)
 }
 
 func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 	return f.hook(ctx, now, pipeline)
+}
+
+func (f fakeExpressionService) BuildPipeline(req *expr.Request) (expr.DataPipeline, error) {
+	return f.buildHook(req)
+}
+
+type fakeNode struct {
+	refID string
+}
+
+func (f fakeNode) ID() int64 {
+	return 0
+}
+
+func (f fakeNode) NodeType() expr.NodeType {
+	return expr.TypeCMDNode
+}
+
+func (f fakeNode) RefID() string {
+	return f.refID
+}
+
+func (f fakeNode) String() string {
+	return "Fake"
+}
+
+func (f fakeNode) NeedsVars() []string {
+	return nil
 }

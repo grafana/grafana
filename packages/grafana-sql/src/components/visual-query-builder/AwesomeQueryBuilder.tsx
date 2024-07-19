@@ -1,9 +1,9 @@
 import {
-  AnyObject,
   BasicConfig,
   Config,
   JsonTree,
   Operator,
+  OperatorOptionsI,
   Settings,
   SimpleField,
   SqlFormatOperator,
@@ -13,9 +13,9 @@ import {
 } from '@react-awesome-query-builder/ui';
 import { List } from 'immutable';
 import { isString } from 'lodash';
-import React from 'react';
 
 import { dateTime, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
 
 const buttonLabels = {
@@ -79,7 +79,7 @@ export const widgets: Widgets = {
       return (
         <DateTimePicker
           onChange={(e) => {
-            props?.setValue(e.format(BasicConfig.widgets.datetime.valueFormat));
+            props?.setValue(e?.format(BasicConfig.widgets.datetime.valueFormat));
           }}
           date={dateValue}
         />
@@ -124,6 +124,7 @@ export const settings: Settings = {
       <Select
         id={conjProps?.id}
         aria-label="Conjunction"
+        data-testid={selectors.components.SQLQueryEditor.filterConjunction}
         menuShouldPortal
         options={conjProps?.conjunctionOptions ? Object.keys(conjProps?.conjunctionOptions).map(toOption) : undefined}
         value={conjProps?.selectedConjunction}
@@ -139,6 +140,7 @@ export const settings: Settings = {
         id={fieldProps?.id}
         width={25}
         aria-label="Field"
+        data-testid={selectors.components.SQLQueryEditor.filterField}
         menuShouldPortal
         options={fieldProps?.items.map((f) => {
           // @ts-ignore
@@ -175,6 +177,7 @@ export const settings: Settings = {
       <Select
         options={operatorProps?.items.map((op) => ({ label: op.label, value: op.key }))}
         aria-label="Operator"
+        data-testid={selectors.components.SQLQueryEditor.filterOperator}
         menuShouldPortal
         value={operatorProps?.selectedKey}
         onChange={(val) => {
@@ -258,7 +261,7 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: AnyObject,
+    operatorOptions: OperatorOptionsI,
     fieldDef: SimpleField
   ) => {
     return sqlFormatInOpOrNoop()(
@@ -288,7 +291,7 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: AnyObject,
+    operatorOptions: OperatorOptionsI,
     fieldDef: SimpleField
   ) => {
     return sqlFormatNotInOpOrNoop()(

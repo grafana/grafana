@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
@@ -25,7 +26,7 @@ const percentileSyntaxRE = /^(p|tm|tc|ts|wm)\d{2}(?:\.\d{1,2})?$/;
 const boundariesInnerParenthesesSyntax = `\\d*(\\.\\d+)?%?:\\d*(\\.\\d+)?%?`;
 const boundariesSyntaxRE = new RegExp(`^(PR|TM|TC|TS|WM)\\((${boundariesInnerParenthesesSyntax})\\)$`);
 
-// used in both Metric Query editor and in Annotations Editor
+// used in both Metric query editor and in Annotations Editor
 export const MetricStatEditor = ({
   refId,
   metricStat,
@@ -146,7 +147,24 @@ export const MetricStatEditor = ({
           <EditorField
             label="Match exact"
             optional={true}
-            tooltip="Only show metrics that exactly match all defined dimension names."
+            tooltip={
+              <>
+                {
+                  'Only show metrics that contain exactly the dimensions defined in the query and match the specified values. If this is enabled, all dimensions of the metric being queried must be specified so that the '
+                }
+                <a
+                  href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  metric schema
+                </a>
+                {
+                  ' matches exactly. If this is disabled, metrics that match the schema and have additional dimensions will also be returned.'
+                }
+              </>
+            }
+            tooltipInteractive
           >
             <EditorSwitch
               id={`${refId}-cloudwatch-match-exact`}

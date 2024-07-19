@@ -8,6 +8,8 @@ import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource'
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
 
+import { ScopedResourceClient } from '../apiserver/client';
+import { Resource, ResourceForCreate, ResourceClient } from '../apiserver/types';
 import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
@@ -36,38 +38,32 @@ class LegacyAPI implements PlaylistAPI {
   }
 }
 
-interface K8sPlaylistList {
-  items: K8sPlaylist[];
+interface PlaylistSpec {
+  title: string;
+  interval: string;
+  items: PlaylistItem[];
 }
 
-interface K8sPlaylist {
-  apiVersion: string;
-  kind: 'Playlist';
-  metadata: {
-    name: string;
-  };
-  spec: {
-    title: string;
-    interval: string;
-    items: PlaylistItem[];
-  };
-}
+type K8sPlaylist = Resource<PlaylistSpec>;
 
 class K8sAPI implements PlaylistAPI {
-  readonly apiVersion = 'playlist.grafana.app/v0alpha1';
-  readonly url: string;
+  readonly server: ResourceClient<PlaylistSpec>;
 
   constructor() {
-    this.url = `/apis/${this.apiVersion}/namespaces/${config.namespace}/playlists`;
+    this.server = new ScopedResourceClient<PlaylistSpec>({
+      group: 'playlist.grafana.app',
+      version: 'v0alpha1',
+      resource: 'playlists',
+    });
   }
 
   async getAllPlaylist(): Promise<Playlist[]> {
-    const result = await getBackendSrv().get<K8sPlaylistList>(this.url);
+    const result = await this.server.list();
     return result.items.map(k8sResourceAsPlaylist);
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
-    const r = await getBackendSrv().get<K8sPlaylist>(this.url + '/' + uid);
+    const r = await this.server.get(uid);
     const p = k8sResourceAsPlaylist(r);
     await migrateInternalIDs(p);
     return p;
@@ -75,22 +71,22 @@ class K8sAPI implements PlaylistAPI {
 
   async createPlaylist(playlist: Playlist): Promise<void> {
     const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(() => getBackendSrv().post(this.url, body));
+    await withErrorHandling(async () => {
+      await this.server.create(body);
+    });
   }
 
   async updatePlaylist(playlist: Playlist): Promise<void> {
     const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(() => getBackendSrv().put(`${this.url}/${playlist.uid}`, body));
+    await withErrorHandling(() => this.server.update(body).then(() => {}));
   }
 
   async deletePlaylist(uid: string): Promise<void> {
-    await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
+    await withErrorHandling(() => this.server.delete(uid).then(() => {}), 'Playlist deleted');
   }
 
-  playlistAsK8sResource = (playlist: Playlist): K8sPlaylist => {
+  playlistAsK8sResource = (playlist: Playlist): ResourceForCreate<PlaylistSpec> => {
     return {
-      apiVersion: this.apiVersion,
-      kind: 'Playlist',
       metadata: {
         name: playlist.uid, // uid as k8s name
       },
@@ -104,7 +100,7 @@ class K8sAPI implements PlaylistAPI {
 }
 
 // This converts a saved k8s resource into a playlist object
-// the main difference is that k8s uses metdata.name as the uid
+// the main difference is that k8s uses metadata.name as the uid
 // to avoid future confusion, the display name is now called "title"
 function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
   const { spec, metadata } = r;

@@ -1,13 +1,13 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/PromQail.tsx
 import { css, cx } from '@emotion/css';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import React, { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
-import store from '../../../gcopypaste/app/core/store';
 import { PromVisualQuery } from '../../types';
 
 import { QuerySuggestionContainer } from './QuerySuggestionContainer';

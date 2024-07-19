@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useMemo } from 'react';
+import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Switch, useStyles2 } from '@grafana/ui';

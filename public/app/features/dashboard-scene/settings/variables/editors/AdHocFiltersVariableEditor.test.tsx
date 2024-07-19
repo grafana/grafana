@@ -1,6 +1,6 @@
 import { render, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { of } from 'rxjs';
 
 import {
@@ -86,9 +86,31 @@ describe('AdHocFiltersVariableEditor', () => {
 
     expect(variable.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' });
   });
+
+  it('should update the variable default keys when the default keys options is enabled', async () => {
+    const { renderer, variable, user } = await setup();
+
+    // Simulate toggling default options on
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle)
+    );
+
+    expect(variable.state.defaultKeys).toEqual([]);
+  });
+
+  it('should update the variable default keys when the default keys option is disabled', async () => {
+    const { renderer, variable, user } = await setup(undefined, true);
+
+    // Simulate toggling default options off
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle)
+    );
+
+    expect(variable.state.defaultKeys).toEqual(undefined);
+  });
 });
 
-async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>) {
+async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, withDefaultKeys = false) {
   const onRunQuery = jest.fn();
   const variable = new AdHocFiltersVariable({
     name: 'adhocVariable',
@@ -110,6 +132,7 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
         value: 'baseTestValue',
       },
     ],
+    defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
   });
   return {
     renderer: await act(() =>

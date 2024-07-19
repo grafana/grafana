@@ -1,5 +1,4 @@
 import { isEqual } from 'lodash';
-import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SelectableValue } from '@grafana/data';
@@ -8,7 +7,6 @@ import {
   SceneComponentProps,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridItem,
   SceneGridItemStateLike,
   SceneObjectBase,
   SceneObjectRef,
@@ -28,8 +26,8 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
 import { VizPanelManager } from '../panel-edit/VizPanelManager';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -110,7 +108,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     const gridItem = buildGridItemForPanel(panelModel);
     const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
 
-    if (!(panel.parent instanceof SceneGridItem) || !(gridItem instanceof SceneGridItem)) {
+    if (!(panel.parent instanceof DashboardGridItem)) {
       console.error('Cannot update state of panel', panel, gridItem);
       return;
     }
@@ -143,8 +141,13 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     const panel = this.state.panelRef.resolve();
 
+    // Library panels are not editable from the inspect
+    if (panel.parent instanceof LibraryVizPanel) {
+      return false;
+    }
+
     // Only support normal grid items for now and not repeated items
-    if (!(panel.parent instanceof SceneGridItem)) {
+    if (panel.parent instanceof DashboardGridItem && panel.parent.isRepeated()) {
       return false;
     }
 
@@ -159,7 +162,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     return (
       <div className={styles.wrap}>
-        <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
+        <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
           <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
             <Select
               inputId="select-source-dropdown"
@@ -203,15 +206,23 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
     case 'panel-json': {
       reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
 
-      const parent = panel.parent!;
+      const isInspectingLibraryPanel = panel.parent instanceof LibraryVizPanel;
+      const gridItem = isInspectingLibraryPanel ? panel.parent.parent : panel.parent;
 
-      if (parent instanceof SceneGridItem || parent instanceof PanelRepeaterGridItem) {
-        objToStringify = gridItemToPanel(parent);
-      } else if (parent instanceof LibraryVizPanel) {
+      if (isInspectingLibraryPanel) {
         objToStringify = libraryPanelChildToLegacyRepresentation(panel);
-      } else if (parent instanceof VizPanelManager) {
-        objToStringify = parent.getPanelSaveModel();
+        break;
       }
+
+      if (panel.parent instanceof VizPanelManager) {
+        objToStringify = panel.parent.getPanelSaveModel();
+        break;
+      }
+
+      if (gridItem instanceof DashboardGridItem) {
+        objToStringify = gridItemToPanel(gridItem);
+      }
+
       break;
     }
 
@@ -245,7 +256,7 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
 /**
  *
- * @param panel Must be child of a LibraryVizPanel that is in turn the child of a SceneGridItem
+ * @param panel Must be child of a LibraryVizPanel that is in turn the child of a DashboardGridItem
  * @returns object representation of the legacy library panel structure.
  */
 function libraryPanelChildToLegacyRepresentation(panel: VizPanel<{}, {}>) {
@@ -253,8 +264,8 @@ function libraryPanelChildToLegacyRepresentation(panel: VizPanel<{}, {}>) {
     throw 'Panel not child of LibraryVizPanel';
   }
 
-  if (!(panel.parent.parent instanceof SceneGridItem)) {
-    throw 'LibraryPanel not child of SceneGridItem';
+  if (!(panel.parent.parent instanceof DashboardGridItem)) {
+    throw 'LibraryPanel not child of DashboardGridItem';
   }
 
   const gridItem = panel.parent.parent;

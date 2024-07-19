@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -15,6 +16,9 @@ func upgradeCommand(c utils.CommandLine) error {
 	ctx := context.Background()
 	pluginsDir := c.PluginDirectory()
 	pluginID := c.Args().First()
+	if pluginID == "" {
+		return errors.New("please specify plugin to update")
+	}
 
 	localPlugin, err := services.GetLocalPlugin(pluginsDir, pluginID)
 	if err != nil {
@@ -31,7 +35,7 @@ func upgradeCommand(c utils.CommandLine) error {
 			return fmt.Errorf("failed to remove plugin '%s': %w", pluginID, err)
 		}
 
-		err = installPlugin(ctx, pluginID, "", c)
+		err = installPlugin(ctx, pluginID, "", newInstallPluginOpts(c))
 		if err == nil {
 			logRestartNotice()
 		}

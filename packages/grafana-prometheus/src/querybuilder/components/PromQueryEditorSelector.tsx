@@ -1,5 +1,6 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual, map } from 'lodash';
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -21,6 +22,7 @@ import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
+import { PromQueryCodeEditorAutocompleteInfo } from './PromQueryCodeEditorAutocompleteInfo';
 
 export const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
   { label: 'Time series', value: 'time_series' },
@@ -35,7 +37,7 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
 
 type Props = PromQueryEditorProps;
 
-export const PromQueryEditorSelector = React.memo<Props>((props) => {
+export const PromQueryEditorSelector = memo<Props>((props) => {
   const {
     onChange,
     onRunQuery,
@@ -138,6 +140,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             Run queries
           </Button>
         )}
+        <PromQueryCodeEditorAutocompleteInfo datasourceUid={props.datasource.uid} editorMode={editorMode} />
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.editorToggle}>
           <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
         </div>

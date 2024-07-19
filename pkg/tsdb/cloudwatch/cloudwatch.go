@@ -80,7 +80,7 @@ type CloudWatchService struct {
 }
 
 type SessionCache interface {
-	GetSession(c awsds.SessionConfig) (*session.Session, error)
+	GetSessionWithAuthSettings(c awsds.GetSessionConfig, as awsds.AuthSettings) (*session.Session, error)
 }
 
 func newExecutor(im instancemgmt.InstanceManager, logger log.Logger) *cloudWatchExecutor {
@@ -174,13 +174,30 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 	}, nil
 }
 
+// getRequestContextOnlySettings is useful for resource endpoints that are called before auth has been configured such as external-id that need access to settings but nothing else
+func (e *cloudWatchExecutor) getRequestContextOnlySettings(ctx context.Context, pluginCtx backend.PluginContext, _ string) (models.RequestContext, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return models.RequestContext{}, err
+	}
+
+	return models.RequestContext{
+		OAMAPIProvider:        nil,
+		MetricsClientProvider: nil,
+		LogsAPIProvider:       nil,
+		EC2APIProvider:        nil,
+		Settings:              instance.Settings,
+		Logger:                e.logger.FromContext(ctx),
+	}, nil
+}
+
 func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx = instrumentContext(ctx, "callResource", req.PluginContext)
+	ctx = instrumentContext(ctx, string(backend.EndpointCallResource), req.PluginContext)
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ctx = instrumentContext(ctx, "queryData", req.PluginContext)
+	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
@@ -193,8 +210,12 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	// Public dashboard queries execute like alert queries, i.e. they execute on the backend, therefore, we need to handle them synchronously.
 	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
 	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
-	fromPublicDashboard := (model.Type == "" && model.QueryMode == logsQueryMode)
-	isSyncLogQuery := ((fromAlert || fromExpression) && model.QueryMode == logsQueryMode) || fromPublicDashboard
+	queryMode := ""
+	if model.QueryMode != nil {
+		queryMode = string(*model.QueryMode)
+	}
+	fromPublicDashboard := model.Type == "" && queryMode == logsQueryMode
+	isSyncLogQuery := ((fromAlert || fromExpression) && queryMode == logsQueryMode) || fromPublicDashboard
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, e, req)
 	}
@@ -215,7 +236,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 }
 
 func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	ctx = instrumentContext(ctx, "checkHealth", req.PluginContext)
+	ctx = instrumentContext(ctx, string(backend.EndpointCheckHealth), req.PluginContext)
 	status := backend.HealthStatusOk
 	metricsTest := "Successfully queried the CloudWatch metrics API."
 	logsTest := "Successfully queried the CloudWatch logs API."
@@ -278,7 +299,7 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 		}
 		region = ds.Settings.Region
 	}
-	sess, err := ds.sessions.GetSession(awsds.SessionConfig{
+	sess, err := ds.sessions.GetSessionWithAuthSettings(awsds.GetSessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
 		// HTTPClient: instance.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
@@ -292,9 +313,8 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 			AccessKey:     ds.Settings.AccessKey,
 			SecretKey:     ds.Settings.SecretKey,
 		},
-		UserAgentName: aws.String("Cloudwatch"),
-		AuthSettings:  &ds.Settings.GrafanaSettings,
-	})
+		UserAgentName: aws.String("Cloudwatch")},
+		ds.Settings.GrafanaSettings)
 	if err != nil {
 		return nil, err
 	}

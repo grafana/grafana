@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,7 +27,7 @@ func newStackIDAuthorizer(cfg *setting.Cfg) *stackIDAuthorizer {
 }
 
 func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-	signedInUser, err := appcontext.User(ctx)
+	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
@@ -37,8 +37,8 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
 	}
 
-	// No opinion when the namespace is arbitrary
-	if info.OrgID == -1 {
+	// No opinion when the namespace is empty
+	if info.Value == "" {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
@@ -48,7 +48,7 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 	if info.OrgID != 1 {
 		return authorizer.DecisionDeny, "cloud instance requires org 1", nil
 	}
-	if signedInUser.OrgID != 1 {
+	if signedInUser.GetOrgID() != 1 {
 		return authorizer.DecisionDeny, "user must be in org 1", nil
 	}
 

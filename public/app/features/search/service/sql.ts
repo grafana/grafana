@@ -2,6 +2,7 @@ import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableVal
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { PermissionLevelString } from 'app/types';
 
 import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
@@ -21,6 +22,8 @@ interface APIQuery {
   folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
+  permission?: PermissionLevelString;
+  deleted?: boolean;
 }
 
 // Internal object to hold folderId
@@ -32,7 +35,7 @@ export class SQLSearcher implements GrafanaSearcher {
   locationInfo: Record<string, LocationInfoEXT> = {
     general: {
       kind: 'folder',
-      name: 'General',
+      name: 'Dashboards',
       url: '/dashboards',
     },
   }; // share location info with everyone
@@ -85,7 +88,9 @@ export class SQLSearcher implements GrafanaSearcher {
         limit: limit,
         tag: query.tags,
         sort: query.sort,
+        permission: query.permission,
         page,
+        deleted: query.deleted,
       },
       query
     );
@@ -153,6 +158,8 @@ export class SQLSearcher implements GrafanaSearcher {
     const tags: string[][] = [];
     const location: string[] = [];
     const sortBy: number[] = [];
+    const isDeleted: boolean[] = [];
+    const permanentlyDeleteDate: Array<Date | undefined> = [];
     let sortMetaName: string | undefined;
 
     for (let hit of rsp) {
@@ -163,6 +170,8 @@ export class SQLSearcher implements GrafanaSearcher {
       url.push(hit.url);
       tags.push(hit.tags);
       sortBy.push(hit.sortMeta!);
+      isDeleted.push(hit.isDeleted ?? false);
+      permanentlyDeleteDate.push(hit.permanentlyDeleteDate ? new Date(hit.permanentlyDeleteDate) : undefined);
 
       let v = hit.folderUid;
       if (!v && k === 'dashboard') {
@@ -199,6 +208,8 @@ export class SQLSearcher implements GrafanaSearcher {
         { name: 'url', type: FieldType.string, config: {}, values: url },
         { name: 'tags', type: FieldType.other, config: {}, values: tags },
         { name: 'location', type: FieldType.string, config: {}, values: location },
+        { name: 'isDeleted', type: FieldType.boolean, config: {}, values: isDeleted },
+        { name: 'permanentlyDeleteDate', type: FieldType.time, config: {}, values: permanentlyDeleteDate },
       ],
       length: name.length,
       meta: {

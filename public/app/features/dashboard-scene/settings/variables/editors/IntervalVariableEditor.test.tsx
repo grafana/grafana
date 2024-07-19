@@ -2,7 +2,6 @@
 
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { IntervalVariable } from '@grafana/scenes';
@@ -46,6 +45,7 @@ describe('IntervalVariableEditor', () => {
       name: 'test',
       type: 'interval',
       intervals: ['1m', '10m', '1h', '6h', '1d', '7d'],
+      value: '10m',
     });
 
     const onRunQuery = jest.fn();
@@ -61,6 +61,8 @@ describe('IntervalVariableEditor', () => {
 
     expect(intervalsInput).toBeInTheDocument();
     expect(intervalsInput).toHaveValue('7d,30d, 1y, 5y, 10y');
+    // If the value is not in the list, it should be set to the first value
+    expect(variable.state.value).toBe('7d');
     expect(onRunQuery).toHaveBeenCalledTimes(1);
   });
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
@@ -34,6 +34,7 @@ function getStyles(theme: GrafanaTheme2) {
       fontStyle: 'italic',
       marginTop: theme.spacing(7),
       textAlign: 'center',
+      width: '100%',
     }),
   };
 }

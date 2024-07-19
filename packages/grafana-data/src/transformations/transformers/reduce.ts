@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../../field';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { KeyValue } from '../../types/data';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo, FieldMatcher, MatcherConfig } from '../../types/transformations';
@@ -122,7 +122,7 @@ function reduceSeriesToRows(
       if (labelsToFields) {
         names[i] = field.name;
         if (field.labels) {
-          for (const key of Object.keys(field.labels)) {
+          for (const key in field.labels) {
             labels[key][i] = field.labels[key];
           }
         }
@@ -132,7 +132,12 @@ function reduceSeriesToRows(
 
       for (const info of calculators) {
         const v = results[info.id];
-        calcs[info.id][i] = v;
+        if (v === null) {
+          // NaN ensures proper row index, null results in shift
+          calcs[info.id][i] = NaN;
+        } else {
+          calcs[info.id][i] = v;
+        }
       }
     }
 

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
@@ -60,7 +59,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
         )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
-            See source
+            {isGrafanaSource ? 'See alert rule' : 'See source'}
           </LinkButton>
         )}
       </div>
@@ -79,16 +78,16 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  button: css`
-    & + & {
-      margin-left: ${theme.spacing(1)};
-    }
-  `,
-  actionsRow: css`
-    padding: ${theme.spacing(2, 0)} !important;
-    border-bottom: 1px solid ${theme.colors.border.medium};
-  `,
-  receivers: css`
-    padding: ${theme.spacing(1, 0)};
-  `,
+  button: css({
+    '& + &': {
+      marginLeft: theme.spacing(1),
+    },
+  }),
+  actionsRow: css({
+    padding: `${theme.spacing(2, 0)} !important`,
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+  }),
+  receivers: css({
+    padding: theme.spacing(1, 0),
+  }),
 });

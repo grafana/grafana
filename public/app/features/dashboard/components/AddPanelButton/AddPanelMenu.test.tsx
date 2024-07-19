@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { PluginType } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -27,7 +26,6 @@ jest.mock('@grafana/runtime', () => ({
     partial: jest.fn(),
   },
   reportInteraction: jest.fn(),
-  config: {},
 }));
 
 jest.mock('app/features/dashboard/utils/dashboard', () => ({

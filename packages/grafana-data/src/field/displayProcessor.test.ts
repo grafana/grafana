@@ -1,7 +1,8 @@
-import { systemDateFormats } from '../datetime';
-import { createTheme } from '../themes';
-import { FieldConfig, FieldType, ThresholdsMode } from '../types';
+import { systemDateFormats } from '../datetime/formats';
+import { createTheme } from '../themes/createTheme';
+import { FieldConfig, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { ThresholdsMode } from '../types/thresholds';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
@@ -19,11 +20,9 @@ function getDisplayProcessorFromConfig(config: FieldConfig, fieldType: FieldType
 function assertSame(input: unknown, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach((processor) => {
     const value = processor(input);
-    for (const key of Object.keys(match)) {
-      // need to type assert on the object keys here
-      // see e.g. https://github.com/Microsoft/TypeScript/issues/12870
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      expect(value[key as keyof typeof match]).toEqual(match[key as keyof typeof match]);
+    let key: keyof typeof match;
+    for (key in match) {
+      expect(value[key]).toEqual(match[key]);
     }
   });
 }

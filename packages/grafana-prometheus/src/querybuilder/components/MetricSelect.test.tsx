@@ -1,8 +1,9 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromOptions } from '../../types';
@@ -68,7 +69,7 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getByText('random_metric')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('unique_metric')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('more_unique_metric')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(3));
   });
 
   it('truncates list of metrics to 1000', async () => {
@@ -80,7 +81,7 @@ describe('MetricSelect', () => {
 
     render(<MetricSelect {...props} />);
     await openMetricSelect();
-    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(1000));
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(1000));
   });
 
   it('shows option to set custom value when typing', async () => {
@@ -96,7 +97,7 @@ describe('MetricSelect', () => {
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'unique');
-    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(3));
   });
 
   it('searches on split words', async () => {
@@ -104,7 +105,7 @@ describe('MetricSelect', () => {
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more unique');
-    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(2));
   });
 
   it('searches on multiple split words', async () => {
@@ -112,7 +113,7 @@ describe('MetricSelect', () => {
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more unique metric');
-    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(2));
   });
 
   it('highlights matching string', async () => {

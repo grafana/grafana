@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, VerticalGroup } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 import { notifyApp, hideAppNotification } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { selectVisible } from 'app/core/reducers/appNotification';
@@ -10,6 +10,7 @@ import { useSelector, useDispatch } from 'app/types';
 
 import {
   createErrorNotification,
+  createInfoNotification,
   createSuccessNotification,
   createWarningNotification,
 } from '../../copy/appNotification';
@@ -25,6 +26,7 @@ export function AppNotificationList() {
     appEvents.on(AppEvents.alertWarning, (payload) => dispatch(notifyApp(createWarningNotification(...payload))));
     appEvents.on(AppEvents.alertSuccess, (payload) => dispatch(notifyApp(createSuccessNotification(...payload))));
     appEvents.on(AppEvents.alertError, (payload) => dispatch(notifyApp(createErrorNotification(...payload))));
+    appEvents.on(AppEvents.alertInfo, (payload) => dispatch(notifyApp(createInfoNotification(...payload))));
   }, [dispatch]);
 
   const onClearAppNotification = (id: string) => {
@@ -33,7 +35,7 @@ export function AppNotificationList() {
 
   return (
     <div className={styles.wrapper}>
-      <VerticalGroup>
+      <Stack direction="column">
         {appNotifications.map((appNotification, index) => {
           return (
             <AppNotificationItem
@@ -43,7 +45,7 @@ export function AppNotificationList() {
             />
           );
         })}
-      </VerticalGroup>
+      </Stack>
     </div>
   );
 }

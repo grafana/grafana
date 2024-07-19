@@ -1,10 +1,8 @@
-import React from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
 
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
 
@@ -15,7 +13,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const datasourceRef = variable.useState().datasource ?? undefined;
+  const { datasource: datasourceRef, defaultKeys } = variable.useState();
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -26,15 +24,26 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     : 'This data source does not support ad hoc filters yet.';
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
-    const dsRef: DataSourceRef = {
-      uid: ds.uid,
-      type: ds.type,
-    };
+    const dsRef = getDataSourceRef(ds);
 
     variable.setState({
       datasource: dsRef,
     });
   };
 
-  return <AdHocVariableForm datasource={datasourceRef} infoText={message} onDataSourceChange={onDataSourceChange} />;
+  const onDefaultKeysChange = (defaultKeys?: MetricFindValue[]) => {
+    variable.setState({
+      defaultKeys,
+    });
+  };
+
+  return (
+    <AdHocVariableForm
+      datasource={datasourceRef ?? undefined}
+      infoText={message}
+      onDataSourceChange={onDataSourceChange}
+      defaultKeys={defaultKeys}
+      onDefaultKeysChange={onDefaultKeysChange}
+    />
+  );
 }

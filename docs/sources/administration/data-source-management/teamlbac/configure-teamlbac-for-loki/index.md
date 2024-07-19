@@ -17,7 +17,7 @@ Team LBAC is available in private preview on Grafana Cloud for Loki created with
 
 ## Before you begin
 
-To be able to use Team LBAC rules, you need to enable the feature toggle `teamHTTPHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
+To be able to use Team LBAC rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
 
 - Be sure that you have the permission setup to create a loki tenant in Grafana Cloud
 - Be sure that you have admin data source permissions for Grafana.
@@ -42,4 +42,4 @@ We recommend that you remove all permissions for roles and teams that are not re
 1. Navigate to Data Source Permissions
    - Go to the permissions tab of the newly created Loki data source. Here, you'll find the Team LBAC rules section.
 
-For more information on how to setup Team LBAC rules for a Loki data source, [Add Team LBAC rules]({{< relref "./../create-teamlbac-rules/" >}}).
+For more information on how to setup Team LBAC rules for a Loki data source, refer to [Create Team LBAC rules for the Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/create-teamlbac-rules/).

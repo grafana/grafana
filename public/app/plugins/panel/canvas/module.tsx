@@ -39,6 +39,14 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     editor: PanZoomHelp,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
+  builder.addBooleanSwitch({
+    path: 'infinitePan',
+    name: 'Infinite panning',
+    description:
+      'Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained',
+    defaultValue: false,
+    showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
+  });
 };
 
 export const plugin = new PanelPlugin<Options>(CanvasPanel)
@@ -50,6 +58,9 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
           icon: true,
         },
       },
+      [FieldConfigProperty.Links]: {
+        hideFromDefaults: true,
+      },
     },
   })
   .setMigrationHandler(canvasMigrationHandler)
@@ -58,7 +69,7 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
 
     addStandardCanvasEditorOptions(builder);
 
-    if (state) {
+    if (state && state.scene) {
       builder.addNestedOptions(getLayerEditor(state));
 
       const selection = state.selected;

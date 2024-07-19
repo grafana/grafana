@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
@@ -22,26 +22,28 @@ var _ envvars.Provider = (*EnvVarsProvider)(nil)
 type EnvVarsProvider struct {
 	cfg     *PluginInstanceCfg
 	license plugins.Licensing
+	logger  log.Logger
 }
 
 func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing) *EnvVarsProvider {
 	return &EnvVarsProvider{
 		cfg:     cfg,
 		license: license,
+		logger:  log.New("plugins.envvars"),
 	}
 }
 
 func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
 	hostEnv := []string{
-		envVar("GF_VERSION", p.cfg.GrafanaVersion),
+		p.envVar("GF_VERSION", p.cfg.GrafanaVersion),
 	}
 
 	if p.license != nil {
 		hostEnv = append(
 			hostEnv,
-			envVar("GF_EDITION", p.license.Edition()),
-			envVar("GF_ENTERPRISE_LICENSE_PATH", p.license.Path()),
-			envVar("GF_ENTERPRISE_APP_URL", p.license.AppURL()),
+			p.envVar("GF_EDITION", p.license.Edition()),
+			p.envVar("GF_ENTERPRISE_LICENSE_PATH", p.license.Path()),
+			p.envVar("GF_ENTERPRISE_APP_URL", p.license.AppURL()),
 		)
 		hostEnv = append(hostEnv, p.license.Environment()...)
 	}
@@ -49,12 +51,12 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	if plugin.ExternalService != nil {
 		hostEnv = append(
 			hostEnv,
-			envVar("GF_APP_URL", p.cfg.GrafanaAppURL),
-			envVar("GF_PLUGIN_APP_CLIENT_ID", plugin.ExternalService.ClientID),
-			envVar("GF_PLUGIN_APP_CLIENT_SECRET", plugin.ExternalService.ClientSecret),
+			p.envVar("GF_APP_URL", p.cfg.GrafanaAppURL),
+			p.envVar("GF_PLUGIN_APP_CLIENT_ID", plugin.ExternalService.ClientID),
+			p.envVar("GF_PLUGIN_APP_CLIENT_SECRET", plugin.ExternalService.ClientSecret),
 		)
 		if plugin.ExternalService.PrivateKey != "" {
-			hostEnv = append(hostEnv, envVar("GF_PLUGIN_APP_PRIVATE_KEY", plugin.ExternalService.PrivateKey))
+			hostEnv = append(hostEnv, p.envVar("GF_PLUGIN_APP_PRIVATE_KEY", plugin.ExternalService.PrivateKey))
 		}
 	}
 
@@ -88,7 +90,7 @@ func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string 
 		for feat := range enabledFeatures {
 			features = append(features, feat)
 		}
-		variables = append(variables, envVar("GF_INSTANCE_FEATURE_TOGGLES_ENABLE", strings.Join(features, ",")))
+		variables = append(variables, p.envVar("GF_INSTANCE_FEATURE_TOGGLES_ENABLE", strings.Join(features, ",")))
 	}
 
 	return variables
@@ -101,19 +103,19 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 
 	var variables []string
 	if !p.cfg.AWSAssumeRoleEnabled {
-		variables = append(variables, envVar(awsds.AssumeRoleEnabledEnvVarKeyName, "false"))
+		variables = append(variables, p.envVar(awsds.AssumeRoleEnabledEnvVarKeyName, "false"))
 	}
 	if len(p.cfg.AWSAllowedAuthProviders) > 0 {
-		variables = append(variables, envVar(awsds.AllowedAuthProvidersEnvVarKeyName, strings.Join(p.cfg.AWSAllowedAuthProviders, ",")))
+		variables = append(variables, p.envVar(awsds.AllowedAuthProvidersEnvVarKeyName, strings.Join(p.cfg.AWSAllowedAuthProviders, ",")))
 	}
 	if p.cfg.AWSExternalId != "" {
-		variables = append(variables, envVar(awsds.GrafanaAssumeRoleExternalIdKeyName, p.cfg.AWSExternalId))
+		variables = append(variables, p.envVar(awsds.GrafanaAssumeRoleExternalIdKeyName, p.cfg.AWSExternalId))
 	}
 	if p.cfg.AWSSessionDuration != "" {
-		variables = append(variables, envVar(awsds.SessionDurationEnvVarKeyName, p.cfg.AWSSessionDuration))
+		variables = append(variables, p.envVar(awsds.SessionDurationEnvVarKeyName, p.cfg.AWSSessionDuration))
 	}
 	if p.cfg.AWSListMetricsPageLimit != "" {
-		variables = append(variables, envVar(awsds.ListMetricsPageLimitKeyName, p.cfg.AWSListMetricsPageLimit))
+		variables = append(variables, p.envVar(awsds.ListMetricsPageLimitKeyName, p.cfg.AWSListMetricsPageLimit))
 	}
 
 	return variables
@@ -122,34 +124,36 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
 	if p.cfg.ProxySettings.Enabled {
 		return []string{
-			envVar(proxy.PluginSecureSocksProxyClientCert, p.cfg.ProxySettings.ClientCert),
-			envVar(proxy.PluginSecureSocksProxyClientKey, p.cfg.ProxySettings.ClientKey),
-			envVar(proxy.PluginSecureSocksProxyRootCACert, p.cfg.ProxySettings.RootCA),
-			envVar(proxy.PluginSecureSocksProxyProxyAddress, p.cfg.ProxySettings.ProxyAddress),
-			envVar(proxy.PluginSecureSocksProxyServerName, p.cfg.ProxySettings.ServerName),
-			envVar(proxy.PluginSecureSocksProxyEnabled, strconv.FormatBool(p.cfg.ProxySettings.Enabled)),
-			envVar(proxy.PluginSecureSocksProxyAllowInsecure, strconv.FormatBool(p.cfg.ProxySettings.AllowInsecure)),
+			// nolint:staticcheck
+			p.envVar(proxy.PluginSecureSocksProxyClientCertFilePathEnvVarName, p.cfg.ProxySettings.ClientCertFilePath),
+			// nolint:staticcheck
+			p.envVar(proxy.PluginSecureSocksProxyClientKeyFilePathEnvVarName, p.cfg.ProxySettings.ClientKeyFilePath),
+			// nolint:staticcheck
+			p.envVar(proxy.PluginSecureSocksProxyRootCACertFilePathsEnvVarName, strings.Join(p.cfg.ProxySettings.RootCAFilePaths, " ")),
+			// nolint:staticcheck
+			p.envVar(proxy.PluginSecureSocksProxyAddressEnvVarName, p.cfg.ProxySettings.ProxyAddress),
+			// nolint:staticcheck
+			p.envVar(proxy.PluginSecureSocksProxyServerNameEnvVarName, p.cfg.ProxySettings.ServerName),
+			// nolint:staticcheck
+			p.envVar(proxy.PluginSecureSocksProxyEnabledEnvVarName, strconv.FormatBool(p.cfg.ProxySettings.Enabled)),
+			// nolint:staticcheck
+			p.envVar(proxy.PluginSecureSocksProxyAllowInsecureEnvVarName, strconv.FormatBool(p.cfg.ProxySettings.AllowInsecure)),
 		}
 	}
 	return nil
 }
 
 func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
-	pluginTracingEnabled := p.cfg.Features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
-	if v, exists := p.cfg.PluginSettings[plugin.ID]["tracing"]; exists && !pluginTracingEnabled {
-		pluginTracingEnabled = v == "true"
-	}
-
-	if !p.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
+	if !p.cfg.Tracing.IsEnabled() {
 		return nil
 	}
 
 	vars := []string{
-		envVar("GF_INSTANCE_OTLP_ADDRESS", p.cfg.Tracing.OpenTelemetry.Address),
-		envVar("GF_INSTANCE_OTLP_PROPAGATION", p.cfg.Tracing.OpenTelemetry.Propagation),
-		envVar("GF_INSTANCE_OTLP_SAMPLER_TYPE", p.cfg.Tracing.OpenTelemetry.Sampler),
+		p.envVar("GF_INSTANCE_OTLP_ADDRESS", p.cfg.Tracing.OpenTelemetry.Address),
+		p.envVar("GF_INSTANCE_OTLP_PROPAGATION", p.cfg.Tracing.OpenTelemetry.Propagation),
+		p.envVar("GF_INSTANCE_OTLP_SAMPLER_TYPE", p.cfg.Tracing.OpenTelemetry.Sampler),
 		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", p.cfg.Tracing.OpenTelemetry.SamplerParam),
-		envVar("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL", p.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
+		p.envVar("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL", p.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
 	}
 	if plugin.Info.Version != "" {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
@@ -159,20 +163,29 @@ func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 
 func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	const customConfigPrefix = "GF_PLUGIN"
-	var env []string
-	for k, v := range p.cfg.PluginSettings[pluginID] {
+
+	pluginSettings := p.cfg.PluginSettings[pluginID]
+
+	env := make([]string, 0, len(pluginSettings))
+	for k, v := range pluginSettings {
 		if k == "path" || strings.ToLower(k) == "id" {
 			continue
 		}
+
 		key := fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))
 		if value := os.Getenv(key); value != "" {
 			v = value
 		}
+
 		env = append(env, fmt.Sprintf("%s=%s", key, v))
 	}
+
 	return env
 }
 
-func envVar(key, value string) string {
+func (p *EnvVarsProvider) envVar(key, value string) string {
+	if strings.Contains(value, "\x00") {
+		p.logger.Error("Variable with key '%s' contains NUL", key)
+	}
 	return fmt.Sprintf("%s=%s", key, value)
 }

@@ -86,7 +86,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 					return err
 				}
 
-				metricDataInput, err := e.buildMetricDataInput(startTime, endTime, requestQueries)
+				metricDataInput, err := e.buildMetricDataInput(ctx, startTime, endTime, requestQueries)
 				if err != nil {
 					return err
 				}
@@ -96,14 +96,23 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 					return err
 				}
 
-				if features.IsEnabled(ctx, features.FlagCloudWatchWildCardDimensionValues) {
-					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit)
-					if err != nil {
-						return err
+				newLabelParsingEnabled := features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing)
+				requestQueries, err = e.getDimensionValuesForWildcards(ctx, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit, func(q *models.CloudWatchQuery) bool {
+					if q.MetricQueryType == models.MetricQueryTypeSearch && (q.MatchExact || newLabelParsingEnabled) {
+						return true
 					}
+
+					if q.MetricQueryType == models.MetricQueryTypeQuery && q.MetricEditorMode == models.MetricEditorModeRaw {
+						return true
+					}
+
+					return false
+				})
+				if err != nil {
+					return err
 				}
 
-				res, err := e.parseResponse(startTime, endTime, mdo, requestQueries)
+				res, err := e.parseResponse(ctx, startTime, endTime, mdo, requestQueries)
 				if err != nil {
 					return err
 				}

@@ -54,7 +54,7 @@ func RunTargetServer(opts ServerOptions) error {
 		}
 	}()
 
-	if err := setupProfiling(Profile, ProfileAddr, ProfilePort); err != nil {
+	if err := setupProfiling(Profile, ProfileAddr, ProfilePort, ProfileBlockRate, ProfileMutexFraction); err != nil {
 		return err
 	}
 	if err := setupTracing(Tracing, TracingFile, logger); err != nil {
@@ -75,7 +75,7 @@ func RunTargetServer(opts ServerOptions) error {
 		}
 	}()
 
-	setBuildInfo(opts)
+	SetBuildInfo(opts)
 	checkPrivileges()
 
 	configOptions := strings.Split(ConfigOverrides, " ")
@@ -89,7 +89,7 @@ func RunTargetServer(opts ServerOptions) error {
 		return err
 	}
 
-	metrics.SetBuildInformation(metrics.ProvideRegisterer(cfg), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
+	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
 	s, err := server.InitializeModuleServer(
 		cfg,

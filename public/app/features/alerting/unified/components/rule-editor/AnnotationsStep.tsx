@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { produce } from 'immer';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state';
 import { RuleFormValues } from '../../types/rule-form';
@@ -89,20 +89,15 @@ const AnnotationsStep = () => {
   };
 
   function getAnnotationsSectionDescription() {
-    const docsLink =
-      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
-
     return (
-      <Stack direction="row" gap={0.5} alignItems="baseline">
+      <Stack direction="row" gap={0.5} alignItems="center">
         <Text variant="bodySmall" color="secondary">
           Add more context in your notification messages.
         </Text>
         <NeedHelpInfo
-          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages. 
-          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on. 
+          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
+          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
           Annotations can contain a combination of text and template code.`}
-          externalLink={docsLink}
-          linkText={`Read about annotations`}
           title="Annotations"
         />
       </Stack>
@@ -210,50 +205,50 @@ const AnnotationsStep = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  annotationValueInput: css`
-    width: 394px;
-  `,
-  textarea: css`
-    height: 76px;
-  `,
-  addAnnotationsButtonContainer: css`
-    margin-top: ${theme.spacing(1)};
-    gap: ${theme.spacing(1)};
-    display: flex;
-  `,
-  field: css`
-    margin-bottom: ${theme.spacing(0.5)};
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-  `,
-  flexRowItemMargin: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  deleteAnnotationButton: css`
-    display: inline-block;
-    margin-top: 10px;
-    margin-left: 10px;
-  `,
+  annotationValueInput: css({
+    width: '394px',
+  }),
+  textarea: css({
+    height: '76px',
+  }),
+  addAnnotationsButtonContainer: css({
+    marginTop: theme.spacing(1),
+    gap: theme.spacing(1),
+    display: 'flex',
+  }),
+  field: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  }),
+  flexRowItemMargin: css({
+    marginTop: theme.spacing(1),
+  }),
+  deleteAnnotationButton: css({
+    display: 'inline-block',
+    marginTop: '10px',
+    marginLeft: '10px',
+  }),
 
-  annotationTitle: css`
-    color: ${theme.colors.text.primary};
-    margin-bottom: 3px;
-  `,
+  annotationTitle: css({
+    color: theme.colors.text.primary,
+    marginBottom: '3px',
+  }),
 
-  annotationContainer: css`
-    margin-top: 5px;
-  `,
+  annotationContainer: css({
+    marginTop: '5px',
+  }),
 
-  annotationDescription: css`
-    color: ${theme.colors.text.secondary};
-  `,
+  annotationDescription: css({
+    color: theme.colors.text.secondary,
+  }),
 
-  annotationValueContainer: css`
-    display: flex;
-  `,
+  annotationValueContainer: css({
+    display: 'flex',
+  }),
 });
 
 export default AnnotationsStep;

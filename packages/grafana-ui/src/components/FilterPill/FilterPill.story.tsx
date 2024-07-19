@@ -1,8 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { getAvailableIcons } from '../../types';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { FilterPill } from './FilterPill';
 import mdx from './FilterPill.mdx';
@@ -30,11 +30,11 @@ export const Example = () => {
   const elements = ['Singapore', 'Paris', 'Stockholm', 'New York', 'London'];
 
   return (
-    <HorizontalGroup>
+    <Stack>
       {elements.map((item) => (
         <FilterPill key={item} label={item} selected={item === selected} onClick={() => setSelected(item)} />
       ))}
-    </HorizontalGroup>
+    </Stack>
   );
 };
 

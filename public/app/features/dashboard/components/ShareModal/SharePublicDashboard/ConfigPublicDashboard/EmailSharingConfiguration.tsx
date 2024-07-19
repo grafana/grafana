@@ -1,21 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { FieldSet } from '@grafana/ui';
-import {
-  Button,
-  ButtonGroup,
-  Field,
-  Input,
-  InputControl,
-  RadioButtonGroup,
-  Spinner,
-  useStyles2,
-} from '@grafana/ui/src';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { FieldSet, Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
@@ -23,10 +12,12 @@ import {
   useDeleteRecipientMutation,
   useGetPublicDashboardQuery,
   useReshareAccessToRecipientMutation,
-  useUpdatePublicDashboardMutation,
+  useUpdatePublicDashboardAccessMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types';
 
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
@@ -103,14 +94,13 @@ const EmailList = ({
   );
 };
 
-export const EmailSharingConfiguration = () => {
+export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardModel | DashboardScene }) => {
   const { width } = useWindowSize();
   const styles = useStyles2(getStyles);
-  const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = dashboardState.getModel()!;
 
-  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
-  const [updateShareType] = useUpdatePublicDashboardMutation();
+  const dashboardUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboardUid);
+  const [updateShareType] = useUpdatePublicDashboardAccessMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -145,7 +135,7 @@ export const EmailSharingConfiguration = () => {
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     DashboardInteractions.publicDashboardEmailInviteClicked();
-    await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
+    await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
 
@@ -156,7 +146,7 @@ export const EmailSharingConfiguration = () => {
           label={t('public-dashboard.config.can-view-dashboard-radio-button-label', 'Can view dashboard')}
           className={styles.field}
         >
-          <InputControl
+          <Controller
             name="shareType"
             control={control}
             render={({ field }) => {
@@ -225,7 +215,7 @@ export const EmailSharingConfiguration = () => {
             {!!publicDashboard?.recipients?.length && (
               <EmailList
                 recipients={publicDashboard.recipients}
-                dashboardUid={dashboard.uid}
+                dashboardUid={dashboardUid}
                 publicDashboardUid={publicDashboard.uid}
               />
             )}
@@ -237,52 +227,50 @@ export const EmailSharingConfiguration = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: emailConfigContainer;
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(3)};
-  `,
-  field: css`
-    label: field-noMargin;
-    margin-bottom: 0;
-  `,
-  emailContainer: css`
-    label: emailContainer;
-    display: flex;
-    gap: ${theme.spacing(1)};
-  `,
-  emailInput: css`
-    label: emailInput;
-    flex-grow: 1;
-  `,
-  table: css`
-    label: table;
-    display: flex;
-    max-height: 220px;
-    overflow-y: scroll;
+  container: css({
+    label: 'emailConfigContainer',
+    display: 'flex',
+    flexDirection: 'column',
+    flexWrap: 'wrap',
+    gap: theme.spacing(3),
+  }),
+  field: css({
+    label: 'field-noMargin',
+    marginBottom: 0,
+  }),
+  emailContainer: css({
+    label: 'emailContainer',
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
+  emailInput: css({
+    label: 'emailInput',
+    flexGrow: 1,
+  }),
+  table: css({
+    label: 'table',
+    display: 'flex',
+    maxHeight: '220px',
+    overflowY: 'scroll',
+    '& tbody': {
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+    },
+    '& tr': {
+      minHeight: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(0.5, 1),
 
-    & tbody {
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-    }
-
-    & tr {
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: ${theme.spacing(0.5, 1)};
-
-      :nth-child(odd) {
-        background: ${theme.colors.background.secondary};
-      }
-    }
-  `,
-  tableButtonsContainer: css`
-    display: flex;
-    justify-content: end;
-  `,
+      ':nth-child(odd)': {
+        background: theme.colors.background.secondary,
+      },
+    },
+  }),
+  tableButtonsContainer: css({
+    display: 'flex',
+    justifyContent: 'end',
+  }),
 });

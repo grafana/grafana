@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { uniqueId } from 'lodash';
-import React, { useEffect, useState } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
@@ -264,7 +264,7 @@ export function buildEditRowModels(value: ValueMapping[]) {
     for (const mapping of value) {
       switch (mapping.type) {
         case MappingType.ValueToText:
-          for (const key of Object.keys(mapping.options)) {
+          for (const key in mapping.options) {
             editRows.push(
               createRow({
                 type: mapping.type,

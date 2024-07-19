@@ -1,5 +1,6 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/QuerySuggestionContainer.tsx
 import { cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button, useTheme2 } from '@grafana/ui';
 

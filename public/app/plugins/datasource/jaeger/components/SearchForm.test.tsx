@@ -1,17 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { of } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginMetaInfo, PluginType } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { BackendSrv } from '@grafana/runtime';
 
 import { JaegerDatasource, JaegerJsonData } from '../datasource';
+import { createFetchResponse } from '../helpers/createFetchResponse';
 import { testResponse } from '../testResponse';
 import { JaegerQuery } from '../types';
 
 import SearchForm from './SearchForm';
+
+export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
