@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -70,6 +71,10 @@ func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 // section to the configuration file while using the same cfg struct.
 func (dbCfg *DatabaseConfig) readConfigSection(cfg *setting.Cfg, section string) error {
 	sec := cfg.Raw.Section(section)
+	return dbCfg.parseConfigIni(sec)
+}
+
+func (dbCfg *DatabaseConfig) parseConfigIni(sec *ini.Section) error {
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
 		dbURL, err := url.Parse(cfgURL)

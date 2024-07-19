@@ -29,4 +29,4 @@ func (f *FakeActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontro
 	return f.ExpectedPermissions
 }
 
-func (f *FakeActionSetSvc) StoreActionSet(resource, permission string, actions []string) {}
+func (f *FakeActionSetSvc) StoreActionSet(name string, actions []string) {}
