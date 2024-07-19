@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"strings"
 
@@ -587,11 +588,15 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
 	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
 	convertToResources := func() error {
-		for idx, group := range body.Groups {
+		for _, group := range body.Groups {
 			gr := group
+			sum := fnv.New64()
+			_, _ = sum.Write([]byte(gr.Name))
+			_, _ = sum.Write([]byte(gr.FolderUID))
+			hash := sum.Sum64()
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_rule_group",
-				Name: fmt.Sprintf("rule_group_%04d", idx),
+				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
 		}
