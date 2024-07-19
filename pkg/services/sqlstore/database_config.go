@@ -235,3 +235,33 @@ func buildExtraConnectionString(sep rune, urlQueryParams map[string][]string) st
 	}
 	return sb.String()
 }
+
+func validateReplicaConfigs(primary *DatabaseConfig, cfgs []*DatabaseConfig) error {
+	if cfgs == nil {
+		return errors.New("cfg cannot be nil")
+	}
+
+	// Return multiple errors so we can fix them all at once!
+	var result error
+
+	// Check for duplicate connection strings
+	seen := make(map[string]struct{})
+	seen[primary.ConnectionString] = struct{}{}
+	for _, cfg := range cfgs {
+		if _, ok := seen[cfg.ConnectionString]; ok {
+			result = errors.Join(result, fmt.Errorf("found duplicate connection string: %s", cfg.ConnectionString))
+		} else {
+			seen[cfg.ConnectionString] = struct{}{}
+		}
+	}
+
+	// Verify that every database is the same type and version, and that it matches the primary database.
+	for _, cfg := range cfgs {
+		if cfg.Type != primary.Type {
+			result = errors.Join(result, fmt.Errorf("the replicas must have the same database type as the primary database (%s != %s)", primary.Type, cfg.Type))
+			break // Only need to report this once
+		}
+	}
+
+	return result
+}
