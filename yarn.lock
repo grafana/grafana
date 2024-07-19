@@ -4543,36 +4543,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@manypkg/find-root@npm:^2.2.0":
-  version: 2.2.1
-  resolution: "@manypkg/find-root@npm:2.2.1"
+"@manypkg/find-root@npm:^2.2.2":
+  version: 2.2.2
+  resolution: "@manypkg/find-root@npm:2.2.2"
   dependencies:
-    "@manypkg/tools": "npm:^1.1.0"
+    "@manypkg/tools": "npm:^1.1.1"
     find-up: "npm:^4.1.0"
     fs-extra: "npm:^8.1.0"
-  checksum: 10/7f31120c3ef0711f6e65857ea232fb4f7caf4db388080e738f82d979d7f72572dae60519c8fcd45c431a8e94095b6628257fbf7373b34401359def00687bab13
+  checksum: 10/e9ce97bcab91df59e6bcb9e894bc2f8e0082635d97e50e579947f33ef67f6f66d7f3a6d938b6dc3e036c29aea10bb03d313989a74ee0b16fffbd46da1cc9eedf
   languageName: node
   linkType: hard
 
 "@manypkg/get-packages@npm:^2.2.0":
-  version: 2.2.1
-  resolution: "@manypkg/get-packages@npm:2.2.1"
+  version: 2.2.2
+  resolution: "@manypkg/get-packages@npm:2.2.2"
   dependencies:
-    "@manypkg/find-root": "npm:^2.2.0"
-    "@manypkg/tools": "npm:^1.1.0"
-  checksum: 10/648da51cf0bf301cfb133b51b816f04f7caf3c29c386c7fb38a106e6ffdc00823e6aa54b3f72eca49c7a64a1fdf00d55c85095ca9ebcbadfa02b89f6acd4fcdb
+    "@manypkg/find-root": "npm:^2.2.2"
+    "@manypkg/tools": "npm:^1.1.1"
+  checksum: 10/90a6f08a0b79f8edefeddb34eb0f1dad9ae08f5a86fc0df02349111cb85a239feb5aefb20d82c097caff2181581b3ec59b043c21cafd32e6baf9af6b19cc9de4
   languageName: node
   linkType: hard
 
-"@manypkg/tools@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@manypkg/tools@npm:1.1.0"
+"@manypkg/tools@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@manypkg/tools@npm:1.1.1"
   dependencies:
     fs-extra: "npm:^8.1.0"
     globby: "npm:^11.0.0"
     jju: "npm:^1.4.0"
     read-yaml-file: "npm:^1.1.0"
-  checksum: 10/85bd2a656c46a475a8f7232515302ffc374005f8cea893e2505271a757fc14accca40e298f7c3acd0df2277ab436b30efeb22af5c6b0d7cd238bc413456a150b
+  checksum: 10/ddb94b02f5a02a1f42e44243abd0f3a680b795c11b722dc739236daf314540adcf7ea6e8cc9ff71e302ba3dcf3b97165ed6aeb49fec10a12a1a9e97a50b82b83
   languageName: node
   linkType: hard
 
