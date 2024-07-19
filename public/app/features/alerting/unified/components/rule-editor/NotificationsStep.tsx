@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -27,9 +28,12 @@ enum RoutingOptions {
 }
 
 function useHasInternalAlertmanagerEnabled() {
-  const { currentData: amChoiceStatus } =
-    alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined);
-  return amChoiceStatus?.alertmanagersChoice === 'internal' || amChoiceStatus?.alertmanagersChoice === 'all';
+  const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
+  const { currentData: amChoiceStatus } = useGetGrafanaAlertingConfigurationStatusQuery(undefined);
+  return (
+    amChoiceStatus?.alertmanagersChoice === AlertmanagerChoice.Internal ||
+    amChoiceStatus?.alertmanagersChoice === AlertmanagerChoice.All
+  );
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
