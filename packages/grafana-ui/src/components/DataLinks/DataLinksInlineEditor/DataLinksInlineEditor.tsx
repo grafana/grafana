@@ -90,10 +90,10 @@ export const DataLinksInlineEditor = ({
     onChange(linksSafe);
   };
 
-  const renderFirstLink = (linkJSX: ReactNode) => {
+  const renderFirstLink = (linkJSX: ReactNode, key: string) => {
     if (oneClick === OneClick.Link) {
       return (
-        <div className={styles.oneClickOverlay}>
+        <div className={styles.oneClickOverlay} key={key}>
           <span className={styles.oneClickSpan}>One-click</span>
           {linkJSX}
         </div>
@@ -125,7 +125,7 @@ export const DataLinksInlineEditor = ({
                 );
 
                 if (idx === 0) {
-                  return renderFirstLink(linkJSX);
+                  return renderFirstLink(linkJSX, key);
                 }
 
                 return linkJSX;
