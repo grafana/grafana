@@ -112,7 +112,7 @@ Metrics data is only one type of telemetry data; the other kinds are logs and tr
 
 The following image illustrates how Grafana Alloy works as an intermediary between 'MyApp' and Grafana Cloud.
 
-{{< figure src="/media/docs/alloy/flow-diagram-small-alloy.png" max-width="750px" alt="Grafana Alloy" caption="Grafana Alloy" >}}
+{{< figure src="/media/docs/alloy/flow-diagram-small-alloy.png" alt="Grafana Alloy" caption="Grafana Alloy" >}}
 
 ## Bringing it together
 
