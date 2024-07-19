@@ -21,7 +21,10 @@ import { Trans } from 'app/core/internationalization';
 import { SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
 import { getExpireOptions } from '../../ShareSnapshotTab';
 
-const SNAPSHOT_URL = 'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot';
+const DASHBOARD_SNAPSHOT_URL =
+  'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot';
+const PANEL_SNAPSHOT_URL =
+  'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot-1';
 
 interface Props {
   isLoading: boolean;
@@ -65,7 +68,11 @@ export function CreateSnapshot({
               </Trans>
             )}
           </Text>
-          <Button variant="secondary" onClick={() => window.open(SNAPSHOT_URL, '_blank')} type="button">
+          <Button
+            variant="secondary"
+            onClick={() => window.open(panelRef ? PANEL_SNAPSHOT_URL : DASHBOARD_SNAPSHOT_URL, '_blank')}
+            type="button"
+          >
             <Trans i18nKey="snapshot.share.learn-more-button">Learn more</Trans>
           </Button>
         </Stack>
