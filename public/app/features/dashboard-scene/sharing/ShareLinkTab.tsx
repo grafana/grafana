@@ -49,6 +49,10 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     this.addActivationHandler(() => {
       this.buildUrl();
     });
+
+    this.onToggleLockedTime = this.onToggleLockedTime.bind(this);
+    this.onUrlShorten = this.onUrlShorten.bind(this);
+    this.onThemeChange = this.onThemeChange.bind(this);
   }
 
   async buildUrl() {
