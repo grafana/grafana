@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { trackUseCentralHistoryExpandRow } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { useCombinedRule } from '../../../hooks/useCombinedRule';
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
@@ -29,6 +30,11 @@ interface EventDetailsProps {
   timeRange: TimeRange;
 }
 export function EventDetails({ record, addFilter, timeRange }: EventDetailsProps) {
+  // track the usage of the expand row
+  useEffect(() => {
+    trackUseCentralHistoryExpandRow();
+  }, []);
+
   // get the rule from the ruleUID
   const ruleUID = record.line?.ruleUID ?? '';
   const labelsInInstance = record.line?.labels;
