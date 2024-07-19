@@ -10,11 +10,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -27,11 +26,10 @@ type elasticsearchDataQuery struct {
 	dataQueries          []backend.DataQuery
 	logger               log.Logger
 	ctx                  context.Context
-	tracer               tracing.Tracer
 	keepLabelsInResponse bool
 }
 
-var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger, tracer tracing.Tracer) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger) *elasticsearchDataQuery {
 	_, fromAlert := req.Headers[headerFromAlert]
 	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
 
@@ -40,7 +38,6 @@ var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req 
 		dataQueries: req.Queries,
 		logger:      logger,
 		ctx:         ctx,
-		tracer:      tracer,
 		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
 		// Historically, these labels have been used in alerting rules and transformations.
 		keepLabelsInResponse: fromAlert || fromExpression,
@@ -84,7 +81,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
 
-	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.keepLabelsInResponse, e.logger, e.tracer)
+	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.keepLabelsInResponse, e.logger)
 }
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {

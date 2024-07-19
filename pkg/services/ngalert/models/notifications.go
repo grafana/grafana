@@ -18,8 +18,9 @@ const GroupByAll = "..."
 var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 
 type ListNotificationSettingsQuery struct {
-	OrgID        int64
-	ReceiverName string
+	OrgID            int64
+	ReceiverName     string
+	TimeIntervalName string
 }
 
 // NotificationSettings represents the settings for sending notifications for a single AlertRule. It is used to

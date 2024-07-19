@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataQueryResponse, LoadingState, EventBusSrv, dateTime } from '@grafana/data';
+import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 
@@ -14,7 +14,7 @@ jest.mock('../Graph/ExploreGraph', () => {
 function renderPanel(logsVolumeData: DataQueryResponse) {
   render(
     <LogsVolumePanel
-      timeRange={{ from: dateTime(0), to: dateTime(1), raw: { from: dateTime(0), to: dateTime(1) } }}
+      absoluteRange={{ from: 0, to: 1 }}
       timeZone="timeZone"
       splitOpen={() => {}}
       width={100}
