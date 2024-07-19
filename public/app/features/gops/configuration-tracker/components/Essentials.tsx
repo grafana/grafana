@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';
 
@@ -95,13 +95,13 @@ interface LinkButtonProps {
 function OpenLinkButton(props: LinkButtonProps) {
   const { urlLink, label, urlLinkOnDone, labelOnDone, done } = props;
   const urlToGoWhenNotDone = urlLink?.url
-    ? createUrl(urlLink.url, {
+    ? createRelativeUrl(urlLink.url, {
         returnTo: location.pathname + location.search,
         ...urlLink.queryParams,
       })
     : '';
   const urlToGoWhenDone = urlLinkOnDone?.url
-    ? createUrl(urlLinkOnDone.url, {
+    ? createRelativeUrl(urlLinkOnDone.url, {
         returnTo: location.pathname + location.search,
         ...urlLinkOnDone.queryParams,
       })

@@ -3,8 +3,8 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
+import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -37,7 +37,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
@@ -447,7 +447,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           <Text variant="bodySmall" color="secondary">
             is used by{' '}
             <TextLink
-              href={createUrl('/alerting/routes', { contactPoint: name })}
+              href={createRelativeUrl('/alerting/routes', { contactPoint: name })}
               variant="bodySmall"
               color="primary"
               inline={false}

@@ -28,7 +28,7 @@ import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings, labelsMatchMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { createUrl } from '../../../utils/url';
+import { createRelativeUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
@@ -240,7 +240,7 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
       </Text>
     );
   }
-  const ruleViewUrl = createUrl(`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view`, {
+  const ruleViewUrl = createRelativeUrl(`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view`, {
     tab: 'history',
     returnTo,
   });

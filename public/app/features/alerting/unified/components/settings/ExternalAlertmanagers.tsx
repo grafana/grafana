@@ -8,7 +8,7 @@ import {
   isProvisionedDataSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../../utils/datasource';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 
 import { AlertmanagerCard } from './AlertmanagerCard';
 import { useSettings } from './SettingsContext';
@@ -51,7 +51,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const isProvisioned = isProvisionedDataSource(alertmanager.dataSourceSettings);
         const isReadOnly = isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
 
-        const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
+        const detailHref = createRelativeUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         const handleEditConfiguration = () => onEditConfiguration(name);
         const handleEnable = forwardingDisabled ? undefined : () => enableAlertmanager(uid);

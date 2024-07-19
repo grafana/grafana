@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import {
   isOnCallContactPointReady,
@@ -114,7 +114,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   } = useGetConfigurationForApps();
 
   function onIntegrationClick(integrationId: string, url: string) {
-    const urlToGoWithIntegration = createUrl(url + integrationId, {
+    const urlToGoWithIntegration = createRelativeUrl(url + integrationId, {
       returnTo: location.pathname + location.search,
     });
     locationService.push(urlToGoWithIntegration);

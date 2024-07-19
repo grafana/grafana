@@ -13,7 +13,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { Link, useStyles2 } from '@grafana/ui';
 
 import { PANEL_STYLES } from '../../home/Insights';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { InsightsRatingModal } from '../RatingModal';
 
 export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle: string) {
@@ -119,7 +119,7 @@ export function RuleLink({ value, ruleUID }: { value: string; ruleUID: string })
 
   return (
     <div className={styles.link}>
-      <Link target="_blank" href={createUrl(`/alerting/grafana/${ruleUID}/view`)}>
+      <Link target="_blank" href={createRelativeUrl(`/alerting/grafana/${ruleUID}/view`)}>
         {value}
       </Link>
     </div>

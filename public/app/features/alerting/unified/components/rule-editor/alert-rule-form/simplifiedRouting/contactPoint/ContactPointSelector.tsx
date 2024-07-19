@@ -1,7 +1,7 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
+import { useCallback, useEffect, useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -15,7 +15,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 
@@ -144,7 +144,7 @@ export function ContactPointSelector({
 function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
-    <TextLink external href={createUrl(hrefToContactPoints)} aria-label="View or create contact points">
+    <TextLink external href={createRelativeUrl(hrefToContactPoints)} aria-label="View or create contact points">
       View or create contact points
     </TextLink>
   );

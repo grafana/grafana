@@ -1,10 +1,14 @@
 import { config } from '@grafana/runtime';
 
-export function createUrl(path: string, queryParams?: string[][] | Record<string, string> | string | URLSearchParams) {
+export function createRelativeUrl(
+  path: string,
+  queryParams?: string[][] | Record<string, string> | string | URLSearchParams
+) {
   const searchParams = new URLSearchParams(queryParams);
   const searchParamsString = searchParams.toString();
+  const pathWithSlash = path.startsWith('/') ? path : `/${path}`;
 
-  return `${config.appSubUrl}${path}${searchParamsString ? `?${searchParamsString}` : ''}`;
+  return `${config.appSubUrl}${pathWithSlash}${searchParamsString ? `?${searchParamsString}` : ''}`;
 }
 
 export function createAbsoluteUrl(
@@ -18,6 +22,6 @@ export function createAbsoluteUrl(
     const baseUrl = new URL(config.appSubUrl + path, config.appUrl);
     return `${baseUrl.href}${searchParamsString ? `?${searchParamsString}` : ''}`;
   } catch (err) {
-    return createUrl(path, queryParams);
+    return createRelativeUrl(path, queryParams);
   }
 }
