@@ -213,7 +213,7 @@ export const optionBuilder: OptionSuppliers = {
       category: ['Data links'],
       id: 'dataLinks',
       path: 'links',
-      name: '',
+      name: 'Links',
       editor: DataLinksEditor,
       settings: context.options,
     });
