@@ -22,7 +22,6 @@ import (
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -37,14 +36,12 @@ const (
 
 type Service struct {
 	im     instancemgmt.InstanceManager
-	tracer tracing.Tracer
 	logger log.Logger
 }
 
-func ProvideService(httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		tracer: tracer,
 		logger: backend.NewLoggerWith("logger", "tsdb.elasticsearch"),
 	}
 }
@@ -59,20 +56,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req, dsInfo, logger, s.tracer)
+	return queryData(ctx, req, dsInfo, logger)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, logger)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, req, logger, tracer)
+	query := newElasticsearchDataQuery(ctx, client, req, logger)
 	return query.execute()
 }
 
