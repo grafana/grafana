@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { cloneDeep } from 'lodash';
+import { select } from 'react-select-event';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -30,6 +32,8 @@ const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
   onChange: jest.fn(),
   query: {} as CloudWatchQuery,
 };
+
+const createFreshProps = () => cloneDeep(props);
 
 const FAKE_EDITOR_LABEL = 'FakeEditor';
 
@@ -332,23 +336,174 @@ describe('QueryEditor should render right editor', () => {
   });
 
   describe('metric insights in builder mode', () => {
-    let originalValueCloudWatchCrossAccountQuerying: boolean | undefined;
-    let originalValueCloudwatchMetricInsightsCrossAccount: boolean | undefined;
-    beforeEach(() => {
-      originalValueCloudWatchCrossAccountQuerying = config.featureToggles.cloudWatchCrossAccountQuerying;
-      originalValueCloudwatchMetricInsightsCrossAccount = config.featureToggles.cloudwatchMetricInsightsCrossAccount;
+    describe('accountId dropdown when feature toggles are NOT enabled', () => {
+      it('should NOT show the accountId dropdown', async () => {
+        render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
+        await screen.findByText('Metric Insights');
+        expect(screen.queryByText('Account')).not.toBeInTheDocument();
+      });
     });
-    afterEach(() => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = originalValueCloudWatchCrossAccountQuerying;
-      config.featureToggles.cloudwatchMetricInsightsCrossAccount = originalValueCloudwatchMetricInsightsCrossAccount;
-    });
-    it('should have an account selector when the feature is enabled', async () => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = true;
-      config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
-      props.datasource.resources.getAccounts = jest.fn().mockResolvedValue(['account123']);
-      render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
-      await screen.findByText('Metric Insights');
-      expect(await screen.findByText('Account')).toBeInTheDocument();
+    describe('accountId dropdown when feature toggles are enabled', () => {
+      let originalValueCloudWatchCrossAccountQuerying: boolean | undefined;
+      let originalValueCloudwatchMetricInsightsCrossAccount: boolean | undefined;
+      beforeEach(() => {
+        originalValueCloudWatchCrossAccountQuerying = config.featureToggles.cloudWatchCrossAccountQuerying;
+        originalValueCloudwatchMetricInsightsCrossAccount = config.featureToggles.cloudwatchMetricInsightsCrossAccount;
+        config.featureToggles.cloudWatchCrossAccountQuerying = true;
+        config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
+      });
+      afterEach(() => {
+        config.featureToggles.cloudWatchCrossAccountQuerying = originalValueCloudWatchCrossAccountQuerying;
+        config.featureToggles.cloudwatchMetricInsightsCrossAccount = originalValueCloudwatchMetricInsightsCrossAccount;
+      });
+      it('should have an account selector when the account is a monitoring account', async () => {
+        const p = createFreshProps();
+        p.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+        p.datasource.resources.getAccounts = jest.fn().mockResolvedValue(['account123']);
+        render(<QueryEditor {...p} query={validMetricQueryBuilderQuery} />);
+        await screen.findByText('Metric Insights');
+        expect(await screen.findByText('Account')).toBeInTheDocument();
+      });
+
+      it('should NOT have an account selector if the account is NOT a monitoring account', async () => {
+        const p = createFreshProps();
+        p.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+        render(<QueryEditor {...p} query={validMetricQueryBuilderQuery} />);
+        await screen.findByText('Metric Insights');
+        expect(screen.queryByText('Account')).not.toBeInTheDocument();
+      });
+
+      it("should select 'all' if no accountId was previously selected", async () => {
+        const p = createFreshProps();
+        p.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+        p.datasource.resources.getAccounts = jest.fn().mockResolvedValue([
+          {
+            arn: 'arn',
+            id: 'someaccountid',
+            label: 'some label for an account id',
+            isMonitoringAccount: true,
+          },
+        ]);
+        render(<QueryEditor {...p} query={validMetricQueryBuilderQuery} />);
+        await screen.findByText('Metric Insights');
+        expect(await screen.findByText('Account')).toBeInTheDocument();
+        expect(await screen.findByText('All')).toBeInTheDocument();
+      });
+
+      it('should select the previously selected accountId', async () => {
+        const p = createFreshProps();
+        p.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+        p.datasource.resources.getAccounts = jest.fn().mockResolvedValue([
+          {
+            arn: 'arn',
+            id: 'someaccountid',
+            label: 'some label for an account id',
+            isMonitoringAccount: true,
+          },
+        ]);
+        render(<QueryEditor {...p} query={{ ...validMetricQueryBuilderQuery, accountId: 'someaccountid' }} />);
+        await screen.findByText('Metric Insights');
+        expect(await screen.findByText('Account')).toBeInTheDocument();
+        expect(await screen.findByText('some label for an account id')).toBeInTheDocument();
+      });
+
+      it('should let users select an account', async () => {
+        const p = createFreshProps();
+        p.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+        p.datasource.resources.getAccounts = jest.fn().mockResolvedValue([
+          {
+            arn: 'arn',
+            id: 'someaccountid',
+            label: 'some label for an account id',
+            isMonitoringAccount: true,
+          },
+        ]);
+        render(<QueryEditor {...p} query={validMetricQueryBuilderQuery} />);
+        await screen.findByText('Metric Insights');
+        expect(screen.getByRole('combobox', { name: 'Account' })).toBeInTheDocument();
+        await selectOptionInTest(screen.getByRole('combobox', { name: 'Account' }), 'some label for an account id');
+        const newExpectedQuery = {
+          accountId: 'someaccountid', // new
+          dimensions: { somekey: 'somevalue' },
+          id: '',
+          metricEditorMode: 0,
+          metricQueryType: 1,
+          namespace: 'ec2',
+          queryMode: 'Metrics',
+          refId: '',
+          region: 'us-east-1',
+          sql: {
+            from: {
+              name: 'SCHEMA',
+              parameters: [
+                { name: 'AWS/EC2', type: 'functionParameter' },
+                { name: 'InstanceId', type: 'functionParameter' },
+              ],
+              type: 'function',
+            },
+            where: {
+              expressions: [
+                // new
+                {
+                  operator: { name: '=', value: 'someaccountid' },
+                  property: { name: 'AccountId', type: 'string' },
+                  type: 'operator',
+                },
+              ],
+              type: 'and',
+            },
+          },
+          sqlExpression: undefined, // this part doesn't happen until after new props are provided after the onchange from grafana
+        };
+        expect(p.onChange).toHaveBeenLastCalledWith(newExpectedQuery);
+      });
+
+      it('should let users unselect an account', async () => {
+        const p = createFreshProps();
+        p.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+        p.datasource.resources.getAccounts = jest.fn().mockResolvedValue([
+          {
+            arn: 'arn',
+            id: 'someaccountid',
+            label: 'some label for an account id',
+            isMonitoringAccount: true,
+          },
+        ]);
+        render(<QueryEditor {...p} query={{ ...validMetricQueryBuilderQuery, accountId: 'someaccountid' }} />);
+        await screen.findByText('Metric Insights');
+        expect(screen.getByRole('combobox', { name: 'Account' })).toBeInTheDocument();
+        await selectOptionInTest(screen.getByRole('combobox', { name: 'Account' }), 'All');
+        const newExpectedQuery = {
+          accountId: 'all', // new
+          dimensions: { somekey: 'somevalue' },
+          id: '',
+          metricEditorMode: 0,
+          metricQueryType: 1,
+          namespace: 'ec2',
+          queryMode: 'Metrics',
+          refId: '',
+          region: 'us-east-1',
+          sql: {
+            from: {
+              name: 'SCHEMA',
+              parameters: [
+                { name: 'AWS/EC2', type: 'functionParameter' },
+                { name: 'InstanceId', type: 'functionParameter' },
+              ],
+              type: 'function',
+            },
+            where: undefined,
+          },
+          sqlExpression: undefined, // this part doesn't happen until after new props are provided after the onchange from grafana
+        };
+        expect(p.onChange).toHaveBeenLastCalledWith(newExpectedQuery);
+      });
     });
   });
 });
+
+// Used to select an option or options from a Select in unit tests
+export const selectOptionInTest = async (
+  input: HTMLElement,
+  optionOrOptions: string | RegExp | Array<string | RegExp>
+) => await waitFor(() => select(input, optionOrOptions, { container: document.body }));

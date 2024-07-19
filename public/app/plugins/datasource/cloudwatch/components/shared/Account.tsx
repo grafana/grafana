@@ -37,12 +37,13 @@ export function Account({ accountId, onChange, accountOptions }: Props) {
 
   return (
     <EditorField
+      htmlFor="account-selection"
       label="Account"
       width={26}
       tooltip="A CloudWatch monitoring account views data from source accounts so you can centralize monitoring and troubleshooting activities across multiple accounts. Go to the CloudWatch settings page in the AWS console for more details."
     >
       <Select
-        aria-label="Account Selection"
+        inputId="account-selection"
         value={selectedAccountExistsInOptions ? accountId : ALL_ACCOUNTS_OPTION.value}
         options={[ALL_ACCOUNTS_OPTION, ...accountOptions]}
         onChange={({ value }) => {
