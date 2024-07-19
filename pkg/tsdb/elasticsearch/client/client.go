@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"net/http"
 	"net/url"
 	"path"
@@ -19,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
