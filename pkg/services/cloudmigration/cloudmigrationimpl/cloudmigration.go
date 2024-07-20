@@ -384,10 +384,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
-	s.gmsClient.ReportEvent(ctx, *cm, gmsclient.EventRequestDTO{
-		LocalID: s.getLocalEventId(ctx),
-		Event:   gmsclient.EventConnect,
-	})
+	s.report(ctx, cm, gmsclient.EventConnect, 0, nil)
 
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
@@ -470,10 +467,9 @@ func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigratio
 	if err != nil {
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}
-	s.gmsClient.ReportEvent(ctx, *c, gmsclient.EventRequestDTO{
-		LocalID: s.getLocalEventId(ctx),
-		Event:   gmsclient.EventDisconnect,
-	})
+
+	s.report(ctx, c, gmsclient.EventDisconnect, 0, nil)
+
 	return c, nil
 }
 
@@ -525,10 +521,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		s.cancelFunc = cancelFunc
 
-		s.gmsClient.ReportEvent(ctx, *session, gmsclient.EventRequestDTO{
-			LocalID: s.getLocalEventId(ctx),
-			Event:   gmsclient.EventStartBuildingSnapshot,
-		})
+		s.report(ctx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
 
 		start := time.Now()
 		err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, snapshot)
@@ -543,15 +536,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 			}
 		}
 
-		e := gmsclient.EventRequestDTO{
-			LocalID:            s.getLocalEventId(ctx),
-			Event:              gmsclient.EventDoneBuildingSnapshot,
-			DurationIfFinished: time.Since(start),
-		}
-		if err != nil {
-			e.Error = err.Error()
-		}
-		s.gmsClient.ReportEvent(ctx, *session, e)
+		s.report(ctx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err)
 	}()
 
 	return &snapshot, nil
@@ -668,10 +653,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		s.cancelFunc = cancelFunc
 
-		s.gmsClient.ReportEvent(ctx, *session, gmsclient.EventRequestDTO{
-			LocalID: s.getLocalEventId(ctx),
-			Event:   gmsclient.EventStartUploadingSnapshot,
-		})
+		s.report(ctx, session, gmsclient.EventStartUploadingSnapshot, 0, nil)
 
 		start := time.Now()
 		err := s.uploadSnapshot(ctx, session, snapshot, uploadUrl)
@@ -686,15 +668,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 			}
 		}
 
-		e := gmsclient.EventRequestDTO{
-			LocalID:            s.getLocalEventId(ctx),
-			Event:              gmsclient.EventDoneUploadingSnapshot,
-			DurationIfFinished: time.Since(start),
-		}
-		if err != nil {
-			e.Error = err.Error()
-		}
-		s.gmsClient.ReportEvent(ctx, *session, e)
+		s.report(ctx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err)
 	}()
 
 	return nil
@@ -727,15 +701,42 @@ func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapsho
 	return nil
 }
 
-func (s *Service) getLocalEventId(ctx context.Context) string {
+func (s *Service) report(
+	ctx context.Context,
+	sess *cloudmigration.CloudMigrationSession,
+	t gmsclient.LocalEventType,
+	d time.Duration,
+	evtErr error,
+) {
+	id, err := s.getLocalEventId(ctx)
+	if err != nil {
+		s.log.Error("failed to report event", "type", t, "error", err.Error())
+		return
+	}
+
+	e := gmsclient.EventRequestDTO{
+		Event:   t,
+		LocalID: id,
+	}
+
+	if d != 0 {
+		e.DurationIfFinished = d
+	}
+	if evtErr != nil {
+		e.Error = evtErr.Error()
+	}
+
+	s.gmsClient.ReportEvent(ctx, *sess, e)
+}
+
+func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 	anonId, ok, err := s.kvStore.Get(ctx, "anonymous_id")
 	if err != nil {
-		s.log.Error("Failed to get usage stats id", "error", err)
-		return ""
+		return "", fmt.Errorf("failed to get usage stats id: %w", err)
 	}
 
 	if ok {
-		return anonId
+		return anonId, nil
 	}
 
 	anonId = uuid.NewString()
@@ -743,8 +744,8 @@ func (s *Service) getLocalEventId(ctx context.Context) string {
 	err = s.kvStore.Set(ctx, "anonymous_id", anonId)
 	if err != nil {
 		s.log.Error("Failed to store usage stats id", "error", err)
-		return ""
+		return "", fmt.Errorf("failed to store usage stats id: %w", err)
 	}
 
-	return anonId
+	return anonId, nil
 }
