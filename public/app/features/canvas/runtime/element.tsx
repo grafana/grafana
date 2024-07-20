@@ -62,6 +62,7 @@ export class ElementState implements LayerElement {
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0, rotation: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
     options.border = options.border ?? { color: { fixed: 'dark-green' } };
+    options.oneClickMode = options.oneClickMode ?? OneClickMode.Off;
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();

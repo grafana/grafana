@@ -136,6 +136,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       });
 
       optionBuilder.addDataLinks(builder, ctx);
+      optionBuilder.addActions(builder, ctx);
     },
   };
 }
