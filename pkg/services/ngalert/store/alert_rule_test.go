@@ -11,27 +11,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
-
-	"github.com/grafana/grafana/pkg/infra/db"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -42,7 +41,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	}
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
@@ -121,7 +120,7 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	}
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
@@ -378,7 +377,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	store := &DBstore{
 		SQLStore:       sqlStore,
 		Cfg:            cfg.UnifiedAlerting,
@@ -501,7 +500,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())}
 
@@ -566,7 +565,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	store := &DBstore{
 		SQLStore:      sqlStore,
@@ -599,7 +598,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	store := &DBstore{
 		SQLStore:      sqlStore,
@@ -653,7 +652,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	}
 
 	orgID := int64(1)
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
@@ -778,7 +777,15 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	getKeyMap := func(r []*models.AlertRule) map[models.AlertRuleKey]struct{} {
+		result := make(map[models.AlertRuleKey]struct{}, len(r))
+		for _, rule := range r {
+			result[rule.GetKey()] = struct{}{}
+		}
+		return result
+	}
+
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
@@ -789,15 +796,17 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	}
 
 	receiverName := "receiver\"-" + uuid.NewString()
+	timeIntervalName := "time-" + util.GenerateShortUID()
 
 	gen := models.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rules := gen.GenerateManyRef(3)
 	receiveRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))).GenerateManyRef(3)
-	noise := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
+	timeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	noise := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(timeIntervalName), models.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
 
-	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(noise))
-	for _, rule := range append(append(rules, receiveRules...), noise...) {
+	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(timeIntervalRules)+len(noise))
+	for _, rule := range append(append(append(rules, receiveRules...), noise...), timeIntervalRules...) {
 		r := *rule
 		r.ID = 0
 		deref = append(deref, r)
@@ -807,18 +816,60 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("should find rules by receiver name", func(t *testing.T) {
-		expectedUIDs := map[string]struct{}{}
-		for _, rule := range receiveRules {
-			expectedUIDs[rule.UID] = struct{}{}
-		}
+		expected := getKeyMap(receiveRules)
 		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 			OrgID:        1,
 			ReceiverName: receiverName,
 		})
 		require.NoError(t, err)
-		assert.Len(t, actual, len(expectedUIDs))
+		assert.Len(t, actual, len(expected))
 		for _, rule := range actual {
-			assert.Contains(t, expectedUIDs, rule.UID)
+			assert.Contains(t, expected, rule.GetKey())
+		}
+	})
+
+	t.Run("should find rules by time interval name", func(t *testing.T) {
+		expected := getKeyMap(timeIntervalRules)
+		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:            1,
+			TimeIntervalName: timeIntervalName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expected))
+		for _, rule := range actual {
+			assert.Contains(t, expected, rule.GetKey())
+		}
+	})
+
+	t.Run("should find rules by receiver and time-interval name", func(t *testing.T) {
+		var receiver, intervalName string
+		var expected []models.AlertRuleKey
+		rand.Shuffle(len(deref), func(i, j int) {
+			deref[i], deref[j] = deref[j], deref[i]
+		})
+		for _, rule := range deref {
+			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+				continue
+			}
+			if len(expected) > 0 {
+				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) {
+					expected = append(expected, rule.GetKey())
+				}
+			} else {
+				receiver = rule.NotificationSettings[0].Receiver
+				intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				expected = append(expected, rule.GetKey())
+			}
+		}
+		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:            1,
+			ReceiverName:     receiver,
+			TimeIntervalName: intervalName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expected))
+		for _, rule := range actual {
+			assert.Contains(t, expected, rule.GetKey())
 		}
 	})
 
@@ -856,7 +907,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
@@ -866,13 +917,17 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	receiverName := `receiver%"-👍'test`
+	searchName := `name-%"-👍'test`
 	gen := models.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 
-	rulesWithNotifications := gen.With(
-		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))),
+	rulesWithNotificationsAndReceiver := gen.With(
+		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(searchName))),
 	).GenerateMany(5)
+	rulesWithNotificationsAndTimeInterval := gen.With(
+		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(searchName))),
+	).GenerateMany(5)
+
 	rulesInOtherOrg := gen.With(
 		gen.WithOrgID(2),
 		gen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
@@ -880,15 +935,18 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 
 	rulesWithNoNotifications := gen.With(gen.WithNoNotificationSettings()).GenerateMany(5)
 
-	deref := append(append(rulesWithNotifications, rulesWithNoNotifications...), rulesInOtherOrg...)
+	deref := append(append(rulesWithNotificationsAndReceiver, rulesWithNoNotifications...), rulesInOtherOrg...)
+	deref = append(deref, rulesWithNotificationsAndTimeInterval...)
+
+	orgRules := append(rulesWithNotificationsAndReceiver, rulesWithNotificationsAndTimeInterval...)
 
 	_, err := store.InsertAlertRules(context.Background(), deref)
 	require.NoError(t, err)
 
 	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
 	require.NoError(t, err)
-	require.Len(t, result, len(rulesWithNotifications))
-	for _, rule := range rulesWithNotifications {
+	require.Len(t, result, len(orgRules))
+	for _, rule := range rulesWithNotificationsAndReceiver {
 		if !assert.Contains(t, result, rule.GetKey()) {
 			continue
 		}
@@ -897,19 +955,73 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 
 	t.Run("should list notification settings by receiver name", func(t *testing.T) {
 		expectedUIDs := map[models.AlertRuleKey]struct{}{}
-		for _, rule := range rulesWithNotifications {
+		for _, rule := range rulesWithNotificationsAndReceiver {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
 		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
 			OrgID:        1,
-			ReceiverName: receiverName,
+			ReceiverName: searchName,
 		})
 		require.NoError(t, err)
 		assert.Len(t, actual, len(expectedUIDs))
 		for ruleKey := range actual {
 			assert.Contains(t, expectedUIDs, ruleKey)
 		}
+	})
+	t.Run("should filter notification settings by time interval name", func(t *testing.T) {
+		expectedUIDs := map[models.AlertRuleKey]struct{}{}
+		for _, rule := range rulesWithNotificationsAndTimeInterval {
+			expectedUIDs[rule.GetKey()] = struct{}{}
+		}
+
+		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:            1,
+			TimeIntervalName: searchName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expectedUIDs))
+		for ruleKey := range actual {
+			assert.Contains(t, expectedUIDs, ruleKey)
+		}
+	})
+	t.Run("should return nothing if filter does not match", func(t *testing.T) {
+		result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:            1,
+			ReceiverName:     "not-found-receiver",
+			TimeIntervalName: "not-found-time-interval",
+		})
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+	t.Run("should filter by time interval and receiver", func(t *testing.T) {
+		var receiver, timeInterval string
+		var expected []models.AlertRuleKey
+		rand.Shuffle(len(orgRules), func(i, j int) {
+			orgRules[i], orgRules[j] = orgRules[j], orgRules[i]
+		})
+		for _, rule := range orgRules {
+			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+				continue
+			}
+			if len(expected) > 0 {
+				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, timeInterval) {
+					expected = append(expected, rule.GetKey())
+				}
+			} else {
+				receiver = rule.NotificationSettings[0].Receiver
+				timeInterval = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				expected = append(expected, rule.GetKey())
+			}
+		}
+
+		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:            1,
+			ReceiverName:     receiver,
+			TimeIntervalName: timeInterval,
+		})
+		require.NoError(t, err)
+		require.EqualValuesf(t, expected, maps.Keys(actual), "got more rules than expected: %#v", actual)
 	})
 }
 
@@ -918,7 +1030,7 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
@@ -969,7 +1081,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
@@ -1125,11 +1237,11 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, 
 	require.NoError(t, err)
 }
 
-func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
+func setupFolderService(t *testing.T, sqlStore db.ReplDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{})
+	return testutil.SetupFolderService(t, cfg, sqlStore.DB(), dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{})
 }

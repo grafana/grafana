@@ -200,7 +200,7 @@ const AmRoutes = () => {
     updatingTree
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
-  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
+  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -219,6 +219,7 @@ const AmRoutes = () => {
 
   return (
     <>
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
         <Tab
           label={'Notification Policies'}
@@ -249,7 +250,6 @@ const AmRoutes = () => {
           <>
             {policyTreeTabActive && (
               <>
-                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter

@@ -25,8 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 const entityTable = "entity"
@@ -655,6 +655,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		rvSubQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
 	}
 
+	// nolint:staticcheck
 	if len(r.OriginKeys) > 0 {
 		entityQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
 		rvMaxQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))

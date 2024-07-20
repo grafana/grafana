@@ -656,6 +656,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 	}
 
 	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+		ctx.Resp.Header().Set("WWW-Authenticate", `Basic realm="Grafana"`)
 		ctx.Resp.WriteHeader(http.StatusUnauthorized)
 		return
 	}

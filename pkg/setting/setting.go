@@ -366,6 +366,7 @@ type Cfg struct {
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
+	ReportingStaticContext              map[string]string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -512,7 +513,8 @@ type Cfg struct {
 	AlertingMinInterval         int64
 
 	// Explore UI
-	ExploreEnabled bool
+	ExploreEnabled           bool
+	ExploreDefaultTimeOffset string
 
 	// Help UI
 	HelpEnabled bool
@@ -1156,12 +1158,29 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
+	// parse reporting static context string of key=value, key=value pairs into an object
+	cfg.ReportingStaticContext = make(map[string]string)
+	for _, pair := range strings.Split(analytics.Key("reporting_static_context").String(), ",") {
+		kv := strings.Split(pair, "=")
+		if len(kv) == 2 {
+			cfg.ReportingStaticContext[strings.TrimSpace("_static_context_"+kv[0])] = strings.TrimSpace(kv[1])
+		}
+	}
+
 	if err := cfg.readAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
 	explore := iniFile.Section("explore")
 	cfg.ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	exploreDefaultTimeOffset := valueAsString(explore, "defaultTimeOffset", "1h")
+	// we want to ensure the value parses as a duration, but we send it forward as a string to the frontend
+	if _, err := gtime.ParseDuration(exploreDefaultTimeOffset); err != nil {
+		return err
+	} else {
+		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
+	}
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)

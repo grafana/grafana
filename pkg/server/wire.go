@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	"github.com/grafana/grafana/pkg/plugins"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -351,6 +352,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
 	resourcepermissions.NewActionSetService,
 	wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)),
+	wire.Bind(new(plugins.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
 	acimpl.ProvideAccessControl,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -360,6 +362,7 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	authnimpl.ProvideIdentitySynchronizer,
 	authnimpl.ProvideAuthnService,
+	authnimpl.ProvideAuthnServiceAuthenticateOnly,
 	authnimpl.ProvideRegistration,
 	supportbundlesimpl.ProvideService,
 	extsvcaccounts.ProvideExtSvcAccountsService,
@@ -396,6 +399,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
@@ -412,6 +416,7 @@ var wireCLISet = wire.NewSet(
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),

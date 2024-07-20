@@ -8,7 +8,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	// nolint:depguard
+	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 )
 
 func TestSetDualWritingMode(t *testing.T) {
@@ -46,9 +50,9 @@ func TestSetDualWritingMode(t *testing.T) {
 		kvStore := &fakeNamespacedKV{data: make(map[string]string), namespace: "storage.dualwriting." + tt.stackID}
 
 		p := prometheus.NewRegistry()
-		dw, err := SetDualWritingMode(context.Background(), kvStore, ls, us, "playlist.grafana.app/v0alpha1", tt.desiredMode, p)
+		dwMode, err := SetDualWritingMode(context.Background(), kvStore, ls, us, "playlist.grafana.app/v0alpha1", tt.desiredMode, p)
 		assert.NoError(t, err)
-		assert.Equal(t, tt.expectedMode, dw.Mode())
+		assert.Equal(t, tt.expectedMode, dwMode)
 
 		// check kv store
 		val, ok, err := kvStore.Get(context.Background(), "playlist.grafana.app/v0alpha1")
@@ -59,24 +63,44 @@ func TestSetDualWritingMode(t *testing.T) {
 }
 
 func TestCompare(t *testing.T) {
+	var examplePlaylistGen1 = &playlist.Playlist{ObjectMeta: metav1.ObjectMeta{Generation: 1}, Spec: playlist.Spec{Title: "Example Playlist"}}
+	var examplePlaylistGen2 = &playlist.Playlist{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: playlist.Spec{Title: "Example Playlist"}}
+	var anotherPlaylist = &playlist.Playlist{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: playlist.Spec{Title: "Another Playlist"}}
+
 	testCase := []struct {
 		name     string
-		input    runtime.Object
+		input1   runtime.Object
+		input2   runtime.Object
 		expected bool
 	}{
 		{
 			name:     "should return true when both objects are the same",
-			input:    exampleObj,
+			input1:   exampleObj,
+			input2:   exampleObj,
 			expected: true,
 		},
 		{
-			name:  "should return false when objects are different",
-			input: anotherObj,
+			name:     "should return false when objects are different",
+			input1:   exampleObj,
+			input2:   anotherObj,
+			expected: false,
+		},
+		{
+			name:     "should return true when Playlists are the same, but different metadata (generation)",
+			input1:   examplePlaylistGen1,
+			input2:   examplePlaylistGen2,
+			expected: true,
+		},
+		{
+			name:     "should return false when Playlists different",
+			input1:   examplePlaylistGen1,
+			input2:   anotherPlaylist,
+			expected: false,
 		},
 	}
 	for _, tt := range testCase {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, Compare(tt.input, exampleObj))
+			assert.Equal(t, tt.expected, Compare(tt.input1, tt.input2))
 		})
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -47,7 +48,7 @@ type scenarioContext struct {
 	initialResult QueryHistoryResponse
 }
 
-func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+func testScenario(t *testing.T, desc string, isViewer bool, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
@@ -72,13 +73,20 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		)
 		require.NoError(t, err)
 
+		var role identity.RoleType
+		if isViewer {
+			role = org.RoleViewer
+		} else {
+			role = org.RoleEditor
+		}
+
 		usr := user.SignedInUser{
 			UserID:     testUserID,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
 			OrgID:      testOrgID,
-			OrgRole:    org.RoleViewer,
+			OrgRole:    role,
 			LastSeenAt: service.now(),
 		}
 
@@ -105,11 +113,13 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 func testScenarioWithQueryInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
-	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
+	testScenario(t, desc, false, func(t *testing.T, sc scenarioContext) {
 		command := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
-			Queries: simplejson.NewFromAny(map[string]any{
-				"expr": "test",
+			Queries: simplejson.NewFromAny([]interface{}{
+				map[string]any{
+					"expr": "test",
+				},
 			}),
 		}
 		sc.reqContext.Req.Body = mockRequestBody(command)
@@ -122,13 +132,15 @@ func testScenarioWithQueryInQueryHistory(t *testing.T, desc string, fn func(t *t
 func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
-	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
+	testScenario(t, desc, false, func(t *testing.T, sc scenarioContext) {
 		start := time.Now().Add(-3 * time.Second)
 		sc.service.now = func() time.Time { return start }
 		command1 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
-			Queries: simplejson.NewFromAny(map[string]any{
-				"expr": "test",
+			Queries: simplejson.NewFromAny([]interface{}{
+				map[string]any{
+					"expr": "test",
+				},
 			}),
 		}
 		sc.reqContext.Req.Body = mockRequestBody(command1)
@@ -144,8 +156,10 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.service.now = func() time.Time { return start.Add(time.Second) }
 		command2 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
-			Queries: simplejson.NewFromAny(map[string]any{
-				"expr": "test2",
+			Queries: simplejson.NewFromAny([]interface{}{
+				map[string]any{
+					"expr": "test2",
+				},
 			}),
 		}
 		sc.reqContext.Req.Body = mockRequestBody(command2)
@@ -157,8 +171,10 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.service.now = func() time.Time { return start.Add(2 * time.Second) }
 		command3 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID2,
-			Queries: simplejson.NewFromAny(map[string]any{
-				"expr": "test2",
+			Queries: simplejson.NewFromAny([]interface{}{
+				map[string]any{
+					"expr": "test2",
+				},
 			}),
 		}
 		sc.reqContext.Req.Body = mockRequestBody(command3)
@@ -166,6 +182,48 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		result3 := validateAndUnMarshalResponse(t, resp3)
 		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result3.Result.UID})
 		sc.service.starHandler(sc.reqContext)
+
+		fn(t, sc)
+	})
+}
+
+// Creates a scenario where 2 queries are added to the db
+// mixed with testDs1 & testDs2
+// non-mixed with testDs2
+func testScenarioWithMixedQueriesInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	t.Helper()
+
+	testScenario(t, desc, false, func(t *testing.T, sc scenarioContext) {
+		start := time.Now()
+		sc.service.now = func() time.Time { return start }
+		command1 := CreateQueryInQueryHistoryCommand{
+			DatasourceUID: "-- Mixed --",
+			Queries: simplejson.NewFromAny([]interface{}{
+				map[string]any{
+					"datasource": map[string]any{"uid": testDsUID1},
+					"expr":       "test",
+				},
+				map[string]any{
+					"datasource": map[string]any{"uid": testDsUID2},
+					"expr":       "test",
+				},
+			}),
+		}
+		sc.reqContext.Req.Body = mockRequestBody(command1)
+		resp1 := sc.service.createHandler(sc.reqContext)
+		sc.initialResult = validateAndUnMarshalResponse(t, resp1)
+
+		command2 := CreateQueryInQueryHistoryCommand{
+			DatasourceUID: testDsUID2,
+			Queries: simplejson.NewFromAny([]interface{}{
+				map[string]any{
+					"datasource": map[string]any{"uid": testDsUID2},
+					"expr":       "test2",
+				},
+			}),
+		}
+		sc.reqContext.Req.Body = mockRequestBody(command2)
+		sc.service.createHandler(sc.reqContext)
 
 		fn(t, sc)
 	})

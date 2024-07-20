@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -43,16 +44,16 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var sqlStore db.DB
+	var sqlStore db.ReplDB
 	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		// insertTestDashboard creates the following hierarchy:
 		// 1 test dash folder
@@ -538,16 +539,16 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.ReplDB
 	var cfg *setting.Cfg
 	var savedFolder, savedDash *dashboards.Dashboard
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
@@ -659,7 +660,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -684,7 +685,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -735,7 +736,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
@@ -779,7 +780,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 }
 
 func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
@@ -817,7 +818,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
@@ -827,7 +828,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features)
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
@@ -934,7 +935,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
@@ -944,7 +945,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features)
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
@@ -1115,8 +1116,8 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}
 }
 
-func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
-	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+func insertTestRule(t *testing.T, sqlStore db.ReplDB, foderOrgID int64, folderUID string) {
+	err := sqlStore.DB().WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string

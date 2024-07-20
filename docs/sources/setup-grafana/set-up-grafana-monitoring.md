@@ -115,7 +115,7 @@ These instructions assume you have already added Graphite as a data source in Gr
 
 ### Pull metrics from Grafana backend plugin into Prometheus
 
-Any installed [backend plugin](/developers/plugin-tools/introduction/backend-plugins) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
+Any installed [backend plugin](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 

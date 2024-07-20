@@ -21,10 +21,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -44,6 +45,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var (
@@ -113,7 +118,9 @@ type service struct {
 	tracing *tracing.TracingService
 	metrics prometheus.Registerer
 
-	authorizer *authorizer.GrafanaAuthorizer
+	authorizer        *authorizer.GrafanaAuthorizer
+	serverLockService builder.ServerLockService
+	kvStore           kvstore.KVStore
 }
 
 func ProvideService(
@@ -122,7 +129,9 @@ func ProvideService(
 	rr routing.RouteRegister,
 	orgService org.Service,
 	tracing *tracing.TracingService,
+	serverLockService *serverlock.ServerLockService,
 	db db.DB,
+	kvStore kvstore.KVStore,
 ) (*service, error) {
 	s := &service{
 		cfg:        cfg,
@@ -135,6 +144,7 @@ func ProvideService(
 		tracing:    tracing,
 		db:         db, // For Unified storage
 		metrics:    metrics.ProvideRegisterer(),
+		kvStore:    kvStore,
 	}
 
 	// This will be used when running as a dskit service
@@ -199,6 +209,7 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+// nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	defer close(s.startedCh)
 
@@ -258,44 +269,78 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-	case grafanaapiserveroptions.StorageTypeUnified:
+	case grafanaapiserveroptions.StorageTypeUnifiedNext:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
+		server, err := sql.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
+		client := resource.NewLocalResourceStoreClient(server)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+			o.RecommendedOptions.Etcd.StorageConfig)
 
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
-		if err != nil {
-			return err
+	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
-
-		store := entity.NewEntityStoreClientLocal(storeServer)
-
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
-
-	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
 		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
 
-		// TODO: determine when to close the connection, we cannot defer it here
-		// defer conn.Close()
-
 		// Create a client instance
-		store := entity.NewEntityStoreClientGRPC(conn)
+		client := resource.NewResourceStoreClientGRPC(conn)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+	case grafanaapiserveroptions.StorageTypeUnified, grafanaapiserveroptions.StorageTypeUnifiedGrpc:
+		var client entity.EntityStoreClient
+		var entityServer sqlstash.SqlEntityServer
+
+		if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeUnifiedGrpc {
+			conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return err
+			}
+			client = entity.NewEntityStoreClientGRPC(conn)
+		} else {
+			if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+				return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+			}
+
+			eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
+			if err != nil {
+				return err
+			}
+
+			entityServer, err = sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
+			if err != nil {
+				return err
+			}
+			client = entity.NewEntityStoreClientLocal(entityServer)
+		}
+
+		if false {
+			// Use the entity bridge
+			server, err := entitybridge.EntityAsResourceServer(client, entityServer, s.tracing)
+			if err != nil {
+				return err
+			}
+			client := resource.NewLocalResourceStoreClient(server)
+			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+				o.RecommendedOptions.Etcd.StorageConfig)
+		} else {
+			serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
+				client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		}
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		restOptionsGetter, err := filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := apistore.NewRESTOptionsGetterForFile(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
 		if err != nil {
 			return err
 		}
@@ -323,7 +368,10 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions, s.metrics)
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+		// Required for the dual writer initialization
+		s.metrics, kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
+	)
 	if err != nil {
 		return err
 	}

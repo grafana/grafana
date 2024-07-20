@@ -7984,7 +7984,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -8035,6 +8035,34 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/images/:image": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "Get custom branding report image.",
+        "operationId": "getSettingsImage",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8161,7 +8189,7 @@
           "reports",
           "enterprise"
         ],
-        "summary": "Get settings.",
+        "summary": "Get report settings.",
         "operationId": "getReportSettings",
         "responses": {
           "200": {
@@ -8230,7 +8258,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -8309,7 +8337,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           },
           {
@@ -12303,10 +12331,10 @@
           "format": "date-time"
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "state": {
           "type": "string"
@@ -12721,7 +12749,7 @@
           }
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "duration": {
           "type": "number",
@@ -12735,7 +12763,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -13990,7 +14018,7 @@
         }
       }
     },
-    "CreateOrUpdateReportConfig": {
+    "CreateOrUpdateReport": {
       "type": "object",
       "properties": {
         "dashboards": {
@@ -15560,6 +15588,9 @@
         "sessionUid": {
           "type": "string"
         },
+        "stats": {
+          "$ref": "#/definitions/SnapshotResourceStats"
+        },
         "status": {
           "type": "string",
           "enum": [
@@ -15570,6 +15601,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -19006,7 +19038,6 @@
       }
     },
     "Report": {
-      "description": "ConfigDTO is model representation in transfer",
       "type": "object",
       "properties": {
         "created": {
@@ -19496,7 +19527,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -20339,6 +20370,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -20355,6 +20387,25 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SnapshotDTO"
+          }
+        }
+      }
+    },
+    "SnapshotResourceStats": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }
@@ -22193,6 +22244,16 @@
     },
     "gettableGrafanaSilence": {
       "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt",
+        "id",
+        "status",
+        "updatedAt"
+      ],
       "properties": {
         "accessControl": {
           "type": "object",
@@ -22205,8 +22266,41 @@
             "write": false
           }
         },
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "id",
+          "type": "string"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
         "metadata": {
           "$ref": "#/definitions/SilenceMetadata"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/silenceStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -22342,14 +22436,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/matcher"
-      }
-    },
-    "overrideLabels": {
-      "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-      "type": "object",
-      "title": "override the labels type with a map for generation.",
-      "additionalProperties": {
-        "type": "string"
       }
     },
     "peerStatus": {
@@ -23900,7 +23986,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/receiver"
+          "$ref": "#/definitions/Receiver"
         }
       }
     },

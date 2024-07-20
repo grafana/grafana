@@ -5,27 +5,42 @@ import { GrafanaTheme2 } from '@grafana/data';
 export function getPageStyles(theme: GrafanaTheme2) {
   const maxWidthBreakpoint =
     theme.breakpoints.values.xxl + theme.spacing.gridSize * 2 + theme.components.sidemenu.width;
+  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
 
   return css({
-    '.grafana-app': {
-      display: 'flex',
-      alignItems: 'stretch',
-      position: 'absolute',
-      width: '100%',
-      height: '100%',
-      top: 0,
-      left: 0,
-    },
+    '.grafana-app': isBodyScrolling
+      ? {
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100svh',
+        }
+      : {
+          display: 'flex',
+          alignItems: 'stretch',
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          top: 0,
+          left: 0,
+        },
 
-    '.main-view': {
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      height: '100%',
-      flex: '1 1 0',
-      minWidth: 0,
-    },
+    '.main-view': isBodyScrolling
+      ? {
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          position: 'relative',
+          minWidth: 0,
+        }
+      : {
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          height: '100%',
+          flex: '1 1 0',
+          minWidth: 0,
+        },
 
     '.page-scrollbar-content': {
       display: 'flex',

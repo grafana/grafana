@@ -41,8 +41,8 @@ func setupTestEnv(t testing.TB) *Service {
 		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		store:         database.ProvideService(db.InitTestDB(t)),
 		tracer:        tracing.InitializeTracerForTest(),
+		store:         database.ProvideService(db.InitTestReplDB(t)),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -65,7 +65,7 @@ func TestUsageMetrics(t *testing.T) {
 
 			s := ProvideOSSService(
 				cfg,
-				database.ProvideService(db.InitTestDB(t)),
+				database.ProvideService(db.InitTestReplDB(t)),
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
@@ -805,9 +805,10 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			ac := setupTestEnv(t)
 			if tt.withActionSets {
 				ac.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-				actionSetSvc := resourcepermissions.NewActionSetService()
+				actionSetSvc := resourcepermissions.NewActionSetService(ac.features)
 				for set, actions := range tt.actionSets {
-					actionSetSvc.StoreActionSet(strings.Split(set, ":")[0], strings.Split(set, ":")[1], actions)
+					actionSetName := resourcepermissions.GetActionSetName(strings.Split(set, ":")[0], strings.Split(set, ":")[1])
+					actionSetSvc.StoreActionSet(actionSetName, actions)
 				}
 				ac.actionResolver = actionSetSvc
 			}

@@ -61,10 +61,9 @@ func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, nam
 	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
-// nolint:unused
-func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
+func (m *dualWriterMetrics) recordOutcome(mode string, name string, areEqual bool, method string) {
 	var observeValue float64
-	if outcome {
+	if !areEqual {
 		observeValue = 1
 	}
 	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
