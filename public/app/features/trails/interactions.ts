@@ -17,7 +17,7 @@ type Interactions = {
       | 'overview_link'
       // By clicking on the label selector at the top of the breakdown
       | 'selector'
-    )
+    );
   };
   // User changed a label filter.
   label_filter_changed: {
@@ -42,7 +42,7 @@ type Interactions = {
       | 'loaded_shared_url'
       // the exploration was opened from the dashboard panel menu and is embedded in a drawer
       | 'dashboard_panel'
-    )
+    );
   };
   // A user has changed a bookmark
   bookmark_changed: {
@@ -52,7 +52,7 @@ type Interactions = {
       | 'toggled_off'
       // Deleted from the homepage bookmarks list
       | 'deleted'
-    )
+    );
   };
   // User changes metric explore settings
   settings_changed: { stickyMainGraph?: boolean };
@@ -63,7 +63,7 @@ type Interactions = {
       | TrailStepType
       // The special metric step type that is created when the user de-selects the current metric
       | 'metric-clear'
-    )
+    );
     // Which step index was clicked on
     step: number;
     // The total number of steps currently in the trail
@@ -73,8 +73,7 @@ type Interactions = {
   metric_action_view_changed: { view: ActionViewType };
   // User clicks on one of the action buttons associated with a selected metric
   selected_metric_action_clicked: {
-    action: 
-    (
+    action: (
       // Opens the metric queries in Explore
       | 'open_in_explore'
       // Clicks on the share URL button
@@ -83,7 +82,7 @@ type Interactions = {
       | 'unselect'
       // When in embedded mode, clicked to open the exploration from the embedded view
       | 'open_from_embedded'
-    )
+    );
   };
   // User selects a metric
   metric_selected: {
@@ -92,8 +91,8 @@ type Interactions = {
       | 'metric_list'
       // By clicking "Select" on a metric panel when on the related metrics tab
       | 'related_metrics'
-      // The number of search terms activated when the selection was made
-    )
+    );
+    // The number of search terms activated when the selection was made
     searchTermCount: number | null;
   };
   // User opens/closes the prefix filter dropdown
