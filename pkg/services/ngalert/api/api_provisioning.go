@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"net/http"
 	"strings"
 
@@ -590,30 +589,30 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 	convertToResources := func() error {
 		for _, group := range body.Groups {
 			gr := group
-			sum := fnv.New64()
-			_, _ = sum.Write([]byte(gr.Name))
-			_, _ = sum.Write([]byte(gr.FolderUID))
-			hash := sum.Sum64()
+			hash := getHash([]string{gr.Name, gr.FolderUID})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_rule_group",
 				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
+
 		}
-		for idx, cp := range body.ContactPoints {
+		for _, cp := range body.ContactPoints {
 			upd, err := ContactPointFromContactPointExport(cp)
 			if err != nil {
 				return fmt.Errorf("failed to convert contact points to HCL:%w", err)
 			}
+			hash := getHash([]string{upd.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_contact_point",
-				Name: fmt.Sprintf("contact_point_%d", idx),
+				Name: fmt.Sprintf("contact_point_%016x", hash),
 				Body: &upd,
 			})
 		}
 
 		for idx, cp := range body.Policies {
 			policy := cp.RouteExport
+			hash := getHash([]string{policy.})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_notification_policy",
 				Name: fmt.Sprintf("notification_policy_%d", idx+1),

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"net/http"
 	"net/url"
@@ -229,4 +230,13 @@ func containsProvisionedAlerts(provenances map[string]ngmodels.Provenance, rules
 		}
 	}
 	return false
+}
+
+func getHash(hashSlice []string) uint64 {
+	sum := fnv.New64()
+	for _, str := range hashSlice {
+		sum.Write([]byte(str))
+	}
+	hash := sum.Sum64()
+	return hash
 }
