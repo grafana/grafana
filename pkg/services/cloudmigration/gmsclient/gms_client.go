@@ -254,7 +254,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 		return
 	}
 
-	path := fmt.Sprintf("%s/api/v1/snapshots/event", c.buildBasePath(session.ClusterSlug))
+	path := fmt.Sprintf("%s/api/v1/snapshots/events", c.buildBasePath(session.ClusterSlug))
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(event); err != nil {
@@ -278,7 +278,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 		c.log.Error("error sending http request for report event", "err", err.Error())
 		return
 	} else if resp.StatusCode >= 400 {
-		c.log.Error("received error response for report event", "statusCode", resp.StatusCode)
+		c.log.Error("received error response for report event", "type", event.Event, "statusCode", resp.StatusCode)
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			c.log.Error("reading request body", "err", err.Error())
