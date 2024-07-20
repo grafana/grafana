@@ -219,7 +219,6 @@ To access values and labels from other fields use:
 | --------------------------------- | ------------------------------------------ |
 | `__data.fields[i]`                | Value of field `i` (on the same row)       |
 | `__data.fields["NameOfField"]`    | Value of field using name instead of index |
-| `__data.fields["NameOfField"]`    | Value of field using name instead of index |
 | `__data.fields[1].labels.cluster` | Access labels of another field             |
 
 ### Template variables
