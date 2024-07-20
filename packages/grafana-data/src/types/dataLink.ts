@@ -101,6 +101,14 @@ export interface LinkModel<T = any> {
   onClick?: (e: any, origin?: any) => void;
 }
 
+export interface ActionModel<T = any> {
+  title: string;
+  origin: T;
+
+  onClick?: (e: any, origin?: any) => void;
+  // summary/confirm msg?
+}
+
 /**
  * Provides a way to produce links on demand
  *

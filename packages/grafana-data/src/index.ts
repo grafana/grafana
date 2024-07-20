@@ -789,6 +789,7 @@ export {
   type InternalDataLink,
   type LinkTarget,
   type LinkModel,
+  type ActionModel,
   type LinkModelSupplier,
   VariableOrigin,
   type VariableSuggestion,

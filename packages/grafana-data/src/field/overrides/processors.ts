@@ -1,3 +1,4 @@
+import { Action } from '../..';
 import { Field } from '../../types/dataFrame';
 import { DataLink } from '../../types/dataLink';
 import { FieldOverrideContext } from '../../types/fieldOverrides';
@@ -56,6 +57,14 @@ export const dataLinksOverrideProcessor = (
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
 ): DataLink[] => {
+  return value;
+};
+
+export const actionsOverrideProcessor = (
+  value: any,
+  _context: FieldOverrideContext,
+  _settings?: DataLinksFieldConfigSettings
+): Action[] => {
   return value;
 };
 

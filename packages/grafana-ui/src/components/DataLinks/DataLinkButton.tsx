@@ -1,4 +1,4 @@
-import { Field, LinkModel } from '@grafana/data';
+import { ActionModel, Field, LinkModel } from '@grafana/data';
 
 import { ButtonProps, Button } from '../Button';
 
@@ -36,5 +36,21 @@ export function DataLinkButton({ link, buttonProps }: DataLinkButtonProps) {
         {link.title}
       </Button>
     </a>
+  );
+}
+
+type ActionButtonProps = {
+  action: ActionModel<Field>;
+  buttonProps?: ButtonProps;
+};
+
+/**
+ * @internal
+ */
+export function ActionButton({ action, buttonProps }: ActionButtonProps) {
+  return (
+    <Button icon="external-link-alt" variant="primary" size="sm" onClick={action.onClick} {...buttonProps}>
+      {action.title}
+    </Button>
   );
 }

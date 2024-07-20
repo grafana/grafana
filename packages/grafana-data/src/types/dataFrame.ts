@@ -7,6 +7,7 @@ import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFact
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
+import { Action } from '..';
 
 /** @public */
 export enum FieldType {
@@ -97,6 +98,8 @@ export interface FieldConfig<TOptions = any> {
 
   // The behavior when clicking on a result
   links?: DataLink[];
+
+  actions?: Action[];
 
   // Alternative to empty string
   noValue?: string;

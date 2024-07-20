@@ -1,4 +1,4 @@
-import { Field, LinkModel } from '@grafana/data';
+import { ActionModel, Field, LinkModel } from '@grafana/data';
 
 export const getDataLinks = (field: Field, rowIdx: number) => {
   const links: Array<LinkModel<Field>> = [];
@@ -17,4 +17,30 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
   }
 
   return links;
+};
+
+export const getActions = (field: Field, rowIdx: number) => {
+  const actions: Array<ActionModel<Field>> = [];
+  const lookup = new Set<string>();
+
+  if ((field.config.actions?.length ?? 0) > 0) {
+    const v = field.values[rowIdx];
+
+    field.config.actions?.forEach((action) => {
+      const key = `${action.title}`;
+
+      if (!lookup.has(key)) {
+        actions.push({
+          title: action.title,
+          // TODO: generate fetch() call using configured & interpolated form fields, href, etc.
+          onClick: () => {},
+          origin: field,
+        });
+
+        lookup.add(key);
+      }
+    });
+  }
+
+  return actions;
 };

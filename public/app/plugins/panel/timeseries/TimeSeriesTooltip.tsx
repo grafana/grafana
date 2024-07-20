@@ -10,7 +10,7 @@ import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizToolt
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
-import { getDataLinks } from '../status-history/utils';
+import { getActions, getDataLinks } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
 import { isTooltipScrollable } from './utils';
@@ -79,8 +79,9 @@ export const TimeSeriesTooltip = ({
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
+    const actions = getActions(field, dataIdx);
 
-    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
+    footer = <VizTooltipFooter dataLinks={links} actions={actions} annotate={annotate} />;
   }
 
   const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
