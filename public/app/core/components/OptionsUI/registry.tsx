@@ -27,8 +27,9 @@ import {
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
   Action,
+  OneClickMode,
 } from '@grafana/data';
-import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
+import { SelectFieldConfigSettings, actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
 import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -346,6 +347,27 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
+  const oneClickMode: FieldConfigPropertyItem<FieldConfig, OneClickMode, SelectFieldConfigSettings<OneClickMode>> = {
+    id: 'oneClickMode',
+    path: 'oneClickMode',
+    name: 'One-click',
+    editor: standardEditorsRegistry.get('radio').editor,
+    override: standardEditorsRegistry.get('radio').editor,
+    process: (value) => value,
+    settings: {
+      options: [
+        { value: OneClickMode.Off, label: 'Off' },
+        { value: OneClickMode.Link, label: 'Link' },
+        { value: OneClickMode.Action, label: 'Action' },
+      ],
+    },
+    defaultValue: OneClickMode.Off,
+    shouldApply: () => true,
+    category: ['Data links and actions'],
+    description: 'When enabled, a single click opens first link or action',
+    getItemsCount: (value) => (value ? value.length : 0),
+  };
+
   const links: FieldConfigPropertyItem<FieldConfig, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
@@ -449,6 +471,7 @@ export const getAllStandardFieldConfigs = () => {
     displayName,
     color,
     noValue,
+    oneClickMode,
     links,
     actions,
     mappings,

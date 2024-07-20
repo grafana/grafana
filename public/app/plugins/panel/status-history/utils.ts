@@ -24,7 +24,7 @@ export const getActions = (field: Field, rowIdx: number) => {
   const lookup = new Set<string>();
 
   if ((field.config.actions?.length ?? 0) > 0) {
-    const v = field.values[rowIdx];
+    // const v = field.values[rowIdx];
 
     field.config.actions?.forEach((action) => {
       const key = `${action.title}`;
