@@ -250,6 +250,10 @@ func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cl
 }
 
 func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.CloudMigrationSession, event EventRequestDTO) {
+	if event.LocalID == "" || event.Event == "" {
+		return
+	}
+
 	path := fmt.Sprintf("%s/api/v1/snapshots/event", c.buildBasePath(session.ClusterSlug))
 
 	var buf bytes.Buffer
