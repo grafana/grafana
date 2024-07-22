@@ -436,7 +436,7 @@ The Network layer renders a network graph. This layer supports the same [data fo
 
 ### Options
 
-- **Data and Location mode** configures the data setings for the layer. For more information check [Data](#data) and [Location mode](#location-mode).
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Arrow** sets the arrow direction to display for each edge, with forward meaning source to target. Choose from:
   - **None**
   - **Forward**
