@@ -55,17 +55,16 @@ You can also set the pending period to zero to skip it and have the alert fire i
 
 ## Condition operator
 
-There are several condition operators available:
+There are several condition operators available.
 
-- **and**: Two conditions before and after it must be true for the overall condition to be true.
-- **or**: If one of conditions before and after it is true, the overall condition is true.
+- **and**: Two conditions before and after must be true for the overall condition to be true.
+- **or**: If one of conditions before and after are true, the overall condition is true.
 - **logic-or**: If the condition before logic-or is true, the overall condition is immediately true, without evaluating subsequent conditions.
 
-Here are some example of operators:
+Here are some examples of operators.
 
-- `TRUE and TRUE or FALSE and FALSE` will evaluate to `FALSE` because last two conditions return `FALSE`.
-- `TRUE and TRUE logic-or FALSE and FALSE` will evaluate to `TRUE` because preceding condition return `TRUE`.
-
+- `TRUE and TRUE or FALSE and FALSE` evaluate to `FALSE`, because last two conditions return `FALSE`.
+- `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`.
 ## Evaluation example
 
 Keep in mind:
