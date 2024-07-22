@@ -27,3 +27,4 @@ jobs:
           metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
           community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
           community_api_username: grafanabot
+          dry_run: ${{ inputs.dry_run }}
