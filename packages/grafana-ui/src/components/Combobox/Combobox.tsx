@@ -94,8 +94,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   });
 
   const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_WIDTH;
-  console.log('size', rowVirtualizer.getTotalSize());
-  console.log('virtualizer', rowVirtualizer);
+
   return (
     <div>
       {/* @ts-expect-error */}
