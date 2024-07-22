@@ -77,12 +77,20 @@ func TestBackendHappyPath(t *testing.T) {
 	})
 
 	t.Run("PrepareList latest", func(t *testing.T) {
-		resp, err := store.PrepareList(ctx, &resource.ListRequest{})
+		resp, err := store.PrepareList(ctx, &resource.ListRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "namespace",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+		})
 		assert.NoError(t, err)
 		assert.Len(t, resp.Items, 2)
 		assert.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
 		assert.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
-		assert.Equal(t, int64(4), resp.ResourceVersion)
+		assert.Equal(t, int64(5), resp.ResourceVersion)
 	})
 
 	t.Run("Watch events", func(t *testing.T) {
@@ -162,7 +170,14 @@ func TestBackendPrepareList(t *testing.T) {
 	_, _ = writeEvent(ctx, store, "item3", resource.WatchEvent_DELETED)  // rv=7
 	_, _ = writeEvent(ctx, store, "item6", resource.WatchEvent_ADDED)    // rv=8
 	t.Run("fetch all latest", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{})
+		res, err := store.PrepareList(ctx, &resource.ListRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
+		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 5)
 		assert.Empty(t, res.NextPageToken)
@@ -171,6 +186,12 @@ func TestBackendPrepareList(t *testing.T) {
 	t.Run("list latest first page ", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
 			Limit: 3,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 3)
@@ -183,6 +204,12 @@ func TestBackendPrepareList(t *testing.T) {
 	t.Run("list at revision", func(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
 			ResourceVersion: 4,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 4)
@@ -197,6 +224,12 @@ func TestBackendPrepareList(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
 			Limit:           3,
 			ResourceVersion: 7,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 3)
@@ -218,6 +251,12 @@ func TestBackendPrepareList(t *testing.T) {
 		res, err := store.PrepareList(ctx, &resource.ListRequest{
 			NextPageToken: continueToken.String(),
 			Limit:         2,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 2)
