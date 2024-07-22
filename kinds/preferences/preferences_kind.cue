@@ -49,7 +49,7 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface")
 
 		#NavbarPreference: {
-			savedItemIds: [...string]
+			bookmarkIds: [...string]
 		} @cuetsy(kind="interface")
 	}
 }]

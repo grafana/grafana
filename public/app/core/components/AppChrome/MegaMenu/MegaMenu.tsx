@@ -3,14 +3,15 @@ import { DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
+import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
-import { useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
@@ -28,6 +29,7 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
+    const dispatch = useDispatch();
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
@@ -61,7 +63,8 @@ export const MegaMenu = memo(
       [pinnedItems]
     );
 
-    const onPinItem = (id?: string) => {
+    const onPinItem = (item: NavModelItem) => {
+      const id = item.id;
       if (id && config.featureToggles.pinNavItems) {
         const navItem = navTree.find((item) => item.id === id);
         const isSaved = isPinned(id);
@@ -73,9 +76,13 @@ export const MegaMenu = memo(
         patchPreferences({
           patchPrefsCmd: {
             navbar: {
-              savedItemIds: newItems,
+              bookmarkIds: newItems,
             },
           },
+        }).then((data) => {
+          if (!data.error) {
+            dispatch(setBookmark({ item: item, isSaved: !isSaved }));
+          }
         });
       }
     };

@@ -22,11 +22,11 @@ export interface CookiePreferences {
 }
 
 export interface NavbarPreference {
-  savedItemIds: Array<string>;
+  bookmarkIds: Array<string>;
 }
 
 export const defaultNavbarPreference: Partial<NavbarPreference> = {
-  savedItemIds: [],
+  bookmarkIds: [],
 };
 
 /**

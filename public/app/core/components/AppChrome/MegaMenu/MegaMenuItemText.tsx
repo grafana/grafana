@@ -32,7 +32,8 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
       }
       {config.featureToggles.pinNavItems && (
         <Icon
-          name={isPinned ? 'favorite' : 'star'}
+          name="bookmark"
+          type={isPinned ? 'solid' : 'default'}
           className={'pin-icon'}
           onClick={(e) => {
             e.preventDefault();
