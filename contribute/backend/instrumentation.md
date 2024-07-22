@@ -264,29 +264,29 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 
 ### How to collect, visualize and query traces (and correlate logs with traces) locally
 
-#### Step 1. Start Jaeger
+1. Start Jaeger
 
-```bash
-make devenv sources=jaeger
-```
+   ```bash
+   make devenv sources=jaeger
+   ```
 
-#### Step 2. Enable tracing in Grafana
+1. Enable tracing in Grafana
 
-To enable tracing in Grafana, you must set the address in your `config.ini` file:
+   To enable tracing in Grafana, you must set the address in your `config.ini` file:
 
-```ini
-[tracing.opentelemetry.jaeger]
-address = http://localhost:14268/api/traces
-```
+   ```ini
+   [tracing.opentelemetry.jaeger]
+   address = http://localhost:14268/api/traces
+   ```
 
-#### Step 3. Search/browse collected logs and traces in Grafana Explore
+1. Search/browse collected logs and traces in Grafana Explore
 
-You need provisioned `gdev-jaeger` and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for set up instructions.
+   You need provisioned `gdev-jaeger` and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for set up instructions.
 
-Open Grafana explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
+   Open Grafana explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
 
-You can then inspect any log message that includes a `traceID` and from there click `gdev-jaeger` to split the view and inspect the trace in question.
+   You can then inspect any log message that includes a `traceID` and from there click `gdev-jaeger` to split the view and inspect the trace in question.
 
-#### Step 4. Search or browse collected traces in Jaeger UI
+1. Search or browse collected traces in Jaeger UI
 
-You can open `http://localhost:16686` to use the Jaeger UI for browsing and searching traces.
+   You can open `http://localhost:16686` to use the Jaeger UI for browsing and searching traces.

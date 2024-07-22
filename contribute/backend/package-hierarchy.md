@@ -33,9 +33,7 @@ sub-package containing the implementation of the service. By moving the
 implementation into a separate package we reduce the risk of triggering
 circular dependencies.
 
-> **Note:** In Go, circular dependencies are evaluated per
-package, and this structure logically moves it to be per type or function
-declaration.
+> **Note:** In Go, circular dependencies are evaluated per package, and this structure logically moves it to be per type or function declaration.
 
 Large packages may need to utilize multiple sub-packages at the discretion
 of the implementor. Keep interfaces and domain types to the root
