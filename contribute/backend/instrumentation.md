@@ -238,7 +238,7 @@ Refer to [trace semantic conventions from OpenTelemetry](https://opentelemetry.i
 
 ### Span names and high cardinality
 
-Be careful with what span names you add or accept. Using or allowing too many span names could result in high cardinality problems.
+Be careful with what span names you add or accept. Using or allowing too many span names can result in high cardinality problems.
 
 ### Validate and sanitize input coming from user input
 
