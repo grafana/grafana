@@ -1,5 +1,4 @@
 ---
-
 keywords:
   - explore
   - trace
@@ -31,7 +30,7 @@ For information on how to configure queries for these data sources, refer to the
 
 ## Query editor
 
-You can query and search tracing data using a data source's query editor. Note that data sources in Grafana have unique query editors. 
+You can query and search tracing data using a data source's query editor. Note that data sources in Grafana have unique query editors.
 
 For information on querying each data source, refer to their documentation:
 
@@ -57,7 +56,6 @@ The trace view header includes the following:
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-header.png" class="docs-image--no-shadow" max-width= "750px" caption="Trace view header example" >}}
 
-
 ### Minimap
 
 **Minimap**m displays a condensed view of the trace timeline. Drag your mouse over the minimap to zoom into a smaller time range. This also updates the main timeline, making it easier to view shorter spans
@@ -74,7 +72,7 @@ Span filters allow you to refine the spans displayed in the trace timeline viewe
 You can add one or more of the following filters:
 
 - **Service name -** Filter by selecting a service name from the dropdown.
-- **Span name -** Filter by selecting a span name from the dropdown. 
+- **Span name -** Filter by selecting a span name from the dropdown.
 - **Duration -** Filter by duration. Accepted units include ns, us, ms, s, m, h.
 - **Tags -** Filter by tags, process tags, or log fields in your span.
 
