@@ -1,5 +1,5 @@
 ---
-description: Tracing in Explore
+
 keywords:
   - explore
   - trace
@@ -8,15 +8,15 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Tracing in Explore
+title: Traces in Explore
 weight: 20
 ---
 
-# Tracing in Explore
+# Traces in Explore
 
 You can use Explore to query and visualize traces from tracing data sources.
 
-Supported data sources are:
+Supported data sources include:
 
 - [Tempo]({{< relref "../datasources/tempo/" >}}) (supported ingestion formats: OpenTelemetry, Jaeger, and Zipkin)
 - [Jaeger]({{< relref "../datasources/jaeger/" >}})
@@ -27,13 +27,11 @@ Supported data sources are:
 - [New Relic](https://grafana.com/grafana/plugins/grafana-newrelic-datasource)
 - [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource)
 
-For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
+For information on how to configure queries for these data sources, refer to the documentation for each individual data source.
 
 ## Query editor
 
-You can query and search tracing data using a data source's query editor.
-
-Each data source can have it's own query editor. The query editor for the Tempo data source is slightly different than the query editor for the Jaeger data source.
+You can query and search tracing data using a data source's query editor. Note that data sources in Grafana have unique query editors. 
 
 For information on querying each data source, refer to their documentation:
 
@@ -47,55 +45,60 @@ For information on querying each data source, refer to their documentation:
 
 This section explains the elements of the Trace View.
 
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view" >}}
 
 ### Header
 
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-header.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot of the trace view header" >}}
+The trace view header includes the following:
 
-- Header title: Shows the name of the root span and trace ID.
-- Search: Highlights spans containing the searched text.
-- Metadata: Various metadata about the trace.
+- **Header title -** Shows the name of the root span and trace ID.
+- **Search -** Highlights spans containing the searched text.
+- **Metadata -** Various metadata about the trace.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-header.png" class="docs-image--no-shadow" max-width= "750px" caption="Trace view header example" >}}
+
 
 ### Minimap
 
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-minimap.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view minimap" >}}
+**Minimap**m displays a condensed view of the trace timeline. Drag your mouse over the minimap to zoom into a smaller time range. This also updates the main timeline, making it easier to view shorter spans
+When zoomed in, hovering over the minimap displays the **Reset selectio** button, which resets the zoom.
 
-Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-minimap.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view minimap example" >}}
 
 ### Span filters
 
-![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png)
+Span filters allow you to refine the spans displayed in the trace timeline viewer. The more filters you add, the more specific the filtered spans become. Click on a trace to access Span filters.
 
-Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png)
 
 You can add one or more of the following filters:
 
-- Resource service name
-- Span name
-- Duration
-- Tags (which include tags, process tags, and log fields)
+- **Service name -** Filter by selecting a service name from the dropdown.
+- **Span name -** Filter by selecting a span name from the dropdown. 
+- **Duration -** Filter by duration. Accepted units include ns, us, ms, s, m, h.
+- **Tags -** Filter by tags, process tags, or log fields in your span.
 
-To only show the spans you have matched, you can press the `Show matches only` toggle.
+To only show the spans you have matched, toggle **Show matches only**.
 
+Watch the following video to learn more about filtering trace spans in Grafana:
 {{< youtube id="VP2XV3IIc80" >}}
 
 ### Timeline
 
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view timeline" >}}
+Timeline shows list of spans within the trace. Each span row consists of the following components:
 
-Shows list of spans within the trace. Each span row consists of these components:
-
-- Expand children button: Expands or collapses all the children spans of selected span.
-- Service name: Name of the service logged the span.
-- Operation name: Name of the operation that this span represents.
-- Span duration bar: Visual representation of the operation duration within the trace.
+- **Expand children -** Expands or collapses all the children spans of the selected span.
+- **Service name -** Name of the service logged the span.
+- **Operation name -** Name of the operation that this span represents.
+- **Span duration bar -** Visual representation of the operation duration within the trace.
 
 Clicking anywhere on the span row shows span details.
 
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view timeline" >}}
+
 ### Span details
 
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view span details" >}}
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span details" >}}
 
 - Operation name.
 - Span metadata.
@@ -105,7 +108,7 @@ Clicking anywhere on the span row shows span details.
 
 ### Trace to logs
 
-You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
+You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-trace-to-logs.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
