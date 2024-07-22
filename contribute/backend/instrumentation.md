@@ -141,7 +141,7 @@ To guarantee the existence of metrics before any observations have happened, you
 ### How to collect and visualize metrics locally
 
 1. Ensure you have Docker installed and running on your machine.
-1. Start Prometheus. For example:
+1. Start Prometheus.
 
    ```bash
    make devenv sources=prometheus
