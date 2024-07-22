@@ -57,7 +57,7 @@ func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error 
 	instances := cache.asInstances(a.doNotSaveNormalState)
 	if err := a.store.FullSync(ctx, instances); err != nil {
 		if errors.Is(err, store.ErrLockDB) {
-			a.log.Warn("Full state sync failed to acquire the lock, probably another full sync is in progress")
+			a.log.Warn("Full state sync failed to acquire the lock, another full sync may be in progress")
 			return nil
 		}
 
