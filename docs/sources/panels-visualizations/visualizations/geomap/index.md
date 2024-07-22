@@ -372,7 +372,7 @@ The Route layer renders data points as a route.
 
 ### Options
 
-- **Data and Location mode** configures the data setings for the layer. For more information check [Data](#data) and [Location mode](#location-mode).
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale.
 - **Color** sets the route color. Set to `Fixed color` by default. You can also tie the color to field data.
 - **Fill opacity** configures the opacity of the route.
