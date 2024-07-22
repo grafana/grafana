@@ -53,7 +53,9 @@ jobs:
   post_changelog_on_forum:
     needs: setup
     uses: ./.github/workflows/community-release.yml
-    secrets: inherit
+    secrets:
+      metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     with:
       version: ${{ needs.setup.output.version }}
       dry_run: ${{ needs.setup.output.dry_run == 'true' }}
