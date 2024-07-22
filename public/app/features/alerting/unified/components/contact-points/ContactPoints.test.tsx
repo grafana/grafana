@@ -14,7 +14,8 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
-import ContactPoints, { ContactPoint } from './ContactPoints';
+import { ContactPoint } from './ContactPoint';
+import ContactPointsPageContents from './ContactPoints';
 import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
@@ -62,32 +63,32 @@ describe('contact points', () => {
 
     describe('tabs behaviour', () => {
       test('loads contact points tab', async () => {
-        renderWithProvider(<ContactPoints />, { initialEntries: ['/?tab=contact_points'] });
+        renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=contact_points'] });
 
         expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
       });
 
       test('loads templates tab', async () => {
-        renderWithProvider(<ContactPoints />, { initialEntries: ['/?tab=templates'] });
+        renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=templates'] });
 
         expect(await screen.findByText(/add notification template/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with invalid query param', async () => {
-        renderWithProvider(<ContactPoints />, { initialEntries: ['/?tab=foo_bar'] });
+        renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=foo_bar'] });
 
         expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with no query param', async () => {
-        renderWithProvider(<ContactPoints />);
+        renderWithProvider(<ContactPointsPageContents />);
 
         expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
       });
     });
 
     it('should show / hide loading states, have all actions enabled', async () => {
-      renderWithProvider(<ContactPoints />);
+      renderWithProvider(<ContactPointsPageContents />);
 
       await waitFor(async () => {
         expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -126,7 +127,7 @@ describe('contact points', () => {
     it('should disable certain actions if the user has no write permissions', async () => {
       grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
-      renderWithProvider(<ContactPoints />);
+      renderWithProvider(<ContactPointsPageContents />);
 
       // wait for loading to be done
       await waitFor(async () => {
@@ -245,9 +246,9 @@ describe('contact points', () => {
     });
 
     it('should be able to search', async () => {
-      renderWithProvider(<ContactPoints />);
+      renderWithProvider(<ContactPointsPageContents />);
 
-      const searchInput = screen.getByRole('textbox', { name: 'search contact points' });
+      const searchInput = await screen.findByRole('textbox', { name: 'search contact points' });
       await userEvent.type(searchInput, 'slack');
       expect(searchInput).toHaveValue('slack');
 
@@ -283,7 +284,7 @@ describe('contact points', () => {
     });
 
     it('should show / hide loading states, have the right actions enabled', async () => {
-      renderWithProvider(<ContactPoints />, undefined, { alertmanagerSourceName: MIMIR_DATASOURCE_UID });
+      renderWithProvider(<ContactPointsPageContents />, undefined, { alertmanagerSourceName: MIMIR_DATASOURCE_UID });
 
       await waitFor(async () => {
         expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -339,7 +340,9 @@ describe('contact points', () => {
     });
 
     it("should not allow any editing because it's not supported", async () => {
-      renderWithProvider(<ContactPoints />, undefined, { alertmanagerSourceName: VANILLA_ALERTMANAGER_DATASOURCE_UID });
+      renderWithProvider(<ContactPointsPageContents />, undefined, {
+        alertmanagerSourceName: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+      });
 
       await waitFor(async () => {
         expect(screen.getByText('Loading...')).toBeInTheDocument();
