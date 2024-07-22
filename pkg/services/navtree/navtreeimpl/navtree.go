@@ -163,6 +163,20 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
+		bookmarks := s.buildBookmarksNavLinks(prefs, treeRoot)
+
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:           "Bookmarks",
+			Id:             "bookmarks",
+			Icon:           "bookmark",
+			SortWeight:     navtree.WeightBookmarks,
+			Children:       bookmarks,
+			EmptyMessageId: "bookmarks-empty",
+			Url:            s.cfg.AppSubURL + "/bookmarks",
+		})
+	}
+
 	return treeRoot, nil
 }
 
@@ -315,6 +329,38 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 	}
 
 	return starredItemsChildNavs, nil
+}
+func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
+	bookmarksChildNavs := []*navtree.NavLink{}
+
+	bookmarkIds := prefs.JSONData.Navbar.BookmarkIds
+
+	if len(bookmarkIds) > 0 {
+		for _, id := range bookmarkIds {
+			item := treeRoot.FindById(id)
+			if item != nil {
+				bookmarksChildNavs = append(bookmarksChildNavs, &navtree.NavLink{
+					Id:             item.Id,
+					Text:           item.Text,
+					SubTitle:       item.SubTitle,
+					Icon:           item.Icon,
+					Img:            item.Img,
+					Url:            item.Url,
+					Target:         item.Target,
+					HideFromTabs:   item.HideFromTabs,
+					RoundIcon:      item.RoundIcon,
+					IsSection:      item.IsSection,
+					HighlightText:  item.HighlightText,
+					HighlightID:    item.HighlightID,
+					PluginID:       item.PluginID,
+					IsCreateAction: item.IsCreateAction,
+					Keywords:       item.Keywords,
+				})
+			}
+		}
+	}
+
+	return bookmarksChildNavs
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {

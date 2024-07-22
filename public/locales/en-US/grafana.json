@@ -1188,6 +1188,12 @@
     "authentication": {
       "title": "Authentication"
     },
+    "bookmarks": {
+      "title": "Bookmarks"
+    },
+    "bookmarks-empty": {
+      "title": "Bookmark pages for them to appear here"
+    },
     "collector": {
       "title": "Collector"
     },

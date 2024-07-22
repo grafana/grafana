@@ -12,6 +12,7 @@ const (
 	// any items with default weight.
 
 	WeightHome = (iota - 20) * 100
+	WeightBookmarks
 	WeightSavedItems
 	WeightDashboard
 	WeightExplore
