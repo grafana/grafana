@@ -48,7 +48,7 @@ When should you use each log level?
 
 - **Debug:** Informational messages of high frequency, less-important messages during normal operations, or both.
 - **Info:** Informational messages of low frequency, important messages, or both.
-- **Warning:** Should in normal cases not be used. If used, it should be actionable.
+- **Warning:** Use warning messages sparingly. If used, messages should be actionable.
 - **Error:** Error messages indicating some operation failed (with an error) and the program didn't have a way to handle the error.
 
 ### Contextual logging
