@@ -170,9 +170,7 @@ export function addLabelToQuery(
   if (!labelType) {
     const identifierSelectorMatchers = getIdentifierInStreamPositions(query);
     const indexedKeys = identifierSelectorMatchers.map((match) => match.getExpression(query));
-    const alreadyAddedAValueForThisStreamSelectorLabel = indexedKeys.includes(key);
-
-    if (alreadyAddedAValueForThisStreamSelectorLabel) {
+    if (indexedKeys.includes(key)) {
       labelType = LabelType.Indexed;
     }
   }
