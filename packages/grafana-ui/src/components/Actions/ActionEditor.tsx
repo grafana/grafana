@@ -23,9 +23,9 @@ import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../Input/Input';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 import { Select } from '../Select/Select';
-import { TextArea } from '../TextArea/TextArea';
 
 import { ParamsEditor } from './ParamsEditor';
+import { HTMLElementType, SuggestionsInput } from './SuggestionsInput';
 
 interface ActionEditorProps {
   index: number;
@@ -118,7 +118,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       <Label>API</Label>
       <InlineFieldRow>
         <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
-          <Input value={value.endpoint} onChange={onEndpointChange} />
+          <SuggestionsInput
+            value={value.endpoint}
+            onChange={() => onEndpointChange}
+            suggestions={suggestions}
+            placeholder="Value"
+          />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -149,7 +154,13 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
 
       {value?.method !== HttpRequestMethod.GET && value?.contentType && (
         <Field label="Payload">
-          <TextArea value={value.data} onChange={onPayloadChange} />
+          <SuggestionsInput
+            value={value.data}
+            onChange={() => onPayloadChange}
+            suggestions={suggestions}
+            placeholder="Value"
+            type={HTMLElementType.TextAreaElement}
+          />
         </Field>
       )}
 

@@ -11,18 +11,25 @@ import { DataLinkSuggestions } from '../DataLinks/DataLinkSuggestions';
 import { FieldValidationMessage } from '../Forms/FieldValidationMessage';
 import { Input } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
+import { TextArea } from '../TextArea/TextArea';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;
 
+export enum HTMLElementType {
+  InputElement = 'input',
+  TextAreaElement = 'textarea',
+}
+
 interface SuggestionsInputProps {
   value?: string | number;
-  onChange: (url: string, callback?: () => void) => void;
+  onChange: (value: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
   invalid?: boolean;
   error?: string;
   width?: number;
+  type?: HTMLElementType;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -50,6 +57,7 @@ export const SuggestionsInput = ({
   placeholder,
   error,
   invalid,
+  type = HTMLElementType.InputElement,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -61,7 +69,7 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>();
 
   // the order of middleware is important!
   const middleware = [
@@ -84,7 +92,7 @@ export const SuggestionsInput = ({
   });
 
   const handleRef = useCallback(
-    (ref: HTMLInputElement) => {
+    (ref: HTMLInputElement | HTMLTextAreaElement) => {
       refs.setReference(ref);
 
       inputRef.current = ref;
@@ -153,12 +161,12 @@ export const SuggestionsInput = ({
     [showingSuggestions, suggestions, suggestionsIndex, onVariableSelect]
   );
 
-  const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement>) => {
+  const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setVariableValue(event.currentTarget.value);
   }, []);
 
   const onBlur = React.useCallback(
-    (event: FormEvent<HTMLInputElement>) => {
+    (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       onChange(event.currentTarget.value);
     },
     [onChange]
@@ -198,15 +206,27 @@ export const SuggestionsInput = ({
           <FieldValidationMessage>{error}</FieldValidationMessage>
         </div>
       )}
-      <Input
-        placeholder={placeholder}
-        invalid={invalid}
-        ref={handleRef}
-        value={variableValue}
-        onChange={onValueChanged}
-        onBlur={onBlur}
-        onKeyDown={onKeyDown}
-      />
+      {type === HTMLElementType.InputElement ? (
+        <Input
+          placeholder={placeholder}
+          invalid={invalid}
+          ref={handleRef as unknown as React.RefObject<HTMLInputElement>}
+          value={variableValue}
+          onChange={onValueChanged}
+          onBlur={onBlur}
+          onKeyDown={onKeyDown}
+        />
+      ) : (
+        <TextArea
+          placeholder={placeholder}
+          invalid={invalid}
+          ref={handleRef as unknown as React.RefObject<HTMLTextAreaElement>}
+          value={variableValue}
+          onChange={onValueChanged}
+          onBlur={onBlur}
+          onKeyDown={onKeyDown}
+        />
+      )}
     </div>
   );
 };

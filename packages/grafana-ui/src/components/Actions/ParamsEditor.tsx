@@ -7,6 +7,8 @@ import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { SuggestionsInput } from './SuggestionsInput';
+
 interface Props {
   onChange: (v: Array<[string, string]>) => void;
   value: Array<[string, string]>;
@@ -48,24 +50,21 @@ export const ParamsEditor = ({ value, onChange, suggestions }: Props) => {
 
   const isAddParamsDisabled = !paramName && !paramValue;
 
-  // @TODO: Suggestions
   return (
     <div>
       <Stack direction="row">
-        {/*<SuggestionsInput*/}
-        {/*  value={paramName}*/}
-        {/*  onChange={() => changeParamName}*/}
-        {/*  suggestions={suggestions}*/}
-        {/*  placeholder="Key"*/}
-        {/*/>*/}
-        {/*<SuggestionsInput*/}
-        {/*  value={paramValue}*/}
-        {/*  onChange={() => changeParamValue}*/}
-        {/*  suggestions={suggestions}*/}
-        {/*  placeholder="Value"*/}
-        {/*/>*/}
-        <Input value={paramName} onChange={changeParamName} placeholder="Key" />
-        <Input value={paramValue} onChange={changeParamValue} placeholder="Value" />
+        <SuggestionsInput
+          value={paramName}
+          onChange={() => changeParamName}
+          suggestions={suggestions}
+          placeholder="Key"
+        />
+        <SuggestionsInput
+          value={paramValue}
+          onChange={() => changeParamValue}
+          suggestions={suggestions}
+          placeholder="Value"
+        />
         <IconButton aria-label="add" name="plus-circle" onClick={addParam} disabled={isAddParamsDisabled} />
       </Stack>
       <Stack direction="column">
