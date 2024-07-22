@@ -270,7 +270,7 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer](/static/img/docs/geomap-panel/geomap-markers-8-1-0.png)
 
-![Markers Layer Options](/media/docs/grafana/panels-visualizations/geomap-markers-options-11-1-0.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/geomap-markers-options-11-1-0.png" max-width="350px" alt="Markers layer options" >}}
 
 - **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range.
