@@ -12,18 +12,18 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ plugins.ActionSetRegistry = (*InMemoryActionSets)(nil)
+var _ pluginaccesscontrol.ActionSetRegistry = (*InMemoryActionSets)(nil)
 
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
@@ -440,7 +440,7 @@ type ActionSetService interface {
 
 	StoreActionSet(name string, actions []string)
 
-	plugins.ActionSetRegistry
+	pluginaccesscontrol.ActionSetRegistry
 }
 
 // ActionSet is a struct that represents a set of actions that can be performed on a resource.
