@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -9,10 +10,11 @@ import {
   updateDatasourcePluginJsonDataOption,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
-import { Alert, Input, InlineField, FieldProps, SecureSocksProxySettings, Field, Divider } from '@grafana/ui';
+import { Alert, Input, FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { SelectableResourceValue } from '../../resources/types';
@@ -42,7 +44,7 @@ export const ConfigEditor = (props: Props) => {
   const [logGroupFieldState, setLogGroupFieldState] = useState<LogGroupFieldState>({
     invalid: false,
   });
-  const newFormStylingEnabled = config.featureToggles.awsDatasourcesNewFormStyling;
+
   useEffect(() => setLogGroupFieldState({ invalid: false }), [props.options]);
   const report = usePluginInteractionReporter();
   useEffect(() => {
@@ -83,8 +85,10 @@ export const ConfigEditor = (props: Props) => {
     }
   }, [options.jsonData.authType, options.jsonData.database, options.jsonData.profile]);
 
-  return newFormStylingEnabled ? (
-    <div className="width-30">
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.formStyles}>
       {warning && (
         <Alert title="CloudWatch Authentication" severity="warning" onRemove={dismissWarning}>
           {warning}
@@ -192,116 +196,6 @@ export const ConfigEditor = (props: Props) => {
         datasourceUid={options.jsonData.tracingDatasourceUid}
       />
     </div>
-  ) : (
-    <>
-      {warning && (
-        <Alert title="CloudWatch Authentication" severity="warning" onRemove={dismissWarning}>
-          {warning}
-        </Alert>
-      )}
-      <ConnectionConfig
-        {...props}
-        labelWidth={29}
-        loadRegions={
-          datasource &&
-          (async () => {
-            return datasource.resources
-              .getRegions()
-              .then((regions) =>
-                regions.reduce(
-                  (acc: string[], curr: SelectableResourceValue) => (curr.value ? [...acc, curr.value] : acc),
-                  []
-                )
-              );
-          })
-        }
-        externalId={externalId}
-      >
-        <InlineField label="Namespaces of Custom Metrics" labelWidth={29} tooltip="Namespaces of Custom Metrics.">
-          <Input
-            width={60}
-            placeholder="Namespace1,Namespace2"
-            value={options.jsonData.customMetricsNamespaces || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
-          />
-        </InlineField>
-      </ConnectionConfig>
-
-      {config.secureSocksDSProxyEnabled && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
-
-      <h3 className="page-heading">CloudWatch Logs</h3>
-      <div className="gf-form-group">
-        <InlineField
-          label="Query Result Timeout"
-          labelWidth={28}
-          tooltip='Grafana will poll for Cloudwatch Logs query results every second until Done status is returned from AWS or timeout is exceeded, in which case Grafana will return an error. The default period is 30 minutes. Note: For Alerting, the timeout defined in the config file will take precedence. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
-          invalid={Boolean(logsTimeoutError)}
-        >
-          <Input
-            width={60}
-            placeholder="30m"
-            value={options.jsonData.logsTimeout || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
-            title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
-          />
-        </InlineField>
-        <InlineField
-          label="Default Log Groups"
-          labelWidth={28}
-          tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
-          shrink={true}
-          {...logGroupFieldState}
-        >
-          {datasource ? (
-            <LogGroupsFieldWrapper
-              region={defaultRegion ?? ''}
-              datasource={datasource}
-              onBeforeOpen={() => {
-                if (saved) {
-                  return;
-                }
-
-                let error = 'You need to save the data source before adding log groups.';
-                if (props.options.version && props.options.version > 1) {
-                  error =
-                    'You have unsaved connection detail changes. You need to save the data source before adding log groups.';
-                }
-                setLogGroupFieldState({
-                  invalid: true,
-                  error,
-                });
-                throw new Error(error);
-              }}
-              legacyLogGroupNames={defaultLogGroups}
-              logGroups={logGroups}
-              onChange={(updatedLogGroups) => {
-                onOptionsChange({
-                  ...props.options,
-                  jsonData: {
-                    ...props.options.jsonData,
-                    logGroups: updatedLogGroups,
-                    defaultLogGroups: undefined,
-                  },
-                });
-              }}
-              maxNoOfVisibleLogGroups={2}
-              //legacy props
-              legacyOnChange={(logGroups) => {
-                updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
-              }}
-            />
-          ) : (
-            <></>
-          )}
-        </InlineField>
-      </div>
-      <XrayLinkConfig
-        onChange={(uid) => updateDatasourcePluginJsonDataOption(props, 'tracingDatasourceUid', uid)}
-        datasourceUid={options.jsonData.tracingDatasourceUid}
-      />
-    </>
   );
 };
 
@@ -367,3 +261,9 @@ function useDataSourceSavedState(props: Props) {
 
   return saved;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  formStyles: css({
+    maxWidth: theme.spacing(50),
+  }),
+});
