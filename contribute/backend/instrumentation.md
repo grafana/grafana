@@ -141,7 +141,7 @@ To guarantee the existence of metrics before any observations have happened, you
 ### How to collect and visualize metrics locally
 
 1. Ensure you have Docker installed and running on your machine.
-1. Start Prometheus. For example:
+1. Start Prometheus.
 
    ```bash
    make devenv sources=prometheus
@@ -238,17 +238,17 @@ Refer to [trace semantic conventions from OpenTelemetry](https://opentelemetry.i
 
 ### Span names and high cardinality
 
-Be careful with what span names you add or accept. Using or allowing too many span names could result in high cardinality problems.
+Be careful with what span names you add or accept. Using or allowing too many span names can result in high cardinality problems.
 
 ### Validate and sanitize input coming from user input
 
-If span names, attribute or event values originates from user input they should be validated and sanitized. It's very important to only allow a pre-defined set of span names to minimize the risk of high cardinality problems.
+If span names, attribute values, or event values originate from user input, they should be validated and sanitized. It's very important to only allow a pre-defined set of span names to minimize the risk of high cardinality problems.
 
 Be careful to not expose any sensitive information in span names, attribute or event values; for example, secrets, credentials, and so on.
 
 ### Span attributes
 
-Consider using `attributes.<Type>("<key>", <value>)` in favor of `attributes.Key("<key>").<Type>(<value>)` since it requires fewer characters and thereby reads easier.
+Consider using `attributes.<Type>("<key>", <value>)` instead of `attributes.Key("<key>").<Type>(<value>)` since it requires fewer characters and is easier to read. 
 
 For example:
 
