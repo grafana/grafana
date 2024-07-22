@@ -184,7 +184,6 @@ exports[`useContactPoints should return contact points with status 1`] = `
   ],
   "error": undefined,
   "isLoading": false,
-  "refetchReceivers": [Function],
 }
 `;
 
@@ -218,7 +217,14 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "grafana-default-email",
-      "policies": undefined,
+      "policies": [
+        {
+          "receiver": "grafana-default-email",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -246,7 +252,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "lotsa-emails",
-      "policies": undefined,
+      "policies": [],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -263,13 +269,16 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
             "name": "Grafana OnCall",
           },
           Symbol(receiver_plugin_metadata): {
+            "description": "grafana-integration",
+            "externalUrl": "/a/grafana-oncall-app/integrations/ABC123",
             "icon": "public/img/alerting/oncall_logo.svg",
             "title": "Grafana OnCall",
+            "warning": undefined,
           },
         },
       ],
       "name": "OnCall Conctact point",
-      "policies": undefined,
+      "policies": [],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -298,7 +307,14 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "provisioned-contact-point",
-      "policies": undefined,
+      "policies": [
+        {
+          "receiver": "provisioned-contact-point",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -350,11 +366,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "Slack with multiple channels",
-      "policies": undefined,
+      "policies": [],
     },
   ],
   "error": undefined,
   "isLoading": false,
-  "refetchReceivers": [Function],
 }
 `;
