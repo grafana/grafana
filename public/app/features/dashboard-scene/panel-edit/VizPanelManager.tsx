@@ -246,7 +246,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     this.state.panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
 
     this.setState({
-      skipDataQuery: config.panels[pluginId].skipDataQuery,
+      skipDataQuery: config.panels[pluginId]?.skipDataQuery,
       pluginId,
     });
     this.loadDataSource();
