@@ -20,9 +20,6 @@ on:
     - 'main'
     - 'v*.*.*'
 
-permissions:
-  contents: write
-
 jobs:
   setup:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
