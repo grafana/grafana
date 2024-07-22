@@ -165,6 +165,16 @@ export function addLabelToQuery(
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
   // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
   const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
+
+  // If the label type wasn't passed in from the calling function, we can use lezer to figure out if this label is already in the stream selectors
+  if (!labelType) {
+    const identifierSelectorMatchers = getIdentifierInStreamPositions(query);
+    const indexedKeys = identifierSelectorMatchers.map((match) => match.getExpression(query));
+    if (indexedKeys.includes(key)) {
+      labelType = LabelType.Indexed;
+    }
+  }
+
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
       (matcherPosition) =>
@@ -616,6 +626,19 @@ function getMatcherInStreamPositions(query: string): NodePosition[] {
     enter: ({ node }): false | void => {
       if (node.type.id === Selector) {
         positions.push(...getAllPositionsInNodeByType(node, Matcher));
+      }
+    },
+  });
+  return positions;
+}
+
+export function getIdentifierInStreamPositions(query: string): NodePosition[] {
+  const tree = parser.parse(query);
+  const positions: NodePosition[] = [];
+  tree.iterate({
+    enter: ({ node }): false | void => {
+      if (node.type.id === Selector) {
+        positions.push(...getAllPositionsInNodeByType(node, Identifier));
       }
     },
   });

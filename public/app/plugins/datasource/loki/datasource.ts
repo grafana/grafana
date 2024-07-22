@@ -1043,7 +1043,7 @@ export class LokiDatasource
    * @todo this.templateSrv.getAdhocFilters() is deprecated
    */
   addAdHocFilters(queryExpr: string, adhocFilters?: AdHocVariableFilter[]) {
-    if (!adhocFilters) {
+    if (!adhocFilters?.length) {
       return queryExpr;
     }
 
