@@ -97,11 +97,10 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
 
   return (
     <div>
-      {/* @ts-expect-error */}
       <Input
         suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
         {...restProps}
-        {...getInputProps({ ref: inputRef })}
+        {...getInputProps({ ref: inputRef, onChange: () => {} })}
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
