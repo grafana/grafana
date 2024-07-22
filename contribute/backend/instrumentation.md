@@ -229,7 +229,7 @@ Span names should follow the [guidelines from OpenTelemetry](https://opentelemet
 
 Span attribute and span event attributes should follow the [attribute naming specification from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/common/attribute-naming/). 
 
-These are a few examples of god attributes:
+These are a few examples of good attributes:
 
 - `service.version`
 - `http.status_code`
