@@ -355,6 +355,10 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 	_, span := b.tracer.Start(ctx, trace_prefix+"List")
 	defer span.End()
 
+	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
+		return nil, fmt.Errorf("missing group or resource")
+	}
+
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
 
 	if req.ResourceVersion > 0 || req.NextPageToken != "" {
@@ -373,9 +377,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 	err := b.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		var err error
 
-		// TODO: Here the lastest RV might be lower than the actual latest RV
-		// because delete events are not included in the resource table.
-		out.ResourceVersion, err = fetchLatestRV(ctx, tx)
+		out.ResourceVersion, err = fetchLatestRV(ctx, tx, b.sqlDialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
@@ -500,10 +502,10 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 	if err := b.Init(); err != nil {
 		return nil, err
 	}
-	// Fetch the lastest RV
-	since, err := fetchLatestRV(ctx, b.sqlDB)
+	// Get the latest RV
+	since, err := b.listLatestRVs(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get the latest resource version: %w", err)
 	}
 	// Start the poller
 	stream := make(chan *resource.WrittenEvent)
@@ -511,9 +513,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 	return stream, nil
 }
 
-func (b *backend) poller(ctx context.Context, since int64, stream chan<- *resource.WrittenEvent) {
-	var err error
-
+func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
 	interval := 100 * time.Millisecond // TODO make this configurable
 	t := time.NewTicker(interval)
 	defer close(stream)
@@ -524,63 +524,123 @@ func (b *backend) poller(ctx context.Context, since int64, stream chan<- *resour
 		case <-b.ctx.Done():
 			return
 		case <-t.C:
-			since, err = b.poll(ctx, since, stream)
+			// List the latest RVs
+			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
-				b.log.Error("watch error", "err", err)
+				b.log.Error("get the latest resource version", "err", err)
+				t.Reset(interval)
+				continue
 			}
+			for group, items := range grv {
+				for resource := range items {
+					// If we haven't seen this resource before, we start from 0
+					if _, ok := since[group]; !ok {
+						since[group] = make(map[string]int64)
+					}
+					if _, ok := since[group][resource]; !ok {
+						since[group][resource] = 0
+					}
+
+					// Poll for new events
+					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
+					if err != nil {
+						b.log.Error("polling for resource", "err", err)
+						t.Reset(interval)
+						continue
+					}
+					since[group][resource] = next
+				}
+			}
+
 			t.Reset(interval)
 		}
 	}
 }
 
-// fetchLatestRV returns the current maxium RV in the resource table
-func fetchLatestRV(ctx context.Context, db db.ContextExecer) (int64, error) {
-	// Fetch the lastest RV
-	rows, err := db.QueryContext(ctx, `SELECT COALESCE(max("resource_version"), 0)  FROM "resource";`)
+// listLatestRVs returns the latest resource version for each (Group, Resource) pair.
+func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
+	since := groupResourceRV{}
+	reqRVs := sqlResourceVersionListRequest{
+		SQLTemplate:          sqltemplate.New(b.sqlDialect),
+		groupResourceVersion: new(groupResourceVersion),
+	}
+	query, err := sqltemplate.Execute(sqlResourceVersionList, reqRVs)
 	if err != nil {
-		return 0, fmt.Errorf("fetch latest rv: %w", err)
+		return nil, fmt.Errorf("execute SQL template to get the latest resource version: %w", err)
+	}
+	rows, err := b.sqlDB.QueryContext(ctx, query, reqRVs.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching recent resource versions: %w", err)
 	}
 	defer func() { _ = rows.Close() }()
-	if rows.Next() {
-		rv := new(int64)
-		if err := rows.Scan(&rv); err != nil {
-			return 0, fmt.Errorf("scan since resource version: %w", err)
+
+	for rows.Next() {
+		if err := rows.Scan(reqRVs.GetScanDest()...); err != nil {
+			return nil, err
 		}
-		return *rv, nil
+		if _, ok := since[reqRVs.Group]; !ok {
+			since[reqRVs.Group] = map[string]int64{}
+		}
+		if _, ok := since[reqRVs.Group][reqRVs.Resource]; !ok {
+			since[reqRVs.Group] = map[string]int64{}
+		}
+		since[reqRVs.Group][reqRVs.Resource] = reqRVs.ResourceVersion
 	}
-	return 0, fmt.Errorf("no rows")
+	return since, nil
 }
 
-func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
+// fetchLatestRV returns the current maximum RV in the resource table
+func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+	res, err := queryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
+		SQLTemplate:     sqltemplate.New(d),
+		Group:           group,
+		Resource:        resource,
+		resourceVersion: new(resourceVersion),
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, fmt.Errorf("now row for the provided resource version")
+	} else if err != nil {
+		return 0, fmt.Errorf("get resource version: %w", err)
+	}
+	return res.ResourceVersion, nil
+}
+
+func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, trace_prefix+"poll")
 	defer span.End()
 
 	pollReq := sqlResourceHistoryPollRequest{
 		SQLTemplate:          sqltemplate.New(b.sqlDialect),
+		Resource:             res,
+		Group:                grp,
 		SinceResourceVersion: since,
-		Response:             new(historyPollResponse),
+		Response:             &historyPollResponse{},
 	}
 	query, err := sqltemplate.Execute(sqlResourceHistoryPoll, pollReq)
 	if err != nil {
-		return 0, fmt.Errorf("execute SQL template to poll for resource history: %w", err)
+		return since, fmt.Errorf("execute SQL template to poll for resource history: %w", err)
 	}
+
 	rows, err := b.sqlDB.QueryContext(ctx, query, pollReq.GetArgs()...)
 	if err != nil {
-		return 0, fmt.Errorf("poll for resource history: %w", err)
+		return since, fmt.Errorf("poll for resource history: %w", err)
 	}
+
 	defer func() { _ = rows.Close() }()
-	next := since
-	for i := 1; rows.Next(); i++ {
+	nextRV := since
+	for rows.Next() {
 		// check if the context is done
 		if ctx.Err() != nil {
-			return 0, ctx.Err()
+			return nextRV, ctx.Err()
 		}
 		if err := rows.Scan(pollReq.GetScanDest()...); err != nil {
-			return 0, fmt.Errorf("scan row #%d polling for resource history: %w", i, err)
+			return nextRV, fmt.Errorf("scan row polling for resource history: %w", err)
 		}
 		resp := pollReq.Response
-		next = resp.ResourceVersion
-
+		if resp.Key.Group == "" || resp.Key.Resource == "" || resp.Key.Name == "" {
+			return nextRV, fmt.Errorf("missing key in response")
+		}
+		nextRV = resp.ResourceVersion
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{
 				Value: resp.Value,
@@ -596,7 +656,7 @@ func (b *backend) poll(ctx context.Context, since int64, stream chan<- *resource
 			// Timestamp:  , // TODO: add timestamp
 		}
 	}
-	return next, nil
+	return nextRV, nil
 }
 
 // resourceVersionAtomicInc atomically increases the version of a kind within a
