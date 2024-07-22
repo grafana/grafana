@@ -1496,7 +1496,7 @@ Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
 
 ### instrumentations_tracing_enabled
 
-Turn on tracing instrumentation. Only affects Grafana Javascript Agent
+Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
 
 ### api_key
 
