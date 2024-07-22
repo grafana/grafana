@@ -36,6 +36,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     if (vizPanel instanceof VizPanel) {
       this._libPanelSubscription = vizPanel.subscribeToState((newState, prevState) => {
+        console.log('stsst', newState, prevState);
         if (newState !== prevState) {
           const _loadedPanel = libraryVizPanelToSaveModel(vizPanel);
 

@@ -190,3 +190,15 @@ export async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<Library
   });
   return result;
 }
+
+export async function saveLibPanel(panel: VizPanel) {
+  const updatedLibPanel = await updateLibraryVizPanel(panel);
+
+  const libPanelBehavior = getLibraryPanelBehavior(panel);
+
+  if (!libPanelBehavior) {
+    throw new Error("Could not find library panel behavior for panel")
+  }
+
+  libPanelBehavior.setPanelFromLibPanel(updatedLibPanel);
+}
