@@ -91,8 +91,6 @@ export const UsersTable = ({
                   </Stack>
                 );
               },
-              sortType: (a: UseTableRowProps<UserDTO>, b: UseTableRowProps<UserDTO>) =>
-                (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
             },
           ]
         : []),
@@ -113,8 +111,6 @@ export const UsersTable = ({
                   value
                 );
               },
-              // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
-              sortType: 'string' as const,
             },
           ]
         : []),
