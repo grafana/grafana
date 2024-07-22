@@ -156,7 +156,7 @@
     "blob-polyfill": "7.0.20220408",
     "browserslist": "^4.21.4",
     "chance": "^1.0.10",
-    "chrome-remote-interface": "0.33.0",
+    "chrome-remote-interface": "0.33.2",
     "codeowners": "^5.1.1",
     "copy-webpack-plugin": "12.0.2",
     "core-js": "3.37.1",
