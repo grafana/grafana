@@ -3,7 +3,6 @@ package writer
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -63,15 +62,14 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 
 	points := make([]Point, 0, len(col.Refs))
 	for _, ref := range col.Refs {
-		// Use a default value of NaN if the value is empty or nil.
-		f := math.NaN()
-		if fp, empty, _ := ref.NullableFloat64Value(); !empty && fp != nil {
-			f = *fp
+		fp, empty, _ := ref.NullableFloat64Value()
+		if empty || fp == nil {
+			return nil, fmt.Errorf("unable to read float64 value")
 		}
 
 		metric := Metric{
 			T: t,
-			V: f,
+			V: *fp,
 		}
 
 		labels := ref.GetLabels().Copy()

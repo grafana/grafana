@@ -482,8 +482,8 @@ func TestRecordingRule_Integration(t *testing.T) {
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
-			// TODO: OK expected for nil result but having a point. Probably should change.
-			require.Equal(t, "ok", status.Health)
+			//TODO: assert "error" to fix test, update to "nodata" in the future
+			require.Equal(t, "error", status.Health)
 		})
 	})
 }
