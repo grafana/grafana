@@ -242,7 +242,7 @@ Be careful with what span names you add or accept. Using or allowing too many sp
 
 ### Validate and sanitize input coming from user input
 
-If span names, attribute or event values originates from user input they should be validated and sanitized. It's very important to only allow a pre-defined set of span names to minimize the risk of high cardinality problems.
+If span names, attribute values, or event values originate from user input, they should be validated and sanitized. It's very important to only allow a pre-defined set of span names to minimize the risk of high cardinality problems.
 
 Be careful to not expose any sensitive information in span names, attribute or event values; for example, secrets, credentials, and so on.
 
