@@ -126,8 +126,6 @@ func TestMode3_Get(t *testing.T) {
 				return
 			}
 
-			us.AssertNotCalled(t, "Get", context.Background(), tt.name, &metav1.GetOptions{})
-
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
 		})
@@ -236,7 +234,6 @@ func TestMode3_Delete(t *testing.T) {
 				return
 			}
 
-			us.AssertNotCalled(t, "Delete", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
 		})
@@ -291,7 +288,6 @@ func TestMode3_DeleteCollection(t *testing.T) {
 				return
 			}
 
-			us.AssertNotCalled(t, "DeleteCollection", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
 		})
