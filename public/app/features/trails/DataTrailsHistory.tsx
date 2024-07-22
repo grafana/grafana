@@ -3,17 +3,19 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
-  SceneObjectState,
-  SceneObjectBase,
   SceneComponentProps,
-  SceneVariableValueChangedEvent,
+  SceneObjectBase,
+  SceneObjectState,
   SceneObjectStateChangedEvent,
+  SceneObjectUrlValue,
   SceneTimeRange,
   sceneUtils,
+  SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
-import { useStyles2, Tooltip, Stack } from '@grafana/ui';
+import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
+import { SerializedTrailHistory } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
 import { VAR_FILTERS } from './shared';
 import { getTrailFor, isSceneTimeRangeState } from './utils';
@@ -21,23 +23,34 @@ import { getTrailFor, isSceneTimeRangeState } from './utils';
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
   steps: DataTrailHistoryStep[];
+  filtersApplied: string[];
 }
 
 export function isDataTrailsHistoryState(state: SceneObjectState): state is DataTrailsHistoryState {
   return 'currentStep' in state && 'steps' in state;
 }
 
+export function isDataTrailHistoryFilter(filter?: SceneObjectUrlValue): filter is string[] {
+  return !!filter;
+}
+
 export interface DataTrailHistoryStep {
   description: string;
+  detail: string;
   type: TrailStepType;
   trailState: DataTrailState;
   parentIndex: number;
 }
 
 export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
+
+const filterPipeRegex = /(\|)(=)(\|)/g;
+const filterSubst = ` $2 `;
+
+
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
-    super({ steps: state.steps ?? [], currentStep: state.currentStep ?? 0 });
+    super({ steps: state.steps ?? [], currentStep: state.currentStep ?? 0, filtersApplied: [] });
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -115,6 +128,67 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         ...this.state.steps,
         {
           description: 'Test',
+          detail: 'Test',
+          type,
+          trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: this }),
+          parentIndex,
+        },
+      ],
+    });
+  }
+
+  public addTrailStepFromStorage(trail: DataTrail, step: SerializedTrailHistory) {
+    if (this.stepTransitionInProgress) {
+      // Do not add trail steps when step transition is in progress
+      return;
+    }
+
+    const type = step.type;
+    const stepIndex = this.state.steps.length;
+    const parentIndex = type === 'start' ? -1 : this.state.currentStep;
+    const filtersApplied = this.state.filtersApplied;
+    let detail = '';
+    let description = '';
+
+    switch (step.type) {
+      case 'start':
+        description = 'Start of history';
+        break;
+      case 'metric':
+        description = 'Metric selected:';
+        detail = step.urlValues.metric?.toString() ?? '';
+        break;
+      case 'filters':
+        description = 'Filter applied:';
+        const varFilters = step.urlValues['var-filters'];
+        if (isDataTrailHistoryFilter(varFilters)) {
+          detail =
+            varFilters.filter((f) => {
+              if (f !== '' && !this.state.filtersApplied.includes(f)) {
+                filtersApplied.push(f);
+                return true;
+              }
+              return false;
+            })[0] ?? '';
+        }
+        // filters saved as key|operator|value
+        // we need to remove pipes (|)
+        detail = detail.replace(filterPipeRegex, filterSubst);
+        break;
+      case 'time':
+        description = 'Time range changed:';
+
+        break;
+    }
+
+    this.setState({
+      filtersApplied,
+      currentStep: stepIndex,
+      steps: [
+        ...this.state.steps,
+        {
+          description,
+          detail,
           type,
           trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: this }),
           parentIndex,
@@ -145,8 +219,8 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   renderStepTooltip(step: DataTrailHistoryStep) {
     return (
       <Stack direction="column">
-        <div>{step.type}</div>
-        {step.type === 'metric' && <div>{step.trailState.metric || 'Select new metric'}</div>}
+        <div>{step.description}</div>
+        {step.detail !== '' && <div>{step.detail}</div>}
       </Stack>
     );
   }
