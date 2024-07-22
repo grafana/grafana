@@ -29,6 +29,10 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
 };
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
+  if (!filters) {
+    return '';
+  }
+
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
     .map((f) => `${scopeHelper(f)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)

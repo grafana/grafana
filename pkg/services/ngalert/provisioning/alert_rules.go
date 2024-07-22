@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
@@ -485,7 +486,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 				if err != nil {
 					return err
 				}
-				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+				if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 					return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 				}
 			}
@@ -502,7 +503,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 				if err != nil {
 					return err
 				}
-				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+				if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 				}
 				updates = append(updates, models.UpdateRule{

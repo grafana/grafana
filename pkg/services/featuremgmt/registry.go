@@ -786,14 +786,6 @@ var (
 			Owner:        identityAccessTeam,
 		},
 		{
-			Name:         "awsDatasourcesNewFormStyling",
-			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true",
-			FrontendOnly: true,
-			Owner:        awsDatasourcesSquad,
-		},
-		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
 			Description:  "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
 			Stage:        FeatureStageExperimental,
@@ -1365,6 +1357,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        awsDatasourcesSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "prometheusAzureOverrideAudience",
+			Description: "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
+			Stage:       FeatureStageDeprecated,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // Enabled by default for now
 		},
 	}
 )

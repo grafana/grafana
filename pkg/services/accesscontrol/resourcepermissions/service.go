@@ -13,13 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var _ pluginaccesscontrol.ActionSetRegistry = (*InMemoryActionSets)(nil)
 
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
@@ -70,7 +74,7 @@ func New(cfg *setting.Cfg,
 			actionSet[a] = struct{}{}
 		}
 		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			actionSetService.StoreActionSet(options.Resource, permission, actions)
+			actionSetService.StoreActionSet(GetActionSetName(options.Resource, permission), actions)
 		}
 	}
 
@@ -90,6 +94,7 @@ func New(cfg *setting.Cfg,
 		store:        NewStore(cfg, sqlStore, features),
 		options:      options,
 		license:      license,
+		log:          log.New("resourcepermissions"),
 		permissions:  permissions,
 		actions:      actions,
 		sqlStore:     sqlStore,
@@ -119,6 +124,7 @@ type Service struct {
 	api      *api
 	license  licensing.Licensing
 
+	log          log.Logger
 	options      Options
 	permissions  []string
 	actions      []string
@@ -172,9 +178,14 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 				if isFolderOrDashboardAction(action) {
 					actionSetActions := s.actionSetSvc.ResolveActionSet(action)
 					if len(actionSetActions) > 0 {
+						// Add all actions for folder
+						if s.options.Resource == dashboards.ScopeFoldersRoot {
+							expandedActions = append(expandedActions, actionSetActions...)
+							continue
+						}
+						// This check is needed for resolving inherited permissions - we don't want to include
+						// actions that are not related to dashboards when expanding dashboard action sets
 						for _, actionSetAction := range actionSetActions {
-							// This check is needed for resolving inherited permissions - we don't want to include
-							// actions that are not related to dashboards when expanding folder action sets
 							if slices.Contains(s.actions, actionSetAction) {
 								expandedActions = append(expandedActions, actionSetAction)
 							}
@@ -427,7 +438,9 @@ type ActionSetService interface {
 	// ResolveActionSet resolves an action set to a list of corresponding actions.
 	ResolveActionSet(actionSet string) []string
 
-	StoreActionSet(resource, permission string, actions []string)
+	StoreActionSet(name string, actions []string)
+
+	pluginaccesscontrol.ActionSetRegistry
 }
 
 // ActionSet is a struct that represents a set of actions that can be performed on a resource.
@@ -439,14 +452,16 @@ type ActionSet struct {
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
+	features           featuremgmt.FeatureToggles
 	log                log.Logger
 	actionSetToActions map[string][]string
 	actionToActionSets map[string][]string
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService() ActionSetService {
+func NewActionSetService(features featuremgmt.FeatureToggles) ActionSetService {
 	actionSets := &InMemoryActionSets{
+		features:           features,
 		log:                log.New("resourcepermissions.actionsets"),
 		actionSetToActions: make(map[string][]string),
 		actionToActionSets: make(map[string][]string),

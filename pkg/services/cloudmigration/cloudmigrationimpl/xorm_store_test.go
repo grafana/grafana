@@ -257,6 +257,7 @@ func Test_SnapshotResources(t *testing.T) {
 			cloudmigration.ItemStatusOK:      3,
 			cloudmigration.ItemStatusPending: 1,
 		}, stats.CountsByStatus)
+		assert.Equal(t, 4, stats.Total)
 
 		// delete snapshot resources
 		err = s.DeleteSnapshotResources(ctx, "poiuy")

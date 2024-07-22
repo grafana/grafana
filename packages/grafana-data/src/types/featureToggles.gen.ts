@@ -122,7 +122,6 @@ export interface FeatureToggles {
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
-  awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
@@ -199,4 +198,5 @@ export interface FeatureToggles {
   cloudWatchRoundUpEndTime?: boolean;
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
+  prometheusAzureOverrideAudience?: boolean;
 }

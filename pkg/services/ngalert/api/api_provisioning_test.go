@@ -760,7 +760,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, rule1)
 				insertRule(t, sut, createTestAlertRule("rule2", 1))
 
-				expectedResponse := `resource "grafana_rule_group" "rule_group_0000" {
+				expectedResponse := `resource "grafana_rule_group" "rule_group_cc0954af8a53fa18" {
   org_id           = 1
   name             = "my-cool-group"
   folder_uid       = "folder-uid"
@@ -1891,7 +1891,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		policies:            newFakeNotificationPolicyService(),
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
+		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,

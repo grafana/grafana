@@ -423,10 +423,6 @@ const (
 	// Enables Team LBAC for datasources to apply team headers to the client requests
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
-	// FlagAwsDatasourcesNewFormStyling
-	// Applies new form styling for configuration and query editors in AWS plugins
-	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
-
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
@@ -730,4 +726,8 @@ const (
 	// FlagCloudwatchMetricInsightsCrossAccount
 	// Enables cross account observability for Cloudwatch Metric Insights
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
+
+	// FlagPrometheusAzureOverrideAudience
+	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
+	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 )

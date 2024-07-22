@@ -103,7 +103,6 @@ cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
-awsDatasourcesNewFormStyling,GA,@grafana/aws-datasources,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 panelTitleSearchInV1,experimental,@grafana/search-and-storage,true,false,false
 managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
@@ -180,3 +179,4 @@ dashboardRestoreUI,experimental,@grafana/grafana-frontend-platform,false,false,f
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 bodyScrolling,experimental,@grafana/grafana-frontend-platform,false,false,true
 cloudwatchMetricInsightsCrossAccount,experimental,@grafana/aws-datasources,false,false,true
+prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false

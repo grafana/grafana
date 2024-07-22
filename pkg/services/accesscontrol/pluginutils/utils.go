@@ -2,6 +2,7 @@ package pluginutils
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -19,6 +20,8 @@ var (
 		"folders.permissions:read":  "folders:uid:",
 		"folders.permissions:write": "folders:uid:",
 	}
+
+	allowedActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 )
 
 // ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
@@ -34,10 +37,36 @@ func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) err
 			permissions[i].Scope = scopePrefix + pluginID
 			continue
 		}
-		if !strings.HasPrefix(permissions[i].Action, pluginID+":") &&
-			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
-			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
-				Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
+		if err := ValidatePluginAction(pluginID, permissions[i].Action); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ValidatePluginAction(pluginID, action string) error {
+	if !strings.HasPrefix(action, pluginID+":") &&
+		!strings.HasPrefix(action, pluginID+".") {
+		return &ac.ErrorActionPrefixMissing{Action: action,
+			Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
+	}
+
+	return nil
+}
+
+// ValidatePluginActionSet errors when a actionset does not match expected pattern for plugins
+// - action set should be one of the allow-listed action sets (currently only folder action sets are supported for plugins)
+// - actions should have the pluginID prefix
+func ValidatePluginActionSet(pluginID string, actionSet plugins.ActionSet) error {
+	if !slices.Contains(allowedActionSets, actionSet.Action) {
+		return ac.ErrActionSetValidationFailed.Errorf("currently only folder and dashboard action sets are supported, provided action set %s is not a folder or dashboard action set", actionSet.Action)
+	}
+
+	// verify that actions have the pluginID prefix, plugins are only allowed to register actions for the plugin
+	for _, action := range actionSet.Actions {
+		if err := ValidatePluginAction(pluginID, action); err != nil {
+			return err
 		}
 	}
 

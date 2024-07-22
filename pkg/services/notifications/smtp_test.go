@@ -1,11 +1,17 @@
 package notifications
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/textproto"
 	"strings"
 	"testing"
 
+	smtpmock "github.com/mocktools/go-smtp-mock/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -140,5 +146,189 @@ func TestSmtpDialer(t *testing.T) {
 
 		require.Equal(t, 0, count)
 		require.EqualError(t, err, "could not load cert or key file: open /var/certs/does-not-exist.pem: no such file or directory")
+	})
+}
+
+func TestSmtpSend(t *testing.T) {
+	// Test is currently very flaky. Skipping it for now.
+	t.Skip()
+	srv := smtpmock.New(smtpmock.ConfigurationAttr{
+		MultipleRcptto: true,
+	})
+	require.NoError(t, srv.Start())
+	defer func() { _ = srv.Stop() }()
+
+	cfg := createSmtpConfig()
+	cfg.Smtp.Host = fmt.Sprintf("127.0.0.1:%d", srv.PortNumber())
+	cfg.Smtp.EnableTracing = true
+
+	client, err := NewSmtpClient(cfg.Smtp)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	t.Run("single message sends", func(t *testing.T) {
+		tracer := tracing.InitializeTracerForTest()
+		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
+		defer span.End()
+
+		message := &Message{
+			From:    "from@example.com",
+			To:      []string{"rcpt@example.com"},
+			Subject: "subject",
+			Body:    map[string]string{"text/plain": "hello world"},
+		}
+
+		count, err := client.Send(ctx, message)
+		require.NoError(t, err)
+		require.Equal(t, 1, count)
+
+		messages := srv.MessagesAndPurge()
+		require.Len(t, messages, 1)
+		sentMsg := messages[0]
+
+		// read the headers
+		r := bufio.NewReader(strings.NewReader(sentMsg.MsgRequest()))
+		mimeReader := textproto.NewReader(r)
+		hdr, err := mimeReader.ReadMIMEHeader()
+		require.NoError(t, err)
+
+		// make sure the trace is propagated
+		traceId := span.SpanContext().TraceID().String()
+		hasPrefix := strings.HasPrefix(hdr.Get("traceparent"), "00-"+traceId+"-")
+		require.True(t, hasPrefix)
+
+		// one of the lines should be the body we expect!
+		found := false
+		for {
+			line, err := mimeReader.ReadLine()
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			require.NoError(t, err)
+
+			t.Logf("line: %q", line)
+			if strings.Contains(line, "hello world") {
+				found = true
+				break
+			}
+		}
+
+		require.True(t, found)
+	})
+
+	t.Run("multiple recipients, single message", func(t *testing.T) {
+		tracer := tracing.InitializeTracerForTest()
+		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
+		defer span.End()
+
+		message := &Message{
+			From:    "from@example.com",
+			To:      []string{"rcpt1@example.com", "rcpt2@example.com", "rcpt3@example.com"},
+			Subject: "subject",
+			Body:    map[string]string{"text/plain": "hello world"},
+		}
+
+		count, err := client.Send(ctx, message)
+		require.NoError(t, err)
+		require.Equal(t, 1, count)
+
+		messages := srv.MessagesAndPurge()
+		require.Len(t, messages, 1)
+		sentMsg := messages[0]
+
+		rcpts := sentMsg.RcpttoRequestResponse()
+		require.EqualValues(t, [][]string{
+			{"RCPT TO:<rcpt1@example.com>", "250 Received"},
+			{"RCPT TO:<rcpt2@example.com>", "250 Received"},
+			{"RCPT TO:<rcpt3@example.com>", "250 Received"},
+		}, rcpts)
+
+		// read the headers
+		r := bufio.NewReader(strings.NewReader(sentMsg.MsgRequest()))
+		mimeReader := textproto.NewReader(r)
+		hdr, err := mimeReader.ReadMIMEHeader()
+		require.NoError(t, err)
+
+		// make sure the trace is propagated
+		traceId := span.SpanContext().TraceID().String()
+		hasPrefix := strings.HasPrefix(hdr.Get("traceparent"), "00-"+traceId+"-")
+		require.True(t, hasPrefix)
+
+		// one of the lines should be the body we expect!
+		found := false
+		for {
+			line, err := mimeReader.ReadLine()
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			require.NoError(t, err)
+
+			t.Logf("line: %q", line)
+			if strings.Contains(line, "hello world") {
+				found = true
+				break
+			}
+		}
+
+		require.True(t, found)
+	})
+
+	t.Run("multiple recipients, multiple messages", func(t *testing.T) {
+		tracer := tracing.InitializeTracerForTest()
+		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
+		defer span.End()
+
+		msgs := []*Message{
+			{From: "from@example.com", To: []string{"rcpt1@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"rcpt2@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"rcpt3@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+		}
+
+		count, err := client.Send(ctx, msgs...)
+		require.NoError(t, err)
+		require.Equal(t, 3, count)
+
+		messages := srv.MessagesAndPurge()
+		require.Len(t, messages, 3)
+
+		for i, sentMsg := range messages {
+			rcpts := sentMsg.RcpttoRequestResponse()
+			require.EqualValues(t, [][]string{
+				{fmt.Sprintf("RCPT TO:<rcpt%d@example.com>", i+1), "250 Received"},
+			}, rcpts)
+
+			// read the headers
+			r := bufio.NewReader(strings.NewReader(sentMsg.MsgRequest()))
+			mimeReader := textproto.NewReader(r)
+			hdr, err := mimeReader.ReadMIMEHeader()
+			require.NoError(t, err)
+
+			// make sure the trace is propagated
+			traceId := span.SpanContext().TraceID().String()
+			hasPrefix := strings.HasPrefix(hdr.Get("traceparent"), "00-"+traceId+"-")
+			require.True(t, hasPrefix)
+
+			// one of the lines should be the body we expect!
+			found := false
+			for {
+				line, err := mimeReader.ReadLine()
+				if errors.Is(err, io.EOF) {
+					break
+				}
+				require.NoError(t, err)
+
+				t.Logf("line: %q", line)
+				if strings.Contains(line, "hello world") {
+					found = true
+					break
+				}
+			}
+
+			require.True(t, found)
+		}
 	})
 }

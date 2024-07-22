@@ -5,13 +5,16 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -38,7 +41,6 @@ func Test_NoopServiceDoesNothing(t *testing.T) {
 }
 
 func Test_CreateGetAndDeleteToken(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false)
 
 	createResp, err := s.CreateToken(context.Background())
@@ -61,7 +63,6 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 }
 
 func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, true)
 
 	createTokenResp, err := s.CreateToken(context.Background())
@@ -116,7 +117,6 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false).(*Service)
 
 	gmsClientMock := &gmsClientMock{}
@@ -292,7 +292,6 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 }
 
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
-	t.Parallel()
 	s := setUpServiceTest(t, false).(*Service)
 
 	gmsClientMock := &gmsClientMock{
@@ -354,6 +353,36 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	}
 }
 
+func Test_DeletedDashboardsNotMigrated(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+	// modify what the mock returns for just this test case
+	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
+	dashMock.On("GetAllDashboards", mock.Anything).Return(
+		[]*dashboards.Dashboard{
+			{
+				UID:  "1",
+				Data: simplejson.New(),
+			},
+			{
+				UID:     "2",
+				Data:    simplejson.New(),
+				Deleted: time.Now(),
+			},
+		},
+		nil,
+	)
+
+	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
+	assert.NoError(t, err)
+	dashCount := 0
+	for _, it := range data.Items {
+		if it.Type == cloudmigration.DashboardDataType {
+			dashCount++
+		}
+	}
+	assert.Equal(t, 1, dashCount)
+}
+
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
@@ -404,7 +433,9 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 
 	s, err := ProvideService(
 		cfg,
-		featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations),
+		featuremgmt.WithFeatures(
+			featuremgmt.FlagOnPremToCloudMigrations,
+			featuremgmt.FlagDashboardRestore),
 		sqlStore,
 		dsService,
 		secretsService,
@@ -413,6 +444,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		tracer,
 		dashboardService,
 		mockFolder,
+		kvstore.ProvideService(sqlStore),
 	)
 	require.NoError(t, err)
 
@@ -420,9 +452,11 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 }
 
 type gmsClientMock struct {
-	validateKeyCalled   int
-	startSnapshotCalled int
-	getStatusCalled     int
+	validateKeyCalled     int
+	startSnapshotCalled   int
+	getStatusCalled       int
+	createUploadUrlCalled int
+	reportEventCalled     int
 
 	getSnapshotResponse *cloudmigration.GetSnapshotStatusResponse
 }
@@ -441,7 +475,16 @@ func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudM
 	return nil, nil
 }
 
-func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.CloudMigrationSnapshot, _ int) (*cloudmigration.GetSnapshotStatusResponse, error) {
 	m.getStatusCalled++
 	return m.getSnapshotResponse, nil
+}
+
+func (m *gmsClientMock) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	m.createUploadUrlCalled++
+	return "http://localhost:3000", nil
+}
+
+func (m *gmsClientMock) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, gmsclient.EventRequestDTO) {
+	m.reportEventCalled++
 }

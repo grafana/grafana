@@ -100,7 +100,11 @@ The initial view configures how the geomap renders when the panel is first loade
 
 ### Share view
 
-The Share view option allows users to link multiple map panels' movement and zoom actions within the same dashboard. The map panels that have this option activated will act in tandem when one of them is moved or zoomed, leaving the deactivated ones independent. _Note: this may require a dashboard reload._
+The **Share view** option allows you to link the movement and zoom actions of multiple map visualizations within the same dashboard. The map visualizations that have this option enabled act in tandem when one of them is moved or zoomed, leaving the other ones independent.
+
+{{< admonition type="note" >}}
+You might need to reload the dashboard for this feature to work.
+{{< /admonition >}}
 
 ## Map layers
 
@@ -162,11 +166,11 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 ### Data
 
-Geomaps need a source of geographical data gathered from a data source query which can return multiple data sets. By default Grafana picks the first data set, this field allows users to pick other data sets if the query returns more than one.
+Geomaps need a source of geographical data gathered from a data source query which can return multiple datasets. By default Grafana picks the first dataset, but this drop-down allows you to pick other datasets if the query returns more than one.
 
 ### Location mode
 
-There are four options to map the data returned by the selected query.
+There are four options to map the data returned by the selected query:
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”

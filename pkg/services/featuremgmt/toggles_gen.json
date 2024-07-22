@@ -469,6 +469,7 @@
         "name": "awsDatasourcesNewFormStyling",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-12T08:59:10Z",
+        "deletionTimestamp": "2024-07-05T10:20:55Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2017,6 +2018,23 @@
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusAzureOverrideAudience",
+        "resourceVersion": "1721046541163",
+        "creationTimestamp": "2022-05-30T15:43:32Z",
+        "deletionTimestamp": "2023-07-16T21:30:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-15 12:29:01.163772 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
       }
     },
     {
