@@ -103,7 +103,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       panel: sourcePanel.clone(),
       sourcePanel: sourcePanel.getRef(),
       pluginId: sourcePanel.state.pluginId,
-      skipDataQuery: config.panels[sourcePanel.state.pluginId].skipDataQuery,
+      skipDataQuery: config.panels[sourcePanel.state.pluginId]?.skipDataQuery,
       ...repeatOptions,
     });
   }
