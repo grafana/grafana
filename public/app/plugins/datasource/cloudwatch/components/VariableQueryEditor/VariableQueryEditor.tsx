@@ -228,7 +228,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
                 </a>
               </>
             }
-          />{' '}
+          />
           <EditorField
             label="Filters"
             tooltipInteractive
