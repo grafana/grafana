@@ -7,8 +7,6 @@ import (
 )
 
 type ContinueToken struct {
-	// TODO: there is no need to make this information opaque, move it to the API
-
 	StartOffset     int64 `json:"o"`
 	ResourceVersion int64 `json:"v"`
 }

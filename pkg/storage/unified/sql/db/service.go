@@ -7,7 +7,7 @@ import (
 
 // DBProvider provides access to a SQL Database.
 type DBProvider interface {
-	// Init initializes	the SQL Database, running migrations if needed. It is
+	// Init initializes the SQL Database, running migrations if needed. It is
 	// idempotent and thread-safe.
 	Init(context.Context) (DB, error)
 }

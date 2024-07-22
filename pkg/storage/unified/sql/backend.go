@@ -343,7 +343,6 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 // listLatest fetches the resources from the resource table.
 func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	out := &resource.ListResponse{
-		Items:           make([]*resource.ResourceWrapper, 0, req.Limit),
 		ResourceVersion: 0,
 	}
 
@@ -403,7 +402,6 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 	}
 
 	out := &resource.ListResponse{
-		Items:           make([]*resource.ResourceWrapper, 0, req.Limit),
 		ResourceVersion: rv,
 	}
 
