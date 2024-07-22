@@ -413,27 +413,22 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 }
 
 func (ss *sqlStore) encryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
-	s, err := ss.secretsService.Encrypt(ctx, []byte(snapshot.EncryptionKey), secrets.WithoutScope())
+	s, err := ss.secretsService.Encrypt(ctx, snapshot.EncryptionKey, secrets.WithoutScope())
 	if err != nil {
 		return fmt.Errorf("encrypting key: %w", err)
 	}
 
-	snapshot.EncryptionKey = base64.StdEncoding.EncodeToString(s)
+	snapshot.EncryptionKey = s
 
 	return nil
 }
 
 func (ss *sqlStore) decryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
-	decoded, err := base64.StdEncoding.DecodeString(snapshot.EncryptionKey)
-	if err != nil {
-		return fmt.Errorf("key could not be decoded")
-	}
-
-	t, err := ss.secretsService.Decrypt(ctx, decoded)
+	t, err := ss.secretsService.Decrypt(ctx, snapshot.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("decrypting key: %w", err)
 	}
-	snapshot.EncryptionKey = string(t)
+	snapshot.EncryptionKey = t
 
 	return nil
 }
