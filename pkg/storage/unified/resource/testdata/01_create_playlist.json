@@ -1,0 +1,23 @@
+{
+    "apiVersion": "playlist.grafana.app/v0alpha1",
+    "kind": "Playlist",
+    "metadata": {
+        "name": "fdgsv37qslr0ga",
+        "namespace": "default",
+        "annotations": {
+            "grafana.app/originName": "elsewhere",
+            "grafana.app/originPath": "path/to/item",
+            "grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+        }
+    },
+    "spec": {
+        "title": "hello",
+        "interval": "5m",
+        "items": [
+            {
+                "type": "dashboard_by_uid",
+                "value": "vmie2cmWz"
+            }
+        ]
+    }
+}

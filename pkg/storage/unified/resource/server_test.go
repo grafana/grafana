@@ -38,6 +38,7 @@ func TestSimpleServer(t *testing.T) {
 			Metadata:  fileblob.MetadataDontWrite, // skip
 		})
 		require.NoError(t, err)
+
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
 	store, err := NewCDKBackend(ctx, CDKBackendOptions{

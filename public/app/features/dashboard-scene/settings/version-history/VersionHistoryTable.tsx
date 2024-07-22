@@ -4,14 +4,13 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
 
-import { DecoratedRevisionModel } from '../VersionsEditView';
-
+import { DecoratedRevisionModel } from './HistorySrv';
 import { RevertDashboardModal } from './RevertDashboardModal';
 
 type VersionsTableProps = {
   versions: DecoratedRevisionModel[];
   canCompare: boolean;
-  onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
+  onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number | string) => void;
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 
@@ -33,7 +32,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
         </thead>
         <tbody>
           {versions.map((version, idx) => (
-            <tr key={version.id}>
+            <tr key={version.version}>
               <td>
                 <Checkbox
                   aria-label={`Toggle selection of version ${version.version}`}
@@ -41,7 +40,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                     display: 'inline',
                   })}
                   checked={version.checked}
-                  onChange={(ev) => onCheck(ev, version.id)}
+                  onChange={(ev) => onCheck(ev, version.version)}
                   disabled={!version.checked && canCompare}
                 />
               </td>

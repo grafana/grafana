@@ -1,7 +1,7 @@
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { DecoratedRevisionModel } from '../VersionsEditView';
+import { DecoratedRevisionModel } from './HistorySrv';
 
 export interface RevertDashboardModalProps {
   hideModal: () => void;

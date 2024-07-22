@@ -2,11 +2,14 @@ package resource
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 var (
 	_ DiagnosticsServer   = (*noopService)(nil)
 	_ ResourceIndexServer = (*noopService)(nil)
+	_ BlobStore           = (*noopService)(nil)
 	_ LifecycleHooks      = (*noopService)(nil)
 )
 
@@ -48,5 +51,17 @@ func (n *noopService) History(context.Context, *HistoryRequest) (*HistoryRespons
 
 // Origin implements ResourceServer.
 func (n *noopService) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
+	return nil, ErrNotImplementedYet
+}
+
+func (n *noopService) SupportsSignedURLs() bool {
+	return false
+}
+
+func (n *noopService) PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error) {
+	return nil, ErrNotImplementedYet
+}
+
+func (n *noopService) GetBlob(ctx context.Context, resource *ResourceKey, info *utils.BlobInfo, mustProxy bool) (*GetBlobResponse, error) {
 	return nil, ErrNotImplementedYet
 }
