@@ -51,6 +51,31 @@ const navTreeSlice = createSlice({
         }
       }
     },
+    setBookmark: (state, action: PayloadAction<{ item: NavModelItem; isSaved: boolean }>) => {
+      if (!config.featureToggles.pinNavItems) {
+        return;
+      }
+      const bookmarks = state.find((navItem) => navItem.id === 'bookmarks');
+      const { item, isSaved } = action.payload;
+      if (bookmarks) {
+        if (isSaved) {
+          if (!bookmarks.children) {
+            bookmarks.children = [];
+          }
+          const newBookmark: NavModelItem = {
+            ...item,
+            // Clear the children, sortWeight and empty message of the item
+            children: [],
+            sortWeight: 0,
+            emptyMessageId: '',
+            emptyMessage: '',
+          };
+          bookmarks.children.push(newBookmark);
+        } else {
+          bookmarks.children = bookmarks.children?.filter((i) => i.id !== item.id) ?? [];
+        }
+      }
+    },
     updateDashboardName: (state, action: PayloadAction<{ id: string; title: string; url: string }>) => {
       const { id, title, url } = action.payload;
       const starredItems = state.find((navItem) => navItem.id === 'starred');
@@ -73,5 +98,5 @@ const navTreeSlice = createSlice({
   },
 });
 
-export const { setStarred, removePluginFromNavTree, updateDashboardName } = navTreeSlice.actions;
+export const { setStarred, removePluginFromNavTree, updateDashboardName, setBookmark } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

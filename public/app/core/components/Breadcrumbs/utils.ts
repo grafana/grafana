@@ -35,6 +35,14 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     const shouldAddCrumb = !node.hideFromBreadcrumbs && !(shouldDedupe && isSamePathAsLastBreadcrumb);
 
     if (shouldAddCrumb) {
+      const activeChildIndex = node.children?.findIndex((child) => child.active) ?? -1;
+      // Add tab to breadcrumbs if it's not the first active child
+      if (activeChildIndex > 0) {
+        const activeChild = node.children?.[activeChildIndex];
+        if (activeChild) {
+          crumbs.unshift({ text: activeChild.text, href: activeChild.url ?? '' });
+        }
+      }
       crumbs.unshift({ text: node.text, href: node.url ?? '' });
     }
 
