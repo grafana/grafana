@@ -11,6 +11,11 @@ on:
         required: false
         default: false
         description: When enabled, this workflow will print a preview instead of creating an actual post.
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY:
+        required: true
+      GRAFANABOT_FORUM_KEY:
+        required: true
   workflow_dispatch:
     inputs:
       version:
