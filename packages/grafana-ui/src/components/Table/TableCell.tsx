@@ -42,7 +42,9 @@ export const TableCell = ({
   if (cellProps.style) {
     cellProps.style.minWidth = cellProps.style.width;
     const justifyContent = (cell.column as any).justifyContent;
-    if (justifyContent === 'flex-end') {
+
+    // If cell has a unit we should avoid setting direction to rtl
+    if (justifyContent === 'flex-end' && !field.config.unit) {
       // justify-content flex-end is not compatible with cellLink overflow; use direction instead
       cellProps.style.textAlign = 'right';
       cellProps.style.direction = 'rtl';
