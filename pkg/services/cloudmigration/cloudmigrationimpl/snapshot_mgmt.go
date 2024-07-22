@@ -161,7 +161,7 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
-func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedInUser, maxItemsPerPartition uint32, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
+func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedInUser, maxItemsPerPartition uint32, metadata []byte, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
 	// TODO -- make sure we can only build one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
@@ -241,7 +241,10 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	// Add the grafana generated public key to the index file so gms can use it to decrypt the snapshot files later.
 	// This works because the snapshot files are being encrypted with
 	// the grafana generated private key + the gms public key.
-	if _, err := snapshotWriter.Finish(publicKey[:]); err != nil {
+	if _, err := snapshotWriter.Finish(snapshot.FinishInput{
+		SenderPublicKey: publicKey[:],
+		Metadata:        metadata,
+	}); err != nil {
 		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
 	}
 

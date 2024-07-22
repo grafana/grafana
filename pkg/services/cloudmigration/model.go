@@ -208,6 +208,7 @@ type StartSnapshotResponse struct {
 	MaxItemsPerPartition uint32 `json:"maxItemsPerPartition"`
 	Algo                 string `json:"algo"`
 	EncryptionKey        string `json:"encryptionKey"`
+	Metadata             []byte `json:"metadata"`
 }
 
 // Based on Grafana Migration Service DTOs
