@@ -1,7 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
-import { select } from 'react-select-event';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -16,6 +15,7 @@ import {
 } from '../../__mocks__/queries';
 import { CloudWatchDatasource } from '../../datasource';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../../types';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import { QueryEditor } from './QueryEditor';
 
@@ -501,9 +501,3 @@ describe('QueryEditor should render right editor', () => {
     });
   });
 });
-
-// Used to select an option or options from a Select in unit tests
-export const selectOptionInTest = async (
-  input: HTMLElement,
-  optionOrOptions: string | RegExp | Array<string | RegExp>
-) => await waitFor(() => select(input, optionOrOptions, { container: document.body }));
