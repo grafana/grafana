@@ -2,6 +2,7 @@ package writer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -23,6 +24,10 @@ import (
 )
 
 const backendType = "prometheus"
+
+var (
+	ErrNoData = errors.New("no values to write")
+)
 
 const (
 	// Fixed error messages
@@ -65,7 +70,12 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 	for _, ref := range col.Refs {
 		// Use a default value of NaN if the value is empty or nil.
 		f := math.NaN()
-		if fp, empty, _ := ref.NullableFloat64Value(); !empty && fp != nil {
+		fp, empty, err := ref.NullableFloat64Value()
+		if fp == nil && err == nil {
+			// Match Alert rule behavior where values that are present but nil are treated as a NoData dimension.
+			continue
+		}
+		if !empty {
 			f = *fp
 		}
 
@@ -195,6 +205,9 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
 		return err
+	}
+	if len(points) == 0 {
+		return fmt.Errorf("skipping write: %w", ErrNoData)
 	}
 
 	series := make([]promremote.TimeSeries, 0, len(points))

@@ -2,6 +2,7 @@ package schedule
 
 import (
 	context "context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,6 +31,10 @@ type RuleStatus struct {
 	EvaluationTimestamp time.Time
 	EvaluationDuration  time.Duration
 }
+
+var (
+	ErrNoData = errors.New("no data")
+)
 
 type recordingRule struct {
 	key ngmodels.AlertRuleKey
@@ -189,6 +195,9 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		if err == nil {
 			break
 		}
+		if errors.Is(err, ErrNoData) {
+			break
+		}
 
 		logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
 		evalAttemptFailures.Inc()
@@ -208,6 +217,13 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		}
 	}
 
+	if errors.Is(latestError, ErrNoData) {
+		logger.Debug("Recording rule finished with no data")
+		span.AddEvent("no data")
+		r.lastError.Store(nil)
+		r.health.Store("nodata")
+		return
+	}
 	if latestError != nil {
 		evalTotalFailures.Inc()
 		span.SetStatus(codes.Error, "rule evaluation failed")
@@ -252,14 +268,20 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 			attribute.String("reason", err.Error()),
 		))
 		logger.Debug("Query returned no data", "reason", err)
-		r.health.Store("nodata")
-		return nil
+		return ErrNoData
 	}
 
 	writeStart := r.clock.Now()
 	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.Labels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
+	if errors.Is(err, writer.ErrNoData) {
+		span.AddEvent("no valid dimensions to write", trace.WithAttributes(
+			attribute.String("reason", err.Error()),
+		))
+		logger.Debug("No valid dimensions to write", "reason", err)
+		return ErrNoData
+	}
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to write metrics")
 		span.RecordError(err)

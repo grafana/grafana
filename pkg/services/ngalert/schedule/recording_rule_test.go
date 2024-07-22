@@ -482,8 +482,11 @@ func TestRecordingRule_Integration(t *testing.T) {
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
-			// TODO: OK expected for nil result but having a point. Probably should change.
-			require.Equal(t, "ok", status.Health)
+			require.Equal(t, "nodata", status.Health)
+		})
+
+		t.Run("no write was performed", func(t *testing.T) {
+			require.Zero(t, writeTarget.RequestsCount)
 		})
 	})
 }
