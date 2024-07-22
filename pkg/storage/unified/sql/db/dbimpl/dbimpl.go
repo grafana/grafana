@@ -2,7 +2,6 @@ package dbimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -11,131 +10,108 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	resourcedb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
 )
 
-var _ resourcedb.ResourceDBInterface = (*ResourceDB)(nil)
+const (
+	dbTypeMySQL    = "mysql"
+	dbTypePostgres = "postgres"
+)
 
-func ProvideResourceDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (*ResourceDB, error) {
-	return &ResourceDB{
-		db:       db,
-		cfg:      cfg,
-		features: features,
-		log:      log.New("entity-db"),
-		tracer:   tracer,
-	}, nil
-}
-
-type ResourceDB struct {
-	once    sync.Once
-	onceErr error
-
-	db       db.DB
-	features featuremgmt.FeatureToggles
-	engine   *xorm.Engine
-	cfg      *setting.Cfg
-	log      log.Logger
-	tracer   trace.Tracer
-
-	rdb resourcedb.DB
-}
-
-func (db *ResourceDB) GetDB() (resourcedb.DB, error) {
-	if db.onceErr != nil {
-		return nil, db.onceErr
+func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (db.DBProvider, error) {
+	p, err := newResourceDBProvider(grafanaDB, cfg, features, tracer)
+	if err != nil {
+		return nil, fmt.Errorf("provide Resource DB: %w", err)
 	}
-	if db.rdb == nil {
-		return nil, errors.New("database not initialized")
-	}
+	var once sync.Once
+	var resourceDB db.DB
 
-	return db.rdb, nil
+	return dbProviderFunc(func(ctx context.Context) (db.DB, error) {
+		once.Do(func() {
+			resourceDB, err = p.init(ctx)
+		})
+		return resourceDB, err
+	}), nil
 }
 
-func (db *ResourceDB) Init(ctx context.Context) error {
-	db.once.Do(func() {
-		db.onceErr = db.init(ctx)
-	})
+type dbProviderFunc func(context.Context) (db.DB, error)
 
-	return db.onceErr
+func (f dbProviderFunc) Init(ctx context.Context) (db.DB, error) {
+	return f(ctx)
 }
 
-func (db *ResourceDB) init(ctx context.Context) error {
-	if db.engine != nil {
-		return nil
-	}
+type resourceDBProvider struct {
+	once            sync.Once
+	engine          *xorm.Engine
+	cfg             *setting.Cfg
+	log             log.Logger
+	migrateFunc     func(context.Context, *xorm.Engine, *setting.Cfg) error
+	registerMetrics bool
+	logQueries      bool
+}
 
-	var engine *xorm.Engine
-	var err error
-
+func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (p *resourceDBProvider, err error) {
 	// TODO: This should be renamed resource_api
 	getter := &sectionGetter{
-		DynamicSection: db.cfg.SectionWithEnvOverrides("resource_api"),
+		DynamicSection: cfg.SectionWithEnvOverrides("resource_api"),
 	}
 
-	dbType := getter.Key("db_type").MustString("")
-
-	// if explicit connection settings are provided, use them
-	if dbType != "" {
-		if dbType == "postgres" {
-			engine, err = getEnginePostgres(getter, db.tracer)
-			if err != nil {
-				return err
-			}
-
-			// FIXME: this config option is cockroachdb-specific, it's not supported by postgres
-			// FIXME: this only sets this option for the session that we get
-			// from the pool right now. A *sql.DB is a pool of connections,
-			// there is no guarantee that the session where this is run will be
-			// the same where we need to change the type of a column
-			_, err = engine.Exec("SET SESSION enable_experimental_alter_column_type_general=true")
-			if err != nil {
-				db.log.Error("error connecting to postgres", "msg", err.Error())
-				// FIXME: return nil, err
-			}
-		} else if dbType == "mysql" {
-			engine, err = getEngineMySQL(getter, db.tracer)
-			if err != nil {
-				return err
-			}
-
-			if err = engine.Ping(); err != nil {
-				return err
-			}
-		} else {
-			// TODO: sqlite support
-			return fmt.Errorf("invalid db type specified: %s", dbType)
-		}
-
-		// register sql stat metrics
-		if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", engine.DB().DB)); err != nil {
-			db.log.Warn("Failed to register unified storage sql stats collector", "error", err)
-		}
-
-		// configure sql logging
-		_ = getter.Key("log_queries").MustBool(false) // TODO
-
-		// otherwise, try to use the grafana db connection
-	} else {
-		if db.db == nil {
-			return fmt.Errorf("no db connection provided")
-		}
-
-		engine = db.db.GetEngine()
+	p = &resourceDBProvider{
+		cfg:        cfg,
+		log:        log.New("entity-db"),
+		logQueries: getter.Key("log_queries").MustBool(false),
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+		p.migrateFunc = migrations.MigrateResourceStore
 	}
 
-	db.engine = engine
+	switch dbType := getter.Key("db_type").MustString(""); dbType {
+	case dbTypePostgres:
+		p.registerMetrics = true
+		p.engine, err = getEnginePostgres(getter, tracer)
+		return p, err
 
-	if err := migrations.MigrateResourceStore(ctx, engine, db.cfg, db.features); err != nil {
-		db.engine = nil
-		return fmt.Errorf("run migrations: %w", err)
+	case dbTypeMySQL:
+		p.registerMetrics = true
+		p.engine, err = getEngineMySQL(getter, tracer)
+		return p, err
+
+	case "":
+		// try to use the grafana db connection
+		if grafanaDB == nil {
+			return p, fmt.Errorf("no db connection provided")
+		}
+		p.engine = grafanaDB.GetEngine()
+		return p, nil
+
+	default:
+		// TODO: sqlite support
+		return p, fmt.Errorf("invalid db type specified: %s", dbType)
+	}
+}
+
+func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
+	if p.registerMetrics {
+		err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", p.engine.DB().DB))
+		if err != nil {
+			p.log.Warn("Failed to register unified storage sql stats collector", "error", err)
+		}
+	}
+	_ = p.logQueries // TODO: configure SQL logging
+
+	// TODO: change the migrator to use db.DB instead of xorm
+	// Skip migrations if feature flag is not enabled
+	if p.migrateFunc != nil {
+		err := p.migrateFunc(ctx, p.engine, p.cfg)
+		if err != nil {
+			return nil, fmt.Errorf("run migrations: %w", err)
+		}
 	}
 
-	db.rdb = NewDB(engine.DB().DB, engine.Dialect().DriverName())
-
-	return nil
+	return NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName()), nil
 }

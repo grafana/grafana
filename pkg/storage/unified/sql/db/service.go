@@ -5,20 +5,11 @@ import (
 	"database/sql"
 )
 
-const (
-	DriverPostgres = "postgres"
-	DriverMySQL    = "mysql"
-	DriverSQLite   = "sqlite"
-	DriverSQLite3  = "sqlite3"
-)
-
-// ResourceDBInterface provides access to a database capable of supporting the
-// Resource Server.
-type ResourceDBInterface interface {
-	// Init initializes	the Resource Database, running migrations if needed.
-	Init(context.Context) error
-	// GetDB returns the DB interface.
-	GetDB() (DB, error)
+// DBProvider provides access to a SQL Database.
+type DBProvider interface {
+	// Init initializes	the SQL Database, running migrations if needed. It is
+	// idempotent and thread-safe.
+	Init(context.Context) (DB, error)
 }
 
 // DB is a thin abstraction on *sql.DB to allow mocking to provide better unit

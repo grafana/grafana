@@ -29,6 +29,11 @@ func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error)
 	config.AllowNativePasswords = true
 	config.ClientFoundRows = true
 
+	// allow executing multiple SQL statements in a single roundtrip, and also
+	// enable executing the CALL statement to run stored procedures that execute
+	// multiple SQL statements.
+	//config.MultiStatements = true
+
 	// TODO: do we want to support these?
 	//	config.ServerPubKey = getter.String("db_server_pub_key")
 	//	config.TLSConfig = getter.String("db_tls_config_name")
