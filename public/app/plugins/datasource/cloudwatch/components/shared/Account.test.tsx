@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import selectEvent from 'react-select-event';
 
 import { selectOptionInTest } from '../../utils/testUtils';
 
