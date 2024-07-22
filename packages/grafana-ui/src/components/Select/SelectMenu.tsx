@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import React, { RefCallback, useEffect, useMemo, useRef } from 'react';
+import React, { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
@@ -51,6 +51,7 @@ const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 export const VirtualizedSelectMenu = ({
   children,
   maxHeight,
+  innerRef: scrollRef,
   options,
   focusedOption,
 }: MenuListProps<SelectableValue>) => {
@@ -70,7 +71,7 @@ export const VirtualizedSelectMenu = ({
   const focusedIndex = flattenedOptions.findIndex(
     (option: SelectableValue<unknown>) => option.value === focusedOption?.value
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     listRef.current?.scrollToItem(focusedIndex);
   }, [focusedIndex]);
 
@@ -98,6 +99,7 @@ export const VirtualizedSelectMenu = ({
 
   return (
     <List
+      outerRef={scrollRef}
       ref={listRef}
       className={styles.menu}
       height={heightEstimate}
