@@ -25,11 +25,11 @@ func (st *DBstore) WithLock(ctx context.Context, lockName string, f func(ctx con
 		}
 		err := st.SQLStore.GetDialect().Lock(cfg)
 		// If Lock returns migrator.ErrLockDB, the lock is already acquired by another session.
-		if err != nil && errors.Is(err, migrator.ErrLockDB) {
-			return ErrLockDB
-		}
 		if err != nil {
-			return fmt.Errorf("failed to acquire the database lock (%s): %w", cfg.Key, err)
+		    if errors.Is(err, migrator.ErrLockDB) {
+		        return ErrLockDB
+		    }
+		    return fmt.Errorf("failed to acquire the database lock (%s): %w", cfg.Key, err)
 		}
 
 		defer func() {
