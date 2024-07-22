@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { UseTableRowProps } from 'react-table';
 
 import {
   Avatar,
