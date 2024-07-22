@@ -232,7 +232,7 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	if err, ignored := checkWriteError(writeErr); err != nil {
 		return fmt.Errorf("failed to write time series: %w", err)
 	} else if ignored {
-		l.Debug("Ignored write error", "error", err, "status_code", res.StatusCode)
+		l.Warn("Ignored write error", "error", err, "status_code", res.StatusCode)
 	}
 
 	return nil
