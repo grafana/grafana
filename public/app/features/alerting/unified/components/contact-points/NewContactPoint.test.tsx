@@ -1,6 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, waitFor, userEvent } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types';
@@ -10,10 +8,7 @@ import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import NewContactPoint from './NewContactPoint';
-import setupGrafanaManagedServer, {
-  setupSaveEndpointMock,
-  setupTestEndpointMock,
-} from './__mocks__/grafanaManagedServer';
+import { setupSaveEndpointMock, setupTestEndpointMock } from './__mocks__/grafanaManagedServer';
 
 import 'core-js/stable/structured-clone';
 
@@ -22,7 +17,6 @@ const user = userEvent.setup();
 
 beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
-  setupGrafanaManagedServer(server);
 });
 
 it('should be able to test and save a receiver', async () => {
@@ -32,15 +26,12 @@ it('should be able to test and save a receiver', async () => {
   render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName="grafana">
       <NewContactPoint />
-    </AlertmanagerProvider>,
-    { wrapper: TestProvider }
+    </AlertmanagerProvider>
   );
 
   // wait for loading to be done
   // type in a name for the new receiver
-  await waitFor(() => {
-    user.type(ui.inputs.name.get(), 'my new receiver');
-  });
+  await user.type(await ui.inputs.name.find(), 'my new receiver');
 
   // enter some email
   const email = ui.inputs.email.addresses.get();
@@ -50,12 +41,8 @@ it('should be able to test and save a receiver', async () => {
   // try to test the contact point
   await user.click(await ui.testContactPointButton.find());
 
-  await waitFor(
-    () => {
-      expect(ui.testContactPointModal.get()).toBeInTheDocument();
-    },
-    { timeout: 1000 }
-  );
+  expect(await ui.testContactPointModal.find()).toBeInTheDocument();
+
   await user.click(ui.customContactPointOption.get());
 
   // enter custom annotations and labels
@@ -70,14 +57,14 @@ it('should be able to test and save a receiver', async () => {
   // it can't seem to assert on the success toast
   await waitFor(() => {
     expect(testMock).toHaveBeenCalled();
-    expect(testMock.mock.lastCall).toMatchSnapshot();
   });
+  expect(testMock.mock.lastCall).toMatchSnapshot();
 
   await user.click(ui.saveContactButton.get());
   await waitFor(() => {
     expect(saveMock).toHaveBeenCalled();
-    expect(saveMock.mock.lastCall).toMatchSnapshot();
   });
+  expect(saveMock.mock.lastCall).toMatchSnapshot();
 });
 
 const ui = {
