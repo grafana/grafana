@@ -3717,7 +3717,7 @@ __metadata:
     "@types/uuid": "npm:9.0.8"
     ansicolor: "npm:1.1.100"
     calculate-size: "npm:1.1.1"
-    chance: "npm:1.1.11"
+    chance: "npm:1.1.12"
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
     core-js: "npm:3.37.1"
@@ -11956,14 +11956,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chance@npm:1.1.11":
-  version: 1.1.11
-  resolution: "chance@npm:1.1.11"
-  checksum: 10/d76cc76dbcb837f051e6080d94be8bdcd07559d52077854f614c7081062fee10d4c3b508f6ae4b70303dac000422ea35160b01de165fcd176a01f67ea4b2cef5
-  languageName: node
-  linkType: hard
-
-"chance@npm:^1.0.10":
+"chance@npm:1.1.12, chance@npm:^1.0.10":
   version: 1.1.12
   resolution: "chance@npm:1.1.12"
   checksum: 10/8700d5a66e27b47f4bdcf68f48489e1a490f39cd8bc8e39cac67c089b3f8d04b4bbc6710db0e85e802ad698cf3440d92784861208d2c248820355404b85b3f30
