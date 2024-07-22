@@ -26,9 +26,9 @@ To set up Microsoft Teams for integration with Grafana Alerting, you need to cre
 
 ### Create a new Workflow in Microsoft Teams
 
-1. To create a new workflow follow the steps in [Create flows in Microsoft Teams](https://learn.microsoft.com/en-us/power-automate/teams/teams-app-create)
-2. Microsoft provides template library. You can use template "Post to a channel when a webhook request is received" 
-3. At the end of workflow creation wizard, copy the provided URL
+1. To create a new workflow, follow the steps in [Create flows in Microsoft Teams](https://learn.microsoft.com/en-us/power-automate/teams/teams-app-create) documentation. 
+2. Consider using the template "Post to a channel when a webhook request is received" from the Microsoft template library. 
+3. After creating the workflow in Teams, copy the provided URL for use in the next steps.
 
 ## Procedure
 
