@@ -27,6 +27,7 @@ enum LabelValueTypes {
 
 const SUCCESSFULLY_COPIED_TEXT = 'Copied to clipboard';
 const SHOW_SUCCESS_DURATION = 2 * 1000;
+const HORIZONTAL_PX_PER_CHAR = 7;
 
 export const VizTooltipRow = ({
   label,
@@ -119,6 +120,11 @@ export const VizTooltipRow = ({
   };
 
   const onMouseLeaveLabel = () => setShowLabelTooltip(false);
+
+  // if label is > 50% window width, try to put label/value pairs on new lines
+  if (label.length * HORIZONTAL_PX_PER_CHAR > window.innerWidth / 2) {
+    label = label.replaceAll('{', '{\n  ').replaceAll('}', '\n}').replaceAll(', ', ',\n  ');
+  }
 
   return (
     <div className={styles.contentWrapper}>
