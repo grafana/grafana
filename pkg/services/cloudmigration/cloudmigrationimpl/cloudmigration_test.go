@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -442,6 +444,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		tracer,
 		dashboardService,
 		mockFolder,
+		kvstore.ProvideService(sqlStore),
 	)
 	require.NoError(t, err)
 
@@ -449,9 +452,11 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 }
 
 type gmsClientMock struct {
-	validateKeyCalled   int
-	startSnapshotCalled int
-	getStatusCalled     int
+	validateKeyCalled     int
+	startSnapshotCalled   int
+	getStatusCalled       int
+	createUploadUrlCalled int
+	reportEventCalled     int
 
 	getSnapshotResponse *cloudmigration.GetSnapshotStatusResponse
 }
@@ -473,4 +478,13 @@ func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudM
 func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.CloudMigrationSnapshot, _ int) (*cloudmigration.GetSnapshotStatusResponse, error) {
 	m.getStatusCalled++
 	return m.getSnapshotResponse, nil
+}
+
+func (m *gmsClientMock) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	m.createUploadUrlCalled++
+	return "http://localhost:3000", nil
+}
+
+func (m *gmsClientMock) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, gmsclient.EventRequestDTO) {
+	m.reportEventCalled++
 }
