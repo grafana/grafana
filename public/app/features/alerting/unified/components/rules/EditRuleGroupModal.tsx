@@ -11,9 +11,9 @@ import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'a
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  useUpdateRuleGroupConfiguration,
-  useRenameRuleGroup,
   useMoveRuleGroup,
+  useRenameRuleGroup,
+  useUpdateRuleGroupConfiguration,
 } from '../../hooks/ruleGroup/useUpdateRuleGroup';
 import { anyOfRequestState } from '../../hooks/useAsync';
 import { fetchRulerRulesAction, rulesInSameGroupHaveInvalidFor } from '../../state/actions';
@@ -265,7 +265,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   };
 
   const rulesWithoutRecordingRules = compact(
-    group.rules.map((r) => r.rulerRule).filter((rule) => rule && !isGrafanaOrDataSourceRecordingRule(rule))
+    group.rules.map((r) => r.rulerRule).filter((rule) => !isGrafanaOrDataSourceRecordingRule(rule))
   );
   const hasSomeNoRecordingRules = rulesWithoutRecordingRules.length > 0;
   const modalTitle =

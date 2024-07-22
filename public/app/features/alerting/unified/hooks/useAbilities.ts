@@ -188,7 +188,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
     [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
-    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false], // not sure about this one
+    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
   };
 
   return abilities;
