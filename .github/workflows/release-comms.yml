@@ -53,6 +53,7 @@ jobs:
   post_changelog_on_forum:
     needs: setup
     uses: ./.github/workflows/community-release.yml
+    secrets: inherit
     with:
       version: ${{ needs.setup.output.version }}
       dry_run: ${{ needs.setup.output.dry_run == 'true' }}
