@@ -1,11 +1,19 @@
+import * as H from 'history';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
-import { Router, Redirect, Switch, RouteComponentProps, MemoryRouter } from 'react-router-dom';
+import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom';
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
 import { DataQuery } from '@grafana/data';
-import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import {
+  config,
+  navigationLogger,
+  reportInteraction,
+  HistoryWrapper,
+  LocationServiceProvider,
+  locationService,
+} from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack, IconButton } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { dispatch, getState, store } from 'app/store/store';
@@ -131,6 +139,8 @@ function WindowSplitWrapper(props: { routes: React.ReactNode }) {
   const secondAppId = useSelector((state) => state.windowSplit.secondAppId);
   const dispatch = useDispatch();
 
+  const history2 = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
+
   return (
     <SplitPaneWrapper
       splitOrientation="vertical"
@@ -142,58 +152,62 @@ function WindowSplitWrapper(props: { routes: React.ReactNode }) {
       paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
     >
       <Router history={locationService.getHistory()}>
-        <CompatRouter>
-          <ModalsContextProvider>
-            <GlobalStyles />
-            <AppChrome>
-              <AngularRoot />
-              <AppNotificationList />
-              <Stack gap={0} grow={1} direction="column">
-                {pageBanners.map((Banner, index) => (
-                  <Banner key={index.toString()} />
-                ))}
-                {props.routes}
-              </Stack>
-              {bodyRenderHooks.map((Hook, index) => (
-                <Hook key={index.toString()} />
-              ))}
-            </AppChrome>
-            <LiveConnectionWarning />
-            <ModalRoot />
-            <PortalContainer />
-          </ModalsContextProvider>
-        </CompatRouter>
-      </Router>
-      {secondAppId && (
-        <MemoryRouter>
+        <LocationServiceProvider service={locationService}>
           <CompatRouter>
             <ModalsContextProvider>
               <GlobalStyles />
-              <div
-                style={{
-                  display: 'flex',
-                  height: '100%',
-                  paddingTop: TOP_BAR_LEVEL_HEIGHT,
-                  flexGrow: 1,
-                  flexDirection: 'column',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <IconButton
-                    size={'lg'}
-                    style={{ margin: '8px' }}
-                    name={'times'}
-                    aria-label={'close'}
-                    onClick={() => {
-                      dispatch(windowSplit.actions.closeSplitApp({ secondAppId }));
-                    }}
-                  />
-                </div>
-                <AppRootPage pluginId={secondAppId} />
-              </div>
+              <AppChrome>
+                <AngularRoot />
+                <AppNotificationList />
+                <Stack gap={0} grow={1} direction="column">
+                  {pageBanners.map((Banner, index) => (
+                    <Banner key={index.toString()} />
+                  ))}
+                  {props.routes}
+                </Stack>
+                {bodyRenderHooks.map((Hook, index) => (
+                  <Hook key={index.toString()} />
+                ))}
+              </AppChrome>
+              <LiveConnectionWarning />
+              <ModalRoot />
+              <PortalContainer />
             </ModalsContextProvider>
           </CompatRouter>
-        </MemoryRouter>
+        </LocationServiceProvider>
+      </Router>
+      {secondAppId && (
+        <Router history={history2.getHistory()}>
+          <LocationServiceProvider service={history2}>
+            <CompatRouter>
+              <ModalsContextProvider>
+                <GlobalStyles />
+                <div
+                  style={{
+                    display: 'flex',
+                    height: '100%',
+                    paddingTop: TOP_BAR_LEVEL_HEIGHT,
+                    flexGrow: 1,
+                    flexDirection: 'column',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <IconButton
+                      size={'lg'}
+                      style={{ margin: '8px' }}
+                      name={'times'}
+                      aria-label={'close'}
+                      onClick={() => {
+                        dispatch(windowSplit.actions.closeSplitApp({ secondAppId }));
+                      }}
+                    />
+                  </div>
+                  <AppRootPage pluginId={secondAppId} />
+                </div>
+              </ModalsContextProvider>
+            </CompatRouter>
+          </LocationServiceProvider>
+        </Router>
       )}
     </SplitPaneWrapper>
   );
