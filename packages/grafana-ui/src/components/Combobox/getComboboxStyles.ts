@@ -49,7 +49,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     optionDescription: css({
       label: 'grafana-select-option-description',
       fontWeight: 'normal',
-      fontSize: theme.typography.size.sm,
+      fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       whiteSpace: 'normal',
       lineHeight: theme.typography.body.lineHeight,
