@@ -57,8 +57,8 @@ jobs:
       GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
       GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     with:
-      version: ${{ needs.setup.output.version }}
-      dry_run: ${{ needs.setup.output.dry_run == 'true' }}
+      version: ${{ needs.setup.outputs.version }}
+      dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
   create_github_release:
     # a github release requires a git tag
     # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
