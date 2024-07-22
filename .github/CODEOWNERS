@@ -165,7 +165,7 @@
 
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
-/devenv/docker/blocks/elastic* @grafana/observability-logs
+/devenv/docker/blocks/elastic* @grafana/aws-datasources
 /devenv/docker/blocks/self-instrumentation* @grafana/observability-metrics
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
@@ -253,7 +253,7 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/observability-metrics
-/pkg/tsdb/elasticsearch/ @grafana/observability-logs
+/pkg/tsdb/elasticsearch/ @grafana/aws-datasources
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
@@ -572,7 +572,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
-/public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
+/public/app/plugins/datasource/elasticsearch/ @grafana/aws-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
