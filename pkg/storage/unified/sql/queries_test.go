@@ -290,8 +290,9 @@ func TestQueries(t *testing.T) {
 					},
 				},
 				Expected: expected{
-					"resource_version_inc_mysql.sql": dialects{
+					"resource_version_inc_mysql_sqlite.sql": dialects{
 						sqltemplate.MySQL,
+						sqltemplate.SQLite,
 					},
 				},
 			},
