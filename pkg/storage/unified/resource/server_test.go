@@ -108,7 +108,7 @@ func TestSimpleServer(t *testing.T) {
 
 		// Now update the value
 		tmp := &unstructured.Unstructured{}
-		err = json.Unmarshal(created.Value, tmp)
+		err = json.Unmarshal(found.Value, tmp)
 		require.NoError(t, err)
 
 		now := time.Now().UnixMilli()

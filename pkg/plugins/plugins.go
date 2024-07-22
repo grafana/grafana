@@ -101,7 +101,8 @@ type JSONData struct {
 	Routes       []*Route     `json:"routes"`
 
 	// AccessControl settings
-	Roles []RoleRegistration `json:"roles,omitempty"`
+	Roles      []RoleRegistration `json:"roles,omitempty"`
+	ActionSets []ActionSet        `json:"actionSets,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`

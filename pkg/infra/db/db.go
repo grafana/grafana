@@ -24,9 +24,6 @@ type DB interface {
 	// through [context.Context] or if that's not present, as non-transactional database
 	// operations.
 	WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error
-	// WithNewDbSession behaves like [DB.WithDbSession] without picking up a transaction
-	// from the context.
-	WithNewDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error
 	// GetDialect returns an object that contains information about the peculiarities of
 	// the particular database type available to the runtime.
 	GetDialect() migrator.Dialect
