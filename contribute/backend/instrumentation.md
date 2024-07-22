@@ -156,7 +156,7 @@ A distributed trace is data that tracks an application request as it flows throu
 
 ### Usage
 
-Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the `pkg/infra/tracing` package that implements the [OpenTelemetry Tracer interface](go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To get a hold of a `Tracer` you need to get it injected as a dependency of your service. Refer to [Services](services.md) for more details. For more information, you may also refer to [The OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/go/manual/).
+Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the `pkg/infra/tracing` package that implements the [OpenTelemetry Tracer interface](go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To access `Tracer` you need to get it injected as a dependency of your service. Refer to [Services](services.md) for more details. For more information, you may also refer to [The OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/go/manual/).
 
 For example:
 
