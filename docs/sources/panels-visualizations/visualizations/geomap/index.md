@@ -295,7 +295,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 
 ![Heatmap Layer](/static/img/docs/geomap-panel/geomap-heatmap-8-1-0.png)
 
-![Heatmap Layer Options](/media/docs/grafana/panels-visualizations/geomap-heatmap-options-11-1-0.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/geomap-heatmap-options-11-1-0.png" max-width="350px" alt="Heatmap layer options" >}}
 
 - **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Weight values** configure the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop-down to automatically scale the weight values depending on data values.
