@@ -61,7 +61,7 @@ export function getDashDiffStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.isDark ? '#457740' : '#664e33',
     },
     '.diff-json-old': {
-      backgroundColor: theme.isDark ? 'a04338' : '5a372a',
+      backgroundColor: theme.isDark ? '#a04338' : '#5a372a',
     },
     '.diff-json-added': {
       backgroundColor: theme.colors.primary.shade,
