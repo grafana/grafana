@@ -94,7 +94,7 @@ func TestMode3_Get(t *testing.T) {
 				},
 			},
 			{
-				name:  "error when getting an object in the inified store fails",
+				name:  "error when getting an object in the unified store fails",
 				input: "object-fail",
 				setupStorageFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
