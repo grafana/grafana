@@ -57,7 +57,7 @@ func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMi
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
 	c.snapshot = &cloudmigration.StartSnapshotResponse{
-		EncryptionKey:        fmt.Sprintf("%x", publicKey[:]),
+		EncryptionKey:        publicKey[:],
 		SnapshotID:           uuid.NewString(),
 		MaxItemsPerPartition: 10,
 		Algo:                 "nacl",

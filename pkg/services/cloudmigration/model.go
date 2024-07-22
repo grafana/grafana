@@ -37,7 +37,7 @@ type CloudMigrationSnapshot struct {
 	UID            string `xorm:"uid"`
 	SessionUID     string `xorm:"session_uid"`
 	Status         SnapshotStatus
-	EncryptionKey  string `xorm:"encryption_key"` // stored in the unified secrets table
+	EncryptionKey  []byte `xorm:"encryption_key"` // stored in the unified secrets table
 	LocalDir       string `xorm:"local_directory"`
 	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
 	ErrorString    string `xorm:"error_string"`
@@ -207,7 +207,7 @@ type StartSnapshotResponse struct {
 	SnapshotID           string `json:"snapshotID"`
 	MaxItemsPerPartition uint32 `json:"maxItemsPerPartition"`
 	Algo                 string `json:"algo"`
-	EncryptionKey        string `json:"encryptionKey"`
+	EncryptionKey        []byte `json:"encryptionKey"`
 	Metadata             []byte `json:"metadata"`
 }
 

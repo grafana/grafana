@@ -188,7 +188,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 
 	// Use GMS public key + the grafana generated private private key to encrypt snapshot files.
 	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
-		Public:  []byte(snapshotMeta.EncryptionKey),
+		Public:  snapshotMeta.EncryptionKey,
 		Private: privateKey[:],
 	},
 		crypto.NewNacl(),
