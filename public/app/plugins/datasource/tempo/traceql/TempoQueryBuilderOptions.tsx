@@ -11,6 +11,7 @@ import { TempoQuery } from '../types';
 interface Props {
   onChange: (value: TempoQuery) => void;
   query: Partial<TempoQuery> & TempoQuery;
+  isStreaming: boolean;
 }
 
 /**
@@ -26,7 +27,7 @@ const parseIntWithFallback = (val: string, fallback: number) => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
-export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) => {
+export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, isStreaming }) => {
   if (!query.hasOwnProperty('limit')) {
     query.limit = DEFAULT_LIMIT;
   }
@@ -53,6 +54,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
     `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
     `Step: ${query.step || 'auto'}`,
+    `Streaming: ${isStreaming ? 'Enabled' : 'Disabled'}`,
   ];
 
   return (
@@ -104,10 +106,29 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               value={query.step}
             />
           </EditorField>
+          <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
+            <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
+          </EditorField>
         </QueryOptionGroup>
       </EditorRow>
     </>
   );
 });
+
+const StreamingTooltip = () => {
+  return (
+    <div style={{ display: 'flex', gap: '4px' }}>
+      <span>Stream partial query results.</span>
+      <a
+        href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}
+        target={'_blank'}
+        rel="noreferrer"
+        style={{ textDecoration: 'underline' }}
+      >
+        Learn more
+      </a>
+    </div>
+  );
+};
 
 TempoQueryBuilderOptions.displayName = 'TempoQueryBuilderOptions';
