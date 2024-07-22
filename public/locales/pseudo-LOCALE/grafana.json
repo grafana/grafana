@@ -100,10 +100,17 @@
       }
     },
     "contact-points": {
+      "delivery-duration": "Ŀäşŧ đęľįvęřy ŧőőĸ <1></1>",
+      "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
+      "last-delivery-failed": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ ƒäįľęđ",
+      "no-delivery-attempts": "Ńő đęľįvęřy äŧŧęmpŧş",
+      "only-firing": "Đęľįvęřįŉģ <1>őŉľy ƒįřįŉģ</1> ŉőŧįƒįčäŧįőŉş",
       "telegram": {
         "parse-mode-warning-body": "Ĩƒ yőū ūşę ä <1>päřşę_mőđę</1> őpŧįőŉ őŧĥęř ŧĥäŉ <3>Ńőŉę</3>, ŧřūŉčäŧįőŉ mäy řęşūľŧ įŉ äŉ įŉväľįđ męşşäģę, čäūşįŉģ ŧĥę ŉőŧįƒįčäŧįőŉ ŧő ƒäįľ. Főř ľőŉģęř męşşäģęş, ŵę řęčőmmęŉđ ūşįŉģ äŉ äľŧęřŉäŧįvę čőŉŧäčŧ męŧĥőđ.",
         "parse-mode-warning-title": "Ŧęľęģřäm męşşäģęş äřę ľįmįŧęđ ŧő 4096 ŮŦF-8 čĥäřäčŧęřş."
-      }
+      },
+      "used-by_one": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy",
+      "used-by_other": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčįęş"
     },
     "policies": {
       "metadata": {
