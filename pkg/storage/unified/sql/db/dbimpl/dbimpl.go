@@ -46,7 +46,6 @@ func (f dbProviderFunc) Init(ctx context.Context) (db.DB, error) {
 }
 
 type resourceDBProvider struct {
-	once            sync.Once
 	engine          *xorm.Engine
 	cfg             *setting.Cfg
 	log             log.Logger

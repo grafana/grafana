@@ -111,7 +111,6 @@ func wordsMatcherFunc(expectedSQL, actualSQL string) error {
 					"ain %q but it does\n\tFragment: %s\n\tFull SQL: %s",
 					v, actualSQL[offset:], actualSQL)
 			}
-
 		} else {
 			loc := reWord.FindStringIndex(actualSQL[offset:])
 			if len(loc) == 0 {

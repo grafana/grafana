@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -359,7 +360,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 			Request:     new(resource.ListRequest),
 			Response:    new(resource.ResourceWrapper),
 		}
-		*listReq.Request = *req
+		listReq.Request = proto.Clone(req).(*resource.ListRequest)
 		if req.Limit > 0 {
 			listReq.Request.Limit++ // fetch one extra row for Limit
 		}

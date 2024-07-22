@@ -109,7 +109,7 @@ func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 // Query uses `req` as input for a single-statement, set-returning query
 // generated with `tmpl`, and executed in `x`. The `Results` method of `req`
 // should return a deep copy since it will be used multiple times to decode each
-// value. It retuns an error if more than one result set is returned.
+// value. It returns an error if more than one result set is returned.
 func Query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) ([]T, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("Query: invalid request for template %q: %w",
