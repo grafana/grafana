@@ -248,7 +248,7 @@ Be careful to not expose any sensitive information in span names, attribute or e
 
 ### Span attributes
 
-Consider using `attributes.<Type>("<key>", <value>)` in favor of `attributes.Key("<key>").<Type>(<value>)` since it requires fewer characters and thereby reads easier.
+Consider using `attributes.<Type>("<key>", <value>)` instead of `attributes.Key("<key>").<Type>(<value>)` since it requires fewer characters and is easier to read. 
 
 For example:
 
