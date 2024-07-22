@@ -524,7 +524,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		s.report(ctx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
 
 		start := time.Now()
-		err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, snapshot)
+		err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot)
 		if err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
 			// Update status to error with retries
