@@ -40,7 +40,7 @@ Use the key `Error` when logging Go errors; for example, `logger.Error("Somethin
 
 If log messages or key/value pairs originate from user input they should be validated and sanitized.
 
-Be careful not to expose any sensitive information in log messages; for example, secrets, credentials, and so on. It's especially easy to do this by mistake if you include a struct as a value.
+Be careful not to expose any sensitive information in log messages; for example, secrets and credentials. It's easy to do this by mistake if you include a struct as a value.
 
 ### Log levels
 
