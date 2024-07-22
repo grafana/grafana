@@ -47,7 +47,6 @@ export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   sourcePanel: SceneObjectRef<VizPanel>;
   pluginId: string;
-  skipDataQuery?: boolean;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   tableView?: VizPanel;
@@ -103,7 +102,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       panel: sourcePanel.clone(),
       sourcePanel: sourcePanel.getRef(),
       pluginId: sourcePanel.state.pluginId,
-      skipDataQuery: config.panels[sourcePanel.state.pluginId]?.skipDataQuery,
       ...repeatOptions,
     });
   }
@@ -239,16 +237,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
-    this.state.panel.setState({
+    this.setState({
       pluginId,
     });
 
     this.state.panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
 
-    this.setState({
-      skipDataQuery: config.panels[pluginId]?.skipDataQuery,
-      pluginId,
-    });
     this.loadDataSource();
   }
 

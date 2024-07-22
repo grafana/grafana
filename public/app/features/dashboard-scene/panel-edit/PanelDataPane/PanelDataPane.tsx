@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { Container, CustomScrollbar, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
-import { getConfig } from 'app/core/config';
+import { config, getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -82,12 +82,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   private buildTabs() {
     const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
+    const pluginId = panelManager.state.pluginId;
 
     const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
     if (panel) {
-      if (panelManager.state.skipDataQuery) {
+      if (config.panels[pluginId]?.skipDataQuery) {
         this.setState({ tabs });
         return;
       } else {
