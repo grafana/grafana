@@ -43,7 +43,7 @@ The following sections provide information on Grafana's Trace View.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view" >}}
 
-Learn more about how to use traces to troubleshoot issues by reading  [Use traces to find solutions](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/).
+Learn more about how to use traces to troubleshoot issues by reading [Use traces to find solutions](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/).
 
 ### Header
 
@@ -75,9 +75,9 @@ You can add one or more of the following filters:
 - **Duration -** Filter by duration. Accepted units include ns, us, ms, s, m, h.
 - **Tags -** Filter by tags, process tags, or log fields in your span.
 
-To only show the spans you have matched, toggle **Show matches only**.  
+To only show the spans you have matched, toggle **Show matches only**.
 
-Refer to [Span filters](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-filters/) for more in depth information on working with span filters. 
+Refer to [Span filters](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-filters/) for more in depth information on working with span filters.
 
 Watch the following video to learn more about filtering trace spans in Grafana:
 {{< youtube id="VP2XV3IIc80" >}}
@@ -102,7 +102,6 @@ Traces are composed of one or more spans. A span is a unit of work within a trac
 You can expand any span in a trace and view the details, including the span and resource attributes.
 
 For more information about spans and traces, refer to [Introduction to tracing](https://grafana.com/docs/tempo/latest/introduction/) in the Tempo documentation.
-
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span details" >}}
 
