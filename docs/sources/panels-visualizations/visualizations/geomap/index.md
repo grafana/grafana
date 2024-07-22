@@ -401,7 +401,7 @@ The Photos layer renders a photo at each data point.
 
 ### Options
 
-- **Data and Location mode** configures the data setings for the layer. For more information check [Data](#data) and [Location mode](#location-mode).
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Image Source field** allows you to select a string field containing image data in either of the following formats:
   - **Image URLs**
   - **Base64 encoded** - Image binary ("data:image/png;base64,...")
