@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var invalidUTF8ByteSequence = []byte{0xff, 0xfe, 0xfd}
@@ -44,7 +45,7 @@ func TestSectionGetter(t *testing.T) {
 	v = g.String(key)
 	require.Empty(t, v)
 	require.Error(t, g.Err())
-	require.ErrorIs(t, g.Err(), ErrInvalidUTF8Sequence)
+	require.ErrorIs(t, g.Err(), errInvalidUTF8Sequence)
 }
 
 func TestMakeDSN(t *testing.T) {
@@ -55,7 +56,7 @@ func TestMakeDSN(t *testing.T) {
 	})
 	require.Empty(t, s)
 	require.Error(t, err)
-	require.ErrorIs(t, err, ErrInvalidUTF8Sequence)
+	require.ErrorIs(t, err, errInvalidUTF8Sequence)
 
 	s, err = MakeDSN(map[string]string{
 		"skip": "",
