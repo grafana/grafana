@@ -13,9 +13,7 @@ weight: 20
 
 # Traces in Explore
 
-You can use Explore to query and visualize traces from tracing data sources.
-
-Supported data sources include:
+You can use Explore to query and visualize traces from tracing data sources. Supported data sources include:
 
 - [Tempo]({{< relref "../datasources/tempo/" >}}) (supported ingestion formats: OpenTelemetry, Jaeger, and Zipkin)
 - [Jaeger]({{< relref "../datasources/jaeger/" >}})
@@ -26,25 +24,26 @@ Supported data sources include:
 - [New Relic](https://grafana.com/grafana/plugins/grafana-newrelic-datasource)
 - [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource)
 
-For information on how to configure queries for these data sources, refer to the documentation for each individual data source.
-
-## Query editor
+## Query editors
 
 You can query and search tracing data using a data source's query editor. Note that data sources in Grafana have unique query editors.
 
-For information on querying each data source, refer to their documentation:
+For information on how to configure queries for these data sources, refer to the documentation for each individual data source.
 
-- [Tempo query editor]({{< relref "../datasources/tempo/query-editor" >}})
+<!-- - [Tempo query editor]({{< relref "../datasources/tempo/query-editor" >}})
 - [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
 - [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
 - [Azure Monitor Application Insights query editor]({{< relref "../datasources/azure-monitor/query-editor/#query-application-insights-traces" >}})
 - [ClickHouse query editor](https://clickhouse.com/docs/en/integrations/grafana/query-builder#traces)
+- [New Relic](https://grafana.com/docs/plugins/grafana-newrelic-datasource/<GRAFANA_VERSION>/#query-the-data-source) -->
 
 ## Trace view
 
-This section explains the elements of the Trace View.
+The following sections provide information on Grafana's Trace View.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view" >}}
+
+Learn more about how to use traces to troubleshoot issues by reading  [Use traces to find solutions](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/).
 
 ### Header
 
@@ -76,7 +75,9 @@ You can add one or more of the following filters:
 - **Duration -** Filter by duration. Accepted units include ns, us, ms, s, m, h.
 - **Tags -** Filter by tags, process tags, or log fields in your span.
 
-To only show the spans you have matched, toggle **Show matches only**.
+To only show the spans you have matched, toggle **Show matches only**.  
+
+Refer to [Span filters](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-filters/) for more in depth information on working with span filters. 
 
 Watch the following video to learn more about filtering trace spans in Grafana:
 {{< youtube id="VP2XV3IIc80" >}}
@@ -96,17 +97,24 @@ Clicking anywhere on the span row shows span details.
 
 ### Span details
 
+Traces are composed of one or more spans. A span is a unit of work within a trace that has a start time relative to the beginning of the trace, a duration and an operation name for the unit of work. It usually has a reference to a parent span (unless it’s the first span, the root span, in a trace). It frequently includes key/value attributes that are relevant to the span itself, for example the HTTP method used in the request, as well as other metadata such as the service name, sub-span events, or links to other spans.
+
+You can expand any span in a trace and view the details, including the span and resource attributes.
+
+For more information about spans and traces, refer to [Introduction to tracing](https://grafana.com/docs/tempo/latest/introduction/) in the Tempo documentation.
+
+
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span details" >}}
 
-- Operation name.
+<!-- - Operation name.
 - Span metadata.
 - Tags: Any tags associated with this span.
 - Process metadata: Metadata about the process that logged this span.
-- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
+- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations. -->
 
 ### Trace to logs
 
-You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
+You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/#trace-to-logs) for configuration instructions.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-trace-to-logs.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
@@ -114,11 +122,7 @@ Click the document icon to open a split view in Explore with the configured data
 
 ### Trace to metrics
 
-{{% admonition type="note" %}}
-This feature is currently in beta and behind the `traceToMetrics` feature toggle.
-{{% /admonition %}}
-
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#trace-to-metrics) for configuration instructions.
+You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#trace-to-metrics) for configuration instructions.
 
 ### Trace to profiles
 
