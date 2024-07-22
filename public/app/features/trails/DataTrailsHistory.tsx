@@ -2,12 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import {
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneObjectUrlValue,
+  SceneObjectUrlValues,
   SceneTimeRange,
   sceneUtils,
   SceneVariableValueChangedEvent,
@@ -46,7 +48,7 @@ export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
 
 const filterPipeRegex = /(\|)(=)(\|)/g;
 const filterSubst = ` $2 `;
-
+const timeFormat = 'YY-MM-DD HH:mm:ss';
 
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
@@ -160,24 +162,11 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         break;
       case 'filters':
         description = 'Filter applied:';
-        const varFilters = step.urlValues['var-filters'];
-        if (isDataTrailHistoryFilter(varFilters)) {
-          detail =
-            varFilters.filter((f) => {
-              if (f !== '' && !this.state.filtersApplied.includes(f)) {
-                filtersApplied.push(f);
-                return true;
-              }
-              return false;
-            })[0] ?? '';
-        }
-        // filters saved as key|operator|value
-        // we need to remove pipes (|)
-        detail = detail.replace(filterPipeRegex, filterSubst);
+        detail = parseFilterTooltip(step.urlValues, filtersApplied);
         break;
       case 'time':
         description = 'Time range changed:';
-
+        detail = parseTimeTooltip(step.urlValues);
         break;
     }
 
@@ -292,6 +281,36 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       </div>
     );
   };
+}
+
+function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
+  if (!isSceneTimeRangeState(urlValues)) {
+    return '';
+  }
+
+  const range = convertRawToRange({
+    from: urlValues.from,
+    to: urlValues.to,
+  });
+  return `${range.from.format(timeFormat)} - ${range.to.format(timeFormat)}`;
+}
+
+function parseFilterTooltip(urlValues: SceneObjectUrlValues, filtersApplied: string[]): string {
+  let detail = '';
+  const varFilters = urlValues['var-filters'];
+  if (isDataTrailHistoryFilter(varFilters)) {
+    detail =
+      varFilters.filter((f) => {
+        if (f !== '' && !filtersApplied.includes(f)) {
+          filtersApplied.push(f);
+          return true;
+        }
+        return false;
+      })[0] ?? '';
+  }
+  // filters saved as key|operator|value
+  // we need to remove pipes (|)
+  return detail.replace(filterPipeRegex, filterSubst);
 }
 
 function getStyles(theme: GrafanaTheme2) {
