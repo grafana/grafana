@@ -54,7 +54,8 @@ jobs:
     needs: setup
     uses: ./.github/workflows/community-release.yml
     with:
-      version: ${{ inputs.version }}
+      version: ${{ needs.setup.output.version }}
+      dry_run: ${{ needs.setup.output.dry_run == 'true' }}
   create_github_release:
     # a github release requires a git tag
     # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
