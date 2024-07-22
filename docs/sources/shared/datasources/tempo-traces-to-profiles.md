@@ -84,7 +84,7 @@ To use a basic configuration, follow these steps:
 If you have configured a Pyroscope data source and no profile data is available or the **Profiles for this span**
 button and the embedded flame graph isn't visible, verify that the `pyroscope.profile.id` key-value pair exists in your span tags.
 
-## Configure a custom query
+## Configure a custom query {#configure-custom-query-traces-profiles}
 
 To use a custom query with the configuration, follow these steps:
 

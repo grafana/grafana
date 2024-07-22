@@ -797,6 +797,7 @@
       "cancel-button": "Cancel",
       "copy-button": "Copy to clipboard",
       "download-button": "Download file",
+      "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
       "title": "Save dashboard JSON"
