@@ -119,12 +119,9 @@ interface EditLinkViewProps {
 }
 
 function EditLinkView({ pageNav, link, navModel, dashboard, onChange, onGoBack }: EditLinkViewProps) {
-  const parentTab = pageNav.children!.find((p) => p.active)!;
-  parentTab.parentItem = pageNav;
-
   const editLinkPageNav = {
     text: 'Edit link',
-    parentItem: parentTab,
+    parentItem: pageNav,
   };
 
   return (

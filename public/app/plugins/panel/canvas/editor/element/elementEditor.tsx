@@ -124,7 +124,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         category: ['Data links and actions'],
         path: 'oneClickMode',
         name: 'One-click',
-        description: 'When enabled, a single click opens first link or action',
+        description: 'When enabled, a single click opens the first link or action',
         settings: {
           options: [
             { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
