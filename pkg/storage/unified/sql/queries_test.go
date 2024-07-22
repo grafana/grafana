@@ -2,7 +2,6 @@ package sql
 
 import (
 	"embed"
-	"errors"
 	"testing"
 	"text/template"
 
@@ -11,23 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
-
-// debug is meant to provide greater debugging detail about certain errors. The
-// returned error will either provide more detailed information or be the same
-// original error, suitable only for local debugging. The details provided are
-// not meant to be logged, since they could include PII or otherwise
-// sensitive/confidential information. These information should only be used for
-// local debugging with fake or otherwise non-regulated information.
-func debug(err error) error {
-	var d interface{ Debug() string }
-	if errors.As(err, &d) {
-		return errors.New(d.Debug())
-	}
-
-	return err
-}
-
-var _ = debug // silence the `unused` linter
 
 //go:embed testdata/*
 var testdataFS embed.FS
@@ -126,6 +108,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceUpdate: {
 			{
 				Name: "single path",
@@ -162,6 +145,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceList: {
 			{
 				Name: "filter on namespace",
@@ -185,6 +169,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryList: {
 			{
 				Name: "single path",
@@ -208,6 +193,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceUpdateRV: {
 			{
 				Name: "single path",
@@ -222,6 +208,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryRead: {
 			{
 				Name: "single path",
@@ -241,6 +228,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryUpdateRV: {
 			{
 				Name: "single path",
@@ -255,6 +243,7 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+
 		sqlResourceHistoryInsert: {
 			{
 				Name: "insert into resource_history",
@@ -343,7 +332,7 @@ func TestQueries(t *testing.T) {
 							expectedQuery := sqltemplate.FormatSQL(rawQuery)
 
 							for _, d := range ds {
-								t.Run(d.Name(), func(t *testing.T) {
+								t.Run(d.DialectName(), func(t *testing.T) {
 									// not parallel for the same reason
 
 									tc.Data.SetDialect(d)

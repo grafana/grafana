@@ -18,10 +18,10 @@ type WriteAccessHooks struct {
 
 type LifecycleHooks interface {
 	// Called once at initialization
-	Init() error
+	Init(context.Context) error
 
 	// Stop function -- after calling this, any additional storage functions may error
-	Stop()
+	Stop(context.Context) error
 }
 
 func (a *WriteAccessHooks) CanWriteFolder(ctx context.Context, user identity.Requester, uid string) error {

@@ -9,7 +9,7 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 
-	resourcedb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
 func newCtx(t *testing.T) context.Context {
@@ -71,8 +71,8 @@ func TestDB_BeginTx(t *testing.T) {
 func TestDB_WithTx(t *testing.T) {
 	t.Parallel()
 
-	newTxFunc := func(err error) resourcedb.TxFunc {
-		return func(context.Context, resourcedb.Tx) error {
+	newTxFunc := func(err error) db.TxFunc {
+		return func(context.Context, db.Tx) error {
 			return err
 		}
 	}

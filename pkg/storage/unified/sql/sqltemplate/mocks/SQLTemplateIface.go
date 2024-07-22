@@ -171,6 +171,51 @@ func (_c *SQLTemplateIface_ArgPlaceholder_Call) RunAndReturn(run func(int) strin
 	return _c
 }
 
+// DialectName provides a mock function with given fields:
+func (_m *SQLTemplateIface) DialectName() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for DialectName")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// SQLTemplateIface_DialectName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DialectName'
+type SQLTemplateIface_DialectName_Call struct {
+	*mock.Call
+}
+
+// DialectName is a helper method to define mock.On call
+func (_e *SQLTemplateIface_Expecter) DialectName() *SQLTemplateIface_DialectName_Call {
+	return &SQLTemplateIface_DialectName_Call{Call: _e.mock.On("DialectName")}
+}
+
+func (_c *SQLTemplateIface_DialectName_Call) Run(run func()) *SQLTemplateIface_DialectName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *SQLTemplateIface_DialectName_Call) Return(_a0 string) *SQLTemplateIface_DialectName_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *SQLTemplateIface_DialectName_Call) RunAndReturn(run func() string) *SQLTemplateIface_DialectName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetArgs provides a mock function with given fields:
 func (_m *SQLTemplateIface) GetArgs() []interface{} {
 	ret := _m.Called()
@@ -421,51 +466,6 @@ func (_c *SQLTemplateIface_Into_Call) Return(_a0 string, _a1 error) *SQLTemplate
 }
 
 func (_c *SQLTemplateIface_Into_Call) RunAndReturn(run func(reflect.Value, string) (string, error)) *SQLTemplateIface_Into_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Name provides a mock function with given fields:
-func (_m *SQLTemplateIface) Name() string {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Name")
-	}
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// SQLTemplateIface_Name_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Name'
-type SQLTemplateIface_Name_Call struct {
-	*mock.Call
-}
-
-// Name is a helper method to define mock.On call
-func (_e *SQLTemplateIface_Expecter) Name() *SQLTemplateIface_Name_Call {
-	return &SQLTemplateIface_Name_Call{Call: _e.mock.On("Name")}
-}
-
-func (_c *SQLTemplateIface_Name_Call) Run(run func()) *SQLTemplateIface_Name_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *SQLTemplateIface_Name_Call) Return(_a0 string) *SQLTemplateIface_Name_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *SQLTemplateIface_Name_Call) RunAndReturn(run func() string) *SQLTemplateIface_Name_Call {
 	_c.Call.Return(run)
 	return _c
 }

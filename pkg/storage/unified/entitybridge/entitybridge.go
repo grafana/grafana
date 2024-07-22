@@ -44,7 +44,7 @@ type entityBridge struct {
 }
 
 // Init implements ResourceServer.
-func (b *entityBridge) Init() error {
+func (b *entityBridge) Init(context.Context) error {
 	if b.server != nil {
 		return b.server.Init()
 	}
@@ -52,10 +52,11 @@ func (b *entityBridge) Init() error {
 }
 
 // Stop implements ResourceServer.
-func (b *entityBridge) Stop() {
+func (b *entityBridge) Stop(context.Context) error {
 	if b.server != nil {
 		b.server.Stop()
 	}
+	return nil
 }
 
 // Convert resource key to the entity key

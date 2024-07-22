@@ -150,11 +150,11 @@ type server struct {
 }
 
 // Init implements ResourceServer.
-func (s *server) Init() error {
+func (s *server) Init(ctx context.Context) error {
 	s.once.Do(func() {
 		// Call lifecycle hooks
 		if s.lifecycle != nil {
-			err := s.lifecycle.Init()
+			err := s.lifecycle.Init(ctx)
 			if err != nil {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
@@ -172,18 +172,28 @@ func (s *server) Init() error {
 	return s.initErr
 }
 
-func (s *server) Stop() {
+func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
 
+	var stopFailed bool
 	if s.lifecycle != nil {
-		s.lifecycle.Stop()
+		err := s.lifecycle.Stop(ctx)
+		if err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+		}
 	}
 
 	// Stops the streaming
 	s.cancel()
 
 	// mark the value as done
+	if stopFailed {
+		return s.initErr
+	}
 	s.initErr = fmt.Errorf("service is stopped")
+
+	return nil
 }
 
 // Old value indicates an update -- otherwise a create
@@ -279,7 +289,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
@@ -349,7 +359,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
@@ -394,7 +404,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
@@ -455,7 +465,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
@@ -479,7 +489,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
@@ -508,11 +518,11 @@ func (s *server) initWatcher() error {
 }
 
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
-	if err := s.Init(); err != nil {
+	ctx := srv.Context()
+
+	if err := s.Init(ctx); err != nil {
 		return err
 	}
-
-	ctx := srv.Context()
 
 	// Start listening -- this will buffer any changes that happen while we backfill
 	stream, err := s.broadcaster.Subscribe(ctx)
@@ -565,7 +575,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 
 // History implements ResourceServer.
 func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 	return s.index.History(ctx, req)
@@ -573,7 +583,7 @@ func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResp
 
 // Origin implements ResourceServer.
 func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 	return s.index.Origin(ctx, req)
@@ -581,7 +591,7 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*HealthCheckResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 	return s.diagnostics.IsHealthy(ctx, req)
