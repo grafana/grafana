@@ -131,7 +131,7 @@ There's a [`wireexts_oss.go`](/pkg/server/wireexts_oss.go) that has the `wireinj
 
 Similarly, there's a `wireexts_enterprise.go` file in the Enterprise source code repository where you can override or register other service implementations.
 
-To extend an OSS background service, create a specific background interface for that type and inject that type to [`ProvideBackgroundServiceRegistry`](/pkg/registry/backgroundsvcs/background_services.go) instead of the concrete type. Next, add a wire binding for that interface in [`wireexts_oss.go`](/pkg/server/wireexts_oss.go) and in the enterprise `wireexts` file.
+To extend an OSS background service, create a specific background interface for that type and inject that type to [`ProvideBackgroundServiceRegistry`](/pkg/registry/backgroundsvcs/background_services.go) instead of the concrete type. Next, add a Wire binding for that interface in [`wireexts_oss.go`](/pkg/server/wireexts_oss.go) and in the enterprise `wireexts` file.
 
 ## Methods
 
