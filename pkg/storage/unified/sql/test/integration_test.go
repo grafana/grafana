@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 func newServer(t *testing.T) sql.Backend {
 	t.Helper()
 
-	dbstore := db.InitTestDB(t)
+	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
 	tr := noop.NewTracerProvider().Tracer("integrationtests")
@@ -35,11 +35,14 @@ func newServer(t *testing.T) sql.Backend {
 	require.NotNil(t, eDB)
 
 	ret, err := sql.NewBackend(sql.BackendOptions{
-		DB:     eDB,
-		Tracer: tr,
+		DBProvider: eDB,
+		Tracer:     tr,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, ret)
+
+	err = ret.Init(testutil.NewDefaultTestContext(t))
+	require.NoError(t, err)
 
 	return ret
 }

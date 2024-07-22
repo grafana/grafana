@@ -3,7 +3,7 @@ package sql
 import (
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -11,7 +11,7 @@ import (
 )
 
 // Creates a ResourceServer
-func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (resource.ResourceServer, error) {
+func ProvideResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (resource.ResourceServer, error) {
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
 	}
@@ -20,7 +20,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 	if err != nil {
 		return nil, err
 	}
-	store, err := NewBackend(BackendOptions{DB: eDB, Tracer: tracer})
+	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer})
 	if err != nil {
 		return nil, err
 	}
