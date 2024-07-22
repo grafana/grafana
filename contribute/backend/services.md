@@ -6,7 +6,7 @@ Grafana uses [Wire](https://github.com/google/wire), which is a code generation 
 
 Even though the services in Grafana do different things, they share a number of patterns. To better understand how a service works, let's build one from scratch!
 
-Before a service can start communicating with the rest of Grafana, it needs to be registered with Wire. Refer to the `ProvideService` factory method in the following service example and how it's being referenced in the `wire.go` example.
+Before a service can start communicating with the rest of Grafana, it needs to be registered with Wire. Refer to the `ProvideService` factory method in the following service example and note how it's being referenced in the `wire.go` example.
 
 When you run Wire, it inspects the parameters of `ProvideService` and makes sure that all its dependencies have been wired up and initialized properly.
 
