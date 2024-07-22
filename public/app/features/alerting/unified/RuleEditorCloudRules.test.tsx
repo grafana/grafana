@@ -12,8 +12,8 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
-import { grantUserPermissions, labelsPluginMetaMock, mockDataSource } from './mocks';
+import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
+import { grantUserPermissions, mockDataSource } from './mocks';
 import { emptyExternalAlertmanagersResponse, mockAlertmanagersResponse } from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
@@ -51,7 +51,6 @@ const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
 mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
-mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
 // and wait for the UI to be in particular states, drone seems to time out quite often so
