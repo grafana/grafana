@@ -21,7 +21,7 @@ type LifecycleHooks interface {
 	Init(context.Context) error
 
 	// Stop function -- after calling this, any additional storage functions may error
-	Stop(context.Context)
+	Stop(context.Context) error
 }
 
 func (a *WriteAccessHooks) CanWriteFolder(ctx context.Context, user identity.Requester, uid string) error {

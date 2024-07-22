@@ -52,10 +52,11 @@ func (b *entityBridge) Init(context.Context) error {
 }
 
 // Stop implements ResourceServer.
-func (b *entityBridge) Stop(context.Context) {
+func (b *entityBridge) Stop(context.Context) error {
 	if b.server != nil {
 		b.server.Stop()
 	}
+	return nil
 }
 
 // Convert resource key to the entity key

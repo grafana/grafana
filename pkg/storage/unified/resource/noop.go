@@ -20,8 +20,8 @@ func (n *noopService) Init(context.Context) error {
 }
 
 // Stop implements ResourceServer.
-func (n *noopService) Stop(context.Context) {
-	// nothing
+func (n *noopService) Stop(context.Context) error {
+	return nil
 }
 
 // IsHealthy implements ResourceServer.

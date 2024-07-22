@@ -172,18 +172,28 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-func (s *server) Stop(ctx context.Context) {
+func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
 
+	var stopFailed bool
 	if s.lifecycle != nil {
-		s.lifecycle.Stop(ctx)
+		err := s.lifecycle.Stop(ctx)
+		if err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+		}
 	}
 
 	// Stops the streaming
 	s.cancel()
 
 	// mark the value as done
+	if stopFailed {
+		return s.initErr
+	}
 	s.initErr = fmt.Errorf("service is stopped")
+
+	return nil
 }
 
 // Old value indicates an update -- otherwise a create
