@@ -479,6 +479,65 @@ func TestRecordingRule_Integration(t *testing.T) {
 		})
 		_ = waitForTimeChannel(t, evalDoneChan)
 
+		t.Run("reports basic evaluation metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
+				# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 3
+				grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
+				grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 3
+				# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+				# TYPE grafana_alerting_rule_evaluations_total counter
+				grafana_alerting_rule_evaluations_total{org="%[1]d"} 3
+				# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+				 # TYPE grafana_alerting_rule_evaluation_attempts_total counter
+				grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 3
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluation_duration_seconds",
+				"grafana_alerting_rule_evaluations_total",
+				"grafana_alerting_rule_evaluation_attempts_total",
+			)
+			require.NoError(t, err)
+		})
+
+		t.Run("reports success evaluation metrics", func(t *testing.T) {
+			expectedMetric := fmt.Sprintf(
+				`
+				# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
+				# TYPE grafana_alerting_rule_evaluation_failures_total counter
+				grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 1
+				# HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
+				# TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
+				grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} 1
+				`,
+				rule.OrgID,
+			)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+				"grafana_alerting_rule_evaluation_failures_total",
+				"grafana_alerting_rule_evaluation_attempt_failures_total",
+			)
+			require.NoError(t, err)
+		})
+
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
