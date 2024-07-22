@@ -19,6 +19,7 @@ on:
     branches:
     - 'main'
     - 'v*.*.*'
+
 jobs:
   setup:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
@@ -51,11 +52,13 @@ jobs:
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
   post_changelog_on_forum:
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-    - run: |
-        echo post changelog to forums for ${{ needs.setup.outputs.version }}
-        echo dry run: ${{ needs.setup.outputs.dry_run }}
+    uses: ./.github/workflows/community-release.yml
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+    with:
+      version: ${{ needs.setup.outputs.version }}
+      dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
   create_github_release:
     # a github release requires a git tag
     # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
