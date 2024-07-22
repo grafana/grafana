@@ -368,6 +368,7 @@ The Route layer renders data points as a route.
 
 ### Options
 
+- **Data and Location mode** configures the data setings for the layer. For more information check [Data](#data) and [Location mode](#location-mode).
 - **Size** sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale.
 - **Color** sets the route color. Set to `Fixed color` by default. You can also tie the color to field data.
 - **Fill opacity** configures the opacity of the route.
@@ -396,6 +397,7 @@ The Photos layer renders a photo at each data point.
 
 ### Options
 
+- **Data and Location mode** configures the data setings for the layer. For more information check [Data](#data) and [Location mode](#location-mode).
 - **Image Source field** allows you to select a string field containing image data in either of the following formats:
   - **Image URLs**
   - **Base64 encoded** - Image binary ("data:image/png;base64,...")
@@ -430,6 +432,7 @@ The Network layer renders a network graph. This layer supports the same [data fo
 
 ### Options
 
+- **Data and Location mode** configures the data setings for the layer. For more information check [Data](#data) and [Location mode](#location-mode).
 - **Arrow** sets the arrow direction to display for each edge, with forward meaning source to target. Choose from:
   - **None**
   - **Forward**
