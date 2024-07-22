@@ -80,7 +80,7 @@ func doSomething(ctx context.Context) {
 
 ### Enable certain log levels for certain loggers
 
-During development, it's convenient to enable certain log levels; for example, `debug`. This allows certain loggers to minimize the generated log output and makes it easier to find things. Refer to [[log.filters]](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#filters) for information on how to configure this.
+ You can enable certain log levels during development to make logging easier. For example, you can enable `debug` to allow certain loggers to minimize the generated log output and makes it easier to find things. Refer to [[log.filters]](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#filters) for information on how to to set different levels for specific loggers.
 
 You can also configure multiple loggers. For example:
 
