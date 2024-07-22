@@ -168,8 +168,8 @@ export function addLabelToQuery(
 
   // If the label type wasn't passed in from the calling function, we can use lezer to figure out if this label is already in the stream selectors
   if (!labelType) {
-    const hasIdentifierSelectorMatchers = getIdentifierInStreamPositions(query);
-    const indexedKeys = hasIdentifierSelectorMatchers.map((match) => match.getExpression(query));
+    const identifierSelectorMatchers = getIdentifierInStreamPositions(query);
+    const indexedKeys = identifierSelectorMatchers.map((match) => match.getExpression(query));
     const alreadyAddedAValueForThisStreamSelectorLabel = indexedKeys.includes(key);
 
     if (alreadyAddedAValueForThisStreamSelectorLabel) {
