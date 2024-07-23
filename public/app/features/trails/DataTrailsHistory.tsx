@@ -329,10 +329,6 @@ function parseFilterArrayAsTooltipDetail(urlValues: SceneObjectUrlValues, filter
   return detail.replace(filterPipeRegex, filterSubst);
 }
 
-// function parseFilterStringAsTooltipDetail(filterStr: string, filtersApplied: string[]): string {
-//   return 'NOT IMPLEMENTED';
-// }
-
 function getStyles(theme: GrafanaTheme2) {
   const visTheme = theme.visualization;
 
