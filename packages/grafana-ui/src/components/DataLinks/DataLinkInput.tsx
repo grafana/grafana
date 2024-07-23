@@ -132,8 +132,8 @@ export const DataLinkInput = memo(
 
       switch (event.key) {
         case 'Backspace':
-          if (getUrlLength() === 1) {
-            next()
+          if (stateRef.current.linkUrl.focusText.getText().length === 1) {
+            next();
           }
           // Fall through
         case 'Escape':
