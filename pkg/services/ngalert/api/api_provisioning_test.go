@@ -99,8 +99,10 @@ func TestProvisioningApi(t *testing.T) {
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
 				require.Equal(t, 400, response.Status())
-				expBody := `{"message":"invalid object specification: invalid policy tree"}`
-				require.Equal(t, expBody, string(response.Body()))
+				expBody := definitions.ValidationError{Message: "invalid object specification: invalid policy tree"}
+				expBodyJSON, marshalErr := json.Marshal(expBody)
+				require.NoError(t, marshalErr)
+				require.Equal(t, string(expBodyJSON), string(response.Body()))
 			})
 		})
 

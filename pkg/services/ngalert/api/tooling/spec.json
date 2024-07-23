@@ -8021,7 +8021,7 @@
     "ValidationError": {
       "type": "object",
       "properties": {
-        "msg": {
+        "message": {
           "type": "string",
           "example": "error message"
         }
