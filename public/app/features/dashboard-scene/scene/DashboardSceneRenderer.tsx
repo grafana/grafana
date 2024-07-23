@@ -126,11 +126,6 @@ function getStyles(theme: GrafanaTheme2) {
     panelsContainer: css({
       gridArea: 'panels',
     }),
-    nonScrollable: css({
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }),
     controlsWrapper: css({
       display: 'flex',
       flexDirection: 'column',
