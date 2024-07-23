@@ -1,4 +1,4 @@
-# Style accessibility at Grafana
+# Develop for accessibility at Grafana
 
 At Grafana we pay special attention to accessibility (a11y) and that's why it's important that all components are written with it in mind. This document contains some best practices for writing accessible components.
 
