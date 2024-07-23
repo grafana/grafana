@@ -514,6 +514,10 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
     },
+    {
+      path: '/bookmarks',
+      component: () => <NavLandingPage navId="bookmarks" />,
+    },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
