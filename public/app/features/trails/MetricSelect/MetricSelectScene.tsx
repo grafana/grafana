@@ -492,17 +492,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           </Field>
           <Field
             label={
-              <div>
-                View by <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={viewByTooltip} />
+              <div className={styles.displayOptionTooltip}>
+                View by{` `}
+                <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={viewByTooltip} />
               </div>
             }
             className={styles.displayOption}
-            htmlFor={'displayOption'}
           >
             <Select
-              id={'displayOption'}
-              onChange={model.onPrefixFilterChange}
               value={metricPrefix}
+              onChange={model.onPrefixFilterChange}
               onOpenMenu={() => model.reportPrefixFilterInteraction(true)}
               onCloseMenu={() => model.reportPrefixFilterInteraction(false)}
               options={[
@@ -577,6 +576,10 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       marginBottom: 0,
       minWidth: '184px',
+    }),
+    displayOptionTooltip: css({
+      display: 'flex',
+      gap: theme.spacing(1),
     }),
     warningIcon: css({
       color: theme.colors.warning.main,
