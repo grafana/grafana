@@ -30,12 +30,16 @@ variableAdapters.setInit(() => [
 ]);
 
 const interpolateMock = jest.fn();
+const timeRangeMock = jest.fn().mockReturnValue({
+  state: { value: { from: dateTime(1594671549254), to: dateTime(1594671549254), raw: { from: '12', to: '14' } } },
+});
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneGraph: {
     ...jest.requireActual('@grafana/scenes').sceneGraph,
     interpolate: (...args: unknown[]) => interpolateMock(...args),
+    getTimeRange: (...args: unknown[]) => timeRangeMock(...args),
   },
 }));
 
@@ -888,6 +892,28 @@ describe('templateSrv', () => {
       expect(podVar.type).toBe('query');
       expect(podVar.current.value).toEqual(['pA', 'pB']);
       expect(podVar.current.text).toEqual(['podA', 'podB']);
+    });
+
+    it('Should return timeRange from scenes context', () => {
+      window.__grafanaSceneContext = new EmbeddedScene({
+        body: new SceneCanvasText({ text: 'hello' }),
+      });
+      _templateSrv.updateTimeRange({
+        from: dateTime(1594671549254),
+        to: dateTime(1594671549254),
+        raw: { from: '10', to: '10' },
+      });
+
+      const deactivate = window.__grafanaSceneContext.activate();
+
+      expect(_templateSrv.timeRange).not.toBeNull();
+      expect(_templateSrv.timeRange).not.toBeUndefined();
+      expect(_templateSrv.timeRange!.raw).toEqual({ from: '12', to: '14' });
+      expect(timeRangeMock).toHaveBeenCalled();
+
+      deactivate();
+
+      expect(_templateSrv.timeRange!.raw).toEqual({ from: '10', to: '10' });
     });
   });
 });
