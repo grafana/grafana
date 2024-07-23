@@ -30,11 +30,9 @@ variableAdapters.setInit(() => [
 ]);
 
 const interpolateMock = jest.fn();
-const timeRangeMock = jest
-  .fn()
-  .mockReturnValue({
-    state: { value: { from: dateTime(1594671549254), to: dateTime(1594671549254), raw: { from: '12', to: '14' } } },
-  });
+const timeRangeMock = jest.fn().mockReturnValue({
+  state: { value: { from: dateTime(1594671549254), to: dateTime(1594671549254), raw: { from: '12', to: '14' } } },
+});
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
