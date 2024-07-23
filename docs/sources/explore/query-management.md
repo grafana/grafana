@@ -30,7 +30,7 @@ Starred queries aren't subject to the two week retention period and aren't delet
 
 To view your query history:
 
-1. Go to the Explore page
+1. Go to the Explore page.
 1. Click **Query history**.
 
 The Query history pane opens at the bottom of the page, and contains the following tabs:
