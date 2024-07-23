@@ -6,6 +6,15 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.0.1 (2024-07-01)
+#
+# ### Fixed
+#
+# - Update log suppression to catch new format of website /docs/ homepage REF_NOT_FOUND warnings.
+#
+#   These warnings are related to missing some pages during the build that are required for the /docs/ homepage.
+#   They were previously suppressed but the log format changed and without this change they reappear in the latest builds.
+#
 # ## 8.0.0 (2024-05-28)
 #
 # ### Changed
@@ -904,7 +913,8 @@ EOF
               -e '/rm -rf dist*/ d' \
               -e '/Press Ctrl+C to stop/ d' \
               -e '/make/ d' \
-              -e '/WARNING: The manual_mount source directory/ d'
+              -e '/WARNING: The manual_mount source directory/ d' \
+              -e '/"docs\/_index.md" not found/d'
     fi
     ;;
 esac
