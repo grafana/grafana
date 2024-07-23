@@ -359,7 +359,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
     const currentFilterCount = filters?.length || 0;
 
-    const kinder: SceneFlexItem[] = [];
+    const previewPanelLayoutItems: SceneFlexItem[] = [];
     for (let index = 0; index < values.length; index++) {
       const metricName = values[index];
       const metric: MetricPanel = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
@@ -368,14 +368,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
       if (this.state.showPreviews) {
         if (metric.itemRef && metric.isPanel) {
-          kinder.push(metric.itemRef.resolve());
+          previewPanelLayoutItems.push(metric.itemRef.resolve());
           continue;
         }
         const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
-        kinder.push(panel);
+        previewPanelLayoutItems.push(panel);
       } else {
         const panel = new SceneCSSGridItem({
           $variables: new SceneVariableSet({
@@ -385,11 +385,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         });
         metric.itemRef = panel.getRef();
         metric.isPanel = false;
-        kinder.push(panel);
+        previewPanelLayoutItems.push(panel);
       }
     }
 
-    return kinder;
+    return previewPanelLayoutItems;
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
