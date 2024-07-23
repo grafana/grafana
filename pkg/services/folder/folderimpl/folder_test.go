@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -1144,7 +1145,7 @@ func TestNestedFolderService(t *testing.T) {
 			features := featuremgmt.WithFeatures("nestedFolders")
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
-			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+			require.ErrorIs(t, err, dashboards.ErrMoveAccessDenied)
 		})
 
 		t.Run("move with the right permissions succeeds", func(t *testing.T) {
@@ -1160,14 +1161,14 @@ func TestNestedFolderService(t *testing.T) {
 			}
 
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
-			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("newFolder")}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{
+				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("myFolder"), dashboards.ScopeFoldersProvider.GetResourceScopeUID("newFolder")},
+			}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
-			// the folder is set inside InTransaction() but the fake one is called
-			// require.NotNil(t, f)
 		})
 
 		t.Run("cannot move the k6 folder even when has permissions to move folders", func(t *testing.T) {
@@ -2185,6 +2186,161 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 				if cmp.Diff(tc.expectedFolders, actual) != "" {
 					t.Fatalf("unexpected folders: %s", cmp.Diff(tc.expectedFolders, actual))
 				}
+			}
+		})
+	}
+}
+
+func TestIntegration_canMove(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	dashStore := &dashboards.FakeDashboardStore{}
+	dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
+	orgID := CreateOrg(t, db, cfg)
+
+	adminUsr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleAdmin}
+
+	// Set up source folder and a source folder parent
+	sourceParent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		UID:          "source-parent",
+		OrgID:        orgID,
+		Title:        "Source parent",
+		SignedInUser: adminUsr,
+	})
+	require.NoError(t, err)
+	sourceFolder, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		UID:          "source",
+		OrgID:        orgID,
+		Title:        "Source",
+		ParentUID:    sourceParent.UID,
+		SignedInUser: adminUsr,
+	})
+	require.NoError(t, err)
+
+	// Set up destination folder and destination folder parent
+	destParent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		UID:          "destination-parent",
+		OrgID:        orgID,
+		Title:        "Destination parent",
+		SignedInUser: adminUsr,
+	})
+	require.NoError(t, err)
+	destFolder, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		UID:          "destination",
+		OrgID:        orgID,
+		Title:        "Destination",
+		ParentUID:    destParent.UID,
+		SignedInUser: adminUsr,
+	})
+	require.NoError(t, err)
+
+	features := featuremgmt.WithFeatures("nestedFolders")
+	folderSvc := setup(t, dashStore, dashboardFolderStore, folderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
+
+	testCases := []struct {
+		description       string
+		destinationFolder string
+		permissions       map[string][]string
+		expectedErr       error
+	}{
+		{
+			description:       "can move a folder if has edit access to both folders",
+			destinationFolder: destFolder.UID,
+			permissions: map[string][]string{
+				dashboards.ActionFoldersWrite: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(destFolder.UID),
+				},
+			},
+		},
+		{
+			description:       "can't move a folder if missing write access to the destination folder",
+			destinationFolder: destFolder.UID,
+			permissions: map[string][]string{
+				dashboards.ActionFoldersWrite: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+				},
+				dashboards.ActionFoldersRead: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(destFolder.UID),
+				},
+			},
+			expectedErr: dashboards.ErrMoveAccessDenied,
+		},
+		{
+			description:       "can't move a folder to the root if missing folder create permissions",
+			destinationFolder: "",
+			permissions: map[string][]string{
+				dashboards.ActionFoldersWrite: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+				},
+			},
+			expectedErr: dashboards.ErrMoveAccessDenied,
+		},
+		{
+			description:       "can move a folder to the root with folder create permissions",
+			destinationFolder: "",
+			permissions: map[string][]string{
+				dashboards.ActionFoldersCreate: {},
+			},
+		},
+		{
+			description:       "can't move a folder to another folder where user has higher plugin permissions",
+			destinationFolder: destFolder.UID,
+			permissions: map[string][]string{
+				dashboards.ActionFoldersWrite: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(destFolder.UID),
+				},
+				"some_plugin:action": {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(destFolder.UID),
+				},
+			},
+			expectedErr: dashboards.ErrFolderAccessEscalation,
+		},
+		{
+			description:       "can move a folder to another folder where user has lower permissions",
+			destinationFolder: destFolder.UID,
+			permissions: map[string][]string{
+				dashboards.ActionFoldersWrite: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(destFolder.UID),
+				},
+				"some_plugin:action": {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+				},
+			},
+		},
+		{
+			description:       "can't move a folder to another folder where user has higher plugin permissions through inheritance",
+			destinationFolder: destFolder.UID,
+			permissions: map[string][]string{
+				dashboards.ActionFoldersWrite: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(destFolder.UID),
+				},
+				"some_plugin:action": {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(destParent.UID),
+				},
+			},
+			expectedErr: dashboards.ErrFolderAccessEscalation,
+		},
+	}
+
+	for _, tc := range testCases {
+		usr := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+		usr.Permissions[orgID] = tc.permissions
+
+		t.Run(tc.description, func(t *testing.T) {
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: sourceFolder.UID, NewParentUID: tc.destinationFolder, OrgID: orgID, SignedInUser: usr})
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tc.expectedErr)
 			}
 		})
 	}
