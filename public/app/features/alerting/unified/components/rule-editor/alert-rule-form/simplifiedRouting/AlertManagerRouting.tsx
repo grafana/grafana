@@ -27,7 +27,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const {
     isLoading,
     error: errorInContactPointStatus,
-    data: contactPoints = [],
+    contactPoints = [],
     refetch: refetchReceivers,
   } = useGetContactPoints();
 

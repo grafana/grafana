@@ -71,8 +71,10 @@ export const useGetContactPoints = () => {
   const contactPointsListResponse = useGetContactPointsListQuery();
 
   return useMemo(() => {
-    if (onCallResponse?.isLoading || !alertNotifiers.data || !contactPointsListResponse.data) {
-      return contactPointsListResponse;
+    const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;
+
+    if (isLoading || !contactPointsListResponse.data) {
+      return { ...contactPointsListResponse, contactPoints: [] };
     }
 
     const enhanced = enhanceContactPointsWithMetadata(
@@ -85,9 +87,15 @@ export const useGetContactPoints = () => {
 
     return {
       ...contactPointsListResponse,
-      data: enhanced,
+      contactPoints: enhanced,
     };
-  }, [alertNotifiers.data, contactPointsListResponse, onCallResponse]);
+  }, [
+    alertNotifiers.data,
+    alertNotifiers.isLoading,
+    contactPointsListResponse,
+    onCallResponse?.data,
+    onCallResponse.isLoading,
+  ]);
 };
 
 export function useContactPointsWithStatus() {
