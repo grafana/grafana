@@ -662,7 +662,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 	}
 
 	promhttp.
-		HandlerFor(hs.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
+		HandlerFor(hs.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true, DisableCompression: true}).
 		ServeHTTP(ctx.Resp, ctx.Req)
 }
 

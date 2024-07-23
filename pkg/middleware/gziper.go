@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"bufio"
-	"compress/gzip" // commment to test the current state
 	"fmt"
 	"net"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/klauspost/compress/gzip"
 )
 
 type gzipResponseWriter struct {
@@ -45,8 +45,7 @@ var gzipIgnoredPaths = []matcher{
 	prefix("/api/datasources"),
 	prefix("/api/plugins"),
 	prefix("/api/plugin-proxy/"),
-	prefix("/api/gnet/"), // Already gzipped by grafana.com.
-	prefix("/metrics"),
+	prefix("/api/gnet/"),     // Already gzipped by grafana.com.
 	prefix("/api/live/ws"),   // WebSocket does not support gzip compression.
 	prefix("/api/live/push"), // WebSocket does not support gzip compression.
 	substr("/resources"),
