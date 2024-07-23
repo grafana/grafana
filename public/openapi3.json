@@ -12460,6 +12460,23 @@
         },
         "type": "array"
       },
+      "healthResponse": {
+        "properties": {
+          "commit": {
+            "type": "string"
+          },
+          "database": {
+            "type": "string"
+          },
+          "enterpriseCommit": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "integration": {
         "description": "Integration integration",
         "properties": {
@@ -18839,6 +18856,30 @@
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "tags": [
           "folder_permissions"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "apiHealthHandler will return ok if Grafana's web server is running and it\ncan access the database. If the database cannot be accessed it will return\nhttp status code 503.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/healthResponse"
+                }
+              }
+            },
+            "description": "healthResponse"
+          },
+          "503": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "health"
         ]
       }
     },
