@@ -3,9 +3,13 @@
 package apistore
 
 import (
-	"path"
+	"context"
+	"os"
+	"path/filepath"
 	"time"
 
+	"gocloud.dev/blob/fileblob"
+	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -21,43 +25,85 @@ import (
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	client resource.ResourceStoreClient
-	Codec  runtime.Codec
+	client   resource.ResourceStoreClient
+	original storagebackend.Config
 }
 
-func NewRESTOptionsGetterForServer(server resource.ResourceServer, codec runtime.Codec) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceStoreClient, original storagebackend.Config) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client: resource.NewLocalResourceStoreClient(server),
-		Codec:  codec,
+		client:   client,
+		original: original,
 	}
 }
 
-func NewRESTOptionsGetter(client resource.ResourceStoreClient, codec runtime.Codec) *RESTOptionsGetter {
-	return &RESTOptionsGetter{
-		client: client,
-		Codec:  codec,
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
+		Bucket: memblob.OpenBucket(&memblob.Options{}),
+	})
+	if err != nil {
+		return nil, err
 	}
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend: backend,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return NewRESTOptionsGetterForClient(
+		resource.NewLocalResourceStoreClient(server),
+		originalStorageConfig,
+	), nil
 }
 
-func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+// Optionally, this constructor allows specifying directories
+// for resources that are required to be read/watched on startup and there
+// won't be any write operations that initially bootstrap their directories
+func NewRESTOptionsGetterForFile(path string,
+	originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	if path == "" {
+		path = filepath.Join(os.TempDir(), "grafana-apiserver")
+	}
+
+	bucket, err := fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
+		CreateDir: true,
+		Metadata:  fileblob.MetadataDontWrite, // skip
+	})
+	if err != nil {
+		return nil, err
+	}
+	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
+		Bucket: bucket,
+	})
+	if err != nil {
+		return nil, err
+	}
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend: backend,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return NewRESTOptionsGetterForClient(
+		resource.NewLocalResourceStoreClient(server),
+		originalStorageConfig,
+	), nil
+}
+
+func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
-			Type:   "custom",
-			Prefix: "",
-			Transport: storagebackend.TransportConfig{
-				ServerList: []string{
-					// ??? string(connectionInfo),
-				},
-			},
-			Codec:                     f.Codec,
-			EncodeVersioner:           nil,
-			Transformer:               nil,
+			Type:                      "resource",
+			Prefix:                    "resource/", // Not actually used
+			Transport:                 storagebackend.TransportConfig{},
+			Codec:                     r.original.Codec,
+			EncodeVersioner:           r.original.EncodeVersioner,
+			Transformer:               r.original.Transformer,
 			CompactionInterval:        0,
 			CountMetricPollPeriod:     0,
 			DBMetricPollInterval:      0,
 			HealthcheckTimeout:        0,
 			ReadycheckTimeout:         0,
-			StorageObjectCountTracker: nil,
+			StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
 		},
 		GroupResource: resource,
 	}
@@ -74,13 +120,14 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, resource, f.client, f.Codec, keyFunc, newFunc, newListFunc, getAttrsFunc)
+			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
 		},
-		DeleteCollectionWorkers:   0,
-		EnableGarbageCollection:   false,
-		ResourcePrefix:            path.Join(storageConfig.Prefix, resource.Group, resource.Resource),
+		DeleteCollectionWorkers: 0,
+		EnableGarbageCollection: false,
+		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
+		ResourcePrefix:            "/group/" + resource.Group + "/resource/" + resource.Resource,
 		CountMetricPollPeriod:     1 * time.Second,
-		StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
+		StorageObjectCountTracker: storageConfig.Config.StorageObjectCountTracker,
 	}
 
 	return ret, nil

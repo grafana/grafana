@@ -1,3 +1,4 @@
+import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Text } from '@grafana/ui';
 
 import { Trans, t } from '../../../core/internationalization';
@@ -14,6 +15,11 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoadi
   const numberOfDashboards = selectedDashboards.length;
 
   const onRestore = async () => {
+    reportInteraction('grafana_restore_confirm_clicked', {
+      item_counts: {
+        dashboard: numberOfDashboards,
+      },
+    });
     await onConfirm();
     onDismiss();
   };

@@ -99,20 +99,24 @@ export function PluginDetailsPage({
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    alert: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    subtitle: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `,
+    alert: css({
+      marginBottom: theme.spacing(2),
+    }),
+    subtitle: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
     // Needed due to block formatting context
-    tabContent: css`
-      overflow: auto;
-      height: 100%;
-      padding-left: 5px;
-    `,
+    tabContent: config.featureToggles.bodyScrolling
+      ? css({
+          paddingLeft: '5px',
+        })
+      : css({
+          overflow: 'auto',
+          height: '100%',
+          paddingLeft: '5px',
+        }),
   };
 };
 

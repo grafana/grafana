@@ -74,7 +74,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	claims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
 	if err != nil {
-		s.log.Error("Failed to verify access token", "error", err)
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
 
@@ -82,7 +81,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	if idToken != "" {
 		idTokenClaims, err := s.idTokenVerifier.Verify(ctx, idToken)
 		if err != nil {
-			s.log.Error("Failed to verify id token", "error", err)
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
 

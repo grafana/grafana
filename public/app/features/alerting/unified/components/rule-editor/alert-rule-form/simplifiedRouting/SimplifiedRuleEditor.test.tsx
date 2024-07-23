@@ -14,6 +14,7 @@ import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as useContactPoints from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import * as utils_config from 'app/features/alerting/unified/utils/config';
 import {
@@ -25,10 +26,11 @@ import {
 import { getDefaultQueries } from 'app/features/alerting/unified/utils/rule-form';
 import { searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { grafanaRulerEmptyGroup, grafanaRulerNamespace2, grafanaRulerRule } from '../../../../mocks/alertRuleApi';
+import { grafanaRulerEmptyGroup, grafanaRulerNamespace2, grafanaRulerRule } from '../../../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../../../testSetup/datasources';
 import { RECEIVER_META_KEY } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
@@ -159,6 +161,14 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       expect(screen.getByText('Contact point is required.')).toBeInTheDocument();
       expect(mocks.api.setRulerRuleGroup).not.toHaveBeenCalled();
     });
+  });
+  it('simplified routing is not available when Grafana AM is not enabled', async () => {
+    config.featureToggles.alertingSimplifiedRouting = true;
+    setAlertmanagerChoices(AlertmanagerChoice.External, 1);
+    renderSimplifiedRuleEditor();
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+
+    expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument();
   });
 
   it('can create new grafana managed alert when using simplified routing and selecting a contact point', async () => {

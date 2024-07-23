@@ -137,7 +137,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       borderLeft: 'none',
       borderTopRightRadius: theme.shape.borderRadius(2),
       borderBottomRightRadius: theme.shape.borderRadius(2),
-      whiteSpace: 'nowrap',
+      whiteSpace: 'pre',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '300px',

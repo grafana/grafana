@@ -7,11 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
-	"golang.org/x/exp/slices"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"

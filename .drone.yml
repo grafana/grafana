@@ -2856,8 +2856,26 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --version-tag
-    ${DRONE_TAG}
+  - "\n    debug=\n    if [[ -n $${DRY_RUN} ]];  then debug=echo; fi\n    docker login
+    -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
+    images\n    $debug docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $debug docker push grafana/grafana-image-tags:$${TAG}-armv7\n
+    \   $debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $debug docker
+    push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n    # Create the grafana
+    manifests\n    $debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64
+    \      grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7\n\n
+    \   $debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
+    \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then\n        $debug
+    docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64
+    \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
+    \       $debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \       $debug docker manifest push grafana/grafana:latest\n        $debug docker
+    manifest push grafana/grafana:latest-ubuntu\n\n    fi\n    "
   depends_on:
   - fetch-images
   environment:
@@ -2865,15 +2883,7 @@ steps:
       from_secret: docker_password
     DOCKER_USER:
       from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk:431.0.0
+  image: docker:27-cli
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -2906,6 +2916,100 @@ trigger:
   - promote
   target:
   - public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: manually-publish-docker-public
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.19.1
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.22.4-alpine
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition oss
+  depends_on:
+  - compile-build-cmd
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_grafanauploads
+  image: google/cloud-sdk:431.0.0
+  name: fetch-images
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - "\n    debug=\n    if [[ -n $${DRY_RUN} ]];  then debug=echo; fi\n    docker login
+    -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}\n\n    # Push the grafana-image-tags
+    images\n    $debug docker push grafana/grafana-image-tags:$${TAG}-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-arm64\n    $debug docker push grafana/grafana-image-tags:$${TAG}-armv7\n
+    \   $debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64\n    $debug
+    docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64\n    $debug docker
+    push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n    # Create the grafana
+    manifests\n    $debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64
+    \      grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7\n\n
+    \   $debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \      grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \   # Push the grafana manifests\n    $debug docker manifest push grafana/grafana:$${TAG}\n
+    \   $debug docker manifest push grafana/grafana:$${TAG}-ubuntu\n\n    # if LATEST
+    is set, then also create & push latest\n    if [[ -n $${LATEST} ]]; then\n        $debug
+    docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64
+    \          grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7\n
+    \       $debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
+    \          grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7\n\n
+    \       $debug docker manifest push grafana/grafana:latest\n        $debug docker
+    manifest push grafana/grafana:latest-ubuntu\n\n    fi\n    "
+  depends_on:
+  - fetch-images
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+  image: docker:27-cli
+  name: publish-images-grafana
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+  - promote
+  target:
+  - publish-docker-public
 type: docker
 volumes:
 - host:
@@ -3141,6 +3245,130 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: verify-linux-packages
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - 'echo "Step 1: Updating package lists..."'
+  - apt-get update >/dev/null 2>&1
+  - 'echo "Step 2: Installing prerequisites..."'
+  - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
+    wget >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - mkdir -p /etc/apt/keyrings/
+  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
+    > /dev/null
+  - 'echo "Step 4: Adding Grafana repository..."'
+  - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
+    main" | tee -a /etc/apt/sources.list.d/grafana.list
+  - 'echo "Step 5: Installing Grafana..."'
+  - for i in $(seq 1 10); do
+  - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
+    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 10 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
+  - 'echo "Step 6: Verifying Grafana installation..."'
+  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  - echo "Verification complete."
+  depends_on: []
+  environment: {}
+  image: ubuntu:22.04
+  name: verify-linux-DEB-packages
+- commands:
+  - 'echo "Step 1: Updating package lists..."'
+  - dnf check-update -y >/dev/null 2>&1 || true
+  - 'echo "Step 2: Installing prerequisites..."'
+  - dnf install -y dnf-utils >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://rpm.grafana.com/gpg.key
+  - 'echo "Step 4: Configuring Grafana repository..."'
+  - |-
+    echo '[grafana]
+    name=grafana
+    baseurl=https://rpm.grafana.com
+    repo_gpgcheck=0
+    enabled=1
+    gpgcheck=0
+    gpgkey=https://rpm.grafana.com/gpg.key
+    sslverify=1
+    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+    ' > /etc/yum.repos.d/grafana.repo
+  - 'echo "Step 5: Checking RPM repository..."'
+  - dnf list available grafana-${TAG}
+  - if [ $? -eq 0 ]; then
+  - '    echo "Grafana package found in repository. Installing from repo..."'
+  - for i in $(seq 1 5); do
+  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 5 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
+  - '    echo "Verifying GPG key..."'
+  - '    rpm --import https://rpm.grafana.com/gpg.key'
+  - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
+  - else
+  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    dnf repolist'
+  - '    dnf list available grafana*'
+  - '    exit 1'
+  - fi
+  - 'echo "Step 6: Verifying Grafana installation..."'
+  - if rpm -q grafana | grep -q "${TAG}"; then
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  - echo "Verification complete."
+  depends_on: []
+  environment: {}
+  image: rockylinux:9
+  name: verify-linux-RPM-packages
+trigger:
+  event:
+  - promote
+  target: verify-linux-packages
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 depends_on:
 - publish-artifacts-public
 - publish-docker-public
@@ -3207,6 +3435,107 @@ steps:
     service_account_json:
       from_secret: packages_service_account
     target_bucket: grafana-packages
+- commands:
+  - 'echo "Step 1: Updating package lists..."'
+  - apt-get update >/dev/null 2>&1
+  - 'echo "Step 2: Installing prerequisites..."'
+  - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
+    wget >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - mkdir -p /etc/apt/keyrings/
+  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
+    > /dev/null
+  - 'echo "Step 4: Adding Grafana repository..."'
+  - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
+    main" | tee -a /etc/apt/sources.list.d/grafana.list
+  - 'echo "Step 5: Installing Grafana..."'
+  - for i in $(seq 1 10); do
+  - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
+    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 10 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
+  - 'echo "Step 6: Verifying Grafana installation..."'
+  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  - echo "Verification complete."
+  depends_on:
+  - publish-linux-packages-deb
+  environment: {}
+  image: ubuntu:22.04
+  name: verify-linux-DEB-packages
+- commands:
+  - 'echo "Step 1: Updating package lists..."'
+  - dnf check-update -y >/dev/null 2>&1 || true
+  - 'echo "Step 2: Installing prerequisites..."'
+  - dnf install -y dnf-utils >/dev/null 2>&1
+  - 'echo "Step 3: Adding Grafana GPG key..."'
+  - rpm --import https://rpm.grafana.com/gpg.key
+  - 'echo "Step 4: Configuring Grafana repository..."'
+  - |-
+    echo '[grafana]
+    name=grafana
+    baseurl=https://rpm.grafana.com
+    repo_gpgcheck=0
+    enabled=1
+    gpgcheck=0
+    gpgkey=https://rpm.grafana.com/gpg.key
+    sslverify=1
+    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+    ' > /etc/yum.repos.d/grafana.repo
+  - 'echo "Step 5: Checking RPM repository..."'
+  - dnf list available grafana-${TAG}
+  - if [ $? -eq 0 ]; then
+  - '    echo "Grafana package found in repository. Installing from repo..."'
+  - for i in $(seq 1 5); do
+  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
+  - '        echo "Command succeeded on attempt $i"'
+  - '        break'
+  - '    else'
+  - '        echo "Attempt $i failed"'
+  - '        if [ $i -eq 5 ]; then'
+  - '            echo ''All attempts failed'''
+  - '            exit 1'
+  - '        fi'
+  - '        echo "Waiting 60 seconds before next attempt..."'
+  - '        sleep 60'
+  - '    fi'
+  - done
+  - '    echo "Verifying GPG key..."'
+  - '    rpm --import https://rpm.grafana.com/gpg.key'
+  - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
+  - else
+  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    dnf repolist'
+  - '    dnf list available grafana*'
+  - '    exit 1'
+  - fi
+  - 'echo "Step 6: Verifying Grafana installation..."'
+  - if rpm -q grafana | grep -q "${TAG}"; then
+  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - else
+  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    exit 1'
+  - fi
+  - echo "Verification complete."
+  depends_on:
+  - publish-linux-packages-rpm
+  environment: {}
+  image: rockylinux:9
+  name: verify-linux-RPM-packages
 - commands:
   - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
   depends_on:
@@ -4890,6 +5219,7 @@ steps:
   - name: config
     path: /root/.docker/
 - commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:27-cli
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.22.4-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
@@ -4915,6 +5245,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.10.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4925,6 +5256,7 @@ steps:
   - name: config
     path: /root/.docker/
 - commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL docker:27-cli
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.22.4-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:20.9.0-alpine
@@ -4950,6 +5282,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.10.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
+  - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
   depends_on:
   - authenticate-gcr
   environment:
@@ -5181,6 +5514,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 33b84712df805ae55115bdfedc6c40f71c75e7d6065656b49295b0f78f47bb9d
+hmac: 2478fec0f251bc9f1eeaa692cdc5b150e7d6f93f143c1b8e6a149fada98cd097
 
 ...

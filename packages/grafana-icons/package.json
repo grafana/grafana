@@ -34,7 +34,7 @@
     "build": "yarn generate && rollup -c rollup.config.ts"
   },
   "devDependencies": {
-    "@babel/core": "7.24.7",
+    "@babel/core": "7.24.9",
     "@grafana/tsconfig": "^1.3.0-rc1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
@@ -45,7 +45,7 @@
     "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/babel__core": "^7",
-    "@types/node": "20.14.2",
+    "@types/node": "20.14.11",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "esbuild": "0.20.2",

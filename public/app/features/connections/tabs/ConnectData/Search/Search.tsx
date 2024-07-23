@@ -2,16 +2,17 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   searchContainer: css({
     display: 'flex',
     justifyContent: 'space-between',
 
     position: 'sticky',
-    top: 0,
+    top: headerHeight,
     backgroundColor: theme.colors.background.primary,
     zIndex: 2,
     padding: theme.spacing(2, 0),
@@ -26,7 +27,8 @@ export interface Props {
 }
 
 export const Search = ({ onChange, value }: Props) => {
-  const styles = useStyles2(getStyles);
+  const chromeHeaderHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, config.featureToggles.bodyScrolling ? chromeHeaderHeight ?? 0 : 0);
 
   return (
     <div className={styles.searchContainer}>

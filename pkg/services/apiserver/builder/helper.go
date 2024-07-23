@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -10,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/version"
@@ -26,7 +27,10 @@ import (
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/web"
+
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
@@ -98,6 +102,7 @@ func SetupConfig(
 
 		// Needs to run last in request chain to function as expected, hence we register it first.
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 
@@ -136,6 +141,10 @@ func SetupConfig(
 	return nil
 }
 
+type ServerLockService interface {
+	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
+}
+
 func InstallAPIs(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
@@ -144,15 +153,40 @@ func InstallAPIs(
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
 	reg prometheus.Registerer,
+	kvStore grafanarest.NamespacedKVStore,
+	serverLock ServerLockService,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
-	dualWriteEnabled := storageOpts.StorageType != options.StorageTypeLegacy
+	var dualWrite grafanarest.DualWriteBuilder
+	if storageOpts.StorageType != options.StorageTypeLegacy {
+		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
+
+			// Get the option from custom.ini/command line
+			// when missing this will default to mode zero (legacy only)
+			mode := storageOpts.DualWriterDesiredModes[key]
+
+			// Moving from one version to the next can only happen after the previous step has
+			// successfully synchronized.
+			currentMode, err := grafanarest.SetDualWritingMode(context.Background(), kvStore, legacy, storage, key, mode, reg)
+			if err != nil {
+				return nil, err
+			}
+			switch currentMode {
+			case grafanarest.Mode0:
+				return legacy, nil
+			case grafanarest.Mode4:
+				return storage, nil
+			default:
+			}
+			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg), nil
+		}
+	}
 
 	for _, b := range builders {
-		mode := b.GetDesiredDualWriterMode(dualWriteEnabled, storageOpts.DualWriterDesiredModes)
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, mode, reg)
+		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
 		if err != nil {
 			return err
 		}

@@ -276,6 +276,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       },
     }),
     // Grafana Managed Alertmanager only
+    // TODO: Remove as part of migration to k8s API for receivers
     getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
       query: () => ({ url: '/api/v1/notifications/receivers' }),
     }),

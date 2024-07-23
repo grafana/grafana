@@ -12,15 +12,13 @@ import {
   DataSourceRef,
   PluginExtensionLink,
   PluginExtensionTypes,
-  PluginMeta,
-  PluginType,
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
 import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertManagerCortexConfig,
@@ -174,20 +172,6 @@ export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): Ru
   rules: [mockRulerAlertingRule()],
   ...partial,
 });
-
-export const promRuleFromRulerRule = (
-  rulerRule: RulerAlertingRuleDTO,
-  override?: Partial<AlertingRule>
-): AlertingRule => {
-  return mockPromAlertingRule({
-    name: rulerRule.alert,
-    query: rulerRule.expr,
-    labels: rulerRule.labels,
-    annotations: rulerRule.annotations,
-    type: PromRuleType.Alerting,
-    ...override,
-  });
-};
 
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
@@ -810,28 +794,3 @@ export function mockDashboardDto(
     meta: { ...meta },
   };
 }
-
-export const getMockPluginMeta: (id: string, name: string) => PluginMeta = (id, name) => {
-  return {
-    name,
-    id,
-    type: PluginType.app,
-    module: `plugins/${id}/module`,
-    baseUrl: `public/plugins/${id}`,
-    info: {
-      author: { name: 'Grafana Labs' },
-      description: name,
-      updated: '',
-      version: '',
-      links: [],
-      logos: {
-        small: '',
-        large: '',
-      },
-      screenshots: [],
-    },
-  };
-};
-
-export const labelsPluginMetaMock = getMockPluginMeta('grafana-labels-app', 'Grafana IRM Labels');
-export const onCallPluginMetaMock = getMockPluginMeta('grafana-oncall-app', 'Grafana OnCall');
