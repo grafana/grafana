@@ -106,7 +106,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       if (evt.payload.state.name === VAR_FILTERS) {
         const filtersApplied = this.state.filtersApplied;
         const urlState = getUrlSyncManager().getUrlState(trail);
-        this.addTrailStep(trail, 'filters', parseFilterArrayAsTooltipDetail(urlState, filtersApplied));
+        this.addTrailStep(trail, 'filters', parseFilterTooltip(urlState, filtersApplied));
         this.setState({ filtersApplied });
       }
     });
@@ -126,7 +126,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
             parseTimeTooltip({
               from: newState.from,
               to: newState.to,
-              timezone: newState.timeZone,
+              timeZone: newState.timeZone,
             })
           );
         }
@@ -175,7 +175,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         detail = step.urlValues.metric?.toString() ?? '';
         break;
       case 'filters':
-        detail = parseFilterArrayAsTooltipDetail(step.urlValues, filtersApplied);
+        detail = parseFilterTooltip(step.urlValues, filtersApplied);
         break;
       case 'time':
         detail = parseTimeTooltip(step.urlValues);
@@ -314,7 +314,7 @@ export function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
   return `${from} - ${to}`;
 }
 
-function parseFilterArrayAsTooltipDetail(urlValues: SceneObjectUrlValues, filtersApplied: string[]): string {
+export function parseFilterTooltip(urlValues: SceneObjectUrlValues, filtersApplied: string[]): string {
   let detail = '';
   const varFilters = urlValues['var-filters'];
   if (isDataTrailHistoryFilter(varFilters)) {
