@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import { useReducer } from 'react';
-import * as React from 'react';
+import { SyntheticEvent, useReducer } from 'react';
 
-import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
+import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -12,21 +11,28 @@ import {
   SceneCSSGridItem,
   SceneCSSGridLayout,
   SceneFlexItem,
+  SceneFlexLayout,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip, Input } from '@grafana/ui';
+import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
+import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
 import {
@@ -54,7 +60,9 @@ interface MetricPanel {
 }
 
 export interface MetricSelectSceneState extends SceneObjectState {
-  body: SceneCSSGridLayout;
+  body: SceneFlexLayout | SceneCSSGridLayout;
+  rootGroup?: Node;
+  metricPrefix?: string;
   showPreviews?: boolean;
   metricNames?: string[];
   metricNamesLoading?: boolean;
@@ -64,16 +72,23 @@ export interface MetricSelectSceneState extends SceneObjectState {
 
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
+const METRIC_PREFIX_ALL = 'all';
 
 const MAX_METRIC_NAMES = 20000;
 
-export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
+const viewByTooltip =
+  'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
+
+export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
+  private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
+      showPreviews: true,
       $variables: state.$variables,
+      metricPrefix: state.metricPrefix ?? METRIC_PREFIX_ALL,
       body:
         state.body ??
         new SceneCSSGridLayout({
@@ -82,13 +97,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           autoRows: ROW_PREVIEW_HEIGHT,
           isLazy: true,
         }),
-      showPreviews: true,
       ...state,
     });
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
@@ -96,6 +111,18 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       this._debounceRefreshMetricNames();
     },
   });
+
+  getUrlState() {
+    return { metricPrefix: this.state.metricPrefix };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    if (typeof values.metricPrefix === 'string') {
+      if (this.state.metricPrefix !== values.metricPrefix) {
+        this.setState({ metricPrefix: values.metricPrefix });
+      }
+    }
+  }
 
   private _onActivate() {
     if (this.state.body.state.children.length === 0) {
@@ -159,8 +186,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this._debounceRefreshMetricNames();
   }
 
-  private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
-
   private async _refreshMetricNames() {
     const trail = getTrailFor(this);
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
@@ -199,7 +224,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           `Add search terms or label filters to narrow down the number of metric names returned.`
         : undefined;
 
-      this.setState({ metricNames, metricNamesLoading: false, metricNamesWarning, metricNamesError: response.error });
+      let bodyLayout = this.state.body;
+      const rootGroupNode = await this.generateGroups(metricNames);
+
+      this.setState({
+        metricNames,
+        rootGroup: rootGroupNode,
+        body: bodyLayout,
+        metricNamesLoading: false,
+        metricNamesWarning,
+        metricNamesError: response.error,
+      });
     } catch (err: unknown) {
       let error = 'Unknown error';
       if (isFetchError(err)) {
@@ -214,19 +249,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
   }
 
-  private sortedPreviewMetrics() {
-    return Object.values(this.previewCache).sort((a, b) => {
-      if (a.isEmpty && b.isEmpty) {
-        return a.index - b.index;
-      }
-      if (a.isEmpty) {
-        return 1;
-      }
-      if (b.isEmpty) {
-        return -1;
-      }
-      return a.index - b.index;
-    });
+  private async generateGroups(metricNames: string[] = []) {
+    const groopParser = new Parser();
+    groopParser.config = {
+      ...groopParser.config,
+      maxDepth: 2,
+      minGroupSize: 2,
+      miscGroupKey: 'misc',
+    };
+    const { root: rootGroupNode } = groopParser.parse(metricNames);
+    return rootGroupNode;
   }
 
   private onMetricNamesChanged() {
@@ -286,32 +318,67 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       return;
     }
 
-    const children: SceneFlexItem[] = [];
+    if (!this.state.rootGroup) {
+      const rootGroupNode = await this.generateGroups(this.state.metricNames);
+      this.setState({ rootGroup: rootGroupNode });
+    }
 
+    const children = await this.populateFilterableViewLayout();
+    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+    this.state.body.setState({ children, autoRows: rowTemplate });
+  }
+
+  private async populateFilterableViewLayout() {
     const trail = getTrailFor(this);
-
-    const metricsList = this.sortedPreviewMetrics();
-
     // Get the current filters to determine the count of them
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
+
+    let rootGroupNode = this.state.rootGroup;
+    if (!rootGroupNode) {
+      rootGroupNode = await this.generateGroups(this.state.metricNames);
+      this.setState({ rootGroup: rootGroupNode });
+    }
+
+    const children: SceneFlexItem[] = [];
+
+    for (const [groupKey, groupNode] of rootGroupNode.groups) {
+      if (this.state.metricPrefix !== METRIC_PREFIX_ALL && this.state.metricPrefix !== groupKey) {
+        continue;
+      }
+
+      for (const [_, value] of groupNode.groups) {
+        const panels = await this.populatePanels(trail, filters, value.values);
+        children.push(...panels);
+      }
+
+      const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
+      children.push(...morePanelsMaybe);
+    }
+
+    return children;
+  }
+
+  private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
     const currentFilterCount = filters?.length || 0;
 
-    for (let index = 0; index < metricsList.length; index++) {
-      const metric = metricsList[index];
-      const metadata = await trail.getMetricMetadata(metric.name);
+    const previewPanelLayoutItems: SceneFlexItem[] = [];
+    for (let index = 0; index < values.length; index++) {
+      const metricName = values[index];
+      const metric: MetricPanel = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
+      const metadata = await trail.getMetricMetadata(metricName);
       const description = getMetricDescription(metadata);
 
       if (this.state.showPreviews) {
         if (metric.itemRef && metric.isPanel) {
-          children.push(metric.itemRef.resolve());
+          previewPanelLayoutItems.push(metric.itemRef.resolve());
           continue;
         }
         const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
-        children.push(panel);
+        previewPanelLayoutItems.push(panel);
       } else {
         const panel = new SceneCSSGridItem({
           $variables: new SceneVariableSet({
@@ -321,13 +388,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         });
         metric.itemRef = panel.getRef();
         metric.isPanel = false;
-        children.push(panel);
+        previewPanelLayoutItems.push(panel);
       }
     }
 
-    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
-
-    this.state.body.setState({ children, autoRows: rowTemplate });
+    return previewPanelLayoutItems;
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
@@ -336,15 +401,34 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       metricPanel.isEmpty = isEmpty;
       metricPanel.loaded = isLoaded;
       this.previewCache[metric] = metricPanel;
-      this.buildLayout();
+      if (this.state.metricPrefix === 'All') {
+        this.buildLayout();
+      }
     }
   };
 
-  public onSearchQueryChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
+  public onSearchQueryChange = (evt: SyntheticEvent<HTMLInputElement>) => {
     const metricSearch = evt.currentTarget.value;
     const trail = getTrailFor(this);
     // Update the variable
     trail.setState({ metricSearch });
+  };
+
+  public onPrefixFilterChange = (val: SelectableValue) => {
+    this.setState({ metricPrefix: val.value });
+    this.buildLayout();
+  };
+
+  public reportPrefixFilterInteraction = (isMenuOpen: boolean) => {
+    const trail = getTrailFor(this);
+    const { steps, currentStep } = trail.state.history.state;
+    const previousMetric = steps[currentStep]?.trailState.metric;
+    const isRelatedMetricSelector = previousMetric !== undefined;
+
+    reportExploreMetrics('prefix_filter_clicked', {
+      from: isRelatedMetricSelector ? 'related_metrics' : 'metric_list',
+      action: isMenuOpen ? 'open' : 'close',
+    });
   };
 
   public onTogglePreviews = () => {
@@ -353,8 +437,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showPreviews, body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning } =
-      model.useState();
+    const {
+      showPreviews,
+      body,
+      metricNames,
+      metricNamesError,
+      metricNamesLoading,
+      metricNamesWarning,
+      rootGroup,
+      metricPrefix,
+    } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
     const styles = useStyles2(getStyles);
@@ -399,6 +491,29 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               suffix={metricNamesWarningIcon}
             />
           </Field>
+          <Field
+            label={
+              <div className={styles.displayOptionTooltip}>
+                <Trans i18nKey="explore-metrics.viewBy">View by</Trans>
+                <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={viewByTooltip} />
+              </div>
+            }
+            className={styles.displayOption}
+          >
+            <Select
+              value={metricPrefix}
+              onChange={model.onPrefixFilterChange}
+              onOpenMenu={() => model.reportPrefixFilterInteraction(true)}
+              onCloseMenu={() => model.reportPrefixFilterInteraction(false)}
+              options={[
+                {
+                  label: 'All metric names',
+                  value: METRIC_PREFIX_ALL,
+                },
+                ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
+              ]}
+            />
+          </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         {metricNamesError && (
@@ -418,7 +533,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           </Alert>
         )}
         <StatusWrapper {...{ isLoading, blockingMessage }}>
-          <body.Component model={body} />
+          {body instanceof SceneFlexLayout && <body.Component model={body} />}
+          {body instanceof SceneCSSGridLayout && <body.Component model={body} />}
         </StatusWrapper>
       </div>
     );
@@ -439,7 +555,6 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      flexGrow: 1,
     }),
     headingWrapper: css({
       marginBottom: theme.spacing(0.5),
@@ -454,6 +569,18 @@ function getStyles(theme: GrafanaTheme2) {
     searchField: css({
       flexGrow: 1,
       marginBottom: 0,
+    }),
+    metricTabGroup: css({
+      marginBottom: theme.spacing(2),
+    }),
+    displayOption: css({
+      flexGrow: 0,
+      marginBottom: 0,
+      minWidth: '184px',
+    }),
+    displayOptionTooltip: css({
+      display: 'flex',
+      gap: theme.spacing(1),
     }),
     warningIcon: css({
       color: theme.colors.warning.main,
