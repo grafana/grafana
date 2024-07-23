@@ -2150,3 +2150,24 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
 .drop-element.drop-popover.drop-function-def .drop-content {
   max-width: 416px;
 }
+
+.panel-height-helper {
+  display: block;
+  height: 100%;
+}
+
+.panel-content {
+  padding: $panel-padding;
+  width: 100%;
+  flex-grow: 1;
+  contain: size layout;
+  height: calc(100% - #{$panel-header-height});
+
+  &--no-padding {
+    padding: 0;
+  }
+}
+
+div.flot-text {
+  color: $text-color !important;
+}
