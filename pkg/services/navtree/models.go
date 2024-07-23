@@ -49,6 +49,7 @@ const (
 	NavIDCfgGeneral           = "cfg/general"
 	NavIDCfgPlugins           = "cfg/plugins"
 	NavIDCfgAccess            = "cfg/access"
+	NavIDBookmarks            = "bookmarks"
 )
 
 type NavLink struct {
@@ -70,6 +71,7 @@ type NavLink struct {
 	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 	IsCreateAction bool       `json:"isCreateAction,omitempty"`
 	Keywords       []string   `json:"keywords,omitempty"`
+	ParentItem     *NavLink   `json:"parentItem,omitempty"` // (Optional) The parent item of the nav link
 }
 
 func (node *NavLink) Sort() {
