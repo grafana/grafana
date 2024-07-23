@@ -34,9 +34,11 @@ type ReceiverService struct {
 
 // receiverAccessControlService provides access control for receivers.
 type receiverAccessControlService interface {
+	FilterRead(context.Context, identity.Requester, ...*models.Receiver) ([]*models.Receiver, error)
+	AuthorizeRead(context.Context, identity.Requester, *models.Receiver) error
+	FilterReadDecrypted(context.Context, identity.Requester, ...*models.Receiver) ([]*models.Receiver, error)
+	AuthorizeReadDecrypted(context.Context, identity.Requester, *models.Receiver) error
 	HasList(ctx context.Context, user identity.Requester) (bool, error)
-	HasReadAll(ctx context.Context, user identity.Requester) (bool, error)
-	AuthorizeReadDecryptedAll(ctx context.Context, user identity.Requester) error
 }
 
 type alertmanagerConfigStore interface {
@@ -73,17 +75,6 @@ func NewReceiverService(
 	}
 }
 
-func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requester, reqDecrypt bool) (bool, error) {
-	if !reqDecrypt {
-		return false, nil
-	}
-	if err := rs.authz.AuthorizeReadDecryptedAll(ctx, user); err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
 // GetReceiver returns a receiver by name.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
@@ -96,18 +87,22 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 		return definitions.GettableApiReceiver{}, ErrReceiverNotFound.Errorf("")
 	}
 
-	decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
-	if err != nil {
+	auth := rs.authz.AuthorizeReadDecrypted
+	if !q.Decrypt {
+		auth = rs.authz.AuthorizeRead
+	}
+	if err := auth(ctx, user, postable); err != nil {
 		return definitions.GettableApiReceiver{}, err
 	}
-	decryptFn := rs.decryptOrRedact(ctx, decrypt, q.Name, "")
 
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return definitions.GettableApiReceiver{}, err
 	}
 
-	return PostableToGettableApiReceiver(postable, storedProvenances, decryptFn)
+	rs.decryptOrRedactSecureSettings(ctx, postable, q.Decrypt)
+
+	return PostableToGettableApiReceiver(postable, storedProvenances)
 }
 
 // GetReceivers returns a list of receivers a user has access to.
@@ -124,33 +119,26 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	}
 	postables := revision.GetReceivers(uids)
 
+	filterFn := rs.authz.FilterReadDecrypted
+	if !q.Decrypt {
+		filterFn = rs.authz.FilterRead
+	}
+	filtered, err := filterFn(ctx, user, postables...)
+	if err != nil {
+		return nil, err
+	}
+
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return nil, err
 	}
 
-	decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
-	if err != nil {
-		return nil, err
-	}
-
-	readRedactedAccess, err := rs.authz.HasReadAll(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	// User doesn't have any permissions on the receivers.
-	// This is mostly a safeguard as it should not be possible with current API endpoints + middleware authentication.
-	if !readRedactedAccess {
-		return nil, nil
-	}
-
 	var output []definitions.GettableApiReceiver
-	for i := q.Offset; i < len(postables); i++ {
-		r := postables[i]
+	for i := q.Offset; i < len(filtered); i++ {
+		r := filtered[i]
 
-		decryptFn := rs.decryptOrRedact(ctx, decrypt, r.Name, "")
-		res, err := PostableToGettableApiReceiver(r, storedProvenances, decryptFn)
+		rs.decryptOrRedactSecureSettings(ctx, r, q.Decrypt)
+		res, err := PostableToGettableApiReceiver(r, storedProvenances)
 		if err != nil {
 			return nil, err
 		}
@@ -176,11 +164,6 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 		return nil, err
 	}
 
-	readRedactedAccess, err := rs.authz.HasReadAll(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
 	uids := make([]string, 0, len(q.Names))
 	for _, name := range q.Names {
 		uids = append(uids, legacy_storage.NameToUid(name))
@@ -192,15 +175,17 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 	}
 	postables := revision.GetReceivers(uids)
 
+	if !listAccess {
+		var err error
+		postables, err = rs.authz.FilterRead(ctx, user, postables...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return nil, err
-	}
-
-	// User doesn't have any permissions on the receivers.
-	// This is mostly a safeguard as it should not be possible with current API endpoints + middleware authentication.
-	if !listAccess && !readRedactedAccess {
-		return nil, nil
 	}
 
 	var output []definitions.GettableApiReceiver
@@ -214,8 +199,7 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 			integration.DisableResolveMessage = false
 		}
 
-		decryptFn := rs.decryptOrRedact(ctx, false, r.Name, "")
-		res, err := PostableToGettableApiReceiver(r, storedProvenances, decryptFn)
+		res, err := PostableToGettableApiReceiver(r, storedProvenances)
 		if err != nil {
 			return nil, err
 		}
@@ -301,25 +285,46 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 	return nil
 }
 
-func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, name, fallback string) func(value string) string {
-	return func(value string) string {
-		if !decrypt {
-			return definitions.RedactedValue
+func (rs *ReceiverService) decryptOrRedactSecureSettings(ctx context.Context, recv *models.Receiver, decrypt bool) {
+	decryptOrRedact := rs.redactor()
+	if decrypt {
+		decryptOrRedact = rs.decryptor(ctx)
+	}
+	for _, r := range recv.Integrations {
+		for field, val := range r.SecureSettings {
+			newVal, err := decryptOrRedact(val)
+			if err != nil {
+				newVal = ""
+				rs.log.Warn("failed to decrypt secure setting", "name", recv.Name, "error", err)
+			}
+			r.SecureSettings[field] = newVal
 		}
+	}
+}
 
+// decryptor returns a decryptFn that decrypts a secure setting. If decryption fails, the fallback value is used.
+func (rs *ReceiverService) decryptor(ctx context.Context) decryptFn {
+	return func(value string) (string, error) {
 		decoded, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
-			rs.log.Warn("failed to decode secure setting", "name", name, "error", err)
-			return fallback
+			return "", err
 		}
 		decrypted, err := rs.encryptionService.Decrypt(ctx, decoded)
 		if err != nil {
-			rs.log.Warn("failed to decrypt secure setting", "name", name, "error", err)
-			return fallback
+			return "", err
 		}
-		return string(decrypted)
+		return string(decrypted), nil
 	}
 }
+
+// redactor returns a decryptFn that redacts a secure setting.
+func (rs *ReceiverService) redactor() decryptFn {
+	return func(value string) (string, error) {
+		return definitions.RedactedValue, nil
+	}
+}
+
+type decryptFn = func(value string) (string, error)
 
 // getContactPointProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
 func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *definitions.PostableApiReceiver, orgID int64) (models.Provenance, error) {

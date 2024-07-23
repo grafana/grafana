@@ -2,7 +2,6 @@ package accesscontrol
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -145,11 +144,6 @@ func (s ReceiverAccess[T]) HasRead(ctx context.Context, user identity.Requester,
 	return s.read.Has(ctx, user, receiver)
 }
 
-// HasReadAll checks if user has access to read all redacted receivers. Returns false if user does not have access.
-func (s ReceiverAccess[T]) HasReadAll(ctx context.Context, user identity.Requester) (bool, error) { // TODO: Temporary for legacy compatibility.
-	return s.read.HasAccess(ctx, user, s.read.authorizeAll)
-}
-
 // FilterReadDecrypted filters the given list of receivers based on the read decrypted access control permissions of the user.
 // This method is preferred when many receivers need to be checked.
 func (s ReceiverAccess[T]) FilterReadDecrypted(ctx context.Context, user identity.Requester, receivers ...T) ([]T, error) {
@@ -164,11 +158,4 @@ func (s ReceiverAccess[T]) AuthorizeReadDecrypted(ctx context.Context, user iden
 // HasReadDecrypted checks if user has access to read a decrypted receiver. Returns false if user does not have access.
 func (s ReceiverAccess[T]) HasReadDecrypted(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
 	return s.readDecrypted.Has(ctx, user, receiver)
-}
-
-// AuthorizeReadDecryptedAll checks if user has access to read all decrypted receiver. Returns an error if user does not have access.
-func (s ReceiverAccess[T]) AuthorizeReadDecryptedAll(ctx context.Context, user identity.Requester) error { // TODO: Temporary for legacy compatibility.
-	return s.readDecrypted.HasAccessOrError(ctx, user, s.readDecrypted.authorizeAll, func() string {
-		return fmt.Sprintf("%s %s", s.readDecrypted.action, s.readDecrypted.resource)
-	})
 }

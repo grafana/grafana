@@ -124,13 +124,13 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 			name:    "service returns error when trying to decrypt without permission",
 			decrypt: true,
 			user:    readUser,
-			err:     "[alerting.unauthorized] user is not authorized to read decrypted receiver",
+			err:     "[alerting.unauthorized] user is not authorized to read any decrypted receiver",
 		},
 		{
 			name:    "service returns error if user is nil and decrypt is true",
 			decrypt: true,
 			user:    nil,
-			err:     "[alerting.unauthorized] user is not authorized to read decrypted receiver",
+			err:     "[alerting.unauthorized] user is not authorized to read any decrypted receiver",
 		},
 		{
 			name:    "service decrypts receivers with permission",
