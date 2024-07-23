@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
-import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
+import { fieldReducers, GrafanaTheme2, RawTimeRange, ReducerID, SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -68,6 +68,8 @@ export interface MetricSelectSceneState extends SceneObjectState {
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
+  sortBy: string;
+  sortDirection: string;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
@@ -78,11 +80,27 @@ const MAX_METRIC_NAMES = 20000;
 
 const viewByTooltip =
   'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
+const sortByTooltip =
+  'Calculate a derived quantity from the values in your time series and sort by this criteria. Defaults to standard deviation.';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
   private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
+
+  public sortingOptions = [
+    {
+      value: 'changepoint',
+      label: 'Relevance',
+      description: 'Most relevant time series first',
+    },
+    {
+      value: ReducerID.stdDev,
+      label: 'Dispersion',
+      description: 'Standard deviation of all values in a field',
+    },
+    ...fieldReducers.selectOptions([], (ext) => ext.id !== ReducerID.stdDev).options,
+  ];
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
@@ -97,6 +115,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           autoRows: ROW_PREVIEW_HEIGHT,
           isLazy: true,
         }),
+      sortBy: 'changepoint',
+      sortDirection: 'desc',
       ...state,
     });
 
@@ -414,6 +434,24 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     trail.setState({ metricSearch });
   };
 
+  public onSortByCriteriaChange = (criteria: SelectableValue<string>) => {
+    if (!criteria.value) {
+      return;
+    }
+    this.setState({ sortBy: criteria.value });
+    // setSortByPreference(this.state.target, criteria.value, this.state.direction);
+    // this.publishEvent(new SortCriteriaChanged(criteria.value, this.state.direction), true);
+  };
+
+  public onSortDirectionChange = (sortDirection: SelectableValue<string>) => {
+    if (!sortDirection.value) {
+      return;
+    }
+    this.setState({ sortDirection: sortDirection.value });
+    // setSortByPreference(this.state.target, this.state.sortBy, sortDirection.value);
+    // this.publishEvent(new SortCriteriaChanged(this.state.sortBy, sortDirection.value), true);
+  };
+
   public onPrefixFilterChange = (val: SelectableValue) => {
     this.setState({ metricPrefix: val.value });
     this.buildLayout();
@@ -446,6 +484,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       metricNamesWarning,
       rootGroup,
       metricPrefix,
+      sortBy,
+      sortDirection,
     } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -457,6 +497,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const tooStrict = children.length === 0 && metricSearch;
     const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
+    const sortByValue = model.sortingOptions.find(({ value }) => value === sortBy);
 
     const isLoading = metricNamesLoading && children.length === 0;
 
@@ -511,6 +552,40 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                   value: METRIC_PREFIX_ALL,
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
+              ]}
+            />
+          </Field>
+          <Field
+            label={
+              <div className={styles.displayOptionTooltip}>
+                <Trans i18nKey="explore-metrics.sortBy">Sort by</Trans>
+                <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={sortByTooltip} />
+              </div>
+            }
+            className={styles.displayOption}
+          >
+            <Select
+              value={sortByValue}
+              isSearchable={true}
+              options={model.sortingOptions}
+              placeholder={'Choose criteria'}
+              onChange={model.onSortByCriteriaChange}
+            />
+          </Field>
+          <Field label="Sort direction" className={styles.sortDirection}>
+            <Select
+              onChange={model.onSortDirectionChange}
+              placeholder=""
+              value={sortDirection}
+              options={[
+                {
+                  label: 'Asc',
+                  value: 'asc',
+                },
+                {
+                  label: 'Desc',
+                  value: 'desc',
+                },
               ]}
             />
           </Field>
@@ -577,6 +652,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       marginBottom: 0,
       minWidth: '184px',
+    }),
+    sortDirection: css({
+      flexGrow: 0,
+      marginBottom: 0,
+      minWidth: '100px',
     }),
     displayOptionTooltip: css({
       display: 'flex',
