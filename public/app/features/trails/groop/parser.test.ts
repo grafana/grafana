@@ -73,8 +73,8 @@ describe('Parser', () => {
 
     const miscGroup = lookupNode(grouping.root, 'misc');
     expect(miscGroup).not.toBeNull();
-    expect(miscGroup!.values.length).toBe(52);
-    expect(miscGroup?.descendants).toBe(52);
+    expect(miscGroup!.values.length).toBe(17);
+    expect(miscGroup?.descendants).toBe(17);
   });
 });
 
