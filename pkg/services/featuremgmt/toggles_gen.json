@@ -426,7 +426,8 @@
       "metadata": {
         "name": "autoMigrateXYChartPanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-22T15:44:37Z"
+        "creationTimestamp": "2024-03-22T15:44:37Z",
+        "deletionTimestamp": "2024-07-23T04:21:53Z"
       },
       "spec": {
         "description": "Migrate old XYChart panel to new XYChart2 model",
