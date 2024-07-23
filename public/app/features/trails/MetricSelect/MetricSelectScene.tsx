@@ -26,8 +26,7 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Alert, Field, Icon, InlineSwitch, Input, Tooltip, useStyles2 } from '@grafana/ui';
-import { Select } from '@grafana/ui/';
+import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
@@ -75,6 +74,9 @@ const ROW_CARD_HEIGHT = '64px';
 const METRIC_PREFIX_ALL = 'all';
 
 const MAX_METRIC_NAMES = 20000;
+
+const viewByTooltip =
+  'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
@@ -488,8 +490,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               suffix={metricNamesWarningIcon}
             />
           </Field>
-          <Field label={'View by'} className={styles.displayOption}>
+          <Field
+            label={
+              <div>
+                View by <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={viewByTooltip} />
+              </div>
+            }
+            className={styles.displayOption}
+            htmlFor={'displayOption'}
+          >
             <Select
+              id={'displayOption'}
               onChange={model.onPrefixFilterChange}
               value={metricPrefix}
               onOpenMenu={() => model.reportPrefixFilterInteraction(true)}
