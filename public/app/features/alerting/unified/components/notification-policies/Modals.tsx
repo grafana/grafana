@@ -212,11 +212,9 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useAlertGroupsModal = (): [
-  JSX.Element,
-  (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void,
-  () => void,
-] => {
+const useAlertGroupsModal = (
+  alertManagerSourceName: string
+): [JSX.Element, (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void, () => void] => {
   const [showModal, setShowModal] = useState(false);
   const [alertGroups, setAlertGroups] = useState<AlertmanagerGroup[]>([]);
   const [matchers, setMatchers] = useState<ObjectMatcher[]>([]);
@@ -271,7 +269,7 @@ const useAlertGroupsModal = (): [
           />
           <div>
             {alertGroups.map((group, index) => (
-              <AlertGroup key={index} alertManagerSourceName={''} group={group} />
+              <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName} group={group} />
             ))}
           </div>
         </Stack>
@@ -282,7 +280,7 @@ const useAlertGroupsModal = (): [
         </Modal.ButtonRow>
       </Modal>
     ),
-    [alertGroups, handleDismiss, instancesByState, matchers, formatter, showModal]
+    [alertGroups, handleDismiss, instancesByState, matchers, formatter, showModal, alertManagerSourceName]
   );
 
   return [modalElement, handleShow, handleDismiss];

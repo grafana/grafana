@@ -15,9 +15,6 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.52.0
 
-// Update when github.com/deepmap/oapi-codegen/v2 is updated to support later versions.
-replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.122.0
-
 require (
 	cloud.google.com/go/storage v1.38.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-release-guild
@@ -129,7 +126,7 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240422145632-c33c6b5b6e6b
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240625192351-66ec17e3aa45
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

@@ -2,12 +2,11 @@ import { css, cx } from '@emotion/css';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
-import { ITEM_TYPES } from './ContentOutlineItem';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
@@ -35,8 +34,15 @@ function shouldBeActive(
   }
 }
 
+export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
+  visible: 'grafana.explore.contentOutline.visible',
+  expanded: 'grafana.explore.contentOutline.expanded',
+};
+
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
-  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
+  const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
+    store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
+  );
   const styles = useStyles2(getStyles, contentOutlineExpanded);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
@@ -57,12 +63,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }, {});
   });
 
-  const scrollIntoView = (
-    ref: HTMLElement | null,
-    itemPanelId: string,
-    itemType: ITEM_TYPES | undefined,
-    customOffsetTop = 0
-  ) => {
+  const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
 
@@ -88,10 +89,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       });
 
       if (activeParent) {
-        scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.type, activeParent.customTopOffset);
+        scrollIntoView(activeParent.ref, activeParent.customTopOffset);
       }
     } else {
-      scrollIntoView(item.ref, item.panelId, item.type, item.customTopOffset);
+      scrollIntoView(item.ref, item.customTopOffset);
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'select_section',
         type: item.panelId,
@@ -100,6 +101,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   const toggle = () => {
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, !contentOutlineExpanded);
     toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'outline',

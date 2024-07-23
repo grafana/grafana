@@ -3,6 +3,7 @@ import { Global } from '@emotion/react';
 import { useTheme2 } from '../ThemeContext';
 
 import { getAccessibilityStyles } from './accessibility';
+import { getAlertingStyles } from './alerting';
 import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
@@ -15,7 +16,7 @@ import { getJsonFormatterStyles } from './jsonFormatter';
 import { getLegacySelectStyles } from './legacySelect';
 import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
-import { getQueryPartStyles } from './queryPart';
+import { getQueryEditorStyles } from './queryEditor';
 import { getRcTimePickerStyles } from './rcTimePicker';
 import { getSkeletonStyles } from './skeletonStyles';
 import { getSlateStyles } from './slate';
@@ -30,6 +31,7 @@ export function GlobalStyles() {
       styles={[
         getAccessibilityStyles(theme),
         getAgularPanelStyles(theme),
+        getAlertingStyles(theme),
         getCodeStyles(theme),
         getElementStyles(theme),
         getExtraStyles(theme),
@@ -40,7 +42,7 @@ export function GlobalStyles() {
         getCardStyles(theme),
         getMarkdownStyles(theme),
         getPageStyles(theme),
-        getQueryPartStyles(theme),
+        getQueryEditorStyles(theme),
         getRcTimePickerStyles(theme),
         getSkeletonStyles(theme),
         getSlateStyles(theme),

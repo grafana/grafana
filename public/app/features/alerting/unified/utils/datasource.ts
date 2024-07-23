@@ -47,7 +47,7 @@ export function getRulesDataSources() {
 }
 
 export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
-  return isGrafanaRulesSource(rulesSource) ? 'grafana' : rulesSource.uid ?? rulesSource.id;
+  return isGrafanaRulesSource(rulesSource) ? 'grafana' : (rulesSource.uid ?? rulesSource.id);
 }
 
 export function getRulesDataSource(rulesSourceName: string) {

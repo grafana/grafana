@@ -199,7 +199,7 @@ function getSectionNav(
     subTitle: page.subTitle,
   }));
 
-  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.node);
+  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.main);
 
   main.parentItem = pageNavWithSectionParent;
 

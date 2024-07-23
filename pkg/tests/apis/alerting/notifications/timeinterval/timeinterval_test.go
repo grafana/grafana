@@ -2,8 +2,11 @@ package timeinterval
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"path"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
@@ -24,11 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+//go:embed test-data/*.*
+var testData embed.FS
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -624,5 +631,60 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
+	})
+}
+
+func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	// Prepare environment and create notification policy and rule that use time interval
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
+	require.NoError(t, err)
+	var ruleGroup definitions.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &ruleGroup))
+
+	folderUID := "test-folder"
+	legacyCli.CreateFolder(t, folderUID, "TEST")
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	intervals, err := adminClient.List(ctx, v1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, intervals.Items, 1)
+
+	intervalToDelete := intervals.Items[0]
+
+	t.Run("should fail to delete if time interval is used in rule and routes", func(t *testing.T) {
+		err := adminClient.Delete(ctx, intervalToDelete.Name, v1.DeleteOptions{})
+		require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+	})
+
+	t.Run("should fail to delete if time interval is used in only rule", func(t *testing.T) {
+		amConfig.AlertmanagerConfig.Route.Routes[0].MuteTimeIntervals = nil
+		success, err := legacyCli.PostConfiguration(t, amConfig)
+		require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+		err = adminClient.Delete(ctx, intervalToDelete.Name, v1.DeleteOptions{})
+		require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
 	})
 }

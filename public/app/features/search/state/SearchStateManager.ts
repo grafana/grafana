@@ -197,14 +197,14 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return (
+    return Boolean(
       this.state.query ||
-      this.state.tag.length ||
-      this.state.starred ||
-      this.state.panel_type ||
-      this.state.sort ||
-      this.state.deleted ||
-      this.state.layout === SearchLayout.List
+        this.state.tag.length ||
+        this.state.starred ||
+        this.state.panel_type ||
+        this.state.sort ||
+        this.state.deleted ||
+        this.state.layout === SearchLayout.List
     );
   }
 

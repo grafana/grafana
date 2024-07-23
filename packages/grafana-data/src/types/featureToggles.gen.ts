@@ -122,7 +122,6 @@ export interface FeatureToggles {
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
-  awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
@@ -142,7 +141,6 @@ export interface FeatureToggles {
   ssoSettingsApi?: boolean;
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
-  flameGraphItemCollapsing?: boolean;
   exploreMetrics?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
@@ -200,4 +198,5 @@ export interface FeatureToggles {
   cloudWatchRoundUpEndTime?: boolean;
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
+  prometheusAzureOverrideAudience?: boolean;
 }

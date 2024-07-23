@@ -134,6 +134,7 @@ type AlertNG struct {
 	Log                 log.Logger
 	renderService       rendering.Service
 	ImageService        image.ImageService
+	RecordingWriter     schedule.RecordingWriter
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       folder.Service
@@ -343,10 +344,11 @@ func (ng *AlertNG) init() error {
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.tracer, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.tracer, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
+	ng.RecordingWriter = recordingWriter
 
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
@@ -363,7 +365,7 @@ func (ng *AlertNG) init() error {
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
-		RecordingWriter:      recordingWriter,
+		RecordingWriter:      ng.RecordingWriter,
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
@@ -412,7 +414,7 @@ func (ng *AlertNG) init() error {
 	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
 	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
 	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
-	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
@@ -642,11 +644,11 @@ func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVS
 	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, tracer tracing.Tracer, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, tracer tracing.Tracer, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		return writer.NewPrometheusWriter(settings, httpClientProvider, tracer, logger, m)
+		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, tracer, logger, m)
 	}
 
 	return writer.NoopWriter{}, nil
