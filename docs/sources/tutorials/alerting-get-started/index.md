@@ -102,7 +102,7 @@ Alternatively, you can try out this example in our interactive learning environm
 
 It's a fully configured environment with all the dependencies already installed.
 
-![Interactive](https://raw.githubusercontent.com/grafana/killercoda/prod/assets/loki-ile.svg)
+![Interactive](https://raw.githubusercontent.com/grafana/killercoda/prod/assets/full-stack-ile.png)
 
 Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
 {{< /admonition >}}
