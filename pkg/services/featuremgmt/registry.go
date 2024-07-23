@@ -1021,9 +1021,10 @@ var (
 		},
 		{
 			Name:        "onPremToCloudMigrations",
-			Description: "In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.",
-			Stage:       FeatureStageExperimental,
+			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "alertingSaveStatePeriodic",
@@ -1343,13 +1344,13 @@ var (
 		{
 			Name:              "bodyScrolling",
 			Description:       "Adjusts Page to make body the scrollable element",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaFrontendPlatformSquad,
 			Expression:        "false", // enabled by default
 			FrontendOnly:      true,
-			AllowSelfServe:    false,
+			AllowSelfServe:    true,
 			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			HideFromAdminPage: false,
 		},
 		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",

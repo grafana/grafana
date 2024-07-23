@@ -34,7 +34,7 @@ export function OperationListExplained<T extends QueryWithOperations>({
           return `Operation ${op.id} not found`;
         }
         const title = def.renderer(op, def, '<expr>');
-        const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs';
+        const body = def.explainHandler ? def.explainHandler(op, def) : (def.documentation ?? 'no docs');
 
         return (
           <div
