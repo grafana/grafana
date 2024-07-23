@@ -22,6 +22,7 @@ import {
   PMM_ADD_INSTANCE_CREATE_PAGE,
   getPmmSettingsPage,
   PMM_INVENTORY_PAGE,
+  PMM_UPDATES_LINK,
 } from './PerconaNavigation.constants';
 
 export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem | undefined => {
@@ -53,7 +54,11 @@ export const removeAlertingMenuItem = (mainLinks: NavModelItem[]) => {
   return alertingItem;
 };
 
-export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: Settings): NavModelItem[] => {
+export const buildInventoryAndSettings = (
+  mainLinks: NavModelItem[],
+  settings?: Settings,
+  updateAvailable?: boolean
+): NavModelItem[] => {
   const inventoryLink: NavModelItem = PMM_INVENTORY_PAGE;
   const orgLink: NavModelItem = {
     id: 'main-organization',
@@ -64,6 +69,8 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
   const configNode = mainLinks.find((link) => link.id === 'cfg');
   const pmmConfigNode = mainLinks.find((link) => link.id === 'pmmcfg');
 
+  PMM_UPDATES_LINK.showDot = updateAvailable;
+
   if (!pmmConfigNode) {
     const pmmcfgNode: NavModelItem = {
       id: 'pmmcfg',
@@ -71,8 +78,9 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
       icon: 'percona-nav-logo',
       url: `${config.appSubUrl}/inventory`,
       subTitle: 'Configuration',
-      children: [PMM_ADD_INSTANCE_PAGE, PMM_ADD_INSTANCE_CREATE_PAGE, inventoryLink, settingsLink],
+      children: [PMM_ADD_INSTANCE_PAGE, PMM_ADD_INSTANCE_CREATE_PAGE, inventoryLink, settingsLink, PMM_UPDATES_LINK],
       sortWeight: -800,
+      showDot: updateAvailable,
     };
     mainLinks.push(pmmcfgNode);
   }

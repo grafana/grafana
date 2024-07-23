@@ -85,6 +85,15 @@ export const PMM_INVENTORY_PAGE: NavModelItem = {
   children: [PMM_SERVICES_PAGE, PMM_NODES_PAGE],
 };
 
+export const PMM_UPDATES_LINK: NavModelItem = {
+  id: 'pmm-updates',
+  text: 'Updates',
+  url: '/pmm-ui/updates',
+  hideFromTabs: true,
+  target: '_self',
+  showDot: false,
+};
+
 export const PMM_HEADING_LINK: NavModelItem = {
   id: 'settings-pmm',
   text: 'PMM',

@@ -18,6 +18,7 @@ import { useAppDispatch } from 'app/store/store';
 
 import { Telemetry } from '../../../ui-events/components/Telemetry';
 import usePerconaTour from '../../core/hooks/tour';
+import { checkUpdatesAction } from '../../core/reducers/updates';
 import { logger } from '../../helpers/logger';
 import { isPmmAdmin } from '../../helpers/permissions';
 
@@ -82,6 +83,7 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
         await getSettings();
         await dispatch(fetchUserStatusAction());
         await dispatch(fetchAdvisors({ disableNotifications: true }));
+        await dispatch(checkUpdatesAction());
       }
 
       await getUserDetails();

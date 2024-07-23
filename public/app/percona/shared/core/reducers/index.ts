@@ -21,6 +21,7 @@ import pmmDumpsReducers from './pmmDump/pmmDump';
 import rolesReducers from './roles/roles';
 import servicesReducer from './services';
 import tourReducer from './tour/tour';
+import updatesReducers from './updates';
 import perconaUserReducers from './user/user';
 import usersReducers from './users/users';
 
@@ -216,5 +217,6 @@ export default {
     users: usersReducers,
     advisors: advisorsReducers,
     pmmDumps: pmmDumpsReducers,
+    updates: updatesReducers,
   }),
 };

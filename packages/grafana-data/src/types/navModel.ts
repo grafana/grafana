@@ -44,6 +44,7 @@ export interface NavModelItem extends NavLinkDTO {
   isDivider?: boolean;
   isHeading?: boolean;
   showChildren?: boolean;
+  showDot?: boolean;
 }
 
 /**

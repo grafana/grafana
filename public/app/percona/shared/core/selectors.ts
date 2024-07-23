@@ -25,3 +25,4 @@ export const getCategorizedAdvisors = createSelector([getAdvisors], (advisors) =
   groupAdvisorsIntoCategories(advisors.result || [])
 );
 export const getDumps = (state: StoreState) => state.percona.pmmDumps;
+export const getUpdatesInfo = (state: StoreState) => state.percona.updates;

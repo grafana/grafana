@@ -6,6 +6,7 @@ import { useLocalStorage } from 'react-use';
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
 import { useStyles2, Text, IconButton, Icon } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { Dot } from 'app/percona/shared/components/Elements/Dot';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -100,14 +101,23 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               {/* @PERCONA - show icons for inner items */}
               {level <= 1 && link.icon && (
                 <FeatureHighlightWrapper>
-                  <Icon
-                    className={styles.icon}
-                    name={toIconName(link.icon) ?? 'link'}
-                    size={level === 0 ? 'lg' : 'md'}
-                  />
+                  <>
+                    <Icon
+                      className={styles.icon}
+                      name={toIconName(link.icon) ?? 'link'}
+                      size={level === 0 ? 'lg' : 'md'}
+                    />
+                    {/* @PERCONA */}
+                    {!!link.showDot && <Dot left={23} top={0} />}
+                  </>
                 </FeatureHighlightWrapper>
               )}
-              <Text truncate>{link.text}</Text>
+              {/* @PERCONA */}
+              <div className={styles.relativeText}>
+                <Text truncate>{link.text}</Text>
+                {/* @PERCONA */}
+                {!!link.showDot && !link.icon && <Dot right={-8} top={2} />}
+              </div>
             </div>
           </MegaMenuItemText>
         </div>
@@ -207,6 +217,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     fontStyle: 'italic',
     padding: theme.spacing(1, 1.5, 1, 7),
+  }),
+  // @PERCONA
+  relativeText: css({
+    position: 'relative',
   }),
 });
 
