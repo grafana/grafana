@@ -45,6 +45,7 @@ import {
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
 import { SelectMetricAction } from './SelectMetricAction';
+import { SortByScene } from './SortByScene';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
@@ -68,8 +69,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
-  sortBy: string;
-  sortDirection: string;
+  sortBy: SortByScene;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
@@ -80,8 +80,6 @@ const MAX_METRIC_NAMES = 20000;
 
 const viewByTooltip =
   'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
-const sortByTooltip =
-  'Calculate a derived quantity from the values in your time series and sort by this criteria. Defaults to standard deviation.';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
@@ -115,8 +113,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           autoRows: ROW_PREVIEW_HEIGHT,
           isLazy: true,
         }),
-      sortBy: 'changepoint',
-      sortDirection: 'desc',
+      sortBy: new SortByScene({ target: 'fields' }),
       ...state,
     });
 
@@ -434,24 +431,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     trail.setState({ metricSearch });
   };
 
-  public onSortByCriteriaChange = (criteria: SelectableValue<string>) => {
-    if (!criteria.value) {
-      return;
-    }
-    this.setState({ sortBy: criteria.value });
-    // setSortByPreference(this.state.target, criteria.value, this.state.direction);
-    // this.publishEvent(new SortCriteriaChanged(criteria.value, this.state.direction), true);
-  };
-
-  public onSortDirectionChange = (sortDirection: SelectableValue<string>) => {
-    if (!sortDirection.value) {
-      return;
-    }
-    this.setState({ sortDirection: sortDirection.value });
-    // setSortByPreference(this.state.target, this.state.sortBy, sortDirection.value);
-    // this.publishEvent(new SortCriteriaChanged(this.state.sortBy, sortDirection.value), true);
-  };
-
   public onPrefixFilterChange = (val: SelectableValue) => {
     this.setState({ metricPrefix: val.value });
     this.buildLayout();
@@ -485,7 +464,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       rootGroup,
       metricPrefix,
       sortBy,
-      sortDirection,
     } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -497,7 +475,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const tooStrict = children.length === 0 && metricSearch;
     const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
-    const sortByValue = model.sortingOptions.find(({ value }) => value === sortBy);
 
     const isLoading = metricNamesLoading && children.length === 0;
 
@@ -555,40 +532,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               ]}
             />
           </Field>
-          <Field
-            label={
-              <div className={styles.displayOptionTooltip}>
-                <Trans i18nKey="explore-metrics.sortBy">Sort by</Trans>
-                <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={sortByTooltip} />
-              </div>
-            }
-            className={styles.displayOption}
-          >
-            <Select
-              value={sortByValue}
-              isSearchable={true}
-              options={model.sortingOptions}
-              placeholder={'Choose criteria'}
-              onChange={model.onSortByCriteriaChange}
-            />
-          </Field>
-          <Field label="Sort direction" className={styles.sortDirection}>
-            <Select
-              onChange={model.onSortDirectionChange}
-              placeholder=""
-              value={sortDirection}
-              options={[
-                {
-                  label: 'Asc',
-                  value: 'asc',
-                },
-                {
-                  label: 'Desc',
-                  value: 'desc',
-                },
-              ]}
-            />
-          </Field>
+          <sortBy.Component model={sortBy} />
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         {metricNamesError && (
