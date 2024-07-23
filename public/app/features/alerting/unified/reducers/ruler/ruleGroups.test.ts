@@ -178,7 +178,7 @@ describe('update rule', () => {
     const action = updateRuleAction({ identifier: ruleIdentifier, rule });
     expect(() => {
       ruleGroupReducer(initialGroup, action);
-    }).toThrow('no such rule');
+    }).toThrow('no rule matching identifier found');
   });
 });
 
