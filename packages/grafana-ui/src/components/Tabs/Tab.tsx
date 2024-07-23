@@ -47,37 +47,34 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       'data-testid': selectors.components.Tab.title(label),
       ...otherProps,
       onClick: onChangeTab,
+      role: 'tab',
       'aria-selected': active,
     };
 
     if (href) {
       return (
-        <div className={tabsStyles.item} role="tab">
-          <a
-            {...commonProps}
-            href={href}
-            // don't think we can avoid the type assertion here :(
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            ref={ref as React.ForwardedRef<HTMLAnchorElement>}
-          >
-            {content()}
-          </a>
-        </div>
+        <a
+          {...commonProps}
+          href={href}
+          // don't think we can avoid the type assertion here :(
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
+        >
+          {content()}
+        </a>
       );
     }
 
     return (
-      <div className={tabsStyles.item} role="tab">
-        <button
-          {...commonProps}
-          type="button"
-          // don't think we can avoid the type assertion here :(
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ref={ref as React.ForwardedRef<HTMLButtonElement>}
-        >
-          {content()}
-        </button>
-      </div>
+      <button
+        {...commonProps}
+        type="button"
+        // don't think we can avoid the type assertion here :(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        ref={ref as React.ForwardedRef<HTMLButtonElement>}
+      >
+        {content()}
+      </button>
     );
   }
 );
@@ -94,8 +91,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.5),
     }),
     link: css({
+      position: 'relative',
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 1.5, 0.5),
+      padding: theme.spacing(1, 1.5, 1),
       borderRadius: theme.shape.radius.default,
 
       display: 'block',
