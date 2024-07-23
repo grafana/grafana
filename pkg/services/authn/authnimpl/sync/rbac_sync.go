@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -97,10 +96,12 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	return permissions, nil
 }
 
-var fixedCloudRoles = map[org.RoleType]string{
-	org.RoleViewer: accesscontrol.FixedCloudViewerRole,
-	org.RoleEditor: accesscontrol.FixedCloudEditorRole,
-	org.RoleAdmin:  accesscontrol.FixedCloudAdminRole,
+// Since Cloud Admin/Editor/Viewer roles are not yet implemented one-to-one in the Grafana, it becomes a confusing experience for users,
+// therefore we are doing granular mapping of all available functionality in the Grafana temporary.
+var fixedCloudRoles = map[org.RoleType][]string{
+	org.RoleViewer: {accesscontrol.FixedCloudViewerRole, accesscontrol.FixedCloudSupportTicketReader},
+	org.RoleEditor: {accesscontrol.FixedCloudEditorRole, accesscontrol.FixedCloudSupportTicketAdmin},
+	org.RoleAdmin:  {accesscontrol.FixedCloudAdminRole, accesscontrol.FixedCloudSupportTicketAdmin},
 }
 
 func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r *authn.Request) error {
@@ -125,11 +126,13 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 	rolesToAdd := make([]string, 0, 1)
 	rolesToRemove := make([]string, 0, 2)
 
-	for role, fixedRole := range fixedCloudRoles {
-		if role == ident.GetOrgRole() {
-			rolesToAdd = append(rolesToAdd, fixedRole)
-		} else {
-			rolesToRemove = append(rolesToRemove, fixedRole)
+	for role, fixedRoles := range fixedCloudRoles {
+		for _, fixedRole := range fixedRoles {
+			if role == ident.GetOrgRole() {
+				rolesToAdd = append(rolesToAdd, fixedRole)
+			} else {
+				rolesToRemove = append(rolesToRemove, fixedRole)
+			}
 		}
 	}
 
