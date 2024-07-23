@@ -19,7 +19,7 @@ export type Option = {
 
 interface ComboboxProps
   extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
-  onChange: (val: Option) => void;
+  onChange: (val: Option | null) => void;
   value: Value;
   options: Option[];
 }
@@ -48,7 +48,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef(null);
   const floatingRef = useRef(null);
   const styles = useStyles2(getComboboxStyles);
 
@@ -84,12 +84,15 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       fallbackPlacements: ['top'],
     }),
   ];
-  const elements = { reference: inputRef.current, floating: floatingRef.current };
-  const { floatingStyles } = useFloating({
+  // const elements = { reference: inputRef.current, floating: floatingRef.current };
+  const { refs, floatingStyles } = useFloating({
     open: isOpen,
     placement: 'bottom',
     middleware,
-    elements,
+    elements: {
+      reference: inputRef.current,
+      floating: floatingRef.current,
+    },
     whileElementsMounted: autoUpdate,
   });
 
@@ -100,11 +103,11 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       <Input
         suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
         {...restProps}
-        {...getInputProps({ ref: inputRef, onChange: () => {} })}
+        {...getInputProps({ ref: inputRef })}
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
-        style={{ ...floatingStyles, width: elements.reference?.getBoundingClientRect().width }}
+        style={{ ...floatingStyles, width: refs.reference?.current?.getBoundingClientRect().width }}
         {...getMenuProps({ ref: floatingRef })}
       >
         {isOpen && (
