@@ -5,10 +5,12 @@ import { ScopesScene } from './internal/ScopesScene';
 
 export let scopesScene: ScopesScene | null = null;
 
-if (config.featureToggles.scopeFilters) {
-  scopesScene = new ScopesScene();
-  const urlSyncManager = new UrlSyncManager();
-  urlSyncManager.initSync(scopesScene!);
+export function initializeScopes() {
+  if (config.featureToggles.scopeFilters) {
+    scopesScene = new ScopesScene();
+    const urlSyncManager = new UrlSyncManager();
+    urlSyncManager.initSync(scopesScene!);
+  }
 }
 
 export function renderScopes() {

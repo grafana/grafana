@@ -73,14 +73,13 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     this.state.dashboards.toggle(this.getSelectedScopesNames());
   }
 
-  public enterViewMode() {
-    this.state.filters.enterViewMode();
-    this.state.dashboards.enterViewMode();
+  public disable() {
+    this.state.filters.disable();
+    this.state.dashboards.hide();
   }
 
-  public exitViewMode() {
-    this.state.filters.exitViewMode();
-    this.state.dashboards.exitViewMode();
+  public enable() {
+    this.state.filters.enable();
   }
 }
 

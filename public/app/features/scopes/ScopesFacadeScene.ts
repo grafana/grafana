@@ -1,11 +1,10 @@
-import { Scope } from '@grafana/data';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
 import { scopesScene } from './instance';
 
 interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
-  handler?: (scopes: Scope[]) => void;
+  handler?: (facade: ScopesFacade) => void;
 
   // Prevent rendering the selector by default
   hidden?: boolean;
@@ -24,7 +23,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
 
     this._subs.add(
       scopesScene?.subscribeToSelectedScopes((scopes) => {
-        this.state.handler?.(scopes);
+        this.state.handler?.(this);
       })
     );
 
@@ -45,11 +44,11 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
     return scopesScene?.getSelectedScopes() ?? [];
   }
 
-  public enterViewMode() {
-    scopesScene?.enterViewMode();
+  public disable() {
+    scopesScene?.disable();
   }
 
-  public exitViewMode() {
-    scopesScene?.exitViewMode();
+  public enable() {
+    scopesScene?.enable();
   }
 }

@@ -76,12 +76,6 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     this.setState({ isVisible: false });
   }
 
-  public enterViewMode() {
-    this.hide();
-  }
-
-  public exitViewMode() {}
-
   private filterDashboards(dashboards: SuggestedDashboard[], searchQuery: string): SuggestedDashboard[] {
     const lowerCasedSearchQuery = searchQuery.toLowerCase();
 

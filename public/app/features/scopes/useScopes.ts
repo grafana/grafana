@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { Scope } from '@grafana/data';
-
 import { scopesScene } from './instance';
 
 export interface UseScopesOptions {
-  // A callback that will be executed when new scopes are set
-  handler?: (scopes: Scope[]) => void;
-
   // Prevent rendering the selector by default
   hidden?: boolean;
 }
 
-export const useScopes = ({ handler, hidden }: UseScopesOptions = {}) => {
+export const useScopes = ({ hidden }: UseScopesOptions = {}) => {
   const [value, setValue] = useState(scopesScene?.getSelectedScopes() ?? []);
 
   useEffect(() => {
@@ -22,7 +17,6 @@ export const useScopes = ({ handler, hidden }: UseScopesOptions = {}) => {
 
     const sub = scopesScene?.subscribeToSelectedScopes((scopes) => {
       setValue(scopes);
-      handler?.(scopes);
     });
 
     return () => {
@@ -30,13 +24,13 @@ export const useScopes = ({ handler, hidden }: UseScopesOptions = {}) => {
 
       scopesScene?.hide();
     };
-  }, [handler, hidden, setValue]);
+  }, [hidden, setValue]);
 
   return {
     value,
     show: () => scopesScene?.show(),
     hide: () => scopesScene?.hide(),
-    enterViewMode: () => scopesScene?.enterViewMode(),
-    exitViewMode: () => scopesScene?.exitViewMode(),
+    disable: () => scopesScene?.disable(),
+    enable: () => scopesScene?.enable(),
   };
 };

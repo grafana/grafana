@@ -228,11 +228,11 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.setState({ scopes: [], treeScopes: [], isLoadingScopes: false });
   }
 
-  public enterViewMode() {
+  public disable() {
     this.setState({ isDisabled: true, isOpened: false });
   }
 
-  public exitViewMode() {
+  public enable() {
     this.setState({ isDisabled: false });
   }
 
