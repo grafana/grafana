@@ -163,3 +163,4 @@ newPDFRendering,experimental,@grafana/sharing-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false
+prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false

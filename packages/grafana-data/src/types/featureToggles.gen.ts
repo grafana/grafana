@@ -182,4 +182,5 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   groupByVariable?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
+  prometheusAzureOverrideAudience?: boolean;
 }
