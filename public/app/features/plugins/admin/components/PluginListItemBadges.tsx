@@ -1,5 +1,5 @@
 import { PluginType } from '@grafana/data';
-import { HorizontalGroup, PluginSignatureBadge } from '@grafana/ui';
+import { PluginSignatureBadge, Stack } from '@grafana/ui';
 
 import { CatalogPlugin } from '../types';
 
@@ -21,23 +21,23 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
   const hasUpdate = plugin.hasUpdate && !plugin.isCore && plugin.type !== PluginType.renderer;
   if (plugin.isEnterprise) {
     return (
-      <HorizontalGroup height="auto" wrap>
+      <Stack height="auto" wrap="wrap">
         <PluginEnterpriseBadge plugin={plugin} />
         {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
         {hasUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
         {plugin.angularDetected && <PluginAngularBadge />}
-      </HorizontalGroup>
+      </Stack>
     );
   }
 
   return (
-    <HorizontalGroup height="auto" wrap>
+    <Stack height="auto" wrap="wrap">
       <PluginSignatureBadge status={plugin.signature} />
       {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
       {plugin.isDeprecated && <PluginDeprecatedBadge />}
       {plugin.isInstalled && <PluginInstalledBadge />}
       {hasUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
       {plugin.angularDetected && <PluginAngularBadge />}
-    </HorizontalGroup>
+    </Stack>
   );
 }
