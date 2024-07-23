@@ -279,6 +279,7 @@ describe('DashboardDatasourceBehaviour', () => {
         panel: dashboardDSPanel.clone(),
         $data: dashboardDSPanel.state.$data?.clone(),
         sourcePanel: dashboardDSPanel.getRef(),
+        pluginId: dashboardDSPanel.state.pluginId,
       });
 
       vizPanelManager.activate();

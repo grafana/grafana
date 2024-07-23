@@ -2,292 +2,579 @@ package sql
 
 import (
 	"context"
+	"database/sql/driver"
+	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
-func TestBackendHappyPath(t *testing.T) {
-	ctx := context.Background()
-	dbstore := db.InitTestDB(t)
-
-	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
-	assert.NoError(t, err)
-	store, err := NewBackendStore(backendOptions{
-		DB: rdb,
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, store)
-
-	stream, err := store.WatchWriteEvents(ctx)
-	assert.NoError(t, err)
-
-	t.Run("Add 3 resources", func(t *testing.T) {
-		rv, err := writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(1), rv)
-
-		rv, err = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(2), rv)
-
-		rv, err = writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(3), rv)
-	})
-
-	t.Run("Update item2", func(t *testing.T) {
-		rv, err := writeEvent(ctx, store, "item2", resource.WatchEvent_MODIFIED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(4), rv)
-	})
-
-	t.Run("Delete item1", func(t *testing.T) {
-		rv, err := writeEvent(ctx, store, "item1", resource.WatchEvent_DELETED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(5), rv)
-	})
-
-	t.Run("Read latest item 2", func(t *testing.T) {
-		resp, err := store.Read(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
-		assert.NoError(t, err)
-		assert.Equal(t, int64(4), resp.ResourceVersion)
-		assert.Equal(t, "item2 MODIFIED", string(resp.Value))
-	})
-
-	t.Run("Read early verion of item2", func(t *testing.T) {
-		resp, err := store.Read(ctx, &resource.ReadRequest{
-			Key:             resourceKey("item2"),
-			ResourceVersion: 3, // item2 was created at rv=2 and updated at rv=4
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, int64(2), resp.ResourceVersion)
-		assert.Equal(t, "item2 ADDED", string(resp.Value))
-	})
-
-	t.Run("PrepareList latest", func(t *testing.T) {
-		resp, err := store.PrepareList(ctx, &resource.ListRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Namespace: "namespace",
-					Group:     "group",
-					Resource:  "resource",
-				},
-			},
-		})
-		assert.NoError(t, err)
-		assert.Len(t, resp.Items, 2)
-		assert.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
-		assert.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
-		assert.Equal(t, int64(5), resp.ResourceVersion)
-	})
-
-	t.Run("Watch events", func(t *testing.T) {
-		event := <-stream
-		assert.Equal(t, "item1", event.Key.Name)
-		assert.Equal(t, int64(1), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
-		event = <-stream
-		assert.Equal(t, "item2", event.Key.Name)
-		assert.Equal(t, int64(2), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
-
-		event = <-stream
-		assert.Equal(t, "item3", event.Key.Name)
-		assert.Equal(t, int64(3), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
-
-		event = <-stream
-		assert.Equal(t, "item2", event.Key.Name)
-		assert.Equal(t, int64(4), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_MODIFIED, event.Type)
-
-		event = <-stream
-		assert.Equal(t, "item1", event.Key.Name)
-		assert.Equal(t, int64(5), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_DELETED, event.Type)
-	})
-}
-
-func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
-	ctx := context.Background()
-	dbstore := db.InitTestDB(t)
-
-	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
-	assert.NoError(t, err)
-	store, err := NewBackendStore(backendOptions{
-		DB: rdb,
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, store)
-
-	// Create a few resources before initing the watch
-	_, err = writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
-	assert.NoError(t, err)
-
-	// Start the watch
-	stream, err := store.WatchWriteEvents(ctx)
-	assert.NoError(t, err)
-
-	// Create one more event
-	_, err = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)
-	assert.NoError(t, err)
-	assert.Equal(t, "item2", (<-stream).Key.Name)
-}
-
-func TestBackendPrepareList(t *testing.T) {
-	ctx := context.Background()
-	dbstore := db.InitTestDB(t)
-
-	rdb, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage), nil)
-	assert.NoError(t, err)
-	store, err := NewBackendStore(backendOptions{
-		DB: rdb,
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, store)
-
-	// Create a few resources before initing the watch
-	_, _ = writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)    // rv=1
-	_, _ = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)    // rv=2 - will be modified at rv=6
-	_, _ = writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted at rv=7
-	_, _ = writeEvent(ctx, store, "item4", resource.WatchEvent_ADDED)    // rv=4
-	_, _ = writeEvent(ctx, store, "item5", resource.WatchEvent_ADDED)    // rv=5
-	_, _ = writeEvent(ctx, store, "item2", resource.WatchEvent_MODIFIED) // rv=6
-	_, _ = writeEvent(ctx, store, "item3", resource.WatchEvent_DELETED)  // rv=7
-	_, _ = writeEvent(ctx, store, "item6", resource.WatchEvent_ADDED)    // rv=8
-	t.Run("fetch all latest", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
-				},
-			},
-		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 5)
-		assert.Empty(t, res.NextPageToken)
-	})
-
-	t.Run("list latest first page ", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
-			Limit: 3,
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
-				},
-			},
-		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 3)
-		continueToken, err := GetContinueToken(res.NextPageToken)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(8), continueToken.ResourceVersion)
-		assert.Equal(t, int64(3), continueToken.StartOffset)
-	})
-
-	t.Run("list at revision", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
-			ResourceVersion: 4,
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
-				},
-			},
-		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 4)
-		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item2 ADDED", string(res.Items[1].Value))
-		assert.Equal(t, "item3 ADDED", string(res.Items[2].Value))
-		assert.Equal(t, "item4 ADDED", string(res.Items[3].Value))
-		assert.Empty(t, res.NextPageToken)
-	})
-
-	t.Run("fetch first page at revision with limit", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
-			Limit:           3,
-			ResourceVersion: 7,
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
-				},
-			},
-		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 3)
-		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item4 ADDED", string(res.Items[1].Value))
-		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
-
-		continueToken, err := GetContinueToken(res.NextPageToken)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(7), continueToken.ResourceVersion)
-		assert.Equal(t, int64(3), continueToken.StartOffset)
-	})
-
-	t.Run("fetch second page at revision", func(t *testing.T) {
-		continueToken := &ContinueToken{
-			ResourceVersion: 8,
-			StartOffset:     2,
-		}
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
-			NextPageToken: continueToken.String(),
-			Limit:         2,
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
-				},
-			},
-		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 2)
-		assert.Equal(t, "item5 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-
-		continueToken, err = GetContinueToken(res.NextPageToken)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(8), continueToken.ResourceVersion)
-		assert.Equal(t, int64(4), continueToken.StartOffset)
-	})
-}
-
-func writeEvent(ctx context.Context, store *backend, name string, action resource.WatchEvent_Type) (int64, error) {
-	return store.WriteEvent(ctx, resource.WriteEvent{
-		Type:  action,
-		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
-		Key: &resource.ResourceKey{
-			Namespace: "namespace",
-			Group:     "group",
-			Resource:  "resource",
-			Name:      name,
-		},
-	})
-}
-
-func resourceKey(name string) *resource.ResourceKey {
-	return &resource.ResourceKey{
-		Namespace: "namespace",
-		Group:     "group",
-		Resource:  "resource",
-		Name:      name,
+var (
+	errTest = errors.New("things happened")
+	resKey  = &resource.ResourceKey{
+		Namespace: "ns",
+		Group:     "gr",
+		Resource:  "rs",
+		Name:      "nm",
 	}
+)
+
+type (
+	Cols = []string         // column names
+	Rows = [][]driver.Value // row values returned
+)
+
+type testBackend struct {
+	*backend
+	test.TestDBProvider
+}
+
+func (b testBackend) ExecWithResult(expectedSQL string) {
+	b.SQLMock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+}
+
+func (b testBackend) ExecWithErr(expectedSQL string, err error) {
+	b.SQLMock.ExpectExec(expectedSQL).WillReturnError(err)
+}
+
+func (b testBackend) QueryWithResult(expectedSQL string, numCols int, rs Rows) {
+	rows := b.SQLMock.NewRows(make([]string, numCols))
+	if len(rs) > 0 {
+		rows = rows.AddRows(rs...)
+	}
+	b.SQLMock.ExpectQuery(expectedSQL).WillReturnRows(rows)
+}
+
+func (b testBackend) QueryWithErr(expectedSQL string, err error) {
+	b.SQLMock.ExpectQuery(expectedSQL).WillReturnError(err)
+}
+
+func setupBackendTest(t *testing.T) (testBackend, context.Context) {
+	t.Helper()
+
+	ctx := testutil.NewDefaultTestContext(t)
+	dbp := test.NewDBProviderMatchWords(t)
+	b, err := NewBackend(BackendOptions{DBProvider: dbp})
+	require.NoError(t, err)
+	require.NotNil(t, b)
+
+	err = b.Init(ctx)
+	require.NoError(t, err)
+
+	bb, ok := b.(*backend)
+	require.True(t, ok)
+	require.NotNil(t, bb)
+
+	return testBackend{
+		backend:        bb,
+		TestDBProvider: dbp,
+	}, ctx
+}
+
+func TestNewBackend(t *testing.T) {
+	t.Parallel()
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+	})
+
+	t.Run("no db provider", func(t *testing.T) {
+		t.Parallel()
+
+		b, err := NewBackend(BackendOptions{})
+		require.Nil(t, b)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "no db provider")
+	})
+}
+
+func TestBackend_Init(t *testing.T) {
+	t.Parallel()
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := testutil.NewDefaultTestContext(t)
+		dbp := test.NewDBProviderWithPing(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
+		err = b.Init(ctx)
+		require.NoError(t, err)
+
+		// if it isn't idempotent, then it will make a second ping and the
+		// expectation will fail
+		err = b.Init(ctx)
+		require.NoError(t, err, "should be idempotent")
+
+		err = b.Stop(ctx)
+		require.NoError(t, err)
+	})
+
+	t.Run("no db provider", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := testutil.NewDefaultTestContext(t)
+		dbp := test.TestDBProvider{
+			Err: errTest,
+		}
+		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		err = b.Init(ctx)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "initialize resource DB")
+	})
+
+	t.Run("no dialect for driver", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := testutil.NewDefaultTestContext(t)
+		mockDB, _, err := sqlmock.New()
+		require.NoError(t, err)
+		dbp := test.TestDBProvider{
+			DB: dbimpl.NewDB(mockDB, "juancarlo"),
+		}
+
+		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		err = b.Init(ctx)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "no dialect for driver")
+	})
+
+	t.Run("database unreachable", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := testutil.NewDefaultTestContext(t)
+		dbp := test.NewDBProviderWithPing(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.NoError(t, err)
+		require.NotNil(t, dbp.DB)
+
+		dbp.SQLMock.ExpectPing().WillReturnError(errTest)
+		err = b.Init(ctx)
+		require.Error(t, err)
+		require.ErrorIs(t, err, errTest)
+	})
+}
+
+func TestBackend_IsHealthy(t *testing.T) {
+	t.Parallel()
+
+	ctx := testutil.NewDefaultTestContext(t)
+	dbp := test.NewDBProviderWithPing(t)
+	b, err := NewBackend(BackendOptions{DBProvider: dbp})
+	require.NoError(t, err)
+	require.NotNil(t, dbp.DB)
+
+	dbp.SQLMock.ExpectPing().WillReturnError(nil)
+	err = b.Init(ctx)
+	require.NoError(t, err)
+
+	dbp.SQLMock.ExpectPing().WillReturnError(nil)
+	res, err := b.IsHealthy(ctx, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	dbp.SQLMock.ExpectPing().WillReturnError(errTest)
+	res, err = b.IsHealthy(ctx, nil)
+	require.Nil(t, res)
+	require.Error(t, err)
+	require.ErrorIs(t, err, errTest)
+}
+
+// expectSuccessfulResourceVersionAtomicInc sets up expectations for calling
+// resourceVersionAtomicInc, where the returned RV will be 1.
+func expectSuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend) {
+	b.QueryWithResult("select resource_version for update", 0, nil)
+	b.ExecWithResult("insert resource_version")
+}
+
+// expectUnsuccessfulResourceVersionAtomicInc sets up expectations for calling
+// resourceVersionAtomicInc, where the returned RV will be 1.
+func expectUnsuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend, err error) {
+	b.QueryWithErr("select resource_version for update", errTest)
+}
+
+func TestResourceVersionAtomicInc(t *testing.T) {
+	t.Parallel()
+
+	dialect := sqltemplate.MySQL
+
+	t.Run("happy path - insert new row", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+
+		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), v)
+	})
+
+	t.Run("happy path - update existing row", func(t *testing.T) {
+		t.Parallel()
+
+		b, ctx := setupBackendTest(t)
+
+		b.QueryWithResult("select resource_version for update", 1, Rows{{2}})
+		b.ExecWithResult("update resource_version")
+
+		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		require.NoError(t, err)
+		require.Equal(t, int64(3), v)
+	})
+
+	t.Run("error getting current version", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.QueryWithErr("select resource_version for update", errTest)
+
+		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "get current resource version")
+	})
+
+	t.Run("error inserting new row", func(t *testing.T) {
+		t.Parallel()
+
+		b, ctx := setupBackendTest(t)
+
+		b.QueryWithResult("select resource_version for update", 0, nil)
+		b.ExecWithErr("insert resource_version", errTest)
+
+		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "insert into resource_version")
+	})
+
+	t.Run("error updating existing row", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.QueryWithResult("select resource_version for update", 1, Rows{{2}})
+		b.ExecWithErr("update resource_version", errTest)
+
+		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "increase resource version")
+	})
+}
+
+func TestBackend_create(t *testing.T) {
+	t.Parallel()
+	event := resource.WriteEvent{
+		Type: resource.WatchEvent_ADDED,
+		Key:  resKey,
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		b.ExecWithResult("update resource_history")
+		b.ExecWithResult("update resource")
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.create(ctx, event)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), v)
+	})
+
+	t.Run("error inserting into resource", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithErr("insert resource", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.create(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "insert into resource:")
+	})
+
+	t.Run("error inserting into resource_history", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource")
+		b.ExecWithErr("insert resource_history", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.create(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "insert into resource history:")
+	})
+
+	t.Run("error incrementing resource version", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource")
+		b.ExecWithResult("insert resource_history")
+		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.create(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "increment resource version")
+	})
+
+	t.Run("error updating resource_history", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b)
+		b.ExecWithErr("update resource_history", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.create(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update resource_history")
+	})
+
+	t.Run("error updating resource", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b)
+		b.ExecWithResult("update resource_history")
+		b.ExecWithErr("update resource", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.create(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update resource rv")
+	})
+}
+
+func TestBackend_update(t *testing.T) {
+	t.Parallel()
+	event := resource.WriteEvent{
+		Type: resource.WatchEvent_MODIFIED,
+		Key:  resKey,
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("update resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		b.ExecWithResult("update resource_history")
+		b.ExecWithResult("update resource")
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.update(ctx, event)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), v)
+	})
+
+	t.Run("error in first update to resource", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithErr("update resource", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.update(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "initial resource update")
+	})
+
+	t.Run("error inserting into resource history", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("update resource")
+		b.ExecWithErr("insert resource_history", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.update(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "insert into resource history")
+	})
+
+	t.Run("error incrementing rv", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("update resource")
+		b.ExecWithResult("insert resource_history")
+		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.update(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "increment resource version")
+	})
+
+	t.Run("error updating history rv", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("update resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		b.ExecWithErr("update resource_history", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.update(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update history rv")
+	})
+
+	t.Run("error updating resource rv", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("update resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		b.ExecWithResult("update resource_history")
+		b.ExecWithErr("update resource", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.update(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update resource rv")
+	})
+}
+
+func TestBackend_delete(t *testing.T) {
+	t.Parallel()
+	event := resource.WriteEvent{
+		Type: resource.WatchEvent_DELETED,
+		Key:  resKey,
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("delete resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		b.ExecWithResult("update resource_history")
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.delete(ctx, event)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), v)
+	})
+
+	t.Run("error deleting resource", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithErr("delete resource", errTest)
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.delete(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "delete resource")
+	})
+
+	t.Run("error inserting into resource history", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("delete resource")
+		b.ExecWithErr("insert resource_history", errTest)
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.delete(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "insert into resource history")
+	})
+
+	t.Run("error incrementing resource version", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("delete resource")
+		b.ExecWithResult("insert resource_history")
+		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.delete(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "increment resource version")
+	})
+
+	t.Run("error updating resource history", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("delete resource")
+		b.ExecWithResult("insert resource_history")
+		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		b.ExecWithErr("update resource_history", errTest)
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.delete(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update history rv")
+	})
 }
