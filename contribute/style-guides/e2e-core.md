@@ -22,4 +22,4 @@ The previous commands use some `utils` scripts under [_\<repo-root>/e2e_](../../
 
 ## Test suites
 
-You can find integration tests aat `\<repo-root>/e2e/suite\<x>/specs`.
+You can find integration tests at `\<repo-root>/e2e/suite\<x>/specs`.
