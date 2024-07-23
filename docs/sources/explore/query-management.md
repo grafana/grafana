@@ -14,7 +14,7 @@ weight: 10
 
 # Query management in Explore
 
-Grafana Explore provides a variety of tools to help manage your queries. 
+Grafana Explore provides a variety of tools to help manage your queries.
 
 {{% admonition type="note" %}}
 For help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector. Refer to [Query inspector in Explore](/docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/) for more information.
@@ -22,7 +22,7 @@ For help with debugging queries, Explore allows you to investigate query request
 
 ## Query history
 
-Query history contains the list of queries that you created in Explore. This history is stored in the Grafana database and isn't shared with other users. The retention period for a query history is **two weeks**. Queries older than two weeks are automatically deleted. 
+Query history contains the list of queries that you created in Explore. This history is stored in the Grafana database and isn't shared with other users. The retention period for a query history is **two weeks**. Queries older than two weeks are automatically deleted.
 
 {{% admonition type="note" %}}
 Starred queries aren't subject to the two-week retention period and aren't deleted.
@@ -35,9 +35,9 @@ To view your query history:
 
 The Query history pane opens at the bottom of the page, and contains the following tabs:
 
- - **Query history tab-** Contains a history of all your queries, with options for searching and managing them.
- - **Starred tab -** Contains all of your starred queries.
- - **Settings tab-** Provides customizable options for your query history.
+- **Query history tab-** Contains a history of all your queries, with options for searching and managing them.
+- **Starred tab -** Contains all of your starred queries.
+- **Settings tab-** Provides customizable options for your query history.
 
 ### Query history tab
 
@@ -50,7 +50,7 @@ The Query history depicts a history of your queries for the past two weeks, unle
 - Delete a query.
 - Star a query.
 
-By default, query history shows you newest queries first. Click the sort box in the upper right to change to **Oldest first** to older queries first.  You can search your queries using keywords. 
+By default, query history shows you newest queries first. Click the sort box in the upper right to change to **Oldest first** to older queries first. You can search your queries using keywords.
 
 ### Query history Starred tab
 
@@ -76,7 +76,7 @@ You can also filter queries by date using the vertical slider:
 
 #### Search in query history
 
-Use **Search queries** in both the **Query history** and **Starred** tabs to search your query history and comments using keywords. 
+Use **Search queries** in both the **Query history** and **Starred** tabs to search your query history and comments using keywords.
 
 1. Click in the **Search queries** field.
 1. Type the keyword(s) or term you are want to search for in search field.
@@ -90,6 +90,5 @@ Toggle **Change the default active tab from "Query history" to "Starred"** to ma
 {{% admonition type="note" %}}
 Query history settings are global, and applied to both panels in split mode.
 {{% /admonition %}}
-
 
 <!-- All queries that have been starred in the Query history tab are displayed in the Starred tab. This allows you to access your favorite queries faster and to reuse these queries without typing them from scratch. -->
