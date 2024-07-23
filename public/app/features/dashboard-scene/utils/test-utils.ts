@@ -96,7 +96,6 @@ interface SceneOptions {
   variableQueryTime: number;
   maxPerRow?: number;
   itemHeight?: number;
-  height?: number;
   repeatDirection?: RepeatDirection;
   x?: number;
   y?: number;
@@ -114,7 +113,6 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     repeatDirection: options.repeatDirection,
     maxPerRow: options.maxPerRow,
     itemHeight: options.itemHeight,
-    height: options.height,
     body:
       source ??
       new VizPanel({

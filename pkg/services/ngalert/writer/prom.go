@@ -3,12 +3,12 @@ package writer
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -62,15 +62,14 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 
 	points := make([]Point, 0, len(col.Refs))
 	for _, ref := range col.Refs {
-		// Use a default value of NaN if the value is empty or nil.
-		f := math.NaN()
-		if fp, empty, _ := ref.NullableFloat64Value(); !empty && fp != nil {
-			f = *fp
+		fp, empty, _ := ref.NullableFloat64Value()
+		if empty || fp == nil {
+			return nil, fmt.Errorf("unable to read float64 value")
 		}
 
 		metric := Metric{
 			T: t,
-			V: f,
+			V: *fp,
 		}
 
 		labels := ref.GetLabels().Copy()
@@ -98,6 +97,7 @@ type HttpClientProvider interface {
 
 type PrometheusWriter struct {
 	client  promremote.Client
+	clock   clock.Clock
 	logger  log.Logger
 	metrics *metrics.RemoteWriter
 }
@@ -105,6 +105,7 @@ type PrometheusWriter struct {
 func NewPrometheusWriter(
 	settings setting.RecordingRuleSettings,
 	httpClientProvider HttpClientProvider,
+	clock clock.Clock,
 	tracer tracing.Tracer,
 	l log.Logger,
 	metrics *metrics.RemoteWriter,
@@ -145,6 +146,7 @@ func NewPrometheusWriter(
 
 	return &PrometheusWriter{
 		client:  client,
+		clock:   clock,
 		logger:  l,
 		metrics: metrics,
 	}, nil
@@ -205,9 +207,9 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	l.Debug("Writing metric", "name", name)
-	writeStart := time.Now()
+	writeStart := w.clock.Now()
 	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
-	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(time.Since(writeStart).Seconds())
+	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(w.clock.Now().Sub(writeStart).Seconds())
 
 	lvs = append(lvs, fmt.Sprint(res.StatusCode))
 	w.metrics.WritesTotal.WithLabelValues(lvs...).Inc()

@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
+import { config } from '@grafana/runtime';
 import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -8,7 +9,12 @@ import {
   grafanaAlertingConfigurationStatusHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import {
+  getDisabledPluginHandler,
+  getPluginMissingHandler,
+} from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
@@ -109,3 +115,14 @@ export function mimirDataSource() {
 
   return { dataSource };
 }
+
+/** Make a given plugin ID respond with a 404, as if it isn't installed at all */
+export const removePlugin = (pluginId: string) => {
+  delete config.apps[pluginId];
+  server.use(getPluginMissingHandler(pluginId));
+};
+
+/** Make a plugin respond with `enabled: false`, as if its installed but disabled */
+export const disablePlugin = (pluginId: SupportedPlugin) => {
+  server.use(getDisabledPluginHandler(pluginId));
+};
