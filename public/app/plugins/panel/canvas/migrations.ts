@@ -43,7 +43,7 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     }
   }
 
-  if (parseFloat(pluginVersion) <= 11.2) {
+  if (parseFloat(pluginVersion) <= 11.3) {
     // migrate links from field name overrides to elements
     for (let idx = 0; idx < panel.fieldConfig.overrides.length; idx++) {
       const override = panel.fieldConfig.overrides[idx];
@@ -74,6 +74,7 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
       for (const element of root.elements) {
         if (element.oneClickLinks) {
           element.oneClickMode = OneClickMode.Link;
+          delete element.oneClickLinks;
         }
       }
     }

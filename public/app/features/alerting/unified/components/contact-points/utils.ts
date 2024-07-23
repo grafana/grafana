@@ -124,8 +124,8 @@ export function enhanceContactPointsWithMetadata(
   const usedContactPointsByName = groupBy(usedContactPoints, 'receiver');
 
   const contactPointsList = alertmanagerConfiguration
-    ? alertmanagerConfiguration?.alertmanager_config.receivers ?? []
-    : contactPoints ?? [];
+    ? (alertmanagerConfiguration?.alertmanager_config.receivers ?? [])
+    : (contactPoints ?? []);
 
   return contactPointsList.map((contactPoint) => {
     const receivers = extractReceivers(contactPoint);

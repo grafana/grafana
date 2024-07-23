@@ -25,7 +25,7 @@
     "@grafana/schema": "11.2.0-pre",
     "@grafana/ui": "11.2.0-pre",
     "react-select": "5.8.0",
-    "react-use": "17.5.0",
+    "react-use": "17.5.1",
     "rxjs": "7.8.1",
     "tslib": "2.6.3"
   },
@@ -36,7 +36,7 @@
     "@testing-library/react": "15.0.2",
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "^29.5.4",
-    "@types/node": "20.14.11",
+    "@types/node": "20.14.12",
     "@types/react": "18.3.3",
     "@types/systemjs": "6.13.5",
     "@types/testing-library__jest-dom": "5.14.9",

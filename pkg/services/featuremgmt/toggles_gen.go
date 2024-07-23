@@ -548,7 +548,7 @@ const (
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
-	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
+	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagAlertingSaveStatePeriodic

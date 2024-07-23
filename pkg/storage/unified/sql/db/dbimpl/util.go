@@ -12,9 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	ErrInvalidUTF8Sequence = errors.New("invalid UTF-8 sequence")
-)
+var errInvalidUTF8Sequence = errors.New("invalid UTF-8 sequence")
 
 type sectionGetter struct {
 	*setting.DynamicSection
@@ -28,7 +26,7 @@ func (g *sectionGetter) Err() error {
 func (g *sectionGetter) String(key string) string {
 	v := g.DynamicSection.Key(key).MustString("")
 	if !utf8.ValidString(v) {
-		g.err = fmt.Errorf("value for key %q: %w", key, ErrInvalidUTF8Sequence)
+		g.err = fmt.Errorf("value for key %q: %w", key, errInvalidUTF8Sequence)
 
 		return ""
 	}
@@ -47,7 +45,7 @@ func MakeDSN(m map[string]string) (string, error) {
 		v := m[k]
 		if !utf8.ValidString(v) {
 			return "", fmt.Errorf("value for DSN key %q: %w", k,
-				ErrInvalidUTF8Sequence)
+				errInvalidUTF8Sequence)
 		}
 		if v == "" {
 			continue
