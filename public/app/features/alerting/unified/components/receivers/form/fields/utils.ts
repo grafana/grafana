@@ -18,6 +18,13 @@
 import { Template } from './TemplateSelector';
 
 export function parseTemplates(templatesString: string): Template[] {
+  // Is it json?
+  if (templatesString.startsWith('#json')) {
+    const nameMatch = templatesString.match(/#json(.*?)\n/);
+    if (nameMatch) {
+      return [{ name: nameMatch[1], content: templatesString }];
+    }
+  }
   const templates: Record<string, Template> = {};
   const stack: Array<{ type: string; startIndex: number; name?: string }> = [];
   const regex = /{{(-?\s*)(define|end|if|range|else|with|template)(\s*.*?)?(-?\s*)}}/gs;

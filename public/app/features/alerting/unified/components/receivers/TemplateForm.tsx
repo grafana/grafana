@@ -22,6 +22,7 @@ import {
   Box,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -81,6 +82,8 @@ export const isDuplicating = (location: Location) => location.pathname.endsWith(
  * └───────────────────┘└───────────┘
  */
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
+  const [queryParams] = useQueryParams();
+  const templateType = queryParams.type && queryParams.type.toLowerCase();
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
@@ -111,10 +114,18 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     dragPosition: 'middle',
   });
 
-  const submit = (values: TemplateFormValues) => {
+  const submit = (values: TemplateFormValues, isJSON: boolean) => {
+    console.log('JSON?', isJSON);
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
     // it's not obvious that this is needed for template to work
-    const content = ensureDefine(values.name, values.content);
+    let content = values.content;
+    if (!isJSON) {
+      content = ensureDefine(values.name, values.content);
+    } else {
+      if (!values.content.startsWith('#json')) {
+        content = '#json ' + values.name + '\n' + values.content;
+      }
+    }
 
     // add new template to template map
     const template_files = {
@@ -193,7 +204,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     <>
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
-        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
+        <form onSubmit={handleSubmit((e) => submit(e, templateType == 'json'))} ref={formRef} className={styles.form}>
           {/* error message */}
           {error && (
             <Alert severity="error" title="Error saving template">
@@ -256,6 +267,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                               containerStyles={styles.editorContainer}
                               width={width}
                               height={height}
+                              type={templateType}
                             />
                           )}
                         </AutoSizer>

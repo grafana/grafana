@@ -166,6 +166,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     if (Boolean(valueInForm)) {
       if (matchesOnlyOneTemplate(valueInForm)) {
         const name = getTemplateName(valueInForm);
+        console.log('Name:', name);
         setTemplate({
           name,
           content: getContentFromOptions(name, options),

@@ -74,7 +74,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.3 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240712142914-5558735b4462 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20240723165453-d57d2e901a46 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20240711083030-f139ff397f7b // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
@@ -471,6 +471,8 @@ require (
 )
 
 require github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
+
+require github.com/google/go-jsonnet v0.20.0 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c

@@ -22,6 +22,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import { ContactPoint } from './ContactPoint';
+import { JSONTemplates } from './JSONTemplates';
 import { NotificationTemplates } from './NotificationTemplates';
 import { ContactPointsFilter } from './components/ContactPointsFilter';
 import { GlobalConfigAlert } from './components/GlobalConfigAlert';
@@ -34,6 +35,7 @@ import { ContactPointWithMetadata, isProvisioned } from './utils';
 export enum ActiveTab {
   ContactPoints = 'contact_points',
   NotificationTemplates = 'templates',
+  JSONTemplates = 'json_templates',
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -139,6 +141,32 @@ const NotificationTemplatesTab = () => {
   );
 };
 
+const JSONTemplatesTab = () => {
+  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationTemplate
+  );
+  return (
+    <>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Text variant="body" color="secondary">
+          Create JSON templates to customize your notification payloads.
+        </Text>
+        {createTemplateSupported && (
+          <LinkButton
+            icon="plus"
+            variant="primary"
+            href="/alerting/notifications/templates/new?type=json"
+            disabled={!createTemplateAllowed}
+          >
+            Add JSON template
+          </LinkButton>
+        )}
+      </Stack>
+      <JSONTemplates />
+    </>
+  );
+};
+
 const useTabQueryParam = () => {
   const [queryParams, setQueryParams] = useURLSearchParams();
   const param = useMemo(() => {
@@ -164,6 +192,7 @@ const ContactPointsPageContents = () => {
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
+  const showJsonTemplates = activeTab === ActiveTab.JSONTemplates;
 
   return (
     <>
@@ -181,11 +210,18 @@ const ContactPointsPageContents = () => {
             active={showNotificationTemplates}
             onChangeTab={() => setActiveTab(ActiveTab.NotificationTemplates)}
           />
+          <Tab
+            label="JSON Templates"
+            active={showJsonTemplates}
+            onChangeTab={() => setActiveTab(ActiveTab.JSONTemplates)}
+          />
         </TabsBar>
         <TabContent>
           <Stack direction="column">
             {showingContactPoints && <ContactPointsTab />}
             {showNotificationTemplates && <NotificationTemplatesTab />}
+            {/* Json Templates tab */}
+            {showJsonTemplates && <JSONTemplatesTab />}
           </Stack>
         </TabContent>
       </Stack>

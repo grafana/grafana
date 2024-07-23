@@ -4,6 +4,7 @@ import type { languages, editor, Position, IRange, IDisposable } from 'monaco-ed
 import type { Monaco } from '@grafana/ui';
 
 import { getAlertManagerSuggestions } from './alertManagerSuggestions';
+import { getStdSuggestions } from './jsonnetDataSuggestions';
 import { SuggestionDefinition } from './suggestionDefinition';
 import {
   getAlertsSuggestions,
@@ -48,6 +49,36 @@ export function registerGoTemplateAutocomplete(monaco: Monaco): IDisposable {
   return monaco.languages.registerCompletionItemProvider('go-template', goTemplateAutocompleteProvider);
 }
 
+export function registerJsonnetAutocomplete(monaco: Monaco): IDisposable {
+  const jsonnetAutocompleteProvider: languages.CompletionItemProvider = {
+    triggerCharacters: ['.'],
+    provideCompletionItems(model, position, context): languages.ProviderResult<languages.CompletionList> {
+      const word = model.getWordUntilPosition(position);
+      const range = {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
+      };
+
+      const completionProvider = new CompletionProvider(monaco, range);
+
+      if (context.triggerKind === monaco.languages.CompletionTriggerKind.Invoke && !context.triggerCharacter) {
+        return completionProvider.getFunctionsSuggestions();
+      }
+
+      const wordBeforeDot = model.getWordUntilPosition({
+        lineNumber: position.lineNumber,
+        column: position.column - 1,
+      });
+
+      return completionProvider.getJsonnetDataSuggestions(wordBeforeDot.word);
+    },
+  };
+
+  return monaco.languages.registerCompletionItemProvider('jsonnet', jsonnetAutocompleteProvider);
+}
+
 function isInsideGoExpression(model: editor.ITextModel, position: Position) {
   const searchRange = {
     startLineNumber: position.lineNumber,
@@ -87,6 +118,25 @@ export class CompletionProvider {
       case 'CommonAnnotations':
       case 'Labels':
       case 'Annotations':
+        return this.getCompletionsFromDefinitions(getKeyValueSuggestions(this.monaco));
+      default:
+        return { suggestions: [] };
+    }
+  };
+
+  getJsonnetDataSuggestions = (wordContext: string): languages.ProviderResult<languages.CompletionList> => {
+    switch (wordContext) {
+      case 'data':
+        return this.getCompletionsFromDefinitions(getGlobalSuggestions(this.monaco), getAlertSuggestions(this.monaco));
+      case 'std':
+        return this.getCompletionsFromDefinitions(getStdSuggestions(this.monaco));
+      case 'alerts':
+        return this.getCompletionsFromDefinitions(getAlertsSuggestions(this.monaco));
+      case 'groupLabels':
+      case 'commonLabels':
+      case 'commonAnnotations':
+      case 'labels':
+      case 'annotations':
         return this.getCompletionsFromDefinitions(getKeyValueSuggestions(this.monaco));
       default:
         return { suggestions: [] };

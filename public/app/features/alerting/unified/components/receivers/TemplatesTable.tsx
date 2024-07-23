@@ -103,7 +103,8 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                         <ActionIcon
                           to={makeAMLink(
                             `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
-                            alertManagerName
+                            alertManagerName,
+                            { type: 'json' }
                           )}
                           tooltip="edit template"
                           icon="pen"

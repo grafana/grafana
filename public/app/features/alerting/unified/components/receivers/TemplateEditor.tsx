@@ -9,15 +9,22 @@ import { useEffect, useRef } from 'react';
 import { CodeEditor } from '@grafana/ui';
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 
-import { registerGoTemplateAutocomplete } from './editor/autocomplete';
-import goTemplateLanguageDefinition, { GO_TEMPLATE_LANGUAGE_ID } from './editor/definition';
+import { registerGoTemplateAutocomplete, registerJsonnetAutocomplete } from './editor/autocomplete';
+import {
+  goTemplateLanguageDefinition,
+  jsonnetLanguageDefinition,
+  GO_TEMPLATE_LANGUAGE_ID,
+  JSONNET_LANGUAGE_ID,
+} from './editor/definition';
 import { registerLanguage } from './editor/register';
 
 type TemplateEditorProps = Omit<CodeEditorProps, 'language' | 'theme'> & {
   autoHeight?: boolean;
+  type?: string;
 };
 
 const TemplateEditor = (props: TemplateEditorProps) => {
+  const type = props.type;
   const shouldAutoHeight = Boolean(props.autoHeight);
   const disposeSuggestions = useRef<IDisposable | null>(null);
 
@@ -39,7 +46,20 @@ const TemplateEditor = (props: TemplateEditorProps) => {
     };
   }, []);
 
-  return (
+  return type === 'json_templates' ? (
+    // TODO(santiago): cambiar language
+    <CodeEditor
+      showLineNumbers={true}
+      showMiniMap={false}
+      {...props}
+      onEditorDidMount={onEditorDidMount}
+      onBeforeEditorMount={(monaco) => {
+        registerLanguage(monaco, jsonnetLanguageDefinition);
+        disposeSuggestions.current = registerJsonnetAutocomplete(monaco);
+      }}
+      language={JSONNET_LANGUAGE_ID}
+    />
+  ) : (
     <CodeEditor
       showLineNumbers={true}
       showMiniMap={false}
