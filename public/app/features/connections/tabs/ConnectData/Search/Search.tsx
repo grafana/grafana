@@ -28,7 +28,7 @@ export interface Props {
 
 export const Search = ({ onChange, value }: Props) => {
   const chromeHeaderHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, config.featureToggles.bodyScrolling ? chromeHeaderHeight ?? 0 : 0);
+  const styles = useStyles2(getStyles, config.featureToggles.bodyScrolling ? (chromeHeaderHeight ?? 0) : 0);
 
   return (
     <div className={styles.searchContainer}>

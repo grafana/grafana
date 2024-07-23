@@ -327,7 +327,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     let xAxisAutoLabel =
       xySeries.length === 1
-        ? xField.state?.displayName ?? xField.name
+        ? (xField.state?.displayName ?? xField.name)
         : new Set(dispNames).size === 1
           ? dispNames[0]
           : getCommonPrefixSuffix(dispNames);
@@ -384,7 +384,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
       let yAxisAutoLabel =
         xySeries.length === 1
-          ? field.state?.displayName ?? field.name
+          ? (field.state?.displayName ?? field.name)
           : new Set(dispNames).size === 1
             ? dispNames[0]
             : getCommonPrefixSuffix(dispNames);

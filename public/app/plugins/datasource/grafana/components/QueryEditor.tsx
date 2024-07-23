@@ -217,7 +217,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     }
 
     const distinctFields = new Set<string>();
-    const fields: Array<SelectableValue<string>> = channel ? channelFields[channel] ?? [] : [];
+    const fields: Array<SelectableValue<string>> = channel ? (channelFields[channel] ?? []) : [];
     // if (data && data.series?.length) {
     //   for (const frame of data.series) {
     //     for (const field of frame.fields) {

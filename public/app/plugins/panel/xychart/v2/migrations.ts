@@ -189,7 +189,7 @@ function migrateOptions(panel: PanelModel): Options {
       frame: {
         matcher: {
           id: FrameMatcherID.byIndex,
-          options: frame ?? (seriesMapping === SeriesMapping.Manual ? i++ : frameShared ?? 0),
+          options: frame ?? (seriesMapping === SeriesMapping.Manual ? i++ : (frameShared ?? 0)),
         },
       },
       x: {
