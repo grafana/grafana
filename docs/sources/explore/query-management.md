@@ -54,7 +54,7 @@ By default, query history shows you newest queries first. Click the sort box in 
 
 ### Query history Starred tab
 
-All starred query are displayed in the Starred tab. This gives quick access to key or favorite queries without having to rewrite them.
+All starred queries are displayed in the **Starred** tab. This gives quick access to key or favorite queries without having to rewrite them.
 
 You also have the option to switch the data source and run a starred query.
 
