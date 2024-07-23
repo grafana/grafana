@@ -2,14 +2,14 @@ package middleware
 
 import (
 	"bufio"
-	"compress/gzip"
 	"fmt"
 	"net"
 	"net/http"
 	"strings"
 
+	"github.com/klauspost/compress/gzip"
+
 	"github.com/grafana/grafana/pkg/web"
-	//"github.com/klauspost/compress/gzip"
 )
 
 type gzipResponseWriter struct {
