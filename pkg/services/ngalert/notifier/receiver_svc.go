@@ -3,27 +3,14 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
-)
-
-var (
-	// ErrPermissionDenied is returned when the user does not have permission to perform the requested action.
-	ErrPermissionDenied = errors.New("permission denied") // TODO: convert to errutil
-	// ErrNotFound is returned when the requested resource does not exist.
-	ErrNotFound = errors.New("not found") // TODO: convert to errutil
-)
-
-var (
-	ErrReceiverInUse   = errutil.Conflict("alerting.notifications.receiver.used", errutil.WithPublicMessage("Receiver is used by one or many notification policies"))
-	ErrVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict")
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -61,7 +48,7 @@ func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requ
 	}
 
 	if reqDecrypt && !decryptAccess {
-		return false, ErrPermissionDenied
+		return false, ac.NewAuthorizationErrorWithPermissions("read any decrypted receiver", nil) // TODO: Replace with authz service.
 	}
 
 	return decryptAccess && reqDecrypt, nil
@@ -96,7 +83,7 @@ func (rs *ReceiverService) hasList(ctx context.Context, user identity.Requester)
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
 	if q.Decrypt && user == nil {
-		return definitions.GettableApiReceiver{}, ErrPermissionDenied
+		return definitions.GettableApiReceiver{}, ac.NewAuthorizationErrorWithPermissions("read any decrypted receiver", nil) // TODO: Replace with authz service.
 	}
 
 	rcv, err := rs.receiverStore.GetReceiver(ctx, q.OrgID, models.GetUID(q.Name))
@@ -117,7 +104,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 // Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
 	if q.Decrypt && user == nil {
-		return nil, ErrPermissionDenied
+		return nil, ac.NewAuthorizationErrorWithPermissions("read any decrypted receiver", nil) // TODO: Replace with authz service.
 	}
 
 	uids := make([]string, 0, len(q.Names))
@@ -143,7 +130,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	// User doesn't have any permissions on the receivers.
 	// This is mostly a safeguard as it should not be possible with current API endpoints + middleware authentication.
 	if !listAccess && !readRedactedAccess {
-		return nil, ErrPermissionDenied
+		return nil, ac.NewAuthorizationErrorWithPermissions("read any receiver", nil) // TODO: Replace with authz service.
 	}
 
 	var output []definitions.GettableApiReceiver

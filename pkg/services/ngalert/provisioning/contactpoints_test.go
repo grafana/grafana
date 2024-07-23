@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -299,7 +300,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		q := cpsQuery(1)
 		q.Decrypt = true
 		_, err := sut.GetContactPoints(context.Background(), q, redactedUser)
-		require.ErrorIs(t, err, ErrPermissionDenied)
+		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
@@ -307,7 +308,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		q := cpsQuery(1)
 		q.Decrypt = true
 		_, err := sut.GetContactPoints(context.Background(), q, nil)
-		require.ErrorIs(t, err, ErrPermissionDenied)
+		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 
 	t.Run("GetContactPoints gets decrypted contact points when Decrypt = true and user has permissions", func(t *testing.T) {

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -81,7 +82,7 @@ func TestRouteGetReceiver(t *testing.T) {
 
 	t.Run("should pass along not found response", func(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
-			return definitions.GettableApiReceiver{}, notifier.ErrNotFound
+			return definitions.GettableApiReceiver{}, legacy_storage.ErrReceiverNotFound.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -91,7 +92,7 @@ func TestRouteGetReceiver(t *testing.T) {
 
 	t.Run("should pass along permission denied response", func(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
-			return definitions.GettableApiReceiver{}, notifier.ErrPermissionDenied
+			return definitions.GettableApiReceiver{}, ac.ErrAuthorizationBase.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -161,7 +162,7 @@ func TestRouteGetReceivers(t *testing.T) {
 
 	t.Run("should pass along permission denied response", func(t *testing.T) {
 		fakeReceiverSvc.GetReceiversFn = func(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error) {
-			return nil, notifier.ErrPermissionDenied
+			return nil, ac.ErrAuthorizationBase.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")

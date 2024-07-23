@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -539,20 +538,8 @@ func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string
 	return s, nil
 }
 
-// handleWrappedError unwraps an error and wraps it with a new expected error type. If the error is not wrapped, it returns just the expected error.
-func handleWrappedError(err error, expected error) error {
-	err = errors.Unwrap(err)
-	if err == nil {
-		return expected
-	}
-	return fmt.Errorf("%w: %s", expected, err.Error())
-}
-
 // convertRecSvcErr converts errors from notifier.ReceiverService to errors expected from ContactPointService.
 func convertRecSvcErr(err error) error {
-	if errors.Is(err, notifier.ErrPermissionDenied) {
-		return handleWrappedError(err, ErrPermissionDenied)
-	}
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return legacy_storage.ErrNoAlertmanagerConfiguration.Errorf("")
 	}
