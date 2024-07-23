@@ -1,8 +1,6 @@
 import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel } from '@grafana/data';
 
-import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig, Options as PrevOptions } from './panelcfg.gen';
-
-import { XYSeriesConfig, Options } from './panelcfg.gen';
+import { SeriesMapping, Options, XYSeriesConfig } from './panelcfg.gen';
 
 export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
@@ -15,8 +13,8 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
 };
 
 function migrateOptions(panel: PanelModel): Options {
-  const { dims, seriesMapping, series: oldSeries, ...cleanedOpts } = panel.options as PrevOptions;
-  const { exclude = [], frame: frameShared, x: xShared }: XYDimensionConfig = dims ?? {};
+  const { dims, seriesMapping, series: oldSeries, ...cleanedOpts } = panel.options;
+  const { exclude = [], frame: frameShared, x: xShared } = dims ?? {};
 
   const custDefaults = panel.fieldConfig.defaults.custom;
 
@@ -51,6 +49,23 @@ function migrateOptions(panel: PanelModel): Options {
     }
   ],
 */
+
+  interface ScatterSeriesConfig {
+    pointColor: {
+      fixed: string;
+      field: string;
+    };
+    pointSize: {
+      field: string;
+      max: number;
+      min: number;
+      fixed: number;
+    };
+    frame: number;
+    x: string;
+    y: string;
+  }
+
   let i = 0;
 
   const newSeries: XYSeriesConfig[] = oldSeries2.map(({ x, y, pointColor, pointSize, frame }: ScatterSeriesConfig) => {
