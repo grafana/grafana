@@ -99,7 +99,7 @@ describe('SpanFilters', () => {
     const toValue = screen.getByLabelText('Select max span duration');
     const tagKey = screen.getByLabelText('Select tag key');
     const tagOperator = screen.getByLabelText('Select tag operator');
-    const tagValue = screen.getByLabelText('Select tag value');
+    const tagSelectValue = screen.getByLabelText('Select tag value');
 
     expect(serviceOperator).toBeInTheDocument();
     expect(getElemText(serviceOperator)).toBe('=');
@@ -116,7 +116,7 @@ describe('SpanFilters', () => {
     expect(tagKey).toBeInTheDocument();
     expect(tagOperator).toBeInTheDocument();
     expect(getElemText(tagOperator)).toBe('=');
-    expect(tagValue).toBeInTheDocument();
+    expect(tagSelectValue).toBeInTheDocument();
 
     await user.click(serviceValue);
     jest.advanceTimersByTime(1000);
@@ -129,6 +129,13 @@ describe('SpanFilters', () => {
     await waitFor(() => {
       expect(screen.getByText('Span0')).toBeInTheDocument();
       expect(screen.getByText('Span1')).toBeInTheDocument();
+    });
+    await user.click(tagOperator);
+    jest.advanceTimersByTime(1000);
+    await waitFor(() => {
+      expect(screen.getByText('!~')).toBeInTheDocument();
+      expect(screen.getByText('=~')).toBeInTheDocument();
+      expect(screen.getByText('!~')).toBeInTheDocument();
     });
     await user.click(tagKey);
     jest.advanceTimersByTime(1000);
@@ -149,6 +156,7 @@ describe('SpanFilters', () => {
     const serviceValue = screen.getByLabelText('Select service name');
     const spanValue = screen.getByLabelText('Select span name');
     const tagKey = screen.getByLabelText('Select tag key');
+    const tagOperator = screen.getByLabelText('Select tag operator');
     const tagValue = screen.getByLabelText('Select tag value');
 
     expect(getElemText(serviceValue)).toBe('All service names');
@@ -164,6 +172,9 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     expect(getElemText(tagValue)).toBe('Select value');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
+    expect(screen.queryByLabelText('Input tag value')).toBeNull();
+    await selectAndCheckValue(user, tagOperator, '=~');
+    expect(screen.getByLabelText('Input tag value')).toBeInTheDocument();
   });
 
   it('should order tag filters', async () => {
