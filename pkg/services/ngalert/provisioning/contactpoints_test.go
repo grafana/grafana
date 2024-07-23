@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -249,17 +250,18 @@ func TestContactPointService(t *testing.T) {
 	})
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
-		sut := createContactPointServiceSut(t, secretsService)
+		cfg := createEncryptedConfig(t, secretsService)
+		fakeConfigStore := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, fakeConfigStore)
 		newCp := createTestContactPoint()
-		config, err := sut.configStore.store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+		config, err := sut.configStore.Get(context.Background(), 1)
 		require.NoError(t, err)
-		expectedConcurrencyToken := config.ConfigurationHash
+		expectedConcurrencyToken := config.ConcurrencyToken
 
 		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		fake := sut.configStore.store.(*fakes.FakeAlertmanagerConfigStore)
-		intercepted := fake.LastSaveCommand
+		intercepted := fakeConfigStore.LastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
 	})
 }
@@ -357,12 +359,17 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	// Encrypt secure settings.
 	cfg := createEncryptedConfig(t, secretService)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+	return createContactPointServiceSutWithConfigStore(t, secretService, store)
+}
+
+func createContactPointServiceSutWithConfigStore(t *testing.T, secretService secrets.Service, configStore legacy_storage.AMConfigStore) *ContactPointService {
+	// Encrypt secure settings.
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	receiverService := notifier.NewReceiverService(
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
-		store,
+		configStore,
 		provisioningStore,
 		secretService,
 		xact,
@@ -370,7 +377,7 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	)
 
 	return &ContactPointService{
-		configStore:       &alertmanagerConfigStoreImpl{store: store},
+		configStore:       legacy_storage.NewAlertmanagerConfigStore(configStore),
 		provenanceStore:   provisioningStore,
 		receiverService:   receiverService,
 		xact:              xact,
