@@ -4806,6 +4806,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -5490,7 +5491,7 @@
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
-        "savedItemIds": {
+        "bookmarkIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -6561,7 +6562,8 @@
         },
         "endDate": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "x-nullable": true
         },
         "frequency": {
           "type": "string"
@@ -6575,7 +6577,8 @@
         },
         "startDate": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "x-nullable": true
         },
         "timeZone": {
           "type": "string"
@@ -7217,6 +7220,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -8376,6 +8380,23 @@
           "format": "date-time"
         },
         "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "healthResponse": {
+      "type": "object",
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "enterpriseCommit": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
