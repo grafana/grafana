@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { defaultFilters, filters0 } from '../../../useSearch';
+import { defaultFilters } from '../../../useSearch';
 import { Trace } from '../../types/trace';
 
 import { SpanFilters } from './SpanFilters';
@@ -51,34 +51,6 @@ describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
   const SpanFiltersWithProps = ({ showFilters = true, matches }: { showFilters?: boolean; matches?: Set<string> }) => {
     const [search, setSearch] = useState(defaultFilters);
-    const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
-    const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
-    const props = {
-      trace: trace,
-      showSpanFilters: showFilters,
-      setShowSpanFilters: jest.fn(),
-      showSpanFilterMatchesOnly,
-      setShowSpanFilterMatchesOnly,
-      showCriticalPathSpansOnly,
-      setShowCriticalPathSpansOnly,
-      search,
-      setSearch,
-      spanFilterMatches: matches,
-      setFocusedSpanIdForSearch: jest.fn(),
-      datasourceType: 'tempo',
-    };
-
-    return <SpanFilters {...props} />;
-  };
-
-  const SpanFiltersWithDifferentProps = ({
-    showFilters = true,
-    matches,
-  }: {
-    showFilters?: boolean;
-    matches?: Set<string>;
-  }) => {
-    const [search, setSearch] = useState(filters0);
     const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
     const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
     const props = {
@@ -158,6 +130,13 @@ describe('SpanFilters', () => {
       expect(screen.getByText('Span0')).toBeInTheDocument();
       expect(screen.getByText('Span1')).toBeInTheDocument();
     });
+    await user.click(tagOperator);
+    jest.advanceTimersByTime(1000);
+    await waitFor(() => {
+      expect(screen.getByText('!~')).toBeInTheDocument();
+      expect(screen.getByText('=~')).toBeInTheDocument();
+      expect(screen.getByText('!~')).toBeInTheDocument();
+    });
     await user.click(tagKey);
     jest.advanceTimersByTime(1000);
     await waitFor(() => {
@@ -172,21 +151,12 @@ describe('SpanFilters', () => {
     });
   });
 
-  it('should render filters with tag operator ~=', async () => {
-    render(<SpanFiltersWithDifferentProps />);
-
-    const tagOperator = screen.getByLabelText('Select tag operator');
-    const tagInputValue = screen.getByLabelText('Input tag value');
-
-    expect(getElemText(tagOperator)).toBe('=~');
-    expect(tagInputValue).toBeInTheDocument();
-  });
-
   it('should update filters', async () => {
     render(<SpanFiltersWithProps />);
     const serviceValue = screen.getByLabelText('Select service name');
     const spanValue = screen.getByLabelText('Select span name');
     const tagKey = screen.getByLabelText('Select tag key');
+    const tagOperator = screen.getByLabelText('Select tag operator');
     const tagValue = screen.getByLabelText('Select tag value');
 
     expect(getElemText(serviceValue)).toBe('All service names');
@@ -202,6 +172,9 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     expect(getElemText(tagValue)).toBe('Select value');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
+    expect(screen.queryByLabelText('Input tag value')).toBeNull();
+    await selectAndCheckValue(user, tagOperator, '=~');
+    expect(screen.getByLabelText('Input tag value')).toBeInTheDocument();
   });
 
   it('should order tag filters', async () => {

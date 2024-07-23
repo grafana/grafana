@@ -30,25 +30,12 @@ export const defaultTagFilter = {
   operator: '=',
 };
 
-export const tagFilter0 = {
-  id: randomId(),
-  operator: '=~',
-};
-
 export const defaultFilters = {
   spanNameOperator: '=',
   serviceNameOperator: '=',
   fromOperator: '>',
   toOperator: '<',
   tags: [defaultTagFilter],
-};
-
-export const filters0 = {
-  spanNameOperator: '=',
-  serviceNameOperator: '=',
-  fromOperator: '>',
-  toOperator: '<',
-  tags: [tagFilter0],
 };
 
 /**
