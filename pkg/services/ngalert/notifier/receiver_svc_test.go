@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -183,15 +184,12 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
-	return &ReceiverService{
-		ac:                acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
-		provisioningStore: provisioningStore,
-		cfgStore:          store,
-		encryptionService: encryptSvc,
-		xact:              xact,
-		log:               log.NewNopLogger(),
-		validator:         validation.ValidateProvenanceRelaxed,
-	}
+	return NewReceiverService(
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		legacy_storage.NewReceiverStore(store, provisioningStore, xact, validation.ValidateProvenanceRelaxed),
+		encryptSvc,
+		log.NewNopLogger(),
+	)
 }
 
 func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {

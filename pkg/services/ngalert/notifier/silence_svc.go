@@ -49,6 +49,10 @@ type RuleStore interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
 }
 
+type transactionManager interface {
+	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
+}
+
 func NewSilenceService(
 	authz SilenceAccessControlService,
 	xact transactionManager,

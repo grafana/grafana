@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -272,7 +273,18 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		alertingauthz.NewRuleService(ps.ac),
 	)
 	configStore := legacy_storage.NewAlertmanagerConfigStore(&st)
-	receiverSvc := notifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
+	receiverStore := legacy_storage.NewReceiverStore(
+		&st,
+		st,
+		ps.SQLStore,
+		validation.ValidateProvenanceRelaxed,
+	)
+	receiverSvc := notifier.NewReceiverService(
+		ps.ac,
+		receiverStore,
+		ps.secretService,
+		ps.log,
+	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log, &st)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,

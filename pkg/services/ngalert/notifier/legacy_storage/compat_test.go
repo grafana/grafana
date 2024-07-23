@@ -1,4 +1,4 @@
-package notifier
+package legacy_storage
 
 import (
 	"encoding/json"

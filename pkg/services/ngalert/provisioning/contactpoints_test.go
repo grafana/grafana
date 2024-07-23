@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -369,10 +370,13 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 
 	receiverService := notifier.NewReceiverService(
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
-		configStore,
-		provisioningStore,
+		legacy_storage.NewReceiverStore(
+			configStore,
+			provisioningStore,
+			xact,
+			validation.ValidateProvenanceRelaxed,
+		),
 		secretService,
-		xact,
 		log.NewNopLogger(),
 	)
 

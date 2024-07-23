@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -1887,7 +1888,18 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	t.Helper()
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
-	receiverSvc := notifier.NewReceiverService(env.ac, env.configs, env.prov, env.secrets, env.xact, env.log)
+	receiverStore := legacy_storage.NewReceiverStore(
+		env.configs,
+		env.prov,
+		env.xact,
+		validation.ValidateProvenanceRelaxed,
+	)
+	receiverSvc := notifier.NewReceiverService(
+		env.ac,
+		receiverStore,
+		env.secrets,
+		env.log,
+	)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),

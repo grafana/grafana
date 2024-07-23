@@ -20,6 +20,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -345,7 +346,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
 		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
 		templates:                ToTemplateDefinitions(cfg),
-		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
+		receivers:                legacy_storage.PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
 		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})
 	if err != nil {

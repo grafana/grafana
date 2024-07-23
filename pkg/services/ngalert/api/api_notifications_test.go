@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -395,7 +397,17 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) NotificationSrv {
 	t.Helper()
 
-	receiverSvc := notifier.NewReceiverService(env.ac, env.configs, env.prov, env.secrets, env.xact, env.log)
+	receiverSvc := notifier.NewReceiverService(
+		env.ac,
+		legacy_storage.NewReceiverStore(
+			env.configs,
+			env.prov,
+			env.xact,
+			validation.ValidateProvenanceRelaxed,
+		),
+		env.secrets,
+		env.log,
+	)
 	return NotificationSrv{
 		logger:          env.log,
 		receiverService: receiverSvc,
