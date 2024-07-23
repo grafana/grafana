@@ -673,7 +673,7 @@ We can generate a matrix using the values of 'Server Status' as column names, th
 
 Use this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. This helps you present complex relationships in a clear and structured matrix format.
 
-### Group to nested table
+### Group to nested tables
 
 Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
 

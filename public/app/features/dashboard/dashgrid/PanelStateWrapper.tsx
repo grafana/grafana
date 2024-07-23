@@ -589,6 +589,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         onCancelQuery={panelChromeProps.onCancelQuery}
         onOpenMenu={panelChromeProps.onOpenMenu}
         onFocus={() => this.setPanelAttention()}
+        onMouseEnter={() => this.setPanelAttention()}
         onMouseMove={() => this.debouncedSetPanelAttention()}
       >
         {(innerWidth, innerHeight) => (

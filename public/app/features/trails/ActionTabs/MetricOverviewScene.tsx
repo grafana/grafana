@@ -10,6 +10,7 @@ import {
 import { Stack, Text, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { getUnitFromMetric } from '../AutomaticMetricQueries/units';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
@@ -67,6 +68,10 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const variable = model.getVariable();
     const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
+    // Get unit name from the metric name
+    const metricScene = getMetricSceneFor(model);
+    const metric = metricScene.state.metric;
+    let unit = getUnitFromMetric(metric) ?? 'Unknown';
     return (
       <StatusWrapper isLoading={labelsLoading || metadataLoading}>
         <Stack gap={6}>
@@ -105,7 +110,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
                 <div>{metadata?.unit}</div>
               ) : (
                 <i>
-                  <Trans>Unknown</Trans>
+                  <Trans>{unit}</Trans>
                 </i>
               )}
             </Stack>

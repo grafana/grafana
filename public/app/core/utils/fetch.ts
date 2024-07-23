@@ -1,6 +1,6 @@
 import { omitBy } from 'lodash';
 
-import { deprecationWarning, safeStringifyValue } from '@grafana/data';
+import { deprecationWarning } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
@@ -93,7 +93,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
     return options.data;
   }
 
-  return isAppJson ? safeStringifyValue(options.data) : new URLSearchParams(options.data);
+  return isAppJson ? JSON.stringify(options.data) : new URLSearchParams(options.data);
 };
 
 export async function parseResponseBody<T>(

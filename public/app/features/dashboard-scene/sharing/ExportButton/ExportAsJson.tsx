@@ -6,7 +6,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
+import { dispatch } from 'app/store/store';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareExportTab } from '../ShareExportTab';
@@ -27,6 +30,12 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
     const json = await model.getExportableDashboardJson();
     return JSON.stringify(json, null, 2);
   }, [isSharingExternally]);
+
+  const onClickDownload = async () => {
+    await model.onSaveAsFile();
+    const message = t('export.json.download-successful_toast_message', 'Your JSON has been downloaded');
+    dispatch(notifyApp(createSuccessNotification(message)));
+  };
 
   const switchLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
 
@@ -71,7 +80,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
             data-testid={selector.saveToFileButton}
             variant="primary"
             icon="download-alt"
-            onClick={model.onSaveAsFile}
+            onClick={onClickDownload}
           >
             <Trans i18nKey="export.json.download-button">Download file</Trans>
           </Button>

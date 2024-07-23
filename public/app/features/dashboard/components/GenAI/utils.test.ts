@@ -2,8 +2,9 @@ import { llms } from '@grafana/experimental';
 
 import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
+import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
-import { getDashboardChanges, isLLMPluginEnabled, sanitizeReply } from './utils';
+import { getDashboardChanges, getPanelStrings, isLLMPluginEnabled, sanitizeReply } from './utils';
 
 // Mock the llms.openai module
 jest.mock('@grafana/experimental', () => ({
@@ -132,5 +133,49 @@ describe('sanitizeReply', () => {
 
   it('should return an empty string if given an empty string', () => {
     expect(sanitizeReply('')).toBe('');
+  });
+});
+
+describe('getPanelStrings', () => {
+  function dashboardSetup(items: Array<{ title: string; description: string }>) {
+    return createDashboardModelFixture({
+      panels: items.map((item) => createPanelSaveModel(item)),
+    });
+  }
+
+  it('should return an empty array if all panels dont have title or descriptions', () => {
+    const dashboard = dashboardSetup([{ title: '', description: '' }]);
+
+    expect(getPanelStrings(dashboard)).toEqual([]);
+  });
+
+  it('should return an empty array if all panels have no description and panels that have title are titled "Panel title', () => {
+    const dashboard = dashboardSetup([{ title: NEW_PANEL_TITLE, description: '' }]);
+
+    expect(getPanelStrings(dashboard)).toEqual([]);
+  });
+
+  it('should return an array of panels if a panel has a title or description', () => {
+    const dashboard = dashboardSetup([
+      { title: 'Graph panel', description: '' },
+      { title: '', description: 'Logs' },
+    ]);
+
+    expect(getPanelStrings(dashboard)).toEqual([
+      '- Panel 0\n- Title: Graph panel',
+      '- Panel 1\n- Title: \n- Description: Logs',
+    ]);
+  });
+
+  it('returns an array with title and description if both are present', () => {
+    const dashboard = dashboardSetup([
+      { title: 'Graph panel', description: 'Logs' },
+      { title: 'Table panel', description: 'Metrics' },
+    ]);
+
+    expect(getPanelStrings(dashboard)).toEqual([
+      '- Panel 0\n- Title: Graph panel\n- Description: Logs',
+      '- Panel 1\n- Title: Table panel\n- Description: Metrics',
+    ]);
   });
 });

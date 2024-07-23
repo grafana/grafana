@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
