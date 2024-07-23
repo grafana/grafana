@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import {
+  getUrlSyncManager,
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
@@ -46,7 +47,14 @@ export interface DataTrailHistoryStep {
 
 export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
 
-const filterPipeRegex = /(\|)(=)(\|)/g;
+const stepDescriptionMap: Record<TrailStepType, string> = {
+  start: 'Start of history',
+  metric: 'Metric selected',
+  filters: 'Filter applied',
+  time: 'Time range changed',
+};
+
+const filterPipeRegex = /(\|)(=|=~|!=|>|<|!~)(\|)/g;
 const filterSubst = ` $2 `;
 const timeFormat = 'YY-MM-DD HH:mm:ss';
 
@@ -77,7 +85,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
         // But must add a secondary step to represent the selection of the metric
         // for this restored trail state
-        this.addTrailStep(trail, 'metric');
+        this.addTrailStep(trail, 'metric', trail.state.metric);
       }
     }
 
@@ -89,14 +97,17 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         }
 
         if (newState.metric || oldState.metric) {
-          this.addTrailStep(trail, 'metric');
+          this.addTrailStep(trail, 'metric', newState.metric);
         }
       }
     });
 
     trail.subscribeToEvent(SceneVariableValueChangedEvent, (evt) => {
       if (evt.payload.state.name === VAR_FILTERS) {
-        this.addTrailStep(trail, 'filters');
+        const filtersApplied = this.state.filtersApplied;
+        const urlState = getUrlSyncManager().getUrlState(trail);
+        this.addTrailStep(trail, 'filters', parseFilterArrayAsTooltipDetail(urlState, filtersApplied));
+        this.setState({ filtersApplied });
       }
     });
 
@@ -108,14 +119,21 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           if (prevState.from === newState.from && prevState.to === newState.to) {
             return;
           }
-        }
 
-        this.addTrailStep(trail, 'time');
+          this.addTrailStep(
+            trail,
+            'time',
+            parseTimeTooltip({
+              from: newState.from,
+              to: newState.to,
+            })
+          );
+        }
       }
     });
   }
 
-  public addTrailStep(trail: DataTrail, type: TrailStepType) {
+  public addTrailStep(trail: DataTrail, type: TrailStepType, detail = '') {
     if (this.stepTransitionInProgress) {
       // Do not add trail steps when step transition is in progress
       return;
@@ -129,9 +147,9 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       steps: [
         ...this.state.steps,
         {
-          description: 'Test',
-          detail: 'Test',
           type,
+          detail,
+          description: stepDescriptionMap[type],
           trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: this }),
           parentIndex,
         },
@@ -150,22 +168,15 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     const parentIndex = type === 'start' ? -1 : this.state.currentStep;
     const filtersApplied = this.state.filtersApplied;
     let detail = '';
-    let description = '';
 
     switch (step.type) {
-      case 'start':
-        description = 'Start of history';
-        break;
       case 'metric':
-        description = 'Metric selected:';
         detail = step.urlValues.metric?.toString() ?? '';
         break;
       case 'filters':
-        description = 'Filter applied:';
-        detail = parseFilterTooltip(step.urlValues, filtersApplied);
+        detail = parseFilterArrayAsTooltipDetail(step.urlValues, filtersApplied);
         break;
       case 'time':
-        description = 'Time range changed:';
         detail = parseTimeTooltip(step.urlValues);
         break;
     }
@@ -176,9 +187,9 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       steps: [
         ...this.state.steps,
         {
-          description,
-          detail,
           type,
+          detail,
+          description: stepDescriptionMap[type],
           trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: this }),
           parentIndex,
         },
@@ -295,7 +306,7 @@ function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
   return `${range.from.format(timeFormat)} - ${range.to.format(timeFormat)}`;
 }
 
-function parseFilterTooltip(urlValues: SceneObjectUrlValues, filtersApplied: string[]): string {
+function parseFilterArrayAsTooltipDetail(urlValues: SceneObjectUrlValues, filtersApplied: string[]): string {
   let detail = '';
   const varFilters = urlValues['var-filters'];
   if (isDataTrailHistoryFilter(varFilters)) {
@@ -312,6 +323,10 @@ function parseFilterTooltip(urlValues: SceneObjectUrlValues, filtersApplied: str
   // we need to remove pipes (|)
   return detail.replace(filterPipeRegex, filterSubst);
 }
+
+// function parseFilterStringAsTooltipDetail(filterStr: string, filtersApplied: string[]): string {
+//   return 'NOT IMPLEMENTED';
+// }
 
 function getStyles(theme: GrafanaTheme2) {
   const visTheme = theme.visualization;
