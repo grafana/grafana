@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -80,7 +81,10 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID strin
 
 	mt, idx := getMuteTimingByName(rev, nameOrUID)
 	if idx == -1 {
-		mt, idx = getMuteTimingByUID(rev, nameOrUID)
+		name, err := uidToName(nameOrUID)
+		if err == nil {
+			mt, idx = getMuteTimingByName(rev, name)
+		}
 	}
 	if idx == -1 {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
@@ -146,9 +150,12 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	}
 
 	var old config.MuteTimeInterval
-	var idx int
+	var idx = -1
 	if mt.UID != "" {
-		old, idx = getMuteTimingByUID(revision, mt.UID)
+		name, err := uidToName(mt.UID)
+		if err == nil {
+			old, idx = getMuteTimingByName(revision, name)
+		}
 	} else {
 		old, idx = getMuteTimingByName(revision, mt.Name)
 	}
@@ -206,7 +213,10 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 
 	existing, idx := getMuteTimingByName(revision, nameOrUID)
 	if idx == -1 {
-		existing, idx = getMuteTimingByUID(revision, nameOrUID)
+		name, err := uidToName(nameOrUID)
+		if err == nil {
+			existing, idx = getMuteTimingByName(revision, name)
+		}
 	}
 	if idx == -1 {
 		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", nameOrUID)
@@ -269,16 +279,6 @@ func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
 func getMuteTimingByName(rev *cfgRevision, name string) (config.MuteTimeInterval, int) {
 	idx := slices.IndexFunc(rev.cfg.AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
 		return interval.Name == name
-	})
-	if idx == -1 {
-		return config.MuteTimeInterval{}, idx
-	}
-	return rev.cfg.AlertmanagerConfig.MuteTimeIntervals[idx], idx
-}
-
-func getMuteTimingByUID(rev *cfgRevision, uid string) (config.MuteTimeInterval, int) {
-	idx := slices.IndexFunc(rev.cfg.AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
-		return getIntervalUID(interval) == uid
 	})
 	if idx == -1 {
 		return config.MuteTimeInterval{}, idx
@@ -357,7 +357,13 @@ func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTime
 }
 
 func getIntervalUID(t config.MuteTimeInterval) string {
-	sum := fnv.New64()
-	_, _ = sum.Write([]byte(t.Name))
-	return fmt.Sprintf("%016x", sum.Sum64())
+	return base64.RawURLEncoding.EncodeToString([]byte(t.Name))
+}
+
+func uidToName(uid string) (string, error) {
+	data, err := base64.RawURLEncoding.DecodeString(uid)
+	if err != nil {
+		return uid, err
+	}
+	return string(data), nil
 }
