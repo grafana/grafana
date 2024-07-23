@@ -64,9 +64,10 @@ export class DataFrameFactory {
 
 ### Indicate partial stability of APIs
 
-Add the main stability of the API at the top according to [Main stability of API](#indicate-main-stability-of-apis).
+To indicate the partial stability of APIs:
 
-Then override the non-stable parts of the API with the proper release tag. This tag should also be placed at the bottom of the comment block.
+1. Add the main stability of the API at the top according to [Main stability of API](#indicate-main-stability-of-apis).
+1. Override the non-stable parts of the API with the proper release tag. This tag should also be placed at the bottom of the comment block.
 
 **Do:**
 
