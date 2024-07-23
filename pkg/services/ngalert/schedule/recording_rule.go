@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -78,6 +77,10 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAtte
 	}
 }
 
+func (r *recordingRule) Type() ngmodels.RuleType {
+	return ngmodels.RuleTypeRecording
+}
+
 func (r *recordingRule) Status() RuleStatus {
 	return RuleStatus{
 		Health:              r.health.Load(),
@@ -115,17 +118,17 @@ func (r *recordingRule) Stop(reason error) {
 
 func (r *recordingRule) Run() error {
 	ctx := r.ctx
-	logger.Debug("Recording rule routine started")
+	r.logger.Debug("Recording rule routine started")
 
 	for {
 		select {
 		case eval, ok := <-r.evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				r.logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
 			if !r.featureToggles.IsEnabled(ctx, featuremgmt.FlagGrafanaManagedRecordingRules) {
-				logger.Warn("Recording rule scheduled but toggle is not enabled. Skipping")
+				r.logger.Warn("Recording rule scheduled but toggle is not enabled. Skipping")
 				return nil
 			}
 			// TODO: Skipping the "evalRunning" guard that the alert rule routine does, because it seems to be dead code and impossible to hit.
@@ -133,7 +136,7 @@ func (r *recordingRule) Run() error {
 
 			r.doEvaluate(ctx, eval)
 		case <-ctx.Done():
-			logger.Debug("Stopping recording rule routine")
+			r.logger.Debug("Stopping recording rule routine")
 			return nil
 		}
 	}

@@ -38,6 +38,8 @@ type Rule interface {
 	Eval(eval *Evaluation) (bool, *Evaluation)
 	// Update sends a singal to change the definition of the rule.
 	Update(lastVersion RuleVersionAndPauseStatus) bool
+	// Type gives the type of the rule.
+	Type() ngmodels.RuleType
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -170,6 +172,10 @@ func newAlertRule(
 		logger:               logger.FromContext(ctx),
 		tracer:               tracer,
 	}
+}
+
+func (a *alertRule) Type() ngmodels.RuleType {
+	return ngmodels.RuleTypeAlerting
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
