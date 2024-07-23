@@ -4,8 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, TabContent, Alert } from '@grafana/ui';
-import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Alert, Box, Stack, TabContent, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
@@ -122,11 +121,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
 function NotFoundPlugin() {
   return (
-    <Layout justify="center" align="center">
-      <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
-        That plugin cannot be found. Please check the url is correct or <br />
-        go to the <a href="/plugins">plugin catalog</a>.
-      </Alert>
-    </Layout>
+    <Stack justifyContent="center" alignItems="center" height="100%">
+      <Box>
+        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
+          That plugin cannot be found. Please check the url is correct or <br />
+          go to the <a href="/plugins">plugin catalog</a>.
+        </Alert>
+      </Box>
+    </Stack>
   );
 }
