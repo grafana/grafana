@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bufio"
-	"compress/gzip"
+	"compress/gzip" // commment to test the current state
 	"fmt"
 	"net"
 	"net/http"
