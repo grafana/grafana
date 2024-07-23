@@ -149,12 +149,10 @@ export function useContactPointsWithStatus() {
   const isLoading =
     fetchAlertmanagerConfiguration.isLoading || fetchContactPointsStatus.isLoading || onCallPluginIntegrationsLoading;
 
-  const unsortedContactPoints = fetchAlertmanagerConfiguration.contactPoints;
-  const contactPoints = unsortedContactPoints.sort((a, b) => a.name.localeCompare(b.name));
   return {
     error,
     isLoading,
-    contactPoints,
+    contactPoints: fetchAlertmanagerConfiguration.contactPoints,
   };
 }
 
