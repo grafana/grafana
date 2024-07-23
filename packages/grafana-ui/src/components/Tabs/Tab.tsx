@@ -93,8 +93,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     link: css({
       position: 'relative',
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 1.5, 1),
+      padding: theme.spacing(1, 1.5, 0.5),
       borderRadius: theme.shape.radius.default,
+      textWrap: 'nowrap',
 
       display: 'block',
       height: '100%',
@@ -128,7 +129,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     activeStyle: css({
       label: 'activeTabStyle',
       color: theme.colors.text.primary,
-      overflow: 'hidden',
 
       '&::before': {
         backgroundImage: theme.colors.gradients.brandHorizontal,
