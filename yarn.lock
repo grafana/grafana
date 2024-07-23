@@ -17314,7 +17314,7 @@ __metadata:
     moment-timezone: "npm:0.5.45"
     monaco-editor: "npm:0.34.1"
     moveable: "npm:0.53.0"
-    msw: "npm:2.3.1"
+    msw: "npm:2.3.2"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.4"
     ngtemplate-loader: "npm:2.1.0"
@@ -22258,9 +22258,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:2.3.1":
-  version: 2.3.1
-  resolution: "msw@npm:2.3.1"
+"msw@npm:2.3.2":
+  version: 2.3.2
+  resolution: "msw@npm:2.3.2"
   dependencies:
     "@bundled-es-modules/cookie": "npm:^2.0.0"
     "@bundled-es-modules/statuses": "npm:^1.0.1"
@@ -22286,7 +22286,7 @@ __metadata:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: 10/449df7c48f82eaa3de4b40ca106be232b09dcf7f736b1bb7410109702f803262016db35247b299c1ec378346678f48d1d50752ee18fc90329c2531326cec7ec4
+  checksum: 10/d51fc761dfc9b60506aa526e98b687b951f68e9d4d87b964bae24973d2e88b22d5449c43be68971733d260e4686a07cb637a826d96b4e1da67535f21fa1618ee
   languageName: node
   linkType: hard
 
