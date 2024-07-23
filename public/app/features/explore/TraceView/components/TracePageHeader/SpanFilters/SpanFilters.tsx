@@ -461,7 +461,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                               }),
                             });
                           }}
-                          placeholder="Input value"
+                          placeholder="Tag value"
                           width={18}
                           value={tag.value || ''}
                         />
