@@ -898,15 +898,22 @@ describe('templateSrv', () => {
       window.__grafanaSceneContext = new EmbeddedScene({
         body: new SceneCanvasText({ text: 'hello' }),
       });
+      _templateSrv.updateTimeRange({
+        from: dateTime(1594671549254),
+        to: dateTime(1594671549254),
+        raw: { from: '10', to: '10' },
+      });
 
-      window.__grafanaSceneContext.activate();
+      const deactivate = window.__grafanaSceneContext.activate();
 
-      const timeRange = _templateSrv.timeRange;
-
-      expect(timeRange).not.toBeNull();
-      expect(timeRange).not.toBeUndefined();
-      expect(timeRange!.raw).toEqual({ from: '12', to: '14' });
+      expect(_templateSrv.timeRange).not.toBeNull();
+      expect(_templateSrv.timeRange).not.toBeUndefined();
+      expect(_templateSrv.timeRange!.raw).toEqual({ from: '12', to: '14' });
       expect(timeRangeMock).toHaveBeenCalled();
+
+      deactivate();
+
+      expect(_templateSrv.timeRange!.raw).toEqual({ from: '10', to: '10' });
     });
   });
 });
