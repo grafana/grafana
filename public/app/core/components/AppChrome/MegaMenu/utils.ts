@@ -35,17 +35,12 @@ export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDocked
   const newItem = { ...item };
   const onClick = newItem.onClick;
   newItem.onClick = () => {
-    if (config.featureToggles.pinNavItems && newItem?.parentItem?.id === 'bookmarks') {
-      reportInteraction('grafana_navigation_pinned_item_clicked', {
-        path: newItem.url ?? newItem.id,
-      });
-    } else {
-      reportInteraction('grafana_navigation_item_clicked', {
-        path: newItem.url ?? newItem.id,
-        menuIsDocked: megaMenuDockedState,
-      });
-      onClick?.();
-    }
+    reportInteraction('grafana_navigation_item_clicked', {
+      path: newItem.url ?? newItem.id,
+      menuIsDocked: megaMenuDockedState,
+      itemIsBookmarked: Boolean(config.featureToggles.pinNavItems && newItem?.parentItem?.id === 'bookmarks'),
+    });
+    onClick?.();
   };
   if (newItem.children) {
     newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, megaMenuDockedState));
