@@ -37,6 +37,8 @@ export function isDataTrailHistoryFilter(filter?: SceneObjectUrlValue): filter i
   return !!filter;
 }
 
+const isString = (value: unknown): value is string => typeof value === 'string';
+
 export interface DataTrailHistoryStep {
   description: string;
   detail: string;
@@ -303,7 +305,8 @@ export function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
     to: urlValues.to,
   });
 
-  const tzInfo = getTimeZoneInfo((urlValues.timezone as string) ?? InternalTimeZones.localBrowserTime, Date.now());
+  const zone = isString(urlValues.timeZone) ? urlValues.timeZone : InternalTimeZones.localBrowserTime;
+  const tzInfo = getTimeZoneInfo(zone, Date.now());
 
   const from = range.from.subtract(tzInfo?.offsetInMins ?? 0, 'minute').format(TIME_FORMAT);
   const to = range.to.subtract(tzInfo?.offsetInMins ?? 0, 'minute').format(TIME_FORMAT);
