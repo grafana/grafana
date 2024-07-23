@@ -22,6 +22,7 @@ import {
   mapStateWithReasonToReason,
 } from 'app/types/unified-alerting-dto';
 
+import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEventsReached } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings, labelsMatchMatchers } from '../../../utils/alertmanager';
@@ -88,6 +89,9 @@ export const HistoryEventsList = ({
   }
 
   const maximumEventsReached = !isLoading && stateHistory?.data?.values?.[0]?.length === LIMIT_EVENTS;
+  if (maximumEventsReached) {
+    trackUseCentralHistoryMaxEventsReached({ from, to });
+  }
 
   return (
     <>
@@ -515,14 +519,15 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
 
   const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
+    trackUseCentralHistoryFilterByClicking({ type, key, value });
     if (type === 'stateTo') {
       stateToFilterVariable.changeValueTo(value);
     }
     if (type === 'stateFrom') {
       stateFromFilterVariable.changeValueTo(value);
     }
+    const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
     if (type === 'label') {
-      const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
       labelsFiltersVariable.setValue(finalFilter);
     }
   };

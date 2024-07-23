@@ -339,7 +339,13 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 		Count  int    `json:"count"`
 		Status string `json:"status"`
 	}, 0)
+	total := 0
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if t, err := sess.Count(cloudmigration.CloudMigrationResource{SnapshotUID: snapshotUid}); err != nil {
+			return err
+		} else {
+			total = int(t)
+		}
 		sess.Select("count(uid) as 'count', resource_type as 'type'").
 			Table(tableName).
 			GroupBy("type").
@@ -360,6 +366,7 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 	stats := &cloudmigration.SnapshotResourceStats{
 		CountsByType:   make(map[cloudmigration.MigrateDataType]int, len(typeCounts)),
 		CountsByStatus: make(map[cloudmigration.ItemStatus]int, len(statusCounts)),
+		Total:          total,
 	}
 	for _, c := range typeCounts {
 		stats.CountsByType[cloudmigration.MigrateDataType(c.Type)] = c.Count
@@ -406,27 +413,22 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 }
 
 func (ss *sqlStore) encryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
-	s, err := ss.secretsService.Encrypt(ctx, []byte(snapshot.EncryptionKey), secrets.WithoutScope())
+	s, err := ss.secretsService.Encrypt(ctx, snapshot.EncryptionKey, secrets.WithoutScope())
 	if err != nil {
 		return fmt.Errorf("encrypting key: %w", err)
 	}
 
-	snapshot.EncryptionKey = base64.StdEncoding.EncodeToString(s)
+	snapshot.EncryptionKey = s
 
 	return nil
 }
 
 func (ss *sqlStore) decryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
-	decoded, err := base64.StdEncoding.DecodeString(snapshot.EncryptionKey)
-	if err != nil {
-		return fmt.Errorf("key could not be decoded")
-	}
-
-	t, err := ss.secretsService.Decrypt(ctx, decoded)
+	t, err := ss.secretsService.Decrypt(ctx, snapshot.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("decrypting key: %w", err)
 	}
-	snapshot.EncryptionKey = string(t)
+	snapshot.EncryptionKey = t
 
 	return nil
 }

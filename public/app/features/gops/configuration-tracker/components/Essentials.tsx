@@ -115,7 +115,7 @@ function OpenLinkButton(props: LinkButtonProps) {
   const urlToGo = done ? urlToGoWhenDone : urlToGoWhenNotDone;
   return (
     <LinkButton href={urlToGo} variant="secondary" className="fs-unmask">
-      {done ? labelOnDone ?? label : label}
+      {done ? (labelOnDone ?? label) : label}
     </LinkButton>
   );
 }

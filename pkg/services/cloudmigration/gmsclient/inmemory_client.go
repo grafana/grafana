@@ -57,8 +57,7 @@ func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMi
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
 	c.snapshot = &cloudmigration.StartSnapshotResponse{
-		EncryptionKey:        fmt.Sprintf("%x", publicKey[:]),
-		UploadURL:            "localhost:3000",
+		EncryptionKey:        publicKey[:],
 		SnapshotID:           uuid.NewString(),
 		MaxItemsPerPartition: 10,
 		Algo:                 "nacl",
@@ -67,7 +66,7 @@ func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMi
 	return c.snapshot, nil
 }
 
-func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.GetSnapshotStatusResponse, error) {
+func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot, offset int) (*cloudmigration.GetSnapshotStatusResponse, error) {
 	gmsResp := &cloudmigration.GetSnapshotStatusResponse{
 		State: cloudmigration.SnapshotStateFinished,
 		Results: []cloudmigration.CloudMigrationResource{
@@ -91,4 +90,11 @@ func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudm
 	}
 
 	return gmsResp, nil
+}
+
+func (c *memoryClientImpl) CreatePresignedUploadUrl(ctx context.Context, sess cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	return "http://localhost:3000", nil
+}
+
+func (c *memoryClientImpl) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, EventRequestDTO) {
 }

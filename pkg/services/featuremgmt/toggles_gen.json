@@ -469,6 +469,7 @@
         "name": "awsDatasourcesNewFormStyling",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-12T08:59:10Z",
+        "deletionTimestamp": "2024-07-05T10:20:55Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -508,18 +509,18 @@
     {
       "metadata": {
         "name": "bodyScrolling",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-07-23 08:36:47.004393 +0000 UTC"
         }
       },
       "spec": {
         "description": "Adjusts Page to make body the scrollable element",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "hideFromAdminPage": true,
+        "allowSelfServe": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1811,13 +1812,17 @@
     {
       "metadata": {
         "name": "onPremToCloudMigrations",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-22T16:09:08Z"
+        "resourceVersion": "1721693547668",
+        "creationTimestamp": "2024-01-22T16:09:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-23 00:12:27.668899 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-operator-experience-squad"
+        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
       }
     },
     {
@@ -2017,6 +2022,23 @@
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusAzureOverrideAudience",
+        "resourceVersion": "1721046541163",
+        "creationTimestamp": "2022-05-30T15:43:32Z",
+        "deletionTimestamp": "2023-07-16T21:30:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-15 12:29:01.163772 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
       }
     },
     {

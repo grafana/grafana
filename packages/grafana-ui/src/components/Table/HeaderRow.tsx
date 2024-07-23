@@ -43,7 +43,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
 };
 
 function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?: boolean) {
-  const headerProps = column.getHeaderProps();
+  const { key, ...headerProps } = column.getHeaderProps();
   const field: Field = column.field ?? null;
   const tableFieldOptions: TableFieldOptions | undefined = field?.config.custom;
 
@@ -81,7 +81,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
   }
 
   return (
-    <div className={tableStyles.headerCell} {...headerProps} role="columnheader">
+    <div className={tableStyles.headerCell} key={key} {...headerProps} role="columnheader">
       {column.canSort && sortHeaderContent}
       {!column.canSort && headerContent}
       {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
