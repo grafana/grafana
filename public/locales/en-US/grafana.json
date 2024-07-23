@@ -792,6 +792,9 @@
       "split-widen": "Widen pane"
     }
   },
+  "explore-metrics": {
+    "viewBy": "View by"
+  },
   "export": {
     "json": {
       "cancel-button": "Cancel",

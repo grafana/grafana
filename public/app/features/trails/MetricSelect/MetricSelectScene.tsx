@@ -27,6 +27,7 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
@@ -493,7 +494,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           <Field
             label={
               <div className={styles.displayOptionTooltip}>
-                View by{` `}
+                <Trans i18nKey="explore-metrics.viewBy">View by</Trans>
                 <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={viewByTooltip} />
               </div>
             }
