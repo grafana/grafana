@@ -266,7 +266,6 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 						require.Equal(t, configs, tc.expected)
 					})
 				}
-
 			})
 			t.Run("decrypt false with read permissions is redacted", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)

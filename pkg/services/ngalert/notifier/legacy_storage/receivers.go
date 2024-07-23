@@ -79,7 +79,7 @@ func (rs *ReceiverStore) DeleteReceiver(ctx context.Context, orgID int64, uid st
 	}
 
 	// Remove the receiver from the configuration.
-	slices.DeleteFunc(revision.Config.AlertmanagerConfig.Receivers, func(r *definitions.PostableApiReceiver) bool {
+	revision.Config.AlertmanagerConfig.Receivers = slices.DeleteFunc(revision.Config.AlertmanagerConfig.Receivers, func(r *definitions.PostableApiReceiver) bool {
 		return models.GetUIDFromNamed(r) == uid
 	})
 
