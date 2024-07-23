@@ -110,9 +110,14 @@ const observer = new PerformanceObserver((list) => {
   const entries = list.getEntries();
   const lastEntry = entries[entries.length - 1]; // Use the latest LCP candidate
   console.log("LCP:", lastEntry.startTime);
-  console.log(lastEntry);
+  // console.log(lastEntry);
 });
 observer.observe({ type: "largest-contentful-paint", buffered: true });
+
+window.addEventListener('load', () => {
+  let perf = performance.toJSON();
+  console.log('load', perf.timing.loadEventStart - perf.timeOrigin);
+});
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
