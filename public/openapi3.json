@@ -8478,7 +8478,8 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "format": "duration",
+            "type": "string"
           },
           "id": {
             "format": "int64",
@@ -12413,7 +12414,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12537,7 +12537,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
