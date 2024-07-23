@@ -856,16 +856,21 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 
 			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
 			assert.NoError(t, err)
-			assert.EqualValues(t, folders, result)
+			assert.ElementsMatch(t, folders, result)
 
 			assert.Len(t, ac.Calls, len(folders)+1)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
 			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
-			for i, folderUID := range folders {
-				assert.Equal(t, "HasAccessInFolder", ac.Calls[i+1].MethodName)
-				assert.Equal(t, usr, ac.Calls[i+1].Arguments[1])
-				assert.Equal(t, folderUID, ac.Calls[i+1].Arguments[2].(models.Namespaced).GetNamespaceUID())
+
+			var called []string
+			for _, call := range ac.Calls[1:] {
+				if !assert.Equal(t, "HasAccessInFolder", call.MethodName) {
+					continue
+				}
+				assert.Equal(t, usr, call.Arguments[1])
+				called = append(called, call.Arguments[2].(models.Namespaced).GetNamespaceUID())
 			}
+			assert.ElementsMatch(t, folders, called)
 
 			t.Run("should fail if no folders to read", func(t *testing.T) {
 				loki := createLoki(ac)

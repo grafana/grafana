@@ -64,7 +64,6 @@ describe('useOnCallIntegration', () => {
         },
       ]);
       mockApi(server).oncall.validateIntegrationName(['grafana-integration', 'alertmanager-integration']);
-      mockApi(server).oncall.createIntegraion();
 
       const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
 

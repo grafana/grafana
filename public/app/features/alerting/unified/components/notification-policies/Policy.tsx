@@ -21,6 +21,7 @@ import {
   getTagColorsFromName,
   useStyles2,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import {
   AlertmanagerGroup,
@@ -720,40 +721,84 @@ const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = (
   );
 };
 
-const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions }) => {
+interface TimingOptionsMetaProps {
+  timingOptions: TimingOptions;
+}
+export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => {
   const groupWait = timingOptions.group_wait;
   const groupInterval = timingOptions.group_interval;
+  const repeatInterval = timingOptions.repeat_interval;
 
   // we don't have any timing options to show – we're inheriting everything from the parent
   // and those show up in a separate "inherited properties" component
-  if (!groupWait && !groupInterval) {
+  if (!groupWait && !groupInterval && !repeatInterval) {
     return null;
+  }
+
+  const metaOptions: ReactNode[] = [];
+
+  if (groupWait) {
+    metaOptions.push(
+      <Tooltip
+        placement="top"
+        content={t(
+          'alerting.policies.metadata.timingOptions.groupWait.description',
+          'How long to initially wait to send a notification for a group of alert instances.'
+        )}
+      >
+        <span>
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupWait.label">
+            Wait <PrimaryText content={groupWait} /> to group instances
+          </Trans>
+        </span>
+      </Tooltip>
+    );
+  }
+
+  if (groupInterval) {
+    metaOptions.push(
+      <Tooltip
+        placement="top"
+        content={t(
+          'alerting.policies.metadata.timingOptions.groupInterval.description',
+          'How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.'
+        )}
+      >
+        <span>
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.groupInterval.label">
+            Wait <PrimaryText content={groupInterval} /> before sending updates
+          </Trans>
+        </span>
+      </Tooltip>
+    );
+  }
+
+  if (repeatInterval) {
+    metaOptions.push(
+      <Tooltip
+        placement="top"
+        content={t(
+          'alerting.policies.metadata.timingOptions.repeatInterval.description',
+          'How often notifications are sent if the group of alerts has not changed since the last notification.'
+        )}
+      >
+        <span>
+          <Trans i18nKey="alerting.policies.metadata.timingOptions.repeatInterval.label">
+            Repeated every <PrimaryText content={repeatInterval} />
+          </Trans>
+        </span>
+      </Tooltip>
+    );
   }
 
   return (
     <MetaText icon="hourglass" data-testid="timing-options">
-      <span>Wait</span>
-      {groupWait && (
-        <Tooltip
-          placement="top"
-          content="How long to initially wait to send a notification for a group of alert instances."
-        >
-          <span>
-            <Text color="primary">{groupWait}</Text> to group instances
-            {groupWait && groupInterval && ','}
-          </span>
-        </Tooltip>
-      )}
-      {groupInterval && (
-        <Tooltip
-          placement="top"
-          content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
-        >
-          <span>
-            <Text color="primary">{groupInterval}</Text> before sending updates
-          </span>
-        </Tooltip>
-      )}
+      {metaOptions.map((meta, index) => (
+        <span key={uniqueId()}>
+          {meta}
+          {index < metaOptions.length - 1 && ' · '}
+        </span>
+      ))}
     </MetaText>
   );
 };
@@ -975,5 +1020,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1.5),
   }),
 });
+
+// This is a convencience component to deal with I18n shenanigans
+// see https://github.com/grafana/grafana/blob/main/contribute/internationalization.md#jsx
+const PrimaryText = ({ content }: { content: string }) => <Text color="primary">{content}</Text>;
 
 export { Policy };

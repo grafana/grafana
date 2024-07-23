@@ -495,6 +495,36 @@ describe('combineResponses', () => {
       expect(combineResponses(responseA, responseB).data[0].meta.stats).toHaveLength(0);
     });
   });
+
+  it('does not combine frames with different refId', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    metricFrameA.refId = 'A';
+    metricFrameB.refId = 'B';
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [metricFrameA, metricFrameB],
+    });
+  });
+
+  it('does not combine frames with different refId', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    metricFrameA.name = 'A';
+    metricFrameB.name = 'B';
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [metricFrameA, metricFrameB],
+    });
+  });
 });
 
 describe('combinePanelData', () => {

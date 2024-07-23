@@ -106,12 +106,12 @@ export const onDashboardLoadedHandler = ({
         q.metricQueryType === MetricQueryType.Search && q.metricEditorMode === MetricEditorMode.Code
       );
       e.metrics_search_match_exact_count += +Boolean(isMetricSearchBuilder(q) && q.matchExact);
-      e.metrics_query_count += +Boolean(q.metricQueryType === MetricQueryType.Query);
+      e.metrics_query_count += +Boolean(q.metricQueryType === MetricQueryType.Insights);
       e.metrics_query_builder_count += +Boolean(
-        q.metricQueryType === MetricQueryType.Query && q.metricEditorMode === MetricEditorMode.Builder
+        q.metricQueryType === MetricQueryType.Insights && q.metricEditorMode === MetricEditorMode.Builder
       );
       e.metrics_query_code_count += +Boolean(
-        q.metricQueryType === MetricQueryType.Query && q.metricEditorMode === MetricEditorMode.Code
+        q.metricQueryType === MetricQueryType.Insights && q.metricEditorMode === MetricEditorMode.Code
       );
       e.metrics_queries_with_account_count += +Boolean(
         config.featureToggles.cloudWatchCrossAccountQuerying && isMetricSearchBuilder(q) && q.accountId

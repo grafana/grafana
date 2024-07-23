@@ -96,6 +96,8 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
+			claims.Rest.Username = id.GetLogin()
+			claims.Rest.UID = id.GetUID().String()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)

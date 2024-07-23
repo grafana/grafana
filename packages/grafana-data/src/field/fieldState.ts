@@ -1,12 +1,12 @@
 import { getFieldMatcher } from '../transformations/matchers';
 import {
   DataFrame,
-  Field,
-  TIME_SERIES_VALUE_FIELD_NAME,
   FieldType,
+  Field,
   TIME_SERIES_TIME_FIELD_NAME,
-  FieldConfigSource,
-} from '../types';
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '../types/dataFrame';
+import { FieldConfigSource } from '../types/fieldOverrides';
 import { formatLabels } from '../utils/labels';
 
 /**

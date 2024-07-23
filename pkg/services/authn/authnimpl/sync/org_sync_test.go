@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -116,6 +117,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				orgService:    tt.fields.orgService,
 				accessControl: tt.fields.accessControl,
 				log:           tt.fields.log,
+				tracer:        tracing.InitializeTracerForTest(),
 			}
 			if err := s.SyncOrgRolesHook(tt.args.ctx, tt.args.id, nil); (err != nil) != tt.wantErr {
 				t.Errorf("OrgSync.SyncOrgRolesHook() error = %v, wantErr %v", err, tt.wantErr)
@@ -214,6 +216,7 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 				accessControl: actest.FakeService{},
 				log:           log.NewNopLogger(),
 				cfg:           cfg,
+				tracer:        tracing.InitializeTracerForTest(),
 			}
 
 			s.SetDefaultOrgHook(context.Background(), tt.identity, nil, tt.inputErr)

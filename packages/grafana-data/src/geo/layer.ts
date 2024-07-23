@@ -4,10 +4,10 @@ import { ReactNode } from 'react';
 
 import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 
-import { EventBus } from '../events';
+import { EventBus } from '../events/types';
 import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
-import { GrafanaTheme2 } from '../themes';
-import { PanelData } from '../types';
+import { GrafanaTheme2 } from '../themes/types';
+import { PanelData } from '../types/panel';
 import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { RegistryItemWithOptions } from '../utils/Registry';
 

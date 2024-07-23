@@ -5,7 +5,6 @@ import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
 import config from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../../element';
 
@@ -84,6 +83,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
     config: {
       type: ServerType.Single,
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
@@ -98,8 +98,6 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       bulbColor: serverConfig?.bulbColor ? dimensionContext.getColor(serverConfig.bulbColor).value() : 'green',
       type: serverConfig?.type ?? ServerType.Single,
     };
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.statusColor);
 
     return data;
   },

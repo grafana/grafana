@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { sortDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame } from '../../types';
+import { DataFrame } from '../../types/dataFrame';
 import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';

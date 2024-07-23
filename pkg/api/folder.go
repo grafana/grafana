@@ -64,13 +64,7 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 		}
 
 		hits := make([]dtos.FolderSearchHit, 0)
-		requesterIsSvcAccount := c.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
 		for _, f := range folders {
-			// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-			if (f.UID == accesscontrol.K6FolderUID || f.ParentUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
-				continue
-			}
-
 			hits = append(hits, dtos.FolderSearchHit{
 				ID:        f.ID, // nolint:staticcheck
 				UID:       f.UID,

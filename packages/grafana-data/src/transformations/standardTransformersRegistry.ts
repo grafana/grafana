@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { DataFrame, DataTransformerInfo } from '../types';
+import { DataFrame } from '../types/dataFrame';
+import { DataTransformerInfo } from '../types/transformations';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {

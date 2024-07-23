@@ -54,7 +54,6 @@ func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Valida
 			SignatureValidationStep(sv),
 			validation.ModuleJSValidationStep(),
 			validation.AngularDetectionStep(cfg, ai),
-			validation.APIVersionValidationStep(),
 		},
 	})
 }

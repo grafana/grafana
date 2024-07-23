@@ -340,7 +340,7 @@ export const useGetConfigurationForUI = ({
     function getConnectDataSourceConfiguration() {
       const description = dataSourceCompatibleWithAlerting
         ? 'You have connected a datasource.'
-        : 'Connect at least one data source to start receiving data.';
+        : 'Connect at least one data source to start receiving data';
       const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
       return {
         id: ConfigurationStepsEnum.CONNECT_DATASOURCE,
@@ -356,8 +356,8 @@ export const useGetConfigurationForUI = ({
         id: ConfigurationStepsEnum.ESSENTIALS,
         title: 'Essentials',
         titleIcon: 'star',
-        description: 'Configure the features you need to start using Grafana IRM workflows',
-        actionButtonTitle: 'Start',
+        description: 'Set up the necessary features to start using Grafana IRM workflows',
+        actionButtonTitle: stepsDone === totalStepsToDo ? 'View' : 'Configure',
         stepsDone,
         totalStepsToDo,
       },

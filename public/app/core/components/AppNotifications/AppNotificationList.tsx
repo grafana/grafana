@@ -10,6 +10,7 @@ import { useSelector, useDispatch } from 'app/types';
 
 import {
   createErrorNotification,
+  createInfoNotification,
   createSuccessNotification,
   createWarningNotification,
 } from '../../copy/appNotification';
@@ -25,6 +26,7 @@ export function AppNotificationList() {
     appEvents.on(AppEvents.alertWarning, (payload) => dispatch(notifyApp(createWarningNotification(...payload))));
     appEvents.on(AppEvents.alertSuccess, (payload) => dispatch(notifyApp(createSuccessNotification(...payload))));
     appEvents.on(AppEvents.alertError, (payload) => dispatch(notifyApp(createErrorNotification(...payload))));
+    appEvents.on(AppEvents.alertInfo, (payload) => dispatch(notifyApp(createInfoNotification(...payload))));
   }, [dispatch]);
 
   const onClearAppNotification = (id: string) => {

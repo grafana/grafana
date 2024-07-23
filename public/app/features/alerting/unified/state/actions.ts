@@ -1,4 +1,4 @@
-import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
@@ -51,14 +51,7 @@ import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
-import {
-  FetchRulerRulesFilter,
-  deleteNamespace,
-  deleteRulerRulesGroup,
-  fetchRulerRules,
-  setRulerRuleGroup,
-} from '../api/ruler';
-import { encodeGrafanaNamespace } from '../components/expressions/util';
+import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -77,8 +70,16 @@ import { safeParsePrometheusDuration } from '../utils/time';
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
   const dataSources = (getState() as StoreState).unifiedAlerting.dataSources;
   const dsConfig = dataSources[rulesSourceName]?.result;
+  const dsError = dataSources[rulesSourceName]?.error;
+
+  // @TODO use aggregateError but add support for it in "stringifyErrorLike"
   if (!dsConfig) {
-    throw new Error(`Data source configuration is not available for "${rulesSourceName}" data source`);
+    const error = new Error(`Data source configuration is not available for "${rulesSourceName}" data source`);
+    if (dsError) {
+      error.cause = dsError;
+    }
+
+    throw error;
   }
 
   return dsConfig;
@@ -652,16 +653,6 @@ export const testReceiversAction = createAsyncThunk(
   }
 );
 
-interface UpdateNamespaceAndGroupOptions {
-  rulesSourceName: string;
-  namespaceName: string;
-  groupName: string;
-  newNamespaceName: string;
-  newGroupName: string;
-  groupInterval?: string;
-  folderUid?: string;
-}
-
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
   return rules.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
@@ -671,123 +662,6 @@ export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDurat
     return forNumber !== 0 && forNumber < everyNumber;
   });
 };
-
-// allows renaming namespace, renaming group and changing group interval, all in one go
-export const updateLotexNamespaceAndGroupAction: AsyncThunk<
-  void,
-  UpdateNamespaceAndGroupOptions,
-  { state: StoreState }
-> = createAsyncThunk<void, UpdateNamespaceAndGroupOptions, { state: StoreState }>(
-  'unifiedalerting/updateLotexNamespaceAndGroup',
-  async (options: UpdateNamespaceAndGroupOptions, thunkAPI): Promise<void> => {
-    return withAppEvents(
-      withSerializedError(
-        (async () => {
-          const {
-            rulesSourceName,
-            namespaceName,
-            groupName,
-            newNamespaceName,
-            newGroupName,
-            groupInterval,
-            folderUid,
-          } = options;
-
-          const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
-          // fetch rules and perform sanity checks
-          const rulesResult = await fetchRulerRules(rulerConfig);
-
-          const existingNamespace = Boolean(rulesResult[namespaceName]);
-
-          if (!existingNamespace) {
-            throw new Error(`Namespace "${namespaceName}" not found.`);
-          }
-
-          const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
-          if (!existingGroup) {
-            throw new Error(`Group "${groupName}" not found.`);
-          }
-
-          const newGroupAlreadyExists = Boolean(
-            rulesResult[namespaceName].find((group) => group.name === newGroupName)
-          );
-
-          if (newGroupName !== groupName && newGroupAlreadyExists) {
-            throw new Error(`Group "${newGroupName}" already exists in namespace "${namespaceName}".`);
-          }
-
-          const newNamespaceAlreadyExists = Boolean(rulesResult[newNamespaceName]);
-          const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
-          const originalNamespace = isGrafanaManagedGroup ? encodeGrafanaNamespace(namespaceName) : namespaceName;
-
-          if (newNamespaceName !== originalNamespace && newNamespaceAlreadyExists) {
-            throw new Error(`Namespace "${newNamespaceName}" already exists.`);
-          }
-          if (
-            newNamespaceName === originalNamespace &&
-            groupName === newGroupName &&
-            groupInterval === existingGroup.interval
-          ) {
-            throw new Error('Nothing changed.');
-          }
-
-          // validation for new groupInterval
-          if (groupInterval !== existingGroup.interval) {
-            const notValidRules = rulesInSameGroupHaveInvalidFor(existingGroup.rules, groupInterval ?? '1m');
-            if (notValidRules.length > 0) {
-              throw new Error(
-                `These alerts belonging to this group will have an invalid 'For' value: ${notValidRules
-                  .map((rule) => {
-                    const { alertName } = getAlertInfo(rule, groupInterval ?? '');
-                    return alertName;
-                  })
-                  .join(',')}`
-              );
-            }
-          }
-          // if renaming namespace - make new copies of all groups, then delete old namespace
-          // this is only possible for cloud rules
-          if (newNamespaceName !== originalNamespace) {
-            for (const group of rulesResult[namespaceName]) {
-              await setRulerRuleGroup(
-                rulerConfig,
-                newNamespaceName,
-                group.name === groupName
-                  ? {
-                      ...group,
-                      name: newGroupName,
-                      interval: groupInterval,
-                    }
-                  : group
-              );
-            }
-            await deleteNamespace(rulerConfig, folderUid || namespaceName);
-
-            // if only modifying group...
-          } else {
-            // save updated group
-            await setRulerRuleGroup(rulerConfig, folderUid || namespaceName, {
-              ...existingGroup,
-              name: newGroupName,
-              interval: groupInterval,
-            });
-            // if group name was changed, delete old group
-            if (newGroupName !== groupName) {
-              await deleteRulerRulesGroup(rulerConfig, folderUid || namespaceName, groupName);
-            }
-          }
-
-          // refetch all rules
-          await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
-        })()
-      ),
-      {
-        errorMessage: 'Failed to update namespace / group',
-        successMessage: 'Update successful',
-      }
-    );
-  }
-);
 
 interface UpdateRulesOrderOptions {
   rulesSourceName: string;

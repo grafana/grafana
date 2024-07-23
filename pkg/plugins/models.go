@@ -191,6 +191,7 @@ type DataSourceDTO struct {
 	Module     string         `json:"module,omitempty"`
 	JSONData   map[string]any `json:"jsonData"`
 	ReadOnly   bool           `json:"readOnly"`
+	APIVersion string         `json:"apiVersion,omitempty"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`

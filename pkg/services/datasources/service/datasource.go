@@ -322,10 +322,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	}
 
 	// When the APIVersion is set, the client must also implement AdmissionHandler
-	if p.APIVersion == "" {
-		if settings.APIVersion != "" {
-			return nil, fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
-		}
+	if settings.APIVersion == "" {
 		return settings, nil // NOOP
 	}
 
@@ -367,7 +364,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
 				return nil, errutil.Internal("plugin.unimplemented").
-					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, p.APIVersion)
+					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
 			return nil, err
 		}
@@ -388,7 +385,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, errutil.Internal("plugin.unimplemented").
-				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, p.APIVersion)
+				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}
 		return nil, err
 	}

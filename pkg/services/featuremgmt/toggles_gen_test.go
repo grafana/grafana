@@ -59,6 +59,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 					AllowSelfServe:    flag.AllowSelfServe,
 					HideFromAdminPage: flag.HideFromAdminPage,
 					HideFromDocs:      flag.HideFromDocs,
+					Expression:        flag.Expression,
 					// EnabledVersion: ???,
 				}
 

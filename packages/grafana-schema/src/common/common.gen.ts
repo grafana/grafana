@@ -771,6 +771,8 @@ export interface TableJsonViewCellOptions {
  * Json view cell options
  */
 export interface TableImageCellOptions {
+  alt?: string;
+  title?: string;
   type: TableCellDisplayMode.Image;
 }
 
@@ -859,6 +861,10 @@ export enum VariableFormatID {
 }
 
 export interface DataSourceRef {
+  /**
+   *  Datasource API version
+   */
+  apiVersion?: string;
   /**
    * The plugin type-id
    */

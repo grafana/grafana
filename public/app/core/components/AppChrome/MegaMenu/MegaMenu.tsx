@@ -1,16 +1,19 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef } from 'react';
+import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config, reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
+import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
+import { usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
@@ -26,6 +29,8 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
+    const [patchPreferences] = usePatchUserPreferencesMutation();
+    const pinnedItems = usePinnedItems();
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -44,6 +49,35 @@ export const MegaMenu = memo(
       setTimeout(() => {
         document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
       });
+    };
+
+    const isPinned = useCallback(
+      (id?: string) => {
+        if (!id || !pinnedItems?.length) {
+          return false;
+        }
+        return pinnedItems?.includes(id);
+      },
+      [pinnedItems]
+    );
+
+    const onPinItem = (id?: string) => {
+      if (id && config.featureToggles.pinNavItems) {
+        const navItem = navTree.find((item) => item.id === id);
+        const isSaved = isPinned(id);
+        const newItems = isSaved ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
+        const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
+        reportInteraction(interactionName, {
+          path: navItem?.url ?? id,
+        });
+        patchPreferences({
+          patchPrefsCmd: {
+            navbar: {
+              savedItemIds: newItems,
+            },
+          },
+        });
+      }
     };
 
     return (
@@ -79,8 +113,10 @@ export const MegaMenu = memo(
                   )}
                   <MegaMenuItem
                     link={link}
+                    isPinned={isPinned}
                     onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
+                    onPin={onPinItem}
                   />
                 </Stack>
               ))}

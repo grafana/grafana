@@ -39,6 +39,11 @@ func ProvideAuthnService(s *Service) authn.Service {
 	return s
 }
 
+// make sure service also implements authn.ServiceAuthenticateOnly interface
+func ProvideAuthnServiceAuthenticateOnly(s *Service) authn.Authenticator {
+	return s
+}
+
 // make sure service implements authn.IdentitySynchronizer interface
 func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 	return s
@@ -323,6 +328,9 @@ Default:
 }
 
 func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.ResolveIdentity")
+	defer span.End()
+
 	r := &authn.Request{}
 	r.OrgID = orgID
 	// hack to not update last seen
@@ -358,6 +366,9 @@ func (s *Service) IsClientEnabled(name string) bool {
 }
 
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
+	ctx, span := s.tracer.Start(ctx, "authn.SyncIdentity")
+	defer span.End()
+
 	r := &authn.Request{OrgID: identity.OrgID}
 	// hack to not update last seen on external syncs
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
@@ -365,6 +376,9 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 }
 
 func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
+	defer span.End()
+
 	if namespaceID.IsNamespace(authn.NamespaceUser) {
 		return &authn.Identity{
 			OrgID: orgID,

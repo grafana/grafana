@@ -17,9 +17,9 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesInput } from './ScopesInput';
 import { ScopesScene } from './ScopesScene';
-import { ScopesTreeLevel } from './ScopesTreeLevel';
+import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
-import { NodesMap, SelectedScope, TreeScope } from './types';
+import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import { getBasicScope } from './utils';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
@@ -47,6 +47,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       nodes: {
         '': {
           name: '',
+          reason: NodeReason.Result,
           nodeType: 'container',
           title: '',
           isExpandable: true,
@@ -107,10 +108,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     currentNode.isExpanded = isExpanded;
     currentNode.query = query;
 
-    this.setState({ nodes, loadingNodeName: undefined });
-
     if (isExpanded || isDifferentQuery) {
-      this.setState({ loadingNodeName: name });
+      this.setState({ nodes, loadingNodeName: name });
 
       this.nodesFetchingSub = from(fetchNodes(name, query))
         .pipe(
@@ -119,12 +118,26 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
           })
         )
         .subscribe((childNodes) => {
-          currentNode.nodes = childNodes;
+          const persistedNodes = this.state.treeScopes
+            .map(({ path }) => path[path.length - 1])
+            .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
+            .reduce<NodesMap>((acc, nodeName) => {
+              acc[nodeName] = {
+                ...currentNode.nodes[nodeName],
+                reason: NodeReason.Persisted,
+              };
+
+              return acc;
+            }, {});
+
+          currentNode.nodes = { ...persistedNodes, ...childNodes };
 
           this.setState({ nodes });
 
           this.nodesFetchingSub?.unsubscribe();
         });
+    } else {
+      this.setState({ nodes, loadingNodeName: undefined });
     }
   }
 
@@ -284,7 +297,7 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           {isLoadingScopes ? (
             <Spinner data-testid="scopes-filters-loading" />
           ) : (
-            <ScopesTreeLevel
+            <ScopesTree
               nodes={nodes}
               nodePath={['']}
               loadingNodeName={loadingNodeName}

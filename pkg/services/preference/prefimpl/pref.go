@@ -71,6 +71,10 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
 			}
 
+			if p.JSONData.Navbar.SavedItemIds != nil {
+				res.JSONData.Navbar.SavedItemIds = p.JSONData.Navbar.SavedItemIds
+			}
+
 			if p.JSONData.CookiePreferences != nil {
 				res.JSONData.CookiePreferences = p.JSONData.CookiePreferences
 			}
@@ -170,6 +174,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
+	if cmd.Navbar != nil && cmd.Navbar.SavedItemIds != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.Navbar.SavedItemIds = cmd.Navbar.SavedItemIds
+	}
+
 	if cmd.QueryHistory != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -257,6 +268,9 @@ func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, 
 		Language: cmd.Language,
 	}
 
+	if cmd.Navbar != nil {
+		jsonData.Navbar = *cmd.Navbar
+	}
 	if cmd.QueryHistory != nil {
 		jsonData.QueryHistory = *cmd.QueryHistory
 	}

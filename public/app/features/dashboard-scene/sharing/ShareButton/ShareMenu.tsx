@@ -8,7 +8,9 @@ import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
+import { DashboardInteractions } from '../../utils/interactions';
 import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
 import { SceneShareDrawerState } from '../types';
 
@@ -21,6 +23,7 @@ const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButt
 type CustomDashboardDrawer = new (...args: SceneShareDrawerState[]) => SceneObject;
 
 export interface ShareDrawerMenuItem {
+  shareId: string;
   testId: string;
   label: string;
   description?: string;
@@ -52,6 +55,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     const menuItems: ShareDrawerMenuItem[] = [];
 
     menuItems.push({
+      shareId: shareDashboardType.link,
       testId: newShareButtonSelector.shareInternally,
       icon: 'building',
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
@@ -62,6 +66,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     });
 
     menuItems.push({
+      shareId: shareDashboardType.publicDashboard,
       testId: newShareButtonSelector.shareExternally,
       icon: 'share-alt',
       label: t('share-dashboard.menu.share-externally-title', 'Share externally'),
@@ -74,6 +79,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     customShareDrawerItem.forEach((d) => menuItems.push(d));
 
     menuItems.push({
+      shareId: shareDashboardType.snapshot,
       testId: newShareButtonSelector.shareSnapshot,
       icon: 'camera',
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
@@ -86,6 +92,15 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     return menuItems.filter((item) => item.renderCondition);
   }, [onMenuItemClick, dashboard, panel]);
 
+  const onClick = (item: ShareDrawerMenuItem) => {
+    DashboardInteractions.sharingCategoryClicked({
+      item: item.shareId,
+      shareResource: getTrackingSource(panel?.getRef()),
+    });
+
+    item.onClick(dashboard);
+  };
+
   return (
     <Menu data-testid={newShareButtonSelector.container}>
       {buildMenuItems().map((item) => (
@@ -95,7 +110,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
           label={item.label}
           icon={item.icon}
           description={item.description}
-          onClick={() => item.onClick(dashboard)}
+          onClick={() => onClick(item)}
         />
       ))}
     </Menu>

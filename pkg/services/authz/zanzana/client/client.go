@@ -28,9 +28,16 @@ func WithLogger(logger log.Logger) ClientOption {
 	}
 }
 
+func WithSchema(dsl string) ClientOption {
+	return func(c *Client) {
+		c.dsl = dsl
+	}
+}
+
 type Client struct {
 	logger   log.Logger
 	client   openfgav1.OpenFGAServiceClient
+	dsl      string
 	tenantID string
 	storeID  string
 	modelID  string
@@ -53,6 +60,10 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 		c.tenantID = "stack-default"
 	}
 
+	if c.dsl == "" {
+		c.dsl = schema.DSL
+	}
+
 	store, err := c.getOrCreateStore(ctx, c.tenantID)
 	if err != nil {
 		return nil, err
@@ -60,7 +71,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 
 	c.storeID = store.GetId()
 
-	modelID, err := c.loadModel(ctx, c.storeID, schema.DSL)
+	modelID, err := c.loadModel(ctx, c.storeID, c.dsl)
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +81,23 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest, opts ...grpc.CallOption) (*openfgav1.CheckResponse, error) {
-	return c.client.Check(ctx, in, opts...)
+func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	return c.client.Check(ctx, in)
 }
 
-func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest, opts ...grpc.CallOption) (*openfgav1.ListObjectsResponse, error) {
-	return c.client.ListObjects(ctx, in, opts...)
+func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	return c.client.ListObjects(ctx, in)
+}
+
+func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	_, err := c.client.Write(ctx, in)
+	return err
 }
 
 func (c *Client) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
@@ -154,7 +176,7 @@ func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (str
 
 			// If provided dsl is equal to a stored dsl we use that as the authorization id
 			if schema.EqualModels(dsl, storedDSL) {
-				return res.AuthorizationModels[0].GetId(), nil
+				return model.GetId(), nil
 			}
 		}
 

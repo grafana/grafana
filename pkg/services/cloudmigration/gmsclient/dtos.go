@@ -1,4 +1,3 @@
-// TODO: Move these to a shared library in common with GMS
 package gmsclient
 
 type MigrateDataType string
@@ -44,4 +43,8 @@ type MigrateDataResponseItemDTO struct {
 	// required:true
 	Status ItemStatus `json:"status"`
 	Error  string     `json:"error,omitempty"`
+}
+
+type CreateSnapshotUploadUrlResponseDTO struct {
+	UploadUrl string `json:"uploadUrl"`
 }

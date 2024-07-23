@@ -43,7 +43,6 @@ func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginst
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
-		APIVersion:    plugin.APIVersion,
 	}
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID()

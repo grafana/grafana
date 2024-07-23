@@ -16,12 +16,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -39,18 +38,16 @@ const (
 )
 
 type Service struct {
-	httpClientProvider httpclient.Provider
-	im                 instancemgmt.InstanceManager
-	tracer             tracing.Tracer
-	logger             *log.ConcreteLogger
+	im     instancemgmt.InstanceManager
+	tracer tracing.Tracer
+	logger *log.ConcreteLogger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
-		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		httpClientProvider: httpClientProvider,
-		tracer:             tracer,
-		logger:             eslog,
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tracer: tracer,
+		logger: eslog,
 	}
 }
 
@@ -81,7 +78,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.Da
 	return query.execute()
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -99,7 +96,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		// set the default middlewars from the httpClientProvider
-		httpCliOpts.Middlewares = httpClientProvider.(*sdkhttpclient.Provider).Opts.Middlewares
+		httpCliOpts.Middlewares = httpClientProvider.Opts.Middlewares
 		// enable experimental http client to support errors with source
 		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {

@@ -108,7 +108,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     if (azureAuthIsSupported) {
       return [
         ...basicAuthenticationOptions,
-        { value: MSSQLAuthenticationType.azureAuth, label: 'Azure AD Authentication' },
+        { value: MSSQLAuthenticationType.azureAuth, label: MSSQLAuthenticationType.azureAuth },
       ];
     }
 
