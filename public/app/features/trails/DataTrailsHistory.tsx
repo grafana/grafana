@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import {
   getUrlSyncManager,
@@ -47,16 +47,14 @@ export interface DataTrailHistoryStep {
 
 export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
 
+const filterSubst = ` $2 `;
+const filterPipeRegex = /(\|)(=|=~|!=|>|<|!~)(\|)/g;
 const stepDescriptionMap: Record<TrailStepType, string> = {
   start: 'Start of history',
   metric: 'Metric selected',
   filters: 'Filter applied',
   time: 'Time range changed',
 };
-
-const filterPipeRegex = /(\|)(=|=~|!=|>|<|!~)(\|)/g;
-const filterSubst = ` $2 `;
-const timeFormat = 'YY-MM-DD HH:mm:ss';
 
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
@@ -126,6 +124,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
             parseTimeTooltip({
               from: newState.from,
               to: newState.to,
+              timezone: newState.timeZone,
             })
           );
         }
@@ -294,7 +293,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   };
 }
 
-function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
+export function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
   if (!isSceneTimeRangeState(urlValues)) {
     return '';
   }
@@ -303,7 +302,13 @@ function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
     from: urlValues.from,
     to: urlValues.to,
   });
-  return `${range.from.format(timeFormat)} - ${range.to.format(timeFormat)}`;
+
+  const tzInfo = getTimeZoneInfo((urlValues.timezone as string) ?? InternalTimeZones.localBrowserTime, Date.now());
+
+  const from = range.from.subtract(tzInfo?.offsetInMins ?? 0, 'minute').format(TIME_FORMAT);
+  const to = range.to.subtract(tzInfo?.offsetInMins ?? 0, 'minute').format(TIME_FORMAT);
+
+  return `${from} - ${to}`;
 }
 
 function parseFilterArrayAsTooltipDetail(urlValues: SceneObjectUrlValues, filtersApplied: string[]): string {
