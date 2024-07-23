@@ -509,18 +509,18 @@
     {
       "metadata": {
         "name": "bodyScrolling",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-07-23 08:36:47.004393 +0000 UTC"
         }
       },
       "spec": {
         "description": "Adjusts Page to make body the scrollable element",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "hideFromAdminPage": true,
+        "allowSelfServe": true,
         "hideFromDocs": true,
         "expression": "false"
       }
