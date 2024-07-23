@@ -186,7 +186,7 @@ const PanelsContainer = ({ id, children, className, testId }: PanelsContainerPro
       {children}
     </div>
   ) : (
-    <CustomScrollbar divId={id} autoHeightMin={'100%'} className={cx(className)} testId={testId}>
+    <CustomScrollbar divId={id} autoHeightMin={'100%'} className={className} testId={testId}>
       {children}
     </CustomScrollbar>
   );
