@@ -15,7 +15,7 @@ import {
   TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
 } from '@grafana/runtime';
-import { sceneGraph, VariableCustomFormatterFn, SceneObject } from '@grafana/scenes';
+import { sceneGraph, VariableCustomFormatterFn, SafeSerializableSceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
@@ -259,8 +259,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   ): string {
     // Scenes compatability (primary method) is via SceneObject inside scopedVars. This way we get a much more accurate "local" scope for the evaluation
     if (scopedVars && scopedVars.__sceneObject) {
-      // We are using valueOf here as __sceneObject can be after scenes 5.6.0 a SafeSerializableSceneObject that overrides valueOf to return the underlying SceneObject
-      const sceneObject: SceneObject = scopedVars.__sceneObject.value.valueOf();
+      const sceneObject = (scopedVars.__sceneObject.value as SafeSerializableSceneObject).valueOf();
       return sceneGraph.interpolate(
         sceneObject,
         target,
