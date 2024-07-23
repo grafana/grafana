@@ -1,6 +1,6 @@
 # End-to-end tests for core Grafana
 
-This guide is specific explains how to conduct end-to-end tests for the [Grafana repository](https://github.com/grafana/grafana). Also, be sure that you've read the [generalized E2E document](e2e.md).
+This guide explains how to conduct end-to-end tests for the [Grafana repository](https://github.com/grafana/grafana). Ensure that you've read the [generalized E2E document](e2e.md).
 
 ## Commands
 
