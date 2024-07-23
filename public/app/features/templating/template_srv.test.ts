@@ -7,7 +7,6 @@ import {
   EmbeddedScene,
   IntervalVariable,
   QueryVariable,
-  SafeSerializableSceneObject,
   SceneCanvasText,
   SceneVariableSet,
   TestVariable,
@@ -835,16 +834,6 @@ describe('templateSrv', () => {
       const variable = new TestVariable({});
 
       _templateSrv.replace('test ${test}', { __sceneObject: { value: variable, text: 'foo' } });
-
-      expect(interpolateMock).toHaveBeenCalledTimes(1);
-      expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
-      expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
-    });
-
-    it('should use scene interpolator when scoped var provided via SafeSerializableSceneObject', () => {
-      const variable = new TestVariable({});
-      const serializable = new SafeSerializableSceneObject(variable);
-      _templateSrv.replace('test ${test}', { __sceneObject: serializable });
 
       expect(interpolateMock).toHaveBeenCalledTimes(1);
       expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
