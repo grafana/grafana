@@ -10,7 +10,13 @@ import { fetchActiveServiceTypesAction } from 'app/percona/shared/core/reducers/
 import { useAppDispatch } from 'app/store/store';
 import { FolderDTO, useSelector } from 'app/types';
 
-import { getCategorizedAdvisors, getPerconaSettings, getPerconaUser, getServices } from '../../../core/selectors';
+import {
+  getCategorizedAdvisors,
+  getPerconaSettings,
+  getPerconaUser,
+  getServices,
+  getUpdatesInfo,
+} from '../../../core/selectors';
 
 import {
   ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS,
@@ -51,6 +57,7 @@ const PerconaNavigation: FC = () => {
   const dispatch = useAppDispatch();
   const { activeTypes } = useSelector(getServices);
   const advisorsPage = buildAdvisorsNavItem(categorizedAdvisors);
+  const { updateAvailable } = useSelector(getUpdatesInfo);
 
   dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
   dispatch(updateNavIndex(PMM_EXPORT_DUMP_PAGE));
@@ -120,7 +127,7 @@ const PerconaNavigation: FC = () => {
         }
       }
 
-      buildInventoryAndSettings(updatedNavTree, result);
+      buildInventoryAndSettings(updatedNavTree, result, updateAvailable);
 
       const iaMenuItem = alertingEnabled
         ? buildIntegratedAlertingMenuItem(updatedNavTree)
@@ -147,7 +154,7 @@ const PerconaNavigation: FC = () => {
 
     dispatch(updateNavTree(filterByServices(updatedNavTree, activeTypes)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, folders, activeTypes, isAuthorized, isPlatformUser, advisorsPage]);
+  }, [result, folders, activeTypes, isAuthorized, isPlatformUser, advisorsPage, updateAvailable]);
 
   return null;
 };
