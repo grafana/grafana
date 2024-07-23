@@ -205,6 +205,18 @@ The following list contains role-based access control actions used by Grafana On
 | `grafana-oncall-app.other-settings:read`         | n/a              | Read OnCall settings.                             |
 | `grafana-oncall-app.other-settings:write`        | n/a              | Edit OnCall settings.                             |
 
+### Grafana Adaptive Metrics action definitions
+
+The following list contains role-based access control actions used by Grafana Adaptive Metrics.
+
+| Action                                            | Applicable scope | Description |
+|---------------------------------------------------|------------------|-------------|
+| `grafana-adaptive-metrics-app.recommendations:read` | n/a              | lala        |
+| `grafana-adaptive-metrics-app.rules:read`           | n/a              | lala        |
+| `grafana-adaptive-metrics-app.exemptions:read`      | n/a              | lala        |
+| `grafana-adaptive-metrics-app.plugin:access`        | n/a              | lala        |
+| `grafana-adaptive-metrics-app.config:read`          | n/a              | lala        |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.
