@@ -83,7 +83,7 @@ Use **Search queries** in both the **Query history** and **Starred** tabs to sea
 
 ### Query history Settings tab
 
-You can customize your query history in the Settings tab.
+You can customize your query history in the **Settings** tab.
 
 Toggle **Change the default active tab from "Query history" to "Starred"** to make the **Starred tab** the default active tab.
 
