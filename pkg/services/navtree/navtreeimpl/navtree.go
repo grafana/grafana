@@ -168,7 +168,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
-			Id:             navtree.NavBookmarks,
+			Id:             navtree.NavIDBookmarks,
 			Icon:           "bookmark",
 			SortWeight:     navtree.WeightBookmarks,
 			Children:       bookmarks,
@@ -355,7 +355,7 @@ func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *n
 					PluginID:       item.PluginID,
 					IsCreateAction: item.IsCreateAction,
 					Keywords:       item.Keywords,
-					ParentItem:     &navtree.NavLink{Id: navtree.NavBookmarks},
+					ParentItem:     &navtree.NavLink{Id: navtree.NavIDBookmarks},
 				})
 			}
 		}

@@ -49,7 +49,7 @@ const (
 	NavIDCfgGeneral           = "cfg/general"
 	NavIDCfgPlugins           = "cfg/plugins"
 	NavIDCfgAccess            = "cfg/access"
-	NavBookmarks              = "bookmarks"
+	NavIDBookmarks            = "bookmarks"
 )
 
 type NavLink struct {
