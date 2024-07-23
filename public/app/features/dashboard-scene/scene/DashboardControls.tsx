@@ -158,8 +158,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      position: 'sticky',
-      top: 0,
+      position: 'relative',
       background: theme.colors.background.canvas,
       zIndex: theme.zIndex.activePanel,
       width: '100%',
@@ -167,6 +166,10 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
+      },
+      [theme.breakpoints.up('sm')]: {
+        position: 'sticky',
+        top: 0,
       },
     }),
     embedded: css({
