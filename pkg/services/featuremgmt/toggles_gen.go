@@ -642,4 +642,8 @@ const (
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
+
+	// FlagPrometheusAzureOverrideAudience
+	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
+	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 )
