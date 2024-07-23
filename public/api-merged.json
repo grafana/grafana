@@ -5536,6 +5536,26 @@
         }
       }
     },
+    "/health": {
+      "get": {
+        "description": "apiHealthHandler will return ok if Grafana's web server is running and it\ncan access the database. If the database cannot be accessed it will return\nhttp status code 503.",
+        "tags": [
+          "health"
+        ],
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "healthResponse",
+            "schema": {
+              "$ref": "#/definitions/healthResponse"
+            }
+          },
+          "503": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/library-elements": {
       "get": {
         "description": "Returns a list of all library elements the authenticated user has permission to view.\nUse the `perPage` query parameter to control the maximum number of library elements returned; the default limit is `100`.\nYou can also use the `page` query parameter to fetch library elements from any page other than the first one.",
@@ -22364,6 +22384,23 @@
       "items": {
         "type": "object",
         "$ref": "#/definitions/gettableSilence"
+      }
+    },
+    "healthResponse": {
+      "type": "object",
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "enterpriseCommit": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
       }
     },
     "integration": {
