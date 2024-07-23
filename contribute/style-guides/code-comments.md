@@ -21,9 +21,9 @@ Add a release tag to all exported APIs from the package to indicate its stabilit
 
 ### Indicate main stability of APIs
 
-Add a tag to mark the stability of the whole exported `class/interface/function/type`, and other interfaces.
-
-Place the release tag at the bottom of the comment to make it consistent among files and easier to read.
+To indicate the main stability of APIs:
+- Add a tag to mark the stability of the whole exported `class/interface/function/type`, and other interfaces.
+- Place the release tag at the bottom of the comment to make it consistent among files and easier to read.
 
 **Do:**
 
