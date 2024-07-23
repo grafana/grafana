@@ -35,7 +35,7 @@ labels:
 title: Geomap
 weight: 100
 refs:
-  data-format-supported-by-the-node-graph-visualization:
+  data-format:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/#data-api
     - pattern: /docs/grafana-cloud/
@@ -429,7 +429,7 @@ The Photos layer renders a photo at each data point.
 The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
-The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format-supported-by-the-node-graph-visualization) with the addition of [geospatial data]({{< relref "#location-mode">}}) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
+The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format) with the addition of [geospatial data](#location-mode) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 {{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
