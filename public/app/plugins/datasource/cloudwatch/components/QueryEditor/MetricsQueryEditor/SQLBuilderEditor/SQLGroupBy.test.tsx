@@ -27,6 +27,10 @@ const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
 datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
 
 describe('Cloudwatch SQLGroupBy', () => {
+  afterEach(() => {
+    baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+  });
+
   const baseProps = {
     query: makeSQLQuery(),
     datasource,
@@ -56,9 +60,11 @@ describe('Cloudwatch SQLGroupBy', () => {
       expect(screen.getByText('InstanceType')).toBeInTheDocument();
     });
   });
+
   it('should show Account ID in groupBy options if feature flag is enabled', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
     config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
+    baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
     const query = makeSQLQuery();
 
     render(<SQLGroupBy {...baseProps} query={query} />);
@@ -67,6 +73,21 @@ describe('Cloudwatch SQLGroupBy', () => {
     selectEvent.openMenu(screen.getByLabelText(/Group by/));
     expect(screen.getByText('Account ID')).toBeInTheDocument();
   });
+
+  it('should not show Account ID in groupBy options if not using a monitoring account', async () => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = true;
+    config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
+    baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+
+    const query = makeSQLQuery();
+
+    render(<SQLGroupBy {...baseProps} query={query} />);
+    const addButton = screen.getByRole('button', { name: 'Add' });
+    await userEvent.click(addButton);
+    selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    expect(screen.queryByText('Account ID')).not.toBeInTheDocument();
+  });
+  
   it('should not show Account ID in groupBy options if feature flag is disabled', async () => {
     config.featureToggles.cloudwatchMetricInsightsCrossAccount = false;
     const query = makeSQLQuery();

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
@@ -10,7 +11,7 @@ import {
   QueryEditorGroupByExpression,
   QueryEditorPropertyType,
 } from '../../../../expressions';
-import { useDimensionKeys } from '../../../../hooks';
+import { useDimensionKeys, useIsMonitoringAccount } from '../../../../hooks';
 import { CloudWatchMetricsQuery } from '../../../../types';
 
 import {
@@ -20,7 +21,6 @@ import {
   setGroupByField,
   setSql,
 } from './utils';
-import { config } from '@grafana/runtime';
 
 interface SQLGroupByProps {
   query: CloudWatchMetricsQuery;
@@ -32,6 +32,7 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   const sql = query.sql ?? {};
   const groupBysFromQuery = useMemo(() => getFlattenedGroupBys(query.sql ?? {}), [query.sql]);
   const [items, setItems] = useState<QueryEditorGroupByExpression[]>(groupBysFromQuery);
+  const isMonitoringAccount = useIsMonitoringAccount(datasource.resources, query.region);
 
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
@@ -44,14 +45,15 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
         config.featureToggles.cloudWatchCrossAccountQuerying &&
         config.featureToggles.cloudwatchMetricInsightsCrossAccount;
 
-      const baseOptionsWithAccountId = isCrossAccountEnabled
-        ? [{ label: 'Account ID', value: 'AWS.AccountId' }, ...baseOptions]
-        : baseOptions;
+      const baseOptionsWithAccountId =
+        isCrossAccountEnabled && isMonitoringAccount
+          ? [{ label: 'Account ID', value: 'AWS.AccountId' }, ...baseOptions]
+          : baseOptions;
       return baseOptionsWithAccountId.filter(
         (option) => !groupBysFromQuery.some((v) => v.property.name === option.value)
       );
     },
-    [baseOptions, groupBysFromQuery]
+    [baseOptions, groupBysFromQuery, isMonitoringAccount]
   );
 
   const onChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
