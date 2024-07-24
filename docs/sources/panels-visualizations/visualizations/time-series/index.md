@@ -148,10 +148,10 @@ Options under the **Axis** section control how the x- and y-axes are rendered. S
 
 Select the placement of the y-axis. Choose from the following:
 
-- **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
-- **Left:** Display all y-axes on the left side.
-- **Right:** Display all y-axes on the right side.
-- **Hidden:** Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
+- **Auto** - Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
+- **Left** - Display all y-axes on the left side.
+- **Right** - Display all y-axes on the right side.
+- **Hidden** - Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
 #### Soft min and soft max
 
@@ -199,10 +199,10 @@ Use this option to define how to display your time series data. You can use over
 
 This option controls how the graph interpolates the series line.
 
-- **Linear:** Points are joined by straight lines.
-- **Smooth:** Points are joined by curved lines that smooths transitions between points.
-- **Step before:** The line is displayed as steps between points. Points are rendered at the end of the step.
-- **Step after:** The line is displayed as steps between points. Points are rendered at the beginning of the step.
+- **Linear** - Points are joined by straight lines.
+- **Smooth** - Points are joined by curved lines that smooths transitions between points.
+- **Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.
+- **Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.
 
 #### Line width
 
@@ -218,10 +218,10 @@ Use opacity to specify the series area fill color.
 
 Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
 
-- **None:** No gradient fill. This is the default setting.
-- **Opacity:** An opacity gradient where the opacity of the fill increases as y-axis values increase.
-- **Hue:** A subtle gradient that is based on the hue of the series color.
-- **Scheme:** A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
+- **None** - No gradient fill. This is the default setting.
+- **Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.
+- **Hue** - A subtle gradient that is based on the hue of the series color.
+- **Scheme** - A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
@@ -247,9 +247,9 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 
 Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
-- **Solid:** Display a solid line. This is the default setting.
-- **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
-- **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
+- **Solid** - Display a solid line. This is the default setting.
+- **Dash** - Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
+- **Dots** - Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
 
 ![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
@@ -261,17 +261,17 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 You can configure your visualization to add points to lines or bars.
 
-- **Auto:** Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
-- **Always:** Show the points regardless of how dense the data set is.
-- **Never:** Do not show points.
+- **Auto** - Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
+- **Always** - Show the points regardless of how dense the data set is.
+- **Never** - Do not show points.
 
 #### Stack series
 
 _Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
 
-- **Off:** Turns off series stacking. When **Off**, all series share the same space in the visualization.
-- **Normal:** Stacks series on top of each other.
-- **100%:** Stack by percentage where all series add up to 100%.
+- **Off** - Turns off series stacking. When **Off**, all series share the same space in the visualization.
+- **Normal** - Stacks series on top of each other.
+- **100%** - Stack by percentage where all series add up to 100%.
 
 ##### Stack series in groups
 
