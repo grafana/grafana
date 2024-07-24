@@ -133,7 +133,7 @@ describe('getNormalizedLokiQuery', () => {
   it('removes deprecated instant property', () => {
     const input: LokiQuery = { refId: 'A', expr: 'test1', instant: true };
     const output = getNormalizedLokiQuery(input);
-    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Instant });
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
   });
 
   it('removes deprecated range property', () => {
