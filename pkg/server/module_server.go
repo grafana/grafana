@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
@@ -131,7 +131,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return storageServer.ProvideService(s.cfg, s.features, s.log)
+		return sql.ProvideService(s.cfg, s.features, s.log)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
