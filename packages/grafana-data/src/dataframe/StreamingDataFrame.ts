@@ -1,7 +1,8 @@
 import { AlignedData } from 'uplot';
 
 import { join } from '../transformations/transformers/joinDataFrames';
-import { FieldDTO, QueryResultMeta, DataFrame, Field, FieldType, Labels } from '../types';
+import { Labels, QueryResultMeta } from '../types/data';
+import { FieldDTO, DataFrame, Field, FieldType } from '../types/dataFrame';
 import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
@@ -267,8 +268,8 @@ export class StreamingDataFrame implements DataFrame {
             type: f.type ?? FieldType.other,
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
-              ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
-                Array(this.length).fill(undefined)
+              ? (this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
+                Array(this.length).fill(undefined))
               : [],
           };
         });

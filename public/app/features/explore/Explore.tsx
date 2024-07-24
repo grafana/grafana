@@ -14,6 +14,7 @@ import {
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
+  store,
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,7 +35,7 @@ import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
 
-import { ContentOutline } from './ContentOutline/ContentOutline';
+import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
@@ -147,7 +148,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      contentOutlineVisible: false,
+      contentOutlineVisible: store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true),
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -175,6 +176,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onContentOutlineToogle = () => {
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !this.state.contentOutlineVisible);
     this.setState((state) => {
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',

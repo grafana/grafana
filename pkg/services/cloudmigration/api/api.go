@@ -376,11 +376,12 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
+
 	if err := util.ValidateUID(uid); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
-	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, uid)
+	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, uid)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "error creating snapshot", err)
 	}
@@ -441,6 +442,17 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		}
 	}
 
+	dtoStats := SnapshotResourceStats{
+		Types:    make(map[MigrateDataType]int, len(snapshot.StatsRollup.CountsByStatus)),
+		Statuses: make(map[ItemStatus]int, len(snapshot.StatsRollup.CountsByType)),
+	}
+	for s, c := range snapshot.StatsRollup.CountsByStatus {
+		dtoStats.Statuses[ItemStatus(s)] = c
+	}
+	for s, c := range snapshot.StatsRollup.CountsByType {
+		dtoStats.Types[MigrateDataType(s)] = c
+	}
+
 	respDto := GetSnapshotResponseDTO{
 		SnapshotDTO: SnapshotDTO{
 			SnapshotUID: snapshot.UID,
@@ -449,7 +461,8 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 			Created:     snapshot.Created,
 			Finished:    snapshot.Finished,
 		},
-		Results: dtoResults,
+		Results:     dtoResults,
+		StatsRollup: dtoStats,
 	}
 
 	return response.JSON(http.StatusOK, respDto)

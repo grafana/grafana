@@ -1,3 +1,3 @@
-import { SelectableValue } from '../types';
+import { SelectableValue } from '../types/select';
 
 export const toOption = (value: string): SelectableValue<string> => ({ label: value, value });

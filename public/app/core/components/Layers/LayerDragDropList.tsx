@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';

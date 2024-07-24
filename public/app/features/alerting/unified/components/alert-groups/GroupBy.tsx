@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
-import { Icon, Label, MultiSelect } from '@grafana/ui';
+import { Icon, Label, MultiSelect, Tooltip } from '@grafana/ui';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isPrivateLabelKey } from '../../utils/labels';
@@ -22,7 +22,19 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
 
   return (
     <div data-testid={'group-by-container'}>
-      <Label>Custom group by</Label>
+      <Label>
+        <span>Custom group by&nbsp;</span>
+        <Tooltip
+          content={
+            <div>
+              Group notifications using a different combination of labels. This option can help validate the grouping
+              settings of your notification policies.
+            </div>
+          }
+        >
+          <Icon name="info-circle" size="sm" />
+        </Tooltip>
+      </Label>
       <MultiSelect
         aria-label={'group by label keys'}
         value={groupBy}

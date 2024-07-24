@@ -160,7 +160,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		return m.next.CallResource(ctx, req, sender)
 	}
 	// Otherwise, intercept the responses in a wrapped sender so we can cache them first
-	cacheSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+	cacheSender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		cr.UpdateCacheFn(ctx, res)
 		return sender.Send(res)
 	})

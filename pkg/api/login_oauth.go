@@ -28,7 +28,7 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 
 	code := reqCtx.Query("code")
 
-	req := &authn.Request{HTTPRequest: reqCtx.Req, Resp: reqCtx.Resp}
+	req := &authn.Request{HTTPRequest: reqCtx.Req}
 	if code == "" {
 		redirect, err := hs.authnService.RedirectURL(reqCtx.Req.Context(), authn.ClientWithPrefix(name), req)
 		if err != nil {

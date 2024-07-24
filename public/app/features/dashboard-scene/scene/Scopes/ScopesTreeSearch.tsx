@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, useStyles2 } from '@grafana/ui';
@@ -18,13 +18,23 @@ export interface ScopesTreeSearchProps {
 export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
-  const [queryValue, setQueryValue] = useState(query);
+  const [inputState, setInputState] = useState<{ value: string; isDirty: boolean }>({ value: query, isDirty: false });
 
   useEffect(() => {
-    setQueryValue(query);
-  }, [query]);
+    if (!inputState.isDirty && inputState.value !== query) {
+      setInputState({ value: query, isDirty: false });
+    }
+  }, [inputState, query]);
 
-  const onQueryUpdate = useMemo(() => debounce(onNodeUpdate, 500), [onNodeUpdate]);
+  useDebounce(
+    () => {
+      if (inputState.isDirty) {
+        onNodeUpdate(nodePath, true, inputState.value);
+      }
+    },
+    500,
+    [inputState.isDirty, inputState.value]
+  );
 
   if (anyChildExpanded) {
     return null;
@@ -33,12 +43,11 @@ export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpda
   return (
     <FilterInput
       placeholder={t('scopes.tree.search', 'Search')}
-      value={queryValue}
+      value={inputState.value}
       className={styles.input}
       data-testid="scopes-tree-search"
       onChange={(value) => {
-        setQueryValue(value);
-        onQueryUpdate(nodePath, true, value);
+        setInputState({ value, isDirty: true });
       }}
     />
   );

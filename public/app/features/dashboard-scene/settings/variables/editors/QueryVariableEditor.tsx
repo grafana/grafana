@@ -1,9 +1,9 @@
 import { FormEvent } from 'react';
 import * as React from 'react';
 
-import { SelectableValue, DataSourceInstanceSettings } from '@grafana/data';
+import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { QueryVariable, sceneGraph } from '@grafana/scenes';
-import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
+import { VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
 
@@ -36,7 +36,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     variable.setState({ allValue: event.currentTarget.value });
   };
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
-    const datasource: DataSourceRef = { uid: dsInstanceSettings.uid, type: dsInstanceSettings.type };
+    const datasource = getDataSourceRef(dsInstanceSettings);
 
     if (variable.state.datasource && variable.state.datasource.type !== datasource.type) {
       variable.setState({ datasource, query: '', definition: '' });

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
@@ -426,7 +427,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService)
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest())
 			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -462,7 +463,9 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			s := UserSync{}
+			s := UserSync{
+				tracer: tracing.InitializeTracerForTest(),
+			}
 			err := s.FetchSyncedUserHook(context.Background(), tt.identity, tt.req)
 			require.ErrorIs(t, err, tt.expectedErr)
 		})
@@ -515,7 +518,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 				return nil
 			}
 
-			s := UserSync{userService: userSvc}
+			s := UserSync{userService: userSvc, tracer: tracing.InitializeTracerForTest()}
 			err := s.EnableUserHook(context.Background(), tt.identity, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.enableUser, called)

@@ -26,6 +26,7 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
       </p>
       <a
         href="https://grafana.com/docs/grafana/next/dashboards/dashboard-public/"
+        target="blank"
         className={cx('text-link', styles.unsupportedDataSourceDescription)}
       >
         <Trans i18nKey="public-dashboard.modal-alerts.unsupport-data-source-alert-readmore-link">

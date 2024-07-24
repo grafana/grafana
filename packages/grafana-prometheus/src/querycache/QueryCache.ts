@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querycache/QueryCache.ts
 import {
+  amendTable,
   DataFrame,
   DataQueryRequest,
   dateTime,
@@ -8,9 +9,10 @@ import {
   incrRoundDn,
   isValidDuration,
   parseDuration,
+  Table,
+  trimTable,
 } from '@grafana/data';
 
-import { amendTable, Table, trimTable } from '../gcopypaste/app/features/live/data/amendTimeSeries';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var fixedDate = time.Date(2024, 6, 5, 17, 30, 40, 0, time.UTC)
@@ -129,14 +130,14 @@ func (m FakeServiceImpl) GetMigrationRunList(_ context.Context, _ string) (*clou
 	}, nil
 }
 
-func (m FakeServiceImpl) CreateSnapshot(ctx context.Context, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (m FakeServiceImpl) CreateSnapshot(ctx context.Context, user *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSnapshot{
 		UID:        "fake_uid",
 		SessionUID: sessionUid,
-		Status:     cloudmigration.SnapshotStatusUnknown,
+		Status:     cloudmigration.SnapshotStatusCreating,
 	}, nil
 }
 
@@ -147,7 +148,7 @@ func (m FakeServiceImpl) GetSnapshot(ctx context.Context, query cloudmigration.G
 	return &cloudmigration.CloudMigrationSnapshot{
 		UID:        "fake_uid",
 		SessionUID: "fake_uid",
-		Status:     cloudmigration.SnapshotStatusUnknown,
+		Status:     cloudmigration.SnapshotStatusCreating,
 	}, nil
 }
 
@@ -159,12 +160,12 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 		{
 			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
-			Status:     cloudmigration.SnapshotStatusUnknown,
+			Status:     cloudmigration.SnapshotStatusCreating,
 		},
 		{
 			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
-			Status:     cloudmigration.SnapshotStatusUnknown,
+			Status:     cloudmigration.SnapshotStatusCreating,
 		},
 	}, nil
 }

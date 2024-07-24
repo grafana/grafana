@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/alerting/definition"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -668,9 +669,9 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.Equal(t, 0, len(alertGroups))
 
 	// Let's create two active alerts and one expired one.
-	alert1 := genAlert(true, map[string]string{"test_1": "test_1"})
-	alert2 := genAlert(true, map[string]string{"test_2": "test_2"})
-	alert3 := genAlert(false, map[string]string{"test_3": "test_3"})
+	alert1 := genAlert(true, map[string]string{"test_1": "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
+	alert2 := genAlert(true, map[string]string{"test_2": "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
+	alert3 := genAlert(false, map[string]string{"test_3": "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
@@ -687,6 +688,12 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(alertGroups))
+
+	// Labels with empty values and the namespace UID label should be removed.
+	for _, a := range alertGroups {
+		require.NotContains(t, a.Labels, "empty")
+		require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
+	}
 
 	// Filtering by `test_1=test_1` should return one alert.
 	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{"test_1=test_1"}, "")
@@ -760,6 +767,7 @@ global:
     http_config:
         follow_redirects: true
         enable_http2: true
+        http_headers: null
     smtp_hello: localhost
     smtp_require_tls: true
     pagerduty_url: https://events.pagerduty.com/v2/enqueue

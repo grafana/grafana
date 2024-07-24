@@ -544,10 +544,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   updateQueries(options: QueryGroupOptions) {
     const { dataSource } = options;
-    this.datasource = {
-      uid: dataSource.uid,
-      type: dataSource.type,
-    };
+    this.datasource = dataSource;
 
     this.cacheTimeout = options.cacheTimeout;
     this.queryCachingTTL = options.queryCachingTTL;

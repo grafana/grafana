@@ -7,11 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
-	"golang.org/x/exp/slices"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -490,6 +488,15 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 }
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
+	resource := "dashboard"
+	if dash.IsFolder {
+		resource = "folder"
+	}
+
+	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
+		return
+	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	inFolder := dash.FolderID > 0
@@ -526,6 +533,10 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	if !dr.cfg.RBAC.PermissionsOnCreation("folder") {
+		return
+	}
+
 	inFolder := f.ParentUID != ""
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
@@ -700,16 +711,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 	hitList := make([]*model.Hit, 0)
 	hits := make(map[int64]*model.Hit)
 
-	requesterIsSvcAccount := query.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
-
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			// Don't list k6 items for users, we don't want users to interact with k6 folders directly through folder UI
-			if (item.UID == accesscontrol.K6FolderUID || item.FolderUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
-				continue
-			}
-
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 			hit = &model.Hit{
 				ID:          item.ID,

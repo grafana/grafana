@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -45,7 +46,7 @@ func TestRBACSync_SyncPermission(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, 1, len(tt.identity.Permissions))
-			assert.Equal(t, accesscontrol.GroupScopesByAction(tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
+			assert.Equal(t, accesscontrol.GroupScopesByActionContext(context.Background(), tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
 		})
 	}
 }
@@ -127,15 +128,106 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 						return nil
 					},
 				},
-				log: log.NewNopLogger(),
+				log:    log.NewNopLogger(),
+				tracer: tracing.InitializeTracerForTest(),
 			}
 
 			req := &authn.Request{}
 			req.SetMeta(authn.MetaKeyAuthModule, tt.module)
 
 			err := s.SyncCloudRoles(context.Background(), tt.identity, req)
-			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.ErrorIs(t, tt.expectedErr, err)
 			assert.Equal(t, tt.expectedCalled, called)
+		})
+	}
+}
+
+func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
+	type testCase struct {
+		desc                  string
+		identity              *authn.Identity
+		expectedErr           error
+		expectedRolesToAdd    []string
+		expectedRolesToRemove []string
+	}
+
+	tests := []testCase{
+		{
+			desc: "should map Cloud Viewer to Grafana Cloud Viewer and Support ticket reader",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			},
+			expectedErr: nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should map Cloud Editor to Grafana Cloud Editor and Support ticket admin",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+			},
+			expectedErr: nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should map Cloud Admin to Grafana Cloud Admin and Support ticket admin",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+			},
+			expectedErr: nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should return an error for not supported role",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
+			},
+			expectedErr:           errInvalidCloudRole,
+			expectedRolesToAdd:    []string{},
+			expectedRolesToRemove: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			rolesToAdd, rolesToRemove, err := cloudRolesToAddAndRemove(tt.identity)
+			assert.ErrorIs(t, tt.expectedErr, err)
+			assert.ElementsMatch(t, tt.expectedRolesToAdd, rolesToAdd)
+			assert.ElementsMatch(t, tt.expectedRolesToRemove, rolesToRemove)
 		})
 	}
 }
@@ -149,8 +241,9 @@ func setupTestEnv() *RBACSync {
 		},
 	}
 	s := &RBACSync{
-		ac:  acMock,
-		log: log.NewNopLogger(),
+		ac:     acMock,
+		log:    log.NewNopLogger(),
+		tracer: tracing.InitializeTracerForTest(),
 	}
 	return s
 }

@@ -35,6 +35,9 @@ func (d *Decorator) QueryData(ctx context.Context, req *backend.QueryDataRequest
 	if req == nil {
 		return nil, errNilRequest
 	}
+	ctx = backend.WithEndpoint(ctx, backend.EndpointQueryData)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
 
@@ -45,6 +48,10 @@ func (d *Decorator) CallResource(ctx context.Context, req *backend.CallResourceR
 	if req == nil {
 		return errNilRequest
 	}
+
+	ctx = backend.WithEndpoint(ctx, backend.EndpointCallResource)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
 
 	if sender == nil {
 		return errors.New("sender cannot be nil")
@@ -59,6 +66,10 @@ func (d *Decorator) CollectMetrics(ctx context.Context, req *backend.CollectMetr
 		return nil, errNilRequest
 	}
 
+	ctx = backend.WithEndpoint(ctx, backend.EndpointCollectMetrics)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CollectMetrics(ctx, req)
 }
@@ -67,6 +78,10 @@ func (d *Decorator) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 	if req == nil {
 		return nil, errNilRequest
 	}
+
+	ctx = backend.WithEndpoint(ctx, backend.EndpointCheckHealth)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CheckHealth(ctx, req)
@@ -77,6 +92,10 @@ func (d *Decorator) SubscribeStream(ctx context.Context, req *backend.SubscribeS
 		return nil, errNilRequest
 	}
 
+	ctx = backend.WithEndpoint(ctx, backend.EndpointSubscribeStream)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.SubscribeStream(ctx, req)
 }
@@ -86,6 +105,10 @@ func (d *Decorator) PublishStream(ctx context.Context, req *backend.PublishStrea
 		return nil, errNilRequest
 	}
 
+	ctx = backend.WithEndpoint(ctx, backend.EndpointPublishStream)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.PublishStream(ctx, req)
 }
@@ -94,6 +117,10 @@ func (d *Decorator) RunStream(ctx context.Context, req *backend.RunStreamRequest
 	if req == nil {
 		return errNilRequest
 	}
+
+	ctx = backend.WithEndpoint(ctx, backend.EndpointRunStream)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
 
 	if sender == nil {
 		return errors.New("sender cannot be nil")
@@ -108,6 +135,10 @@ func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.Admissio
 		return nil, errNilRequest
 	}
 
+	ctx = backend.WithEndpoint(ctx, backend.EndpointValidateAdmission)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.ValidateAdmission(ctx, req)
 }
@@ -117,6 +148,10 @@ func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionR
 		return nil, errNilRequest
 	}
 
+	ctx = backend.WithEndpoint(ctx, backend.EndpointMutateAdmission)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.MutateAdmission(ctx, req)
 }
@@ -125,6 +160,10 @@ func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRe
 	if req == nil {
 		return nil, errNilRequest
 	}
+
+	ctx = backend.WithEndpoint(ctx, backend.EndpointConvertObject)
+	ctx = backend.WithPluginContext(ctx, req.PluginContext)
+	ctx = backend.WithUser(ctx, req.PluginContext.User)
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.ConvertObject(ctx, req)

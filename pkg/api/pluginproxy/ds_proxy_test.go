@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -844,7 +845,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, cfg
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
@@ -966,7 +967,7 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secrets
 	var routes []*plugins.Route
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
@@ -1022,7 +1023,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
 	features := featuremgmt.WithFeatures()
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
 		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)

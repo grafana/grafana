@@ -87,7 +87,7 @@ def pr_pipelines():
         ),
         verify_storybook(
             get_pr_trigger(
-                exclude_paths = ["pkg/**", "packaging/**", "go.sum", "go.mod"],
+                include_paths = ["packages/grafana-ui/**"],
             ),
             ver_mode,
         ),

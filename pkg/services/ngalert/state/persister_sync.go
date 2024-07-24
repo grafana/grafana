@@ -102,6 +102,8 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
+			ResolvedAt:        s.ResolvedAt,
+			LastSentAt:        s.LastSentAt,
 		}
 
 		err = a.store.SaveAlertInstance(ctx, instance)

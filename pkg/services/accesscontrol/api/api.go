@@ -62,7 +62,7 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 		return response.JSON(http.StatusInternalServerError, err)
 	}
 
-	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
+	return response.JSON(http.StatusOK, ac.GroupScopesByActionContext(c.Req.Context(), permissions))
 }
 
 // GET /api/access-control/users/permissions/search

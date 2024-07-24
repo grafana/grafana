@@ -322,9 +322,6 @@ type Cfg struct {
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
-	// accessactionsets
-	OnlyStoreAccessActionSets bool
-
 	// Data sources
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
@@ -366,6 +363,7 @@ type Cfg struct {
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
+	ReportingStaticContext              map[string]string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -466,14 +464,7 @@ type Cfg struct {
 	OAuth2ServerGeneratedKeyTypeForClient string
 	OAuth2ServerAccessTokenLifespan       time.Duration
 
-	// Access Control
-	RBACPermissionCache bool
-	// Enable Permission validation during role creation and provisioning
-	RBACPermissionValidationEnabled bool
-	// Reset basic roles permissions on start-up
-	RBACResetBasicRoles bool
-	// RBAC single organization. This configuration option is subject to change.
-	RBACSingleOrganization bool
+	RBAC RBACSettings
 
 	Zanzana ZanzanaSettings
 
@@ -512,7 +503,8 @@ type Cfg struct {
 	AlertingMinInterval         int64
 
 	// Explore UI
-	ExploreEnabled bool
+	ExploreEnabled           bool
+	ExploreDefaultTimeOffset string
 
 	// Help UI
 	HelpEnabled bool
@@ -1114,7 +1106,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	readOAuth2ServerSettings(cfg)
 
-	readAccessControlSettings(iniFile, cfg)
+	cfg.readRBACSettings()
 
 	cfg.readZanzanaSettings()
 
@@ -1156,12 +1148,29 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
+	// parse reporting static context string of key=value, key=value pairs into an object
+	cfg.ReportingStaticContext = make(map[string]string)
+	for _, pair := range strings.Split(analytics.Key("reporting_static_context").String(), ",") {
+		kv := strings.Split(pair, "=")
+		if len(kv) == 2 {
+			cfg.ReportingStaticContext[strings.TrimSpace("_static_context_"+kv[0])] = strings.TrimSpace(kv[1])
+		}
+	}
+
 	if err := cfg.readAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
 	explore := iniFile.Section("explore")
 	cfg.ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	exploreDefaultTimeOffset := valueAsString(explore, "defaultTimeOffset", "1h")
+	// we want to ensure the value parses as a duration, but we send it forward as a string to the frontend
+	if _, err := gtime.ParseDuration(exploreDefaultTimeOffset); err != nil {
+		return err
+	} else {
+		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
+	}
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)
@@ -1636,15 +1645,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.SSOSettingsConfigurableProviders[provider] = true
 	}
 	return nil
-}
-
-func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
-	rbac := iniFile.Section("rbac")
-	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
-	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
-	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
-	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
-	cfg.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {

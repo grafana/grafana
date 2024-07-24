@@ -34,7 +34,7 @@ import (
 
 func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, numFolders, nestingLevel int) {
 	usr := user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{
-		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+		1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 			{
 				Action: dashboards.ActionFoldersCreate,
 			},
@@ -77,7 +77,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		nestingLevel = folder.MaxNestedFolderDepth
 	}
 
-	store, cfg := db.InitTestDBWithCfg(b)
+	store, cfg := db.InitTestReplDBWithCfg(b)
 
 	quotaService := quotatest.New(false, nil)
 

@@ -1,5 +1,9 @@
 .clearfix {
-  @include clearfix();
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
 }
 
 .highlight-word {
@@ -14,8 +18,7 @@
 // Close icons
 // --------------------------------------------------
 .close {
-  @include opacity(20);
-
+  opacity: 0.2;
   float: right;
   font-size: 20px;
   font-weight: bold;
@@ -28,7 +31,7 @@
     color: $black;
     text-decoration: none;
     cursor: pointer;
-    @include opacity(40);
+    opacity: 0.4;
   }
 }
 

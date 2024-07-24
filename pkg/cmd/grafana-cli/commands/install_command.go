@@ -75,27 +75,57 @@ func installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	err := installPlugin(context.Background(), pluginID, version, c)
+	err := installPlugin(context.Background(), pluginID, version, newInstallPluginOpts(c))
 	if err == nil {
 		logRestartNotice()
 	}
 	return err
 }
 
+type pluginInstallOpts struct {
+	insecure  bool
+	repoURL   string
+	pluginURL string
+	pluginDir string
+}
+
+func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
+	return pluginInstallOpts{
+		insecure:  c.Bool("insecure"),
+		repoURL:   c.PluginRepoURL(),
+		pluginURL: c.PluginURL(),
+		pluginDir: c.PluginDirectory(),
+	}
+}
+
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
-func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
+func installPlugin(ctx context.Context, pluginID, version string, o pluginInstallOpts) error {
+	return doInstallPlugin(ctx, pluginID, version, o, map[string]bool{})
+}
+
+// doInstallPlugin is a recursive function that installs a plugin and its dependencies.
+// installing is a map that keeps track of which plugins are currently being installed to avoid infinite loops.
+func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInstallOpts, installing map[string]bool) error {
+	if installing[pluginID] {
+		return nil
+	}
+	installing[pluginID] = true
+	defer func() {
+		installing[pluginID] = false
+	}()
+
 	// If a version is specified, check if it is already installed
 	if version != "" {
-		if services.PluginVersionInstalled(pluginID, version, c.PluginDirectory()) {
+		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
 			return nil
 		}
 	}
 
 	repository := repo.NewManager(repo.ManagerCfg{
-		SkipTLSVerify: c.Bool("insecure"),
-		BaseURL:       c.PluginRepoURL(),
+		SkipTLSVerify: o.insecure,
+		BaseURL:       o.repoURL,
 		Logger:        services.Logger,
 	})
 
@@ -103,7 +133,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 
 	var archive *repo.PluginArchive
 	var err error
-	pluginZipURL := c.PluginURL()
+	pluginZipURL := o.pluginURL
 	if pluginZipURL != "" {
 		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
 			return err
@@ -114,23 +144,19 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 		}
 	}
 
-	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
+	pluginFs := storage.FileSystem(services.Logger, o.pluginDir)
 	extractedArchive, err := pluginFs.Extract(ctx, pluginID, storage.SimpleDirNameGeneratorFunc, archive.File)
 	if err != nil {
 		return err
 	}
 
 	for _, dep := range extractedArchive.Dependencies {
-		services.Logger.Infof("Fetching %s dependency...", dep.ID)
-		d, err := repository.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
-		if err != nil {
-			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
-		}
-
-		_, err = pluginFs.Extract(ctx, dep.ID, storage.SimpleDirNameGeneratorFunc, d.File)
-		if err != nil {
-			return err
-		}
+		services.Logger.Infof("Fetching %s dependency %s...", pluginID, dep.ID)
+		return doInstallPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
+			insecure:  o.insecure,
+			repoURL:   o.repoURL,
+			pluginDir: o.pluginDir,
+		}, installing)
 	}
 	return nil
 }

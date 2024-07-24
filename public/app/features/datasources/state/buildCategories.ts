@@ -221,6 +221,18 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Azure CosmosDB',
       imgUrl: 'public/img/plugins/azure-cosmosdb.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-adobeanalytics-datasource',
+      description: 'Adobe Analytics datasource',
+      name: 'Adobe Analytics',
+      imgUrl: 'public/img/plugins/adobe-analytics.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-cloudflare-datasource',
+      description: 'Cloudflare datasource',
+      name: 'Cloudflare',
+      imgUrl: 'public/img/plugins/cloudflare.jpg',
+    }),
   ];
 }
 

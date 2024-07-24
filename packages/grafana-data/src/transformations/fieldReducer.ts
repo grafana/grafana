@@ -1,7 +1,8 @@
 // Libraries
 import { isNumber } from 'lodash';
 
-import { NullValueMode, Field, FieldCalcs, FieldType } from '../types/index';
+import { NullValueMode } from '../types/data';
+import { Field, FieldCalcs, FieldType } from '../types/dataFrame';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -572,7 +573,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
-    calcs.diffperc = calcs.diff / calcs.firstNotNull;
+    calcs.diffperc = (calcs.diff / calcs.firstNotNull) * 100;
   }
   return calcs;
 }

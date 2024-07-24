@@ -2,11 +2,14 @@ package gmsclient
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
-	"time"
 
+	cryptoRand "crypto/rand"
+
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/crypto/nacl/box"
 )
 
 // NewInMemoryClient returns an implementation of Client that returns canned responses
@@ -15,7 +18,7 @@ func NewInMemoryClient() Client {
 }
 
 type memoryClientImpl struct {
-	snapshot *cloudmigration.InitializeSnapshotResponse
+	snapshot *cloudmigration.StartSnapshotResponse
 }
 
 func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
@@ -48,43 +51,50 @@ func (c *memoryClientImpl) MigrateData(
 	return &result, nil
 }
 
-func (c *memoryClientImpl) InitializeSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.InitializeSnapshotResponse, error) {
-	c.snapshot = &cloudmigration.InitializeSnapshotResponse{
-		EncryptionKey:  util.GenerateShortUID(),
-		GMSSnapshotUID: util.GenerateShortUID(),
-		UploadURL:      "localhost:3000",
+func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+	publicKey, _, err := box.GenerateKey(cryptoRand.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
+	}
+	c.snapshot = &cloudmigration.StartSnapshotResponse{
+		EncryptionKey:        publicKey[:],
+		SnapshotID:           uuid.NewString(),
+		MaxItemsPerPartition: 10,
+		Algo:                 "nacl",
 	}
 
 	return c.snapshot, nil
 }
 
-func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
-	results := []cloudmigration.CloudMigrationResource{
-		{
-			Type:   cloudmigration.DashboardDataType,
-			RefID:  "dash1",
-			Status: cloudmigration.ItemStatusOK,
-		},
-		{
-			Type:   cloudmigration.DatasourceDataType,
-			RefID:  "ds1",
-			Status: cloudmigration.ItemStatusError,
-			Error:  "fake error",
-		},
-		{
-			Type:   cloudmigration.FolderDataType,
-			RefID:  "folder1",
-			Status: cloudmigration.ItemStatusOK,
+func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot, offset int) (*cloudmigration.GetSnapshotStatusResponse, error) {
+	gmsResp := &cloudmigration.GetSnapshotStatusResponse{
+		State: cloudmigration.SnapshotStateFinished,
+		Results: []cloudmigration.CloudMigrationResource{
+			{
+				Type:   cloudmigration.DashboardDataType,
+				RefID:  "dash1",
+				Status: cloudmigration.ItemStatusOK,
+			},
+			{
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "ds1",
+				Status: cloudmigration.ItemStatusError,
+				Error:  "fake error",
+			},
+			{
+				Type:   cloudmigration.FolderDataType,
+				RefID:  "folder1",
+				Status: cloudmigration.ItemStatusOK,
+			},
 		},
 	}
 
-	// just fake an entire response
-	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
-		Status:         cloudmigration.SnapshotStatusFinished,
-		GMSSnapshotUID: "gmssnapshotuid",
-		Resources:      results,
-		Finished:       time.Now(),
-	}
+	return gmsResp, nil
+}
 
-	return &gmsSnapshot, nil
+func (c *memoryClientImpl) CreatePresignedUploadUrl(ctx context.Context, sess cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	return "http://localhost:3000", nil
+}
+
+func (c *memoryClientImpl) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, EventRequestDTO) {
 }

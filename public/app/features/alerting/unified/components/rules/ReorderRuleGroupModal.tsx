@@ -1,8 +1,4 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
-import { compact } from 'lodash';
-import { useCallback, useState } from 'react';
-import * as React from 'react';
 import {
   DragDropContext,
   Draggable,
@@ -10,7 +6,11 @@ import {
   Droppable,
   DroppableProvided,
   DropResult,
-} from 'react-beautiful-dnd';
+} from '@hello-pangea/dnd';
+import cx from 'classnames';
+import { compact } from 'lodash';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';

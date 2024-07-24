@@ -1,6 +1,7 @@
 package receiver
 
 import (
+	"encoding/json"
 	"fmt"
 	"hash/fnv"
 
@@ -48,25 +49,24 @@ func convertToK8sResource(orgID int64, receiver definitions.GettableApiReceiver,
 			Uid:                   &integration.UID,
 			Type:                  integration.Type,
 			DisableResolveMessage: &integration.DisableResolveMessage,
-			Settings:              integration.Settings,
+			Settings:              json.RawMessage(integration.Settings),
 			SecureFields:          integration.SecureFields,
 		})
 	}
 
 	uid := getUID(receiver) // TODO replace to stable UID when we switch to normal storage
-	return &model.Receiver{
+	r := &model.Receiver{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			UID:       types.UID(uid), // This is needed to make PATCH work
-			Name:      uid,            // TODO replace to stable UID when we switch to normal storage
-			Namespace: namespacer(orgID),
-			Annotations: map[string]string{ // TODO find a better place for provenance?
-				"grafana.com/provenance": string(provenance),
-			},
+			UID:             types.UID(uid), // This is needed to make PATCH work
+			Name:            uid,            // TODO replace to stable UID when we switch to normal storage
+			Namespace:       namespacer(orgID),
 			ResourceVersion: "", // TODO: Implement optimistic concurrency.
 		},
 		Spec: spec,
-	}, nil
+	}
+	r.SetProvenanceStatus(string(provenance))
+	return r, nil
 }
 
 func convertToDomainModel(receiver *model.Receiver) (definitions.GettableApiReceiver, error) {
@@ -84,7 +84,7 @@ func convertToDomainModel(receiver *model.Receiver) (definitions.GettableApiRece
 		grafanaIntegration := definitions.GettableGrafanaReceiver{
 			Name:         receiver.Spec.Title,
 			Type:         integration.Type,
-			Settings:     integration.Settings,
+			Settings:     definitions.RawMessage(integration.Settings),
 			SecureFields: integration.SecureFields,
 			//Provenance:   "", //TODO: Convert provenance?
 		}
