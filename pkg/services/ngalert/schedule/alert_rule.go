@@ -78,6 +78,8 @@ func newRuleFactory(
 				met,
 				tracer,
 				recordingWriter,
+				evalAppliedHook,
+				stopAppliedHook,
 			)
 		}
 		return newAlertRule(

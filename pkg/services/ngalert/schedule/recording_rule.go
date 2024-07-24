@@ -49,13 +49,14 @@ type recordingRule struct {
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
+	stopAppliedHook stopAppliedFunc
 
 	logger  log.Logger
 	metrics *metrics.Scheduler
 	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter) *recordingRule {
+func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
 	return &recordingRule{
 		key:                 key,
@@ -70,6 +71,8 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAtte
 		evalFactory:         evalFactory,
 		featureToggles:      ft,
 		maxAttempts:         maxAttempts,
+		evalAppliedHook:     evalAppliedHook,
+		stopAppliedHook:     stopAppliedHook,
 		logger:              logger.FromContext(ctx),
 		metrics:             metrics,
 		tracer:              tracer,
@@ -119,6 +122,8 @@ func (r *recordingRule) Stop(reason error) {
 func (r *recordingRule) Run() error {
 	ctx := r.ctx
 	r.logger.Debug("Recording rule routine started")
+
+	defer r.stopApplied()
 
 	for {
 		select {
@@ -315,4 +320,13 @@ func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) 
 	}
 
 	return targetNode.Frames, nil
+}
+
+// stopApplied is only used on tests.
+func (r *recordingRule) stopApplied() {
+	if r.stopAppliedHook == nil {
+		return
+	}
+
+	r.stopAppliedHook(r.key)
 }
