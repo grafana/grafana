@@ -1,30 +1,21 @@
 import { config } from '@grafana/runtime';
 import { UrlSyncManager } from '@grafana/scenes';
 
-import { ScopesScene } from './internal/ScopesScene';
+import { ScopesDashboardsScene } from './internal/ScopesDashboardsScene';
+import { ScopesFiltersScene } from './internal/ScopesFiltersScene';
 
-export let scopesScene: ScopesScene | null = null;
+export let scopesDashboardsScene: ScopesDashboardsScene | null = null;
+export let scopesFiltersScene: ScopesFiltersScene | null = null;
 
 export function initializeScopes() {
   if (config.featureToggles.scopeFilters) {
-    scopesScene = new ScopesScene();
+    scopesFiltersScene = new ScopesFiltersScene();
+    scopesDashboardsScene = new ScopesDashboardsScene();
+
+    scopesFiltersScene.setState({ dashboards: scopesDashboardsScene.getRef() });
+    scopesDashboardsScene.setState({ filters: scopesFiltersScene.getRef() });
+
     const urlSyncManager = new UrlSyncManager();
-    urlSyncManager.initSync(scopesScene!);
+    urlSyncManager.initSync(scopesFiltersScene!);
   }
-}
-
-export function renderScopes() {
-  if (!scopesScene) {
-    return null;
-  }
-
-  return <scopesScene.Component model={scopesScene} />;
-}
-
-export function renderScopesDashboards() {
-  if (!scopesScene) {
-    return null;
-  }
-
-  return <scopesScene.state.dashboards.Component model={scopesScene.state.dashboards} />;
 }

@@ -2,18 +2,22 @@ import { css, cx } from '@emotion/css';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 import { Button, CustomScrollbar, FilterInput, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t, Trans } from 'app/core/internationalization';
 
+import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { fetchSuggestedDashboards } from './api';
 import { SuggestedDashboard } from './types';
+import { getScopeNamesFromSelectedScopes } from './utils';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
+  filters: SceneObjectRef<ScopesFiltersScene> | null;
   dashboards: SuggestedDashboard[];
   filteredDashboards: SuggestedDashboard[];
   isLoading: boolean;
+  isOpened: boolean;
   isVisible: boolean;
   scopesSelected: boolean;
   searchQuery: string;
@@ -24,16 +28,34 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
   constructor() {
     super({
+      filters: null,
       dashboards: [],
       filteredDashboards: [],
       isLoading: false,
+      isOpened: false,
       isVisible: false,
       scopesSelected: false,
       searchQuery: '',
     });
+
+    this.addActivationHandler(() => {
+      this._subs.add(
+        this.state.filters?.resolve().subscribeToState((newState, prevState) => {
+          if (
+            this.state.isOpened &&
+            !newState.isLoadingScopes &&
+            (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)
+          ) {
+            this.fetchDashboards();
+          }
+        })
+      );
+    });
   }
 
-  public async fetchDashboards(scopeNames: string[]) {
+  public async fetchDashboards() {
+    const scopeNames = getScopeNamesFromSelectedScopes(this.state.filters?.resolve().state.scopes ?? []);
+
     if (scopeNames.length === 0) {
       return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false, scopesSelected: false });
     }
@@ -59,16 +81,24 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  public toggle(scopeNames: string[]) {
-    if (this.state.isVisible) {
-      this.hide();
+  public toggle() {
+    if (this.state.isOpened) {
+      this.close();
     } else {
-      this.show(scopeNames);
+      this.open();
     }
   }
 
-  public show(scopeNames: string[]) {
-    this.fetchDashboards(scopeNames);
+  public open() {
+    this.fetchDashboards();
+    this.setState({ isOpened: true });
+  }
+
+  public close() {
+    this.setState({ isOpened: false });
+  }
+
+  public show() {
     this.setState({ isVisible: true });
   }
 
@@ -84,29 +114,36 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { dashboards, filteredDashboards, isLoading, isVisible, searchQuery, scopesSelected } = model.useState();
+  const { dashboards, filteredDashboards, isLoading, isOpened, isVisible, searchQuery, scopesSelected } =
+    model.useState();
   const styles = useStyles2(getStyles);
 
   const [queryParams] = useQueryParams();
 
-  if (!isVisible) {
+  if (!isVisible || !isOpened) {
     return null;
   }
 
   if (!isLoading) {
     if (!scopesSelected) {
       return (
-        <p className={cx(styles.container, styles.noResultsContainer)} data-testid="scopes-dashboards-notFoundNoScopes">
+        <div
+          className={cx(styles.container, styles.noResultsContainer)}
+          data-testid="scopes-dashboards-notFoundNoScopes"
+        >
           <Trans i18nKey="scopes.suggestedDashboards.noResultsNoScopes">No scopes selected</Trans>
-        </p>
+        </div>
       );
     } else if (dashboards.length === 0) {
       return (
-        <p className={cx(styles.container, styles.noResultsContainer)} data-testid="scopes-dashboards-notFoundForScope">
+        <div
+          className={cx(styles.container, styles.noResultsContainer)}
+          data-testid="scopes-dashboards-notFoundForScope"
+        >
           <Trans i18nKey="scopes.suggestedDashboards.noResultsForScopes">
             No dashboards found for the selected scopes
           </Trans>
-        </p>
+        </div>
       );
     }
   }
@@ -165,12 +202,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
+      gap: theme.spacing(1),
       padding: theme.spacing(2),
+      width: theme.spacing(37.5),
     }),
     noResultsContainer: css({
       alignItems: 'center',
+      display: 'flex',
+      flexDirection: 'column',
       gap: theme.spacing(1),
+      height: '100%',
       justifyContent: 'center',
+      margin: 0,
       textAlign: 'center',
     }),
     searchInputContainer: css({

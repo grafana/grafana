@@ -1,6 +1,7 @@
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
-import { scopesScene } from './instance';
+import { scopesFiltersScene } from './instance';
+import { disableScopes, enableScopes, getSelectedScopes, hideScopes, showScopes } from './utils';
 
 interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
@@ -13,42 +14,45 @@ interface ScopesFacadeState extends SceneObjectState {
 export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
   public constructor(state: ScopesFacadeState) {
     super(state);
+
     this.addActivationHandler(this._activationHandler);
   }
 
   private _activationHandler = () => {
     if (!this.state.hidden) {
-      scopesScene?.show();
+      this.show();
     }
 
     this._subs.add(
-      scopesScene?.subscribeToSelectedScopes((scopes) => {
-        this.state.handler?.(this);
+      scopesFiltersScene?.subscribeToState((newState, prevState) => {
+        if (!newState.isLoadingScopes && (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)) {
+          this.state.handler?.(this);
+        }
       })
     );
 
     return () => {
-      scopesScene?.hide();
+      this.hide();
     };
   };
 
+  public get value() {
+    return getSelectedScopes();
+  }
+
   public show() {
-    scopesScene?.show();
+    showScopes();
   }
 
   public hide() {
-    scopesScene?.hide();
-  }
-
-  public get value() {
-    return scopesScene?.getSelectedScopes() ?? [];
+    hideScopes();
   }
 
   public disable() {
-    scopesScene?.disable();
+    disableScopes();
   }
 
   public enable() {
-    scopesScene?.enable();
+    enableScopes();
   }
 }

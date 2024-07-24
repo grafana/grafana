@@ -9,7 +9,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { renderScopesDashboards } from 'app/features/scopes';
+import { ScopesDashboards } from 'app/features/scopes';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
@@ -107,7 +107,7 @@ export function AppChrome({ children }: Props) {
           {menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          {!state.chromeless && renderScopesDashboards()}
+          {!state.chromeless && <ScopesDashboards />}
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: config.featureToggles.bodyScrolling && menuDockedAndOpen,

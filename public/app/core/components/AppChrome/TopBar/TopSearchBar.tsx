@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
+import * as React from 'react';
 import { memo } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -7,6 +8,7 @@ import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { ScopesFilters } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
@@ -41,6 +43,7 @@ export const TopSearchBar = memo(function TopSearchBar() {
         <a className={styles.logo} href={homeUrl} title="Go to home">
           <Branding.MenuLogo className={styles.img} />
         </a>
+        <ScopesFilters />
         <OrganizationSwitcher />
       </TopSearchBarSection>
 

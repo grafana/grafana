@@ -7,7 +7,6 @@ import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { renderScopes } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
@@ -61,7 +60,6 @@ export function NavToolbar({
         />
       </div>
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-      {renderScopes()}
       <div className={styles.actions}>
         {actions}
         {searchBarHidden && (

@@ -1,5 +1,7 @@
 import { Scope } from '@grafana/data';
 
+import { SelectedScope, TreeScope } from './types';
+
 export function getBasicScope(name: string): Scope {
   return {
     metadata: { name },
@@ -25,4 +27,19 @@ export function mergeScopes(scope1: Scope, scope2: Scope): Scope {
       ...scope2.spec,
     },
   };
+}
+
+export function getTreeScopesFromSelectedScopes(scopes: SelectedScope[]): TreeScope[] {
+  return scopes.map(({ scope, path }) => ({
+    scopeName: scope.metadata.name,
+    path,
+  }));
+}
+
+export function getScopesFromSelectedScopes(scopes: SelectedScope[]): Scope[] {
+  return scopes.map(({ scope }) => scope);
+}
+
+export function getScopeNamesFromSelectedScopes(scopes: SelectedScope[]): string[] {
+  return scopes.map(({ scope }) => scope.metadata.name);
 }

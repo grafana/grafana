@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
-import { scopesScene } from './instance';
+import { scopesFiltersScene } from './instance';
+import { disableScopes, enableScopes, getSelectedScopes, hideScopes, showScopes } from './utils';
 
 export interface UseScopesOptions {
   // Prevent rendering the selector by default
@@ -8,29 +9,24 @@ export interface UseScopesOptions {
 }
 
 export const useScopes = ({ hidden }: UseScopesOptions = {}) => {
-  const [value, setValue] = useState(scopesScene?.getSelectedScopes() ?? []);
+  // This is here to trigger a re-render when the scopes state changes
+  scopesFiltersScene?.useState();
 
   useEffect(() => {
     if (!hidden) {
-      scopesScene?.show();
+      showScopes();
     }
 
-    const sub = scopesScene?.subscribeToSelectedScopes((scopes) => {
-      setValue(scopes);
-    });
-
     return () => {
-      sub?.unsubscribe();
-
-      scopesScene?.hide();
+      hideScopes();
     };
-  }, [hidden, setValue]);
+  }, [hidden]);
 
   return {
-    value,
-    show: () => scopesScene?.show(),
-    hide: () => scopesScene?.hide(),
-    disable: () => scopesScene?.disable(),
-    enable: () => scopesScene?.enable(),
+    value: getSelectedScopes(),
+    show: showScopes,
+    hide: hideScopes,
+    enable: enableScopes,
+    disable: disableScopes,
   };
 };

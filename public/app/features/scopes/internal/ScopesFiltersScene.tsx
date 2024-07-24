@@ -2,25 +2,28 @@ import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { finalize, from, Subscription } from 'rxjs';
 
-import { GrafanaTheme2, Scope } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
-import { Button, Drawer, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
+import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesInput } from './ScopesInput';
 import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
-import { getBasicScope } from './utils';
+import { getBasicScope, getScopeNamesFromSelectedScopes, getTreeScopesFromSelectedScopes } from './utils';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
+  dashboards: SceneObjectRef<ScopesDashboardsScene> | null;
   nodes: NodesMap;
   loadingNodeName: string | undefined;
   scopes: SelectedScope[];
@@ -28,6 +31,7 @@ export interface ScopesFiltersSceneState extends SceneObjectState {
   isDisabled: boolean;
   isLoadingScopes: boolean;
   isOpened: boolean;
+  isVisible: boolean;
 }
 
 export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> implements SceneObjectWithUrlSync {
@@ -39,6 +43,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   constructor() {
     super({
+      dashboards: null,
       nodes: {
         '': {
           name: '',
@@ -58,6 +63,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       isDisabled: false,
       isLoadingScopes: false,
       isOpened: false,
+      isVisible: false,
     });
 
     this.addActivationHandler(() => {
@@ -71,7 +77,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public getUrlState() {
     return {
-      scopes: this.state.scopes.map(({ scope }) => scope.metadata.name),
+      scopes: this.state.isVisible ? getScopeNamesFromSelectedScopes(this.state.scopes) : undefined,
     };
   }
 
@@ -195,16 +201,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.setState({ isOpened: false });
   }
 
-  public getSelectedScopes(): Scope[] {
-    return this.state.scopes.map(({ scope }) => scope);
-  }
-
-  public getSelectedScopesNames(): string[] {
-    return this.state.scopes.map(({ scope }) => scope.metadata.name);
-  }
-
   public async updateScopes(treeScopes = this.state.treeScopes) {
-    if (isEqual(treeScopes, this.getTreeScopes())) {
+    if (isEqual(treeScopes, getTreeScopesFromSelectedScopes(this.state.scopes))) {
       return;
     }
 
@@ -221,7 +219,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public resetDirtyScopeNames() {
-    this.setState({ treeScopes: this.getTreeScopes() });
+    this.setState({ treeScopes: getTreeScopesFromSelectedScopes(this.state.scopes) });
   }
 
   public removeAllScopes() {
@@ -234,6 +232,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public enable() {
     this.setState({ isDisabled: false });
+  }
+
+  public show() {
+    this.setState({ isVisible: true });
+  }
+
+  public hide() {
+    this.setState({ isVisible: false });
   }
 
   private closeNodes(nodes: NodesMap): NodesMap {
@@ -264,21 +270,47 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
     return nodes;
   }
-
-  private getTreeScopes(): TreeScope[] {
-    return this.state.scopes.map(({ scope, path }) => ({
-      scopeName: scope.metadata.name,
-      path,
-    }));
-  }
 }
 
 export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
-  const { nodes, loadingNodeName, scopes, treeScopes, isDisabled, isLoadingScopes, isOpened } = model.useState();
+  const {
+    dashboards: dashboardsRef,
+    nodes,
+    loadingNodeName,
+    scopes,
+    treeScopes,
+    isDisabled,
+    isLoadingScopes,
+    isOpened,
+    isVisible,
+  } = model.useState();
+
+  const dashboards = dashboardsRef?.resolve();
+
+  const { isOpened: isDashboardsOpened } = dashboards?.useState() ?? {};
+
+  if (!isVisible) {
+    return null;
+  }
+
+  const dashboardsIconLabel = isDashboardsOpened
+    ? t('scopes.suggestedDashboards.toggle.collapse', 'Collapse scope filters')
+    : t('scopes.suggestedDashboards.toggle..expand', 'Expand scope filters');
 
   return (
-    <>
+    <div className={styles.container}>
+      {!isDisabled && (
+        <IconButton
+          name="dashboard"
+          className={styles.dashboards}
+          aria-label={dashboardsIconLabel}
+          tooltip={dashboardsIconLabel}
+          data-testid="scopes-dashboards-expand"
+          onClick={() => dashboards?.toggle()}
+        />
+      )}
+
       <ScopesInput
         nodes={nodes}
         scopes={scopes}
@@ -333,12 +365,24 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           </div>
         </Drawer>
       )}
-    </>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    container: css({
+      display: 'flex',
+      flexDirection: 'row',
+      padding: theme.spacing(0, 0, 0, 1),
+    }),
+    dashboards: css({
+      color: theme.colors.text.secondary,
+
+      '&:hover': css({
+        color: theme.colors.text.primary,
+      }),
+    }),
     buttonGroup: css({
       display: 'flex',
       gap: theme.spacing(1),
