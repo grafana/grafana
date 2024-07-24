@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -334,7 +335,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 }
 
 func (d *DualWriterMode2) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	klog.Error("Watch not implemented in mode 2")
+	d.Log.Error(errors.New("Watch not implemented in mode 2"), "Watch not implemented in mode 2")
 	return nil, nil
 }
 
