@@ -12,6 +12,21 @@ var (
 	ErrInvalidRowLockingClause = errors.New("invalid row-locking clause")
 )
 
+// DialectForDriver returns a predefined Dialect for the given driver name, or
+// nil if no Dialect is known for that driver.
+func DialectForDriver(driverName string) Dialect {
+	switch strings.ToLower(driverName) {
+	case "mysql":
+		return MySQL
+	case "postgres", "pgx":
+		return PostgreSQL
+	case "sqlite", "sqlite3":
+		return SQLite
+	default:
+		return nil
+	}
+}
+
 // Dialect should be added to the data types passed to SQL templates to
 // provide methods that deal with SQL implementation-specific traits. It can be
 // embedded for ease of use, or with a named struct field if any of its methods
@@ -21,7 +36,7 @@ type Dialect interface {
 	// than one DBMS (e.g. "postgres" is common to PostgreSQL and to
 	// CockroachDB), while we can maintain different Dialects for the same DBMS
 	// but different versions (e.g. "mysql5" and "mysql8").
-	Name() string
+	DialectName() string
 
 	// Ident returns the given string quoted in a way that is suitable to be
 	// used as an identifier. Database names, schema names, table names, column
@@ -135,6 +150,6 @@ var (
 
 type name string
 
-func (n name) Name() string {
+func (n name) DialectName() string {
 	return string(n)
 }

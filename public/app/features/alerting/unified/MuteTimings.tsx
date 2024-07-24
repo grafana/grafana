@@ -22,7 +22,7 @@ const MuteTimings = () => {
 
   const getMuteTimingByName = useCallback(
     (id: string, fromTimeIntervals: boolean): MuteTimeInterval | undefined => {
-      const time_intervals = fromTimeIntervals ? config?.time_intervals ?? [] : config?.mute_time_intervals ?? [];
+      const time_intervals = fromTimeIntervals ? (config?.time_intervals ?? []) : (config?.mute_time_intervals ?? []);
       const timing = time_intervals.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
