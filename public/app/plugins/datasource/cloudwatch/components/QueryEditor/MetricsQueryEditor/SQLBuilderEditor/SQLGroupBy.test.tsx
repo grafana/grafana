@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
+import { config } from '@grafana/runtime';
+
 import { setupMockedDataSource } from '../../../../__mocks__/CloudWatchDataSource';
 import { createArray, createGroupBy } from '../../../../__mocks__/sqlUtils';
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../../../types';
@@ -53,6 +55,27 @@ describe('Cloudwatch SQLGroupBy', () => {
       expect(screen.getByText('InstanceId')).toBeInTheDocument();
       expect(screen.getByText('InstanceType')).toBeInTheDocument();
     });
+  });
+  it('should show Account ID in groupBy options if feature flag is enabled', async () => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = true;
+    config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
+    const query = makeSQLQuery();
+
+    render(<SQLGroupBy {...baseProps} query={query} />);
+    const addButton = screen.getByRole('button', { name: 'Add' });
+    await userEvent.click(addButton);
+    selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    expect(screen.getByText('Account ID')).toBeInTheDocument();
+  });
+  it('should not show Account ID in groupBy options if feature flag is disabled', async () => {
+    config.featureToggles.cloudwatchMetricInsightsCrossAccount = false;
+    const query = makeSQLQuery();
+
+    render(<SQLGroupBy {...baseProps} query={query} />);
+    const addButton = screen.getByRole('button', { name: 'Add' });
+    await userEvent.click(addButton);
+    selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    expect(screen.queryByText('Account ID')).not.toBeInTheDocument();
   });
 
   it('should allow adding a new dimension filter', async () => {
