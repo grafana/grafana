@@ -130,19 +130,19 @@ The following section describes the configuration options available in the panel
 
 Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
 
-| Option                             | Description                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Time zone                          | Set the desired time zone(s) to display along the x-axis.                                                                                                                                                                                                                                                                                                                         |
-| [Placement](#placement)            | Select the placement of the y-axis.                                                                                                                                                                                                                                                                                                                                               |
-| Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.                                                                                                                                                                                                                                                                |
-| Width                              | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis. By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other. |
-| Show grid lines                    | Set the axis grid line visibility.<br>                                                                                                                                                                                                                                                                                                                                            |
-| Color                              | Set the color of the axis.                                                                                                                                                                                                                                                                                                                                                        |
-| Show border                        | Set the axis border visibility.                                                                                                                                                                                                                                                                                                                                                   |
-| Scale                              | Set the y-axis values scale.<br>                                                                                                                                                                                                                                                                                                                                                  |
-| Centered zero                      | Set the y-axis to be centered on zero.                                                                                                                                                                                                                                                                                                                                            |
-| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                         |
-| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                         |
+| Option                             | Description                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Time zone                          | Set the desired time zones to display along the x-axis.                                                                                                                                                                                                                                                                                                                          |
+| [Placement](#placement)            | Select the placement of the y-axis.                                                                                                                                                                                                                                                                                                                                              |
+| Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.                                                                                                                                                                                                                                                               |
+| Width                              | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis. By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes aren't shifted or stretched within visual proximity to each other. |
+| Show grid lines                    | Set the axis grid line visibility.<br>                                                                                                                                                                                                                                                                                                                                           |
+| Color                              | Set the color of the axis.                                                                                                                                                                                                                                                                                                                                                       |
+| Show border                        | Set the axis border visibility.                                                                                                                                                                                                                                                                                                                                                  |
+| Scale                              | Set the y-axis values scale.<br>                                                                                                                                                                                                                                                                                                                                                 |
+| Centered zero                      | Set the y-axis so it's centered on zero.                                                                                                                                                                                                                                                                                                                                         |
+| [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                        |
+| [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits. zero.                                                                                                                                                                                                                                                                                                                        |
 
 #### Placement
 
@@ -220,7 +220,7 @@ Gradient mode specifies the gradient fill, which is based on the series color. T
 
 - **None** - No gradient fill. This is the default setting.
 - **Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.
-- **Hue** - A subtle gradient that is based on the hue of the series color.
+- **Hue** - A subtle gradient that's based on the hue of the series color.
 - **Scheme** - A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
@@ -248,8 +248,8 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
 - **Solid** - Display a solid line. This is the default setting.
-- **Dash** - Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
-- **Dots** - Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
+- **Dash** - Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing is 10, 10 by default.
+- **Dots** - Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing is 0, 10 by default.
 
 ![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
@@ -263,7 +263,7 @@ You can configure your visualization to add points to lines or bars.
 
 - **Auto** - Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
 - **Always** - Show the points regardless of how dense the data set is.
-- **Never** - Do not show points.
+- **Never** - Don't show points.
 
 #### Stack series
 
@@ -286,7 +286,7 @@ The stacking group option is only available as an override. For more information
 
 #### Bar alignment
 
-Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
+Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points don't change, but the bars change in relationship to the points.
 
 - **Before** ![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-before.png)
   The bar is drawn before the point. The point is placed on the trailing corner of the bar.
