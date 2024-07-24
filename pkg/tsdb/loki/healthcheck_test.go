@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,10 +92,9 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should do a successful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		s := &Service{
-			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
-			tracer:   tracing.InitializeTracerForTest(),
-			logger:   backend.NewLoggerWith("logger", "loki test"),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
+			tracer: tracing.InitializeTracerForTest(),
+			logger: backend.NewLoggerWith("logger", "loki test"),
 		}
 
 		req := &backend.CheckHealthRequest{
@@ -112,10 +110,9 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should return an error for an unsuccessful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		s := &Service{
-			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
-			tracer:   tracing.InitializeTracerForTest(),
-			logger:   backend.NewLoggerWith("logger", "loki test"),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
+			tracer: tracing.InitializeTracerForTest(),
+			logger: backend.NewLoggerWith("logger", "loki test"),
 		}
 
 		req := &backend.CheckHealthRequest{

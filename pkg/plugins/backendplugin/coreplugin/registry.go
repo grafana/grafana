@@ -222,7 +222,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider, features)
 	case Loki:
-		svc = loki.ProvideService(httpClientProvider, features, tracer)
+		svc = loki.ProvideService(httpClientProvider, tracer)
 	case OpenTSDB:
 		svc = opentsdb.ProvideService(httpClientProvider)
 	case Prometheus:
