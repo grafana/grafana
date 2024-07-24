@@ -19,24 +19,11 @@ func PostableGrafanaReceiverToGrafanaIntegrationConfig(p *apimodels.PostableGraf
 	}
 }
 
-func PostableApiReceiverToApiReceiver(r *apimodels.PostableApiReceiver) *alertingNotify.APIReceiver {
-	integrations := alertingNotify.GrafanaIntegrations{
-		Integrations: make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers)),
-	}
+func PostableApiReceiverToGrafanaIntegrationConfigs(r *apimodels.PostableApiReceiver) []*alertingNotify.GrafanaIntegrationConfig {
+	integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
 	for _, cfg := range r.GrafanaManagedReceivers {
-		integrations.Integrations = append(integrations.Integrations, PostableGrafanaReceiverToGrafanaIntegrationConfig(cfg))
+		integrations = append(integrations, PostableGrafanaReceiverToGrafanaIntegrationConfig(cfg))
 	}
 
-	return &alertingNotify.APIReceiver{
-		ConfigReceiver:      r.Receiver,
-		GrafanaIntegrations: integrations,
-	}
-}
-
-func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConfig) []*alertingNotify.APIReceiver {
-	apiReceivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
-	for _, receiver := range c.Receivers {
-		apiReceivers = append(apiReceivers, PostableApiReceiverToApiReceiver(receiver))
-	}
-	return apiReceivers
+	return integrations
 }
