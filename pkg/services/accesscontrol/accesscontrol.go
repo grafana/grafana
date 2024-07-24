@@ -366,11 +366,11 @@ func GetOrgRoles(user identity.Requester) []string {
 func PermissionsForActions(actions []string, scope string) []Permission {
 	permissions := make([]Permission, len(actions))
 
-	for _, action := range actions {
-		permissions = append(permissions, Permission{
+	for i, action := range actions {
+		permissions[i] = Permission{
 			Action: action,
 			Scope:  scope,
-		})
+		}
 	}
 
 	return permissions

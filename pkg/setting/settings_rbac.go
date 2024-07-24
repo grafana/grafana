@@ -40,7 +40,7 @@ func (cfg *Cfg) readRBACSettings() {
 		s.resourcesWithPermissionsOnCreation[resource] = struct{}{}
 	}
 
-	// List of resources to seed managed permission wildcards for (dashboard, folder, service-account, datasource)
+	// List of resources to seed managed permission wildcards for (dashboard, folder, datasource)
 	resources = util.SplitString(rbac.Key("resources_with_seeded_wildcard_access").MustString(""))
 	s.resourcesWithWildcardSeed = map[string]struct{}{}
 	for _, resource := range resources {
