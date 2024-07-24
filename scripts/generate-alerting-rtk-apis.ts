@@ -32,6 +32,13 @@ const config: ConfigFile = {
       exportName: 'generatedTimeIntervalsApi',
       flattenArg: false,
     },
+    '../public/app/features/alerting/unified/openapi/receiversApi.gen.ts': {
+      apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
+      apiImport: 'alertingApi',
+      filterEndpoints: ['listNamespacedReceiver'],
+      exportName: 'generatedReceiversApi',
+      flattenArg: false,
+    },
   },
 };
 
