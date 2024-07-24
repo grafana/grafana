@@ -117,8 +117,8 @@ export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): Date
   return moment(input as MomentInput, formatInput) as DateTime;
 };
 
-export const dateTimeAsMoment = (input?: DateTimeInput) => {
-  return dateTime(input) as Moment;
+export const dateTimeAsMoment = (input?: DateTimeInput, formatInput?: FormatInput) => {
+  return dateTime(input, formatInput) as Moment;
 };
 
 export const dateTimeForTimeZone = (

@@ -2,6 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { TimeZone } from '@grafana/schema';
 
+import { dateTimeAsMoment } from '../../datetime/moment_wrapper';
 import { dateTimeParse, DateTimeOptionsWhenParsing } from '../../datetime/parser';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
 import { SynchronousDataTransformerInfo } from '../../types/transformations';
@@ -136,7 +137,8 @@ export function fieldToTimeField(field: Field, dateFormat?: string): Field {
 
   for (let t = 0; t < timeValues.length; t++) {
     if (timeValues[t]) {
-      let parsed = isISO8601 ? Date.parse(timeValues[t]) : dateTimeParse(timeValues[t], opts).valueOf();
+      const momentTime = dateTimeAsMoment(timeValues[t], opts?.format);
+      let parsed = isISO8601 ? Date.parse(momentTime.toISOString()) : momentTime.valueOf();
       timeValues[t] = Number.isFinite(parsed) ? parsed : null;
     } else {
       timeValues[t] = null;
