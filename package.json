@@ -84,7 +84,7 @@
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.15",
     "@react-types/button": "3.9.6",
     "@react-types/menu": "3.9.11",
-    "@react-types/overlays": "3.8.8",
+    "@react-types/overlays": "3.8.9",
     "@react-types/shared": "3.23.1",
     "@rtk-query/codegen-openapi": "^1.2.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
