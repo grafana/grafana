@@ -97,14 +97,17 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
 
   return (
     <div>
-      {/* The input was triggering a TS error because seletItem can be null but Downshift does not include this in its type.
-       *  See here: https://github.com/downshift-js/downshift/blob/master/typings/index.d.ts#L394
-       *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
-       */}
       <Input
         suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
         {...restProps}
-        {...getInputProps({ ref: inputRef, onChange: () => {} })}
+        {...getInputProps({
+          ref: inputRef,
+          /*  Empty onCall to avoid TS error
+           *  See issue here: https://github.com/downshift-js/downshift/issues/718
+           *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
+           */
+          onChange: () => {},
+        })}
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
