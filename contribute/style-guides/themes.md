@@ -2,7 +2,7 @@
 
 ## Overview
 
-Themes in Grafana are implemented in TypeScript. We chose the TypeScript language in part because it shares variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code. 
+Themes in Grafana are implemented in TypeScript. We chose the TypeScript language in part because it shares variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code.
 
 Theme definitions are located in the following files:
 
@@ -60,12 +60,13 @@ This section explains how to select the correct variables in your theme.
 ### The rich color object and the state colors
 
 The `theme.colors` object has six rich color objects:
-  - `primary`
-  - `secondary`
-  - `info`
-  - `success`
-  - `warning`
-  - `error`
+
+- `primary`
+- `secondary`
+- `info`
+- `success`
+- `warning`
+- `error`
 
 All these objects use the same secondary colors which are associated with different use cases.
 
@@ -89,17 +90,17 @@ Example use cases:
 | ----------------------------- | ------------------------------------------------------------------------------ |
 | theme.colors.text.primary     | The default text color                                                         |
 | theme.colors.text.secondary   | Text color for things that should be a bit less prominent                      |
-| theme.colors.text.disabled    | Text color for disabled or faint things                                         |
+| theme.colors.text.disabled    | Text color for disabled or faint things                                        |
 | theme.colors.text.link        | Text link color                                                                |
 | theme.colors.text.maxContrast | Maximum contrast (absolute white in dark theme, absolute black in white theme) |
 
 ### Background colors
 
-| Property                          | When to use                                                                                       |
-| --------------------------------- | ------------------------------------------------------------------------------------------------- |
-| theme.colors.background.canvas    | Dashboard background. A background surface for panels and panes that use primary background |
-| theme.colors.background.primary   | The default content background for content panes and panels                                       |
-| theme.colors.background.secondary | For cards and other surfaces that need to stand out when placed on top of the primary background  |
+| Property                          | When to use                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| theme.colors.background.canvas    | Dashboard background. A background surface for panels and panes that use primary background      |
+| theme.colors.background.primary   | The default content background for content panes and panels                                      |
+| theme.colors.background.secondary | For cards and other surfaces that need to stand out when placed on top of the primary background |
 
 ### Borders
 
@@ -177,10 +178,11 @@ describe('MyComponent', () => {
 
 ### Modify Sass variables
 
-If you need to modify the Sass variable files, we recommend that you migrate the styles to [Emotion](https://emotion.sh/docs/introduction). 
+If you need to modify the Sass variable files, we recommend that you migrate the styles to [Emotion](https://emotion.sh/docs/introduction).
 
 For the following variables to apply, you need to run this `yarn dev` task:
-- `[_variables|_variables.dark|_variables.light].generated.scss`: These files must be referenced in the main Sass files for Sass variables to be available. 
+
+- `[_variables|_variables.dark|_variables.light].generated.scss`: These files must be referenced in the main Sass files for Sass variables to be available.
 
 If you need to modify the Sass variable files, be sure to update the files that end with `.tmpl.ts` and not the `.generated.scss` files.
 

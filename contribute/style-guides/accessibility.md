@@ -8,8 +8,8 @@ Some `grafana/ui` components have specific built-in mechanisms that make it easi
 
 #### Form elements
 
-One of the important accessibility considerations when working with form elements is to make sure form controls are properly labelled. 
-For example, a `label` element should be associated with the respective form control. 
+One of the important accessibility considerations when working with form elements is to make sure form controls are properly labelled.
+For example, a `label` element should be associated with the respective form control.
 One way to do that is to provide a `for` attribute to the label that matches the `id` attribute of the form control.
 
 The form components from `grafana/ui` provide an easier way to achieve that. The form elements, used inside `Field` components, get the `label` properly associated with them. This is appropriate because the element has a specified `id` (in case of `Select`, the prop is `inputId`).
