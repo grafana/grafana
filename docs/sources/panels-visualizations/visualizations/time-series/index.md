@@ -106,13 +106,13 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" alt="Fill below to example" >}}
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
 <!-- update shared filed above to add actual steps for adding this override -->
 
 ## Configuration options
 
-<!-- add brief intro text -->
+The following section describes the configuration options available in the panel editor pane for this visualization. These options are, as much as possible, ordered as they appear in the application.
 
 ### Panel options
 
@@ -128,7 +128,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ### Axis options
 
-Options under the axis category change how the x- and y-axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
+Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
 
 | Option                             | Description                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -164,6 +164,8 @@ To define hard limits of the y-axis, set standard min/max options. For more info
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
 ### Graph styles options
+
+The options under the **Graph styles** section let you set the general appearance of the graph, excluding [color]().
 
 | Option                                      | Description                                                                                                                                                                                                                           |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
