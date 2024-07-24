@@ -1,5 +1,5 @@
 {
-  "_comment": "This is the source of truth for Russian phrases, which should be updated in the components directly, and additional plurals specified in this file.",
+  "_comment": "Это источник достоверности для русских фраз, которые должны быть обновлены непосредственно в компонентах, и дополнительных множественных чисел, указанных в этом файле.",
   "{unit}": "{unit}",
   "access-control": {
     "add-permission": {
@@ -18,7 +18,7 @@
     "permissions": {
       "add-label": "Добавить разрешение",
       "no-permissions": "Нет разрешений",
-      "permissions-change-warning": "Это изменит права доступа для этой папки и всех ее потомков. Всего это повлияет:",
+      "permissions-change-warning": "Это изменит права доступа для этой папки и всех ее потомков. Это повлияет на следующее:",
       "role": "Роль",
       "serviceaccount": "Сервисный аккаунт",
       "team": "Команда",
