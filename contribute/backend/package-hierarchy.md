@@ -41,7 +41,7 @@ package.
 
 ### Try to name sub-packages for project-wide uniqueness
 
-Prefix sub-packages with the service name or an abbreviation of the service name, whichever is more appropriate, to provide a unique package name. 
+Prefix sub-packages with the service name or an abbreviation of the service name, whichever is more appropriate, to provide a unique package name.
 This allows `teaimpl` to be distinguished from `coffeeimpl` without the need for package aliases, and encourages the use of the same name to reference your package throughout the codebase.
 
 ### A well-behaving service provides test doubles for itself
@@ -75,7 +75,7 @@ The storage should be an interface that is not directly called from
 outside the service and should be kept to a minimum complexity to
 provide the functionality necessary for the service.
 
-Use a simple litmus test to determine whether an in-memory implementation is a feasible test-double to assess the service. This will reduce the complexity of the storage interface. 
+Use a simple litmus test to determine whether an in-memory implementation is a feasible test-double to assess the service. This will reduce the complexity of the storage interface.
 
 ### Outside the service root
 

@@ -57,7 +57,7 @@ func (s *Service) IsDisabled() bool {
 
 // Run runs the service in the background.
 //
-// Satisfies the registry.BackgroundService interface which 
+// Satisfies the registry.BackgroundService interface which
 // guarantees that the service can be registered as a background service.
 func (s *Service) Run(ctx context.Context) error {
     // background service logic...

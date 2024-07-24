@@ -80,7 +80,7 @@ func doSomething(ctx context.Context) {
 
 ### Enable certain log levels for certain loggers
 
- You can enable certain log levels during development to make logging easier. For example, you can enable `debug` to allow certain loggers to minimize the generated log output and makes it easier to find things. Refer to [[log.filters]](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#filters) for information on how to to set different levels for specific loggers.
+You can enable certain log levels during development to make logging easier. For example, you can enable `debug` to allow certain loggers to minimize the generated log output and makes it easier to find things. Refer to [[log.filters]](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#filters) for information on how to to set different levels for specific loggers.
 
 You can also configure multiple loggers. For example:
 
@@ -130,9 +130,9 @@ If a metric type is a gauge, name it to denote that it's a value that can increa
 
 Be careful with what label values you accept or add. Using or allowing too many label values could result in [high cardinality problems](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/).
 
-If label values originate from user input they should be validated. Use `metricutil.SanitizeLabelName(<label value>)` from the `pkg/infra/metrics/metricutil` package to sanitize label names. 
+If label values originate from user input they should be validated. Use `metricutil.SanitizeLabelName(<label value>)` from the `pkg/infra/metrics/metricutil` package to sanitize label names.
 
-> **Important:** Only allow a pre-defined set of labels to minimize the risk of high cardinality problems. Be careful not to expose any sensitive information in label values such as secrets and credentials. 
+> **Important:** Only allow a pre-defined set of labels to minimize the risk of high cardinality problems. Be careful not to expose any sensitive information in label values such as secrets and credentials.
 
 ### Guarantee the existence of metrics
 
@@ -219,7 +219,6 @@ func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
 
 Span names should follow the [guidelines from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/trace/api/#span).
 
-
 | Span Name                 | Guidance                                                   |
 | ------------------------- | ---------------------------------------------------------- |
 | `get`                     | Too general                                                |
@@ -227,7 +226,7 @@ Span names should follow the [guidelines from OpenTelemetry](https://opentelemet
 | `get_account`             | Good, and `account_id=42` would make a nice Span attribute |
 | `get_account/{accountId}` | Also good (using the “HTTP route”)                         |
 
-Span attribute and span event attributes should follow the [attribute naming specification from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/common/attribute-naming/). 
+Span attribute and span event attributes should follow the [attribute naming specification from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/common/attribute-naming/).
 
 These are a few examples of good attributes:
 
@@ -248,7 +247,7 @@ Be careful to not expose any sensitive information in span names, attribute or e
 
 ### Span attributes
 
-Consider using `attributes.<Type>("<key>", <value>)` instead of `attributes.Key("<key>").<Type>(<value>)` since it requires fewer characters and is easier to read. 
+Consider using `attributes.<Type>("<key>", <value>)` instead of `attributes.Key("<key>").<Type>(<value>)` since it requires fewer characters and is easier to read.
 
 For example:
 
