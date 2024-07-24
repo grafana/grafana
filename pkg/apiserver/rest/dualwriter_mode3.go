@@ -169,6 +169,13 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 	return res, err
 }
 
+//TODO: uncomment when storage watch is implemented
+// func (d *DualWriterMode3) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+// 	var method = "watch"
+// 	d.Log.WithValues("kind", options.Kind, "method", method, "mode", mode3Str).Info("starting to watch")
+// 	return d.Storage.Watch(ctx, options)
+// }
+
 func (d *DualWriterMode3) Destroy() {
 	d.Storage.Destroy()
 	d.Legacy.Destroy()
