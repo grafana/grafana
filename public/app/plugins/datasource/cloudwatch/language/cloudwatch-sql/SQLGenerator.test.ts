@@ -121,11 +121,13 @@ describe('SQLGenerator', () => {
         'SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2") WHERE AWS.AccountId = \'12345\''
       );
     });
+
     it('should not add where clause if account ID is not defined', () => {
       expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).toEqual(
         'SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2")'
       );
     });
+
     it('should not add where clause if account ID is all', () => {
       expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).toEqual(
         'SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2")'
@@ -149,11 +151,11 @@ describe('SQLGenerator', () => {
         `WHERE AWS.AccountId = '12345' AND "Instance-Id" = 'I-123'`
       );
     });
-    it.skip('should add where clauses with WHERE if accountID is not defined', () => {
+    it('should add where clauses with WHERE if accountID is not defined', () => {
       const where = createArray([createOperator('Instance-Id', '=', 'I-123')]);
       assertQueryEndsWith({ sql: { where } }, `WHERE "Instance-Id" = 'I-123'`);
     });
-    it.skip('should add where clauses with WHERE if accountID is all', () => {
+    it('should add where clauses with WHERE if accountID is all', () => {
       const where = createArray([createOperator('Instance-Id', '=', 'I-123')]);
       assertQueryEndsWith({ sql: { where }, accountId: 'all' }, `WHERE "Instance-Id" = 'I-123'`);
     });
