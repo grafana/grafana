@@ -20,6 +20,7 @@ import {
   setGroupByField,
   setSql,
 } from './utils';
+import { config } from '@grafana/runtime';
 
 interface SQLGroupByProps {
   query: CloudWatchMetricsQuery;
@@ -38,7 +39,14 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   const baseOptions = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
   const options = useMemo(
     // Exclude options we've already selected
-    () => baseOptions.filter((option) => !groupBysFromQuery.some((v) => v.property.name === option.value)),
+    () => {
+      const baseOptionsWithAccountId =
+        config.featureToggles.cloudWatchCrossAccountQuerying &&
+        config.featureToggles.cloudwatchMetricInsightsCrossAccount
+          ? [{ label: 'Account ID', value: 'AWS.AccountId' }, ...baseOptions]
+          : baseOptions;
+      return baseOptionsWithAccountId.filter((option) => !groupBysFromQuery.some((v) => v.property.name === option.value));
+    },
     [baseOptions, groupBysFromQuery]
   );
 
