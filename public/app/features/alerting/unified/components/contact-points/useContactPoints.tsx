@@ -15,10 +15,6 @@ import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
-export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
-export const RECEIVER_META_KEY = Symbol('receiver_metadata');
-export const RECEIVER_PLUGIN_META_KEY = Symbol('receiver_plugin_metadata');
-
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 /**
