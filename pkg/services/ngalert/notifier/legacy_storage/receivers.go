@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/grafana/alerting/notify"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -130,14 +128,8 @@ func (rs *ReceiverStore) getReceiversFromConfig(ctx context.Context, orgID int64
 				return nil, err
 			}
 			receivers = append(receivers, &models.Receiver{
-				APIReceiver: notify.APIReceiver{
-					ConfigReceiver: notify.ConfigReceiver{
-						Name: r.Receiver.Name,
-					},
-					GrafanaIntegrations: notify.GrafanaIntegrations{
-						Integrations: PostableApiReceiverToGrafanaIntegrationConfigs(r),
-					},
-				},
+				Name:         r.Receiver.Name,
+				Integrations: PostableApiReceiverToGrafanaIntegrationConfigs(r),
 				Provenance:   provenance,
 				InUseByRoute: isReceiverInUse(r.Receiver.Name, []*definitions.Route{cfg.AlertmanagerConfig.Route}),
 				InUseByRule:  false, // TODO: Implement.

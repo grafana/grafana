@@ -90,7 +90,7 @@ func GrafanaIntegrationConfigToGettable(r *alertingNotify.GrafanaIntegrationConf
 func ReceiverToGettable(r *models.Receiver, decryptFn DecryptFn, listOnly bool) (apimodels.GettableApiReceiver, error) {
 	out := apimodels.GettableApiReceiver{
 		Receiver: config.Receiver{
-			Name: r.ConfigReceiver.Name,
+			Name: r.Name,
 		},
 	}
 

@@ -25,8 +25,9 @@ type GetReceiversQuery struct {
 
 // Receiver is the domain model representation of a receiver / contact point.
 type Receiver struct {
-	notify.APIReceiver
-	Provenance Provenance
+	Name         string
+	Integrations []*notify.GrafanaIntegrationConfig
+	Provenance   Provenance
 
 	// InUseByRoute indicates if the receiver is used by a route.
 	InUseByRoute bool
