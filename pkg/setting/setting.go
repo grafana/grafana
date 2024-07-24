@@ -1106,7 +1106,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	readOAuth2ServerSettings(cfg)
 
-	cfg.readRBACSettings(iniFile)
+	cfg.readRBACSettings()
 
 	cfg.readZanzanaSettings()
 
