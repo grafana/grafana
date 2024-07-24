@@ -98,7 +98,7 @@ type QueryHistoryPreference struct {
 }
 
 type NavbarPreference struct {
-	SavedItemIds []string `json:"savedItemIds"`
+	BookmarkIds []string `json:"bookmarkIds"`
 }
 
 func (j *PreferenceJSONData) FromDB(data []byte) error {

@@ -10,6 +10,7 @@ import (
 	"net/textproto"
 	"strings"
 	"testing"
+	"time"
 
 	smtpmock "github.com/mocktools/go-smtp-mock/v2"
 	"github.com/stretchr/testify/assert"
@@ -152,6 +153,7 @@ func TestSmtpDialer(t *testing.T) {
 func TestSmtpSend(t *testing.T) {
 	srv := smtpmock.New(smtpmock.ConfigurationAttr{
 		MultipleRcptto: true,
+		HostAddress:    "127.0.0.1",
 	})
 	require.NoError(t, srv.Start())
 	defer func() { _ = srv.Stop() }()
@@ -181,6 +183,8 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
 		require.Len(t, messages, 1)
 		sentMsg := messages[0]
@@ -231,6 +235,8 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
 		require.Len(t, messages, 1)
 		sentMsg := messages[0]
@@ -290,6 +296,8 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, count)
 
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
 		require.Len(t, messages, 3)
 

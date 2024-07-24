@@ -1,13 +1,43 @@
 name: Generate changelog
 on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        description: 'Target release version (semver, git tag, branch or commit)'
+      target:
+        required: true
+        type: string
+        description: 'The base branch that these changes are being merged into'
+      dry_run:
+        required: false
+        default: false
+        type: bool
+      latest:
+        required: false
+        default: false
+        type: bool
   workflow_dispatch:
     inputs:
       version:
         required: true
-        description: 'Target release version (git tag)'
-      prev_version:
+        description: 'Target release version (semver, git tag, branch or commit)'
+      target:
         required: true
-        description: 'Previous release version (git tag)'
+        type: string
+        description: 'The base branch that these changes are being merged into'
+      dry_run:
+        required: false
+        default: false
+        type: bool
+      latest:
+        required: false
+        default: false
+        type: bool
+
+permissions:
+  pull-requests: write
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -23,21 +53,68 @@ jobs:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
-          sparse-checkout: .github/workflows
+          sparse-checkout: |
+            .github/workflows
+            CHANGELOG.md
           fetch-depth: 0
           fetch-tags: true
+      - name: "Configure git user"
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local --add --bool push.autoSetupRemote true
+      - name: "Create branch"
+        run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/workflows/actions/changelog
         with:
-          token: ${{ steps.generate_token.outputs.token }}
-          version: ${{ inputs.version }}
-          prev_version: ${{ inputs.prev_version }}
-          output_file: _changelog.md
-      - name: "Draft Github Release"
+          github_token: ${{ steps.generate_token.outputs.token }}
+          target: v${{ inputs.version }}
+          output_file: changelog_items.md
+      - name: "Patch CHANGELOG.md"
+        run: |
+          # Prepare CHANGELOG.md content with version delimiters
+          (
+            echo
+            echo "# ${{ inputs.version}} ($(date '+%F'))"
+            echo
+            cat changelog_items.md
+          ) > CHANGELOG.part
+
+          # Check if a version exists in the changelog
+          if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
+            # Replace the content between START and END delimiters
+            echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
+            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
+                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
+          else
+            # Prepend changelog part to the main changelog file
+            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
+            (
+              echo "<!-- ${{ inputs.version }} START -->"
+              cat CHANGELOG.part
+              echo "<!-- ${{ inputs.version }} END -->"
+              cat CHANGELOG.md
+            ) > CHANGELOG.tmp
+            mv CHANGELOG.tmp CHANGELOG.md
+          fi
+
+          git diff CHANGELOG.md
+          git add CHANGELOG.md
+      - name: "Commit changelog changes"
+        run: git commit --allow-empty -m "Update changelog" CHANGELOG.md
+      - name: "git push"
+        if: ${{ inputs.dry_run }} != true
+        run: git push
+      - name: "Create changelog PR"
+        if: "${{ inputs.backport == '' }}"
+        run: >
+          gh pr create \
+            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
+            --dry-run=${{ inputs.dry_run }} \
+            -B "${{ inputs.target }}" \
+            --title "Release: ${{ inputs.version }}" \
+            --body "Changelog changes for release ${{ inputs.version }}"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-        run: |
-          cat _changelog.md
-          # skip for now
-          # gh release create --draft ${{ inputs.version }} --notes-file _changelog.md
