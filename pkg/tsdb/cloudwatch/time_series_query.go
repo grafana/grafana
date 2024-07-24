@@ -8,6 +8,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -127,9 +128,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	}
 
 	if err := eg.Wait(); err != nil {
-		dataResponse := backend.DataResponse{
-			Error: fmt.Errorf("metric request error: %q", err),
-		}
+		dataResponse := errorsource.Response(errorsource.DownstreamError(fmt.Errorf("metric request error: %q", err), false))
 		resultChan <- &responseWrapper{
 			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueries),
 			DataResponse: &dataResponse,
