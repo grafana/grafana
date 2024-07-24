@@ -550,7 +550,7 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 	evaluator := evalAllPermissions(plugin.JSONData.IAM.Permissions)
 	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.authnService, c)
-	if hs.Cfg.RBACSingleOrganization {
+	if hs.Cfg.RBAC.SingleOrganization {
 		// In a single organization setup, no need for a global check
 		hasAccess = ac.HasAccess(hs.AccessControl, c)
 	}

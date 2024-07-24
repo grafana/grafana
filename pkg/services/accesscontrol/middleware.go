@@ -233,7 +233,7 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 // UseGlobalOrSingleOrg returns the global organization or the current organization in a single organization setup
 func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
-		if cfg.RBACSingleOrganization {
+		if cfg.RBAC.SingleOrganization {
 			return c.GetOrgID(), nil
 		}
 		return GlobalOrgID, nil
@@ -271,7 +271,7 @@ func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 
 		// We only check permissions in the global organization if we are not running a SingleOrganization setup
 		// That allows Organization Admins to modify global roles and make global assignments.
-		if query.Global && !cfg.RBACSingleOrganization {
+		if query.Global && !cfg.RBAC.SingleOrganization {
 			return GlobalOrgID, nil
 		}
 
@@ -284,7 +284,7 @@ func UseGlobalOrgFromRequestParams(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		// We only check permissions in the global organization if we are not running a SingleOrganization setup
 		// That allows Organization Admins to modify global roles and make global assignments, and is intended for use in hosted Grafana.
-		if c.QueryBool("global") && !cfg.RBACSingleOrganization {
+		if c.QueryBool("global") && !cfg.RBAC.SingleOrganization {
 			return GlobalOrgID, nil
 		}
 

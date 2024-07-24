@@ -691,7 +691,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 
 	// if we have actionset feature enabled and are only working with action sets
 	// skip adding the missing actions to the permissions table
-	if !(s.shouldStoreActionSet(resource, permission) && s.cfg.OnlyStoreAccessActionSets) {
+	if !(s.shouldStoreActionSet(resource, permission) && s.cfg.RBAC.OnlyStoreAccessActionSets) {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)
 			p.RoleID = roleID
