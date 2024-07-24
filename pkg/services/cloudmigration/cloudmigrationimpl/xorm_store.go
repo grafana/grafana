@@ -160,12 +160,12 @@ func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID str
 }
 
 func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
-	if err := ss.secretsStore.Set(ctx, secretskv.AllOrganizations, snapshot.UID, secretType, string(snapshot.EncryptionKey)); err != nil {
-		return "", err
-	}
-
 	if snapshot.UID == "" {
 		snapshot.UID = util.GenerateShortUID()
+	}
+
+	if err := ss.secretsStore.Set(ctx, secretskv.AllOrganizations, snapshot.UID, secretType, string(snapshot.EncryptionKey)); err != nil {
+		return "", err
 	}
 
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
