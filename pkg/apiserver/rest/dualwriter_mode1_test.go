@@ -135,7 +135,6 @@ func TestMode1_Get(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			p := prometheus.NewRegistry()
 			dw := NewDualWriter(Mode1, ls, us, p)
 
 			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
