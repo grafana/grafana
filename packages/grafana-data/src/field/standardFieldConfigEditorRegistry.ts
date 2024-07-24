@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 
-import { EventBus } from '../events';
+import { EventBus } from '../events/types';
 import { DataFrame } from '../types/dataFrame';
 import { VariableSuggestionsScope, VariableSuggestion } from '../types/dataLink';
 import { InterpolateFunction } from '../types/panel';

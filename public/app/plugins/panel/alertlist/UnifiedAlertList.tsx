@@ -25,9 +25,9 @@ import {
   fetchAllPromAndRulerRulesAction,
   fetchPromAndRulerRulesAction,
 } from 'app/features/alerting/unified/state/actions';
-import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';
 import {
   isAsyncRequestMapSlicePartiallyDispatched,
   isAsyncRequestMapSlicePartiallyFulfilled,
@@ -132,7 +132,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   };
 
   const matcherList = useMemo(
-    () => parseMatchers(parsedOptions.alertInstanceLabelFilter),
+    () => parsePromQLStyleMatcherLooseSafe(parsedOptions.alertInstanceLabelFilter),
     [parsedOptions.alertInstanceLabelFilter]
   );
 

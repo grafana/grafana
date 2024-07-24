@@ -121,8 +121,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** True when a user copies a panel in the dashboard */
-  hasCopiedPanel?: boolean;
   /** The dashboard doesn't have panels */
   isEmpty?: boolean;
   /** Scene object that handles the scopes selector */
@@ -172,7 +170,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
-      hasCopiedPanel: store.exists(LS_PANEL_COPY_KEY),
       scopes: state.uid && config.featureToggles.scopeFilters ? new ScopesScene() : undefined,
       ...state,
     });
@@ -648,7 +645,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
     appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Use **Paste panel** toolbar action to paste.']);
-    this.setState({ hasCopiedPanel: true });
   }
 
   public pastePanel() {
@@ -703,7 +699,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       children: [gridItem, ...sceneGridLayout.state.children],
     });
 
-    this.setState({ hasCopiedPanel: false });
     store.delete(LS_PANEL_COPY_KEY);
   }
 
@@ -881,6 +876,40 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Need to mark it non dirty to navigate away without unsaved changes warning
     this.setState({ isDirty: false });
     locationService.replace('/');
+  }
+
+  public collapseAllRows() {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Dashboard scene layout is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    sceneGridLayout.state.children.forEach((child) => {
+      if (!(child instanceof SceneGridRow)) {
+        return;
+      }
+      if (!child.state.isCollapsed) {
+        sceneGridLayout.toggleRow(child);
+      }
+    });
+  }
+
+  public expandAllRows() {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Dashboard scene layout is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    sceneGridLayout.state.children.forEach((child) => {
+      if (!(child instanceof SceneGridRow)) {
+        return;
+      }
+      if (child.state.isCollapsed) {
+        sceneGridLayout.toggleRow(child);
+      }
+    });
   }
 }
 

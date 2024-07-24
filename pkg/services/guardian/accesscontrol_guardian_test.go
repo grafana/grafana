@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -956,7 +957,7 @@ func setupAccessControlGuardianTest(
 	fakeDashboardService := dashboards.NewFakeDashboardService(t)
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	folderSvc := foldertest.NewFakeService()
 
 	folderStore := foldertest.NewFakeFolderStore(t)

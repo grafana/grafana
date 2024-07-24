@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -108,6 +109,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.authnService = &authntest.FakeService{
 				ExpectedIdentity: expectedIdentity,
 			}
+
+			hs.log = log.NewNopLogger()
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -746,7 +749,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			}
 			hs.log = logger
 			hs.accesscontrolService = actest.FakeService{}
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tt.orgID,

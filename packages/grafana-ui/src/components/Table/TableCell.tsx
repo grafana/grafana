@@ -41,7 +41,16 @@ export const TableCell = ({
 
   if (cellProps.style) {
     cellProps.style.minWidth = cellProps.style.width;
-    cellProps.style.justifyContent = (cell.column as any).justifyContent;
+    const justifyContent = (cell.column as any).justifyContent;
+
+    // If cell has a unit we should avoid setting direction to rtl
+    if (justifyContent === 'flex-end' && !field.config.unit) {
+      // justify-content flex-end is not compatible with cellLink overflow; use direction instead
+      cellProps.style.textAlign = 'right';
+      cellProps.style.direction = 'rtl';
+    } else {
+      cellProps.style.justifyContent = justifyContent;
+    }
   }
 
   let innerWidth = (typeof cell.column.width === 'number' ? cell.column.width : 24) - tableStyles.cellPadding * 2;

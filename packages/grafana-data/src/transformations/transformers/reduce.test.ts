@@ -27,6 +27,14 @@ const seriesAWithMultipleFields = toDataFrame({
   ],
 });
 
+const seriesAWithAllNulls = toDataFrame({
+  name: 'A',
+  fields: [
+    { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+    { name: 'temperature', type: FieldType.number, values: [null, null, null, null, null] },
+  ],
+});
+
 const seriesBWithSingleField = toDataFrame({
   name: 'B',
   fields: [
@@ -41,6 +49,14 @@ const seriesBWithMultipleFields = toDataFrame({
     { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
     { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
     { name: 'humidity', type: FieldType.number, values: [11000.1, 11000.3, 11000.5, 11000.7] },
+  ],
+});
+
+const seriesBWithAllNulls = toDataFrame({
+  name: 'B',
+  fields: [
+    { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+    { name: 'temperature', type: FieldType.number, values: [null, null, null, null, null] },
   ],
 });
 
@@ -166,6 +182,99 @@ describe('Reducer Transformer', () => {
             name: 'Last',
             type: FieldType.number,
             values: [6, 7],
+            config: {},
+          },
+        ];
+
+        expect(processed.length).toEqual(1);
+        expect(processed[0].length).toEqual(2);
+        expect(processed[0].fields).toEqual(expected);
+      }
+    );
+  });
+
+  it('reduces multiple data frames, one having all null values', async () => {
+    const cfg = {
+      id: DataTransformerID.reduce,
+      options: {
+        reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesAWithAllNulls, seriesBWithSingleField])).toEmitValuesWith(
+      (received) => {
+        const processed = received[0];
+        const expected: Field[] = [
+          {
+            name: 'Field',
+            type: FieldType.string,
+            values: ['A temperature', 'B temperature'],
+            config: {},
+          },
+          {
+            name: 'First',
+            type: FieldType.number,
+            values: [NaN, 1],
+            config: {},
+          },
+          {
+            name: 'Min',
+            type: FieldType.number,
+            values: [NaN, 1],
+            config: {},
+          },
+          {
+            name: 'Max',
+            type: FieldType.number,
+            values: [NaN, 7],
+            config: {},
+          },
+          {
+            name: 'Last',
+            type: FieldType.number,
+            values: [NaN, 7],
+            config: {},
+          },
+        ];
+
+        expect(processed.length).toEqual(1);
+        expect(processed[0].length).toEqual(2);
+        expect(processed[0].fields).toEqual(expected);
+      }
+    );
+
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithAllNulls])).toEmitValuesWith(
+      (received) => {
+        const processed = received[0];
+        const expected: Field[] = [
+          {
+            name: 'Field',
+            type: FieldType.string,
+            values: ['A temperature', 'B temperature'],
+            config: {},
+          },
+          {
+            name: 'First',
+            type: FieldType.number,
+            values: [3, NaN],
+            config: {},
+          },
+          {
+            name: 'Min',
+            type: FieldType.number,
+            values: [3, NaN],
+            config: {},
+          },
+          {
+            name: 'Max',
+            type: FieldType.number,
+            values: [6, NaN],
+            config: {},
+          },
+          {
+            name: 'Last',
+            type: FieldType.number,
+            values: [6, NaN],
             config: {},
           },
         ];

@@ -7,8 +7,8 @@ import { VariableFormatID } from '@grafana/schema';
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
-import { GrafanaTheme2 } from '../themes';
 import { asHexString } from '../themes/colorManipulator';
+import { GrafanaTheme2 } from '../themes/types';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { fieldMatchers } from '../transformations/matchers';
 import { ScopedVars, DataContextScopedVar } from '../types/ScopedVars';
@@ -479,6 +479,7 @@ export const getLinksSupplier =
           href,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
+          sortIndex: link.sortIndex,
           onClick: (evt: MouseEvent, origin: Field) => {
             link.onClick!({
               origin: origin ?? field,
@@ -494,6 +495,7 @@ export const getLinksSupplier =
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           origin: field,
+          sortIndex: link.sortIndex,
         };
       }
 

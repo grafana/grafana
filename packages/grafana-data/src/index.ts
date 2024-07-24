@@ -4,12 +4,6 @@
  * @packageDocumentation
  */
 
-export * from './text';
-export * from './events';
-export * from './themes';
-export * from './monaco';
-export * from './geo/layer';
-export * from './query';
 export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
 
 // DataFrames
@@ -38,7 +32,6 @@ export {
   type PartialDataFrame,
   createDataFrame,
 } from './dataframe/processDataFrame';
-
 export {
   type Dimension,
   type Dimensions,
@@ -49,7 +42,6 @@ export {
   getAllValuesFromDimension,
   getDimensionByName,
 } from './dataframe/dimensions';
-
 export {
   anySeriesWithTimeField,
   hasTimeField,
@@ -65,9 +57,7 @@ export {
   type StreamingFrameOptions,
   closestIdx,
 } from './dataframe/StreamingDataFrame';
-
 export { ArrayDataFrame, arrayToDataFrame } from './dataframe/ArrayDataFrame';
-
 export {
   type DataFrameJSON,
   type DataFrameData,
@@ -79,8 +69,66 @@ export {
   dataFrameFromJSON,
   dataFrameToJSON,
 } from './dataframe/DataFrameJSON';
-
 export { compareDataFrameStructures, compareArrayValues, shallowCompare } from './dataframe/frameComparisons';
+
+// Query
+export { getNextRefId } from './query/refId';
+
+// Geo
+export {
+  FrameGeometrySourceMode,
+  type FrameGeometrySource,
+  type MapLayerOptions,
+  type MapLayerHandler,
+  type MapLayerRegistryItem,
+} from './geo/layer';
+
+// Text
+export {
+  escapeStringForRegex,
+  unEscapeStringFromRegex,
+  stringStartsAsRegEx,
+  stringToJsRegex,
+  stringToMs,
+  toNumberString,
+  toIntegerOrUndefined,
+  toFloatOrUndefined,
+  toPascalCase,
+  escapeRegex,
+} from './text/string';
+export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
+export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
+export { textUtil } from './text/sanitize';
+
+// Events
+export { eventFactory } from './events/eventFactory';
+export {
+  BusEventBase,
+  BusEventWithPayload,
+  type BusEvent,
+  type BusEventType,
+  type BusEventHandler,
+  type EventFilterOptions,
+  type EventBus,
+  type AppEvent,
+  type LegacyEmitter,
+  type LegacyEventHandler,
+  type EventBusExtended,
+} from './events/types';
+export { EventBusSrv } from './events/EventBus';
+export {
+  type DataHoverPayload,
+  DataHoverEvent,
+  DataHoverClearEvent,
+  DataSelectEvent,
+  AnnotationChangeEvent,
+  type DashboardLoadedEventPayload,
+  DashboardLoadedEvent,
+  DataSourceUpdatedSuccessfully,
+  DataSourceTestSucceeded,
+  DataSourceTestFailed,
+  SetPanelAttentionEvent,
+} from './events/common';
 
 // Field
 export {
@@ -106,7 +154,6 @@ export {
   getUniqueFieldName,
 } from './field/fieldState';
 export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta } from './field/scale';
-
 export {
   type ReduceDataOptions,
   VAR_SERIES_NAME,
@@ -123,9 +170,7 @@ export {
   getDisplayValueAlignmentFactors,
   fixCellTemplateExpressions,
 } from './field/fieldDisplay';
-
 export { getDisplayProcessor, getRawDisplayProcessor } from './field/displayProcessor';
-
 export {
   type StandardEditorContext,
   type StandardEditorProps,
@@ -133,7 +178,6 @@ export {
   standardFieldConfigEditorRegistry,
   standardEditorsRegistry,
 } from './field/standardFieldConfigEditorRegistry';
-
 export {
   identityOverrideProcessor,
   numberOverrideProcessor,
@@ -173,7 +217,6 @@ export { convertOldAngularValueMappings, LegacyMappingType } from './utils/value
 export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './utils/variables';
 export { renderLegendFormat } from './utils/legend';
 export { matchPluginId } from './utils/matchPluginId';
-
 export { type RegistryItem, type RegistryItemWithOptions, Registry } from './utils/Registry';
 export {
   getDataSourceRef,
@@ -191,9 +234,7 @@ export {
   updateDatasourcePluginSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from './utils/datasource';
-
 export { deprecationWarning } from './utils/deprecationWarning';
-
 export {
   CSVHeaderStyle,
   type CSVConfig,
@@ -203,7 +244,6 @@ export {
   CSVReader,
   toCSV,
 } from './utils/csv';
-
 export { parseLabels, findCommonLabels, findUniqueLabels, matchAllLabels, formatLabels } from './utils/labels';
 export { roundDecimals, guessDecimals } from './utils/numbers';
 export { objRemoveUndefined, isEmptyObject } from './utils/object';
@@ -228,10 +268,8 @@ export {
   getValueMatcher,
 } from './transformations/matchers';
 export { type FieldValueMatcherConfig } from './transformations/matchers/fieldValueMatcher';
-
 export { DataTransformerID } from './transformations/transformers/ids';
 export { MatcherID, FieldMatcherID, FrameMatcherID, ValueMatcherID } from './transformations/matchers/ids';
-
 export {
   ReducerID,
   isReducerID,
@@ -241,7 +279,6 @@ export {
   defaultCalcs,
   doStandardCalcs,
 } from './transformations/fieldReducer';
-
 export { transformDataFrame } from './transformations/transformDataFrame';
 export {
   type TransformerRegistryItem,
@@ -262,10 +299,29 @@ export {
 } from './transformations/transformers/joinDataFrames';
 export * from './transformations/transformers/histogram';
 export { ensureTimeField } from './transformations/transformers/convertFieldType';
-
 // Required for Sparklines util to work in @grafana/data, but ideally kept internal
 export { applyNullInsertThreshold } from './transformations/transformers/nulls/nullInsertThreshold';
 export { nullToValue } from './transformations/transformers/nulls/nullToValue';
+
+// Monaco
+export { type MonacoLanguageRegistryItem, monacoLanguageRegistry } from './monaco/languageRegistry';
+
+// Theme
+export { createTheme } from './themes/createTheme';
+export { getThemeById, getBuiltInThemes, type ThemeRegistryItem } from './themes/registry';
+export type { NewThemeOptions } from './themes/createTheme';
+export type { ThemeRichColor, GrafanaTheme2 } from './themes/types';
+export type { ThemeColors } from './themes/createColors';
+export type { ThemeBreakpoints, ThemeBreakpointsKey } from './themes/breakpoints';
+export type { ThemeShadows } from './themes/createShadows';
+export type { ThemeShape } from './themes/createShape';
+export type { ThemeTypography, ThemeTypographyVariant, ThemeTypographyVariantTypes } from './themes/createTypography';
+export type { ThemeTransitions } from './themes/createTransitions';
+export type { ThemeSpacing, ThemeSpacingTokens } from './themes/createSpacing';
+export type { ThemeZIndices } from './themes/zIndex';
+export type { ThemeVisualizationColors, ThemeVizColor, ThemeVizHue } from './themes/createVisualizationColors';
+export { colorManipulator } from './themes/colorManipulator';
+export { ThemeContext } from './themes/context';
 
 // ValueFormats
 export {

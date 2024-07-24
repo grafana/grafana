@@ -94,7 +94,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	removeNonAllowedHeaders(req.Headers)
 
 	processedStreams := 0
-	wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+	wrappedSender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		// Expected that headers and status are only part of first stream
 		if processedStreams == 0 && res != nil {
 			if len(res.Headers) > 0 {
@@ -353,10 +353,4 @@ func ensureContentTypeHeader(res *backend.CallResourceResponse) {
 	if !hasContentType && res.Status != http.StatusNoContent {
 		res.Headers[contentTypeHeaderName] = []string{defaultContentType}
 	}
-}
-
-type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
-
-func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
-	return fn(res)
 }

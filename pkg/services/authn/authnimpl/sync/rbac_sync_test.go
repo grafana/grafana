@@ -136,8 +136,98 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			req.SetMeta(authn.MetaKeyAuthModule, tt.module)
 
 			err := s.SyncCloudRoles(context.Background(), tt.identity, req)
-			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.ErrorIs(t, tt.expectedErr, err)
 			assert.Equal(t, tt.expectedCalled, called)
+		})
+	}
+}
+
+func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
+	type testCase struct {
+		desc                  string
+		identity              *authn.Identity
+		expectedErr           error
+		expectedRolesToAdd    []string
+		expectedRolesToRemove []string
+	}
+
+	tests := []testCase{
+		{
+			desc: "should map Cloud Viewer to Grafana Cloud Viewer and Support ticket reader",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			},
+			expectedErr: nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should map Cloud Editor to Grafana Cloud Editor and Support ticket admin",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+			},
+			expectedErr: nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should map Cloud Admin to Grafana Cloud Admin and Support ticket admin",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+			},
+			expectedErr: nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should return an error for not supported role",
+			identity: &authn.Identity{
+				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
+			},
+			expectedErr:           errInvalidCloudRole,
+			expectedRolesToAdd:    []string{},
+			expectedRolesToRemove: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			rolesToAdd, rolesToRemove, err := cloudRolesToAddAndRemove(tt.identity)
+			assert.ErrorIs(t, tt.expectedErr, err)
+			assert.ElementsMatch(t, tt.expectedRolesToAdd, rolesToAdd)
+			assert.ElementsMatch(t, tt.expectedRolesToRemove, rolesToRemove)
 		})
 	}
 }

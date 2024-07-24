@@ -215,6 +215,8 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				LastEvaluationTime:   entry.LastEvalTime,
 				Annotations:          ruleForEntry.Annotations,
 				ResultFingerprint:    resultFp,
+				ResolvedAt:           entry.ResolvedAt,
+				LastSentAt:           entry.LastSentAt,
 			}
 			statesCount++
 		}
@@ -405,10 +407,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
+	currentState.SetNextValues(result)
 	currentState.LatestResult = &Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
-		Values:          NewEvaluationValues(result.Values),
+		Values:          currentState.Values,
 		Condition:       alertRule.Condition,
 	}
 	currentState.LastEvaluationString = result.EvaluationString
