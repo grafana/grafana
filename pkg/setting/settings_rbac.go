@@ -23,10 +23,10 @@ type RBACSettings struct {
 	resourcesWithWildcardSeed map[string]struct{}
 }
 
-func (c *Cfg) readRBACSettings() {
+func (cfg *Cfg) readRBACSettings() {
 	s := RBACSettings{}
 
-	rbac := c.Raw.Section("rbac")
+	rbac := cfg.Raw.Section("rbac")
 	s.PermissionCache = rbac.Key("permission_cache").MustBool(true)
 	s.PermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
@@ -47,7 +47,7 @@ func (c *Cfg) readRBACSettings() {
 		s.resourcesWithWildcardSeed[resource] = struct{}{}
 	}
 
-	c.RBAC = s
+	cfg.RBAC = s
 }
 
 func (r RBACSettings) PermissionsOnCreation(resource string) bool {

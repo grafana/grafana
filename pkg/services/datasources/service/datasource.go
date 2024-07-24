@@ -298,7 +298,6 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		}
 
 		return nil
-
 	})
 }
 
