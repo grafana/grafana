@@ -63,12 +63,12 @@ refs:
 
 # Time series
 
-Time series visualizations are the default and primary way to visualize data points over intervals of time as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
+Time series visualizations are the default and primary way to visualize data points over intervals of time, as a graph. They can render series as lines, points, or bars and are versatile enough to display almost any time-series data.
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
 
 {{< admonition type="note" >}}
-You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
+You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{< /admonition >}}
 
 ## Configure a time series visualization
@@ -81,20 +81,20 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-Time series visualizations require time series data; that is a sequence of measurements, ordered in time, where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+Time series visualizations require time series data: a sequence of measurements, ordered in time, where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+
+<!--should we add the clause "formatted as a table" in the first sentence before we start talking about a table at the end of the sentence -->
 
 ## Alert rules
 
-You can [link alert rules](ref:link-alert) to time series visualizations to observe when alerts fire and are resolved in the form of annotations. In addition, you can create alert rules from the **Alert** tab within the panel editor.
+You can [link alert rules](ref:link-alert) to time series visualizations to observe when alerts fire and are resolved, in the form of annotations. In addition, you can create alert rules from the **Alert** tab within the panel editor.
 
 ## Transform override property
 
-Use the **Transform** override property to transform series values without affecting the values shown in the tooltip, context menu, or legend.
+Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
 
-<!-- add more information about how to access this property -->
-
-- **Negative Y transform:** Flip the results to negative values on the Y axis.
-- **Constant:** Show the first value as a constant line.
+- **Constant** - Show the first value as a constant line.
+- **Negative Y transform** - Flip the results to negative values on the y-axis.
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
@@ -114,6 +114,8 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 {{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" alt="Fill below to example" >}}
 
 ## Configuration options
+
+<!-- add brief intro text -->
 
 ### Panel options
 
