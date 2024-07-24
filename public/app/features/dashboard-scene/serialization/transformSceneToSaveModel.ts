@@ -159,7 +159,7 @@ export function gridItemToPanel(
     sceneState.editPanel.state.vizManager.state.sourcePanel.resolve() === gridItem.state.body
   ) {
     const gridItemClone = gridItem.clone();
-    if (gridItemClone.state.body instanceof VizPanel) {
+    if (gridItemClone.state.body instanceof VizPanel && !isLibraryPanel(gridItemClone.state.body)) {
       sceneState.editPanel.state.vizManager.commitChangesTo(gridItemClone.state.body);
       gridItem_ = gridItemClone;
     }

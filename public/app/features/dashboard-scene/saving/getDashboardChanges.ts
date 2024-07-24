@@ -140,7 +140,6 @@ export function getPanelChanges(saveModel: Panel, originalSaveModel: Panel) {
   const diff = jsonDiff(originalSaveModel, saveModel);
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
-  console.log(diff);
   return {
     changedSaveModel: saveModel,
     initialSaveModel: originalSaveModel,

@@ -36,12 +36,10 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     if (vizPanel instanceof VizPanel) {
       this._libPanelSubscription = vizPanel.subscribeToState((newState, prevState) => {
-        console.log('stsst', newState, prevState);
         if (newState !== prevState) {
           const _loadedPanel = libraryVizPanelToSaveModel(vizPanel);
 
           if (this.state._loadedPanel !== _loadedPanel) {
-            console.log('UPDATING _loadedPanel');
             this.setState({ _loadedPanel });
           }
         }
@@ -49,7 +47,6 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
 
     return () => {
-      console.log('UNSUBBED');
       this._libPanelSubscription?.unsubscribe();
       this._libPanelSubscription = undefined;
     };
@@ -101,13 +98,6 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       this.setPanelFromLibPanel(libPanel);
-      if (vizPanel.parent instanceof DashboardGridItem) {
-        vizPanel.parent.setState({
-          variableName: libPanel.model.repeat,
-          repeatDirection: libPanel.model.repeatDirection === 'h' ? 'h' : 'v',
-          maxPerRow: libPanel.model.maxPerRow,
-        });
-      }
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: `Unable to load library panel: ${this.state.uid}`,

@@ -62,55 +62,36 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._performRepeat();
     }
 
-    //TODO V
     // Subscriptions that handles body updates, i.e. VizPanel -> LibraryVizPanel, AddLibPanelWidget -> LibraryVizPanel
     this._subs.add(
       this.subscribeToState((newState, prevState) => {
         if (newState.body !== prevState.body) {
           if (newState.body instanceof VizPanel && isLibraryPanel(newState.body)) {
-            console.log('SUB');
-            this.setupLibraryPanelChangeSubscription(newState.body);
+            const libraryPanel = newState.body.state.$behaviors?.find(
+              (behaviour) => behaviour instanceof LibraryPanelBehavior
+            );
+
+            if (!libraryPanel || !(libraryPanel instanceof LibraryPanelBehavior)) {
+              return;
+            }
+            if (libraryPanel.state._loadedPanel?.model.repeat) {
+              this._variableDependency.setVariableNames([libraryPanel.state._loadedPanel.model.repeat]);
+              this.setState({
+                variableName: libraryPanel.state._loadedPanel.model.repeat,
+                repeatDirection: libraryPanel.state._loadedPanel.model.repeatDirection,
+                maxPerRow: libraryPanel.state._loadedPanel.model.maxPerRow,
+              });
+              this._performRepeat();
+            }
           }
         }
       })
     );
 
-    // Initial setup of the lbrary panel subscription. Lib panels are lazy laded, so only then we can subscribe to the repeat config changes
-    if (this.state.body instanceof VizPanel && isLibraryPanel(this.state.body)) {
-      this.setupLibraryPanelChangeSubscription(this.state.body);
-    }
-
     return () => {
       this._libPanelSubscription?.unsubscribe();
       this._libPanelSubscription = undefined;
     };
-  }
-
-  //TODO V can move out?
-  private setupLibraryPanelChangeSubscription(panel: VizPanel) {
-    if (this._libPanelSubscription) {
-      this._libPanelSubscription.unsubscribe();
-      this._libPanelSubscription = undefined;
-    }
-
-    this._libPanelSubscription = panel.subscribeToState((newState) => {
-      const libraryPanel = newState.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior);
-
-      if (!(libraryPanel instanceof LibraryPanelBehavior)) {
-        console.log('no lib panel');
-        return;
-      }
-
-      if (libraryPanel.state._loadedPanel?.model.repeat) {
-        this._variableDependency.setVariableNames([libraryPanel.state._loadedPanel.model.repeat]);
-        this.setState({
-          variableName: libraryPanel.state._loadedPanel.model.repeat,
-          repeatDirection: libraryPanel.state._loadedPanel.model.repeatDirection,
-          maxPerRow: libraryPanel.state._loadedPanel.model.maxPerRow,
-        });
-        this._performRepeat();
-      }
-    });
   }
 
   private _onVariableUpdateCompleted(): void {

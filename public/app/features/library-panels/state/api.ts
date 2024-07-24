@@ -141,28 +141,28 @@ export async function getConnectedDashboards(uid: string): Promise<DashboardSear
 
 export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
   const libraryPanelBehavior = getLibraryPanelBehavior(vizPanel);
-  console.log(vizPanel, libraryPanelBehavior);
 
   const { uid, name, _loadedPanel } = libraryPanelBehavior!.state;
 
   let gridItem = vizPanel.parent;
 
   if (gridItem instanceof VizPanelManager) {
-    gridItem = gridItem.state.sourcePanel.resolve().parent as DashboardGridItem;
+    gridItem = gridItem.state.sourcePanel.resolve().parent;
   }
 
   if (!gridItem || !(gridItem instanceof DashboardGridItem)) {
     throw new Error('Trying to save a library panel that does not have a DashboardGridItem parent');
   }
 
+  // we need all the panel properties to save the library panel,
+  // so we clone it and remove the behaviour to get what we need
   const saveModel = {
+    ..._loadedPanel,
     uid,
-    folderUID: _loadedPanel?.folderUid,
     name,
-    version: _loadedPanel?.version || 0,
     type: vizPanel.state.pluginId,
     model: vizPanelToPanel(
-      vizPanel,
+      vizPanel.clone({ $behaviors: undefined }),
       {
         x: gridItem.state.x ?? 0,
         y: gridItem.state.y ?? 0,
@@ -180,7 +180,6 @@ export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
 export async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<LibraryPanel> {
   const { uid, folderUID, name, model, version, kind } = libraryVizPanelToSaveModel(vizPanel);
 
-  console.log('updateLibraryVizPanel', model);
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
     folderUID,
     name,
@@ -191,13 +190,13 @@ export async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<Library
   return result;
 }
 
-export async function saveLibPanel(panel: VizPanel) {
+export async function saveLibPanel(sourcePanel: VizPanel, panel: VizPanel) {
   const updatedLibPanel = await updateLibraryVizPanel(panel);
 
-  const libPanelBehavior = getLibraryPanelBehavior(panel);
+  const libPanelBehavior = getLibraryPanelBehavior(sourcePanel);
 
   if (!libPanelBehavior) {
-    throw new Error("Could not find library panel behavior for panel")
+    throw new Error('Could not find library panel behavior for panel');
   }
 
   libPanelBehavior.setPanelFromLibPanel(updatedLibPanel);

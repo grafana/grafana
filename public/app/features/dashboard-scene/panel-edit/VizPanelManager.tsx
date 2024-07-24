@@ -33,7 +33,7 @@ import { useStyles2 } from '@grafana/ui';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
-import { saveLibPanel, updateLibraryVizPanel } from 'app/features/library-panels/state/api';
+import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
@@ -427,10 +427,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public commitChanges() {
     const sourcePanel = this.state.sourcePanel.resolve();
     this.commitChangesTo(sourcePanel);
-
-    if (isLibraryPanel(this.state.panel)) {
-      saveLibPanel(this.state.panel);
-    }
   }
 
   public commitChangesTo(sourcePanel: VizPanel) {
@@ -447,26 +443,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
-    console.log('TODO V 2');
-    //TODO V
-    // if (isLibraryPanel(sourcePanel)) {
-    //   if (sourcePanel.parent instanceof DashboardGridItem) {
-    //     const newLibPanel = sourcePanel.parent.clone({
-    //       panel: this.state.panel.clone(),
-    //     });
-
-    //     sourcePanel.parent.parent.setState({
-    //       body: newLibPanel,
-    //       ...repeatUpdate,
-    //     });
-
-    //     updateLibraryVizPanel(newLibPanel!).then((p) => {
-    //       if (sourcePanel.parent instanceof LibraryVizPanel) {
-    //         newLibPanel.setPanelFromLibPanel(p);
-    //       }
-    //     });
-    //   }
-    // }
+    if (isLibraryPanel(sourcePanel)) {
+      saveLibPanel(sourcePanel, this.state.panel);
+    }
   }
 
   /**

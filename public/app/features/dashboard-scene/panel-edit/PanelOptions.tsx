@@ -24,8 +24,7 @@ interface Props {
 }
 
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
-  const { panel, sourcePanel, repeat } = vizManager.useState();
-  const parent = sourcePanel.resolve().parent;
+  const { panel, repeat } = vizManager.useState();
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,8 +50,8 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
   }, [panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
-    if (parent instanceof VizPanel && isLibraryPanel(parent)) {
-      const behavior = getLibraryPanelBehavior(parent);
+    if (panel instanceof VizPanel && isLibraryPanel(panel)) {
+      const behavior = getLibraryPanelBehavior(panel);
 
       if (!(behavior instanceof LibraryPanelBehavior)) {
         return;
@@ -61,7 +60,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
       return getLibraryVizPanelOptionsCategory(behavior);
     }
     return;
-  }, [parent]);
+  }, [panel]);
 
   const justOverrides = useMemo(
     () =>

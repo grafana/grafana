@@ -53,8 +53,6 @@ export class DashboardSceneChangeTracker {
     }
     // VizPanelManager includes the repeat configuration
     if (payload.changedObject instanceof VizPanelManager) {
-      console.log(payload);
-
       if (
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeat') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeatDirection') ||
