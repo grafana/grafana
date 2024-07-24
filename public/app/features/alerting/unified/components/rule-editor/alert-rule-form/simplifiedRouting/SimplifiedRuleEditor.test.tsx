@@ -66,7 +66,7 @@ const selectFolderAndGroup = async () => {
   await clickSelectOption(groupInput, grafanaRulerEmptyGroup.name);
 };
 
-describe('Can create a new grafana managed alert unsing simplified routing', () => {
+describe('Can create a new grafana managed alert using simplified routing', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
@@ -166,6 +166,26 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
         ],
       }
     );
+  });
+
+  describe('alertingApiServer enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.alertingApiServer = true;
+    });
+
+    it('allows selecting a contact point when using alerting API server', async () => {
+      const user = userEvent.setup();
+      renderSimplifiedRuleEditor();
+      await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+
+      await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
+
+      const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
+      await user.click(byRole('combobox').get(contactPointInput));
+      await clickSelectOption(contactPointInput, 'lotsa-emails');
+
+      expect(await screen.findByText('Email')).toBeInTheDocument();
+    });
   });
 });
 
