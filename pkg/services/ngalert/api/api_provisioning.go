@@ -612,7 +612,6 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 
 		for idx, cp := range body.Policies {
 			policy := cp.RouteExport
-			hash := getHash([]string{policy.})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_notification_policy",
 				Name: fmt.Sprintf("notification_policy_%d", idx+1),
@@ -620,14 +619,15 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 			})
 		}
 
-		for idx, mt := range body.MuteTimings {
+		for _, mt := range body.MuteTimings {
 			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
 			if err != nil {
 				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
 			}
+			hash := getHash([]string{mthcl.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_mute_timing",
-				Name: fmt.Sprintf("mute_timing_%d", idx+1),
+				Name: fmt.Sprintf("mute_timing_%016x", hash),
 				Body: mthcl,
 			})
 		}
