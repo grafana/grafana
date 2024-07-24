@@ -89,29 +89,26 @@ Time series visualizations require time series data: a sequence of measurements,
 
 You can [link alert rules](ref:link-alert) to time series visualizations to observe when alerts fire and are resolved, in the form of annotations. In addition, you can create alert rules from the **Alert** tab within the panel editor.
 
-## Transform override property
+## Special overrides
+
+### Transform override property
 
 Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
 
 - **Constant** - Show the first value as a constant line.
 - **Negative Y transform** - Flip the results to negative values on the y-axis.
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+### Fill below to override property
 
-<!-- update shared filed above to add actual steps for adding this override -->
-
-## Add the Fill below to override
-
-The **Fill below to** option fills the area between two series. This option is only available as a series/field override.
-
-1. Edit the panel and click **Overrides**.
-1. Select the fields to fill below.
-1. In **Add override property**, select **Fill below to**.
-1. Select the series for which you want the fill to stop.
+The **Graph styles > Fill below to** option fills the area between two series. This option is only available as a series/field override. When you configure the property, you select the series for which you want the fill to stop.
 
 The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
 
 {{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" alt="Fill below to example" >}}
+
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+<!-- update shared filed above to add actual steps for adding this override -->
 
 ## Configuration options
 
