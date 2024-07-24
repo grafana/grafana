@@ -25,13 +25,12 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues, isLibraryPanel } from '../utils/utils';
 
-import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
-  body: VizPanel | AddLibraryPanelDrawer;
+  body: VizPanel;
   repeatedPanels?: VizPanel[];
   variableName?: string;
   itemHeight?: number;
@@ -62,7 +61,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._performRepeat();
     }
 
-    // Subscriptions that handles body updates, i.e. VizPanel -> LibraryVizPanel, AddLibPanelWidget -> LibraryVizPanel
+    // Subscriptions that handles body updates
     this._subs.add(
       this.subscribeToState((newState, prevState) => {
         if (newState.body !== prevState.body) {
@@ -126,9 +125,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   }
 
   private _performRepeat() {
-    if (this.state.body instanceof AddLibraryPanelDrawer) {
-      return;
-    }
     if (!this.state.variableName || this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
@@ -228,10 +224,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
     if (!variableName) {
       if (body instanceof VizPanel) {
-        return <body.Component model={body} key={body.state.key} />;
-      }
-
-      if (body instanceof AddLibraryPanelDrawer) {
         return <body.Component model={body} key={body.state.key} />;
       }
     }

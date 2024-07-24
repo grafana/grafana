@@ -1,9 +1,4 @@
-import {
-  SceneObjectBase,
-  SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
@@ -58,7 +53,6 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       throw new Error('Could not find SceneQueryRunner for panel');
     }
 
-    //TODO V check if this works for lib panels as well
     if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
       queryRunner.runQueries();
     }

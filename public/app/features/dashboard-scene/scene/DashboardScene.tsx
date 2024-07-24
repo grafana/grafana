@@ -564,6 +564,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       y: gridItem.state.y,
       height: gridItem.state.height,
       width: gridItem.state.width,
+      variableName: gridItem.state.variableName,
+      repeatDirection: gridItem.state.repeatDirection,
+      maxPerRow: gridItem.state.maxPerRow,
       body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
     });
 
@@ -697,13 +700,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const gridItem = panel.parent;
 
     if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Trying to unlinka a lib panel in a layout that is not DashboardGridItem');
+      console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem');
       return;
     }
 
-    gridItem?.setState({
-      body: panel.clone({ $behaviors: undefined }),
-    });
+    panel.setState({ $behaviors: undefined });
   }
 
   public showModal(modal: SceneObject) {
