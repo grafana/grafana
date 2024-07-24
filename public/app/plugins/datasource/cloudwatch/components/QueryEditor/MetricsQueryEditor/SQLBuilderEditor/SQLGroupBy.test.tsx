@@ -87,7 +87,7 @@ describe('Cloudwatch SQLGroupBy', () => {
     selectEvent.openMenu(screen.getByLabelText(/Group by/));
     expect(screen.queryByText('Account ID')).not.toBeInTheDocument();
   });
-  
+
   it('should not show Account ID in groupBy options if feature flag is disabled', async () => {
     config.featureToggles.cloudwatchMetricInsightsCrossAccount = false;
     const query = makeSQLQuery();
