@@ -187,7 +187,7 @@
 /devenv/docker/blocks/graphite1/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb1/ @grafana/partner-datasources
-/devenv/docker/blocks/jaeger/ @grafana/observability-traces-and-profiling
+/devenv/docker/blocks/jaeger/ @grafana/oss-big-tent
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/oss-big-tent
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
@@ -212,7 +212,7 @@
 /devenv/docker/blocks/smtp/ @bergquist
 /devenv/docker/blocks/tempo/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/traefik/ @mckn
-/devenv/docker/blocks/zipkin/ @grafana/observability-traces-and-profiling
+/devenv/docker/blocks/zipkin/ @grafana/oss-big-tent
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/grafana-backend-services-squad
@@ -257,7 +257,7 @@
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
-/pkg/tsdb/parca/ @grafana/observability-traces-and-profiling
+/pkg/tsdb/parca/ @grafana/oss-big-tent
 
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
@@ -578,7 +578,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
 /public/app/plugins/datasource/graphite/ @grafana/partner-datasources
 /public/app/plugins/datasource/influxdb/ @grafana/partner-datasources
-/public/app/plugins/datasource/jaeger/ @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/jaeger/ @grafana/oss-big-tent
 /public/app/plugins/datasource/loki/ @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
@@ -587,10 +587,10 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
-/public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/zipkin/ @grafana/oss-big-tent
 /public/app/plugins/datasource/tempo/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
-/public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/parca/ @grafana/oss-big-tent
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
