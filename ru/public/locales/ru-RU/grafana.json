@@ -1,2005 +1,2005 @@
 {
-  "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
+  "_comment": "This is the source of truth for Russian phrases, which should be updated in the components directly, and additional plurals specified in this file.",
   "{unit}": "{unit}",
   "access-control": {
     "add-permission": {
-      "role-label": "Role",
-      "serviceaccount-label": "Service Account",
-      "team-label": "Team",
-      "title": "Add permission for",
-      "user-label": "User"
+      "role-label": "Роль",
+      "serviceaccount-label": "Сервисный аккаунт",
+      "team-label": "Команда",
+      "title": "Добавить разрешение для",
+      "user-label": "Пользователь"
     },
     "add-permissions": {
-      "save": "Save"
+      "save": "Сохранить"
     },
     "permission-list": {
-      "permission": "Permission"
+      "permission": "Разрешение"
     },
     "permissions": {
-      "add-label": "Add a permission",
-      "no-permissions": "There are no permissions",
-      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
-      "role": "Role",
-      "serviceaccount": "Service Account",
-      "team": "Team",
-      "title": "Permissions",
-      "user": "User"
+      "add-label": "Добавить разрешение",
+      "no-permissions": "Нет разрешений",
+      "permissions-change-warning": "Это изменит права доступа для этой папки и всех ее потомков. Всего это повлияет:",
+      "role": "Роль",
+      "serviceaccount": "Сервисный аккаунт",
+      "team": "Команда",
+      "title": "Права доступа",
+      "user": "Пользователь"
     }
   },
   "alert-labels": {
     "button": {
-      "hide": "Hide common labels",
+      "hide": "Скрыть общие метки",
       "show": {
-        "tooltip": "Show common labels"
+        "tooltip": "Показать общие метки"
       }
     }
   },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
-        "text": "Define how the alert rule is evaluated."
+        "text": "Определите, как вычисляется правило оповещения."
       },
       "info-help": {
-        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+        "text": "Определите поведение оповещения при сбое оценки или запрос не возвращает данные."
       },
-      "pending-period": "Pending period"
+      "pending-period": "Период ожидания"
     },
-    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
-    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
-    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+    "evaluation-behaviour-description1": "Группы оценки - это контейнеры для оценки правил оповещения и записи.",
+    "evaluation-behaviour-description2": "Проверочная группа определяет интервал вычисления - как часто вычисляется правило. Правила оповещения в одной и той же группе оцениваются за один и тот же период оценки.",
+    "evaluation-behaviour-description3": "Период ожидания определяет, сколько пороговых условий должно быть выполнено до начала оповещения. Эта опция помогает предотвратить срабатывание предупреждений по временным проблемам.",
     "evaluation-behaviour-for": {
-      "error-parsing": "Failed to parse duration",
-      "validation": "Pending period must be greater than or equal to the evaluation interval."
+      "error-parsing": "Не удалось проанализировать длительность",
+      "validation": "До окончания периода должно быть больше или равно интервалу оценки."
     },
     "evaluation-behaviour-group": {
-      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
+      "text": "Все правила в выбранной группе вычисляются каждый {{evaluateEvery}}."
     },
-    "pause": "Pause evaluation"
+    "pause": "Приостановить оценку"
   },
   "alerting": {
     "central-alert-history": {
       "details": {
-        "error": "Error loading rule for this event.",
+        "error": "Ошибка загрузки правила для этого события.",
         "header": {
-          "alert-rule": "Alert rule",
-          "instance": "Instance",
-          "state": "State",
-          "timestamp": "Timestamp"
+          "alert-rule": "Правило оповещения",
+          "instance": "Экземпляр",
+          "state": "Область",
+          "timestamp": "Отметка времени"
         },
-        "loading": "Loading...",
-        "no-recognized-state": "No recognized state",
-        "no-values": "No values",
-        "not-found": "Rule not found for this event.",
-        "number-transitions": "State transitions for selected period:",
+        "loading": "Загрузка...",
+        "no-recognized-state": "Нет распознанного состояния",
+        "no-values": "Нет значений",
+        "not-found": "Правило не найдено для этого события.",
+        "number-transitions": "Переходы сессий за выбранный период:",
         "state": {
-          "alerting": "Alerting",
-          "error": "Error",
-          "no-data": "No data",
-          "normal": "Normal",
-          "pending": "Pending"
+          "alerting": "Оповещение",
+          "error": "Ошибка",
+          "no-data": "Нет данных",
+          "normal": "Обычный",
+          "pending": "В ожидании"
         },
-        "state-transitions": "State transition",
-        "unknown-event-state": "Unknown",
-        "unknown-rule": "Unknown",
-        "value-in-transition": "Value in transition"
+        "state-transitions": "Переход состояния",
+        "unknown-event-state": "Неизвестен",
+        "unknown-rule": "Неизвестен",
+        "value-in-transition": "Значение при переходе"
       },
-      "error": "Something went wrong loading the alert state history",
+      "error": "Что-то пошло не так при загрузке истории состояния оповещений",
       "filter": {
-        "clear": "Clear filters",
+        "clear": "Очистить фильтры",
         "info": {
-          "label1": "Filter events using label querying without spaces, ex:",
-          "label2": "Invalid use of spaces:",
-          "label3": "Valid use of spaces:",
-          "label4": "Filter alerts using label querying without braces, ex:"
+          "label1": "Фильтр событий с помощью метки запроса без пробелов, например:",
+          "label2": "Недопустимое использование пробелов:",
+          "label3": "Допустимое использование пробелов:",
+          "label4": "Отфильтровать оповещения используя запрос этикетки без скобок, например:"
         }
       },
-      "filterBy": "Filter by:",
+      "filterBy": "Фильтр по:",
       "too-many-events": {
-        "text": "The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.",
-        "title": "Unable to display all events"
+        "text": "Выбранный период времени имеет слишком много событий для отображения. Попробуйте использовать более короткий промежуток времени.",
+        "title": "Не удается отобразить все события"
       }
     },
     "contact-points": {
-      "delivery-duration": "Last delivery took <1></1>",
-      "last-delivery-attempt": "Last delivery attempt",
-      "last-delivery-failed": "Last delivery attempt failed",
-      "no-delivery-attempts": "No delivery attempts",
-      "only-firing": "Delivering <1>only firing</1> notifications",
+      "delivery-duration": "Последняя доставка приняла <1></1>",
+      "last-delivery-attempt": "Последняя попытка доставки",
+      "last-delivery-failed": "Последняя попытка доставки не удалась",
+      "no-delivery-attempts": "Нет попыток доставки",
+      "only-firing": "Доставляется <1>только уведомления</1>",
       "telegram": {
-        "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
-        "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
+        "parse-mode-warning-body": "Если вы используете <1>parse_mode</1> опцию, отличную от <3>Нет</3>, усечение может привести к неверному сообщению, в результате чего уведомление не получится. Для более длительных сообщений мы рекомендуем использовать альтернативный способ связи.",
+        "parse-mode-warning-title": "Сообщения в Telegram ограничены 4096 символами в UTF-8."
       },
-      "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies"
+      "used-by_one": "Используется политикой оповещений {{ count }}",
+      "used-by_other": "Используется правилами оповещения {{ count }}"
     },
     "policies": {
       "metadata": {
         "timingOptions": {
           "groupInterval": {
-            "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
-            "label": "Wait <1></1> before sending updates"
+            "description": "Как долго ждать перед отправкой уведомления о новых оповещениях, добавленных в группу оповещений, для которых уже было отправлено первоначальное уведомление.",
+            "label": "Подождите <1></1> перед отправкой обновлений"
           },
           "groupWait": {
-            "description": "How long to initially wait to send a notification for a group of alert instances.",
-            "label": "Wait <1></1> to group instances"
+            "description": "Как долго изначально ждать отправки уведомления для группы экземпляров предупреждений.",
+            "label": "Подождите <1></1> для группировки экземпляров"
           },
           "repeatInterval": {
-            "description": "How often notifications are sent if the group of alerts has not changed since the last notification.",
-            "label": "Repeated every <1></1>"
+            "description": "Как часто отправляются уведомления, если группа оповещений не изменилась с момента последнего уведомления.",
+            "label": "Повторяется каждый <1></1>"
           }
         }
       }
     },
     "rule-groups": {
       "delete": {
-        "success": "Successfully deleted rule group"
+        "success": "Группа правил успешно удалена"
       },
       "move": {
-        "success": "Successfully moved rule group"
+        "success": "Группа правил успешно перемещена"
       },
       "rename": {
-        "success": "Successfully renamed rule group"
+        "success": "Группа правил успешно переименована"
       },
       "update": {
-        "success": "Successfully updated rule group"
+        "success": "Группа правил успешно обновлена"
       }
     },
     "rules": {
       "delete-rule": {
-        "success": "Rule successfully deleted"
+        "success": "Правило успешно удалено"
       },
       "pause-rule": {
-        "success": "Rule evaluation paused"
+        "success": "Приостановка выполнения правил"
       },
       "resume-rule": {
-        "success": "Rule evaluation resumed"
+        "success": "Возобновлена оценка правил"
       }
     }
   },
   "annotations": {
     "empty-state": {
-      "button-title": "Add annotation query",
-      "info-box-content": "<0>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons on all graph panels. When you hover over an annotation icon you can get event text & tags for the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or drag region). These will be stored in Grafana's annotation database.</0>",
-      "info-box-content-2": "Checkout the <2>Annotations documentation</2> for more information.",
-      "title": "There are no custom annotation queries added yet"
+      "button-title": "Добавить запрос к заметкам",
+      "info-box-content": "<0>Аннотации позволяют интегрировать данные событий в ваши графики. Они визуализируются как вертикальные линии и иконки на всех панелях графов. При наведении курсора на значок аннотации, вы можете получить текст событий и теги для события. Вы можете добавить аннотации непосредственно с графы, удерживая CTRL или CMD + кликнув на графике (или перетащить регион). Они будут храниться в базе данных аннотаций Grafana</0>",
+      "info-box-content-2": "Для получения дополнительной информации ознакомьтесь с <2>документацией по аннотациям</2>.",
+      "title": "Пока нет добавленных пользовательских заметок запросов"
     }
   },
   "api-keys": {
     "empty-state": {
-      "message": "No API keys found"
+      "message": "Ключи API не найдены"
     }
   },
   "bouncing-loader": {
-    "label": "Loading"
+    "label": "Загрузка"
   },
   "browse-dashboards": {
     "action": {
-      "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders cannot be moved",
-      "confirmation-text": "Delete",
-      "delete-button": "Delete",
-      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
-      "delete-modal-invalid-title": "Cannot delete folder",
-      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the 30 days expire. Folders cannot be restored.",
-      "delete-modal-text": "This action will delete the following content:",
-      "delete-modal-title": "Delete",
-      "deleting": "Deleting...",
-      "manage-permissions-button": "Manage permissions",
-      "move-button": "Move",
-      "move-modal-alert": "Moving this item may change its permissions.",
-      "move-modal-field-label": "Folder name",
-      "move-modal-text": "This action will move the following content:",
-      "move-modal-title": "Move",
-      "moving": "Moving...",
-      "new-folder-name-required-phrase": "Folder name is required."
+      "cancel-button": "Отмена",
+      "cannot-move-folders": "Невозможно переместить папки",
+      "confirmation-text": "Удалить",
+      "delete-button": "Удалить",
+      "delete-modal-invalid-text": "Одна или несколько папок содержат панели библиотек или правила предупреждения. Сначала удалите их, чтобы продолжить.",
+      "delete-modal-invalid-title": "Невозможно удалить папку",
+      "delete-modal-restore-dashboards-text": "Это действие немедленно удалит выбранные папки, но выбранные панели инструментов будут помечены для удаления в течение 30 дней. Администратор организации может восстановить рабочие столы в любое время до истечения 30 дней. Папки не могут быть восстановлены.",
+      "delete-modal-text": "Это действие удалит следующее содержимое:",
+      "delete-modal-title": "Удалить",
+      "deleting": "Удаление...",
+      "manage-permissions-button": "Управление правами доступа",
+      "move-button": "Переместить",
+      "move-modal-alert": "Перемещение этого элемента может изменить его права.",
+      "move-modal-field-label": "Имя папки",
+      "move-modal-text": "Это действие переместит следующее содержимое:",
+      "move-modal-title": "Переместить",
+      "moving": "Перемещение...",
+      "new-folder-name-required-phrase": "Требуется название папки."
     },
     "counts": {
-      "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
-      "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
-      "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
-      "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
-      "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "alertRule_one": "{{count}} правило оповещения",
+      "alertRule_other": "Правила оповещений {{count}}",
+      "dashboard_one": "{{count}} панель",
+      "dashboard_other": "",
+      "folder_one": "Папка {{count}}",
+      "folder_other": "Папки {{count}}",
+      "libraryPanel_one": "Панель библиотеки {{count}}",
+      "libraryPanel_other": "Панели библиотеки {{count}}",
+      "total_one": "{{count}} элемент",
+      "total_other": "{{count}} элементов"
     },
     "dashboards-tree": {
-      "collapse-folder-button": "Collapse folder {{title}}",
-      "expand-folder-button": "Expand folder {{title}}",
-      "name-column": "Name",
-      "select-all-header-checkbox": "Select all",
-      "select-checkbox": "Select",
-      "tags-column": "Tags"
+      "collapse-folder-button": "Свернуть папку {{title}}",
+      "expand-folder-button": "Развернуть папку {{title}}",
+      "name-column": "Наименование",
+      "select-all-header-checkbox": "Выбрать все",
+      "select-checkbox": "Выбрать",
+      "tags-column": "Теги"
     },
     "empty-state": {
-      "button-title": "Create dashboard",
-      "pro-tip": "Add/move dashboards to your folder at <2>Browse dashboards</2>",
-      "title": "You haven't created any dashboards yet",
-      "title-folder": "This folder doesn't have any dashboards yet"
+      "button-title": "Создать рабочий стол",
+      "pro-tip": "Добавить/переместить рабочие столы в папку <2>Обзор панели управления</2>",
+      "title": "Вы еще не создали никаких панелей инструментов",
+      "title-folder": "В этой папке еще нет панелей инструментов"
     },
     "folder-actions-button": {
-      "delete": "Delete",
-      "folder-actions": "Folder actions",
-      "manage-permissions": "Manage permissions",
-      "move": "Move"
+      "delete": "Удалить",
+      "folder-actions": "Действия папки",
+      "manage-permissions": "Управление правами доступа",
+      "move": "Переместить"
     },
     "folder-picker": {
-      "accessible-label": "Select folder: {{ label }} currently selected",
-      "button-label": "Select folder",
-      "clear-selection": "Clear selection",
-      "empty-message": "No folders found",
-      "error-title": "Error loading folders",
-      "search-placeholder": "Search folders",
-      "unknown-error": "Unknown error"
+      "accessible-label": "Выберите папку: {{ label }} в настоящее время выбран",
+      "button-label": "Выберите папку",
+      "clear-selection": "Очистить выделенное",
+      "empty-message": "Папки не найдены",
+      "error-title": "Ошибка загрузки папок",
+      "search-placeholder": "Поиск папок",
+      "unknown-error": "Неизвестная ошибка"
     },
     "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
+      "success": "Приборная панель {{name}} удалена"
     },
     "manage-folder-nav": {
-      "alert-rules": "Alert rules",
-      "dashboards": "Dashboards",
-      "panels": "Panels"
+      "alert-rules": "Правила оповещений",
+      "dashboards": "Рабочие столы",
+      "panels": "Панели"
     },
     "new-folder-form": {
-      "cancel-label": "Cancel",
-      "create-label": "Create",
-      "name-label": "Folder name"
+      "cancel-label": "Отмена",
+      "create-label": "Создать",
+      "name-label": "Имя папки"
     },
     "no-results": {
-      "clear": "Clear search and filters",
-      "text": "No results found for your query"
+      "clear": "Очистить поиск и фильтры",
+      "text": "По вашему запросу ничего не найдено"
     },
     "soft-delete": {
-      "success": "Dashboard {{name}} moved to Recently deleted"
+      "success": "Приборная панель {{name}} перемещена в недавно удаленную"
     }
   },
   "clipboard-button": {
     "inline-toast": {
-      "success": "Copied"
+      "success": "Скопировано"
     }
   },
   "command-palette": {
     "action": {
-      "change-theme": "Change theme...",
-      "dark-theme": "Dark",
-      "light-theme": "Light"
+      "change-theme": "Изменить тему...",
+      "dark-theme": "Тёмная",
+      "light-theme": "Светлая"
     },
     "empty-state": {
-      "message": "No results found"
+      "message": "Ничего не найдено"
     },
     "search-box": {
-      "placeholder": "Search or jump to..."
+      "placeholder": "Поиск или прыжок..."
     },
     "section": {
-      "actions": "Actions",
-      "dashboard-search-results": "Dashboards",
-      "folder-search-results": "Folders",
-      "pages": "Pages",
-      "preferences": "Preferences",
-      "recent-dashboards": "Recent dashboards"
+      "actions": "Действия",
+      "dashboard-search-results": "Рабочие столы",
+      "folder-search-results": "Папки",
+      "pages": "Страницы",
+      "preferences": "Настройки",
+      "recent-dashboards": "Последние панели инструментов"
     }
   },
   "common": {
     "locale": {
-      "default": "Default"
+      "default": "По умолчанию"
     },
-    "save": "Save"
+    "save": "Сохранить"
   },
   "connections": {
     "connect-data": {
-      "category-header-label": "Data sources",
-      "empty-message": "No results matching your query were found"
+      "category-header-label": "Источники данных",
+      "empty-message": "Не найдено результатов, соответствующих запросу"
     },
     "search": {
-      "placeholder": "Search all"
+      "placeholder": "Искать все"
     }
   },
   "correlations": {
-    "add-new": "Add new",
+    "add-new": "Добавить новый",
     "alert": {
-      "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
-      "title": "Error fetching correlation data"
+      "error-message": "Произошла неизвестная ошибка при получении данных корреляции. Пожалуйста, попробуйте еще раз.",
+      "title": "Ошибка получения данных корреляции"
     },
     "basic-info-form": {
-      "description-description": "Optional description with more information about the link",
-      "description-label": "Description",
-      "label-description": "This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.",
-      "label-label": "Label",
-      "label-placeholder": "e.g. Tempo traces",
-      "label-required": "This field is required.",
-      "sub-text": "<0>Define text that will describe the correlation.</0>",
-      "title": "Define correlation label (Step 1 of 3)"
+      "description-description": "Дополнительное описание со ссылкой",
+      "description-label": "Описание",
+      "label-description": "Это название будет использоваться в качестве метки для корреляции. Это покажет как текст кнопки, элемент меню или наведите текст на ссылку.",
+      "label-label": "Метка",
+      "label-placeholder": "напр. Tempo traces",
+      "label-required": "Это поле является обязательным.",
+      "sub-text": "<0>Определите текст, который будет описывать корреляцию.</0>",
+      "title": "Определить метку корреляции (Step 1 из 3)"
     },
     "empty-state": {
-      "button-title": "Add correlation",
-      "pro-tip": "You can also define correlations via datasource provisioning",
-      "title": "You haven't defined any correlations yet"
+      "button-title": "Добавить корреляцию",
+      "pro-tip": "Вы также можете определить корреляцию через подготовку к источнику данных",
+      "title": "Вы еще не определили корреляцию"
     },
     "list": {
-      "delete": "delete correlation",
-      "label": "Label",
-      "loading": "loading...",
-      "read-only": "Read only",
-      "source": "Source",
+      "delete": "удалить корреляцию",
+      "label": "Метка",
+      "loading": "загрузка...",
+      "read-only": "Только для чтения",
+      "source": "Источник",
       "target": "Target"
     },
     "navigation-form": {
-      "add-button": "Add",
-      "back-button": "Back",
-      "next-button": "Next",
-      "save-button": "Save"
+      "add-button": "Добавить",
+      "back-button": "Назад",
+      "next-button": "Следующий",
+      "save-button": "Сохранить"
     },
-    "page-content": "To enable Correlations, add it in the Grafana config:",
-    "page-heading": "Correlations are disabled",
+    "page-content": "Чтобы включить Correlations, добавьте его в настройках Grafan:",
+    "page-heading": "Коррекции отключены",
     "query-editor": {
-      "control-rules": "The selected target data source must export a query editor.",
-      "data-source-text": "Please select a target data source first.",
-      "data-source-title": "No data source selected",
-      "error-text": "The selected data source could not be loaded.",
-      "error-title": "Error loading data source",
-      "loading": "Loading query editor...",
-      "query-description": "Define the query that is run when the link is clicked. You can use <2>variables</2> to access specific field values.",
-      "query-editor-title": "Data source does not export a query editor.",
-      "query-label": "Query"
+      "control-rules": "Выбранный источник данных должен экспортировать редактор запроса.",
+      "data-source-text": "Сначала выберите целевой источник данных.",
+      "data-source-title": "Источник данных не выбран",
+      "error-text": "Выбранный источник данных не может быть загружен.",
+      "error-title": "Ошибка загрузки источника данных",
+      "loading": "Загрузка редактора запросов...",
+      "query-description": "Определите запрос, который запускается при нажатии на ссылку. Вы можете использовать <2>переменные</2> для доступа к определенным значениям поля.",
+      "query-editor-title": "Источник данных не экспортирует редактор запросов.",
+      "query-label": "Запрос"
     },
     "source-form": {
-      "control-required": "This field is required.",
-      "description": "You have used following variables in the target query: <1></1><2></2>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<4></4>Note: Not every variable needs to be explicitly defined below. A transformation such as <7>logfmt</7> will create variables for every key/value pair.",
-      "heading": "Variables used in the target query",
-      "results-description": "The link will be shown next to the value of this field",
-      "results-label": "Results field",
-      "results-required": "This field is required.",
-      "source-description": "Results from selected source data source have links displayed in the panel",
-      "source-label": "Source",
-      "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>",
-      "title": "Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)"
+      "control-required": "Это поле является обязательным.",
+      "description": "Вы использовали следующие переменные в целевом запросе: <1></1><2></2></2>Точка данных должна предоставлять значения всем переменным в качестве полей или в качестве вывода преобразований для того, чтобы кнопка корреляции появилась в визуализации. 4></4>Примечание: Не каждая переменная должна быть явно определена ниже. Преобразование такого типа как <7>logfmt</7> создаст переменные для каждой пары ключей/значений.",
+      "heading": "Переменные используются в целевом запросе",
+      "results-description": "Ссылка будет показана рядом со значением этого поля",
+      "results-label": "Поле результатов",
+      "results-required": "Это поле является обязательным.",
+      "source-description": "Результаты из выбранного источника данных имеют ссылки, отображаемые на панели",
+      "source-label": "Источник",
+      "sub-text": "<0>Определить, какой источник данных будет отображать корреляцию, и какие данные будут заменены ранее определенными переменными.</0>",
+      "title": "Настройте источник данных, который будет ссылаться на {{dataSourceName}} (Step 3 из 3)"
     },
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
+    "sub-title": "Определите, как данные из разных источников взаимосвязаны. Читайте больше в <2>документации<1></1></2>",
     "target-form": {
-      "control-rules": "This field is required.",
-      "sub-text": "<0>Define what data source the correlation will link to, and what query will run when the correlation is clicked.</0>",
-      "target-description": "Specify which data source is queried when the link is clicked",
+      "control-rules": "Это поле является обязательным.",
+      "sub-text": "<0>Определить, к какому источнику данных будет привязываться корреляция, и какой запрос будет выполняться при нажатии на корреляцию.</0>",
+      "target-description": "Укажите, какой источник данных запрашивается при нажатии на ссылку",
       "target-label": "Target",
-      "title": "Setup the target for the correlation (Step 2 of 3)"
+      "title": "Настроить цель для корреляции (Step 2 из 3)"
     },
     "trans-details": {
-      "logfmt-description": "Parse provided field with logfmt to get variables",
-      "logfmt-label": "Logfmt",
-      "regex-description": "Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.",
-      "regex-expression": "Use capture groups to extract a portion of the field.",
-      "regex-label": "Regular expression",
-      "regex-map-values": "Defines the name of the variable if the capture group is not named."
+      "logfmt-description": "Обработать поле с logfmt для получения переменных",
+      "logfmt-label": "Лог",
+      "regex-description": "Поле будет анализироваться с регулярным выражением. Используйте именованные группы захвата для возврата нескольких переменных или одной группы захватов, чтобы добавить переменную в именованное значение карты. Regex не чувствителен к регистру.",
+      "regex-expression": "Используйте группы захвата для извлечения части поля.",
+      "regex-label": "Регулярное выражение",
+      "regex-map-values": "Определяет имя переменной, если группа захвата не именуется."
     },
     "transform": {
-      "add-button": "Add transformation",
-      "heading": "Transformations",
-      "no-transform": "No transformations defined."
+      "add-button": "Добавить преобразование",
+      "heading": "Преобразования",
+      "no-transform": "Преобразования не определены."
     },
     "transform-row": {
-      "expression-label": "Expression",
-      "expression-required": "Please define an expression",
-      "expression-tooltip": "Required for regular expression. The expression the transformation will use. Logfmt does not use further specifications.",
-      "field-input": "field",
-      "field-label": "Field",
-      "field-tooltip": "Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
-      "map-value-label": "Map value",
-      "map-value-tooltip": "Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
-      "remove-button": "Remove",
-      "remove-tooltip": "Remove transformation",
-      "transform-required": "Please select a transformation type",
-      "type-label": "Type",
-      "type-tooltip": "The type of transformation that will be applied to the source data."
+      "expression-label": "Выражение",
+      "expression-required": "Пожалуйста, определите выражение",
+      "expression-tooltip": "Требуется для регулярного выражения. Выражение, которое будет использовать преобразование. Logfmt не использует дополнительные спецификации.",
+      "field-input": "поле",
+      "field-label": "Поле",
+      "field-tooltip": "Необязательно. Поле для преобразования. Если не указано, преобразование будет применено к полю результатов.",
+      "map-value-label": "Значение карты",
+      "map-value-tooltip": "Необязательно. Определяет имя переменной. Это в настоящее время допустимо только для регулярных выражений с одноименной группой захвата.",
+      "remove-button": "Удалить",
+      "remove-tooltip": "Удалить преобразование",
+      "transform-required": "Пожалуйста, выберите тип преобразования",
+      "type-label": "Тип",
+      "type-tooltip": "Тип преобразования, который будет применен к исходным данным."
     }
   },
   "dashboard": {
     "add-menu": {
-      "import": "Import from library",
-      "paste-panel": "Paste panel",
-      "row": "Row",
-      "visualization": "Visualization",
-      "widget": "Widget"
+      "import": "Импортировать из библиотеки",
+      "paste-panel": "Вставить панель",
+      "row": "Строка",
+      "visualization": "Визуализация",
+      "widget": "Виджет"
     },
     "alert-rules-drawer": {
-      "redirect-link": "List in Grafana Alerting",
-      "subtitle": "Alert rules related to this dashboard"
+      "redirect-link": "Список в Grafana Alerting",
+      "subtitle": "Правила оповещения, относящиеся к этой панели"
     },
     "empty": {
-      "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
-      "add-library-panel-button": "Add library panel",
-      "add-library-panel-header": "Import panel",
-      "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
-      "add-visualization-button": "Add visualization",
-      "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "add-widget-body": "Create lists, markdowns and other widgets",
-      "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget",
-      "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
-      "import-a-dashboard-header": "Import a dashboard",
-      "import-dashboard-button": "Import dashboard"
+      "add-library-panel-body": "Добавить визуализации, которые используются совместно с другими панелями.",
+      "add-library-panel-button": "Добавить панель библиотеки",
+      "add-library-panel-header": "Импортировать панель",
+      "add-visualization-body": "Выберите источник данных, а затем запросите и визуализируйте ваши данные с помощью графиков, статистики и таблиц или создайте списки, markdowns и другие виджеты.",
+      "add-visualization-button": "Добавить визуализацию",
+      "add-visualization-header": "Начните вашу новую панель управления, добавив визуализацию",
+      "add-widget-body": "Создавать списки, разметки и другие виджеты",
+      "add-widget-button": "Добавить виджет",
+      "add-widget-header": "Добавить виджет",
+      "import-a-dashboard-body": "Импортировать рабочие столы из файлов или <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Импортировать панель инструментов",
+      "import-dashboard-button": "Импорт панели инструментов"
     },
     "inspect": {
-      "data-tab": "Data",
-      "error-tab": "Error",
+      "data-tab": "Данные",
+      "error-tab": "Ошибка",
       "json-tab": "JSON",
-      "meta-tab": "Meta data",
-      "query-tab": "Query",
-      "stats-tab": "Stats",
-      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
-      "title": "Inspect: {{panelTitle}}"
+      "meta-tab": "Мета данные",
+      "query-tab": "Запрос",
+      "stats-tab": "Статистика",
+      "subtitle": "{{queryCount}} запросов с общим временем запроса {{formatted}}",
+      "title": "Проверка: {{panelTitle}}"
     },
     "inspect-data": {
-      "data-options": "Data options",
+      "data-options": "Параметры данных",
       "dataframe-aria-label": "Select dataframe",
-      "dataframe-label": "Show data frame",
-      "download-csv": "Download CSV",
-      "download-excel-description": "Adds header to CSV for use with Excel",
-      "download-excel-label": "Download for Excel",
-      "download-logs": "Download logs",
-      "download-service": "Download service graph",
-      "download-traces": "Download traces",
-      "excel-header": "Excel header",
-      "formatted": "Formatted data",
-      "formatted-data-description": "Table data is formatted with options defined in the Field and Override tabs.",
-      "formatted-data-label": "Formatted data",
-      "panel-transforms": "Panel transforms",
-      "series-to-columns": "Series joined by time",
-      "transformation": "Series joined by time",
-      "transformations-description": "Table data is displayed with transformations defined in the panel Transform tab.",
-      "transformations-label": "Apply panel transformations"
+      "dataframe-label": "Показать кадр данных",
+      "download-csv": "Скачать CSV",
+      "download-excel-description": "Добавляет заголовок в CSV для использования с Excel",
+      "download-excel-label": "Скачать для Excel",
+      "download-logs": "Скачать журналы",
+      "download-service": "Скачать график службы",
+      "download-traces": "Треки загрузок",
+      "excel-header": "Заголовок Excel",
+      "formatted": "Форматированные данные",
+      "formatted-data-description": "Данные таблицы отформатированы с параметрами, определенными в поле и переопределяющими вкладками.",
+      "formatted-data-label": "Форматированные данные",
+      "panel-transforms": "Панель преобразуется",
+      "series-to-columns": "Серия присоединилась к времени",
+      "transformation": "Серия присоединилась к времени",
+      "transformations-description": "Данные таблицы отображаются с преобразованиями, определенными на вкладке Transform.",
+      "transformations-label": "Применить преобразования панели"
     },
     "inspect-json": {
-      "dataframe-description": "Raw data without transformations and field config applied. ",
-      "dataframe-label": "DataFrame JSON (from Query)",
-      "panel-data-description": "The raw model passed to the panel visualization",
-      "panel-data-label": "Panel data",
-      "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
-      "panel-json-label": "Panel JSON",
-      "select-source": "Select source",
-      "unknown": "Unknown Object: {{show}}"
+      "dataframe-description": "Применяются исходные данные без преобразований и конфигурации полей. ",
+      "dataframe-label": "JSON DataFrame (из запроса)",
+      "panel-data-description": "Необработанная модель передана на визуализацию панели",
+      "panel-data-label": "Данные панели",
+      "panel-json-description": "Модель, сохраненная на панели управления JSON, которая настраивает, как все работает.",
+      "panel-json-label": "JSON панели",
+      "select-source": "Выберите источник",
+      "unknown": "Неизвестный объект: {{show}}"
     },
     "inspect-meta": {
-      "no-inspector": "No Metadata Inspector"
+      "no-inspector": "Инспектор метаданных не найден"
     },
     "inspect-stats": {
-      "data-title": "Data source stats",
-      "data-traceids": "Trace IDs",
-      "processing-time": "Data processing time",
-      "queries": "Number of queries",
-      "request-time": "Total request time",
-      "rows": "Total number rows",
-      "table-title": "Stats"
+      "data-title": "Статистика источника данных",
+      "data-traceids": "ID трассировки",
+      "processing-time": "Время обработки данных",
+      "queries": "Количество запросов",
+      "request-time": "Общее время запроса",
+      "rows": "Общее количество строк",
+      "table-title": "Статистика"
     },
     "toolbar": {
-      "add": "Add",
-      "alert-rules": "Alert rules",
-      "mark-favorite": "Mark as favorite",
-      "open-original": "Open original dashboard",
-      "playlist-next": "Go to next dashboard",
-      "playlist-previous": "Go to previous dashboard",
-      "playlist-stop": "Stop playlist",
-      "refresh": "Refresh dashboard",
-      "save": "Save dashboard",
-      "settings": "Dashboard settings",
-      "share": "Share dashboard",
-      "share-button": "Share",
-      "unmark-favorite": "Unmark as favorite"
+      "add": "Добавить",
+      "alert-rules": "Правила оповещений",
+      "mark-favorite": "Пометить как избранное",
+      "open-original": "Открыть оригинальную панель инструментов",
+      "playlist-next": "Перейти к следующей панели",
+      "playlist-previous": "Перейти к предыдущей панели управления",
+      "playlist-stop": "Остановить плейлист",
+      "refresh": "Обновить панель",
+      "save": "Сохранить рабочий стол",
+      "settings": "Настройки панели инструментов",
+      "share": "Поделиться информационной панелью",
+      "share-button": "Поделиться",
+      "unmark-favorite": "Снять пометку избранного"
     },
     "validation": {
-      "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
-      "invalid-json": "Not valid JSON",
-      "tags-expected-array": "tags expected array",
-      "tags-expected-strings": "tags expected array of strings"
+      "invalid-dashboard-id": "Не удалось найти действительный идентификатор Grafana.com",
+      "invalid-json": "Неправильный JSON",
+      "tags-expected-array": "ожидаемый массив тегов",
+      "tags-expected-strings": "теги ожидаемый массив строк"
     }
   },
   "dashboard-import": {
     "file-dropzone": {
-      "primary-text": "Upload dashboard JSON file",
-      "secondary-text": "Drag and drop here or click to browse"
+      "primary-text": "Загрузить JSON файл панели инструментов",
+      "secondary-text": "Перетащите сюда или нажмите для просмотра"
     },
     "form-actions": {
-      "cancel": "Cancel",
-      "load": "Load"
+      "cancel": "Отмена",
+      "load": "Нагрузка"
     },
     "gcom-field": {
-      "label": "Find and import dashboards for common applications at <1></1>",
-      "load-button": "Load",
-      "placeholder": "Grafana.com dashboard URL or ID",
-      "validation-required": "A Grafana dashboard URL or ID is required"
+      "label": "Найти и импортировать рабочие столы для общих приложений по <1></1>",
+      "load-button": "Нагрузка",
+      "placeholder": "URL или ID панели Grafana.com",
+      "validation-required": "Требуется URL или ID панели Grafana"
     },
     "json-field": {
-      "label": "Import via dashboard JSON model",
-      "validation-required": "Need a dashboard JSON model"
+      "label": "Импортировать через модель JSON",
+      "validation-required": "Нужна модель JSON панели мониторинга"
     }
   },
   "dashboard-links": {
     "empty-state": {
-      "button-title": "Add dashboard link",
-      "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <2>Learn more</2>",
-      "title": "There are no dashboard links added yet"
+      "button-title": "Добавить ссылку на панель инструментов",
+      "info-box-content": "Ссылки на приборную панель позволяют размещать ссылки на другие приборные панели и веб-сайты непосредственно под заголовком приборной панели. <2>Подробнее</2>",
+      "title": "Нет добавленных ссылок в приборную панель"
     }
   },
   "dashboard-settings": {
     "annotations": {
-      "title": "Annotations"
+      "title": "Аннотации"
     },
-    "dashboard-delete-button": "Delete dashboard",
+    "dashboard-delete-button": "Удалить рабочий стол",
     "dashboard-delete-modal": {
-      "confirmation-text": "Delete",
-      "delete-button": "Delete",
-      "text": "Do you want to delete this dashboard?",
-      "title": "Delete"
+      "confirmation-text": "Удалить",
+      "delete-button": "Удалить",
+      "text": "Вы хотите удалить эту панель управления?",
+      "title": "Удалить"
     },
     "general": {
-      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
-      "auto-refresh-label": "Auto refresh",
-      "description-label": "Description",
-      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
-      "editable-label": "Editable",
-      "folder-label": "Folder",
-      "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
-      "panel-options-graph-tooltip-label": "Graph tooltip",
-      "panel-options-label": "Panel options",
-      "panels-preload-description": "When enabled all panels will start loading as soon as the dashboard has been loaded.",
-      "panels-preload-label": "Preload panels",
-      "tags-label": "Tags",
-      "title": "General",
-      "title-label": "Title"
+      "auto-refresh-description": "Определите интервалы автообновления, которые должны быть доступны в списке автообновления. Используйте формат '5s' для секунд, '1m' для минут, '1h' для часов, и '1d' для дней (например, '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
+      "auto-refresh-label": "Автообновление",
+      "description-label": "Описание",
+      "editable-description": "Установите в режиме \"только для чтения\", чтобы отключить все редактирования. Перезагрузите панель инструментов, чтобы изменения вступили в силу",
+      "editable-label": "Редактируемый",
+      "folder-label": "Папка",
+      "panel-options-graph-tooltip-description": "Управление подсказками и поведение подсветки при наведении курсора на различные панели. Перезагрузите панель инструментов, чтобы изменения вступили в силу",
+      "panel-options-graph-tooltip-label": "Подсказка к графику",
+      "panel-options-label": "Параметры панели",
+      "panels-preload-description": "Когда включено, все панели начнут загружаться, как только приборная панель будет загружена.",
+      "panels-preload-label": "Предзагрузка панелей",
+      "tags-label": "Теги",
+      "title": "Общие положения",
+      "title-label": "Заголовок"
     },
     "json-editor": {
-      "save-button": "Save changes",
-      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
-      "title": "JSON Model"
+      "save-button": "Сохранить изменения",
+      "subtitle": "Модель JSON ниже - это структура данных, которая определяет панель управления. Она включает в себя настройки панели, настройки панели, макета, запросы и так далее.",
+      "title": "Модель JSON"
     },
     "links": {
-      "title": "Links"
+      "title": "Ссылки"
     },
     "permissions": {
-      "title": "Permissions"
+      "title": "Права доступа"
     },
     "provisioned-delete-modal": {
-      "confirm-button": "OK",
-      "text-1": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
-      "text-2": "See grafana documentation for more information about provisioning. ",
-      "text-3": "File path: {{provisionedId}}",
-      "text-link": "Go to docs page",
-      "title": "Cannot delete provisioned dashboard"
+      "confirm-button": "ОК",
+      "text-1": "Эта панель инструментов управляется подготовкой Grafana и не может быть удалена. Удалите панель инструментов из конфигурационного файла, чтобы удалить её.",
+      "text-2": "См. документацию на графике на графике для более подробной информации. ",
+      "text-3": "Путь к файлу: {{provisionedId}}",
+      "text-link": "Перейти на страницу документации",
+      "title": "Не удается удалить приставную панель"
     },
     "settings": {
-      "title": "Settings"
+      "title": "Настройки"
     },
     "time-picker": {
-      "hide-time-picker": "Hide time picker",
-      "now-delay-description": "Exclude recent data that may be incomplete.",
-      "now-delay-label": "Now delay",
-      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
-      "refresh-live-dashboards-label": "Refresh live dashboards",
-      "time-options-label": "Time options",
-      "time-zone-label": "Time zone",
-      "week-start-label": "Week start"
+      "hide-time-picker": "Скрыть выбор времени",
+      "now-delay-description": "Исключить последние данные, которые могут быть неполными.",
+      "now-delay-label": "Задержка",
+      "refresh-live-dashboards-description": "Постоянно перерисовывать панели, где ссылки на временной диапазон 'now'",
+      "refresh-live-dashboards-label": "Обновить текущие панели инструментов",
+      "time-options-label": "Параметры времени",
+      "time-zone-label": "Часовой пояс",
+      "week-start-label": "Начало недели"
     },
     "variables": {
-      "title": "Variables"
+      "title": "Переменные"
     },
     "versions": {
-      "title": "Versions"
+      "title": "Версии"
     }
   },
   "dashboards": {
     "settings": {
       "variables": {
         "dependencies": {
-          "button": "Show dependencies",
-          "title": "Dependencies"
+          "button": "Показать зависимости",
+          "title": "Зависимости"
         }
       }
     }
   },
   "data-source-list": {
     "empty-state": {
-      "button-title": "Add data source",
-      "pro-tip": "You can also define data sources through configuration files. <2>Learn more</2>",
-      "title": "No data sources defined"
+      "button-title": "Добавить источник данных",
+      "pro-tip": "Вы также можете определить источники данных через конфигурационные файлы. <2>Подробнее</2>",
+      "title": "Источники данных не определены"
     }
   },
   "data-source-picker": {
-    "add-new-data-source": "Configure a new data source",
+    "add-new-data-source": "Настроить новый источник данных",
     "built-in-list": {
-      "description-dashboard": "Reuse query results from other visualizations",
-      "description-grafana": "Discover visualizations using mock data",
-      "description-mixed": "Use multiple data sources"
+      "description-dashboard": "Повторно использовать результаты запроса из других визуализаций",
+      "description-grafana": "Откройте для себя визуализации с помощью данных",
+      "description-mixed": "Использовать несколько источников данных"
     },
     "list": {
-      "no-data-source-message": "No data sources found"
+      "no-data-source-message": "Источников данных не найдено"
     },
     "modal": {
-      "configure-new-data-source": "Open a new tab and configure a data source",
-      "input-placeholder": "Select data source",
-      "title": "Select data source"
+      "configure-new-data-source": "Открытие новой вкладки и настройка источника данных",
+      "input-placeholder": "Выберите источник данных",
+      "title": "Выберите источник данных"
     },
-    "open-advanced-button": "Open advanced data source picker"
+    "open-advanced-button": "Открыть расширенный выбор источника данных"
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Add new data source"
+      "label": "Добавить новый источник данных"
     },
     "empty-state": {
-      "message": "No data sources found"
+      "message": "Источников данных не найдено"
     }
   },
-  "Description": "Description",
+  "Description": "Описание",
   "explore": {
-    "add-to-dashboard": "Add to dashboard",
+    "add-to-dashboard": "Добавить в панель управления",
     "add-to-library-modal": {
-      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
-      "data-source-name": "Data source name",
-      "data-source-type": "Data source type",
-      "description": "Description",
-      "info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "query": "Query",
-      "title": "Add query to Query Library",
-      "visibility": "Visibility"
+      "auto-star": "Авто-звёздочка этого запроса для добавления его в избранный список в Библиотеке запросов.",
+      "data-source-name": "Имя источника данных",
+      "data-source-type": "Тип источника данных",
+      "description": "Описание",
+      "info": "Вы собираетесь сохранить этот запрос. После сохранения вы можете легко получить доступ к нему на вкладке \"Библиотека запросов\" для дальнейшего использования и ссылки.",
+      "query": "Запрос",
+      "title": "Добавить запрос в библиотеку запросов",
+      "visibility": "Видимость"
     },
     "logs": {
-      "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
-      "no-logs-found": "No logs found.",
-      "scan-for-older-logs": "Scan for older logs",
-      "stop-scan": "Stop scan"
+      "maximum-pinned-logs": "Достигнуто максимальное количество прикрепленных журналов {{PINNED_LOGS_LIMIT}} . Отпишите журнал, чтобы добавить другой.",
+      "no-logs-found": "Журналы не найдены.",
+      "scan-for-older-logs": "Сканировать старые журналы",
+      "stop-scan": "Остановить сканирование"
     },
     "query-library": {
-      "delete-query": "Delete query",
-      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
-      "delete-query-title": "Delete query",
-      "query-deleted": "Query deleted"
+      "delete-query": "Удалить запрос",
+      "delete-query-text": "Вы собираетесь удалить этот запрос из библиотеки запросов. Это действие нельзя отменить. Вы хотите продолжить?",
+      "delete-query-title": "Удалить запрос",
+      "query-deleted": "Запрос удален"
     },
     "rich-history": {
-      "close-tooltip": "Close query history",
-      "datasource-a-z": "Data source A-Z",
-      "datasource-z-a": "Data source Z-A",
-      "newest-first": "Newest first",
-      "oldest-first": "Oldest first",
-      "query-history": "Query history",
-      "query-library": "Query library",
-      "settings": "Settings",
-      "starred": "Starred"
+      "close-tooltip": "Закрыть историю запросов",
+      "datasource-a-z": "Источник данных A-Z",
+      "datasource-z-a": "Источник данных Z-A",
+      "newest-first": "Сначала новые",
+      "oldest-first": "Сначала старые",
+      "query-history": "История запросов",
+      "query-library": "Библиотека запросов",
+      "settings": "Настройки",
+      "starred": "Помеченные"
     },
     "rich-history-card": {
-      "add-comment-form": "Add comment form",
-      "add-comment-tooltip": "Add comment",
-      "add-to-library": "Add to library",
-      "cancel": "Cancel",
-      "confirm-delete": "Delete",
-      "copy-query-tooltip": "Copy query to clipboard",
-      "copy-shortened-link-tooltip": "Copy shortened link to clipboard",
-      "datasource-icon-label": "Data source icon",
-      "datasource-name-label": "Data source name",
-      "datasource-not-exist": "Data source does not exist anymore",
-      "delete-query-confirmation-title": "Delete",
-      "delete-query-title": "Delete query",
-      "delete-query-tooltip": "Delete query",
-      "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
-      "edit-comment-tooltip": "Edit comment",
-      "optional-description": "An optional description of what the query does.",
-      "query-comment-label": "Query comment",
-      "query-template-added": "Query template successfully added to the library",
-      "query-text-label": "Query text",
-      "save-comment": "Save comment",
-      "star-query-tooltip": "Star query",
-      "unstar-query-tooltip": "Unstar query",
-      "update-comment-form": "Update comment form"
+      "add-comment-form": "Добавить форму комментария",
+      "add-comment-tooltip": "Добавить комментарий",
+      "add-to-library": "Добавить в библиотеку",
+      "cancel": "Отмена",
+      "confirm-delete": "Удалить",
+      "copy-query-tooltip": "Копировать запрос в буфер обмена",
+      "copy-shortened-link-tooltip": "Копировать сокращенную ссылку в буфер обмена",
+      "datasource-icon-label": "Значок источника данных",
+      "datasource-name-label": "Имя источника данных",
+      "datasource-not-exist": "Источник данных больше не существует",
+      "delete-query-confirmation-title": "Удалить",
+      "delete-query-title": "Удалить запрос",
+      "delete-query-tooltip": "Удалить запрос",
+      "delete-starred-query-confirmation-text": "Вы уверены, что хотите навсегда удалить избранный запрос?",
+      "edit-comment-tooltip": "Редактировать комментарий",
+      "optional-description": "Необязательное описание того, что делает запрос.",
+      "query-comment-label": "Запрос комментария",
+      "query-template-added": "Шаблон запроса успешно добавлен в библиотеку",
+      "query-text-label": "Текст запроса",
+      "save-comment": "Сохранить комментарий",
+      "star-query-tooltip": "Звездный запрос",
+      "unstar-query-tooltip": "Убрать Избранное",
+      "update-comment-form": "Изменить форму комментария"
     },
     "rich-history-container": {
-      "loading": "Loading..."
+      "loading": "Загрузка..."
     },
     "rich-history-notification": {
-      "query-copied": "Query copied to clipboard",
-      "query-deleted": "Query deleted"
+      "query-copied": "Запрос скопирован в буфер обмена",
+      "query-deleted": "Запрос удален"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "Displaying {{ count }} queries",
-      "displaying-queries": "{{ count }} queries",
-      "filter-aria-label": "Filter queries for data sources(s)",
-      "filter-history": "Filter history",
-      "filter-placeholder": "Filter queries for data sources(s)",
-      "history-local": "The history is local to your browser and is not shared with others.",
-      "loading": "Loading...",
-      "loading-results": "Loading results...",
-      "search-placeholder": "Search queries",
-      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
-      "sort-aria-label": "Sort queries",
-      "sort-placeholder": "Sort queries by"
+      "displaying-partial-queries": "Отображаются запросы {{ count }}",
+      "displaying-queries": "{{ count }} запросов",
+      "filter-aria-label": "Фильтровать запросы к источникам данных",
+      "filter-history": "Фильтр истории",
+      "filter-placeholder": "Фильтровать запросы к источникам данных",
+      "history-local": "История локально для вашего браузера и не передается другим пользователям.",
+      "loading": "Загрузка...",
+      "loading-results": "Загрузка результатов...",
+      "search-placeholder": "Поисковые запросы",
+      "showing-queries": "Показаны {{ shown }} из {{ total }} <0>Загрузить больше</0>",
+      "sort-aria-label": "Сортировать запросы",
+      "sort-placeholder": "Сортировать запросы по"
     },
     "rich-history-settings-tab": {
-      "alert-info": "Grafana will keep entries up to {{optionLabel}}.Starred entries won't be deleted.",
-      "change-default-tab": "Change the default active tab from “Query history” to “Starred”",
-      "clear-history-info": "Delete all of your query history, permanently.",
-      "clear-query-history": "Clear query history",
-      "clear-query-history-button": "Clear query history",
-      "delete-confirm": "Delete",
-      "delete-confirm-text": "Are you sure you want to permanently delete your query history?",
-      "delete-title": "Delete",
-      "history-time-span": "History time span",
-      "history-time-span-description": "Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.",
-      "only-show-active-datasource": "Only show queries for data source currently active in Explore",
-      "query-history-deleted": "Query history deleted",
+      "alert-info": "Grafana хранит записи до {{optionLabel}}. Избранные записи не будут удалены.",
+      "change-default-tab": "Изменить вкладку по умолчанию с «История запросов» на «Избранное»",
+      "clear-history-info": "Удалить всю историю запросов, навсегда.",
+      "clear-query-history": "Очистить историю запросов",
+      "clear-query-history-button": "Очистить историю запросов",
+      "delete-confirm": "Удалить",
+      "delete-confirm-text": "Вы уверены, что хотите навсегда удалить историю запросов?",
+      "delete-title": "Удалить",
+      "history-time-span": "Расстояние времени истории",
+      "history-time-span-description": "Выберите период времени, за который Grafana сохранит историю запросов. До записей {{MAX_HISTORY_ITEMS}} будут сохраняться.",
+      "only-show-active-datasource": "Показывать запросы только для источника данных, который в настоящее время активен в Обзоре",
+      "query-history-deleted": "История запросов удалена",
       "retention-period": {
-        "1-week": "1 week",
-        "2-days": "2 days",
-        "2-weeks": "2 weeks",
-        "5-days": "5 days"
+        "1-week": "1 неделя",
+        "2-days": "2 дня",
+        "2-weeks": "2 недели",
+        "5-days": "5 дней"
       }
     },
     "rich-history-starred-tab": {
-      "filter-queries-aria-label": "Filter queries for data sources(s)",
-      "filter-queries-placeholder": "Filter queries for data sources(s)",
-      "loading": "Loading...",
-      "loading-results": "Loading results...",
-      "local-history-message": "The history is local to your browser and is not shared with others.",
-      "search-queries-placeholder": "Search queries",
-      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
-      "sort-queries-aria-label": "Sort queries",
-      "sort-queries-placeholder": "Sort queries by"
+      "filter-queries-aria-label": "Фильтровать запросы к источникам данных",
+      "filter-queries-placeholder": "Фильтровать запросы к источникам данных",
+      "loading": "Загрузка...",
+      "loading-results": "Загрузка результатов...",
+      "local-history-message": "История локально для вашего браузера и не передается другим пользователям.",
+      "search-queries-placeholder": "Поисковые запросы",
+      "showing-queries": "Показаны {{ shown }} из {{ total }} <0>Загрузить больше</0>",
+      "sort-queries-aria-label": "Сортировать запросы",
+      "sort-queries-placeholder": "Сортировать запросы по"
     },
     "rich-history-utils": {
-      "a-week-ago": "a week ago",
-      "days-ago": "{{num}} days ago",
-      "default-from": "now-1h",
-      "default-to": "now",
-      "today": "today",
-      "two-weeks-ago": "two weeks ago",
-      "yesterday": "yesterday"
+      "a-week-ago": "неделю назад",
+      "days-ago": "{{num}} дней назад",
+      "default-from": "сейчас 1ч",
+      "default-to": "сейчас",
+      "today": "сегодня",
+      "two-weeks-ago": "две недели назад",
+      "yesterday": "вчера"
     },
     "rich-history-utils-notification": {
-      "saving-failed": "Saving rich history failed",
-      "update-failed": "Rich History update failed"
+      "saving-failed": "Не удалось сохранить богатую историю",
+      "update-failed": "Не удалось обновить богатую историю"
     },
     "run-query": {
-      "left-pane": "Left pane",
-      "right-pane": "Right pane",
-      "run-query-button": "Run query",
-      "switch-datasource-button": "Switch data source and run query"
+      "left-pane": "Левая панель",
+      "right-pane": "Правая панель",
+      "run-query-button": "Выполнить запрос",
+      "switch-datasource-button": "Переключить источник данных и запустить запрос"
     },
     "secondary-actions": {
-      "query-add-button": "Add query",
-      "query-add-button-aria-label": "Add query",
-      "query-history-button": "Query history",
-      "query-history-button-aria-label": "Query history",
-      "query-inspector-button": "Query inspector",
-      "query-inspector-button-aria-label": "Query inspector"
+      "query-add-button": "Добавить запрос",
+      "query-add-button-aria-label": "Добавить запрос",
+      "query-history-button": "История запросов",
+      "query-history-button-aria-label": "История запросов",
+      "query-inspector-button": "Инспектор запроса",
+      "query-inspector-button-aria-label": "Инспектор запроса"
     },
     "table": {
-      "no-data": "0 series returned",
-      "title": "Table",
-      "title-with-name": "Table - {{name}}"
+      "no-data": "Возвращено 0 серий",
+      "title": "Таблица",
+      "title-with-name": "Таблица - {{name}}"
     },
     "toolbar": {
-      "aria-label": "Explore toolbar",
-      "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy absolute URL",
-      "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
-      "copy-links-normal-category": "Normal URL links",
-      "copy-shortened-link": "Copy shortened URL",
-      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
-      "copy-shortened-link-menu": "Open copy link options",
-      "refresh-picker-cancel": "Cancel",
-      "refresh-picker-run": "Run query",
-      "split-close": " Close ",
-      "split-close-tooltip": "Close split pane",
-      "split-narrow": "Narrow pane",
-      "split-title": "Split",
-      "split-tooltip": "Split the pane",
-      "split-widen": "Widen pane"
+      "aria-label": "Изучить панель инструментов",
+      "copy-link": "Копировать URL",
+      "copy-link-abs-time": "Копировать абсолютный URL",
+      "copy-links-absolute-category": "URL-ссылки с временной синхронизацией (нетронутый диапазон времени)",
+      "copy-links-normal-category": "Обычный URL ссылки",
+      "copy-shortened-link": "Копировать сокращенный URL",
+      "copy-shortened-link-abs-time": "Копировать абсолютный сокращенный URL",
+      "copy-shortened-link-menu": "Открыть параметры ссылки на копию",
+      "refresh-picker-cancel": "Отмена",
+      "refresh-picker-run": "Выполнить запрос",
+      "split-close": " Закрыть ",
+      "split-close-tooltip": "Закрыть разделенную панель",
+      "split-narrow": "Узкая панель",
+      "split-title": "Разделить",
+      "split-tooltip": "Разделить панель",
+      "split-widen": "Широкая панель"
     }
   },
   "explore-metrics": {
-    "viewBy": "View by"
+    "viewBy": "Вид по"
   },
   "export": {
     "json": {
-      "cancel-button": "Cancel",
-      "copy-button": "Copy to clipboard",
-      "download-button": "Download file",
-      "download-successful_toast_message": "Your JSON has been downloaded",
-      "export-externally-label": "Export the dashboard to use in another instance",
-      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Save dashboard JSON"
+      "cancel-button": "Отмена",
+      "copy-button": "Копировать в буфер обмена",
+      "download-button": "Скачать файл",
+      "download-successful_toast_message": "Ваш JSON был загружен",
+      "export-externally-label": "Экспорт панели инструментов для использования в другом экземпляре",
+      "info-text": "Скопируйте или загрузите файл JSON, содержащий JSON вашей панели инструментов",
+      "title": "Сохранить JSON"
     },
     "menu": {
-      "export-as-json-label": "Export",
-      "export-as-json-tooltip": "Export"
+      "export-as-json-label": "Экспорт",
+      "export-as-json-tooltip": "Экспорт"
     }
   },
   "folder-picker": {
-    "loading": "Loading folders..."
+    "loading": "Загрузка папок..."
   },
   "grafana-ui": {
     "drawer": {
-      "close": "Close"
+      "close": "Закрыть"
     },
     "modal": {
-      "close-tooltip": "Close"
+      "close-tooltip": "Закрыть"
     },
     "segment-async": {
-      "error": "Failed to load options",
-      "loading": "Loading options...",
-      "no-options": "No options found"
+      "error": "Не удалось загрузить параметры",
+      "loading": "Загрузка опций...",
+      "no-options": "Опции не найдены"
     },
     "select": {
-      "no-options-label": "No options found",
-      "placeholder": "Choose"
+      "no-options-label": "Опции не найдены",
+      "placeholder": "Выбрать"
     },
     "spinner": {
-      "aria-label": "Loading"
+      "aria-label": "Загрузка"
     }
   },
   "graph": {
     "container": {
-      "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",
-      "show-all-series": "Show all {{length}}",
-      "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
-      "title": "Graph"
+      "content": "Оказание слишком большого количества серий в одной панели может повлиять на производительность и сделать данные труднее читать. Подумайте об уточнении запросов.",
+      "show-all-series": "Показать все {{length}}",
+      "show-only-series": "Показаны только серии {{MAX_NUMBER_OF_TIME_SERIES}}",
+      "title": "График"
     }
   },
   "help-modal": {
     "shortcuts-category": {
-      "dashboard": "Dashboard",
-      "focused-panel": "Focused panel",
-      "global": "Global",
-      "time-range": "Time range"
+      "dashboard": "Панель",
+      "focused-panel": "Фокусная панель",
+      "global": "Глобально",
+      "time-range": "Диапазон времени"
     },
     "shortcuts-description": {
-      "change-theme": "Change theme",
-      "collapse-all-rows": "Collapse all rows",
-      "copy-time-range": "Copy time range",
-      "dashboard-settings": "Dashboard settings",
-      "duplicate-panel": "Duplicate Panel",
-      "exit-edit/setting-views": "Exit edit/setting views",
-      "expand-all-rows": "Expand all rows",
-      "go-to-dashboards": "Go to Dashboards",
-      "go-to-explore": "Go to Explore",
-      "go-to-home-dashboard": "Go to Home Dashboard",
-      "go-to-profile": "Go to Profile",
-      "make-time-range-permanent": "Make time range absolute/permanent",
-      "move-time-range-back": "Move time range back",
-      "move-time-range-forward": "Move time range forward",
-      "open-search": "Open search",
-      "open-shared-modal": "Open Panel Share Modal",
-      "paste-time-range": "Paste time range",
-      "refresh-all-panels": "Refresh all panels",
-      "remove-panel": "Remove Panel",
-      "save-dashboard": "Save dashboard",
-      "show-all-shortcuts": "Show all keyboard shortcuts",
-      "toggle-active-mode": "Toggle in-active / view mode",
-      "toggle-all-panel-legends": "Toggle all panel legends",
-      "toggle-auto-fit": "Toggle auto fit panels (experimental feature)",
-      "toggle-exemplars": "Toggle exemplars in all panel",
-      "toggle-graph-crosshair": "Toggle shared graph crosshair",
-      "toggle-kiosk": "Toggle kiosk mode (hides top nav)",
-      "toggle-panel-edit": "Toggle panel edit view",
-      "toggle-panel-fullscreen": "Toggle panel fullscreen view",
-      "toggle-panel-legend": "Toggle panel legend",
-      "zoom-out-time-range": "Zoom out time range"
+      "change-theme": "Сменить тему",
+      "collapse-all-rows": "Свернуть все строки",
+      "copy-time-range": "Копировать диапазон времени",
+      "dashboard-settings": "Настройки панели инструментов",
+      "duplicate-panel": "Дублировать панель",
+      "exit-edit/setting-views": "Выход из режима/настройки просмотров",
+      "expand-all-rows": "Развернуть все строки",
+      "go-to-dashboards": "Перейти к панели инструментов",
+      "go-to-explore": "Перейти к исследованию",
+      "go-to-home-dashboard": "Перейти на главную панель",
+      "go-to-profile": "Перейти в профиль",
+      "make-time-range-permanent": "Сделать диапазон времени абсолютным/постоянным",
+      "move-time-range-back": "Переместить диапазон времени назад",
+      "move-time-range-forward": "Период перемещения вперед",
+      "open-search": "Открыть поиск",
+      "open-shared-modal": "Открыть общий доступ к панели",
+      "paste-time-range": "Вставить диапазон времени",
+      "refresh-all-panels": "Обновить все панели",
+      "remove-panel": "Удалить панель",
+      "save-dashboard": "Сохранить рабочий стол",
+      "show-all-shortcuts": "Показать все сочетания клавиш",
+      "toggle-active-mode": "Активный режим просмотра",
+      "toggle-all-panel-legends": "Переключить все легенды панели",
+      "toggle-auto-fit": "Переключить автоматическое помещение панелей (экспериментальная функция)",
+      "toggle-exemplars": "Вкл/выкл образцы во всех панелях",
+      "toggle-graph-crosshair": "Переключить прицел общего графика",
+      "toggle-kiosk": "Переключить режим киоска (скрывает верхнюю навигацию)",
+      "toggle-panel-edit": "Вкл/выкл вид редактирования панели",
+      "toggle-panel-fullscreen": "Переключить полноэкранный вид панели",
+      "toggle-panel-legend": "Переключить легенду панели",
+      "zoom-out-time-range": "Масштабирование"
     },
-    "title": "Shortcuts"
+    "title": "Ярлыки"
   },
   "inspector": {
     "query": {
-      "collapse-all": "Collapse all",
-      "copy-to-clipboard": "Copy to clipboard",
-      "description": "Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a new query. Click refresh button below to trigger a new query.",
-      "expand-all": "Expand all",
-      "no-data": "No request and response collected yet. Hit refresh button",
-      "refresh": "Refresh"
+      "collapse-all": "Свернуть все",
+      "copy-to-clipboard": "Копировать в буфер обмена",
+      "description": "Query inspector позволяет просматривать запросы и отвечать на них. Чтобы собрать эти данные, Grafana должна выдать новый запрос. Нажмите кнопку «Обновить», чтобы запустить новый запрос.",
+      "expand-all": "Развернуть все",
+      "no-data": "Нет запросов и ответов. Нажмите кнопку \"Обновить\"",
+      "refresh": "Обновить"
     }
   },
-  "Labels": "Labels",
+  "Labels": "Метки",
   "library-panel": {
     "add-modal": {
-      "cancel": "Cancel",
-      "create": "Create library panel",
-      "error": "Library panel with this name already exists",
-      "folder": "Save in folder",
-      "folder-description": "Library panel permissions are derived from the folder permissions",
-      "name": "Library panel name"
+      "cancel": "Отмена",
+      "create": "Создать панель библиотеки",
+      "error": "Панель библиотеки с таким названием уже существует",
+      "folder": "Сохранить в папке",
+      "folder-description": "Разрешения на панель библиотек получены из прав доступа к папке",
+      "name": "Название панели библиотеки"
     },
     "add-widget": {
-      "title": "Add panel from panel library"
+      "title": "Добавить панель из библиотеки панели"
     },
     "empty-state": {
-      "message": "You haven't created any library panels yet",
-      "more-info": "Create a library panel from any existing dashboard panel through the panel context menu. <2>Learn more</2>"
+      "message": "Вы еще не создали ни одной панели библиотеки",
+      "more-info": "Создать панель библиотеки из любой существующей панели управления через контекстное меню панели. <2>Подробнее</2>"
     }
   },
   "library-panels": {
     "empty-state": {
-      "message": "No library panels found"
+      "message": "Панели библиотеки не найдены"
     },
     "modal": {
-      "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "button-cancel": "Cancel",
-      "button-view-panel1": "View panel in {{label}}...",
-      "button-view-panel2": "View panel in dashboard...",
-      "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
-      "select-no-options-message": "No dashboards found",
-      "select-placeholder": "Start typing to search for dashboard",
-      "title": "View panel in dashboard"
+      "body_one": "Эта панель используется в панели управления {{count}} . Пожалуйста, выберите панель управления для просмотра в следующих случаях:",
+      "body_other": "Эта панель используется в панели управления {{count}} . Пожалуйста, выберите панель управления для просмотра в следующих случаях:",
+      "button-cancel": "Отмена",
+      "button-view-panel1": "Открыть панель в {{label}}...",
+      "button-view-panel2": "Открыть панель управления...",
+      "panel-not-linked": "Панель не связана с панелью. Добавьте панель в панель управления и повторите попытку.",
+      "select-no-options-message": "Панели инструментов не найдены",
+      "select-placeholder": "Начните вводить для поиска панели инструментов",
+      "title": "Показать панель на панели"
     },
     "save": {
-      "error": "Error saving library panel: \"{{errorMsg}}\"",
-      "success": "Library panel saved"
+      "error": "Ошибка сохранения панели библиотеки: \"{{errorMsg}}\"",
+      "success": "Панель библиотеки сохранена"
     }
   },
   "link": {
     "share": {
-      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
-      "config-alert-title": "Link configuration",
-      "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
-      "copy-link-button": "Copy link",
-      "copy-to-clipboard": "Link copied to clipboard",
-      "short-url-label": "Shorten link",
-      "time-range-description": "Change the current relative time range to an absolute time range",
-      "time-range-label": "Lock time range"
+      "config-alert-description": "Обновление ваших настроек изменит ссылку на копию по умолчанию, чтобы включить эти изменения.",
+      "config-alert-title": "Конфигурация ссылки",
+      "config-description": "Создайте персонализированную прямую ссылку, чтобы поделиться вашей панелью управления внутри вашей организации, со следующими настройками:",
+      "copy-link-button": "Копировать ссылку",
+      "copy-to-clipboard": "Ссылка скопирована в буфер обмена",
+      "short-url-label": "Сократить ссылку",
+      "time-range-description": "Изменить текущий относительный диапазон времени на абсолютный диапазон времени",
+      "time-range-label": "Период блокировки"
     }
   },
   "login": {
     "error": {
-      "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
-      "invalid-user-or-password": "Invalid username or password",
-      "title": "Login failed",
-      "unknown": "Unknown error occurred"
+      "blocked": "Вы превысили количество попыток входа для этого пользователя. Пожалуйста, повторите попытку позже.",
+      "invalid-user-or-password": "Неверное имя пользователя или пароль",
+      "title": "Вход не удался",
+      "unknown": "Произошла неизвестная ошибка"
     },
-    "forgot-password": "Forgot your password?",
+    "forgot-password": "Забыли пароль?",
     "form": {
-      "password-label": "Password",
-      "password-placeholder": "password",
-      "password-required": "Password is required",
-      "submit-label": "Log in",
-      "submit-loading-label": "Logging in...",
-      "username-label": "Email or username",
-      "username-placeholder": "email or username",
-      "username-required": "Email or username is required"
+      "password-label": "Пароль",
+      "password-placeholder": "пароль",
+      "password-required": "Требуется пароль",
+      "submit-label": "Вход",
+      "submit-loading-label": "Вход...",
+      "username-label": "Email или имя пользователя",
+      "username-placeholder": "email или имя пользователя",
+      "username-required": "Требуется адрес электронной почты или имя пользователя"
     },
     "services": {
-      "sing-in-with-prefix": "Sign in with {{serviceName}}"
+      "sing-in-with-prefix": "Войти с помощью {{serviceName}}"
     },
     "signup": {
-      "button-label": "Sign up",
-      "new-to-question": "New to Grafana?"
+      "button-label": "Регистрация",
+      "new-to-question": "Новичок в Grafana?"
     }
   },
   "migrate-to-cloud": {
     "build-snapshot": {
-      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
-      "title": "No snapshot exists",
-      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
+      "description": "Этот инструмент может перенести ресурсы из этой установки в облачный стек. Чтобы начать, вам нужно создать снимок этой установки. Создание снимка обычно занимает менее двух минут. Снимки хранятся наряду с этой установкой Grafana.",
+      "title": "Ничего не существует",
+      "when-complete": "Как только снимок будет завершен, вы сможете загрузить его в ваше облако."
     },
     "building-snapshot": {
-      "description": "We're creating a point-in-time snapshot of the current state of this installation. Once the snapshot is complete. you'll be able to upload it to Grafana Cloud.",
-      "description-eta": "Creating a snapshot typically takes less than two minutes.",
-      "title": "Building installation snapshot"
+      "description": "Мы создаем краткий обзор текущего состояния этой установки. Как только снимок завершится, вы сможете загрузить его в Облако Графана.",
+      "description-eta": "Создание снимка обычно занимает менее двух минут.",
+      "title": "Создание снимка установки"
     },
     "can-i-move": {
-      "body": "Once you connect this installation to a cloud stack, you'll be able to upload data sources and dashboards.",
-      "link-title": "Learn about migrating other settings",
-      "title": "Can I move this installation to Grafana Cloud?"
+      "body": "После подключения этой установки к облачному стеку, вы сможете загружать источники данных и панели управления.",
+      "link-title": "Узнайте о переносе других настроек",
+      "title": "Могу ли я перенести эту установку в Облако Grafan?"
     },
     "connect-modal": {
-      "body-cloud-stack": "You'll also need a cloud stack. If you just signed up, we'll automatically create your first stack. If you have an account, you'll need to select or create a stack.",
-      "body-get-started": "To get started, you'll need a Grafana.com account.",
-      "body-sign-up": "Sign up for a Grafana.com account",
-      "body-token": "Your self-managed Grafana installation needs special access to securely migrate content. You'll need to create a migration token on your chosen cloud stack.",
-      "body-token-field": "Migration token",
-      "body-token-field-placeholder": "Paste token here",
-      "body-token-instructions": "Log into your cloud stack and navigate to Administration, General, Migrate to Grafana Cloud. Create a migration token on that screen and paste the token here.",
-      "body-view-stacks": "View my cloud stacks",
-      "cancel": "Cancel",
-      "connect": "Connect to this stack",
-      "connecting": "Connecting to this stack...",
-      "title": "Connect to a cloud stack",
-      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
-      "token-error-title": "Error saving token",
-      "token-required-error": "Migration token is required"
+      "body-cloud-stack": "Вам также понадобится стек облака. Если вы только что зарегистрировались, мы автоматически создадим ваш первый стек. Если у вас есть учетная запись, вам нужно выбрать или создать стек.",
+      "body-get-started": "Для начала вам нужен аккаунт Grafana.com.",
+      "body-sign-up": "Зарегистрируйте аккаунт Grafana.com",
+      "body-token": "Установленная вами версия Grafana требует специального доступа к безопасному переносу контента. Вам нужно создать токен миграции в выбранном облачном стеке.",
+      "body-token-field": "Токен миграции",
+      "body-token-field-placeholder": "Вставьте маркер здесь",
+      "body-token-instructions": "Войдите в свой облачный стек и перейдите к администрации, генерации, переместите в Облако Grafa. Создайте маркер миграции на этом экране и вставьте маркер здесь.",
+      "body-view-stacks": "Просмотр моих стеков в облаке",
+      "cancel": "Отмена",
+      "connect": "Подключиться к этому стеку",
+      "connecting": "Подключение к этому стеку...",
+      "title": "Подключиться к облачному стеку",
+      "token-error-description": "Произошла ошибка при сохранении токена. Смотрите журналы сервера Grafana для получения более подробной информации.",
+      "token-error-title": "Ошибка при сохранении токена",
+      "token-required-error": "Требуется токен миграции"
     },
     "cta": {
-      "button": "Migrate this instance to Cloud",
-      "header": "Let us manage your Grafana stack"
+      "button": "Перенести этот экземпляр в Облако",
+      "header": "Позвольте нам управлять стеком Grafana"
     },
     "delete-migration-token-confirm": {
-      "body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
-      "confirm-button": "Delete token",
-      "error-title": "Error deleting token",
-      "title": "Delete migration token"
+      "body": "Если вы уже использовали этот токен при самоуправляемой установке, то эта установка больше не сможет загружать контент.",
+      "confirm-button": "Удалить токен",
+      "error-title": "Ошибка удаления токена",
+      "title": "Удалить токен миграции"
     },
     "disconnect-modal": {
-      "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
-      "cancel": "Cancel",
-      "disconnect": "Disconnect",
-      "disconnecting": "Disconnecting...",
-      "error": "There was an error disconnecting",
-      "title": "Disconnect from cloud stack"
+      "body": "Это удалит токен миграции из этой установки. Если вы хотите загрузить больше ресурсов в будущем, вам нужно будет ввести новый маркер миграции.",
+      "cancel": "Отмена",
+      "disconnect": "Отключиться",
+      "disconnecting": "Отключение...",
+      "error": "Произошла ошибка при отключении",
+      "title": "Отсоединиться от облачного стека"
     },
     "get-started": {
-      "body": "The migration process must be started from your self-managed Grafana instance.",
-      "configure-pdc-link": "Configure PDC for this stack",
-      "link-title": "Learn more about Private Data Source Connect",
-      "step-1": "Log in to your self-managed instance and navigate to Administration, General, Migrate to Grafana Cloud.",
-      "step-2": "Select \"Migrate this instance to Cloud\".",
-      "step-3": "You'll be prompted for a migration token. Generate one from this screen.",
-      "step-4": "In your self-managed instance, select \"Upload everything\" to upload data sources and dashboards to this cloud stack.",
-      "step-5": "If some of your data sources will not work over the public internet, you’ll need to install Private Data Source Connect in your self-managed environment.",
-      "title": "Performing a migration"
+      "body": "Процесс миграции должен быть запущен из самостоятельного экземпляра Grafana.",
+      "configure-pdc-link": "Настроить PDC для этого стека",
+      "link-title": "Узнайте больше о подключении к личному источнику данных",
+      "step-1": "Войдите в самоуправляемый экземпляр и перейдите к администрированию, Общему, Перейдите в Облако Графана.",
+      "step-2": "Выберите \"Migrate this instance to Cloud\".",
+      "step-3": "Вам будет предложено ввести токен миграции. Сгенерировать его с этого экрана.",
+      "step-4": "В вашем самоуправляемом экземпляре выберите \"Загрузить все\" для загрузки источников данных и панели инструментов в этот облачный стек.",
+      "step-5": "Если некоторые из ваших источников данных не будут работать через публичный интернет, вам нужно установить Приватный Источник Данных Подключения в вашей самоуправляемой среде.",
+      "title": "Выполнение миграции"
     },
     "is-it-secure": {
-      "body": "Grafana Labs is committed to maintaining the highest standards of data privacy and security. By implementing industry-standard security technologies and procedures, we help protect our customers' data from unauthorized access, use, or disclosure.",
-      "link-title": "Grafana Labs Trust Center",
-      "title": "Is it secure?"
+      "body": "Grafana Labs обязуется поддерживать самые высокие стандарты конфиденциальности и безопасности данных. Реализовав стандартные технологии и процедуры безопасности, мы помогаем защитить данные наших клиентов от несанкционированного доступа, использования или раскрытия информации.",
+      "link-title": "Центр доверия Grafana Labs",
+      "title": "Является ли это безопасным?"
     },
     "migrate-to-this-stack": {
-      "body": "You can migrate some resources from your self-managed Grafana installation to this cloud stack. To do this securely, you'll need to generate a migration token. Your self-managed instance will use the token to authenticate with this cloud stack.",
-      "link-title": "View the full migration guide",
-      "title": "Let us help you migrate to this stack"
+      "body": "Вы можете перенести ресурсы из самоуправляемой установки Grafana в это облако. Чтобы безопасно сделать это, вам нужно сгенерировать токен миграции. Ваш самоуправляемый экземпляр будет использовать токен для аутентификации в этом облачном стеке.",
+      "link-title": "Посмотреть полное руководство по миграции",
+      "title": "Позвольте нам помочь вам перейти на этот стек"
     },
     "migration-token": {
-      "delete-button": "Delete token",
-      "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
-      "delete-modal-cancel": "Cancel",
-      "delete-modal-confirm": "Delete",
-      "delete-modal-deleting": "Deleting...",
-      "delete-modal-title": "Delete migration token",
-      "error-body": "Unable to generate a migration token. Please try again later.",
-      "error-title": "Something went wrong",
-      "generate-button": "Generate a migration token",
-      "generate-button-loading": "Generating a migration token...",
-      "modal-close": "Close",
-      "modal-copy-and-close": "Copy to clipboard and close",
-      "modal-copy-button": "Copy to clipboard",
-      "modal-field-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
-      "modal-field-label": "Token",
-      "modal-title": "Migration token created",
-      "status": "Current status: <2></2>"
+      "delete-button": "Удалить токен",
+      "delete-modal-body": "Если вы уже использовали этот токен при самоуправляемой установке, то эта установка больше не сможет загружать контент.",
+      "delete-modal-cancel": "Отмена",
+      "delete-modal-confirm": "Удалить",
+      "delete-modal-deleting": "Удаление...",
+      "delete-modal-title": "Удалить токен миграции",
+      "error-body": "Не удается сгенерировать токен миграции. Пожалуйста, повторите попытку позже.",
+      "error-title": "Что-то пошло не так",
+      "generate-button": "Создать токен миграции",
+      "generate-button-loading": "Создание токена миграции...",
+      "modal-close": "Закрыть",
+      "modal-copy-and-close": "Копировать в буфер обмена и закрыть",
+      "modal-copy-button": "Копировать в буфер обмена",
+      "modal-field-description": "Скопируйте токен сейчас, так как вы не сможете увидеть его снова. Потеря токена требует создания нового.",
+      "modal-field-label": "Токен",
+      "modal-title": "Токен миграции создан",
+      "status": "Текущий статус: <2></2>"
     },
     "pdc": {
-      "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
-      "link-title": "Learn about PDC",
-      "title": "Not all my data sources are on the public internet"
+      "body": "Распространение информации о ваших источниках данных в Интернете может вызвать проблемы безопасности. Подключение к личному источнику данных (PDC) позволяет Grafana Cloud получить доступ к существующим источникам данных через безопасный сетевой туннель.",
+      "link-title": "Узнайте о PDC",
+      "title": "Не все мои источники данных находятся в интернете"
     },
     "pricing": {
-      "body": "Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires, you'll be billed based on usage over the free plan limits.",
-      "link-title": "Grafana Cloud pricing",
-      "title": "How much does it cost?"
+      "body": "Grafana Cloud имеет щедрый бесплатный план и 14-дневную пробную версию. По истечении срока пробной версии вы будете выставлены за счет использования в пределах бесплатного тарифа.",
+      "link-title": "Цены на облако Grafana",
+      "title": "Сколько это стоит?"
     },
     "resource-status": {
-      "error-details-button": "Details",
-      "failed": "Error",
-      "migrated": "Uploaded to cloud",
-      "migrating": "Uploading...",
-      "not-migrated": "Not yet uploaded",
-      "unknown": "Unknown"
+      "error-details-button": "Детали",
+      "failed": "Ошибка",
+      "migrated": "Загружено в облако",
+      "migrating": "Загрузка...",
+      "not-migrated": "Еще не загружен",
+      "unknown": "Неизвестен"
     },
     "resource-table": {
-      "unknown-datasource-title": "Data source {{datasourceUID}}",
-      "unknown-datasource-type": "Unknown data source"
+      "unknown-datasource-title": "Источник данных {{datasourceUID}}",
+      "unknown-datasource-type": "Неизвестный источник данных"
     },
     "resource-type": {
-      "dashboard": "Dashboard",
-      "datasource": "Data source",
-      "folder": "Folder",
-      "unknown": "Unknown"
+      "dashboard": "Панель",
+      "datasource": "Источник данных",
+      "folder": "Папка",
+      "unknown": "Неизвестен"
     },
     "summary": {
-      "cancel-snapshot": "Cancel snapshot",
-      "disconnect": "Disconnect",
-      "disconnect-error-description": "See the Grafana server logs for more details",
-      "disconnect-error-title": "There was an error disconnecting",
-      "errored-resource-count": "Errors",
-      "run-migration-error-description": "See the Grafana server logs for more details",
-      "run-migration-error-title": "There was an error migrating your resources",
-      "snapshot-date": "Snapshot timestamp",
-      "snapshot-not-created": "Not yet created",
-      "start-migration": "Build snapshot",
-      "successful-resource-count": "Successfully migrated",
-      "target-stack-title": "Uploading to",
-      "total-resource-count": "Total resources",
-      "upload-migration": "Upload snapshot"
+      "cancel-snapshot": "Отменить снимок",
+      "disconnect": "Отключиться",
+      "disconnect-error-description": "Смотрите журналы сервера Grafana для получения более подробной информации",
+      "disconnect-error-title": "Произошла ошибка при отключении",
+      "errored-resource-count": "Ошибки",
+      "run-migration-error-description": "Смотрите журналы сервера Grafana для получения более подробной информации",
+      "run-migration-error-title": "Произошла ошибка при миграции ваших ресурсов",
+      "snapshot-date": "Метка времени снимка",
+      "snapshot-not-created": "Еще не создано",
+      "start-migration": "Создать снимок",
+      "successful-resource-count": "Успешно мигрировано",
+      "target-stack-title": "Загрузка в",
+      "total-resource-count": "Всего ресурсов",
+      "upload-migration": "Загрузить снимок"
     },
     "token-status": {
-      "active": "Token created and active",
-      "no-active": "No active token",
-      "unknown": "Unknown",
-      "unknown-error": "Error retrieving token"
+      "active": "Токен создан и активен",
+      "no-active": "Нет активных токенов",
+      "unknown": "Неизвестен",
+      "unknown-error": "Ошибка при получении токена"
     },
     "what-is-cloud": {
-      "body": "Grafana cloud is a fully managed cloud-hosted observability platform ideal for cloud native environments. It's everything you love about Grafana without the overhead of maintaining, upgrading, and supporting an installation.",
-      "link-title": "Learn about cloud features",
-      "title": "What is Grafana Cloud?"
+      "body": "Облако Grafana - это полностью управляемая облачная платформа для наблюдения, идеальная для использования в облачных средах. Все что вам нравится в Grafana без накладных расходов на обслуживание, обновление и поддержку установки.",
+      "link-title": "Узнайте о возможностях облака",
+      "title": "Что такое Облако Графана?"
     },
     "why-host": {
-      "body": "In addition to the convenience of managed hosting, Grafana Cloud includes many cloud-exclusive features like SLOs, incident management, machine learning, and powerful observability integrations.",
-      "link-title": "More questions? Talk to an expert",
-      "title": "Why host with Grafana?"
+      "body": "В дополнение к удобству управляемого хостинга, Grafana Cloud включает в себя много облачных эксклюзивных функций, таких как SLOs, управление инцидентами, обучение машины и мощная интеграция с наблюдением.",
+      "link-title": "Больше вопросов? Поговорите с экспертом",
+      "title": "Зачем принимать Grafan?"
     }
   },
   "nav": {
     "add-new-connections": {
-      "title": "Add new connection"
+      "title": "Добавить новое соединение"
     },
     "admin": {
-      "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
-      "title": "Server admin"
+      "subtitle": "Управление настройками и доступом к ресурсам, таким как организации, пользователи и лицензии",
+      "title": "Администратор сервера"
     },
     "alert-list-legacy": {
-      "title": "Alert rules"
+      "title": "Правила оповещений"
     },
     "alerting": {
-      "subtitle": "Learn about problems in your systems moments after they occur",
-      "title": "Alerting"
+      "subtitle": "Узнайте о проблемах в системных моментах после их появления",
+      "title": "Оповещение"
     },
     "alerting-admin": {
-      "subtitle": "Manage Alertmanager configurations",
-      "title": "Settings"
+      "subtitle": "Управление конфигурациями AlertManager",
+      "title": "Настройки"
     },
     "alerting-am-routes": {
-      "subtitle": "Determine how alerts are routed to contact points",
-      "title": "Notification policies"
+      "subtitle": "Определите, как оповещения направляются в контактные пункты",
+      "title": "Политика уведомлений"
     },
     "alerting-channels": {
-      "title": "Notification channels"
+      "title": "Каналы уведомлений"
     },
     "alerting-groups": {
-      "subtitle": "See grouped alerts with active notifications",
-      "title": "Active notifications"
+      "subtitle": "Посмотреть сгруппированные оповещения с активными уведомлениями",
+      "title": "Активные уведомления"
     },
     "alerting-home": {
-      "title": "Home"
+      "title": "Домашний"
     },
     "alerting-legacy": {
-      "title": "Alerting (legacy)"
+      "title": "Оповещение (устаревшее)"
     },
     "alerting-list": {
-      "subtitle": "Rules that determine whether an alert will fire",
-      "title": "Alert rules"
+      "subtitle": "Правила, определяющие, будет ли огораживать оповещение",
+      "title": "Правила оповещений"
     },
     "alerting-receivers": {
-      "subtitle": "Choose how to notify your contact points when an alert instance fires",
-      "title": "Contact points"
+      "subtitle": "Выберите, как уведомлять ваши контактные пункты при запуске оповещения",
+      "title": "Контактные пункты"
     },
     "alerting-silences": {
-      "subtitle": "Stop notifications from one or more alerting rules",
-      "title": "Silences"
+      "subtitle": "Остановить уведомления из одного или нескольких правил оповещения",
+      "title": "Тишина"
     },
     "alerting-upgrade": {
-      "subtitle": "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
-      "title": "Alerting upgrade"
+      "subtitle": "Обновите существующие устаревшие оповещения и каналы уведомлений до нового Grafana Alerting",
+      "title": "Обновление оповещений"
     },
     "alerts-and-incidents": {
-      "subtitle": "Alerting and incident management apps",
-      "title": "Alerts & IRM"
+      "subtitle": "Оповещение и управление инцидентами",
+      "title": "Оповещения и IRM"
     },
     "api-keys": {
-      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-      "title": "API keys"
+      "subtitle": "Управление и создание ключей API, которые используются для взаимодействия с Grafana HTTP API",
+      "title": "Ключи API"
     },
     "application": {
-      "title": "Application"
+      "title": "Приложение"
     },
     "apps": {
-      "subtitle": "App plugins that extend the Grafana experience",
-      "title": "Apps"
+      "subtitle": "Плагины приложений, расширяющие опыт работы в Grafana",
+      "title": "Приложения"
     },
     "authentication": {
-      "title": "Authentication"
+      "title": "Проверка подлинности"
     },
     "bookmarks": {
-      "title": "Bookmarks"
+      "title": "Закладки"
     },
     "bookmarks-empty": {
-      "title": "Bookmark pages for them to appear here"
+      "title": "Закладка страниц для отображения здесь"
     },
     "collector": {
-      "title": "Collector"
+      "title": "Коллекционер"
     },
     "config": {
-      "title": "Administration"
+      "title": "Администрация"
     },
     "config-access": {
-      "subtitle": "Configure access for individual users, teams, and service accounts",
-      "title": "Users and access"
+      "subtitle": "Настройка доступа для отдельных пользователей, команд и сервисных аккаунтов",
+      "title": "Пользователи и доступ"
     },
     "config-general": {
-      "subtitle": "Manage default preferences and settings across Grafana",
-      "title": "General"
+      "subtitle": "Управление настройками и настройками по умолчанию в Grafana",
+      "title": "Общие положения"
     },
     "config-plugins": {
-      "subtitle": "Install plugins and define the relationships between data",
-      "title": "Plugins and data"
+      "subtitle": "Установить плагины и определить связь между данными",
+      "title": "Плагины и данные"
     },
     "connect-data": {
-      "title": "Connect data"
+      "title": "Подключить данные"
     },
     "connections": {
-      "subtitle": "Browse and create new connections",
-      "title": "Connections"
+      "subtitle": "Обзор и создание новых подключений",
+      "title": "Соединения"
     },
     "correlations": {
-      "subtitle": "Add and configure correlations",
-      "title": "Correlations"
+      "subtitle": "Добавить и настроить корреляции",
+      "title": "Корреляции"
     },
     "create": {
-      "title": "Create"
+      "title": "Создать"
     },
     "create-alert": {
-      "title": "New alert rule"
+      "title": "Новое правило оповещения"
     },
     "create-dashboard": {
-      "title": "Dashboard"
+      "title": "Панель"
     },
     "create-folder": {
-      "title": "Folder"
+      "title": "Папка"
     },
     "create-import": {
-      "title": "Import dashboard"
+      "title": "Импорт панели инструментов"
     },
     "dashboards": {
-      "subtitle": "Create and manage dashboards to visualize your data",
-      "title": "Dashboards"
+      "subtitle": "Создание и управление панелями инструментов для визуализации ваших данных",
+      "title": "Рабочие столы"
     },
     "data-sources": {
-      "subtitle": "View and manage your connected data source connections",
-      "title": "Data sources"
+      "subtitle": "Просмотр и управление подключенными источниками данных",
+      "title": "Источники данных"
     },
     "datasources": {
-      "subtitle": "Add and configure data sources",
-      "title": "Data sources"
+      "subtitle": "Добавление и настройка источников данных",
+      "title": "Источники данных"
     },
     "detect": {
-      "title": "Detect"
+      "title": "Обнаружить"
     },
     "explore": {
-      "title": "Explore"
+      "title": "Исследовать"
     },
     "frontend": {
-      "subtitle": "Gain real user monitoring insights",
-      "title": "Frontend"
+      "subtitle": "Получите реальную информацию о пользователе",
+      "title": "Интерфейс"
     },
     "frontend-app": {
-      "title": "Frontend"
+      "title": "Интерфейс"
     },
     "global-orgs": {
-      "subtitle": "Isolated instances of Grafana running on the same server",
-      "title": "Organizations"
+      "subtitle": "Обособленные экземпляры Grafana, запущенная на том же сервере",
+      "title": "Организации"
     },
     "global-users": {
-      "subtitle": "Manage users in Grafana",
-      "title": "Users"
+      "subtitle": "Управление пользователями в Grafana",
+      "title": "Пользователи"
     },
     "grafana-quaderno": {
-      "title": "Grafana Quaderno"
+      "title": "Графана Квадерно"
     },
     "help": {
-      "title": "Help"
+      "title": "Справка"
     },
-    "help/community": "Community",
-    "help/documentation": "Documentation",
-    "help/keyboard-shortcuts": "Keyboard shortcuts",
-    "help/support": "Support",
+    "help/community": "Сообщество",
+    "help/documentation": "Документация",
+    "help/keyboard-shortcuts": "Горячие клавиши",
+    "help/support": "Поддержка",
     "home": {
-      "title": "Home"
+      "title": "Домашний"
     },
     "incidents": {
-      "title": "Incident"
+      "title": "Инцидент"
     },
     "infrastructure": {
-      "subtitle": "Understand your infrastructure's health",
-      "title": "Infrastructure"
+      "subtitle": "Понимайте здоровье вашей инфраструктуры",
+      "title": "Инфраструктура"
     },
     "integrations": {
-      "title": "Integrations"
+      "title": "Интеграции"
     },
     "k6": {
-      "title": "Performance"
+      "title": "Производительность"
     },
     "kubernetes": {
       "title": "Kubernetes"
     },
     "library-panels": {
-      "subtitle": "Reusable panels that can be added to multiple dashboards",
-      "title": "Library panels"
+      "subtitle": "Повторно используемые панели, которые могут быть добавлены в несколько панелей инструментов",
+      "title": "Панели библиотеки"
     },
     "machine-learning": {
-      "title": "Machine learning"
+      "title": "Машинное обучение"
     },
     "manage-folder": {
-      "subtitle": "Manage folder dashboards and permissions"
+      "subtitle": "Управление рабочими панелями папки и разрешениями"
     },
     "migrate-to-cloud": {
-      "subtitle": "Copy configuration from your self-managed installation to a cloud stack",
-      "title": "Migrate to Grafana Cloud"
+      "subtitle": "Скопировать конфигурацию из самоуправляемой установки в облачный стек",
+      "title": "Миграция в Grafana Cloud"
     },
     "monitoring": {
-      "subtitle": "Out-of-the-box observability solutions",
-      "title": "Observability"
+      "subtitle": "Решения для наблюдения за выходом из ящика",
+      "title": "Наблюдение"
     },
     "new": {
-      "title": "New"
+      "title": "Новый"
     },
     "new-dashboard": {
-      "title": "New dashboard"
+      "title": "Новая панель"
     },
     "new-folder": {
-      "title": "New folder"
+      "title": "Новая папка"
     },
     "observability": {
-      "title": "Observability"
+      "title": "Наблюдение"
     },
     "oncall": {
       "title": "OnCall"
     },
     "org-settings": {
-      "subtitle": "Manage preferences across an organization",
-      "title": "Default preferences"
+      "subtitle": "Управление настройками по организации",
+      "title": "Настройки по умолчанию"
     },
     "playlists": {
-      "subtitle": "Groups of dashboards that are displayed in a sequence",
-      "title": "Playlists"
+      "subtitle": "Группы панелей, которые отображаются в последовательности",
+      "title": "Плейлисты"
     },
     "plugins": {
-      "subtitle": "Extend the Grafana experience with plugins",
-      "title": "Plugins"
+      "subtitle": "Расширьте опыт Grafana с плагинами",
+      "title": "Плагины"
     },
     "private-data-source-connections": {
-      "subtitle": "Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.",
-      "title": "Private data source connect"
+      "subtitle": "Запрос данных, которые живут в защищенной сети без открытия сети для входящего трафика из облака Grafa. Узнайте больше в наших документах.",
+      "title": "Подключение к личным данным"
     },
     "profile/notifications": {
-      "title": "Notification history"
+      "title": "История уведомлений"
     },
     "profile/password": {
-      "title": "Change password"
+      "title": "Изменить пароль"
     },
     "profile/settings": {
-      "title": "Profile"
+      "title": "Профиль"
     },
     "profiles": {
       "title": "Profiles"
     },
     "public": {
-      "title": "Public dashboards"
+      "title": "Публичные панели инструментов"
     },
     "recently-deleted": {
-      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
-      "title": "Recently deleted"
+      "subtitle": "Любые элементы, перечисленные здесь более 30 дней, будут автоматически удалены.",
+      "title": "Недавно удаленные"
     },
     "recorded-queries": {
-      "title": "Recorded queries"
+      "title": "Записанные запросы"
     },
     "reporting": {
-      "title": "Reporting"
+      "title": "Представление докладов"
     },
     "scenes": {
-      "title": "Scenes"
+      "title": "Сцены"
     },
     "search": {
-      "placeholderCommandPalette": "Search or jump to..."
+      "placeholderCommandPalette": "Поиск или прыжок..."
     },
     "search-dashboards": {
-      "title": "Search dashboards"
+      "title": "Поиск панели инструментов"
     },
     "server-settings": {
-      "subtitle": "View the settings defined in your Grafana config",
-      "title": "Settings"
+      "subtitle": "Просмотр настроек, определенных в конфигурации Grafana",
+      "title": "Настройки"
     },
     "service-accounts": {
-      "subtitle": "Use service accounts to run automated workloads in Grafana",
-      "title": "Service accounts"
+      "subtitle": "Использовать сервисные аккаунты для запуска автоматических рабочих нагрузок в Grafana",
+      "title": "Сервисные счета"
     },
     "sign-out": {
-      "title": "Sign out"
+      "title": "Выйти"
     },
     "slo": {
       "title": "SLO"
     },
     "snapshots": {
-      "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
-      "title": "Snapshots"
+      "subtitle": "Интерактивные, общедоступные, точечные представления панели инструментов",
+      "title": "Снимки"
     },
     "starred": {
-      "title": "Starred"
+      "title": "Помеченные"
     },
     "starred-empty": {
-      "title": "Your starred dashboards will appear here"
+      "title": "Ваши избранные панели инструментов появятся здесь"
     },
     "statistics-and-licensing": {
-      "title": "Statistics and licensing"
+      "title": "Статистика и лицензирование"
     },
     "storage": {
-      "subtitle": "Manage file storage",
-      "title": "Storage"
+      "subtitle": "Управление хранилищем файлов",
+      "title": "Хранилище"
     },
     "support-bundles": {
-      "subtitle": "Download support bundles",
-      "title": "Support bundles"
+      "subtitle": "Скачать комплекты поддержки",
+      "title": "Комплекты поддержки"
     },
     "synthetics": {
-      "title": "Synthetics"
+      "title": "Синтетика"
     },
     "teams": {
-      "subtitle": "Groups of users that have common dashboard and permission needs",
-      "title": "Teams"
+      "subtitle": "Группы пользователей, у которых есть общая панель управления и требуется разрешение",
+      "title": "Команды"
     },
     "testing-and-synthetics": {
-      "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
-      "title": "Testing & synthetics"
+      "subtitle": "Оптимизировать производительность с k6 и синтетическим наблюдением",
+      "title": "Тестирование и синтетика"
     },
     "upgrading": {
-      "title": "Stats and license"
+      "title": "Статистика и лицензия"
     },
     "users": {
-      "subtitle": "Invite and assign roles to users",
-      "title": "Users"
+      "subtitle": "Пригласить и назначить роли пользователям",
+      "title": "Пользователи"
     }
   },
   "navigation": {
     "kiosk": {
-      "tv-alert": "Press ESC to exit kiosk mode"
+      "tv-alert": "Нажмите ESC для выхода из режима киоска"
     },
     "megamenu": {
-      "close": "Close menu",
-      "dock": "Dock menu",
+      "close": "Закрыть меню",
+      "dock": "Меню док-станции",
       "list-label": "Navigation",
-      "undock": "Undock menu"
+      "undock": "Открепить меню"
     },
     "toolbar": {
-      "close-menu": "Close menu",
-      "enable-kiosk": "Enable kiosk mode",
-      "open-menu": "Open menu",
-      "toggle-search-bar": "Toggle top search bar"
+      "close-menu": "Закрыть меню",
+      "enable-kiosk": "Включить режим киоска",
+      "open-menu": "Открыть меню",
+      "toggle-search-bar": "Переключить верхнюю панель поиска"
     }
   },
   "news": {
     "drawer": {
-      "close": "Close Drawer"
+      "close": "Закрыть ящик"
     },
-    "title": "Latest from the blog"
+    "title": "Последние из блога"
   },
-  "No description available": "No description available",
+  "No description available": "Нет описания",
   "notifications": {
     "empty-state": {
-      "description": "Notifications you have received will appear here",
-      "title": "You're all caught up!"
+      "description": "Полученные уведомления будут отображаться здесь",
+      "title": "Вы все поймали!"
     },
-    "starred-dashboard": "Dashboard starred",
-    "unstarred-dashboard": "Dashboard unstarred"
+    "starred-dashboard": "Приборная панель отмечена",
+    "unstarred-dashboard": "Панель инструментов не отмечена"
   },
   "panel": {
     "header-menu": {
-      "copy": "Copy",
-      "create-library-panel": "Create library panel",
+      "copy": "Копировать",
+      "create-library-panel": "Создать панель библиотеки",
       "duplicate": "Duplicate",
-      "edit": "Edit",
-      "explore": "Explore",
-      "get-help": "Get help",
-      "hide-legend": "Hide legend",
-      "inspect": "Inspect",
-      "inspect-data": "Data",
-      "inspect-json": "Panel JSON",
-      "more": "More...",
-      "new-alert-rule": "New alert rule",
-      "query": "Query",
-      "remove": "Remove",
-      "replace-library-panel": "Replace library panel",
-      "share": "Share",
-      "show-legend": "Show legend",
-      "unlink-library-panel": "Unlink library panel",
-      "view": "View"
+      "edit": "Редактирование",
+      "explore": "Исследовать",
+      "get-help": "Получить помощь",
+      "hide-legend": "Скрыть легенду",
+      "inspect": "Инспекция",
+      "inspect-data": "Данные",
+      "inspect-json": "JSON панели",
+      "more": "Еще...",
+      "new-alert-rule": "Новое правило оповещения",
+      "query": "Запрос",
+      "remove": "Удалить",
+      "replace-library-panel": "Заменить панель библиотеки",
+      "share": "Поделиться",
+      "show-legend": "Показать легенду",
+      "unlink-library-panel": "Отвязать панель библиотеки",
+      "view": "Вид"
     }
   },
   "playlist-edit": {
-    "error-prefix": "Error loading playlist:",
+    "error-prefix": "Ошибка загрузки плейлиста:",
     "form": {
-      "add-tag-label": "Add by tag",
-      "add-tag-placeholder": "Select a tag",
-      "add-title-label": "Add by title",
-      "cancel": "Cancel",
-      "heading": "Add dashboards",
-      "interval-label": "Interval",
-      "interval-placeholder": "5m",
-      "interval-required": "Interval is required",
-      "name-label": "Name",
-      "name-placeholder": "Name",
-      "name-required": "Name is required",
-      "save": "Save",
-      "table-delete": "Delete playlist item",
-      "table-drag": "Drag and drop to reorder",
-      "table-empty": "Playlist is empty. Add dashboards below.",
-      "table-heading": "Dashboards"
+      "add-tag-label": "Добавить по тегу",
+      "add-tag-placeholder": "Выберите тег",
+      "add-title-label": "Добавить по названию",
+      "cancel": "Отмена",
+      "heading": "Добавить панель инструментов",
+      "interval-label": "Интервал",
+      "interval-placeholder": "5 м",
+      "interval-required": "Требуется интервал",
+      "name-label": "Наименование",
+      "name-placeholder": "Наименование",
+      "name-required": "Требуется имя",
+      "save": "Сохранить",
+      "table-delete": "Удалить плейлист",
+      "table-drag": "Перетащите для изменения порядка",
+      "table-empty": "Плейлист пуст. Добавьте панели инструментов ниже.",
+      "table-heading": "Рабочие столы"
     },
-    "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
-    "title": "Edit playlist"
+    "sub-title": "Поворот плейлиста через заранее выбранный список панелей. Плейлист может быть отличным способом улучшить ситуацию, или просто показать свои метрики вашей команде или посетителям.",
+    "title": "Изменить плейлист"
   },
   "playlist-page": {
     "card": {
-      "delete": "Delete playlist",
-      "edit": "Edit playlist",
-      "start": "Start playlist",
-      "tooltip": "Share playlist"
+      "delete": "Удалить плейлист",
+      "edit": "Изменить плейлист",
+      "start": "Начать плейлист",
+      "tooltip": "Поделиться плейлистом"
     },
     "create-button": {
-      "title": "New playlist"
+      "title": "Новый плейлист"
     },
     "delete-modal": {
-      "body": "Are you sure you want to delete {{name}} playlist?",
-      "confirm-text": "Delete"
+      "body": "Вы уверены, что хотите удалить плейлист {{name}}?",
+      "confirm-text": "Удалить"
     },
     "empty": {
-      "button": "Create playlist",
-      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <2>Learn more</2>",
-      "title": "There are no playlists created yet"
+      "button": "Создать плейлист",
+      "pro-tip": "Вы можете использовать плейлисты для повторения панелей инструментов на телевизорах без контроля пользователя. <2>Подробнее</2>",
+      "title": "Плейлисты еще не созданы"
     }
   },
   "playlists": {
     "empty-state": {
-      "message": "No playlists found"
+      "message": "Плейлисты не найдены"
     }
   },
   "plugins": {
     "empty-state": {
-      "message": "No plugins found"
+      "message": "Плагины не найдены"
     }
   },
   "profile": {
     "change-password": {
-      "cancel-button": "Cancel",
-      "cannot-change-password-message": "Password cannot be changed here.",
-      "change-password-button": "Change Password",
-      "confirm-password-label": "Confirm password",
-      "confirm-password-required": "New password confirmation is required",
-      "ldap-auth-proxy-message": "You cannot change password when signed in with LDAP or auth proxy.",
-      "new-password-label": "New password",
-      "new-password-required": "New password is required",
-      "new-password-same-as-old": "New password can't be the same as the old one.",
-      "old-password-label": "Old password",
-      "old-password-required": "Old password is required",
-      "passwords-must-match": "Passwords must match",
-      "strong-password-validation-register": "Password does not comply with the strong password policy"
+      "cancel-button": "Отмена",
+      "cannot-change-password-message": "Пароль не может быть изменен здесь.",
+      "change-password-button": "Изменить пароль",
+      "confirm-password-label": "Подтвердите пароль",
+      "confirm-password-required": "Требуется подтверждение нового пароля",
+      "ldap-auth-proxy-message": "Вы не можете изменить пароль при входе с LDAP или авторизации прокси.",
+      "new-password-label": "Новый пароль",
+      "new-password-required": "Требуется новый пароль",
+      "new-password-same-as-old": "Новый пароль не может совпадать со старым.",
+      "old-password-label": "Старый пароль",
+      "old-password-required": "Требуется старый пароль",
+      "passwords-must-match": "Пароли должны совпадать",
+      "strong-password-validation-register": "Пароль не соответствует правилам надежного пароля"
     }
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
-      "ack-title": "Before you make the dashboard public, acknowledge the following:",
-      "data-src-ack-desc": "Publishing currently only works with a subset of data sources*",
-      "data-src-ack-tooltip": "Learn more about public datasources",
-      "public-ack-desc": "Your entire dashboard will be public*",
-      "public-ack-tooltip": "Learn more about public dashboards",
-      "usage-ack-desc": "Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*",
-      "usage-ack-desc-tooltip": "Learn more about query caching"
+      "ack-title": "Прежде чем сделать панель управления публичной, признайте следующее:",
+      "data-src-ack-desc": "Публикация в настоящее время работает только с подмножеством источников данных*",
+      "data-src-ack-tooltip": "Подробнее о публичных источниках данных",
+      "public-ack-desc": "Ваша вся панель инструментов будет открыта*",
+      "public-ack-tooltip": "Подробнее о публичных панелях инструментов",
+      "usage-ack-desc": "Создание публичной панели инструментов вызовет запросы к запуску каждый раз, когда они просматриваются, что может увеличить затраты*",
+      "usage-ack-desc-tooltip": "Подробнее о кэшировании запросов"
     },
     "config": {
-      "can-view-dashboard-radio-button-label": "Can view dashboard",
-      "copy-button": "Copy",
-      "dashboard-url-field-label": "Dashboard URL",
-      "email-share-type-option-label": "Only specified people",
-      "pause-sharing-dashboard-label": "Pause sharing dashboard",
-      "public-share-type-option-label": "Anyone with a link",
+      "can-view-dashboard-radio-button-label": "Может просматривать рабочий стол",
+      "copy-button": "Копировать",
+      "dashboard-url-field-label": "URL панели инструментов",
+      "email-share-type-option-label": "Только заданные люди",
+      "pause-sharing-dashboard-label": "Приостановить обмен панелью управления",
+      "public-share-type-option-label": "Любое лицо со ссылкой",
       "revoke-public-URL-button": "Revoke public URL",
       "revoke-public-URL-button-title": "Revoke public URL",
-      "settings-title": "Settings"
+      "settings-title": "Настройки"
     },
     "configuration": {
-      "display-annotations-label": "Display annotations",
-      "enable-time-range-label": "Enable time range",
-      "settings-label": "Settings",
-      "success-pause": "Your dashboard access has been paused",
-      "success-resume": "Your dashboard access has been resumed",
-      "success-update": "Settings have been successfully updated",
-      "success-update-old": "Public dashboard updated!",
-      "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
+      "display-annotations-label": "Отображать аннотации",
+      "enable-time-range-label": "Включить диапазон времени",
+      "settings-label": "Настройки",
+      "success-pause": "Ваш доступ к панели инструментов был приостановлен",
+      "success-resume": "Ваш доступ к панели инструментов был возобновлен",
+      "success-update": "Настройки были успешно обновлены",
+      "success-update-old": "Публичная панель инструментов обновлена!",
+      "time-range-tooltip": "Общая панель инструментов использует настройки временного интервала по умолчанию"
     },
     "create-page": {
-      "generate-public-url-button": "Generate public URL",
-      "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
-      "welcome-title": "Welcome to public dashboards!"
+      "generate-public-url-button": "Генерировать публичный URL",
+      "unsupported-features-desc": "В настоящее время мы не поддерживаем переменные шаблона или источники данных интерфейса",
+      "welcome-title": "Добро пожаловать на открытые панели управления!"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
-      "revoke-orphaned-body-text": "Orphaned public dashboard will no longer be public.",
+      "revoke-nonorphaned-body-text": "Вы уверены, что хотите отменить этот URL? Панель управления больше не будет открыта.",
+      "revoke-orphaned-body-text": "Оставшиеся публичные панели больше не будут публичными.",
       "revoke-title": "Revoke public URL"
     },
     "email-sharing": {
-      "accept-button": "Accept",
-      "alert-text": "Sharing dashboards by email is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.",
-      "bill-ack": "I understand that adding users requires payment.*",
-      "cancel-button": "Cancel",
+      "accept-button": "Принять",
+      "alert-text": "Обмен рабочими панелями по электронной почте оплачивается на одного пользователя в течение 30-дневного токена, независимо от того, сколько панелей общего доступа. Биллинг останавливается через 30 дней, если вы не обновите токен.",
+      "bill-ack": "Я понимаю, что добавление пользователей требует оплаты.*",
+      "cancel-button": "Отмена",
       "input-invalid-email-text": "Invalid email",
-      "input-required-email-text": "Email is required",
-      "invite-button": "Invite",
-      "invite-field-desc": "Invite people by email",
-      "invite-field-label": "Invite",
-      "learn-more-button": "Learn more",
-      "recipient-email-placeholder": "Email",
+      "input-required-email-text": "Требуется адрес электронной почты",
+      "invite-button": "Пригласить",
+      "invite-field-desc": "Пригласить людей по электронной почте",
+      "invite-field-label": "Пригласить",
+      "learn-more-button": "Узнать больше",
+      "recipient-email-placeholder": "Почта",
       "recipient-invalid-email-text": "Invalid email",
-      "recipient-invitation-button": "Invite",
-      "recipient-invitation-description": "Invite someone by email",
-      "recipient-invitation-tooltip": "This dashboard contains sensitive data. By using this feature you will be sharing with external people.",
-      "recipient-list-description": "Only people you've directly invited can access this dashboard",
-      "recipient-list-title": "People with access",
-      "recipient-required-email-text": "Email is required",
-      "resend-button": "Resend",
-      "resend-button-title": "Resend",
-      "resend-invite-label": "Resend invite",
-      "revoke-access-label": "Revoke access",
+      "recipient-invitation-button": "Пригласить",
+      "recipient-invitation-description": "Пригласить кого-нибудь по электронной почте",
+      "recipient-invitation-tooltip": "Эта панель инструментов содержит конфиденциальные данные. С помощью этой функции вы будете делиться с внешними людьми.",
+      "recipient-list-description": "Только приглашенные вами люди могут получить доступ к этой панели инструментов",
+      "recipient-list-title": "Люди с доступом",
+      "recipient-required-email-text": "Требуется адрес электронной почты",
+      "resend-button": "Переслать",
+      "resend-button-title": "Переслать",
+      "resend-invite-label": "Пригласить повторно",
+      "revoke-access-label": "Отозвать доступ",
       "revoke-button": "Revoke",
       "revoke-button-title": "Revoke",
-      "success-creation": "Your dashboard is ready for external sharing",
-      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
+      "success-creation": "Ваша панель инструментов готова к внешнему обмену",
+      "success-share-type-change": "Доступ к панели инструментов ограничен: теперь только определенные люди могут получить доступ по ссылке"
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
-      "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a public dashboard",
-      "save-dashboard-changes-alert-title": "Please save your dashboard changes before updating the public configuration",
-      "unsupport-data-source-alert-readmore-link": "Read more about supported data sources",
-      "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}.",
-      "unsupported-data-source-alert-title": "Unsupported data sources",
-      "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
-      "unsupported-template-variable-alert-title": "Template variables are not supported"
+      "no-upsert-perm-alert-desc": "Свяжитесь с вашим администратором, чтобы получить разрешение на публичные панели инструментов {{mode}}",
+      "no-upsert-perm-alert-title": "У вас нет разрешения на {{ mode }} публичная панель управления",
+      "save-dashboard-changes-alert-title": "Пожалуйста, сохраните изменения панели инструментов перед обновлением публичной конфигурации",
+      "unsupport-data-source-alert-readmore-link": "Подробнее о поддерживаемых источниках данных",
+      "unsupported-data-source-alert-desc": "Есть источники данных, которые не поддерживаются для публичных панелей. Панели, которые используют эти источники данных, могут работать некорректно: {{unsupportedDataSources}}.",
+      "unsupported-data-source-alert-title": "Неподдерживаемые источники данных",
+      "unsupported-template-variable-alert-desc": "Эта публичная панель управления может не работать, так как использует шаблонные переменные",
+      "unsupported-template-variable-alert-title": "Шаблонные переменные не поддерживаются"
     },
     "public-sharing": {
-      "accept-button": "Accept",
-      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
-      "cancel-button": "Cancel",
-      "learn-more-button": "Learn more",
-      "public-ack": "I understand that this entire dashboard will be public.*",
-      "success-creation": "Your dashboard is now publicly accessible",
-      "success-share-type-change": "Dashboard access updated: Anyone with the link can now access"
+      "accept-button": "Принять",
+      "alert-text": "Общий доступ к этой панели управления за пределами делает ее полностью доступной для всех со ссылкой.",
+      "cancel-button": "Отмена",
+      "learn-more-button": "Узнать больше",
+      "public-ack": "Я понимаю, что вся панель инструментов будет открыта.*",
+      "success-creation": "Ваша панель инструментов теперь доступна публично",
+      "success-share-type-change": "Доступ к панели мониторинга обновлен: Любой пользователь со ссылкой теперь может получить доступ"
     },
     "settings-bar-header": {
-      "collapse-settings-tooltip": "Collapse settings",
-      "expand-settings-tooltip": "Expand settings"
+      "collapse-settings-tooltip": "Свернуть настройки",
+      "expand-settings-tooltip": "Развернуть настройки"
     },
     "settings-configuration": {
-      "default-time-range-label": "Default time range",
-      "default-time-range-label-desc": "The public dashboard uses the default time range settings of the dashboard",
-      "show-annotations-label": "Show annotations",
-      "show-annotations-label-desc": "Show annotations on public dashboard",
-      "time-range-picker-label": "Time range picker enabled",
-      "time-range-picker-label-desc": "Allow viewers to change time range"
+      "default-time-range-label": "Временной диапазон по умолчанию",
+      "default-time-range-label-desc": "Публичная панель инструментов использует настройки временного диапазона по умолчанию для панели инструментов",
+      "show-annotations-label": "Показывать аннотации",
+      "show-annotations-label-desc": "Показывать аннотации на публичной панели",
+      "time-range-picker-label": "Выбор диапазона времени включен",
+      "time-range-picker-label-desc": "Разрешить посетителям изменять диапазон времени"
     },
     "settings-summary": {
-      "annotations-hide-text": "Annotations = hide",
-      "annotations-show-text": "Annotations = show",
-      "time-range-picker-disabled-text": "Time range picker = disabled",
-      "time-range-picker-enabled-text": "Time range picker = enabled",
-      "time-range-text": "Time range = "
+      "annotations-hide-text": "Аннотации = Скрыть",
+      "annotations-show-text": "Аннотации = показать",
+      "time-range-picker-disabled-text": "Выбор диапазона времени = отключён",
+      "time-range-picker-enabled-text": "Выбор диапазона времени = включен",
+      "time-range-text": "Диапазон времени = "
     },
     "share": {
-      "success-delete": "Your dashboard is no longer shareable",
-      "success-delete-old": "Public dashboard deleted!"
+      "success-delete": "Ваша панель управления больше не доступна",
+      "success-delete-old": "Публичная панель инструментов удалена!"
     },
     "share-configuration": {
-      "share-type-label": "Link access"
+      "share-type-label": "Доступ к ссылке"
     },
     "share-externally": {
-      "copy-link-button": "Copy external link",
-      "email-share-type-option-description": "Only people with the link can access dashboard",
-      "email-share-type-option-label": "Only specific people",
-      "pause-access-button": "Pause access",
-      "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
-      "public-share-type-option-description": "Anyone with the link can access dashboard",
-      "public-share-type-option-label": "Anyone with the link",
-      "resume-access-button": "Resume access",
-      "revoke-access-button": "Revoke access",
-      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared."
+      "copy-link-button": "Копировать внешнюю ссылку",
+      "email-share-type-option-description": "Только люди с ссылкой могут получить доступ к панели управления",
+      "email-share-type-option-label": "Только определенные люди",
+      "pause-access-button": "Приостановить доступ",
+      "pause-access-tooltip": "Приостановка временно отключит доступ к этой панели инструментов для всех пользователей",
+      "public-share-type-option-description": "Любой пользователь со ссылкой может получить доступ к панели управления",
+      "public-share-type-option-label": "Любое лицо со ссылкой",
+      "resume-access-button": "Возобновить доступ",
+      "revoke-access-button": "Отозвать доступ",
+      "revoke-access-description": "Вы уверены, что хотите отменить этот доступ? Панель управления больше не может быть предоставлена."
     },
     "sharing": {
-      "success-creation": "Dashboard is public!"
+      "success-creation": "Панель открыта!"
     }
   },
   "public-dashboard-list": {
     "button": {
-      "config-button-tooltip": "Configure public dashboard",
+      "config-button-tooltip": "Настроить публичную панель управления",
       "revoke-button-text": "Revoke public URL",
-      "revoke-button-tooltip": "Revoke public dashboard URL",
-      "view-button-tooltip": "View public dashboard"
+      "revoke-button-tooltip": "Отозвать URL публичной панели управления",
+      "view-button-tooltip": "Открыть публичную панель управления"
     },
     "dashboard-title": {
-      "orphaned-title": "<0>Orphaned public dashboard</0>",
-      "orphaned-tooltip": "The linked dashboard has already been deleted"
+      "orphaned-title": "<0>Общедоступная панель управления</0>",
+      "orphaned-tooltip": "Связанная панель инструментов уже удалена"
     },
     "empty-state": {
-      "message": "You haven't created any public dashboards yet",
-      "more-info": "Create a public dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
+      "message": "Вы еще не создали никаких публичных панелей инструментов",
+      "more-info": "Создать публичную панель управления с любой существующей панели через <1>Поделиться</1> модально. <4>Подробнее</4>"
     },
     "toggle": {
-      "pause-sharing-toggle-text": "Pause sharing"
+      "pause-sharing-toggle-text": "Приостановить публикацию"
     }
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
-      "loading-text": "Loading...",
-      "open-dashboard-list-text": "Open dashboards list",
-      "public-dashboard-link": "Public dashboard URL",
-      "public-dashboard-setting": "Public dashboard settings"
+      "loading-text": "Загрузка...",
+      "open-dashboard-list-text": "Открыть список панелей инструментов",
+      "public-dashboard-link": "URL публичной панели",
+      "public-dashboard-setting": "Настройки публичной панели инструментов"
     },
     "delete-user-modal": {
-      "delete-user-button-text": "Delete user",
-      "delete-user-cancel-button": "Cancel",
-      "delete-user-revoke-access-button": "Revoke access",
-      "revoke-access-title": "Revoke access",
-      "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?",
-      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
+      "delete-user-button-text": "Удалить пользователя",
+      "delete-user-cancel-button": "Отмена",
+      "delete-user-revoke-access-button": "Отозвать доступ",
+      "revoke-access-title": "Отозвать доступ",
+      "revoke-user-access-modal-desc-line1": "Вы уверены, что хотите отозвать доступ для {{email}}?",
+      "revoke-user-access-modal-desc-line2": "Это действие немедленно отменит {{email}}&apos;S доступ ко всем публичным панелям."
     },
     "modal": {
-      "dashboard-modal-title": "Public dashboards"
+      "dashboard-modal-title": "Публичные панели инструментов"
     },
     "table-header": {
-      "activated-label": "Activated",
-      "activated-tooltip": "Earliest time user has been an active user to a dashboard",
-      "email-label": "Email",
-      "last-active-label": "Last active",
-      "origin-label": "Origin",
-      "role-label": "Role"
+      "activated-label": "Активирован",
+      "activated-tooltip": "Раньше пользователь был активным пользователем на панель управления",
+      "email-label": "Почта",
+      "last-active-label": "Последняя активность",
+      "origin-label": "Источник",
+      "role-label": "Роль"
     }
   },
   "query-library": {
-    "delete-query-button": "Delete query"
+    "delete-query-button": "Удалить запрос"
   },
   "query-operation": {
     "header": {
-      "collapse-row": "Collapse query row",
-      "datasource-help": "Show data source help",
-      "drag-and-drop": "Drag and drop to reorder",
-      "duplicate-query": "Duplicate query",
-      "expand-row": "Expand query row",
-      "hide-response": "Hide response",
-      "remove-query": "Remove query",
-      "show-response": "Show response",
-      "toggle-edit-mode": "Toggle text edit mode"
+      "collapse-row": "Свернуть строку запроса",
+      "datasource-help": "Справка по источнику данных",
+      "drag-and-drop": "Перетащите для изменения порядка",
+      "duplicate-query": "Повторяющийся запрос",
+      "expand-row": "Развернуть строку запросов",
+      "hide-response": "Скрыть ответ",
+      "remove-query": "Удалить запрос",
+      "show-response": "Показать ответ",
+      "toggle-edit-mode": "Переключить режим редактирования текста"
     },
-    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+    "query-editor-not-exported": "Плагин источника данных не экспортирует компонент Редактора запросов"
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Delete permanently",
-      "restore": "Restore"
+      "delete": "Удалить навсегда",
+      "restore": "Восстановить"
     },
     "page": {
-      "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
-      "no-deleted-dashboards-text": "When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization administrator can restore recently-deleted dashboards.",
-      "no-search-result": "No results found for your query"
+      "no-deleted-dashboards": "Вы не удалили панели инструментов недавно.",
+      "no-deleted-dashboards-text": "При удалении панели инструментов он будет отображаться здесь за 30 дней до окончательного удаления. Администратор организации может восстановить недавно удаленные панели управления.",
+      "no-search-result": "По вашему запросу ничего не найдено"
     },
     "permanently-delete-modal": {
-      "confirm-text": "Delete",
-      "delete-button": "Delete",
-      "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboard.",
-      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
-      "title": "Permanently Delete Dashboards"
+      "confirm-text": "Удалить",
+      "delete-button": "Удалить",
+      "delete-loading": "Удаление...",
+      "text_one": "Это действие удалит приборную панель {{numberOfDashboards}}.",
+      "text_other": "Это действие удалит панель инструментов {{numberOfDashboards}}.",
+      "title": "Окончательно удалить панели инструментов"
     },
     "restore-modal": {
-      "restore-button": "Restore",
-      "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
-      "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
-      "title": "Restore Dashboards"
+      "restore-button": "Восстановить",
+      "restore-loading": "Восстановить...",
+      "text_one": "Это действие восстановит {{numberOfDashboards}} приборную панель.",
+      "text_other": "Это действие восстановит панель инструментов {{numberOfDashboards}}.",
+      "title": "Восстановить панели инструментов"
     }
   },
   "recentlyDeleted": {
     "filter": {
-      "placeholder": "Search for dashboards"
+      "placeholder": "Поиск панели инструментов"
     }
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "Auto refresh turned off. Choose refresh time interval",
-      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+      "choose-interval": "Автоматическое обновление отключено. Выберите интервал обновления",
+      "duration-selected": "Выберите интервал обновления с текущим интервалом {{durationAriaLabel}} выбранным"
     },
     "auto-option": {
       "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Turn on live streaming",
-      "label": "Live"
+      "aria-label": "Включить трансляцию в реальном времени",
+      "label": "Онлайн"
     },
     "off-option": {
-      "aria-label": "Turn off auto refresh",
-      "label": "Off"
+      "aria-label": "Выключить автообновление",
+      "label": "Выкл"
     },
     "tooltip": {
-      "interval-selected": "Set auto refresh interval",
-      "turned-off": "Auto refresh off"
+      "interval-selected": "Установить интервал автообновления",
+      "turned-off": "Автообновление выкл"
     }
   },
   "return-to-previous": {
     "button": {
-      "label": "Back to {{title}}"
+      "label": "Вернуться к {{title}}"
     },
-    "dismissable-button": "Close"
+    "dismissable-button": "Закрыть"
   },
   "scopes": {
     "filters": {
-      "apply": "Apply",
-      "cancel": "Cancel",
+      "apply": "Применить",
+      "cancel": "Отмена",
       "input": {
-        "placeholder": "Select scopes...",
-        "removeAll": "Remove all scopes"
+        "placeholder": "Выберите область...",
+        "removeAll": "Удалить все области действия"
       },
-      "title": "Select scopes"
+      "title": "Выберите области действия"
     },
     "suggestedDashboards": {
-      "loading": "Loading dashboards",
-      "noResultsForFilter": "No results found for your query",
-      "noResultsForFilterClear": "Clear search",
-      "noResultsForScopes": "No dashboards found for the selected scopes",
-      "noResultsNoScopes": "No scopes selected",
-      "search": "Search",
+      "loading": "Загрузка панелей инструментов",
+      "noResultsForFilter": "По вашему запросу ничего не найдено",
+      "noResultsForFilterClear": "Очистить поиск",
+      "noResultsForScopes": "Для выбранных областей не найдены панели инструментов",
+      "noResultsNoScopes": "Области не выбраны",
+      "search": "Искать",
       "toggle": {
-        "collapse": "Collapse scope filters",
-        "expand": "Expand scope filters"
+        "collapse": "Свернуть рамочные фильтры",
+        "expand": "Развернуть охват фильтров"
       }
     },
     "tree": {
-      "collapse": "Collapse",
-      "expand": "Expand",
+      "collapse": "Свернуть",
+      "expand": "Развернуть",
       "headline": {
-        "noResults": "No results found for your query",
-        "recommended": "Recommended",
-        "results": "Results"
+        "noResults": "По вашему запросу ничего не найдено",
+        "recommended": "Рекомендовано",
+        "results": "Результаты"
       },
-      "search": "Search"
+      "search": "Искать"
     }
   },
   "search": {
     "actions": {
-      "include-panels": "Include panels",
-      "remove-datasource-filter": "Datasource: {{datasource}}",
-      "sort-placeholder": "Sort",
-      "starred": "Starred",
-      "view-as-folders": "View by folders",
-      "view-as-list": "View as list"
+      "include-panels": "Включить панели",
+      "remove-datasource-filter": "Источник данных: {{datasource}}",
+      "sort-placeholder": "Сортировка",
+      "starred": "Помеченные",
+      "view-as-folders": "Просмотр по папкам",
+      "view-as-list": "Показать как список"
     },
     "dashboard-actions": {
-      "import": "Import",
-      "new": "New",
-      "new-dashboard": "New dashboard",
-      "new-folder": "New folder"
+      "import": "Импорт",
+      "new": "Новый",
+      "new-dashboard": "Новая панель",
+      "new-folder": "Новая папка"
     },
     "results-table": {
-      "datasource-header": "Data source",
+      "datasource-header": "Источник данных",
       "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Time remaining",
-      "location-header": "Location",
-      "name-header": "Name",
-      "tags-header": "Tags",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Folder",
-      "type-header": "Type"
+      "deleted-remaining-header": "Осталось времени",
+      "location-header": "Местоположение",
+      "name-header": "Наименование",
+      "tags-header": "Теги",
+      "type-dashboard": "Панель",
+      "type-folder": "Папка",
+      "type-header": "Тип"
     },
     "search-input": {
-      "include-panels-placeholder": "Search for dashboards, folders, and panels",
-      "placeholder": "Search for dashboards and folders"
+      "include-panels-placeholder": "Поиск приборных панелей, папок и панелей",
+      "placeholder": "Поиск панелей инструментов и папок"
     }
   },
   "service-accounts": {
     "empty-state": {
-      "button-title": "Add service account",
-      "message": "No services accounts found",
-      "more-info": "Remember, you can provide specific permissions for API access to other applications",
-      "title": "You haven't created any service accounts yet"
+      "button-title": "Добавить учетную запись сервиса",
+      "message": "Аккаунты не найдены",
+      "more-info": "Помните, что вы можете предоставить определенные разрешения для доступа к API другим приложениям",
+      "title": "Вы еще не создали ни одной учетной записи службы"
     }
   },
   "share-dashboard": {
     "menu": {
-      "export-json-title": "Export as JSON",
-      "share-externally-title": "Share externally",
-      "share-internally-description": "Advanced settings",
-      "share-internally-title": "Share internally",
-      "share-snapshot-title": "Share snapshot"
+      "export-json-title": "Экспорт в JSON",
+      "share-externally-title": "Поделиться за пределами страны",
+      "share-internally-description": "Расширенные настройки",
+      "share-internally-title": "Поделиться внутри сети",
+      "share-snapshot-title": "Поделиться снимком"
     },
-    "share-button": "Share",
-    "share-button-tooltip": "Copy shortened link"
+    "share-button": "Поделиться",
+    "share-button-tooltip": "Копировать сокращенную ссылку"
   },
   "share-drawer": {
     "confirm-action": {
-      "back-arrow-button": "Back button"
+      "back-arrow-button": "Кнопка \"Назад\""
     }
   },
   "share-modal": {
     "dashboard": {
-      "title": "Share"
+      "title": "Поделиться"
     },
     "embed": {
-      "copy": "Copy to clipboard",
-      "html": "Embed HTML",
-      "html-description": "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.",
-      "info": "Generate HTML for embedding an iframe with this panel.",
-      "time-range": "Current time range",
-      "time-range-description": "Transforms the current relative time range to an absolute time range"
+      "copy": "Копировать в буфер обмена",
+      "html": "Вставить HTML",
+      "html-description": "Нижеприведенный HTML код может быть вставлен и включен в другую веб-страницу. Если не включен анонимный доступ, пользователь должен войти в Grafana для загрузки графа.",
+      "info": "Генерировать HTML для встраивания iframe с этой панелью.",
+      "time-range": "Текущий интервал времени",
+      "time-range-description": "Преобразует текущий относительный диапазон времени в абсолютный интервал"
     },
     "export": {
-      "back-button": "Back to export config",
-      "cancel-button": "Cancel",
-      "info-text": "Export this dashboard.",
-      "save-button": "Save to file",
-      "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON"
+      "back-button": "Вернуться к настройке экспорта",
+      "cancel-button": "Отмена",
+      "info-text": "Экспортировать эту панель управления.",
+      "save-button": "Сохранить в файл",
+      "share-externally-label": "Экспорт для обмена за границей",
+      "view-button": "Просмотр JSON"
     },
     "library": {
-      "info": "Create library panel."
+      "info": "Создать панель библиотеки."
     },
     "link": {
-      "copy-link-button": "Copy",
-      "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
-      "link-url": "Link URL",
-      "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
-      "rendered-image": "Direct link rendered image",
-      "save-alert": "Dashboard is not saved",
-      "save-dashboard": "To render a panel image, you must save the dashboard first.",
-      "shorten-url": "Shorten URL",
-      "time-range-description": "Transforms the current relative time range to an absolute time range",
-      "time-range-label": "Lock time range"
+      "copy-link-button": "Копировать",
+      "info-text": "Создайте прямую ссылку на эту панель или панель, настроенную с параметрами ниже.",
+      "link-url": "URL ссылки",
+      "render-alert": "Модуль визуализации изображений не установлен",
+      "render-instructions": "Для отображения панели необходимо установить плагин <2>Grafana image renderer plugin</2>. Пожалуйста, свяжитесь с администратором Grafana, чтобы установить плагин.",
+      "rendered-image": "Изображение прямой ссылки",
+      "save-alert": "Панель не сохранена",
+      "save-dashboard": "Чтобы отобразить изображение панели, вы должны сначала сохранить эту панель.",
+      "shorten-url": "Сократить URL",
+      "time-range-description": "Преобразует текущий относительный диапазон времени в абсолютный интервал",
+      "time-range-label": "Период блокировки"
     },
     "panel": {
-      "title": "Share Panel"
+      "title": "Поделиться панелью"
     },
     "snapshot": {
-      "cancel-button": "Cancel",
-      "copy-link-button": "Copy",
-      "delete-button": "Delete snapshot.",
-      "deleted-message": "The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before before it is removed from browser caches or CDN caches.",
-      "expire": "Expire",
-      "expire-day": "1 Day",
-      "expire-hour": "1 Hour",
-      "expire-never": "Never",
-      "expire-week": "1 Week",
-      "info-text-1": "A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data and series names embedded in your dashboard.",
-      "info-text-2": "Keep in mind, your snapshot <1>can be viewed by anyone</1> that has the link and can access the URL. Share wisely.",
-      "local-button": "Publish Snapshot",
-      "mistake-message": "Did you make a mistake? ",
-      "name": "Snapshot name",
-      "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "cancel-button": "Отмена",
+      "copy-link-button": "Копировать",
+      "delete-button": "Удалить снимок.",
+      "deleted-message": "Снимок был удален. Если вы уже обращались к нему один раз, то это может занять не более часа до удаления кэша браузера или CDN кэша.",
+      "expire": "Истекает",
+      "expire-day": "1 день",
+      "expire-hour": "1 час",
+      "expire-never": "Никогда",
+      "expire-week": "1 неделя",
+      "info-text-1": "Снимки — это мгновенный способ публичного распространения интерактивной панели инструментов. При создании мы удаляем чувствительные данные, такие как запросы (метрика, шаблон и аннотация) и ссылки панелей, оставляя только видимые имена метрических данных и серии, встроенные в вашу панель управления.",
+      "info-text-2": "Помните, что ваш снимок <1>может быть просмотрен всеми</1>, который имеет ссылку и может получить доступ к URL. Поделитесь мудро.",
+      "local-button": "Опубликовать снимок",
+      "mistake-message": "Вы ошиблись? ",
+      "name": "Имя снимка",
+      "timeout": "Таймаут (в секундах)",
+      "timeout-description": "Вам может потребоваться настроить значение таймаута, если оно занимает много времени, чтобы получить метрики панели инструментов.",
       "url-label": "Snapshot URL"
     },
     "tab-title": {
-      "embed": "Embed",
-      "export": "Export",
-      "library-panel": "Library panel",
-      "link": "Link",
-      "panel-embed": "Embed",
-      "public-dashboard": "Public Dashboard",
-      "public-dashboard-title": "Public dashboard",
+      "embed": "Вставить",
+      "export": "Экспорт",
+      "library-panel": "Панель библиотеки",
+      "link": "Ссылка",
+      "panel-embed": "Вставить",
+      "public-dashboard": "Публичная панель",
+      "public-dashboard-title": "Общая панель",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
-      "current": "Current",
-      "dark": "Dark",
-      "field-name": "Theme",
-      "light": "Light"
+      "current": "Текущее",
+      "dark": "Тёмная",
+      "field-name": "Тема",
+      "light": "Светлая"
     },
     "view-json": {
-      "copy-button": "Copy to Clipboard"
+      "copy-button": "Скопировать в буфер обмена"
     }
   },
   "share-playlist": {
-    "checkbox-description": "Panel heights will be adjusted to fit screen size",
-    "checkbox-label": "Autofit",
-    "copy-link-button": "Copy",
-    "link-url-label": "Link URL",
-    "mode": "Mode",
-    "mode-kiosk": "Kiosk",
-    "mode-normal": "Normal",
-    "mode-tv": "TV",
-    "title": "Share playlist"
+    "checkbox-description": "Высота панели будет регулироваться по размеру экрана",
+    "checkbox-label": "Автоподбор",
+    "copy-link-button": "Копировать",
+    "link-url-label": "URL ссылки",
+    "mode": "Режим",
+    "mode-kiosk": "Киоск",
+    "mode-normal": "Обычный",
+    "mode-tv": "ТВ",
+    "title": "Поделиться плейлистом"
   },
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "Dark",
-        "light-label": "Light",
-        "system-label": "System preference"
+        "dark-label": "Тёмная",
+        "light-label": "Светлая",
+        "system-label": "Системные настройки"
       }
     }
   },
@@ -2010,210 +2010,210 @@
   },
   "shared-preferences": {
     "fields": {
-      "home-dashboard-label": "Home Dashboard",
-      "home-dashboard-placeholder": "Default dashboard",
-      "locale-label": "Language",
-      "locale-placeholder": "Choose language",
-      "theme-label": "Interface theme",
-      "week-start-label": "Week start"
+      "home-dashboard-label": "Домашняя панель",
+      "home-dashboard-placeholder": "Панель по умолчанию",
+      "locale-label": "Язык",
+      "locale-placeholder": "Выберите язык",
+      "theme-label": "Тема интерфейса",
+      "week-start-label": "Начало недели"
     },
     "theme": {
-      "default-label": "Default"
+      "default-label": "По умолчанию"
     },
-    "title": "Preferences"
+    "title": "Настройки"
   },
   "silences": {
     "empty-state": {
-      "button-title": "Create silence",
-      "title": "You haven't created any silences yet"
+      "button-title": "Создать тишину",
+      "title": "Вы еще не создали никаких тишины"
     },
     "table": {
-      "add-silence-button": "Add Silence",
-      "edit-button": "Edit",
-      "expired-silences": "Expired silences are automatically deleted after 5 days.",
-      "no-matching-silences": "No matching silences found;",
-      "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
-      "recreate-button": "Recreate",
+      "add-silence-button": "Добавить Тишину",
+      "edit-button": "Редактирование",
+      "expired-silences": "Просроченные молчания автоматически удаляются через 5 дней.",
+      "no-matching-silences": "Подходящие молчания не найдены;",
+      "noConfig": "Создайте новый контактный пункт для создания конфигурации, используя значения по умолчанию или обратитесь к администратору, чтобы настроить Alertmanager.",
+      "recreate-button": "Восстановить",
       "unsilence-button": "Unsilence"
     }
   },
   "silences-table": {
     "header": {
-      "alert-name": "Alert name",
-      "state": "State"
+      "alert-name": "Название оповещения",
+      "state": "Область"
     }
   },
   "snapshot": {
     "empty-state": {
-      "message": "You haven't created any snapshots yet",
-      "more-info": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <4>Learn more</4>"
+      "message": "Вы еще не создали ни одного снимка",
+      "more-info": "Вы можете создать снимок любой панели инструментов через <1>Поделиться</1> модально. <4>Подробнее</4>"
     },
-    "external-badge": "External",
-    "name-column-header": "Name",
+    "external-badge": "Внешний",
+    "name-column-header": "Наименование",
     "share": {
-      "cancel-button": "Cancel",
-      "copy-link-button": "Copy link",
-      "delete-button": "Delete snapshot",
-      "delete-description": "Are you sure you want to delete this snapshot?",
-      "delete-title": "Delete snapshot",
-      "deleted-alert": "Your snapshot has been deleted. It might take up to an hour before the snapshot is cleared from any CDN caches.",
-      "expiration-label": "Expires in",
-      "info-alert": "A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.",
-      "learn-more-button": "Learn more",
-      "local-button": "Publish snapshot",
-      "name-label": "Snapshot name*",
-      "new-snapshot-button": "New snapshot",
-      "success-creation": "Your snapshot has been created",
-      "success-delete": "Your snapshot has been deleted",
-      "view-all-button": "View all snapshots"
+      "cancel-button": "Отмена",
+      "copy-link-button": "Копировать ссылку",
+      "delete-button": "Удалить снимок",
+      "delete-description": "Вы уверены, что хотите удалить этот снимок?",
+      "delete-title": "Удалить снимок",
+      "deleted-alert": "Ваш снимок был удален. Это может занять до часа до того, как снимок будет очищен от кэша CDN.",
+      "expiration-label": "Истекает через",
+      "info-alert": "Снимок панели инструментов Grafana публично делится панелью инструментов при удалении таких важных данных, как запросы и ссылки на панели, оставляя только видимые метрики и имена серий. Любой пользователь со ссылкой может получить доступ к снимку.",
+      "learn-more-button": "Узнать больше",
+      "local-button": "Опубликовать снимок",
+      "name-label": "Имя снимка*",
+      "new-snapshot-button": "Новый снимок",
+      "success-creation": "Снимок создан",
+      "success-delete": "Ваш снимок был удален",
+      "view-all-button": "Посмотреть все снимки"
     },
     "url-column-header": "Snapshot url",
-    "view-button": "View"
+    "view-button": "Вид"
   },
   "tag-filter": {
-    "loading": "Loading...",
-    "no-tags": "No tags found",
-    "placeholder": "Filter by tag"
+    "loading": "Загрузка...",
+    "no-tags": "Теги не найдены",
+    "placeholder": "Фильтр по тегу"
   },
   "teams": {
     "empty-state": {
-      "button-title": "New team",
-      "message": "No teams found",
-      "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <2>Learn more</2>",
-      "title": "You haven't created any teams yet"
+      "button-title": "Новая команда",
+      "message": "Команды не найдены",
+      "pro-tip": "Назначить командам папки и права доступа к панели управления вместо пользователей для облегчения администрирования. <2>Подробнее</2>",
+      "title": "Вы еще не создали ни одной команды"
     }
   },
   "time-picker": {
     "absolute": {
-      "recent-title": "Recently used absolute ranges",
-      "title": "Absolute time range"
+      "recent-title": "Недавно использованные абсолютные диапазоны",
+      "title": "Абсолютный диапазон времени"
     },
     "calendar": {
-      "apply-button": "Apply time range",
-      "cancel-button": "Cancel",
-      "close": "Close calendar",
-      "next-month": "Next month",
-      "previous-month": "Previous month",
-      "select-time": "Select a time range"
+      "apply-button": "Применить временной интервал",
+      "cancel-button": "Отмена",
+      "close": "Закрыть календарь",
+      "next-month": "Следующий месяц",
+      "previous-month": "Предыдущий месяц",
+      "select-time": "Выберите временной диапазон"
     },
     "content": {
-      "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
-      "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
-      "filter-placeholder": "Search quick ranges"
+      "empty-recent-list-docs": "<0><0>Прочтите документацию</0><1>, чтобы узнать больше о том, как входить в пользовательские промежутки времени.</1></0>",
+      "empty-recent-list-info": "Похоже, вы не использовали этот выбор раньше. Как только вы вводите интервалы времени, здесь появятся недавно использованные интервалы.",
+      "filter-placeholder": "Поиск быстрых диапазонов"
     },
     "copy-paste": {
-      "copy-success-message": "Time range copied to clipboard",
-      "default-error-message": "{{error}} is not a valid time range",
-      "default-error-title": "Invalid time range",
-      "tooltip-copy": "Copy time range to clipboard",
-      "tooltip-paste": "Paste time range"
+      "copy-success-message": "Диапазон времени скопирован в буфер обмена",
+      "default-error-message": "{{error}} не является допустимым интервалом времени",
+      "default-error-title": "Неверный интервал времени",
+      "tooltip-copy": "Копировать диапазон времени в буфер обмена",
+      "tooltip-paste": "Вставить диапазон времени"
     },
     "footer": {
-      "change-settings-button": "Change time settings",
-      "fiscal-year-option": "Fiscal year",
-      "fiscal-year-start": "Fiscal year start month",
-      "time-zone-option": "Time zone",
-      "time-zone-selection": "Time zone selection"
+      "change-settings-button": "Изменить настройки времени",
+      "fiscal-year-option": "Финансовый год",
+      "fiscal-year-start": "Месяц начала финансового года",
+      "time-zone-option": "Часовой пояс",
+      "time-zone-selection": "Выбор часового пояса"
     },
     "range-content": {
-      "apply-button": "Apply time range",
-      "default-error": "Please enter a past date or \"now\"",
-      "fiscal-year": "Fiscal year",
-      "from-input": "From",
-      "open-input-calendar": "Open calendar",
-      "range-error": "\"From\" can't be after \"To\"",
-      "to-input": "To"
+      "apply-button": "Применить временной интервал",
+      "default-error": "Пожалуйста, введите последнюю дату или «сейчас»",
+      "fiscal-year": "Финансовый год",
+      "from-input": "От",
+      "open-input-calendar": "Открыть календарь",
+      "range-error": "\"От\" не может быть после \"Кому\"",
+      "to-input": "Кому"
     },
     "range-picker": {
-      "backwards-time-aria-label": "Move time range backwards",
-      "current-time-selected": "Time range selected: {{currentTimeRange}}",
-      "forwards-time-aria-label": "Move time range forwards",
-      "to": "to",
-      "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
+      "backwards-time-aria-label": "Переместить диапазон времени назад",
+      "current-time-selected": "Выбранный временной интервал: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Переместить диапазон времени вперёд",
+      "to": "до",
+      "zoom-out-button": "Масштабирование",
+      "zoom-out-tooltip": "Масштабирование интервала <1></1> CTRL+Z"
     },
     "time-range": {
-      "aria-role": "Time range selection",
-      "default-title": "Time ranges",
-      "example-title": "Example time ranges",
-      "specify": "Specify time range <1></1>"
+      "aria-role": "Выбор диапазона времени",
+      "default-title": "Диапазоны времени",
+      "example-title": "Пример временных диапазонов",
+      "specify": "Укажите диапазон времени <1></1>"
     },
     "zone": {
-      "select-aria-label": "Time zone picker",
-      "select-search-input": "Type to search (country, city, abbreviation)"
+      "select-aria-label": "Выбор часового пояса",
+      "select-search-input": "Введите для поиска (страна, город, сокращение)"
     }
   },
   "transformations": {
     "empty": {
-      "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
-      "add-transformation-header": "Start transforming data"
+      "add-transformation-body": "Трансформации позволяют изменять данные различными способами, прежде чем будет показана визуализация. 1></1>Сюда входит объединение данных, переименование полей, расчеты, форматирование данных для отображения и многое другое.",
+      "add-transformation-header": "Начать преобразование данных"
     }
   },
-  "Type": "Type",
-  "Unit": "Unit",
-  "Unknown": "Unknown",
+  "Type": "Тип",
+  "Unit": "Единица измерения",
+  "Unknown": "Неизвестен",
   "user-orgs": {
-    "current-org-button": "Current",
-    "name-column": "Name",
-    "role-column": "Role",
-    "select-org-button": "Select organisation",
-    "title": "Organizations"
+    "current-org-button": "Текущее",
+    "name-column": "Наименование",
+    "role-column": "Роль",
+    "select-org-button": "Выберите организацию",
+    "title": "Организации"
   },
   "user-profile": {
     "fields": {
-      "email-error": "Email is required",
-      "email-label": "Email",
-      "name-error": "Name is required",
-      "name-label": "Name",
-      "username-label": "Username"
+      "email-error": "Требуется адрес электронной почты",
+      "email-label": "Почта",
+      "name-error": "Требуется имя",
+      "name-label": "Наименование",
+      "username-label": "Имя пользователя"
     },
     "tabs": {
-      "general": "General"
+      "general": "Общие положения"
     }
   },
   "user-session": {
-    "browser-column": "Browser & OS",
-    "created-at-column": "Logged on",
-    "ip-column": "IP address",
-    "revoke": "Revoke user session",
-    "seen-at-column": "Last seen"
+    "browser-column": "Браузер и ОС",
+    "created-at-column": "Вход выполнен",
+    "ip-column": "IP-адрес",
+    "revoke": "Отозвать сеанс пользователя",
+    "seen-at-column": "Последний раз видели"
   },
   "user-sessions": {
-    "loading": "Loading sessions..."
+    "loading": "Загрузка сессий..."
   },
   "users": {
     "empty-state": {
-      "message": "No users found"
+      "message": "Пользователей не найдено"
     }
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Public dashboard users"
+      "public-dashboard-users-tab-title": "Пользователи информационной панели"
     }
   },
   "variable": {
     "adhoc": {
-      "placeholder": "Select value"
+      "placeholder": "Выберите значение"
     },
     "dropdown": {
-      "placeholder": "Enter variable value"
+      "placeholder": "Введите значение переменной"
     },
     "picker": {
-      "link-all": "All",
-      "option-all": "All",
-      "option-selected-values": "Selected",
-      "option-tooltip": "Clear selections"
+      "link-all": "Все",
+      "option-all": "Все",
+      "option-selected-values": "Выбрано",
+      "option-tooltip": "Очистить выбранные"
     },
     "textbox": {
-      "placeholder": "Enter variable value"
+      "placeholder": "Введите значение переменной"
     }
   },
   "variables": {
     "empty-state": {
-      "button-title": "Add variable",
-      "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
-      "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
-      "title": "There are no variables added yet"
+      "button-title": "Добавить переменную",
+      "info-box-content": "Переменные позволяют более интерактивные и динамические панели инструментов. Вместо жесткого кодирования такие вещи, как сервер или имена датчиков в ваших метрических запросах вы можете использовать переменные в их месте. Переменные показаны в виде списков в верхней части панели. Эти выпадающие списки позволяют легко изменить данные, отображаемые на панели управления.",
+      "info-box-content-2": "Для получения дополнительной информации ознакомьтесь с <2>Шаблонами и документацией по переменным</2>.",
+      "title": "Переменных пока нет"
     }
   }
 }
