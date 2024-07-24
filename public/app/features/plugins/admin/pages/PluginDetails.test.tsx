@@ -355,6 +355,13 @@ describe('Plugin details page', () => {
       expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
     });
 
+    it('should not display install / uninstall buttons for provisioned plugins', async () => {
+      const { queryByRole } = renderPluginDetails({ id, isProvisioned: true });
+
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
+    });
+
     it('should display install link with `config.pluginAdminExternalManageEnabled` set to true', async () => {
       config.pluginAdminExternalManageEnabled = true;
 
