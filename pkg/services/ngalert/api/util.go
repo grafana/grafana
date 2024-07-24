@@ -235,7 +235,7 @@ func containsProvisionedAlerts(provenances map[string]ngmodels.Provenance, rules
 func getHash(hashSlice []string) uint64 {
 	sum := fnv.New64()
 	for _, str := range hashSlice {
-		sum.Write([]byte(str))
+		_, _ = sum.Write([]byte(str))
 	}
 	hash := sum.Sum64()
 	return hash
