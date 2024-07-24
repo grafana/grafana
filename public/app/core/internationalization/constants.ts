@@ -8,6 +8,7 @@ export const GERMAN_GERMANY = 'de-DE';
 export const BRAZILIAN_PORTUGUESE = 'pt-BR';
 export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const PSEUDO_LOCALE = 'pseudo-LOCALE';
+export const RUSSIAN_LOCALE = 'ru-RU';
 
 export const DEFAULT_LANGUAGE = ENGLISH_US;
 
@@ -70,6 +71,14 @@ export const LANGUAGES: LanguageDefinition[] = [
     name: 'Português Brasileiro',
     loader: {
       grafana: () => import('../../../locales/pt-BR/grafana.json'),
+    },
+  },
+
+  {
+    code: RUSSIAN_LOCALE,
+    name: 'Русский',
+    loader: {
+      grafana: () => import('../../../locales/ru-RU/grafana.json'),
     },
   },
 ] satisfies Array<LanguageDefinition<'grafana'>>;
