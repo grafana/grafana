@@ -8,8 +8,6 @@ comments: |
 
 Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
-You can customize the following options:
-
 | Option     | Description                                                                                                                                                                                                |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Visibility | Toggle the switch to turn the legend on or off.                                                                                                                                                            |

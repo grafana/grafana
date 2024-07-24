@@ -146,7 +146,7 @@ Options under the **Axis** section control how the x- and y-axes are rendered. S
 
 #### Placement
 
-Select the placement of the y-axis.
+Select the placement of the y-axis. Choose from the following:
 
 - **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
 - **Left:** Display all y-axes on the left side.
@@ -165,21 +165,23 @@ To define hard limits of the y-axis, set standard min/max options. For more info
 
 ### Graph styles options
 
-The options under the **Graph styles** section let you set the general appearance of the graph, excluding [color]().
+<!--review this section for consistency of language with others and between table and longer paras -->
+
+The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
 
 | Option                                      | Description                                                                                                                                                                                                                           |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Style](#style)                             | Use this option to define how to display your time series data.                                                                                                                                                                       |
-| [Line interpolation](#line-interpolation)   | This option controls how the graph interpolates the series line.                                                                                                                                                                      |
-| [Line width](#line-width)                   | Line width is a slider that controls the thickness for series lines or the outline for bars.                                                                                                                                          |
-| [Fill opacity](#fill-opacity)               | Use opacity to specify the series area fill color.                                                                                                                                                                                    |
+| [Style](#style)                             | Choose how to display your time series data.                                                                                                                                                                                          |
+| [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line.                                                                                                                                                                                    |
+| [Line width](#line-width)                   | Move the slider to control the thickness for series lines or the outline for bars.                                                                                                                                                    |
+| [Fill opacity](#fill-opacity)               | Set the series area fill color.                                                                                                                                                                                                       |
 | [Gradient mode](#gradient-mode)             | Gradient mode specifies the gradient fill, which is based on the series color.                                                                                                                                                        |
-| [Line style](#line-style)                   | Set the style of the line.                                                                                                                                                                                                            |
+| [Line style](#line-style)                   | Choose the style of the line.                                                                                                                                                                                                         |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph.                                                                                                                                                              |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected.                                                                                                                                              |
-| [Show points](#show-points)                 | You can configure your visualization to add points to lines or bars.                                                                                                                                                                  |
+| [Show points](#show-points)                 | Choose whether to add points to lines or bars to the visualization.                                                                                                                                                                   |
 | Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter.                                                                                                                                                                          |
-| [Stack series](#stack-series)               | Stacking allows Grafana to display series on top of each other.                                                                                                                                                                       |
+| [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other.                                                                                                                                                                             |
 | [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point.                                                                                                                                                                                 |
 | Bar width factor                            | Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space. |
 

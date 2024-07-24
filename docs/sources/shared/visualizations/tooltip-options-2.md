@@ -6,7 +6,7 @@ comments: |
   This file is used in the following visualizations: candlestick, time series, trend
 ---
 
-Tooltip options control the information overlay that appears when you hover over data points in the visualization. You can customize the following options:
+Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
 | Option                                  | Description                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
