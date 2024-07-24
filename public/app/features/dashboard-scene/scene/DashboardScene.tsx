@@ -911,6 +911,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       }
     });
   }
+
+  public shouldShowAngularDeprecationNotice() {
+    const { uid } = this.state;
+    const hasAngularPlugins = true; // this is a mock value
+    const isAngularDeprecationNoticeDismissed = true; // this is a mock value
+    const shouldShowDeprecation =
+      config.featureToggles.angularDeprecationUI &&
+      hasAngularPlugins &&
+      isAngularDeprecationNoticeDismissed &&
+      uid !== undefined;
+    return shouldShowDeprecation;
+  }
 }
 
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {

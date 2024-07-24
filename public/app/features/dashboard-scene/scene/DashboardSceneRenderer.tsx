@@ -10,6 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
+import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
@@ -39,6 +40,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} key="dashboard-empty-state" />
   );
 
+  const showAngularDeprecationNotice = () => {
+    // TODO: we will implement this later
+    const shouldShowAutoMigrateLink = false;
+    // const showAutoMigrateLink = dashboard.panels.some((panel) =>
+    //   explicitlyControlledMigrationPanels.includes(panel.type)
+    // );
+
+    return (
+      model.shouldShowAngularDeprecationNotice() &&
+      model.state.uid && (
+        <AngularDeprecationNotice dashboardUid={model.state.uid} showAutoMigrateLink={shouldShowAutoMigrateLink} />
+      )
+    );
+  };
+
   const withPanels = (
     <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
       <bodyToRender.Component model={bodyToRender} />
@@ -47,7 +63,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   const notFound = meta.dashboardNotFound && <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
 
-  let body = [withPanels];
+  let body = [showAngularDeprecationNotice(), withPanels];
 
   if (notFound) {
     body = [notFound];
