@@ -2,4 +2,4 @@ project_id_env: CROWDIN_PROJECT_ID
 api_token_env: CROWDIN_PERSONAL_TOKEN
 files:
   - source: public/locales/en-US/*.json
-    translation: '%original_file_name%'
+    translation: /public/locales/%locale%/%original_file_name%
