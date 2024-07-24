@@ -3,4 +3,3 @@ api_token_env: CROWDIN_PERSONAL_TOKEN
 files:
   - source: public/locales/en-US/*.json
     translation: '%original_file_name%'
-    multilingual: 1
