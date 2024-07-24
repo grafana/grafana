@@ -95,7 +95,7 @@ If the log doesn't have a specified level label, Grafana attempts to determine i
 Refer to the following table for more information. The log level is always determined by the first match. If Grafana isn't able to infer a log level field, it gets visualized as an unknown log level.
 
 {{< admonition type="tip" >}}
-When using the Loki data source, if `level` is part of your log line, you can use parsers such as JSON, logfmt, or regex to extract the level information into a level label. This label is used to determine the level value, allowing the histogram to display the various log levels as separate bars.
+When using the Loki data source, if `level` is part of your log line, you can use parsers such as `json`, `logfmt`, or `regex` to extract the level information into a level label. This label is used to determine the level value, allowing the histogram to display the various log levels as separate bars.
 {{< /admonition >}}
 
 **Log levels supported and mapping of log level abbreviation and expressions:**
