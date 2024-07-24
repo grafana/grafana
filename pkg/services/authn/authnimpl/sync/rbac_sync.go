@@ -97,10 +97,44 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	return permissions, nil
 }
 
-var fixedCloudRoles = map[org.RoleType]string{
-	org.RoleViewer: accesscontrol.FixedCloudViewerRole,
-	org.RoleEditor: accesscontrol.FixedCloudEditorRole,
-	org.RoleAdmin:  accesscontrol.FixedCloudAdminRole,
+func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error) {
+	const (
+		expectedRolesToAddCount = 2
+		rolesToRemoveInitialCap = 4
+	)
+	// Since Cloud Admin/Editor/Viewer roles are not yet implemented one-to-one in the Grafana, it becomes a confusing experience for users,
+	// therefore we are doing granular mapping of all available functionality in the Grafana temporary.
+	var fixedCloudRoles = map[org.RoleType][]string{
+		org.RoleViewer: {accesscontrol.FixedCloudViewerRole, accesscontrol.FixedCloudSupportTicketReader},
+		org.RoleEditor: {accesscontrol.FixedCloudEditorRole, accesscontrol.FixedCloudSupportTicketAdmin},
+		org.RoleAdmin:  {accesscontrol.FixedCloudAdminRole, accesscontrol.FixedCloudSupportTicketAdmin},
+	}
+
+	rolesToAdd := make([]string, 0, expectedRolesToAddCount)
+	rolesToRemove := make([]string, 0, rolesToRemoveInitialCap)
+
+	currentRole := ident.GetOrgRole()
+	_, validRole := fixedCloudRoles[currentRole]
+
+	if !validRole {
+		return nil, nil, errInvalidCloudRole.Errorf("invalid role: %s", currentRole)
+	}
+
+	for role, fixedRoles := range fixedCloudRoles {
+		for _, fixedRole := range fixedRoles {
+			if role == currentRole {
+				rolesToAdd = append(rolesToAdd, fixedRole)
+			} else {
+				rolesToRemove = append(rolesToRemove, fixedRole)
+			}
+		}
+	}
+
+	if len(rolesToAdd) != expectedRolesToAddCount {
+		return nil, nil, errInvalidCloudRole.Errorf("invalid role: %s", currentRole)
+	}
+
+	return rolesToAdd, rolesToRemove, nil
 }
 
 func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r *authn.Request) error {
@@ -122,19 +156,9 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return err
 	}
 
-	rolesToAdd := make([]string, 0, 1)
-	rolesToRemove := make([]string, 0, 2)
-
-	for role, fixedRole := range fixedCloudRoles {
-		if role == ident.GetOrgRole() {
-			rolesToAdd = append(rolesToAdd, fixedRole)
-		} else {
-			rolesToRemove = append(rolesToRemove, fixedRole)
-		}
-	}
-
-	if len(rolesToAdd) != 1 {
-		return errInvalidCloudRole.Errorf("invalid role: %s", ident.GetOrgRole())
+	rolesToAdd, rolesToRemove, err := cloudRolesToAddAndRemove(ident)
+	if err != nil {
+		return err
 	}
 
 	return s.ac.SyncUserRoles(ctx, ident.GetOrgID(), accesscontrol.SyncUserRolesCommand{
