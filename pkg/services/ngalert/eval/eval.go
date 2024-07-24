@@ -334,7 +334,7 @@ func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map
 	headers := make(map[string]string, len(metadata)+3)
 
 	for key, value := range metadata {
-		headers[fmt.Sprintf("X-Rule-%s", key)] = url.QueryEscape(value)
+		headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(value)
 	}
 
 	// Many data sources check this in query method as sometimes alerting needs special considerations.
