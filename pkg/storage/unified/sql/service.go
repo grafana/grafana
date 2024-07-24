@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
@@ -20,23 +21,18 @@ import (
 
 var (
 	_ Service = (*service)(nil)
-	// _ registry.BackgroundService = (*service)(nil)
-	// _ registry.CanBeDisabled     = (*service)(nil)
 )
 
 type Service interface {
 	services.NamedService
-	// registry.BackgroundService
-	// registry.CanBeDisabled To we need to implement this interface?
 }
 
 type service struct {
 	*services.BasicService
 
-	// config *c
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-
+	cfg       *setting.Cfg
+	features  featuremgmt.FeatureToggles
+	db        infraDB.DB
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -52,6 +48,7 @@ type service struct {
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	db infraDB.DB,
 	log log.Logger,
 ) (*service, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
@@ -68,12 +65,12 @@ func ProvideService(
 	authn := &grpc.Authenticator{}
 
 	s := &service{
-		// config:        newConfig(cfg),
 		cfg:           cfg,
 		features:      features,
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
 		tracing:       tracing,
+		db:            db,
 		log:           log,
 	}
 
@@ -83,16 +80,8 @@ func ProvideService(
 	return s, nil
 }
 
-// // Run is an adapter for the BackgroundService interface.
-// func (s *service) Run(ctx context.Context) error {
-// 	if err := s.start(ctx); err != nil {
-// 		return err
-// 	}
-// 	return s.running(ctx)
-// }
-
 func (s *service) start(ctx context.Context) error {
-	server, err := ProvideResourceServer(nil, s.cfg, s.features, s.tracing)
+	server, err := ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
 	}
@@ -115,12 +104,21 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	err = s.handler.Run(ctx)
-	if err != nil {
-		return err
-	}
-
+	// start the gRPC server
+	go func() {
+		err := s.handler.Run(ctx)
+		if err != nil {
+			s.stoppedCh <- err
+		} else {
+			s.stoppedCh <- nil
+		}
+	}()
 	return nil
+}
+
+// GetAddress returns the address of the gRPC server.
+func (s *service) GetAddress() string {
+	return s.handler.GetAddress()
 }
 
 func (s *service) running(ctx context.Context) error {

@@ -7,7 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -277,6 +281,75 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int64(8), continueToken.ResourceVersion)
 		assert.Equal(t, int64(4), continueToken.StartOffset)
+	})
+}
+func TestClientServer(t *testing.T) {
+	ctx := context.Background()
+	dbstore := infraDB.InitTestDB(t)
+
+	cfg := setting.NewCfg()
+	cfg.GRPCServerAddress = "localhost:0"
+	cfg.GRPCServerNetwork = "tcp"
+
+	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
+
+	svc, err := sql.ProvideService(cfg, features, dbstore, nil)
+	require.NoError(t, err)
+	var client resource.ResourceStoreClient
+
+	// Test with an admin identity
+	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Namespace:      identity.NamespaceUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true, // can do anything
+	})
+
+	t.Run("Start and stop service", func(t *testing.T) {
+		err = services.StartAndAwaitRunning(ctx, svc)
+		require.NoError(t, err)
+		require.NotEmpty(t, svc.GetAddress())
+	})
+
+	t.Run("Create a client", func(t *testing.T) {
+		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		require.NoError(t, err)
+		client = resource.NewResourceStoreClientGRPC(conn)
+	})
+
+	t.Run("Create a resource", func(t *testing.T) {
+		raw := []byte(`{
+			"apiVersion": "group/v0alpha1",
+			"kind": "resource",
+			"metadata": {
+				"name": "item1",
+				"namespace": "namespace"
+			},
+			"spec": {}
+		}`)
+		resp, err := client.Create(clientCtx, &resource.CreateRequest{
+			Key:   resourceKey("item1"),
+			Value: raw,
+		})
+		require.NoError(t, err)
+		require.Empty(t, resp.Error)
+		require.Greater(t, resp.ResourceVersion, int64(0))
+	})
+
+	t.Run("Read the resource", func(t *testing.T) {
+		resp, err := client.Read(clientCtx, &resource.ReadRequest{
+			Key: resourceKey("item1"),
+		})
+		require.NoError(t, err)
+		require.Empty(t, resp.Error)
+		require.Greater(t, resp.ResourceVersion, int64(0))
+	})
+
+	t.Run("Stop the service", func(t *testing.T) {
+		err = services.StopAndAwaitTerminated(ctx, svc)
+		require.NoError(t, err)
 	})
 }
 
