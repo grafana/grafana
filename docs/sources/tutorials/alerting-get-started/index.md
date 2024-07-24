@@ -32,9 +32,9 @@ In this tutorial you will:
 - Set up an alert rule.
 - Receive firing and resolved alert notifications in a public webhook.
 
-{{< admonition type="tip" >}}
+
 Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if you want to learn more about alerts and notification routing.
-{{< /admonition >}}
+
 
 <!-- INTERACTIVE page intro.md END -->
 
@@ -44,7 +44,10 @@ Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if yo
 
 ### Grafana Cloud users
 
-As a Grafana Cloud user, you don't have to install anything. Continue to [Create a contact point](#create-a-contact-point).
+As a Grafana Cloud user, you don't have to install anything.   
+<!-- INTERACTIVE ignore START -->
+Continue to [Create a contact point](#create-a-contact-point).
+<!-- INTERACTIVE ignore END -->
 
 ### Grafana OSS users
 
@@ -120,7 +123,7 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
 1. In your browser, **sign in** to your Grafana Cloud account.
 
    **NOTE:**
-   **OSS users**: To log in, navigate to localhost:3000, where Grafana is running locally.
+   **OSS and Killercoda users**: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running locally.
 
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. **Copy Your unique URL**.
@@ -150,7 +153,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 ## Create an alert
 
-Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
+Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
 In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
