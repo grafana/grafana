@@ -117,15 +117,21 @@ describe('SQLGenerator', () => {
   }
   describe('accountId', () => {
     it('should add where clause if account ID is defined', () => {
-      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery }, '12345')).toEqual('SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2") WHERE AWS.AccountId = \'12345\'');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery }, '12345')).toEqual(
+        'SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2") WHERE AWS.AccountId = \'12345\''
+      );
     });
     it('should not add where clause if account ID is not defined', () => {
-      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).toEqual('SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2")');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).toEqual(
+        'SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2")'
+      );
     });
     it('should not add where clause if account ID is all', () => {
-      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).toEqual('SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2")');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).toEqual(
+        'SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2")'
+      );
     });
-  })
+  });
   describe('filter', () => {
     it('should not add WHERE clause in case its empty', () => {
       expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).not.toContain('WHERE');
@@ -138,15 +144,18 @@ describe('SQLGenerator', () => {
 
     it('should add where clauses with AND if accountID is defined', () => {
       const where = createArray([createOperator('Instance-Id', '=', 'I-123')]);
-      assertQueryEndsWith({ sql: {where }, accountId:'12345'}, `WHERE AWS.AccountId = '12345' AND "Instance-Id" = 'I-123'`);
+      assertQueryEndsWith(
+        { sql: { where }, accountId: '12345' },
+        `WHERE AWS.AccountId = '12345' AND "Instance-Id" = 'I-123'`
+      );
     });
     it.skip('should add where clauses with WHERE if accountID is not defined', () => {
       const where = createArray([createOperator('Instance-Id', '=', 'I-123')]);
-      assertQueryEndsWith({ sql: {where }}, `WHERE "Instance-Id" = 'I-123'`);
+      assertQueryEndsWith({ sql: { where } }, `WHERE "Instance-Id" = 'I-123'`);
     });
     it.skip('should add where clauses with WHERE if accountID is all', () => {
       const where = createArray([createOperator('Instance-Id', '=', 'I-123')]);
-      assertQueryEndsWith({ sql: {where }, accountId:'all'}, `WHERE "Instance-Id" = 'I-123'`);
+      assertQueryEndsWith({ sql: { where }, accountId: 'all' }, `WHERE "Instance-Id" = 'I-123'`);
     });
     // TODO: We should handle this scenario
     it.skip('should not add WHERE clause when the operator is incomplete', () => {
@@ -156,12 +165,12 @@ describe('SQLGenerator', () => {
 
     it('should handle one top level filter with AND', () => {
       const where = createArray([createOperator('Instance-Id', '=', 'I-123')]);
-      assertQueryEndsWith({ sql: {where} }, `WHERE "Instance-Id" = 'I-123'`);
+      assertQueryEndsWith({ sql: { where } }, `WHERE "Instance-Id" = 'I-123'`);
     });
 
     it('should handle one top level filter with OR', () => {
       assertQueryEndsWith(
-        {sql: { where: createArray([createOperator('InstanceId', '=', 'I-123')]) }},
+        { sql: { where: createArray([createOperator('InstanceId', '=', 'I-123')]) } },
         `WHERE InstanceId = 'I-123'`
       );
     });
@@ -341,7 +350,7 @@ describe('SQLGenerator', () => {
     });
 
     it('should be added in case its specified', () => {
-      assertQueryEndsWith({ sql: {limit: 10} }, `LIMIT 10`);
+      assertQueryEndsWith({ sql: { limit: 10 } }, `LIMIT 10`);
     });
   });
 
