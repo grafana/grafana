@@ -357,14 +357,14 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 		} else {
 			total = int(t)
 		}
-		sess.Select("count(uid) as 'count', resource_type as 'type'").
+		sess.Select("count(uid) as \"count\", resource_type as \"type\"").
 			Table(tableName).
 			GroupBy("type").
 			Where("snapshot_uid = ?", snapshotUid)
 		if err := sess.Find(&typeCounts); err != nil {
 			return err
 		}
-		sess.Select("count(uid) as 'count', status").
+		sess.Select("count(uid) as \"count\", status").
 			Table(tableName).
 			GroupBy("status").
 			Where("snapshot_uid = ?", snapshotUid)
