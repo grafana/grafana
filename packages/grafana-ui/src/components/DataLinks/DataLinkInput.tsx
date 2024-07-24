@@ -135,7 +135,6 @@ export const DataLinkInput = memo(
           if (stateRef.current.linkUrl.focusText.getText().length === 1) {
             next();
           }
-          // Fall through
         case 'Escape':
           setShowingSuggestions(false);
           return setSuggestionsIndex(0);
@@ -201,7 +200,6 @@ export const DataLinkInput = memo(
       }
       return precedingChar;
     };
-
 
     return (
       <div className={styles.wrapperOverrides}>
