@@ -61,6 +61,7 @@ func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMi
 		SnapshotID:           uuid.NewString(),
 		MaxItemsPerPartition: 10,
 		Algo:                 "nacl",
+		Metadata:             []byte("metadata"),
 	}
 
 	return c.snapshot, nil
