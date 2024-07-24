@@ -595,7 +595,6 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
-
 		}
 		for _, cp := range body.ContactPoints {
 			upd, err := ContactPointFromContactPointExport(cp)
