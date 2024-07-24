@@ -17,10 +17,10 @@ type RBACSettings struct {
 	OnlyStoreAccessActionSets bool
 
 	// set of resources that should generate managed permissions when created
-	managedPermissionsOnCreation map[string]struct{}
+	resourcesWithPermissionsOnCreation map[string]struct{}
 
 	// set of resources that should we should seed wildcard scopes for
-	managedPermissionsWildcardSeed map[string]struct{}
+	resourcesWithWildcardSeed map[string]struct{}
 }
 
 func (c *Cfg) readRBACSettings() {
@@ -33,28 +33,29 @@ func (c *Cfg) readRBACSettings() {
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
 	s.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
 
-	resoruces := util.SplitString(rbac.Key("managed_permissions_on_creation").MustString(""))
-	s.managedPermissionsOnCreation = map[string]struct{}{}
-	for _, resource := range resoruces {
-		s.managedPermissionsOnCreation[resource] = struct{}{}
+	// List of resources to generate managed permissions for upon resource creation (dashboard, folder, service-account, datasource)
+	resources := util.SplitString(rbac.Key("resources_with_managed_permissions_on_creation").MustString("dashboard, folder, service-account, datasource"))
+	s.resourcesWithPermissionsOnCreation = map[string]struct{}{}
+	for _, resource := range resources {
+		s.resourcesWithPermissionsOnCreation[resource] = struct{}{}
 	}
 
-	resoruces = util.SplitString(rbac.Key("managed_permissions_wildcard_seeds").MustString(""))
-	s.managedPermissionsWildcardSeed = map[string]struct{}{}
-	for _, resource := range resoruces {
-		s.managedPermissionsWildcardSeed[resource] = struct{}{}
+	// List of resources to seed managed permission wildcards for (dashboard, folder, service-account, datasource)
+	resources = util.SplitString(rbac.Key("resources_with_seeded_wildcard_access").MustString(""))
+	s.resourcesWithWildcardSeed = map[string]struct{}{}
+	for _, resource := range resources {
+		s.resourcesWithWildcardSeed[resource] = struct{}{}
 	}
 
 	c.RBAC = s
 }
 
 func (r RBACSettings) PermissionsOnCreation(resource string) bool {
-	_, ok := r.managedPermissionsOnCreation[resource]
+	_, ok := r.resourcesWithPermissionsOnCreation[resource]
 	return ok
 }
 
 func (r RBACSettings) PermissionsWildcardSeed(resource string) bool {
-	_, ok := r.managedPermissionsWildcardSeed[resource]
+	_, ok := r.resourcesWithWildcardSeed[resource]
 	return ok
-
 }
