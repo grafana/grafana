@@ -29,7 +29,7 @@ The results of log queries display as individual log lines and as a graph showin
 
 ## Logs volume
 
-When working with data sources that support a full range logs volume, Explore automatically displays a graph showing the log distribution for all submitted log queries. **This feature is currently supported by the Elasticsearch and Loki data sources.**
+When working with data sources that support a full range logs volume, Explore automatically displays a graph showing the log distribution for all submitted log queries. This feature is currently supported by the Elasticsearch and Loki data sources.
 
 {{< admonition type="note" >}}
 In Loki, generating the full range log volume via a metric query can be resource-intensive, depending on the time range queried. This is especially challenging for smaller Loki installations. To mitigate this, we recommend using a proxy like [nginx](https://www.nginx.com/) in front of Loki to set a custom timeout (e.g., 10 seconds) for these queries. Log volume histogram queries can be identified by looking for queries with the HTTP header `X-Query-Tags` with value `Source=logvolhist`; these headers are added by Grafana to all log volume histogram queries.
