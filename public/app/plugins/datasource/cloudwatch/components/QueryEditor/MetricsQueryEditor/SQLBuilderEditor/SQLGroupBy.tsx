@@ -40,12 +40,16 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   const options = useMemo(
     // Exclude options we've already selected
     () => {
-      const baseOptionsWithAccountId =
+      const isCrossAccountEnabled =
         config.featureToggles.cloudWatchCrossAccountQuerying &&
-        config.featureToggles.cloudwatchMetricInsightsCrossAccount
-          ? [{ label: 'Account ID', value: 'AWS.AccountId' }, ...baseOptions]
-          : baseOptions;
-      return baseOptionsWithAccountId.filter((option) => !groupBysFromQuery.some((v) => v.property.name === option.value));
+        config.featureToggles.cloudwatchMetricInsightsCrossAccount;
+
+      const baseOptionsWithAccountId = isCrossAccountEnabled
+        ? [{ label: 'Account ID', value: 'AWS.AccountId' }, ...baseOptions]
+        : baseOptions;
+      return baseOptionsWithAccountId.filter(
+        (option) => !groupBysFromQuery.some((v) => v.property.name === option.value)
+      );
     },
     [baseOptions, groupBysFromQuery]
   );
