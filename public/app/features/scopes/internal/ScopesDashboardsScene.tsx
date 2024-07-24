@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
@@ -9,6 +10,7 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { fetchSuggestedDashboards } from './api';
+import { DASHBOARDS_OPENED_KEY } from './const';
 import { SuggestedDashboard } from './types';
 import { getScopeNamesFromSelectedScopes } from './utils';
 
@@ -16,6 +18,7 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   filters: SceneObjectRef<ScopesFiltersScene> | null;
   dashboards: SuggestedDashboard[];
   filteredDashboards: SuggestedDashboard[];
+  forScopeNames: string[];
   isLoading: boolean;
   isOpened: boolean;
   isVisible: boolean;
@@ -31,14 +34,19 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
       filters: null,
       dashboards: [],
       filteredDashboards: [],
+      forScopeNames: [],
       isLoading: false,
-      isOpened: false,
+      isOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
       isVisible: false,
       scopesSelected: false,
       searchQuery: '',
     });
 
     this.addActivationHandler(() => {
+      if (this.state.isOpened) {
+        this.fetchDashboards();
+      }
+
       this._subs.add(
         this.state.filters?.resolve().subscribeToState((newState, prevState) => {
           if (
@@ -56,8 +64,18 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   public async fetchDashboards() {
     const scopeNames = getScopeNamesFromSelectedScopes(this.state.filters?.resolve().state.scopes ?? []);
 
+    if (isEqual(scopeNames, this.state.forScopeNames)) {
+      return;
+    }
+
     if (scopeNames.length === 0) {
-      return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false, scopesSelected: false });
+      return this.setState({
+        dashboards: [],
+        filteredDashboards: [],
+        forScopeNames: [],
+        isLoading: false,
+        scopesSelected: false,
+      });
     }
 
     this.setState({ isLoading: true });
@@ -67,6 +85,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     this.setState({
       dashboards,
       filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
+      forScopeNames: scopeNames,
       isLoading: false,
       scopesSelected: scopeNames.length > 0,
     });
@@ -92,10 +111,12 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   public open() {
     this.fetchDashboards();
     this.setState({ isOpened: true });
+    localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(true));
   }
 
   public close() {
     this.setState({ isOpened: false });
+    localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(false));
   }
 
   public show() {
@@ -200,6 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       backgroundColor: theme.colors.background.primary,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
