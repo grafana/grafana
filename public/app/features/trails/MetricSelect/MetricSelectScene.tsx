@@ -11,7 +11,6 @@ import {
   SceneCSSGridItem,
   SceneCSSGridLayout,
   SceneFlexItem,
-  SceneFlexLayout,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
@@ -61,7 +60,7 @@ interface MetricPanel {
 }
 
 export interface MetricSelectSceneState extends SceneObjectState {
-  body: SceneFlexLayout | SceneCSSGridLayout;
+  body: SceneCSSGridLayout;
   rootGroup?: Node;
   metricPrefix?: string;
   showPreviews?: boolean;
@@ -551,7 +550,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           </Alert>
         )}
         <StatusWrapper {...{ isLoading, blockingMessage }}>
-          {body instanceof SceneFlexLayout && <body.Component model={body} />}
           {body instanceof SceneCSSGridLayout && <body.Component model={body} />}
         </StatusWrapper>
       </div>
