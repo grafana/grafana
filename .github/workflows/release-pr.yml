@@ -117,18 +117,16 @@ jobs:
           git diff CHANGELOG.md
 
       - name: Commit CHANGELOG.md changes
-        run: git commit --allow-empty -m "Update changelog placeholder" CHANGELOG.md
+        run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
 
       - name: Update package.json versions
         uses: ./.grafana-main/pkg/build/actions/bump-version
         with:
           version: 'patch'
 
-      - name: Remove `main` checkout of grafana
-        run: rm -rf .grafana-main
       - name: Add package.json changes
         run: |
-          git add .
+          git add package.json lerna.json yarn.lock packages public
           git commit -m "Update version to ${{ inputs.version }}"
 
       - name: Git push
