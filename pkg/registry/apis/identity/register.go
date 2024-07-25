@@ -133,6 +133,14 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[user.StoragePath()] = userStore
 
+	sa := identity.ServiceAccountResourceInfo
+	saStore := &legacyServiceAccountStorage{
+		service:        b.svcUser,
+		resourceInfo:   sa,
+		tableConverter: userStore.tableConverter,
+	}
+	storage[sa.StoragePath()] = saStore
+
 	apiGroupInfo.VersionedResourcesStorageMap[identity.VERSION] = storage
 	return &apiGroupInfo, nil
 }

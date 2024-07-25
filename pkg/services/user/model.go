@@ -98,6 +98,19 @@ type UpdateUserLastSeenAtCommand struct {
 	OrgID  int64
 }
 
+type ListUsersCommand struct {
+	OrgID            int64
+	Limit            int64
+	ContinueID       int64
+	IsServiceAccount bool
+}
+
+type ListUserResult struct {
+	Users      []*User
+	ContinueID int64
+	MaxID      int64
+}
+
 type SearchUsersQuery struct {
 	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`

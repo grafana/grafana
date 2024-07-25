@@ -25,6 +25,12 @@ var TeamResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &TeamList{} },
 )
 
+var ServiceAccountResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"serviceaccountlist", "serviceaccount", "ServiceAccount",
+	func() runtime.Object { return &ServiceAccount{} },
+	func() runtime.Object { return &ServiceAccountList{} },
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
@@ -46,6 +52,8 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) error {
 	scheme.AddKnownTypes(schema.GroupVersion{Group: GROUP, Version: version},
 		&User{},
 		&UserList{},
+		&ServiceAccount{},
+		&ServiceAccountList{},
 		&Team{},
 		&TeamList{},
 		&IdentityDisplayList{},
