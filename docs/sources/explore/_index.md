@@ -10,44 +10,55 @@ labels:
     - cloud
     - enterprise
     - oss
+menuTitle: Explore
 title: Explore
 weight: 90
 hero:
- title: Grafana Explore
+ title: Explore
  level: 1
  width: 110
  height: 110
  description: >-
-   Use Explore to visually collect, query and analyze data for detailed real-time data analysis.
-
+   Use Explore to query, collect, and analyze data for detailed real-time data analysis.
+cards:
+  title_class: pt-0 lh-1
+  items:
+    - title: Get started with Explore
+      href: ./get-started-with-explore/
+      description: Get started using Explore to create queries and do real-time analysis on your data.
+      height: 24
+    - title: Query management
+      href: ./query-management/
+      description: Learn how to manage queries in Explore.
+      height: 24
+    - title: Query inspector in Explore
+      href: ./explore-inspector/
+      description: Learn how to use the Query inspector to troubleshoot issues with your queries.
+      height: 24
+    - title: Logs in Explore
+      href: ./logs-integration/
+      description: Learn about working with logs and log data in Explore.
+      height: 24
+    - title: Traces in Explore
+      href: ./trace-integration/
+      description: Learn about working with traces and tracing data in Explore.
+      height: 24
+    - title: Correlations editor in Explore
+      href: ./correlations-editor-in-explore/
+      description: Learn how to create and use Correlations.
+      height: 24
 ---
+
 
 {{< docs/hero-simple key="hero" >}}
 
 ---
 
-# Overview
+## Overview
 
-Explore is your starting point for analyzing, querying and aggregating data in Grafana. It helps you visually explore and iterate until you have a working query or set of queries with which to start building visualizations and doing data analysis. You don't need to create a dashboard if your data source supports graph and table data, as Explore shows the results as both graph or table. This allows for detailed real-time data analysis. 
-
-
+Explore is your gateway for querying, analyzing, and aggregating data in Grafana. It allows you to visually explore and iterate until you develop a working query or set of queries for building visualizations and conducting data analysis. If your data source supports graph and table data, there's no need to create a dashboard, as Explore can display the results in both formats. This facilitates quick, detailed, real-time data analysis.
 
 
+## Explore
 
-
-See also:
-
-- [Query management in Explore]({{< relref "query-management/" >}})
-- [Logs integration in Explore]({{< relref "logs-integration/" >}})
-- [Trace integration in Explore]({{< relref "trace-integration/" >}})
-- [Explore metrics]({{< relref "explore-metrics/" >}})
-- [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
-- [Inspector in Explore]({{< relref "explore-inspector/" >}})
-
-
-
-
-
-
-
-
+{{< card-grid key="cards" type="simple" >}}
