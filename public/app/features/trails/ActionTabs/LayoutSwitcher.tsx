@@ -38,10 +38,10 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    if (typeof values.breakdownLayout === 'string') {
-      const newBreakdownLayoutLayout = values.breakdownLayout as BreakdownLayoutType;
-      if (this.state.activeBreakdownLayout !== newBreakdownLayoutLayout) {
-        this.setState({ activeBreakdownLayout: newBreakdownLayoutLayout });
+    const newBreakdownLayout = values.breakdownLayout;
+    if (newBreakdownLayout === 'string' && isBreakdownLayoutType(newBreakdownLayout)) {
+      if (this.state.activeBreakdownLayout !== newBreakdownLayout) {
+        this.setState({ activeBreakdownLayout: newBreakdownLayout });
       }
     }
   }
