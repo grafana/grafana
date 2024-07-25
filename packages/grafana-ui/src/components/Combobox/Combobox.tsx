@@ -5,6 +5,7 @@ import { useCombobox } from 'downshift';
 import { useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
@@ -59,15 +60,24 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     overscan: 2,
   });
 
-  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex } = useCombobox({
+  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex, setInputValue } = useCombobox({
     items,
     itemToString,
     selectedItem,
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
+      if (inputValue === '' || inputValue === selectedItem?.label) {
+        setItems(options);
+        return;
+      }
       setItems(options.filter(itemFilter(inputValue)));
     },
-    onSelectedItemChange: ({ selectedItem }) => onChange(selectedItem),
+    onSelectedItemChange: ({ selectedItem }) => {
+      console.log(selectedItem);
+      console.log(options);
+      onChange(selectedItem);
+      setItems(options);
+    },
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
         rowVirtualizer.scrollToIndex(highlightedIndex);
@@ -98,7 +108,23 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   return (
     <div>
       <Input
-        suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+        suffix={
+          <>
+            {!!value && (
+              <Icon
+                name="times"
+                className={styles.clear}
+                title={t('combobox.clear.title', 'Clear value')}
+                tabIndex={0}
+                onClick={() => {
+                  console.log('clear');
+                  onChange(null);
+                }}
+              />
+            )}
+            <Icon name={isOpen ? 'search' : 'angle-down'} />
+          </>
+        }
         {...restProps}
         {...getInputProps({
           ref: inputRef,
@@ -108,6 +134,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
            */
           onChange: () => {},
         })}
+        onBlur={() => (selectedItem ? setInputValue(selectedItem.label) : setInputValue(''))}
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
