@@ -1262,9 +1262,9 @@ func TestCreate(t *testing.T) {
 		}
 
 		expectedHeaders := map[string]string{
-			"X-Rule-Test1":             "data1",
-			"X-Rule-Test2":             "%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D0%B0+%F0%9F%8E%B6",
-			"X-Rule-Test3":             "",
+			"http_X-Rule-Test1":        "data1",
+			"http_X-Rule-Test2":        "%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D0%B0+%F0%9F%8E%B6",
+			"http_X-Rule-Test3":        "",
 			models.FromAlertHeaderName: "true",
 			models.CacheSkipHeaderName: "true",
 			"X-Grafana-Org-Id":         strconv.FormatInt(orgID, 10),
