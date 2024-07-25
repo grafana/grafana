@@ -14,13 +14,15 @@ import { createBookmarkSavedNotification } from './utils';
 
 const MAX_RECENT_TRAILS = 20;
 
+export interface SerializedTrailHistory {
+  urlValues: SceneObjectUrlValues;
+  type: TrailStepType;
+  description: string;
+  parentIndex: number;
+}
+
 export interface SerializedTrail {
-  history: Array<{
-    urlValues: SceneObjectUrlValues;
-    type: TrailStepType;
-    description: string;
-    parentIndex: number;
-  }>;
+  history: SerializedTrailHistory[];
   currentStep?: number; // Assume last step in history if not specified
   createdAt?: number;
 }
@@ -98,7 +100,7 @@ export class TrailStore {
       const parentIndex = step.parentIndex ?? trail.state.history.state.steps.length - 1;
       // Set the parent of the next trail step by setting the current step in history.
       trail.state.history.setState({ currentStep: parentIndex });
-      trail.state.history.addTrailStep(trail, step.type);
+      trail.state.history.addTrailStepFromStorage(trail, step);
     });
 
     const currentStep = t.currentStep ?? trail.state.history.state.steps.length - 1;
