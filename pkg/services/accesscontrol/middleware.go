@@ -80,7 +80,7 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
 	} else {
-		namespace, identifier := c.SignedInUser.GetNamespacedID()
+		namespace, identifier := c.SignedInUser.GetTypedID()
 		c.Logger.Info(
 			"Access denied",
 			"namespace", namespace,
