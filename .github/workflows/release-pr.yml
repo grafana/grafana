@@ -56,13 +56,19 @@ jobs:
         with:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Checkout Grafana (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: false
+          path: ./.grafana-main
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.target }}
           fetch-depth: 0
           fetch-tags: true
-
       - name: Configure git user
         run: |
           git config --local user.name "github-actions[bot]"
@@ -74,7 +80,7 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        uses: ./.github/workflows/actions/changelog
+        uses: ./.grafana-main/.github/workflows/actions/changelog
         with:
           github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
