@@ -65,7 +65,7 @@ jobs:
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
-          ref: km/fix-release-pr-target
+          ref: main
           fetch-depth: '0'
           fetch-tags: 'false'
           path: .grafana-main
