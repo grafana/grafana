@@ -127,5 +127,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     gap: '0.5rem',
     height: '100%',
     width: '100%',
+    justifyContent: 'space-between',
   }),
 });
