@@ -145,7 +145,6 @@ jobs:
         run: >
           gh pr create \
             $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
-            -l "backport ${{ inputs.backport }}" \
             -l "product-approved" \
             --dry-run=${{ inputs.dry_run }} \
             -B "${{ inputs.target }}" \
