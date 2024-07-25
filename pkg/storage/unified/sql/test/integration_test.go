@@ -299,7 +299,7 @@ func TestClientServer(t *testing.T) {
 
 	// Test with an admin identity
 	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-		Namespace:      identity.NamespaceUser,
+		Type:      identity.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
