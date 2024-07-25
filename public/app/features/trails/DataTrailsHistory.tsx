@@ -47,15 +47,16 @@ export interface DataTrailHistoryStep {
   parentIndex: number;
 }
 
-export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
+export type TrailStepType = 'filters' | 'time' | 'metric' | 'start' | 'metric_page';
 
 const filterSubst = ` $2 `;
 const filterPipeRegex = /(\|)(=|=~|!=|>|<|!~)(\|)/g;
 const stepDescriptionMap: Record<TrailStepType, string> = {
   start: 'Start of history',
-  metric: 'Metric selected',
-  filters: 'Filter applied',
-  time: 'Time range changed',
+  metric: 'Metric selected:',
+  metric_page: 'Metric select page',
+  filters: 'Filter applied:',
+  time: 'Time range changed:',
 };
 
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
@@ -74,6 +75,8 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       // We always want to ensure in initial 'start' step
       this.addTrailStep(trail, 'start');
 
+      console.log('_onActivate');
+
       if (trail.state.metric) {
         // But if our current trail has a metric, we want to remove it and the topScene,
         // so that the "start" step always displays a metric select screen.
@@ -86,6 +89,8 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         // But must add a secondary step to represent the selection of the metric
         // for this restored trail state
         this.addTrailStep(trail, 'metric', trail.state.metric);
+      } else {
+        this.addTrailStep(trail, 'metric_page');
       }
     }
 
@@ -96,7 +101,9 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           this.state.steps[0].trailState = sceneUtils.cloneSceneObjectState(oldState, { history: this });
         }
 
-        if (newState.metric || oldState.metric) {
+        if (!newState.metric) {
+          this.addTrailStep(trail, 'metric_page');
+        } else {
           this.addTrailStep(trail, 'metric', newState.metric);
         }
       }
@@ -402,6 +409,7 @@ function getStyles(theme: GrafanaTheme2) {
       start: generateStepTypeStyle(visTheme.getColorByName('green')),
       filters: generateStepTypeStyle(visTheme.getColorByName('purple')),
       metric: generateStepTypeStyle(visTheme.getColorByName('orange')),
+      metric_page: generateStepTypeStyle(visTheme.getColorByName('orange')),
       time: generateStepTypeStyle(theme.colors.primary.main),
     },
   };
