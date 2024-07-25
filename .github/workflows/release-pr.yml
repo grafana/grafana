@@ -68,7 +68,6 @@ jobs:
           ref: km/fix-release-pr-target
           fetch-depth: '0'
           fetch-tags: 'false'
-          sparse-checkout: '.github'
           path: .grafana-main
       - name: Configure git user
         run: |
