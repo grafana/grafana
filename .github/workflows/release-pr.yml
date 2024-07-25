@@ -42,11 +42,20 @@ jobs:
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
       target: main
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
   create-prs:
     name: Create Release PR
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
     steps:
+      - name: Generate bot token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
@@ -66,7 +75,7 @@ jobs:
         id: changelog
         uses: ./.github/workflows/actions/changelog
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
 
