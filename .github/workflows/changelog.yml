@@ -1,5 +1,22 @@
 name: Generate changelog
 on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        description: 'Target release version (semver, git tag, branch or commit)'
+      target:
+        required: true
+        type: string
+        description: 'The base branch that these changes are being merged into'
+      dry_run:
+        required: false
+        default: false
+        type: bool
+      latest:
+        required: false
+        default: false
+        type: bool
   workflow_dispatch:
     inputs:
       version:
@@ -84,8 +101,9 @@ jobs:
           fi
 
           git diff CHANGELOG.md
+          git add CHANGELOG.md
       - name: "Commit changelog changes"
-        run: git commit --allow-empty -m "Update changelog placeholder" CHANGELOG.md
+        run: git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: "git push"
         if: ${{ inputs.dry_run }} != true
         run: git push

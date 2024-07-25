@@ -34,12 +34,19 @@ permissions:
   pull-requests: write
 
 jobs:
+  push-changelog-to-main:
+    name: Create PR to main to update the changelog
+    uses: ./.github/workflows/changelog.yml
+    with:
+      version: ${{ inputs.version }}
+      latest: ${{ inputs.latest }}
+      dry_run: ${{ inputs.dry_run }}
+      target: main
   create-prs:
     name: Create Release PR
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
     steps:
-
       - name: Generate bot token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
