@@ -60,30 +60,31 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     overscan: 2,
   });
 
-  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex, setInputValue } = useCombobox({
-    items,
-    itemToString,
-    selectedItem,
-    scrollIntoView: () => {},
-    onInputValueChange: ({ inputValue }) => {
-      if (inputValue === '' || inputValue === selectedItem?.label) {
+  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex, setInputValue, selectItem } =
+    useCombobox({
+      items,
+      itemToString,
+      selectedItem,
+      scrollIntoView: () => {},
+      onInputValueChange: ({ inputValue }) => {
+        if (inputValue === '' || inputValue === selectedItem?.label) {
+          setItems(options);
+          return;
+        }
+        setItems(options.filter(itemFilter(inputValue)));
+      },
+      onSelectedItemChange: ({ selectedItem }) => {
+        console.log(selectedItem);
+        console.log(options);
+        onChange(selectedItem);
         setItems(options);
-        return;
-      }
-      setItems(options.filter(itemFilter(inputValue)));
-    },
-    onSelectedItemChange: ({ selectedItem }) => {
-      console.log(selectedItem);
-      console.log(options);
-      onChange(selectedItem);
-      setItems(options);
-    },
-    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
-      }
-    },
-  });
+      },
+      onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+        if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
+          rowVirtualizer.scrollToIndex(highlightedIndex);
+        }
+      },
+    });
 
   // the order of middleware is important!
   const middleware = [
@@ -117,8 +118,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                 title={t('combobox.clear.title', 'Clear value')}
                 tabIndex={0}
                 onClick={() => {
-                  console.log('clear');
-                  onChange(null);
+                  selectItem(null);
                 }}
               />
             )}
