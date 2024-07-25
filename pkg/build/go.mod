@@ -88,7 +88,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require dagger.io/dagger v0.12.3
+require dagger.io/dagger v0.11.9
 
 require (
 	github.com/99designs/gqlgen v0.17.49 // indirect
