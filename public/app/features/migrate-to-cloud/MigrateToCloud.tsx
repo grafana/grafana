@@ -13,6 +13,7 @@ export default function MigrateToCloud() {
     <Page navId="migrate-to-cloud">
       <Alert
         title={t('migrate-to-cloud.public-preview.title', 'Migrate to Grafana Cloud is in public preview')}
+        buttonContent={t('migrate-to-cloud.public-preview.button-text', 'Give feedback')}
         severity={'info'}
         onRemove={
           feedbackURL
@@ -21,7 +22,6 @@ export default function MigrateToCloud() {
               }
             : undefined
         }
-        buttonContent={'Give feedback'}
       >
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
           Help us improve this feature by providing feedback and reporting any issues.
