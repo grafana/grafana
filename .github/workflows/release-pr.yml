@@ -59,6 +59,7 @@ jobs:
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.target }}
           fetch-depth: 0
           fetch-tags: true
 
