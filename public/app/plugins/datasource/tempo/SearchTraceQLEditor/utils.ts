@@ -84,6 +84,10 @@ const adHocValueHelper = (f: AdHocVariableFilter) => {
   return `"${f.value}"`;
 };
 
+export const getTagWithoutScope = (tag: string) => {
+  return tag.replace(/^(event|link|resource|span)\./, '');
+};
+
 export const filterScopedTag = (f: TraceqlFilter) => {
   return scopeHelper(f) + f.tag;
 };
