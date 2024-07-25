@@ -42,6 +42,9 @@ jobs:
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
       target: main
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
   create-prs:
     name: Create Release PR
     runs-on: ubuntu-latest
@@ -53,7 +56,6 @@ jobs:
         with:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
