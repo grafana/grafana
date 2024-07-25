@@ -220,7 +220,7 @@ The following list contains role-based access control actions used by Grafana Ad
 | grafana-adaptive-metrics-app.rules:write           | n/a              | Create aggregation rules.                            |
 | grafana-adaptive-metrics-app.rules:delete          | n/a              | Delete aggregation rules.                            |
 | grafana-adaptive-metrics-app.exemptions:read       | n/a              | Read rule exemptions.                                |
-| grafana-adaptive-metrics-app.exemptions:write      | n/a              | Create rule exemptions.                              |
+| grafana-adaptive-metrics-app.exemptions:write      | n/a              | Create, update, and delete rule exemptions.                              |
 
 ## Scope definitions
 
