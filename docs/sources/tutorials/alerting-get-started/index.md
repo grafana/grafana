@@ -32,9 +32,7 @@ In this tutorial you will:
 - Set up an alert rule.
 - Receive firing and resolved alert notifications in a public webhook.
 
-
 Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if you want to learn more about alerts and notification routing.
-
 
 <!-- INTERACTIVE page intro.md END -->
 
@@ -44,9 +42,12 @@ Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if yo
 
 ### Grafana Cloud users
 
-As a Grafana Cloud user, you don't have to install anything.   
+As a Grafana Cloud user, you don't have to install anything.
+
 <!-- INTERACTIVE ignore START -->
+
 Continue to [Create a contact point](#create-a-contact-point).
+
 <!-- INTERACTIVE ignore END -->
 
 ### Grafana OSS users
@@ -63,33 +64,41 @@ To demonstrate the observation of data using the Grafana stack, download the fil
 1. Clone the [tutorial environment repository](https://www.github.com/grafana/tutorial-environment).
 
    <!-- INTERACTIVE exec START -->
+
    ```
    git clone https://github.com/grafana/tutorial-environment.git
    ```
+
    <!-- INTERACTIVE exec END -->
 
 1. Change to the directory where you cloned the repository:
 
    <!-- INTERACTIVE exec START -->
+
    ```
    cd tutorial-environment
    ```
+
    <!-- INTERACTIVE exec END -->
 
 1. Run the Grafana stack:
 
    <!-- INTERACTIVE ignore START -->
+
    ```
    docker compose up -d
    ```
+
    <!-- INTERACTIVE ignore END -->
 
    {{< docs/ignore >}}
 
    <!-- INTERACTIVE exec START -->
-    ```bash 
-    docker-compose up -d 
-    ```
+
+   ```bash
+   docker-compose up -d
+   ```
+
    <!-- INTERACTIVE exec END -->
 
    {{< /docs/ignore >}}
@@ -113,6 +122,7 @@ To demonstrate the observation of data using the Grafana stack, download the fil
    {{< /docs/ignore >}}
 
    <!-- INTERACTIVE ignore START -->
+
    {{< admonition type="tip" >}}
    Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/).
 
@@ -161,7 +171,6 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 <!-- INTERACTIVE page step2.md END -->
 
 <!-- INTERACTIVE page step3.md START -->
-
 
 ## Create an alert
 
