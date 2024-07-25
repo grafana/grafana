@@ -179,6 +179,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
+  cloudMigrationFeedbackURL = '';
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
 
