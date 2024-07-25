@@ -118,8 +118,9 @@ type Interactions = {
       // By clicking "Select" on ssa metric panel when on the related metrics tab
       | 'related_metrics'
     )
-    sortBy: 'alphabetical' | 'changepoint' | 'lastNotNull' | 'last';
-    direction: 'asc' | 'desc';
+    // FIXME remove string and make it typesafe
+    sortBy: 'alphabetical' | 'changepoint' | 'lastNotNull' | 'last' | string;
+    direction: 'asc' | 'desc' | string;
   };
 };
 
