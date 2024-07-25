@@ -23,6 +23,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -32,7 +33,6 @@ import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
-import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
