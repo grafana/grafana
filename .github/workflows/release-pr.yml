@@ -65,7 +65,7 @@ jobs:
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: km/fix-release-pr-target
           fetch-depth: '0'
           fetch-tags: 'false'
           sparse-checkout: '.github'
@@ -123,9 +123,9 @@ jobs:
         run: git commit --allow-empty -m "Update changelog placeholder" CHANGELOG.md
 
       - name: Update package.json versions
-        uses: ./pkg/build/actions/bump-version
+        uses: ./.grafana-main/pkg/build/actions/bump-version
         with:
-          version: ${{ inputs.version }}
+          version: 'patch'
 
       - name: Add package.json changes
         run: |
