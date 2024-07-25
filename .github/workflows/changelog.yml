@@ -117,10 +117,11 @@ jobs:
         if: ${{ inputs.dry_run }} != true
         run: git push
       - name: "Create changelog PR"
-        if: "${{ inputs.backport == '' }}"
         run: >
           gh pr create \
             --dry-run=${{ inputs.dry_run }} \
+            --label "no-backport" \
+            --label "no-changelog" \
             -B "${{ inputs.target }}" \
             --title "Release: ${{ inputs.version }}" \
             --body "Changelog changes for release ${{ inputs.version }}"
