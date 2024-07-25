@@ -13,20 +13,13 @@ import { Field, RadioButtonGroup } from '@grafana/ui';
 import { reportExploreMetrics } from '../interactions';
 import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
-import { isLayoutType, LayoutType } from './types';
-
-export class BreakdownLayoutChange extends BusEventBase {
-  constructor(public layout: LayoutType) {
-    super();
-  }
-
-  public static type = 'breakdown-layout-change';
-}
+import { isLayoutType, LayoutChangeCallback, LayoutType } from './types';
 
 export interface LayoutSwitcherState extends SceneObjectState {
   active: LayoutType;
   layouts: SceneObject[];
   options: Array<SelectableValue<LayoutType>>;
+  onLayoutChange: LayoutChangeCallback;
 }
 
 export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> implements SceneObjectWithUrlSync {
@@ -71,7 +64,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
     reportExploreMetrics('breakdown_layout_changed', { layout: active });
     localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, active);
     this.setState({ active });
-    this.publishEvent(new BreakdownLayoutChange(active));
+    this.state.onLayoutChange(active);
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {

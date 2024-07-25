@@ -35,8 +35,9 @@ import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { ByFrameRepeater } from './ByFrameRepeater';
-import { BreakdownLayoutChange, LayoutSwitcher } from './LayoutSwitcher';
+import { LayoutSwitcher } from './LayoutSwitcher';
 import { breakdownPanelOptions } from './panelConfigs';
+import { LayoutChangeCallback, LayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
 
@@ -97,8 +98,6 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       this.clearBreakdownPanelAxisValues();
     });
 
-    this._subs.add(this.subscribeToEvent(BreakdownLayoutChange, () => this.clearBreakdownPanelAxisValues));
-
     this.updateBody(variable);
   }
 
@@ -149,7 +148,6 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
   }, 1000);
 
   private clearBreakdownPanelAxisValues() {
-    console.log('I am triggered because layout has changed');
     this.breakdownPanelMaxValue = undefined;
     this.breakdownPanelMinValue = undefined;
   }
@@ -182,8 +180,8 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
 
     if (!variable.state.loading && variable.state.options.length) {
       stateUpdate.body = variable.hasAllValue()
-        ? buildAllLayout(options, this._query!)
-        : buildNormalLayout(this._query!);
+        ? buildAllLayout(options, this._query!, this.onLayoutChanged)
+        : buildNormalLayout(this._query!, this.onLayoutChanged);
     } else if (!variable.state.loading) {
       stateUpdate.body = undefined;
       stateUpdate.blockingMessage = 'Unable to retrieve label options for currently selected metric.';
@@ -193,6 +191,10 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     // Setting the new panels will gradually end up calling reportBreakdownPanelData to update the new min & max
     this.setState(stateUpdate);
   }
+
+  public onLayoutChanged = (newLayout: LayoutType) => {
+    this.clearBreakdownPanelAxisValues();
+  };
 
   public onChange = (value?: string) => {
     if (!value) {
@@ -267,7 +269,11 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef: AutoQueryDef) {
+export function buildAllLayout(
+  options: Array<SelectableValue<string>>,
+  queryDef: AutoQueryDef,
+  onLayoutChange: LayoutChangeCallback
+) {
   const children: SceneFlexItemLike[] = [];
 
   for (const option of options) {
@@ -319,6 +325,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       { value: 'rows', label: 'Rows' },
     ],
     active: 'grid',
+    onLayoutChange,
     layouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
@@ -339,7 +346,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
 
 const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 
-function buildNormalLayout(queryDef: AutoQueryDef) {
+function buildNormalLayout(queryDef: AutoQueryDef, onLayoutChange: LayoutChangeCallback) {
   const unit = queryDef.unit;
 
   function getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem {
@@ -380,6 +387,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       { value: 'rows', label: 'Rows' },
     ],
     active: 'grid',
+    onLayoutChange,
     layouts: [
       new SceneFlexLayout({
         direction: 'column',

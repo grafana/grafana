@@ -5,3 +5,5 @@ export type LayoutType = (typeof LAYOUT_TYPES)[number];
 export function isLayoutType(layoutType: string | null | undefined): layoutType is LayoutType {
   return !!layoutType && layoutType in LAYOUT_TYPES;
 }
+
+export type LayoutChangeCallback = (newLayout: LayoutType) => void;
