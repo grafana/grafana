@@ -81,6 +81,9 @@ const adHocValueHelper = (f: AdHocVariableFilter) => {
   if (intrinsics.find((t) => t === f.key)) {
     return f.value;
   }
+  if (parseInt(f.value, 10).toString() === f.value) {
+    return f.value;
+  }
   return `"${f.value}"`;
 };
 
