@@ -147,6 +147,7 @@ export function fieldToTimeField(field: Field, dateFormat?: string): Field {
     ...field,
     type: FieldType.time,
     values: timeValues,
+    config: { custom: { format: dateFormat } },
   };
 }
 
