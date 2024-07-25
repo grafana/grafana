@@ -10497,6 +10497,10 @@
             },
             "type": "object"
           },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          },
           "types": {
             "additionalProperties": {
               "format": "int64",
