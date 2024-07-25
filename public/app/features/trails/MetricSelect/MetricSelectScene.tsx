@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
-import { fieldReducers, GrafanaTheme2, RawTimeRange, ReducerID, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -45,7 +45,7 @@ import {
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
 import { SelectMetricAction } from './SelectMetricAction';
-import { SortByScene } from './SortByScene';
+import { SortByScene, SortCriteriaChanged } from './SortByScene';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
@@ -85,20 +85,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
   private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
-
-  public sortingOptions = [
-    {
-      value: 'changepoint',
-      label: 'Relevance',
-      description: 'Most relevant time series first',
-    },
-    {
-      value: ReducerID.stdDev,
-      label: 'Dispersion',
-      description: 'Standard deviation of all values in a field',
-    },
-    ...fieldReducers.selectOptions([], (ext) => ext.id !== ReducerID.stdDev).options,
-  ];
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
@@ -194,6 +180,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       })
     );
 
+    this._subs.add(this.subscribeToEvent(SortCriteriaChanged, this.handleSortByChange));
+
     this.subscribeToState((newState, prevState) => {
       if (newState.metricNames !== prevState.metricNames) {
         this.onMetricNamesChanged();
@@ -265,6 +253,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       this.setState({ metricNames: undefined, metricNamesLoading: false, metricNamesError: error });
     }
   }
+
+  private handleSortByChange = ({ sortBy, direction }: SortCriteriaChanged) => {
+    // if (this.state.body instanceof LayoutSwitcher && this.state.body.state.layouts[1] instanceof ByFrameRepeater) {
+    //   this.state.body.state.layouts[1].sort(event.sortBy, event.direction);
+    // }
+    reportExploreMetrics('sorting_changed', {
+      from: 'metric_list',
+      sortBy,
+      direction,
+    });
+  };
 
   private async generateGroups(metricNames: string[] = []) {
     const groopParser = new Parser();
