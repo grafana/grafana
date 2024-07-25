@@ -9,15 +9,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const trace_prefix = "sql.resource."
@@ -314,7 +315,10 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resourc
 
 	res, err := dbutil.QueryRow(ctx, b.db, sr, readReq)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, resource.ErrNotFound
+		return nil, apierrors.NewNotFound(schema.GroupResource{
+			Group:    req.Key.Group,
+			Resource: req.Key.Resource,
+		}, req.Key.Name)
 	} else if err != nil {
 		return nil, fmt.Errorf("get resource version: %w", err)
 	}
@@ -540,7 +544,7 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 		resourceVersion: new(resourceVersion),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return 0, fmt.Errorf("now row for the provided resource version")
+		return 1, nil
 	} else if err != nil {
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}

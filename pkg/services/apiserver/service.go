@@ -36,17 +36,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
-	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -269,7 +264,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-	case grafanaapiserveroptions.StorageTypeUnifiedNext:
+	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
@@ -282,7 +277,7 @@ func (s *service) start(ctx context.Context) error {
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
 			o.RecommendedOptions.Etcd.StorageConfig)
 
-	case grafanaapiserveroptions.StorageTypeUnifiedNextGrpc:
+	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
@@ -295,47 +290,6 @@ func (s *service) start(ctx context.Context) error {
 		// Create a client instance
 		client := resource.NewResourceStoreClientGRPC(conn)
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
-
-	case grafanaapiserveroptions.StorageTypeUnified, grafanaapiserveroptions.StorageTypeUnifiedGrpc:
-		var client entity.EntityStoreClient
-		var entityServer sqlstash.SqlEntityServer
-
-		if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeUnifiedGrpc {
-			conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				return err
-			}
-			client = entity.NewEntityStoreClientGRPC(conn)
-		} else {
-			if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-				return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
-			}
-
-			eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
-			if err != nil {
-				return err
-			}
-
-			entityServer, err = sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
-			if err != nil {
-				return err
-			}
-			client = entity.NewEntityStoreClientLocal(entityServer)
-		}
-
-		if false {
-			// Use the entity bridge
-			server, err := entitybridge.EntityAsResourceServer(client, entityServer, s.tracing)
-			if err != nil {
-				return err
-			}
-			client := resource.NewLocalResourceStoreClient(server)
-			serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
-				o.RecommendedOptions.Etcd.StorageConfig)
-		} else {
-			serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg,
-				client, o.RecommendedOptions.Etcd.StorageConfig.Codec)
-		}
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough

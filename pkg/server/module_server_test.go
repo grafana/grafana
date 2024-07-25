@@ -63,7 +63,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 }
 
 func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
-	s, err := cfg.Raw.NewSection("entity_api")
+	s, err := cfg.Raw.NewSection("resource_api")
 	require.NoError(t, err)
 	_, err = s.NewKey("db_type", dbType)
 	require.NoError(t, err)
