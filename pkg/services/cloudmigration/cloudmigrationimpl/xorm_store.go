@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -17,11 +18,13 @@ var _ store = (*sqlStore)(nil)
 
 type sqlStore struct {
 	db             db.DB
+	secretsStore   secretskv.SecretsKVStore
 	secretsService secrets.Service
 }
 
 const (
-	tableName = "cloud_migration_resource"
+	tableName  = "cloud_migration_resource"
+	secretType = "cloudmigration-snapshot-encryption-key"
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -157,12 +160,12 @@ func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID str
 }
 
 func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
-	if err := ss.encryptKey(ctx, &snapshot); err != nil {
-		return "", err
-	}
-
 	if snapshot.UID == "" {
 		snapshot.UID = util.GenerateShortUID()
+	}
+
+	if err := ss.secretsStore.Set(ctx, secretskv.AllOrganizations, snapshot.UID, secretType, string(snapshot.EncryptionKey)); err != nil {
+		return "", err
 	}
 
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -228,8 +231,12 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultPage
 		return nil, err
 	}
 
-	if err := ss.decryptKey(ctx, &snapshot); err != nil {
+	if secret, found, err := ss.secretsStore.Get(ctx, secretskv.AllOrganizations, snapshot.UID, secretType); err != nil {
 		return &snapshot, err
+	} else if !found {
+		return &snapshot, fmt.Errorf("encryption key not found for snapshot with UID %s", snapshot.UID)
+	} else {
+		snapshot.EncryptionKey = []byte(secret)
 	}
 
 	resources, err := ss.GetSnapshotResources(ctx, uid, resultPage, resultLimit)
@@ -259,8 +266,12 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 		return nil, err
 	}
 	for i, snapshot := range snapshots {
-		if err := ss.decryptKey(ctx, &snapshot); err != nil {
+		if secret, found, err := ss.secretsStore.Get(ctx, secretskv.AllOrganizations, snapshot.UID, secretType); err != nil {
 			return nil, err
+		} else if !found {
+			return nil, fmt.Errorf("encryption key not found for snapshot with UID %s", snapshot.UID)
+		} else {
+			snapshot.EncryptionKey = []byte(secret)
 		}
 
 		if stats, err := ss.GetSnapshotResourceStats(ctx, snapshot.UID); err != nil {
@@ -346,14 +357,14 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 		} else {
 			total = int(t)
 		}
-		sess.Select("count(uid) as 'count', resource_type as 'type'").
+		sess.Select("count(uid) as \"count\", resource_type as \"type\"").
 			Table(tableName).
 			GroupBy("type").
 			Where("snapshot_uid = ?", snapshotUid)
 		if err := sess.Find(&typeCounts); err != nil {
 			return err
 		}
-		sess.Select("count(uid) as 'count', status").
+		sess.Select("count(uid) as \"count\", status").
 			Table(tableName).
 			GroupBy("status").
 			Where("snapshot_uid = ?", snapshotUid)
@@ -408,27 +419,6 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 		return fmt.Errorf("decrypting auth token: %w", err)
 	}
 	cm.AuthToken = string(t)
-
-	return nil
-}
-
-func (ss *sqlStore) encryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
-	s, err := ss.secretsService.Encrypt(ctx, snapshot.EncryptionKey, secrets.WithoutScope())
-	if err != nil {
-		return fmt.Errorf("encrypting key: %w", err)
-	}
-
-	snapshot.EncryptionKey = s
-
-	return nil
-}
-
-func (ss *sqlStore) decryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
-	t, err := ss.secretsService.Decrypt(ctx, snapshot.EncryptionKey)
-	if err != nil {
-		return fmt.Errorf("decrypting key: %w", err)
-	}
-	snapshot.EncryptionKey = t
 
 	return nil
 }
