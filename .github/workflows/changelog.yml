@@ -62,6 +62,7 @@ jobs:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
+          ref: main
           sparse-checkout: |
             .github/workflows
             CHANGELOG.md
@@ -123,7 +124,7 @@ jobs:
             --label "no-backport" \
             --label "no-changelog" \
             -B "${{ inputs.target }}" \
-            --title "Release: ${{ inputs.version }}" \
+            --title "Release: update changelog for ${{ inputs.version }}" \
             --body "Changelog changes for release ${{ inputs.version }}"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
