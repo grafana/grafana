@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
@@ -96,7 +97,7 @@ func TestSession_Authenticate(t *testing.T) {
 			},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
-				ID:           authn.MustParseNamespaceID("user:1"),
+				ID:           identity.MustParseTypedID("user:1"),
 				SessionToken: validToken,
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -129,7 +130,7 @@ func TestSession_Authenticate(t *testing.T) {
 			},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
-				ID:           authn.MustParseNamespaceID("user:1"),
+				ID:           identity.MustParseTypedID("user:1"),
 				SessionToken: validToken,
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -148,7 +149,7 @@ func TestSession_Authenticate(t *testing.T) {
 			},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("user:1"),
+				ID:              identity.MustParseTypedID("user:1"),
 				AuthID:          "1",
 				AuthenticatedBy: "oauth_azuread",
 				SessionToken:    validToken,
@@ -170,7 +171,7 @@ func TestSession_Authenticate(t *testing.T) {
 			},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
-				ID:           authn.MustParseNamespaceID("user:1"),
+				ID:           identity.MustParseTypedID("user:1"),
 				SessionToken: validToken,
 
 				ClientParams: authn.ClientParams{
