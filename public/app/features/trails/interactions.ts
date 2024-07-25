@@ -110,6 +110,17 @@ type Interactions = {
       | 'close'
     )
   };
+  // User changes the sorting options
+  sorting_changed: {
+    from: (
+      // By clicking "Select" on a metric panel when on the no-metric-selected metrics list view
+      | 'metric_list'
+      // By clicking "Select" on ssa metric panel when on the related metrics tab
+      | 'related_metrics'
+    )
+    sortBy: 'alphabetical' | 'changepoint' | 'lastNotNull' | 'last';
+    direction: 'asc' | 'desc';
+  };
 };
 
 const PREFIX = 'grafana_explore_metrics_';
