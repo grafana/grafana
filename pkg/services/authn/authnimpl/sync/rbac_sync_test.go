@@ -157,7 +157,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should map Cloud Viewer to Grafana Cloud Viewer and Support ticket reader",
 			identity: &authn.Identity{
-				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				ID:       identity.NewTypedID(identity.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
 			},
@@ -176,7 +176,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should map Cloud Editor to Grafana Cloud Editor and Support ticket admin",
 			identity: &authn.Identity{
-				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				ID:       identity.NewTypedID(identity.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
 			},
@@ -195,7 +195,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should map Cloud Admin to Grafana Cloud Admin and Support ticket admin",
 			identity: &authn.Identity{
-				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				ID:       identity.NewTypedID(identity.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 			},
@@ -214,7 +214,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should return an error for not supported role",
 			identity: &authn.Identity{
-				ID:       authn.NewNamespaceID(authn.NamespaceUser, 1),
+				ID:       identity.NewTypedID(identity.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
 			},
