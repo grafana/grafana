@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"errors"
+	"regexp"
 	"sync/atomic"
 	"time"
 
@@ -43,7 +44,6 @@ func (rs *ReplStore) ReadReplica() *SQLStore {
 		rs.log.Debug("ReadReplica not configured, using main SQLStore")
 		return rs.SQLStore
 	}
-	rs.log.Debug("Using ReadReplica")
 	return rs.nextRepl()
 }
 
@@ -55,6 +55,7 @@ func (rs *ReplStore) nextRepl() *SQLStore {
 	// then increment the index for the next call
 	atomic.AddUint64(&rs.next, 1)
 
+	rs.log.Debug("Using ReadReplica")
 	return selected
 }
 
@@ -89,6 +90,11 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 	}
 
 	for i, replCfg := range replCfgs {
+		// If the database_instrument_queries feature is enabled, wrap the driver with hooks.
+		if cfg.DatabaseInstrumentQueries {
+			replCfg.Type = WrapDatabaseReplDriverWithHooks(replCfg.Type, i, tracer)
+		}
+
 		s, err := newReadOnlySQLStore(cfg, replCfg, features, bus, tracer)
 		if err != nil {
 			return nil, err
@@ -124,7 +130,13 @@ func newReadOnlySQLStore(cfg *setting.Cfg, dbCfg *DatabaseConfig, features featu
 	if err != nil {
 		return nil, err
 	}
-	s.dialect = migrator.NewDialect(s.engine.DriverName())
+
+	// When there are multiple read replicas, we append an index to the driver name (ex: mysqlWithHooks11).
+	// Remove the index from the end of the driver name to get the original driver name that xorm and other libraries recognize.
+	reg := regexp.MustCompile("[0-9]+") // any number of digits
+	driverName := reg.ReplaceAllString(s.engine.DriverName(), "")
+
+	s.dialect = migrator.NewDialect(driverName)
 	return s, nil
 }
 
@@ -133,10 +145,6 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 	if ss.engine != nil {
 		ss.log.Debug("Already connected to database replica")
 		return nil
-	}
-
-	if ss.cfg.DatabaseInstrumentQueries {
-		ss.dbCfg.Type = WrapDatabaseReplDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
 	if engine == nil {
