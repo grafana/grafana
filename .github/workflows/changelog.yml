@@ -18,6 +18,12 @@ on:
         required: false
         default: false
         type: boolean
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID:
+        required: true
+      GRAFANA_DELIVERY_BOT_APP_PEM:
+        required: true
+
   workflow_dispatch:
     inputs:
       version:
@@ -47,6 +53,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
@@ -61,12 +73,12 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
-        run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
+        run: git checkout -b "changelog/${{ github.run_id }}/${{ inputs.version }}"
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/workflows/actions/changelog
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
       - name: "Patch CHANGELOG.md"
@@ -105,11 +117,11 @@ jobs:
         if: ${{ inputs.dry_run }} != true
         run: git push
       - name: "Create changelog PR"
-        if: "${{ inputs.backport == '' }}"
         run: >
           gh pr create \
-            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
             --dry-run=${{ inputs.dry_run }} \
+            --label "no-backport" \
+            --label "no-changelog" \
             -B "${{ inputs.target }}" \
             --title "Release: ${{ inputs.version }}" \
             --body "Changelog changes for release ${{ inputs.version }}"
