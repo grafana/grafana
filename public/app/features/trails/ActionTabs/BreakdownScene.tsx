@@ -37,7 +37,7 @@ import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { breakdownPanelOptions } from './panelConfigs';
-import { LayoutChangeCallback, LayoutType } from './types';
+import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
 
@@ -180,8 +180,8 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
 
     if (!variable.state.loading && variable.state.options.length) {
       stateUpdate.body = variable.hasAllValue()
-        ? buildAllLayout(options, this._query!, this.onLayoutChanged)
-        : buildNormalLayout(this._query!, this.onLayoutChanged);
+        ? buildAllLayout(options, this._query!, this.onBreakdownLayoutChange)
+        : buildNormalLayout(this._query!, this.onBreakdownLayoutChange);
     } else if (!variable.state.loading) {
       stateUpdate.body = undefined;
       stateUpdate.blockingMessage = 'Unable to retrieve label options for currently selected metric.';
@@ -192,7 +192,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     this.setState(stateUpdate);
   }
 
-  public onLayoutChanged = (newLayout: LayoutType) => {
+  public onBreakdownLayoutChange = (_: BreakdownLayoutType) => {
     this.clearBreakdownPanelAxisValues();
   };
 
@@ -272,7 +272,7 @@ function getStyles(theme: GrafanaTheme2) {
 export function buildAllLayout(
   options: Array<SelectableValue<string>>,
   queryDef: AutoQueryDef,
-  onLayoutChange: LayoutChangeCallback
+  onBreakdownLayoutChange: BreakdownLayoutChangeCallback
 ) {
   const children: SceneFlexItemLike[] = [];
 
@@ -320,13 +320,13 @@ export function buildAllLayout(
     );
   }
   return new LayoutSwitcher({
-    options: [
+    breakdownLayoutOptions: [
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
-    onLayoutChange,
-    layouts: [
+    activeBreakdownLayout: 'grid',
+    onBreakdownLayoutChange,
+    breakdownLayouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
         autoRows: '200px',
@@ -346,7 +346,7 @@ export function buildAllLayout(
 
 const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 
-function buildNormalLayout(queryDef: AutoQueryDef, onLayoutChange: LayoutChangeCallback) {
+function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: BreakdownLayoutChangeCallback) {
   const unit = queryDef.unit;
 
   function getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem {
@@ -381,14 +381,14 @@ function buildNormalLayout(queryDef: AutoQueryDef, onLayoutChange: LayoutChangeC
       maxDataPoints: 300,
       queries: queryDef.queries,
     }),
-    options: [
+    breakdownLayoutOptions: [
       { value: 'single', label: 'Single' },
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    active: 'grid',
-    onLayoutChange,
-    layouts: [
+    activeBreakdownLayout: 'grid',
+    onBreakdownLayoutChange,
+    breakdownLayouts: [
       new SceneFlexLayout({
         direction: 'column',
         children: [

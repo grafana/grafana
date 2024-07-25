@@ -1,4 +1,4 @@
-import { BusEventBase, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObject,
@@ -13,69 +13,73 @@ import { Field, RadioButtonGroup } from '@grafana/ui';
 import { reportExploreMetrics } from '../interactions';
 import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
-import { isLayoutType, LayoutChangeCallback, LayoutType } from './types';
+import { isBreakdownLayoutType, BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 
 export interface LayoutSwitcherState extends SceneObjectState {
-  active: LayoutType;
-  layouts: SceneObject[];
-  options: Array<SelectableValue<LayoutType>>;
-  onLayoutChange: LayoutChangeCallback;
+  activeBreakdownLayout: BreakdownLayoutType;
+  breakdownLayouts: SceneObject[];
+  breakdownLayoutOptions: Array<SelectableValue<BreakdownLayoutType>>;
+  onBreakdownLayoutChange: BreakdownLayoutChangeCallback;
 }
 
 export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> implements SceneObjectWithUrlSync {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['layout'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['breakdownLayout'] });
 
-  public constructor(state: MakeOptional<LayoutSwitcherState, 'active'>) {
-    const layout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
+  public constructor(state: MakeOptional<LayoutSwitcherState, 'activeBreakdownLayout'>) {
+    const storedBreakdownLayout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
     super({
-      active: isLayoutType(layout) ? layout : 'grid',
+      activeBreakdownLayout: isBreakdownLayoutType(storedBreakdownLayout) ? storedBreakdownLayout : 'grid',
       ...state,
     });
   }
 
   getUrlState() {
-    return { layout: this.state.active };
+    return { breakdownLayout: this.state.activeBreakdownLayout };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    if (typeof values.layout === 'string') {
-      const newLayout = values.layout as LayoutType;
-      if (this.state.active !== newLayout) {
-        this.setState({ active: newLayout });
+    if (typeof values.breakdownLayout === 'string') {
+      const newBreakdownLayoutLayout = values.breakdownLayout as BreakdownLayoutType;
+      if (this.state.activeBreakdownLayout !== newBreakdownLayoutLayout) {
+        this.setState({ activeBreakdownLayout: newBreakdownLayoutLayout });
       }
     }
   }
 
   public Selector({ model }: { model: LayoutSwitcher }) {
-    const { active, options } = model.useState();
+    const { activeBreakdownLayout, breakdownLayoutOptions } = model.useState();
 
     return (
       <Field label="View">
-        <RadioButtonGroup options={options} value={active} onChange={model.onLayoutChange} />
+        <RadioButtonGroup
+          options={breakdownLayoutOptions}
+          value={activeBreakdownLayout}
+          onChange={model.onLayoutChange}
+        />
       </Field>
     );
   }
 
-  public onLayoutChange = (active: LayoutType) => {
-    if (this.state.active === active) {
+  public onLayoutChange = (active: BreakdownLayoutType) => {
+    if (this.state.activeBreakdownLayout === active) {
       return;
     }
 
     reportExploreMetrics('breakdown_layout_changed', { layout: active });
     localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, active);
-    this.setState({ active });
-    this.state.onLayoutChange(active);
+    this.setState({ activeBreakdownLayout: active });
+    this.state.onBreakdownLayoutChange(active);
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
-    const { layouts, options, active } = model.useState();
+    const { breakdownLayouts, breakdownLayoutOptions, activeBreakdownLayout } = model.useState();
 
-    const index = options.findIndex((o) => o.value === active);
+    const index = breakdownLayoutOptions.findIndex((o) => o.value === activeBreakdownLayout);
     if (index === -1) {
       return null;
     }
 
-    const layout = layouts[index];
+    const layout = breakdownLayouts[index];
 
     return <layout.Component model={layout} />;
   };
