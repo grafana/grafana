@@ -2,6 +2,8 @@ import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
+import { Trans, t } from '../../core/internationalization';
+
 import { Page as CloudPage } from './cloud/Page';
 import { Page as OnPremPage } from './onprem/Page';
 
@@ -10,7 +12,7 @@ export default function MigrateToCloud() {
   return (
     <Page navId="migrate-to-cloud">
       <Alert
-        title={'Migrate to Grafana Cloud is in public preview'}
+        title={t('migrate-to-cloud.public-preview.title', 'Migrate to Grafana Cloud is in public preview')}
         severity={'info'}
         onRemove={
           feedbackURL
@@ -21,7 +23,9 @@ export default function MigrateToCloud() {
         }
         buttonContent={'Give feedback'}
       >
-        Help us to improve Grafana Cloud by providing feedback and reporting issues.
+        <Trans i18nKey="migrate-to-cloud.public-preview.message">
+          Help us improve this feature by providing feedback and reporting any issues.
+        </Trans>
       </Alert>
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}
     </Page>
