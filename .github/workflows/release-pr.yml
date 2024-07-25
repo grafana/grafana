@@ -62,7 +62,8 @@ jobs:
           ref: main
           fetch-depth: 0
           fetch-tags: false
-          path: ./.grafana-main
+          sparse-checkout: '.github'
+          path: .grafana-main
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
